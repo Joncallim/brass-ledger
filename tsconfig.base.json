@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@brass-ledger/shared": [
+        "packages/shared/src/index.ts"
+      ],
+      "@brass-ledger/shared/*": [
+        "packages/shared/src/*"
+      ],
+      "@brass-ledger/content": [
+        "packages/content/src/index.ts"
+      ],
+      "@brass-ledger/content/*": [
+        "packages/content/src/*"
+      ],
+      "@brass-ledger/sim": [
+        "packages/sim/src/index.ts"
+      ],
+      "@brass-ledger/sim/*": [
+        "packages/sim/src/*"
+      ]
+    }
+  }
+}
+

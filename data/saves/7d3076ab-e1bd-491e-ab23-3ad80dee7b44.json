@@ -1,0 +1,347 @@
+{
+  "id": "7d3076ab-e1bd-491e-ab23-3ad80dee7b44",
+  "saveFormatVersion": "1",
+  "scenarioId": "northern-watch",
+  "contentVersion": "0.2.0",
+  "state": {
+    "turn": 1,
+    "maxTurns": 12,
+    "seed": 20260328,
+    "microCampaignLength": 6,
+    "resources": {
+      "budgetAuthority": 88,
+      "readiness": 46,
+      "politicalCapital": 50,
+      "allianceCohesion": 49,
+      "publicLegitimacy": 56,
+      "escalationPressure": 34
+    },
+    "actionPoints": 5,
+    "internalTech": [
+      {
+        "id": "joint-readiness",
+        "level": 1,
+        "progress": 32
+      },
+      {
+        "id": "personnel-resilience",
+        "level": 1,
+        "progress": 25
+      },
+      {
+        "id": "intel-fusion",
+        "level": 1,
+        "progress": 42
+      },
+      {
+        "id": "logistics-digitalization",
+        "level": 0,
+        "progress": 18
+      },
+      {
+        "id": "alliance-signaling",
+        "level": 0,
+        "progress": 20
+      },
+      {
+        "id": "precision-fires",
+        "level": 0,
+        "progress": 8
+      }
+    ],
+    "externalTech": [
+      {
+        "id": "secure-electronics",
+        "level": 1,
+        "progress": 28,
+        "estimate": {
+          "estimatedLevel": 1.2,
+          "confidence": 58,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      },
+      {
+        "id": "propellant-supply",
+        "level": 1,
+        "progress": 15,
+        "estimate": {
+          "estimatedLevel": 0.9,
+          "confidence": 41,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      },
+      {
+        "id": "repair-capacity",
+        "level": 2,
+        "progress": 12,
+        "estimate": {
+          "estimatedLevel": 2,
+          "confidence": 82,
+          "visibility": "KNOWN",
+          "lastVerifiedTurn": 1
+        }
+      },
+      {
+        "id": "sealift-availability",
+        "level": 1,
+        "progress": 24,
+        "estimate": {
+          "estimatedLevel": 1.1,
+          "confidence": 54,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      },
+      {
+        "id": "drone-components",
+        "level": 1,
+        "progress": 30,
+        "estimate": {
+          "estimatedLevel": 1,
+          "confidence": 66,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      },
+      {
+        "id": "industrial-fuel",
+        "level": 1,
+        "progress": 26,
+        "estimate": {
+          "estimatedLevel": 1,
+          "confidence": 60,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      }
+    ],
+    "advisorTrust": {
+      "ward": 61,
+      "halden": 60,
+      "briggs": 58,
+      "okafor": 59,
+      "sato": 55
+    },
+    "activeEventIds": [],
+    "eventHistory": [],
+    "eventFlags": {},
+    "campaignStatus": "active",
+    "campaignScore": 0,
+    "campaignOutcome": null,
+    "briefing": {
+      "theater": "Northern Frontier",
+      "monthLabel": "Month 1",
+      "budgetHeadline": "Supplemental authority remains contested in committee.",
+      "readinessHeadline": "Exercise tempo recovered, but sustainment lag still drags force confidence.",
+      "geopoliticalSummary": "Adversary probes remain calibrated below open conflict while allies ask for steadier reassurance and clearer industrial commitments.",
+      "campaignObjectives": [
+        {
+          "id": "readiness",
+          "label": "Hold readiness above 50",
+          "metric": "readiness",
+          "target": 50,
+          "direction": "gte",
+          "note": "Arrive at the end of the micro-campaign with a credible operational posture."
+        },
+        {
+          "id": "alliances",
+          "label": "Keep alliance cohesion above 52",
+          "metric": "allianceCohesion",
+          "target": 52,
+          "direction": "gte",
+          "note": "Prevent partner confidence from sliding while you modernize the force."
+        },
+        {
+          "id": "politics",
+          "label": "Finish with political capital at 20 or more",
+          "metric": "politicalCapital",
+          "target": 20,
+          "direction": "gte",
+          "note": "Leave enough cabinet support to keep the program moving after the playtest arc."
+        },
+        {
+          "id": "escalation",
+          "label": "Keep escalation pressure at 60 or below",
+          "metric": "escalationPressure",
+          "target": 60,
+          "direction": "lte",
+          "note": "Avoid triggering a crisis spiral while pushing your preferred reforms."
+        }
+      ]
+    }
+  },
+  "initialState": {
+    "turn": 1,
+    "maxTurns": 12,
+    "seed": 20260328,
+    "microCampaignLength": 6,
+    "resources": {
+      "budgetAuthority": 88,
+      "readiness": 46,
+      "politicalCapital": 50,
+      "allianceCohesion": 49,
+      "publicLegitimacy": 56,
+      "escalationPressure": 34
+    },
+    "actionPoints": 5,
+    "internalTech": [
+      {
+        "id": "joint-readiness",
+        "level": 1,
+        "progress": 32
+      },
+      {
+        "id": "personnel-resilience",
+        "level": 1,
+        "progress": 25
+      },
+      {
+        "id": "intel-fusion",
+        "level": 1,
+        "progress": 42
+      },
+      {
+        "id": "logistics-digitalization",
+        "level": 0,
+        "progress": 18
+      },
+      {
+        "id": "alliance-signaling",
+        "level": 0,
+        "progress": 20
+      },
+      {
+        "id": "precision-fires",
+        "level": 0,
+        "progress": 8
+      }
+    ],
+    "externalTech": [
+      {
+        "id": "secure-electronics",
+        "level": 1,
+        "progress": 28,
+        "estimate": {
+          "estimatedLevel": 1.2,
+          "confidence": 58,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      },
+      {
+        "id": "propellant-supply",
+        "level": 1,
+        "progress": 15,
+        "estimate": {
+          "estimatedLevel": 0.9,
+          "confidence": 41,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      },
+      {
+        "id": "repair-capacity",
+        "level": 2,
+        "progress": 12,
+        "estimate": {
+          "estimatedLevel": 2,
+          "confidence": 82,
+          "visibility": "KNOWN",
+          "lastVerifiedTurn": 1
+        }
+      },
+      {
+        "id": "sealift-availability",
+        "level": 1,
+        "progress": 24,
+        "estimate": {
+          "estimatedLevel": 1.1,
+          "confidence": 54,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      },
+      {
+        "id": "drone-components",
+        "level": 1,
+        "progress": 30,
+        "estimate": {
+          "estimatedLevel": 1,
+          "confidence": 66,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      },
+      {
+        "id": "industrial-fuel",
+        "level": 1,
+        "progress": 26,
+        "estimate": {
+          "estimatedLevel": 1,
+          "confidence": 60,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      }
+    ],
+    "advisorTrust": {
+      "ward": 61,
+      "halden": 60,
+      "briggs": 58,
+      "okafor": 59,
+      "sato": 55
+    },
+    "activeEventIds": [],
+    "eventHistory": [],
+    "eventFlags": {},
+    "campaignStatus": "active",
+    "campaignScore": 0,
+    "campaignOutcome": null,
+    "briefing": {
+      "theater": "Northern Frontier",
+      "monthLabel": "Month 1",
+      "budgetHeadline": "Supplemental authority remains contested in committee.",
+      "readinessHeadline": "Exercise tempo recovered, but sustainment lag still drags force confidence.",
+      "geopoliticalSummary": "Adversary probes remain calibrated below open conflict while allies ask for steadier reassurance and clearer industrial commitments.",
+      "campaignObjectives": [
+        {
+          "id": "readiness",
+          "label": "Hold readiness above 50",
+          "metric": "readiness",
+          "target": 50,
+          "direction": "gte",
+          "note": "Arrive at the end of the micro-campaign with a credible operational posture."
+        },
+        {
+          "id": "alliances",
+          "label": "Keep alliance cohesion above 52",
+          "metric": "allianceCohesion",
+          "target": 52,
+          "direction": "gte",
+          "note": "Prevent partner confidence from sliding while you modernize the force."
+        },
+        {
+          "id": "politics",
+          "label": "Finish with political capital at 20 or more",
+          "metric": "politicalCapital",
+          "target": 20,
+          "direction": "gte",
+          "note": "Leave enough cabinet support to keep the program moving after the playtest arc."
+        },
+        {
+          "id": "escalation",
+          "label": "Keep escalation pressure at 60 or below",
+          "metric": "escalationPressure",
+          "target": 60,
+          "direction": "lte",
+          "note": "Avoid triggering a crisis spiral while pushing your preferred reforms."
+        }
+      ]
+    }
+  },
+  "turnInputs": [],
+  "history": [],
+  "updatedAt": "2026-03-28T08:01:42.771Z"
+}

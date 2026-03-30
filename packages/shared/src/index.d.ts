@@ -1,0 +1,784 @@
+import { z } from "zod";
+export declare const resourcesSchema: z.ZodObject<{
+    budgetAuthority: z.ZodNumber;
+    readiness: z.ZodNumber;
+    politicalCapital: z.ZodNumber;
+    allianceCohesion: z.ZodNumber;
+    publicLegitimacy: z.ZodNumber;
+    escalationPressure: z.ZodNumber;
+}, z.core.$strip>;
+export declare const portfolioSchema: z.ZodEnum<{
+    S1: "S1";
+    S2: "S2";
+    S3: "S3";
+    S4: "S4";
+    S5: "S5";
+}>;
+export type PortfolioId = z.infer<typeof portfolioSchema>;
+export declare const visibilitySchema: z.ZodEnum<{
+    RUMORED: "RUMORED";
+    ESTIMATED: "ESTIMATED";
+    KNOWN: "KNOWN";
+}>;
+export type VisibilityState = z.infer<typeof visibilitySchema>;
+export declare const contributorSchema: z.ZodObject<{
+    label: z.ZodString;
+    value: z.ZodNumber;
+}, z.core.$strip>;
+export declare const explainabilityEntrySchema: z.ZodObject<{
+    nodeId: z.ZodString;
+    deltaLevel: z.ZodNumber;
+    deltaProgress: z.ZodNumber;
+    visibilityBefore: z.ZodOptional<z.ZodEnum<{
+        RUMORED: "RUMORED";
+        ESTIMATED: "ESTIMATED";
+        KNOWN: "KNOWN";
+    }>>;
+    visibilityAfter: z.ZodOptional<z.ZodEnum<{
+        RUMORED: "RUMORED";
+        ESTIMATED: "ESTIMATED";
+        KNOWN: "KNOWN";
+    }>>;
+    confidenceBefore: z.ZodOptional<z.ZodNumber>;
+    confidenceAfter: z.ZodOptional<z.ZodNumber>;
+    lockedByGate: z.ZodDefault<z.ZodBoolean>;
+    topPositiveContributors: z.ZodArray<z.ZodObject<{
+        label: z.ZodString;
+        value: z.ZodNumber;
+    }, z.core.$strip>>;
+    topBlockers: z.ZodArray<z.ZodObject<{
+        label: z.ZodString;
+        value: z.ZodNumber;
+    }, z.core.$strip>>;
+    summary: z.ZodString;
+}, z.core.$strip>;
+export type ExplainabilityEntry = z.infer<typeof explainabilityEntrySchema>;
+export declare const techDependencySchema: z.ZodObject<{
+    nodeId: z.ZodString;
+    requiredLevel: z.ZodNumber;
+}, z.core.$strip>;
+export type TechDependency = z.infer<typeof techDependencySchema>;
+export declare const internalTechNodeDefinitionSchema: z.ZodObject<{
+    id: z.ZodString;
+    label: z.ZodString;
+    domain: z.ZodString;
+    description: z.ZodString;
+    beta: z.ZodNumber;
+    decay: z.ZodNumber;
+    gateThreshold: z.ZodNumber;
+    internalPrerequisites: z.ZodArray<z.ZodObject<{
+        nodeId: z.ZodString;
+        requiredLevel: z.ZodNumber;
+    }, z.core.$strip>>;
+    externalPrerequisites: z.ZodArray<z.ZodObject<{
+        nodeId: z.ZodString;
+        requiredLevel: z.ZodNumber;
+    }, z.core.$strip>>;
+    essential: z.ZodDefault<z.ZodBoolean>;
+}, z.core.$strip>;
+export type InternalTechNodeDefinition = z.infer<typeof internalTechNodeDefinitionSchema>;
+export declare const externalTechNodeDefinitionSchema: z.ZodObject<{
+    id: z.ZodString;
+    label: z.ZodString;
+    domain: z.ZodString;
+    description: z.ZodString;
+    alpha: z.ZodNumber;
+    scale: z.ZodNumber;
+    maxUp: z.ZodNumber;
+    maxDown: z.ZodNumber;
+    baseError: z.ZodNumber;
+}, z.core.$strip>;
+export type ExternalTechNodeDefinition = z.infer<typeof externalTechNodeDefinitionSchema>;
+export declare const techEstimateSchema: z.ZodObject<{
+    estimatedLevel: z.ZodNumber;
+    confidence: z.ZodNumber;
+    visibility: z.ZodEnum<{
+        RUMORED: "RUMORED";
+        ESTIMATED: "ESTIMATED";
+        KNOWN: "KNOWN";
+    }>;
+    lastVerifiedTurn: z.ZodNullable<z.ZodNumber>;
+}, z.core.$strip>;
+export type TechEstimate = z.infer<typeof techEstimateSchema>;
+export declare const techNodeStateSchema: z.ZodObject<{
+    id: z.ZodString;
+    level: z.ZodNumber;
+    progress: z.ZodNumber;
+}, z.core.$strip>;
+export type TechNodeState = z.infer<typeof techNodeStateSchema>;
+export declare const externalTechStateSchema: z.ZodObject<{
+    id: z.ZodString;
+    level: z.ZodNumber;
+    progress: z.ZodNumber;
+    estimate: z.ZodObject<{
+        estimatedLevel: z.ZodNumber;
+        confidence: z.ZodNumber;
+        visibility: z.ZodEnum<{
+            RUMORED: "RUMORED";
+            ESTIMATED: "ESTIMATED";
+            KNOWN: "KNOWN";
+        }>;
+        lastVerifiedTurn: z.ZodNullable<z.ZodNumber>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+export type ExternalTechState = z.infer<typeof externalTechStateSchema>;
+export declare const advisorArchetypeSchema: z.ZodObject<{
+    id: z.ZodString;
+    name: z.ZodString;
+    portfolio: z.ZodEnum<{
+        S1: "S1";
+        S2: "S2";
+        S3: "S3";
+        S4: "S4";
+        S5: "S5";
+    }>;
+    doctrineBias: z.ZodString;
+    competence: z.ZodNumber;
+    loyalty: z.ZodNumber;
+    ambition: z.ZodNumber;
+    riskTolerance: z.ZodNumber;
+    preferredDomains: z.ZodArray<z.ZodString>;
+}, z.core.$strip>;
+export type AdvisorArchetype = z.infer<typeof advisorArchetypeSchema>;
+export declare const advisorRecommendationSchema: z.ZodObject<{
+    advisorId: z.ZodString;
+    portfolio: z.ZodEnum<{
+        S1: "S1";
+        S2: "S2";
+        S3: "S3";
+        S4: "S4";
+        S5: "S5";
+    }>;
+    title: z.ZodString;
+    rationale: z.ZodString;
+    confidence: z.ZodNumber;
+    politicalEffect: z.ZodNumber;
+    relationshipEffect: z.ZodNumber;
+    recommendedActions: z.ZodArray<z.ZodString>;
+    objections: z.ZodArray<z.ZodString>;
+    followUp: z.ZodString;
+}, z.core.$strip>;
+export type AdvisorRecommendation = z.infer<typeof advisorRecommendationSchema>;
+export declare const actionOrderSchema: z.ZodObject<{
+    id: z.ZodString;
+    portfolio: z.ZodEnum<{
+        S1: "S1";
+        S2: "S2";
+        S3: "S3";
+        S4: "S4";
+        S5: "S5";
+    }>;
+    label: z.ZodString;
+    targetNodeId: z.ZodNullable<z.ZodString>;
+    budgetCost: z.ZodNumber;
+    actionPointsCost: z.ZodNumber;
+    readinessEffect: z.ZodDefault<z.ZodNumber>;
+    politicalEffect: z.ZodDefault<z.ZodNumber>;
+    legitimacyEffect: z.ZodDefault<z.ZodNumber>;
+    allianceEffect: z.ZodDefault<z.ZodNumber>;
+    escalationEffect: z.ZodDefault<z.ZodNumber>;
+    intelligenceEffect: z.ZodDefault<z.ZodNumber>;
+    executionRisk: z.ZodDefault<z.ZodNumber>;
+    tags: z.ZodDefault<z.ZodArray<z.ZodString>>;
+}, z.core.$strip>;
+export type ActionOrder = z.infer<typeof actionOrderSchema>;
+export declare const eventDefinitionSchema: z.ZodObject<{
+    id: z.ZodString;
+    title: z.ZodString;
+    summary: z.ZodString;
+    triggerTags: z.ZodArray<z.ZodString>;
+    weight: z.ZodNumber;
+    budgetDelta: z.ZodDefault<z.ZodNumber>;
+    readinessDelta: z.ZodDefault<z.ZodNumber>;
+    politicalDelta: z.ZodDefault<z.ZodNumber>;
+    legitimacyDelta: z.ZodDefault<z.ZodNumber>;
+    allianceDelta: z.ZodDefault<z.ZodNumber>;
+    escalationDelta: z.ZodDefault<z.ZodNumber>;
+    affectedExternalNodeId: z.ZodNullable<z.ZodString>;
+    shock: z.ZodDefault<z.ZodNumber>;
+}, z.core.$strip>;
+export type EventDefinition = z.infer<typeof eventDefinitionSchema>;
+export declare const campaignBriefSchema: z.ZodObject<{
+    theater: z.ZodString;
+    monthLabel: z.ZodString;
+    budgetHeadline: z.ZodString;
+    readinessHeadline: z.ZodString;
+    geopoliticalSummary: z.ZodString;
+}, z.core.$strip>;
+export type CampaignBrief = z.infer<typeof campaignBriefSchema>;
+export declare const campaignStateSchema: z.ZodObject<{
+    turn: z.ZodNumber;
+    maxTurns: z.ZodNumber;
+    seed: z.ZodNumber;
+    resources: z.ZodObject<{
+        budgetAuthority: z.ZodNumber;
+        readiness: z.ZodNumber;
+        politicalCapital: z.ZodNumber;
+        allianceCohesion: z.ZodNumber;
+        publicLegitimacy: z.ZodNumber;
+        escalationPressure: z.ZodNumber;
+    }, z.core.$strip>;
+    actionPoints: z.ZodNumber;
+    internalTech: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        level: z.ZodNumber;
+        progress: z.ZodNumber;
+    }, z.core.$strip>>;
+    externalTech: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        level: z.ZodNumber;
+        progress: z.ZodNumber;
+        estimate: z.ZodObject<{
+            estimatedLevel: z.ZodNumber;
+            confidence: z.ZodNumber;
+            visibility: z.ZodEnum<{
+                RUMORED: "RUMORED";
+                ESTIMATED: "ESTIMATED";
+                KNOWN: "KNOWN";
+            }>;
+            lastVerifiedTurn: z.ZodNullable<z.ZodNumber>;
+        }, z.core.$strip>;
+    }, z.core.$strip>>;
+    advisorTrust: z.ZodRecord<z.ZodString, z.ZodNumber>;
+    activeEventIds: z.ZodArray<z.ZodString>;
+    briefing: z.ZodObject<{
+        theater: z.ZodString;
+        monthLabel: z.ZodString;
+        budgetHeadline: z.ZodString;
+        readinessHeadline: z.ZodString;
+        geopoliticalSummary: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+export type CampaignState = z.infer<typeof campaignStateSchema>;
+export declare const turnInputSchema: z.ZodObject<{
+    turn: z.ZodNumber;
+    selectedActionIds: z.ZodArray<z.ZodString>;
+}, z.core.$strip>;
+export type TurnInput = z.infer<typeof turnInputSchema>;
+export declare const turnResultSchema: z.ZodObject<{
+    previousState: z.ZodObject<{
+        turn: z.ZodNumber;
+        maxTurns: z.ZodNumber;
+        seed: z.ZodNumber;
+        resources: z.ZodObject<{
+            budgetAuthority: z.ZodNumber;
+            readiness: z.ZodNumber;
+            politicalCapital: z.ZodNumber;
+            allianceCohesion: z.ZodNumber;
+            publicLegitimacy: z.ZodNumber;
+            escalationPressure: z.ZodNumber;
+        }, z.core.$strip>;
+        actionPoints: z.ZodNumber;
+        internalTech: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            level: z.ZodNumber;
+            progress: z.ZodNumber;
+        }, z.core.$strip>>;
+        externalTech: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            level: z.ZodNumber;
+            progress: z.ZodNumber;
+            estimate: z.ZodObject<{
+                estimatedLevel: z.ZodNumber;
+                confidence: z.ZodNumber;
+                visibility: z.ZodEnum<{
+                    RUMORED: "RUMORED";
+                    ESTIMATED: "ESTIMATED";
+                    KNOWN: "KNOWN";
+                }>;
+                lastVerifiedTurn: z.ZodNullable<z.ZodNumber>;
+            }, z.core.$strip>;
+        }, z.core.$strip>>;
+        advisorTrust: z.ZodRecord<z.ZodString, z.ZodNumber>;
+        activeEventIds: z.ZodArray<z.ZodString>;
+        briefing: z.ZodObject<{
+            theater: z.ZodString;
+            monthLabel: z.ZodString;
+            budgetHeadline: z.ZodString;
+            readinessHeadline: z.ZodString;
+            geopoliticalSummary: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    nextState: z.ZodObject<{
+        turn: z.ZodNumber;
+        maxTurns: z.ZodNumber;
+        seed: z.ZodNumber;
+        resources: z.ZodObject<{
+            budgetAuthority: z.ZodNumber;
+            readiness: z.ZodNumber;
+            politicalCapital: z.ZodNumber;
+            allianceCohesion: z.ZodNumber;
+            publicLegitimacy: z.ZodNumber;
+            escalationPressure: z.ZodNumber;
+        }, z.core.$strip>;
+        actionPoints: z.ZodNumber;
+        internalTech: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            level: z.ZodNumber;
+            progress: z.ZodNumber;
+        }, z.core.$strip>>;
+        externalTech: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            level: z.ZodNumber;
+            progress: z.ZodNumber;
+            estimate: z.ZodObject<{
+                estimatedLevel: z.ZodNumber;
+                confidence: z.ZodNumber;
+                visibility: z.ZodEnum<{
+                    RUMORED: "RUMORED";
+                    ESTIMATED: "ESTIMATED";
+                    KNOWN: "KNOWN";
+                }>;
+                lastVerifiedTurn: z.ZodNullable<z.ZodNumber>;
+            }, z.core.$strip>;
+        }, z.core.$strip>>;
+        advisorTrust: z.ZodRecord<z.ZodString, z.ZodNumber>;
+        activeEventIds: z.ZodArray<z.ZodString>;
+        briefing: z.ZodObject<{
+            theater: z.ZodString;
+            monthLabel: z.ZodString;
+            budgetHeadline: z.ZodString;
+            readinessHeadline: z.ZodString;
+            geopoliticalSummary: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    chosenActions: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        portfolio: z.ZodEnum<{
+            S1: "S1";
+            S2: "S2";
+            S3: "S3";
+            S4: "S4";
+            S5: "S5";
+        }>;
+        label: z.ZodString;
+        targetNodeId: z.ZodNullable<z.ZodString>;
+        budgetCost: z.ZodNumber;
+        actionPointsCost: z.ZodNumber;
+        readinessEffect: z.ZodDefault<z.ZodNumber>;
+        politicalEffect: z.ZodDefault<z.ZodNumber>;
+        legitimacyEffect: z.ZodDefault<z.ZodNumber>;
+        allianceEffect: z.ZodDefault<z.ZodNumber>;
+        escalationEffect: z.ZodDefault<z.ZodNumber>;
+        intelligenceEffect: z.ZodDefault<z.ZodNumber>;
+        executionRisk: z.ZodDefault<z.ZodNumber>;
+        tags: z.ZodDefault<z.ZodArray<z.ZodString>>;
+    }, z.core.$strip>>;
+    recommendations: z.ZodArray<z.ZodObject<{
+        advisorId: z.ZodString;
+        portfolio: z.ZodEnum<{
+            S1: "S1";
+            S2: "S2";
+            S3: "S3";
+            S4: "S4";
+            S5: "S5";
+        }>;
+        title: z.ZodString;
+        rationale: z.ZodString;
+        confidence: z.ZodNumber;
+        politicalEffect: z.ZodNumber;
+        relationshipEffect: z.ZodNumber;
+        recommendedActions: z.ZodArray<z.ZodString>;
+        objections: z.ZodArray<z.ZodString>;
+        followUp: z.ZodString;
+    }, z.core.$strip>>;
+    triggeredEvents: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        title: z.ZodString;
+        summary: z.ZodString;
+        triggerTags: z.ZodArray<z.ZodString>;
+        weight: z.ZodNumber;
+        budgetDelta: z.ZodDefault<z.ZodNumber>;
+        readinessDelta: z.ZodDefault<z.ZodNumber>;
+        politicalDelta: z.ZodDefault<z.ZodNumber>;
+        legitimacyDelta: z.ZodDefault<z.ZodNumber>;
+        allianceDelta: z.ZodDefault<z.ZodNumber>;
+        escalationDelta: z.ZodDefault<z.ZodNumber>;
+        affectedExternalNodeId: z.ZodNullable<z.ZodString>;
+        shock: z.ZodDefault<z.ZodNumber>;
+    }, z.core.$strip>>;
+    explainability: z.ZodArray<z.ZodObject<{
+        nodeId: z.ZodString;
+        deltaLevel: z.ZodNumber;
+        deltaProgress: z.ZodNumber;
+        visibilityBefore: z.ZodOptional<z.ZodEnum<{
+            RUMORED: "RUMORED";
+            ESTIMATED: "ESTIMATED";
+            KNOWN: "KNOWN";
+        }>>;
+        visibilityAfter: z.ZodOptional<z.ZodEnum<{
+            RUMORED: "RUMORED";
+            ESTIMATED: "ESTIMATED";
+            KNOWN: "KNOWN";
+        }>>;
+        confidenceBefore: z.ZodOptional<z.ZodNumber>;
+        confidenceAfter: z.ZodOptional<z.ZodNumber>;
+        lockedByGate: z.ZodDefault<z.ZodBoolean>;
+        topPositiveContributors: z.ZodArray<z.ZodObject<{
+            label: z.ZodString;
+            value: z.ZodNumber;
+        }, z.core.$strip>>;
+        topBlockers: z.ZodArray<z.ZodObject<{
+            label: z.ZodString;
+            value: z.ZodNumber;
+        }, z.core.$strip>>;
+        summary: z.ZodString;
+    }, z.core.$strip>>;
+    replayHash: z.ZodString;
+    summary: z.ZodString;
+}, z.core.$strip>;
+export type TurnResult = z.infer<typeof turnResultSchema>;
+export declare const scenarioDefinitionSchema: z.ZodObject<{
+    id: z.ZodString;
+    title: z.ZodString;
+    description: z.ZodString;
+    maxTurns: z.ZodNumber;
+    contentVersion: z.ZodString;
+    initialState: z.ZodObject<{
+        turn: z.ZodNumber;
+        maxTurns: z.ZodNumber;
+        seed: z.ZodNumber;
+        resources: z.ZodObject<{
+            budgetAuthority: z.ZodNumber;
+            readiness: z.ZodNumber;
+            politicalCapital: z.ZodNumber;
+            allianceCohesion: z.ZodNumber;
+            publicLegitimacy: z.ZodNumber;
+            escalationPressure: z.ZodNumber;
+        }, z.core.$strip>;
+        actionPoints: z.ZodNumber;
+        internalTech: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            level: z.ZodNumber;
+            progress: z.ZodNumber;
+        }, z.core.$strip>>;
+        externalTech: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            level: z.ZodNumber;
+            progress: z.ZodNumber;
+            estimate: z.ZodObject<{
+                estimatedLevel: z.ZodNumber;
+                confidence: z.ZodNumber;
+                visibility: z.ZodEnum<{
+                    RUMORED: "RUMORED";
+                    ESTIMATED: "ESTIMATED";
+                    KNOWN: "KNOWN";
+                }>;
+                lastVerifiedTurn: z.ZodNullable<z.ZodNumber>;
+            }, z.core.$strip>;
+        }, z.core.$strip>>;
+        advisorTrust: z.ZodRecord<z.ZodString, z.ZodNumber>;
+        activeEventIds: z.ZodArray<z.ZodString>;
+        briefing: z.ZodObject<{
+            theater: z.ZodString;
+            monthLabel: z.ZodString;
+            budgetHeadline: z.ZodString;
+            readinessHeadline: z.ZodString;
+            geopoliticalSummary: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    internalTechDefinitions: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        label: z.ZodString;
+        domain: z.ZodString;
+        description: z.ZodString;
+        beta: z.ZodNumber;
+        decay: z.ZodNumber;
+        gateThreshold: z.ZodNumber;
+        internalPrerequisites: z.ZodArray<z.ZodObject<{
+            nodeId: z.ZodString;
+            requiredLevel: z.ZodNumber;
+        }, z.core.$strip>>;
+        externalPrerequisites: z.ZodArray<z.ZodObject<{
+            nodeId: z.ZodString;
+            requiredLevel: z.ZodNumber;
+        }, z.core.$strip>>;
+        essential: z.ZodDefault<z.ZodBoolean>;
+    }, z.core.$strip>>;
+    externalTechDefinitions: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        label: z.ZodString;
+        domain: z.ZodString;
+        description: z.ZodString;
+        alpha: z.ZodNumber;
+        scale: z.ZodNumber;
+        maxUp: z.ZodNumber;
+        maxDown: z.ZodNumber;
+        baseError: z.ZodNumber;
+    }, z.core.$strip>>;
+    actions: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        portfolio: z.ZodEnum<{
+            S1: "S1";
+            S2: "S2";
+            S3: "S3";
+            S4: "S4";
+            S5: "S5";
+        }>;
+        label: z.ZodString;
+        targetNodeId: z.ZodNullable<z.ZodString>;
+        budgetCost: z.ZodNumber;
+        actionPointsCost: z.ZodNumber;
+        readinessEffect: z.ZodDefault<z.ZodNumber>;
+        politicalEffect: z.ZodDefault<z.ZodNumber>;
+        legitimacyEffect: z.ZodDefault<z.ZodNumber>;
+        allianceEffect: z.ZodDefault<z.ZodNumber>;
+        escalationEffect: z.ZodDefault<z.ZodNumber>;
+        intelligenceEffect: z.ZodDefault<z.ZodNumber>;
+        executionRisk: z.ZodDefault<z.ZodNumber>;
+        tags: z.ZodDefault<z.ZodArray<z.ZodString>>;
+    }, z.core.$strip>>;
+    advisors: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        name: z.ZodString;
+        portfolio: z.ZodEnum<{
+            S1: "S1";
+            S2: "S2";
+            S3: "S3";
+            S4: "S4";
+            S5: "S5";
+        }>;
+        doctrineBias: z.ZodString;
+        competence: z.ZodNumber;
+        loyalty: z.ZodNumber;
+        ambition: z.ZodNumber;
+        riskTolerance: z.ZodNumber;
+        preferredDomains: z.ZodArray<z.ZodString>;
+    }, z.core.$strip>>;
+    events: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        title: z.ZodString;
+        summary: z.ZodString;
+        triggerTags: z.ZodArray<z.ZodString>;
+        weight: z.ZodNumber;
+        budgetDelta: z.ZodDefault<z.ZodNumber>;
+        readinessDelta: z.ZodDefault<z.ZodNumber>;
+        politicalDelta: z.ZodDefault<z.ZodNumber>;
+        legitimacyDelta: z.ZodDefault<z.ZodNumber>;
+        allianceDelta: z.ZodDefault<z.ZodNumber>;
+        escalationDelta: z.ZodDefault<z.ZodNumber>;
+        affectedExternalNodeId: z.ZodNullable<z.ZodString>;
+        shock: z.ZodDefault<z.ZodNumber>;
+    }, z.core.$strip>>;
+}, z.core.$strip>;
+export type ScenarioDefinition = z.infer<typeof scenarioDefinitionSchema>;
+export declare const gameSessionSchema: z.ZodObject<{
+    scenarioId: z.ZodString;
+    contentVersion: z.ZodString;
+    state: z.ZodObject<{
+        turn: z.ZodNumber;
+        maxTurns: z.ZodNumber;
+        seed: z.ZodNumber;
+        resources: z.ZodObject<{
+            budgetAuthority: z.ZodNumber;
+            readiness: z.ZodNumber;
+            politicalCapital: z.ZodNumber;
+            allianceCohesion: z.ZodNumber;
+            publicLegitimacy: z.ZodNumber;
+            escalationPressure: z.ZodNumber;
+        }, z.core.$strip>;
+        actionPoints: z.ZodNumber;
+        internalTech: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            level: z.ZodNumber;
+            progress: z.ZodNumber;
+        }, z.core.$strip>>;
+        externalTech: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            level: z.ZodNumber;
+            progress: z.ZodNumber;
+            estimate: z.ZodObject<{
+                estimatedLevel: z.ZodNumber;
+                confidence: z.ZodNumber;
+                visibility: z.ZodEnum<{
+                    RUMORED: "RUMORED";
+                    ESTIMATED: "ESTIMATED";
+                    KNOWN: "KNOWN";
+                }>;
+                lastVerifiedTurn: z.ZodNullable<z.ZodNumber>;
+            }, z.core.$strip>;
+        }, z.core.$strip>>;
+        advisorTrust: z.ZodRecord<z.ZodString, z.ZodNumber>;
+        activeEventIds: z.ZodArray<z.ZodString>;
+        briefing: z.ZodObject<{
+            theater: z.ZodString;
+            monthLabel: z.ZodString;
+            budgetHeadline: z.ZodString;
+            readinessHeadline: z.ZodString;
+            geopoliticalSummary: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    history: z.ZodArray<z.ZodObject<{
+        previousState: z.ZodObject<{
+            turn: z.ZodNumber;
+            maxTurns: z.ZodNumber;
+            seed: z.ZodNumber;
+            resources: z.ZodObject<{
+                budgetAuthority: z.ZodNumber;
+                readiness: z.ZodNumber;
+                politicalCapital: z.ZodNumber;
+                allianceCohesion: z.ZodNumber;
+                publicLegitimacy: z.ZodNumber;
+                escalationPressure: z.ZodNumber;
+            }, z.core.$strip>;
+            actionPoints: z.ZodNumber;
+            internalTech: z.ZodArray<z.ZodObject<{
+                id: z.ZodString;
+                level: z.ZodNumber;
+                progress: z.ZodNumber;
+            }, z.core.$strip>>;
+            externalTech: z.ZodArray<z.ZodObject<{
+                id: z.ZodString;
+                level: z.ZodNumber;
+                progress: z.ZodNumber;
+                estimate: z.ZodObject<{
+                    estimatedLevel: z.ZodNumber;
+                    confidence: z.ZodNumber;
+                    visibility: z.ZodEnum<{
+                        RUMORED: "RUMORED";
+                        ESTIMATED: "ESTIMATED";
+                        KNOWN: "KNOWN";
+                    }>;
+                    lastVerifiedTurn: z.ZodNullable<z.ZodNumber>;
+                }, z.core.$strip>;
+            }, z.core.$strip>>;
+            advisorTrust: z.ZodRecord<z.ZodString, z.ZodNumber>;
+            activeEventIds: z.ZodArray<z.ZodString>;
+            briefing: z.ZodObject<{
+                theater: z.ZodString;
+                monthLabel: z.ZodString;
+                budgetHeadline: z.ZodString;
+                readinessHeadline: z.ZodString;
+                geopoliticalSummary: z.ZodString;
+            }, z.core.$strip>;
+        }, z.core.$strip>;
+        nextState: z.ZodObject<{
+            turn: z.ZodNumber;
+            maxTurns: z.ZodNumber;
+            seed: z.ZodNumber;
+            resources: z.ZodObject<{
+                budgetAuthority: z.ZodNumber;
+                readiness: z.ZodNumber;
+                politicalCapital: z.ZodNumber;
+                allianceCohesion: z.ZodNumber;
+                publicLegitimacy: z.ZodNumber;
+                escalationPressure: z.ZodNumber;
+            }, z.core.$strip>;
+            actionPoints: z.ZodNumber;
+            internalTech: z.ZodArray<z.ZodObject<{
+                id: z.ZodString;
+                level: z.ZodNumber;
+                progress: z.ZodNumber;
+            }, z.core.$strip>>;
+            externalTech: z.ZodArray<z.ZodObject<{
+                id: z.ZodString;
+                level: z.ZodNumber;
+                progress: z.ZodNumber;
+                estimate: z.ZodObject<{
+                    estimatedLevel: z.ZodNumber;
+                    confidence: z.ZodNumber;
+                    visibility: z.ZodEnum<{
+                        RUMORED: "RUMORED";
+                        ESTIMATED: "ESTIMATED";
+                        KNOWN: "KNOWN";
+                    }>;
+                    lastVerifiedTurn: z.ZodNullable<z.ZodNumber>;
+                }, z.core.$strip>;
+            }, z.core.$strip>>;
+            advisorTrust: z.ZodRecord<z.ZodString, z.ZodNumber>;
+            activeEventIds: z.ZodArray<z.ZodString>;
+            briefing: z.ZodObject<{
+                theater: z.ZodString;
+                monthLabel: z.ZodString;
+                budgetHeadline: z.ZodString;
+                readinessHeadline: z.ZodString;
+                geopoliticalSummary: z.ZodString;
+            }, z.core.$strip>;
+        }, z.core.$strip>;
+        chosenActions: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            portfolio: z.ZodEnum<{
+                S1: "S1";
+                S2: "S2";
+                S3: "S3";
+                S4: "S4";
+                S5: "S5";
+            }>;
+            label: z.ZodString;
+            targetNodeId: z.ZodNullable<z.ZodString>;
+            budgetCost: z.ZodNumber;
+            actionPointsCost: z.ZodNumber;
+            readinessEffect: z.ZodDefault<z.ZodNumber>;
+            politicalEffect: z.ZodDefault<z.ZodNumber>;
+            legitimacyEffect: z.ZodDefault<z.ZodNumber>;
+            allianceEffect: z.ZodDefault<z.ZodNumber>;
+            escalationEffect: z.ZodDefault<z.ZodNumber>;
+            intelligenceEffect: z.ZodDefault<z.ZodNumber>;
+            executionRisk: z.ZodDefault<z.ZodNumber>;
+            tags: z.ZodDefault<z.ZodArray<z.ZodString>>;
+        }, z.core.$strip>>;
+        recommendations: z.ZodArray<z.ZodObject<{
+            advisorId: z.ZodString;
+            portfolio: z.ZodEnum<{
+                S1: "S1";
+                S2: "S2";
+                S3: "S3";
+                S4: "S4";
+                S5: "S5";
+            }>;
+            title: z.ZodString;
+            rationale: z.ZodString;
+            confidence: z.ZodNumber;
+            politicalEffect: z.ZodNumber;
+            relationshipEffect: z.ZodNumber;
+            recommendedActions: z.ZodArray<z.ZodString>;
+            objections: z.ZodArray<z.ZodString>;
+            followUp: z.ZodString;
+        }, z.core.$strip>>;
+        triggeredEvents: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            title: z.ZodString;
+            summary: z.ZodString;
+            triggerTags: z.ZodArray<z.ZodString>;
+            weight: z.ZodNumber;
+            budgetDelta: z.ZodDefault<z.ZodNumber>;
+            readinessDelta: z.ZodDefault<z.ZodNumber>;
+            politicalDelta: z.ZodDefault<z.ZodNumber>;
+            legitimacyDelta: z.ZodDefault<z.ZodNumber>;
+            allianceDelta: z.ZodDefault<z.ZodNumber>;
+            escalationDelta: z.ZodDefault<z.ZodNumber>;
+            affectedExternalNodeId: z.ZodNullable<z.ZodString>;
+            shock: z.ZodDefault<z.ZodNumber>;
+        }, z.core.$strip>>;
+        explainability: z.ZodArray<z.ZodObject<{
+            nodeId: z.ZodString;
+            deltaLevel: z.ZodNumber;
+            deltaProgress: z.ZodNumber;
+            visibilityBefore: z.ZodOptional<z.ZodEnum<{
+                RUMORED: "RUMORED";
+                ESTIMATED: "ESTIMATED";
+                KNOWN: "KNOWN";
+            }>>;
+            visibilityAfter: z.ZodOptional<z.ZodEnum<{
+                RUMORED: "RUMORED";
+                ESTIMATED: "ESTIMATED";
+                KNOWN: "KNOWN";
+            }>>;
+            confidenceBefore: z.ZodOptional<z.ZodNumber>;
+            confidenceAfter: z.ZodOptional<z.ZodNumber>;
+            lockedByGate: z.ZodDefault<z.ZodBoolean>;
+            topPositiveContributors: z.ZodArray<z.ZodObject<{
+                label: z.ZodString;
+                value: z.ZodNumber;
+            }, z.core.$strip>>;
+            topBlockers: z.ZodArray<z.ZodObject<{
+                label: z.ZodString;
+                value: z.ZodNumber;
+            }, z.core.$strip>>;
+            summary: z.ZodString;
+        }, z.core.$strip>>;
+        replayHash: z.ZodString;
+        summary: z.ZodString;
+    }, z.core.$strip>>;
+}, z.core.$strip>;
+export type GameSession = z.infer<typeof gameSessionSchema>;

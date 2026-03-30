@@ -1,0 +1,23 @@
+{
+  "name": "brass-ledger",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev --workspace @brass-ledger/server & npm run dev --workspace @brass-ledger/web",
+    "test": "npm run test --workspaces --if-present",
+    "lint:content": "npm run lint:content --workspace @brass-ledger/content",
+    "replay:demo": "npm run replay:demo --workspace @brass-ledger/server"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
+
