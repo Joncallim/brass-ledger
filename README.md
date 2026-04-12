@@ -1,11 +1,10 @@
-<<<<<<< ours
 # Brass Ledger
 
 Single-player browser-based strategic leadership simulator built as a solo-developer-friendly monorepo with strong AI-assisted workflows.
 
 ## Workspace Layout
-- `apps/web`: React + Tailwind command-center UI
-- `apps/server`: Fastify single-player simulation API
+- `apps/server`: Fastify server that serves the app and the API
+- `apps/web`: React + Tailwind client source and build output
 - `packages/shared`: canonical schemas and shared types
 - `packages/content`: scenario definitions and content validation
 - `packages/sim`: deterministic turn resolver and tests
@@ -17,39 +16,32 @@ npm install
 npm run lint:content
 npm test
 npm run build
+npm run dev
 ```
 
-Run the server:
+`npm run dev` now starts the packaged server on a single URL after building the web client. Open the server URL it prints, usually `http://127.0.0.1:4000/`.
+
+For a production-style single-process launch:
 
 ```bash
-npm run dev --workspace @brass-ledger/server
+npm run start
 ```
 
-Run the web app in another terminal:
+If you want the older split setup with the Vite dev server, use:
 
 ```bash
-npm run dev --workspace @brass-ledger/web
+npm run dev:split
 ```
 
-The web app expects the API at `http://127.0.0.1:4000`.
+If you want a one-click launcher from Finder on macOS, use:
+
+`[Launch Brass Ledger.command](/Users/jonathanlim/Documents/GitHub/verbose-potato/Launch Brass Ledger.command)`
+
+Double-clicking it will start the packaged server, reuse an already running Brass Ledger instance if one exists, and open the game in your browser.
 
 ## Solo Dev Workflow Helpers
 - `npm run replay:demo`: runs a deterministic three-turn sample campaign
 - Content is validated from `packages/content/src/validate-content.ts`
-- The API now owns canonical sessions with filesystem-backed saves under `data/saves/`
+- The API owns canonical sessions with filesystem-backed saves under `data/saves/`
 - The browser UI supports new campaign, save/load, delete, export/import JSON, and replay validation
 - Turn results emit explainability entries, advisor reactions, and replay hashes for debugging
-=======
-# verbose-potato
-
-Planning repository for **Brass Ledger**, a multiplayer browser-based strategic leadership simulator.
-<<<<<<< ours
->>>>>>> theirs
-=======
->>>>>>> theirs
-
-## Planning Documents
-- [01-game-design-document.md](docs/planning/01-game-design-document.md)
-- [02-technical-approach.md](docs/planning/02-technical-approach.md)
-- [03-art-direction-and-generation.md](docs/planning/03-art-direction-and-generation.md)
-- [04-dual-tech-tree-exact-algorithm.md](docs/planning/04-dual-tech-tree-exact-algorithm.md)

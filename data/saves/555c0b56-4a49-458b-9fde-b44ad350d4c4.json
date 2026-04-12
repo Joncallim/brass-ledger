@@ -1,0 +1,429 @@
+{
+  "id": "555c0b56-4a49-458b-9fde-b44ad350d4c4",
+  "saveFormatVersion": "2",
+  "scenarioId": "brass-ledger-jhq",
+  "contentVersion": "0.4.0",
+  "state": {
+    "turn": 1,
+    "maxTurns": 12,
+    "microCampaignLength": 6,
+    "seed": 20260330,
+    "campaignStatus": "active",
+    "campaignScore": 0,
+    "campaignOutcome": null,
+    "strategic": {
+      "forceGeneration": {
+        "deployableUnits": 5.2,
+        "reserveStrain": 46,
+        "trainingThroughput": 51,
+        "personnelShortfalls": 41
+      },
+      "intelligence": {
+        "collectionCoverage": 54,
+        "confidence": 52,
+        "warningReliability": 49,
+        "deceptionPressure": 43
+      },
+      "sustainment": {
+        "depotBacklog": 58,
+        "munitionsSufficiency": 49,
+        "fuelSufficiency": 53,
+        "liftAvailability": 47
+      },
+      "alliance": {
+        "reassurance": 48,
+        "politicalAlignment": 50,
+        "partnerParticipation": 44,
+        "partnerPublicSupport": 46
+      },
+      "domestic": {
+        "cabinetCover": 51,
+        "committeeTolerance": 54,
+        "mediaHeat": 39,
+        "publicPatience": 56
+      },
+      "escalation": {
+        "probeTempo": 43,
+        "warningTime": 38,
+        "incidentLadder": 34,
+        "crisisSensitivity": 48
+      }
+    },
+    "resources": {
+      "budgetAuthority": 61,
+      "readiness": 53,
+      "politicalCapital": 56,
+      "allianceCohesion": 50,
+      "publicLegitimacy": 52,
+      "escalationPressure": 43
+    },
+    "forceGeneration": {
+      "deployableUnits": 5.2,
+      "reserveStrain": 46,
+      "trainingThroughput": 51,
+      "personnelShortfalls": 41
+    },
+    "intel": {
+      "collectionCoverage": 54,
+      "confidence": 52,
+      "warningReliability": 49,
+      "deceptionPressure": 43
+    },
+    "sustainment": {
+      "depotBacklog": 58,
+      "munitionsSufficiency": 49,
+      "fuelSufficiency": 53,
+      "liftAvailability": 47
+    },
+    "alliance": {
+      "reassurance": 48,
+      "politicalAlignment": 50,
+      "partnerParticipation": 44,
+      "partnerPublicSupport": 46
+    },
+    "domestic": {
+      "cabinetCover": 51,
+      "committeeTolerance": 54,
+      "mediaHeat": 39,
+      "publicPatience": 56
+    },
+    "escalation": {
+      "probeTempo": 43,
+      "warningTime": 38,
+      "incidentLadder": 34,
+      "crisisSensitivity": 48
+    },
+    "capabilityPrograms": [
+      {
+        "id": "fires-network",
+        "phase": "concept",
+        "progress": 26,
+        "blockers": [
+          "training absorption",
+          "munitions depth"
+        ]
+      },
+      {
+        "id": "counter-deception-grid",
+        "phase": "funded",
+        "progress": 22,
+        "blockers": [
+          "analyst bandwidth"
+        ]
+      },
+      {
+        "id": "sustainment-ledger",
+        "phase": "concept",
+        "progress": 34,
+        "blockers": [
+          "trusted electronics",
+          "depot burden"
+        ]
+      },
+      {
+        "id": "reserve-rebuild",
+        "phase": "funded",
+        "progress": 28,
+        "blockers": [
+          "public patience",
+          "training seats"
+        ]
+      }
+    ],
+    "externalConstraints": [
+      {
+        "id": "shipping-market",
+        "severity": 56,
+        "trend": "steady"
+      },
+      {
+        "id": "electronics-chain",
+        "severity": 52,
+        "trend": "steady"
+      },
+      {
+        "id": "propellant-market",
+        "severity": 49,
+        "trend": "steady"
+      }
+    ],
+    "internalTech": [],
+    "externalTech": [],
+    "chiefTrust": {
+      "warden": 58,
+      "halden": 59,
+      "briggs": 57,
+      "okafor": 60,
+      "sato": 55,
+      "navarro": 58
+    },
+    "advisorTrust": {},
+    "activeEventIds": [],
+    "eventHistory": [],
+    "eventFlags": {},
+    "briefing": {
+      "theater": "Northern Frontier",
+      "monthLabel": "Month 1",
+      "situationSummary": "Probe tempo is rising, the reserve base is feeling the strain, and sustainment remains too brittle to support every attractive course of action at once.",
+      "riskPosture": "The force can absorb one sharp move this month, not three.",
+      "commandersIntent": "Recover credible readiness without spending political cover faster than the theater can justify.",
+      "operationalPicture": "Adversary probes are steady, the force is still rebuilding, and sustainment remains the binding constraint on how much the room can ask for at once.",
+      "decisionFocus": "Protect readiness without exhausting political cover or overcommitting support capacity.",
+      "openQuestions": [
+        "Is the warning picture clean enough to support a more visible posture?",
+        "Which sustainment weakness becomes the first real bottleneck if tempo rises?",
+        "Can allies be reassured without provoking a domestic backlash?"
+      ],
+      "campaignObjectives": [
+        {
+          "id": "readiness",
+          "label": "Finish the micro-campaign with 7 or more deployable brigades",
+          "metric": "deployableUnits",
+          "target": 7,
+          "direction": "gte",
+          "note": "Deterrence needs a force that looks usable, not just active."
+        },
+        {
+          "id": "alliance",
+          "label": "Keep alliance political alignment at 56 or more",
+          "metric": "politicalAlignment",
+          "target": 56,
+          "direction": "gte",
+          "note": "Partner reassurance cannot be allowed to drift while the headquarters rebuilds itself."
+        },
+        {
+          "id": "politics",
+          "label": "Keep cabinet cover at 32 or more",
+          "metric": "cabinetCover",
+          "target": 32,
+          "direction": "gte",
+          "note": "If domestic cover collapses, the theater plan stops being implementable."
+        },
+        {
+          "id": "escalation",
+          "label": "Keep the incident ladder at 58 or lower",
+          "metric": "incidentLadder",
+          "target": 58,
+          "direction": "lte",
+          "note": "The force must avoid stumbling into a crisis spiral while rebuilding credible posture."
+        }
+      ],
+      "budgetHeadline": "1.6B USD",
+      "readinessHeadline": "5 brigades deployable",
+      "geopoliticalSummary": "Pressure is rising, but the picture still favors a controlled recovery if the headquarters keeps its line of effort tight."
+    }
+  },
+  "initialState": {
+    "turn": 1,
+    "maxTurns": 12,
+    "microCampaignLength": 6,
+    "seed": 20260330,
+    "campaignStatus": "active",
+    "campaignScore": 0,
+    "campaignOutcome": null,
+    "strategic": {
+      "forceGeneration": {
+        "deployableUnits": 5.2,
+        "reserveStrain": 46,
+        "trainingThroughput": 51,
+        "personnelShortfalls": 41
+      },
+      "intelligence": {
+        "collectionCoverage": 54,
+        "confidence": 52,
+        "warningReliability": 49,
+        "deceptionPressure": 43
+      },
+      "sustainment": {
+        "depotBacklog": 58,
+        "munitionsSufficiency": 49,
+        "fuelSufficiency": 53,
+        "liftAvailability": 47
+      },
+      "alliance": {
+        "reassurance": 48,
+        "politicalAlignment": 50,
+        "partnerParticipation": 44,
+        "partnerPublicSupport": 46
+      },
+      "domestic": {
+        "cabinetCover": 51,
+        "committeeTolerance": 54,
+        "mediaHeat": 39,
+        "publicPatience": 56
+      },
+      "escalation": {
+        "probeTempo": 43,
+        "warningTime": 38,
+        "incidentLadder": 34,
+        "crisisSensitivity": 48
+      }
+    },
+    "resources": {
+      "budgetAuthority": 61,
+      "readiness": 53,
+      "politicalCapital": 56,
+      "allianceCohesion": 50,
+      "publicLegitimacy": 52,
+      "escalationPressure": 43
+    },
+    "forceGeneration": {
+      "deployableUnits": 5.2,
+      "reserveStrain": 46,
+      "trainingThroughput": 51,
+      "personnelShortfalls": 41
+    },
+    "intel": {
+      "collectionCoverage": 54,
+      "confidence": 52,
+      "warningReliability": 49,
+      "deceptionPressure": 43
+    },
+    "sustainment": {
+      "depotBacklog": 58,
+      "munitionsSufficiency": 49,
+      "fuelSufficiency": 53,
+      "liftAvailability": 47
+    },
+    "alliance": {
+      "reassurance": 48,
+      "politicalAlignment": 50,
+      "partnerParticipation": 44,
+      "partnerPublicSupport": 46
+    },
+    "domestic": {
+      "cabinetCover": 51,
+      "committeeTolerance": 54,
+      "mediaHeat": 39,
+      "publicPatience": 56
+    },
+    "escalation": {
+      "probeTempo": 43,
+      "warningTime": 38,
+      "incidentLadder": 34,
+      "crisisSensitivity": 48
+    },
+    "capabilityPrograms": [
+      {
+        "id": "fires-network",
+        "phase": "concept",
+        "progress": 26,
+        "blockers": [
+          "training absorption",
+          "munitions depth"
+        ]
+      },
+      {
+        "id": "counter-deception-grid",
+        "phase": "funded",
+        "progress": 22,
+        "blockers": [
+          "analyst bandwidth"
+        ]
+      },
+      {
+        "id": "sustainment-ledger",
+        "phase": "concept",
+        "progress": 34,
+        "blockers": [
+          "trusted electronics",
+          "depot burden"
+        ]
+      },
+      {
+        "id": "reserve-rebuild",
+        "phase": "funded",
+        "progress": 28,
+        "blockers": [
+          "public patience",
+          "training seats"
+        ]
+      }
+    ],
+    "externalConstraints": [
+      {
+        "id": "shipping-market",
+        "severity": 56,
+        "trend": "steady"
+      },
+      {
+        "id": "electronics-chain",
+        "severity": 52,
+        "trend": "steady"
+      },
+      {
+        "id": "propellant-market",
+        "severity": 49,
+        "trend": "steady"
+      }
+    ],
+    "internalTech": [],
+    "externalTech": [],
+    "chiefTrust": {
+      "warden": 58,
+      "halden": 59,
+      "briggs": 57,
+      "okafor": 60,
+      "sato": 55,
+      "navarro": 58
+    },
+    "advisorTrust": {},
+    "activeEventIds": [],
+    "eventHistory": [],
+    "eventFlags": {},
+    "briefing": {
+      "theater": "Northern Frontier",
+      "monthLabel": "Month 1",
+      "situationSummary": "Probe tempo is rising, the reserve base is feeling the strain, and sustainment remains too brittle to support every attractive course of action at once.",
+      "riskPosture": "The force can absorb one sharp move this month, not three.",
+      "commandersIntent": "Recover credible readiness without spending political cover faster than the theater can justify.",
+      "operationalPicture": "Adversary probes are steady, the force is still rebuilding, and sustainment remains the binding constraint on how much the room can ask for at once.",
+      "decisionFocus": "Protect readiness without exhausting political cover or overcommitting support capacity.",
+      "openQuestions": [
+        "Is the warning picture clean enough to support a more visible posture?",
+        "Which sustainment weakness becomes the first real bottleneck if tempo rises?",
+        "Can allies be reassured without provoking a domestic backlash?"
+      ],
+      "campaignObjectives": [
+        {
+          "id": "readiness",
+          "label": "Finish the micro-campaign with 7 or more deployable brigades",
+          "metric": "deployableUnits",
+          "target": 7,
+          "direction": "gte",
+          "note": "Deterrence needs a force that looks usable, not just active."
+        },
+        {
+          "id": "alliance",
+          "label": "Keep alliance political alignment at 56 or more",
+          "metric": "politicalAlignment",
+          "target": 56,
+          "direction": "gte",
+          "note": "Partner reassurance cannot be allowed to drift while the headquarters rebuilds itself."
+        },
+        {
+          "id": "politics",
+          "label": "Keep cabinet cover at 32 or more",
+          "metric": "cabinetCover",
+          "target": 32,
+          "direction": "gte",
+          "note": "If domestic cover collapses, the theater plan stops being implementable."
+        },
+        {
+          "id": "escalation",
+          "label": "Keep the incident ladder at 58 or lower",
+          "metric": "incidentLadder",
+          "target": 58,
+          "direction": "lte",
+          "note": "The force must avoid stumbling into a crisis spiral while rebuilding credible posture."
+        }
+      ],
+      "budgetHeadline": "1.6B USD",
+      "readinessHeadline": "5 brigades deployable",
+      "geopoliticalSummary": "Pressure is rising, but the picture still favors a controlled recovery if the headquarters keeps its line of effort tight."
+    }
+  },
+  "turnInputs": [],
+  "history": [],
+  "updatedAt": "2026-04-10T15:26:21.733Z"
+}

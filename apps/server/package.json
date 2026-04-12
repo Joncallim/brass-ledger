@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "node --import tsx --watch src/index.ts",
+    "dev": "node --import tsx src/index.ts",
+    "dev:watch": "node --import tsx --watch src/index.ts",
+    "start": "node --import tsx src/index.ts",
     "replay:demo": "node --import tsx src/replay-demo.ts"
   },
   "dependencies": {
