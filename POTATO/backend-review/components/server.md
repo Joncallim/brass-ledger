@@ -27,11 +27,12 @@ The server is a Fastify app that registers permissive CORS, exposes JSON API rou
 
 ## Main Risks
 
-- Whole-session save route accepts client-provided state as authoritative: [[../findings/F-001-client-save-overwrites-authoritative-state]].
-- Import route accepts structurally valid but unreplayed sessions: [[../findings/F-002-import-accepts-forged-sessions]].
-- CORS is open while mutation routes are available: [[../findings/F-003-open-cors-local-save-mutation]].
-- Save ids are raw strings with implicit path boundaries: [[../findings/F-004-save-id-path-boundary-is-implicit]].
-- No optimistic concurrency on read-modify-write handlers: [[../findings/F-006-file-store-has-lost-update-races]].
+- Closed: whole-session save route is disabled by default: [[../findings/F-001-client-save-overwrites-authoritative-state]].
+- Closed: import route validates canonical scenario state and replay before write: [[../findings/F-002-import-accepts-forged-sessions]].
+- Closed: CORS defaults to known development origins only: [[../findings/F-003-open-cors-local-save-mutation]].
+- Closed: save ids are rejected unless they match UUID shape: [[../findings/F-004-save-id-path-boundary-is-implicit]].
+- Closed for local single-process use: read-modify-write handlers are serialized by per-session locks: [[../findings/F-006-file-store-has-lost-update-races]].
+- Still open: static asset path prefix handling needs a stricter boundary check: [[../findings/F-008-static-asset-prefix-check-is-fragile]].
 
 ## Source Anchors
 

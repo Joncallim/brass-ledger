@@ -21,22 +21,22 @@ Backlink: [[POTATO]]
 | `POST` | `/api/sessions` | Creates a new session | Low |
 | `GET` | `/api/sessions/:id` | Reads a save file by id | Medium, id boundary is implicit |
 | `DELETE` | `/api/sessions/:id` | Deletes a save file by id | Medium, id boundary is implicit |
-| `POST` | `/api/sessions/:id/save` | Persists a client-provided whole session | High, see [[findings/F-001-client-save-overwrites-authoritative-state]] |
+| `POST` | `/api/sessions/:id/save` | Disabled whole-session client save endpoint | Closed, see [[findings/F-001-client-save-overwrites-authoritative-state]] |
 | `POST` | `/api/sessions/:id/preview-turn` | Runs deterministic preview from saved state and input | Low/medium |
 | `POST` | `/api/sessions/:id/resolve-turn` | Resolves a turn server-side and persists | Low/medium |
 | `POST` | `/api/sessions/:id/chiefs/:chiefId/conversation/open` | Creates/replaces current-turn chief conversation | Medium, no concurrency guard |
 | `POST` | `/api/sessions/:id/chiefs/:chiefId/respond` | Advances current-turn chief conversation and trust | Medium, no concurrency guard |
 | `GET` | `/api/sessions/:id/export` | Exports whole session | Low |
-| `POST` | `/api/sessions/import` | Imports whole session with new id | High, see [[findings/F-002-import-accepts-forged-sessions]] |
-| `GET` | `/api/sessions/:id/replay` | Validates replay for a saved session | Medium, see [[findings/F-005-replay-validation-assumes-history-alignment]] |
+| `POST` | `/api/sessions/import` | Imports replay-validated whole session with new id | Medium, rejects forged/corrupt saves |
+| `GET` | `/api/sessions/:id/replay` | Validates replay for a saved session | Low/medium, reports malformed history as validation failure |
 
 ## HTTP Boundary Notes
 
-The server registers CORS with `origin: true`, which mirrors arbitrary request origins. Because the app listens on `127.0.0.1`, this is mostly a local-app issue, but any web page running in the user's browser can still attempt cross-origin requests to the local backend. That matters because the backend exposes create, save, import, resolve, conversation, and delete endpoints.
+The server restricts CORS to known development origins by default. Packaged same-origin use does not require cross-origin access; split development can extend the allowlist with `CORS_ORIGINS`.
 
 ## Recommended API Shape
 
 - Keep `POST /api/sessions`, `POST /api/sessions/:id/resolve-turn`, and conversation endpoints as authoritative mutation paths.
-- Replace `POST /api/sessions/:id/save` with a narrow endpoint for client preferences or remove it entirely.
-- For import, validate scenario/version, validate replay, enforce canonical `initialState`, and write only after validation passes.
+- If client preferences are needed, add a narrow preferences endpoint rather than reviving whole-session save.
+- For import, continue validating scenario/version, replay, and canonical `initialState` before writing.
 - Add a `revision` or `updatedAt` precondition to every mutating route.

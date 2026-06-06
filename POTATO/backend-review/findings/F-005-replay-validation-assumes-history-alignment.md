@@ -2,7 +2,7 @@
 type: backend-finding
 id: F-005
 severity: P2
-status: open
+status: closed
 area: replay
 risk: malformed sessions can crash validation instead of producing diagnostics
 file: packages/sim/src/index.ts

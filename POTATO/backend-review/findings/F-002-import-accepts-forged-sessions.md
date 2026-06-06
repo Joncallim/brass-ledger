@@ -2,7 +2,7 @@
 type: backend-finding
 id: F-002
 severity: P1
-status: open
+status: closed
 area: import/replay
 risk: forged sessions become trusted saves
 file: apps/server/src/index.ts

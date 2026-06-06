@@ -2,7 +2,7 @@
 type: backend-finding
 id: F-003
 severity: P1
-status: open
+status: closed
 area: http-boundary
 risk: arbitrary browser origins can call local mutation endpoints
 file: apps/server/src/index.ts

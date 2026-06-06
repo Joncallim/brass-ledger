@@ -636,6 +636,24 @@ export function validateReplaySession(scenario: ScenarioDefinition, session: { i
   let failureKind: ReplayValidation["failureKind"] = "none";
   const diffs: ReplayValidation["diffs"] = [];
 
+  if (session.turnInputs.length !== session.history.length) {
+    const turn = session.turnInputs[session.history.length]?.turn ?? session.state.turn;
+    return {
+      ok: false,
+      checkedTurns: Math.min(session.turnInputs.length, session.history.length),
+      failedAtTurn: turn,
+      failureKind: "history_length_mismatch",
+      diffs: [
+        {
+          turn,
+          path: "history.length",
+          expected: String(session.turnInputs.length),
+          actual: String(session.history.length),
+        },
+      ],
+    };
+  }
+
   for (let index = 0; index < session.turnInputs.length; index += 1) {
     const expected = resolveTurn(scenario, current, session.turnInputs[index]);
     const actual = session.history[index];

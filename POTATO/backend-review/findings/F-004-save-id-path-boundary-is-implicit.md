@@ -2,7 +2,7 @@
 type: backend-finding
 id: F-004
 severity: P2
-status: open
+status: closed
 area: persistence/pathing
 risk: save path safety depends on router decoding behavior
 file: apps/server/src/index.ts

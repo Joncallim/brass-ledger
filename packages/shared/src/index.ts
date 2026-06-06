@@ -541,7 +541,7 @@ export const replayValidationSchema = z.object({
   ok: z.boolean(),
   checkedTurns: z.number().int(),
   failedAtTurn: z.number().int().nullable().default(null),
-  failureKind: z.enum(["none", "replay_hash_mismatch", "state_mismatch", "final_state_mismatch"]).default("none"),
+  failureKind: z.enum(["none", "history_length_mismatch", "replay_hash_mismatch", "state_mismatch", "final_state_mismatch"]).default("none"),
   diffs: z.array(replayValidationDiffSchema),
 });
 export type ReplayValidation = z.infer<typeof replayValidationSchema>;

@@ -27,7 +27,7 @@ The simulation package is the core backend game engine. It owns memo derivation,
 
 ## Main Risks
 
-- Replay validation assumes every turn input has a matching history item: [[../findings/F-005-replay-validation-assumes-history-alignment]].
+- Closed: replay validation now reports mismatched input/history lengths instead of throwing: [[../findings/F-005-replay-validation-assumes-history-alignment]].
 - Program progression can advance only one phase per turn even if progress exceeds 200; probably acceptable with current content, but worth documenting as an intentional balance rule.
 - Several state values are duplicated between `strategic.*` and legacy top-level mirrors (`forceGeneration`, `intel`, etc.), so authoritative writes should keep those mirrors derived rather than client-supplied.
 

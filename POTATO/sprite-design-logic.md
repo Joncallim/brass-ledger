@@ -68,6 +68,37 @@ Negative prompt pattern:
 photorealistic, cinematic glow, fantasy armor, tactical weapon pose, exaggerated emotion, glossy sci-fi suit, decorative background, cluttered medals, text, logo, watermark, distorted face, extra limbs
 ```
 
+## Legal And Provenance Controls
+
+Generated bitmap sprites are not allowed into the product asset set until each asset has a metadata record:
+
+```ts
+type GeneratedAssetRecord = {
+  assetId: string;
+  subjectId: string;
+  provider: string;
+  model: string;
+  modelVersion: string;
+  generatedAt: string;
+  promptHash: string;
+  negativePromptHash: string;
+  seed: string;
+  licenseStatus: "approved-for-commercial-use" | "prototype-only" | "rejected";
+  reviewer: string;
+  notes: string;
+};
+```
+
+Rules:
+
+- Use only providers and models whose terms allow the intended commercial/game use.
+- Keep prompt, negative prompt, seed, model, and review metadata outside campaign saves.
+- Reject assets that resemble living public figures, known commanders, celebrities, or copyrighted characters.
+- Reject assets containing readable text, logos, watermarks, real insignia, or real unit identifiers.
+- Do not use real-world military photos as likeness references unless rights and releases are documented.
+- Mark unreviewed generations as prototype-only and exclude them from release builds.
+- Cache by prompt hash and seed, but keep the review record as the authority for whether the cached asset can ship.
+
 ## State-Driven Variants
 
 Sprite variants should be generated or selected from state:
@@ -107,6 +138,7 @@ Stage 2:
 
 - Add optional bitmap generation from `SpriteSpec`.
 - Cache generated bitmap assets by deterministic seed and prompt hash.
+- Require `GeneratedAssetRecord.licenseStatus === "approved-for-commercial-use"` before a bitmap asset can be packaged.
 
 Stage 3:
 

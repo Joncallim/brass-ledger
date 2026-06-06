@@ -26,6 +26,7 @@ Always consult this database before changing game rules, interface direction, sp
 - [[game-engine-review/06-recommendations-and-roadmap]]
 - [[compiled-engine-roadmap]]
 - [[s1-s5-user-interface-model]]
+- [[detailed-dialogue-and-advisor-styles]]
 - [[development-stages]]
 - [[sprite-design-logic]]
 - [[backend-review/review-summary]]

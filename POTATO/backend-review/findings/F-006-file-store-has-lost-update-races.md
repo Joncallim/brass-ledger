@@ -2,7 +2,7 @@
 type: backend-finding
 id: F-006
 severity: P2
-status: open
+status: closed
 area: persistence/concurrency
 risk: concurrent requests can overwrite each other's state changes
 file: apps/server/src/index.ts

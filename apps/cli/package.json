@@ -16,5 +16,8 @@
     "@brass-ledger/content": "*",
     "@brass-ledger/shared": "*",
     "@brass-ledger/sim": "*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.0"
   }
 }

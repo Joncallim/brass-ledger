@@ -16,17 +16,17 @@ Backlink: [[POTATO]]
 
 The backend is compact and understandable. The strongest part is the deterministic simulation core: `resolveTurn` validates memo selections, advances state through a consistent pipeline, emits replay hashes, and has basic determinism tests. The content package also validates scenario identity, memo/program references, and event uniqueness.
 
-The weakest part is authority. The server exposes whole-session save/import endpoints that accept client-provided `GameSession` objects after structural Zod parsing, but without proving that the state follows from the scenario and turn inputs. For a local single-player prototype this is survivable; for a real game backend, it means the client can overwrite campaign state, history, trust, replay records, and outcome.
+The previous weakest part was authority: whole-session save/import endpoints accepted client-provided `GameSession` objects after structural Zod parsing. The hardened server now disables whole-session client saves, validates imports against canonical scenario state plus replay reconstruction, restricts CORS to known development origins, rejects non-UUID save ids, and serializes per-session mutating handlers.
 
 ## Highest Priority Findings
 
-| ID | Severity | Finding | Area |
-| --- | --- | --- | --- |
-| [[findings/F-001-client-save-overwrites-authoritative-state\|F-001]] | P1 | `/api/sessions/:id/save` accepts whole client sessions as authoritative | Persistence/API |
-| [[findings/F-002-import-accepts-forged-sessions\|F-002]] | P1 | Import accepts forged but structurally valid sessions | Import/replay |
-| [[findings/F-003-open-cors-local-save-mutation\|F-003]] | P1 | Open CORS allows arbitrary browser origins to mutate local saves | HTTP boundary |
-| [[findings/F-005-replay-validation-assumes-history-alignment\|F-005]] | P2 | Replay validation can throw on malformed aligned-looking sessions | Replay |
-| [[findings/F-006-file-store-has-lost-update-races\|F-006]] | P2 | File persistence has no optimistic concurrency control | Persistence |
+| ID | Severity | Status | Finding | Area |
+| --- | --- | --- | --- | --- |
+| [[findings/F-001-client-save-overwrites-authoritative-state\|F-001]] | P1 | Closed | `/api/sessions/:id/save` is disabled by default | Persistence/API |
+| [[findings/F-002-import-accepts-forged-sessions\|F-002]] | P1 | Closed | Import requires canonical scenario state and clean replay validation | Import/replay |
+| [[findings/F-003-open-cors-local-save-mutation\|F-003]] | P1 | Closed | CORS defaults to known dev origins only | HTTP boundary |
+| [[findings/F-005-replay-validation-assumes-history-alignment\|F-005]] | P2 | Closed | Replay validation reports history length mismatches without throwing | Replay |
+| [[findings/F-006-file-store-has-lost-update-races\|F-006]] | P2 | Closed | Per-session mutation locks serialize local read-modify-write handlers | Persistence |
 
 ## Verification
 
@@ -38,11 +38,9 @@ The following checks passed during review:
 | `npm run build` | Passed: server, web, content, shared, sim |
 | `npm run lint:content` | Passed: scenario validation |
 
-## Recommended Remediation Order
+## Remaining Remediation Order
 
-1. Make the server authoritative for saves: remove or narrow `/api/sessions/:id/save`, and only persist state produced by server-side `resolveTurn` and conversation handlers.
-2. Validate imports with replay reconstruction before writing imported sessions.
-3. Restrict CORS to the packaged client/dev origins, or disable browser cross-origin mutation endpoints for the local server.
-4. Add a session id schema and safe path resolver that rejects anything except UUID-like ids.
-5. Harden replay validation against missing history entries and mismatched lengths.
-6. Add revision numbers or compare-and-swap writes to prevent concurrent lost updates.
+1. Add schema-level range invariants for persisted/imported game metrics.
+2. Harden static asset path handling with a boundary check that accounts for sibling path prefixes.
+3. Add HTTP route tests for CORS, disabled whole-session save, import rejection, replay validation, and session id validation.
+4. Add durable revision metadata if the file save store ever becomes multi-process or networked.

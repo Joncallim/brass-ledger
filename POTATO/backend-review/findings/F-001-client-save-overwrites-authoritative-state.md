@@ -2,7 +2,7 @@
 type: backend-finding
 id: F-001
 severity: P1
-status: open
+status: closed
 area: persistence/api
 risk: client can replace authoritative game state
 file: apps/server/src/index.ts
