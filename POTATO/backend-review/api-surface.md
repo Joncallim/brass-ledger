@@ -23,9 +23,9 @@ Backlink: [[POTATO]]
 | `DELETE` | `/api/sessions/:id` | Deletes a save file by id | Medium, id boundary is implicit |
 | `POST` | `/api/sessions/:id/save` | Disabled whole-session client save endpoint | Closed, see [[findings/F-001-client-save-overwrites-authoritative-state]] |
 | `POST` | `/api/sessions/:id/preview-turn` | Runs deterministic preview from saved state and input | Low/medium |
-| `POST` | `/api/sessions/:id/resolve-turn` | Resolves a turn server-side and persists | Low/medium |
-| `POST` | `/api/sessions/:id/chiefs/:chiefId/conversation/open` | Creates/replaces current-turn chief conversation | Medium, no concurrency guard |
-| `POST` | `/api/sessions/:id/chiefs/:chiefId/respond` | Advances current-turn chief conversation and trust | Medium, no concurrency guard |
+| `POST` | `/api/sessions/:id/resolve-turn` | Resolves a turn server-side, optionally checks `expectedRevision`, increments revision, and persists | Low/medium |
+| `POST` | `/api/sessions/:id/chiefs/:chiefId/conversation/open` | Creates/replaces current-turn chief conversation with optional `expectedRevision` guard | Low/medium |
+| `POST` | `/api/sessions/:id/chiefs/:chiefId/respond` | Advances current-turn chief conversation and trust with optional `expectedRevision` guard | Low/medium |
 | `GET` | `/api/sessions/:id/export` | Exports whole session | Low |
 | `POST` | `/api/sessions/import` | Imports replay-validated whole session with new id | Medium, rejects forged/corrupt saves |
 | `GET` | `/api/sessions/:id/replay` | Validates replay for a saved session | Low/medium, reports malformed history as validation failure |
@@ -39,4 +39,4 @@ The server restricts CORS to known development origins by default. Packaged same
 - Keep `POST /api/sessions`, `POST /api/sessions/:id/resolve-turn`, and conversation endpoints as authoritative mutation paths.
 - If client preferences are needed, add a narrow preferences endpoint rather than reviving whole-session save.
 - For import, continue validating scenario/version, replay, and canonical `initialState` before writing.
-- Add a `revision` or `updatedAt` precondition to every mutating route.
+- Keep `revision` in every session payload and continue accepting optional `expectedRevision` on authoritative mutating routes; stale revisions should return `409 Conflict`.

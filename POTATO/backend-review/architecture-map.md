@@ -39,8 +39,8 @@ flowchart LR
 1. New sessions are created in `apps/server/src/index.ts` using `createInitialGameSession(soloScenario, sessionId)`.
 2. The server writes the whole session to `data/saves/{id}.json`.
 3. Turn previews call `previewTurn`, which internally calls `resolveTurn` but does not persist.
-4. Turn resolution reads the saved session, parses `TurnInput`, calls `resolveTurn`, appends input/result history, validates replay, writes the next session, and returns the payload.
-5. Conversations mutate `state.conversationHistory` and `state.chiefTrust`, then write the whole session back.
+4. Turn resolution reads the saved session, optionally checks `expectedRevision`, parses `TurnInput`, calls `resolveTurn`, appends input/result history, increments `revision`, validates replay, writes the next session, and returns the payload.
+5. Conversations optionally check `expectedRevision`, mutate `state.conversationHistory` and `state.chiefTrust`, increment `revision`, then write the whole session back.
 6. Export returns the whole saved session; import parses a whole exported session and writes it with a new id.
 
 ## Design Strengths
@@ -49,11 +49,11 @@ flowchart LR
 - Shared Zod schemas give a clear contract boundary.
 - Replays are deterministic enough to hash and validate.
 - Save writes use temp-file plus rename, avoiding torn writes for a single write operation.
+- Per-session in-process mutation locks serialize local read-modify-write handlers.
+- Session payloads include durable `revision` metadata, and authoritative mutating routes can reject stale `expectedRevision` values.
 - Content validation catches duplicate ids and broken program/constraint references.
 
 ## Design Gaps
 
-- The API exposes full session mutation, so the server is not the sole source of truth.
-- Replay validation exists but is not consistently enforced before persistence.
-- Local file persistence has no revision or lock, so concurrent requests can overwrite each other.
-- CORS is permissive despite mutation endpoints.
+- Route coverage should continue expanding around delete, conversation, and malformed persistence cases.
+- The local file store still lacks cross-process compare-and-swap, so a networked or multi-process deployment would need stronger storage semantics.

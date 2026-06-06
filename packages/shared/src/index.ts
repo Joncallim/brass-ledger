@@ -613,6 +613,7 @@ export type ScenarioDefinition = z.infer<typeof scenarioDefinitionSchema>;
 export const gameSessionSchema = z.object({
   id: z.string(),
   saveFormatVersion: z.literal("5"),
+  revision: z.number().int().min(0).default(0),
   scenarioId: z.string(),
   contentVersion: z.string(),
   advisorRoster: z.array(sessionAdvisorSchema),
@@ -2057,6 +2058,7 @@ export function createInitialGameSession(scenario: ScenarioDefinition, sessionSe
   return {
     id: scenario.id,
     saveFormatVersion: "5",
+    revision: 0,
     scenarioId: scenario.id,
     contentVersion: scenario.contentVersion,
     advisorRoster: generateAdvisorRoster(scenario.chiefs, sessionSeed),

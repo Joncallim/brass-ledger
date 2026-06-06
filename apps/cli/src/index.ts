@@ -122,6 +122,7 @@ async function runHeadlessCampaign(options: CliOptions) {
     const result = resolveTurn(soloScenario, session.state, input);
     session = {
       ...session,
+      revision: session.revision + 1,
       state: result.nextState,
       turnInputs: [...session.turnInputs, input],
       history: [...session.history, result],

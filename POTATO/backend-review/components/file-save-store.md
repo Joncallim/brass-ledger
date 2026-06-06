@@ -23,18 +23,19 @@ The save store persists each session as one JSON file under `data/saves`.
 
 - Human-readable saves are useful for development and replay debugging.
 - `writeSession` uses a temporary file and rename, which reduces partial-write risk.
+- Sessions carry a numeric `revision` that is incremented on authoritative server mutations.
+- Mutating routes can reject stale `expectedRevision` values before applying changes.
+- Per-session in-process locks serialize local read-modify-write handlers.
 - `listSessions` skips invalid save files rather than failing the entire listing.
 
 ## Main Risks
 
-- No revision/etag/compare-and-swap; concurrent handlers can overwrite each other.
-- Raw session id strings are used to build paths.
-- The store accepts all structurally valid sessions from save/import paths, even if replay-invalid.
+- There is no cross-process compare-and-swap; multi-process or networked deployments need stronger storage semantics.
 - Large or numerous save files can make `GET /api/sessions` expensive because it parses all JSON files.
 
 ## Source Anchors
 
-- Path construction: `apps/server/src/index.ts:79`
-- Write flow: `apps/server/src/index.ts:87`
-- Read flow: `apps/server/src/index.ts:95`
-- Listing/parsing all saves: `apps/server/src/index.ts:100`
+- Path construction: `apps/server/src/index.ts`
+- Write flow: `apps/server/src/index.ts`
+- Read flow: `apps/server/src/index.ts`
+- Listing/parsing all saves: `apps/server/src/index.ts`

@@ -1,6 +1,6 @@
 ---
 type: backend-review-summary
-reviewed_on: 2026-06-06
+reviewed_on: 2026-06-07
 status: complete
 tags:
   - backend-review
@@ -16,7 +16,7 @@ Backlink: [[POTATO]]
 
 The backend is compact and understandable. The strongest part is the deterministic simulation core: `resolveTurn` validates memo selections, advances state through a consistent pipeline, emits replay hashes, and has basic determinism tests. The content package also validates scenario identity, memo/program references, and event uniqueness.
 
-The previous weakest part was authority: whole-session save/import endpoints accepted client-provided `GameSession` objects after structural Zod parsing. The hardened server now disables whole-session client saves, validates imports against canonical scenario state plus replay reconstruction, restricts CORS to known development origins, rejects non-UUID save ids, and serializes per-session mutating handlers.
+The previous weakest part was authority: whole-session save/import endpoints accepted client-provided `GameSession` objects after structural Zod parsing. The hardened server now disables whole-session client saves, validates imports against canonical scenario state plus replay reconstruction, restricts CORS to known development origins, rejects non-UUID save ids, serializes per-session mutating handlers, and persists revision metadata for authoritative mutations.
 
 ## Highest Priority Findings
 
@@ -36,12 +36,12 @@ The following checks passed during review:
 
 | Command | Result |
 | --- | --- |
-| `npm test` | Passed: 7/7 sim tests |
+| `npm test` | Passed: 8/8 server route tests and 7/7 sim tests |
 | `npm run build` | Passed: server, web, content, shared, sim |
 | `npm run lint:content` | Passed: scenario validation |
 | `npm run lint:potato` | Passed: 33 notes |
 
 ## Remaining Remediation Order
 
-1. Add HTTP route tests for CORS, disabled whole-session save, import rejection, replay validation, session id validation, and static asset path handling.
-2. Add durable revision metadata if the file save store ever becomes multi-process or networked.
+1. Expand HTTP route tests around malformed persisted files and deeper replay corruption variants.
+2. Add storage-level compare-and-swap if the file save store ever becomes multi-process or networked.

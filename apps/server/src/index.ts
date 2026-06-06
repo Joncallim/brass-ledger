@@ -23,7 +23,7 @@ import {
 } from "@brass-ledger/shared";
 import { deriveDecisionMemos, previewTurn, resolveTurn, validateReplaySession } from "@brass-ledger/sim";
 
-const app = Fastify({ logger: true });
+export const app = Fastify({ logger: process.env.NODE_ENV !== "test" });
 
 const allowedCorsOrigins = new Set(
   (process.env.CORS_ORIGINS ?? "http://127.0.0.1:5173,http://localhost:5173")
@@ -54,8 +54,12 @@ function resolveExistingPath(candidates: string[]) {
   return path.resolve(moduleDir, candidates[0]);
 }
 
-const dataDir = resolveExistingPath(["../../../../data/saves", "../../../data/saves"]);
-const webDistDir = resolveExistingPath(["../../../web/dist", "../../web/dist"]);
+const dataDir = process.env.BRASS_LEDGER_SAVE_DIR
+  ? path.resolve(process.env.BRASS_LEDGER_SAVE_DIR)
+  : resolveExistingPath(["../../../../data/saves", "../../../data/saves"]);
+const webDistDir = process.env.BRASS_LEDGER_WEB_DIST_DIR
+  ? path.resolve(process.env.BRASS_LEDGER_WEB_DIST_DIR)
+  : resolveExistingPath(["../../../web/dist", "../../web/dist"]);
 const webIndexPath = path.join(webDistDir, "index.html");
 const sessionIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const sessionLocks = new Map<string, Promise<unknown>>();
@@ -64,6 +68,30 @@ function assertSessionId(sessionId: string) {
   if (!sessionIdPattern.test(sessionId)) {
     throw new Error("Invalid session id");
   }
+}
+
+function assertExpectedRevision(session: GameSession, expectedRevision: unknown) {
+  if (expectedRevision === undefined) {
+    return;
+  }
+  if (typeof expectedRevision !== "number" || !Number.isInteger(expectedRevision) || expectedRevision < 0) {
+    throw new Error("expectedRevision must be a non-negative integer.");
+  }
+  if (expectedRevision !== session.revision) {
+    throw new Error(`Session revision mismatch: expected ${expectedRevision}, current ${session.revision}.`);
+  }
+}
+
+function isRevisionMismatch(error: unknown) {
+  return error instanceof Error && error.message.startsWith("Session revision mismatch:");
+}
+
+function advanceSessionRevision(session: GameSession) {
+  return {
+    ...session,
+    revision: session.revision + 1,
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 async function withSessionLock<T>(sessionId: string, operation: () => Promise<T>) {
@@ -224,6 +252,7 @@ function summarizeSession(session: GameSession) {
     scenarioId: session.scenarioId,
     contentVersion: session.contentVersion,
     saveFormatVersion: session.saveFormatVersion,
+    revision: session.revision,
     updatedAt: session.updatedAt,
     turn: session.state.turn,
     maxTurns: session.state.maxTurns,
@@ -335,7 +364,7 @@ app.post("/api/sessions/:id/preview-turn", async (request, reply) => {
 app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, reply) => {
   try {
     const { id, chiefId } = request.params as { id: string; chiefId: string };
-    const body = (request.body ?? {}) as { memoId?: string; optionId?: string };
+    const body = (request.body ?? {}) as { memoId?: string; optionId?: string; expectedRevision?: unknown };
     if (!body.memoId || !body.optionId) {
       reply.code(400);
       return { error: "memoId and optionId are required." };
@@ -343,6 +372,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
 
     return await withSessionLock(id, async () => {
       const session = await readSession(id);
+      assertExpectedRevision(session, body.expectedRevision);
       const chief = soloScenario.chiefs.find((entry) => entry.id === chiefId);
       if (!chief) {
         reply.code(404);
@@ -372,7 +402,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
       }
 
       const conversation = startChiefConversation(chief, memo, option, position, session.state);
-      const updatedSession = gameSessionSchema.parse({
+      const updatedSession = gameSessionSchema.parse(advanceSessionRevision({
         ...session,
         state: {
           ...session.state,
@@ -381,8 +411,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
             conversation,
           ],
         },
-        updatedAt: new Date().toISOString(),
-      });
+      }));
 
       await writeSession(updatedSession);
       return {
@@ -391,7 +420,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
       };
     });
   } catch (error) {
-    reply.code(400);
+    reply.code(isRevisionMismatch(error) ? 409 : 400);
     return { error: error instanceof Error ? error.message : "Failed to open chief conversation" };
   }
 });
@@ -399,7 +428,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
 app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => {
   try {
     const { id, chiefId } = request.params as { id: string; chiefId: string };
-    const body = (request.body ?? {}) as { responseId?: string };
+    const body = (request.body ?? {}) as { responseId?: string; expectedRevision?: unknown };
     if (!body.responseId) {
       reply.code(400);
       return { error: "responseId is required." };
@@ -408,6 +437,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
 
     return await withSessionLock(id, async () => {
       const session = await readSession(id);
+      assertExpectedRevision(session, body.expectedRevision);
       const chief = soloScenario.chiefs.find((entry) => entry.id === chiefId);
       if (!chief) {
         reply.code(404);
@@ -434,7 +464,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
 
       const nextConversation = continueChiefConversation(conversation, chief, memo, option, session.state, responseId);
 
-      const updatedSession = gameSessionSchema.parse({
+      const updatedSession = gameSessionSchema.parse(advanceSessionRevision({
         ...session,
         state: {
           ...session.state,
@@ -446,8 +476,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
             entry.turn === session.state.turn && entry.chiefId === chiefId ? nextConversation : entry,
           ),
         },
-        updatedAt: new Date().toISOString(),
-      });
+      }));
 
       await writeSession(updatedSession);
       const selectedResponse = conversation.choices.find((entry) => entry.id === responseId);
@@ -464,7 +493,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
       };
     });
   } catch (error) {
-    reply.code(400);
+    reply.code(isRevisionMismatch(error) ? 409 : 400);
     return { error: error instanceof Error ? error.message : "Failed to update chief relationship" };
   }
 });
@@ -472,18 +501,18 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
 app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
-    const body = (request.body ?? {}) as { input?: unknown };
+    const body = (request.body ?? {}) as { input?: unknown; expectedRevision?: unknown };
     const input = turnInputSchema.parse(body.input);
     return await withSessionLock(id, async () => {
       const session = await readSession(id);
+      assertExpectedRevision(session, body.expectedRevision);
       const result = resolveTurn(soloScenario, session.state, input);
-      const nextSession = gameSessionSchema.parse({
+      const nextSession = gameSessionSchema.parse(advanceSessionRevision({
         ...session,
         state: result.nextState,
         turnInputs: [...session.turnInputs, input],
         history: [...session.history, result],
-        updatedAt: new Date().toISOString(),
-      });
+      }));
       const validation: ReplayValidation = assertReplayableSession(nextSession);
       await writeSession(nextSession);
       return {
@@ -493,7 +522,7 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
       };
     });
   } catch (error) {
-    reply.code(400);
+    reply.code(isRevisionMismatch(error) ? 409 : 400);
     return { error: error instanceof Error ? error.message : "Failed to resolve turn" };
   }
 });
@@ -525,6 +554,7 @@ app.post("/api/sessions/import", async (request, reply) => {
     const importedSession = {
       ...session,
       id: randomUUID(),
+      revision: 0,
       updatedAt: new Date().toISOString(),
     };
     await writeSession(importedSession);
@@ -572,8 +602,10 @@ app.get("/*", async (request, reply) => {
   }
 });
 
-const port = Number(process.env.PORT ?? "4000");
-app.listen({ port, host: "127.0.0.1" }).catch((error) => {
-  app.log.error(error);
-  process.exit(1);
-});
+if (process.env.BRASS_LEDGER_NO_LISTEN !== "1") {
+  const port = Number(process.env.PORT ?? "4000");
+  app.listen({ port, host: "127.0.0.1" }).catch((error) => {
+    app.log.error(error);
+    process.exit(1);
+  });
+}

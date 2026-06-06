@@ -8,6 +8,7 @@
     "dev": "node --import tsx src/index.ts",
     "dev:watch": "node --import tsx --watch src/index.ts",
     "start": "node --import tsx src/index.ts",
+    "test": "node --import tsx --test src/**/*.test.ts",
     "replay:demo": "node --import tsx src/replay-demo.ts"
   },
   "dependencies": {

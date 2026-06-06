@@ -1,6 +1,6 @@
 ---
 type: backend-review-note
-reviewed_on: 2026-06-06
+reviewed_on: 2026-06-07
 tags:
   - backend-review
   - verification
@@ -32,17 +32,26 @@ Backlink: [[POTATO]]
 - schema rejection for out-of-range persisted campaign metrics
 - schema rejection for divergent `state.strategic` mirror fields
 
+`apps/server/src/index.test.ts` currently covers:
+
+- CORS allowlist behavior
+- disabled whole-session save endpoint
+- invalid session id rejection on save
+- resolve-turn persistence, replay validation, revision increment, and stale `expectedRevision` rejection
+- chief conversation open/respond revision increments and stale response rejection
+- import rejection for forged scenario identity and acceptance of replayable exports
+- replay endpoint validation
+- delete endpoint removal and missing-session readback
+- static client shell serving and traversal-style static lookup rejection
+
 ## Coverage Gaps
 
-- No HTTP route tests for save, import, resolve, export, delete, CORS, or static asset serving.
 - No replay corruption tests for forged current state, altered initial state, altered replay hash, or extra history.
-- No concurrency tests for simultaneous resolve/conversation/save requests.
-- No persistence tests around path handling and id validation.
+- No concurrency tests for simultaneous resolve/conversation requests.
+- No persistence tests around malformed save files in `GET /api/sessions`.
 
 ## Suggested Tests
 
-- Route-level Fastify injection tests for all mutation endpoints.
-- Import tests that reject forged state and accept valid exported replayable sessions.
-- Save endpoint tests that prove either removal or replay enforcement.
+- Route-level Fastify injection tests for malformed persisted save handling.
 - Replay validator tests for missing `history[index]`, extra history, altered replay hash, altered `state`, altered `initialState`, and terminal campaigns.
-- File-store tests for revision mismatch behavior once optimistic concurrency is added.
+- File-store tests for invalid save skipping and storage-level compare-and-swap if the persistence layer becomes multi-process.
