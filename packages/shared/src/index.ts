@@ -34,51 +34,56 @@ export const chiefPositionSchema = z.enum([
 ]);
 export type ChiefPositionType = z.infer<typeof chiefPositionSchema>;
 
+const indexMetricSchema = z.number().min(0).max(100);
+const deployableUnitsSchema = z.number().min(2).max(12);
+const campaignScoreSchema = z.number().min(0).max(100);
+const nonNegativeNumberSchema = z.number().min(0);
+
 export const forceGenerationStateSchema = z.object({
-  deployableUnits: z.number(),
-  reserveStrain: z.number(),
-  trainingThroughput: z.number(),
-  personnelShortfalls: z.number(),
+  deployableUnits: deployableUnitsSchema,
+  reserveStrain: indexMetricSchema,
+  trainingThroughput: indexMetricSchema,
+  personnelShortfalls: indexMetricSchema,
 });
 export type ForceGenerationState = z.infer<typeof forceGenerationStateSchema>;
 
 export const intelStateSchema = z.object({
-  collectionCoverage: z.number(),
-  confidence: z.number(),
-  warningReliability: z.number(),
-  deceptionPressure: z.number(),
+  collectionCoverage: indexMetricSchema,
+  confidence: indexMetricSchema,
+  warningReliability: indexMetricSchema,
+  deceptionPressure: indexMetricSchema,
 });
 export type IntelState = z.infer<typeof intelStateSchema>;
 
 export const sustainmentStateSchema = z.object({
-  depotBacklog: z.number(),
-  munitionsSufficiency: z.number(),
-  fuelSufficiency: z.number(),
-  liftAvailability: z.number(),
+  depotBacklog: indexMetricSchema,
+  munitionsSufficiency: indexMetricSchema,
+  fuelSufficiency: indexMetricSchema,
+  liftAvailability: indexMetricSchema,
 });
 export type SustainmentState = z.infer<typeof sustainmentStateSchema>;
 
 export const allianceStateSchema = z.object({
-  reassurance: z.number(),
-  politicalAlignment: z.number(),
-  partnerParticipation: z.number(),
-  partnerPublicSupport: z.number(),
+  reassurance: indexMetricSchema,
+  politicalAlignment: indexMetricSchema,
+  partnerParticipation: indexMetricSchema,
+  partnerPublicSupport: indexMetricSchema,
 });
 export type AllianceState = z.infer<typeof allianceStateSchema>;
 
 export const domesticStateSchema = z.object({
-  cabinetCover: z.number(),
-  committeeTolerance: z.number(),
-  mediaHeat: z.number(),
-  publicPatience: z.number(),
+  cabinetCover: indexMetricSchema,
+  committeeTolerance: indexMetricSchema,
+  mediaHeat: indexMetricSchema,
+  publicPatience: indexMetricSchema,
 });
 export type DomesticState = z.infer<typeof domesticStateSchema>;
 
 export const escalationStateSchema = z.object({
-  probeTempo: z.number(),
-  warningTime: z.number(),
-  incidentLadder: z.number(),
-  crisisSensitivity: z.number(),
+  probeTempo: indexMetricSchema,
+  warningTime: indexMetricSchema,
+  incidentLadder: indexMetricSchema,
+  crisisSensitivity: indexMetricSchema,
 });
 export type EscalationState = z.infer<typeof escalationStateSchema>;
 
@@ -93,12 +98,12 @@ export const strategicStateSchema = z.object({
 export type StrategicState = z.infer<typeof strategicStateSchema>;
 
 export const resourcesSchema = z.object({
-  budgetAuthority: z.number(),
-  readiness: z.number(),
-  politicalCapital: z.number(),
-  allianceCohesion: z.number(),
-  publicLegitimacy: z.number(),
-  escalationPressure: z.number(),
+  budgetAuthority: indexMetricSchema,
+  readiness: indexMetricSchema,
+  politicalCapital: indexMetricSchema,
+  allianceCohesion: indexMetricSchema,
+  publicLegitimacy: indexMetricSchema,
+  escalationPressure: indexMetricSchema,
 });
 export type Resources = z.infer<typeof resourcesSchema>;
 
@@ -157,8 +162,8 @@ export const chiefArchetypeSchema = z.object({
   title: z.string(),
   doctrineBias: z.string(),
   temperament: z.string(),
-  competence: z.number(),
-  riskTolerance: z.number(),
+  competence: z.number().min(0).max(1),
+  riskTolerance: z.number().min(0).max(1),
   preferredTags: z.array(z.string()),
   concernTags: z.array(z.string()),
 });
@@ -224,7 +229,7 @@ export type StoredChiefConversationChoice = z.infer<typeof chiefConversationChoi
 
 export const chiefConversationRecordSchema = z.object({
   id: z.string(),
-  turn: z.number().int(),
+  turn: z.number().int().min(1),
   chiefId: z.string(),
   chiefName: z.string(),
   memoId: z.string(),
@@ -243,26 +248,77 @@ export const chiefConversationRecordSchema = z.object({
   transcript: z.array(chiefConversationTurnSchema),
   choices: z.array(chiefConversationChoiceSchema),
   choiceTrail: z.array(z.string()).default([]),
-  trustBefore: z.number(),
-  trustAfter: z.number(),
+  trustBefore: indexMetricSchema,
+  trustAfter: indexMetricSchema,
   totalTrustDelta: z.number(),
 });
 export type ChiefConversationRecord = z.infer<typeof chiefConversationRecordSchema>;
 
 export const burdenContributionSchema = z.object({
   directorate: directorateSchema,
-  points: z.number(),
+  points: nonNegativeNumberSchema,
 });
 export type BurdenContribution = z.infer<typeof burdenContributionSchema>;
 
+const forceGenerationDeltaSchema = z.object({
+  deployableUnits: z.number(),
+  reserveStrain: z.number(),
+  trainingThroughput: z.number(),
+  personnelShortfalls: z.number(),
+});
+
+const intelDeltaSchema = z.object({
+  collectionCoverage: z.number(),
+  confidence: z.number(),
+  warningReliability: z.number(),
+  deceptionPressure: z.number(),
+});
+
+const sustainmentDeltaSchema = z.object({
+  depotBacklog: z.number(),
+  munitionsSufficiency: z.number(),
+  fuelSufficiency: z.number(),
+  liftAvailability: z.number(),
+});
+
+const allianceDeltaSchema = z.object({
+  reassurance: z.number(),
+  politicalAlignment: z.number(),
+  partnerParticipation: z.number(),
+  partnerPublicSupport: z.number(),
+});
+
+const domesticDeltaSchema = z.object({
+  cabinetCover: z.number(),
+  committeeTolerance: z.number(),
+  mediaHeat: z.number(),
+  publicPatience: z.number(),
+});
+
+const escalationDeltaSchema = z.object({
+  probeTempo: z.number(),
+  warningTime: z.number(),
+  incidentLadder: z.number(),
+  crisisSensitivity: z.number(),
+});
+
+const resourcesDeltaSchema = z.object({
+  budgetAuthority: z.number(),
+  readiness: z.number(),
+  politicalCapital: z.number(),
+  allianceCohesion: z.number(),
+  publicLegitimacy: z.number(),
+  escalationPressure: z.number(),
+});
+
 export const stateDeltaSchema = z.object({
-  resources: resourcesSchema.partial(),
-  forceGeneration: forceGenerationStateSchema.partial(),
-  intelligence: intelStateSchema.partial(),
-  sustainment: sustainmentStateSchema.partial(),
-  alliance: allianceStateSchema.partial(),
-  domestic: domesticStateSchema.partial(),
-  escalation: escalationStateSchema.partial(),
+  resources: resourcesDeltaSchema.partial(),
+  forceGeneration: forceGenerationDeltaSchema.partial(),
+  intelligence: intelDeltaSchema.partial(),
+  sustainment: sustainmentDeltaSchema.partial(),
+  alliance: allianceDeltaSchema.partial(),
+  domestic: domesticDeltaSchema.partial(),
+  escalation: escalationDeltaSchema.partial(),
 }).partial();
 export type StateDelta = z.infer<typeof stateDeltaSchema>;
 
@@ -278,7 +334,7 @@ const emptyStateDelta: StateDelta = {
 
 export const programPushSchema = z.object({
   programId: z.string(),
-  points: z.number(),
+  points: nonNegativeNumberSchema,
 });
 export type ProgramPush = z.infer<typeof programPushSchema>;
 
@@ -343,12 +399,12 @@ export type ChiefPosition = ChiefPositionEntry;
 
 export const directorateBurdenSchema = z.object({
   directorate: directorateSchema,
-  burdenPoints: z.number(),
-  capacity: z.number(),
+  burdenPoints: nonNegativeNumberSchema,
+  capacity: nonNegativeNumberSchema,
   burdenLevel: burdenLevelSchema,
   failureMode: z.string(),
-  confidencePenalty: z.number(),
-  executionPenalty: z.number(),
+  confidencePenalty: nonNegativeNumberSchema,
+  executionPenalty: nonNegativeNumberSchema,
   summary: z.string(),
 });
 export type DirectorateBurden = z.infer<typeof directorateBurdenSchema>;
@@ -376,7 +432,7 @@ export type CapabilityProgramDefinition = z.infer<typeof capabilityProgramDefini
 export const capabilityProgramStateSchema = z.object({
   id: z.string(),
   phase: programPhaseSchema,
-  progress: z.number(),
+  progress: indexMetricSchema,
   blockers: z.array(z.string()),
 });
 export type CapabilityProgramState = z.infer<typeof capabilityProgramStateSchema>;
@@ -390,7 +446,7 @@ export type ExternalConstraintDefinition = z.infer<typeof externalConstraintDefi
 
 export const externalConstraintStateSchema = z.object({
   id: z.string(),
-  severity: z.number(),
+  severity: indexMetricSchema,
   trend: z.enum(["improving", "steady", "worsening"]),
 });
 export type ExternalConstraintState = z.infer<typeof externalConstraintStateSchema>;
@@ -417,13 +473,23 @@ export const afterActionNoteSchema = z.object({
 });
 export type AfterActionNote = z.infer<typeof afterActionNoteSchema>;
 
+const techProgressSchema = z.object({ id: z.string(), level: z.number().int().min(0), progress: indexMetricSchema });
+
+function addMirrorIssue(ctx: z.RefinementCtx, path: string, message: string) {
+  ctx.addIssue({
+    code: "custom",
+    path: [path],
+    message,
+  });
+}
+
 export const campaignStateSchema = z.object({
-  turn: z.number().int(),
-  maxTurns: z.number().int(),
+  turn: z.number().int().min(1),
+  maxTurns: z.number().int().min(1),
   microCampaignLength: z.number().int().min(1).default(6),
   seed: z.number().int(),
   campaignStatus: z.enum(["active", "won", "lost"]).default("active"),
-  campaignScore: z.number().default(0),
+  campaignScore: campaignScoreSchema.default(0),
   campaignOutcome: z.string().nullable().default(null),
   strategic: strategicStateSchema,
   resources: resourcesSchema,
@@ -435,30 +501,65 @@ export const campaignStateSchema = z.object({
   escalation: escalationStateSchema,
   capabilityPrograms: z.array(capabilityProgramStateSchema),
   externalConstraints: z.array(externalConstraintStateSchema),
-  internalTech: z.array(z.object({ id: z.string(), level: z.number(), progress: z.number() })).default([]),
+  internalTech: z.array(techProgressSchema).default([]),
   externalTech: z.array(z.object({
     id: z.string(),
-    level: z.number(),
-    progress: z.number(),
+    level: z.number().int().min(0),
+    progress: indexMetricSchema,
     estimate: z.object({
-      estimatedLevel: z.number(),
-      confidence: z.number(),
+      estimatedLevel: z.number().int().min(0),
+      confidence: indexMetricSchema,
       visibility: z.enum(["RUMORED", "ESTIMATED", "KNOWN"]),
-      lastVerifiedTurn: z.number().nullable(),
+      lastVerifiedTurn: z.number().int().min(1).nullable(),
     }),
   })).default([]),
-  chiefTrust: z.record(z.string(), z.number()),
-  advisorTrust: z.record(z.string(), z.number()).default({}),
+  chiefTrust: z.record(z.string(), indexMetricSchema),
+  advisorTrust: z.record(z.string(), indexMetricSchema).default({}),
   activeEventIds: z.array(z.string()).default([]),
   eventHistory: z.array(z.string()).default([]),
   eventFlags: z.record(z.string(), z.boolean()).default({}),
   conversationHistory: z.array(chiefConversationRecordSchema).default([]),
   briefing: campaignBriefSchema,
+}).superRefine((state, ctx) => {
+  if (state.turn > state.maxTurns + 1) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["turn"],
+      message: "turn cannot exceed maxTurns + 1",
+    });
+  }
+
+  if (state.microCampaignLength > state.maxTurns) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["microCampaignLength"],
+      message: "microCampaignLength cannot exceed maxTurns",
+    });
+  }
+
+  if (JSON.stringify(state.forceGeneration) !== JSON.stringify(state.strategic.forceGeneration)) {
+    addMirrorIssue(ctx, "forceGeneration", "forceGeneration must mirror strategic.forceGeneration");
+  }
+  if (JSON.stringify(state.intel) !== JSON.stringify(state.strategic.intelligence)) {
+    addMirrorIssue(ctx, "intel", "intel must mirror strategic.intelligence");
+  }
+  if (JSON.stringify(state.sustainment) !== JSON.stringify(state.strategic.sustainment)) {
+    addMirrorIssue(ctx, "sustainment", "sustainment must mirror strategic.sustainment");
+  }
+  if (JSON.stringify(state.alliance) !== JSON.stringify(state.strategic.alliance)) {
+    addMirrorIssue(ctx, "alliance", "alliance must mirror strategic.alliance");
+  }
+  if (JSON.stringify(state.domestic) !== JSON.stringify(state.strategic.domestic)) {
+    addMirrorIssue(ctx, "domestic", "domestic must mirror strategic.domestic");
+  }
+  if (JSON.stringify(state.escalation) !== JSON.stringify(state.strategic.escalation)) {
+    addMirrorIssue(ctx, "escalation", "escalation must mirror strategic.escalation");
+  }
 });
 export type CampaignState = z.infer<typeof campaignStateSchema>;
 
 export const turnInputSchema = z.object({
-  turn: z.number().int(),
+  turn: z.number().int().min(1),
   selectedActionIds: z.array(z.string()).default([]),
   selections: z.array(memoSelectionSchema),
 });

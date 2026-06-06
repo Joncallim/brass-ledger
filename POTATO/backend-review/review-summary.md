@@ -27,6 +27,8 @@ The previous weakest part was authority: whole-session save/import endpoints acc
 | [[findings/F-003-open-cors-local-save-mutation\|F-003]] | P1 | Closed | CORS defaults to known dev origins only | HTTP boundary |
 | [[findings/F-005-replay-validation-assumes-history-alignment\|F-005]] | P2 | Closed | Replay validation reports history length mismatches without throwing | Replay |
 | [[findings/F-006-file-store-has-lost-update-races\|F-006]] | P2 | Closed | Per-session mutation locks serialize local read-modify-write handlers | Persistence |
+| [[findings/F-007-save-schema-lacks-game-invariant-ranges\|F-007]] | P2 | Closed | Persisted campaign metrics are range-bounded and state mirrors are checked | Schema/invariants |
+| [[findings/F-008-static-asset-prefix-check-is-fragile\|F-008]] | P3 | Closed | Static assets use relative path containment instead of string prefix checks | Static assets |
 
 ## Verification
 
@@ -34,13 +36,12 @@ The following checks passed during review:
 
 | Command | Result |
 | --- | --- |
-| `npm test` | Passed: 4/4 sim tests |
+| `npm test` | Passed: 7/7 sim tests |
 | `npm run build` | Passed: server, web, content, shared, sim |
 | `npm run lint:content` | Passed: scenario validation |
+| `npm run lint:potato` | Passed: 33 notes |
 
 ## Remaining Remediation Order
 
-1. Add schema-level range invariants for persisted/imported game metrics.
-2. Harden static asset path handling with a boundary check that accounts for sibling path prefixes.
-3. Add HTTP route tests for CORS, disabled whole-session save, import rejection, replay validation, and session id validation.
-4. Add durable revision metadata if the file save store ever becomes multi-process or networked.
+1. Add HTTP route tests for CORS, disabled whole-session save, import rejection, replay validation, session id validation, and static asset path handling.
+2. Add durable revision metadata if the file save store ever becomes multi-process or networked.

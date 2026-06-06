@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { soloScenario } from "@brass-ledger/content";
-import { buildChiefPositions, continueChiefConversation, startChiefConversation } from "@brass-ledger/shared";
+import { buildChiefPositions, campaignStateSchema, continueChiefConversation, startChiefConversation } from "@brass-ledger/shared";
 import { resolveTurn, validateReplaySession } from "./index";
 
 test("resolveTurn is deterministic for the same memo selections", () => {
@@ -135,4 +135,40 @@ test("validateReplaySession reports mismatched history length without throwing",
   assert.equal(validation.ok, false);
   assert.equal(validation.failureKind, "history_length_mismatch");
   assert.equal(validation.checkedTurns, 0);
+});
+
+test("campaign state schema rejects impossible persisted metric ranges", () => {
+  const invalidState = {
+    ...soloScenario.initialState,
+    strategic: {
+      ...soloScenario.initialState.strategic,
+      domestic: {
+        ...soloScenario.initialState.strategic.domestic,
+        cabinetCover: 125,
+      },
+    },
+    domestic: {
+      ...soloScenario.initialState.domestic,
+      cabinetCover: 125,
+    },
+  };
+
+  const parsed = campaignStateSchema.safeParse(invalidState);
+
+  assert.equal(parsed.success, false);
+});
+
+test("campaign state schema rejects divergent strategic mirror fields", () => {
+  const invalidState = {
+    ...soloScenario.initialState,
+    domestic: {
+      ...soloScenario.initialState.domestic,
+      cabinetCover: soloScenario.initialState.domestic.cabinetCover - 1,
+    },
+  };
+
+  const parsed = campaignStateSchema.safeParse(invalidState);
+
+  assert.equal(parsed.success, false);
+  assert.ok(parsed.error.issues.some((issue) => issue.message.includes("domestic must mirror")));
 });

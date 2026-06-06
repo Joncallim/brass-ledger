@@ -18,6 +18,7 @@ Backlink: [[POTATO]]
 | `npm test` | Passed |
 | `npm run build` | Passed |
 | `npm run lint:content` | Passed |
+| `npm run lint:potato` | Passed |
 
 ## Existing Test Coverage
 
@@ -27,14 +28,16 @@ Backlink: [[POTATO]]
 - turn advancement plus burden/chief-position emission
 - chief trust effect on future positions
 - multi-stage chief conversation progression and trust deltas
+- replay validation reporting history length mismatches without throwing
+- schema rejection for out-of-range persisted campaign metrics
+- schema rejection for divergent `state.strategic` mirror fields
 
 ## Coverage Gaps
 
 - No HTTP route tests for save, import, resolve, export, delete, CORS, or static asset serving.
-- No replay corruption tests for missing history, mismatched history/input lengths, forged current state, or altered initial state.
+- No replay corruption tests for forged current state, altered initial state, altered replay hash, or extra history.
 - No concurrency tests for simultaneous resolve/conversation/save requests.
 - No persistence tests around path handling and id validation.
-- No schema tests for out-of-range persisted metrics.
 
 ## Suggested Tests
 

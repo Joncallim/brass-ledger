@@ -101,6 +101,11 @@ function contentTypeFor(filePath: string) {
   return "application/octet-stream";
 }
 
+function isPathInside(parentDir: string, candidatePath: string) {
+  const relative = path.relative(parentDir, candidatePath);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
 async function sendStaticFile(reply: FastifyReply, filePath: string) {
   const body = await readFile(filePath);
   reply.header("content-type", contentTypeFor(filePath));
@@ -551,7 +556,7 @@ app.get("/*", async (request, reply) => {
 
   const relativePath = pathname === "/" ? "index.html" : pathname.slice(1);
   const filePath = path.resolve(webDistDir, relativePath);
-  if (!filePath.startsWith(webDistDir)) {
+  if (!isPathInside(webDistDir, filePath)) {
     reply.code(400);
     return { error: "Invalid asset path" };
   }

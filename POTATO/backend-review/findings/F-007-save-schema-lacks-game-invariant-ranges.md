@@ -2,7 +2,7 @@
 type: backend-finding
 id: F-007
 severity: P2
-status: open
+status: closed
 area: schema/invariants
 risk: structurally valid saves can violate game ranges and mirrors
 file: packages/shared/src/index.ts
@@ -20,6 +20,8 @@ Backlink: [[POTATO]]
 ## Finding
 
 Most game-state metrics are plain `z.number()` fields with no min/max bounds. `GameSession` also does not enforce that top-level mirror fields match `state.strategic`.
+
+Status update: closed on 2026-06-06. Persisted campaign-state schemas now bound 0-100 index metrics, deployable-unit range, scores, turn ranges, tech progress, trust values, constraint severity, and enforce that the legacy top-level state mirrors match `state.strategic`.
 
 ## Impact
 
@@ -43,3 +45,5 @@ Add domain refinements:
 - replay-validity checks before persistence for any whole-session path
 
 If cross-field Zod refinements become too heavy, use a separate `validateGameSessionInvariants(session)` helper and call it before every write.
+
+Implemented with schema-level bounds and a `campaignStateSchema.superRefine` mirror check. State deltas remain intentionally unbounded so memo and event effects can still express negative changes before the resolver clamps final state.
