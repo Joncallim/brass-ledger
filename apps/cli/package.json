@@ -1,0 +1,23 @@
+{
+  "name": "@brass-ledger/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "brass-ledger": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js",
+    "start": "node --import tsx src/index.ts",
+    "run": "node dist/index.js"
+  },
+  "dependencies": {
+    "@brass-ledger/content": "*",
+    "@brass-ledger/shared": "*",
+    "@brass-ledger/sim": "*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.0"
+  }
+}

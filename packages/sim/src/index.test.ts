@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { soloScenario } from "@brass-ledger/content";
 import { buildChiefPositions, continueChiefConversation, startChiefConversation } from "@brass-ledger/shared";
-import { resolveTurn } from "./index";
+import { resolveTurn, validateReplaySession } from "./index";
 
 test("resolveTurn is deterministic for the same memo selections", () => {
   const input = {
@@ -110,4 +110,29 @@ test("chief conversations branch across multiple stages and update trust deltas"
   assert.equal(completed.choices.length, 0);
   assert.equal(completed.choiceTrail.length, 4);
   assert.ok(completed.totalTrustDelta >= 0);
+});
+
+test("validateReplaySession reports mismatched history length without throwing", () => {
+  const input = {
+    turn: 1,
+    selectedActionIds: [],
+    selections: [
+      { memoId: "posture", optionId: "measured-deterrence" },
+      { memoId: "intelligence-focus", optionId: "deception-hunt" },
+      { memoId: "sustainment-focus", optionId: "repair-first" },
+      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+      { memoId: "force-development", optionId: "training-reset" },
+    ],
+  };
+
+  const validation = validateReplaySession(soloScenario, {
+    initialState: soloScenario.initialState,
+    turnInputs: [input],
+    history: [],
+    state: soloScenario.initialState,
+  });
+
+  assert.equal(validation.ok, false);
+  assert.equal(validation.failureKind, "history_length_mismatch");
+  assert.equal(validation.checkedTurns, 0);
 });

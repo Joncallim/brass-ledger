@@ -24,7 +24,23 @@ import {
 import { deriveDecisionMemos, previewTurn, resolveTurn, validateReplaySession } from "@brass-ledger/sim";
 
 const app = Fastify({ logger: true });
-await app.register(cors, { origin: true });
+
+const allowedCorsOrigins = new Set(
+  (process.env.CORS_ORIGINS ?? "http://127.0.0.1:5173,http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
+
+await app.register(cors, {
+  origin(origin, callback) {
+    if (!origin || allowedCorsOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error("Origin is not allowed by CORS"), false);
+  },
+});
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -41,6 +57,35 @@ function resolveExistingPath(candidates: string[]) {
 const dataDir = resolveExistingPath(["../../../../data/saves", "../../../data/saves"]);
 const webDistDir = resolveExistingPath(["../../../web/dist", "../../web/dist"]);
 const webIndexPath = path.join(webDistDir, "index.html");
+const sessionIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const sessionLocks = new Map<string, Promise<unknown>>();
+
+function assertSessionId(sessionId: string) {
+  if (!sessionIdPattern.test(sessionId)) {
+    throw new Error("Invalid session id");
+  }
+}
+
+async function withSessionLock<T>(sessionId: string, operation: () => Promise<T>) {
+  assertSessionId(sessionId);
+  const previous = sessionLocks.get(sessionId) ?? Promise.resolve();
+  let release: () => void = () => {};
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const tail = previous.then(() => current, () => current);
+  sessionLocks.set(sessionId, tail);
+
+  try {
+    await previous.catch(() => undefined);
+    return await operation();
+  } finally {
+    release();
+    if (sessionLocks.get(sessionId) === tail) {
+      sessionLocks.delete(sessionId);
+    }
+  }
+}
 
 function contentTypeFor(filePath: string) {
   const ext = path.extname(filePath).toLowerCase();
@@ -77,7 +122,45 @@ async function serveClientShell(reply: FastifyReply) {
 }
 
 function sessionPath(sessionId: string) {
+  assertSessionId(sessionId);
   return path.join(dataDir, `${sessionId}.json`);
+}
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableJson).join(",")}]`;
+  }
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, entry]) => `${JSON.stringify(key)}:${stableJson(entry)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function assertReplayableSession(session: GameSession) {
+  if (session.turnInputs.length !== session.history.length) {
+    throw new Error("Session turn input and history lengths must match.");
+  }
+  const validation = replayValidationSchema.parse(validateReplaySession(soloScenario, session));
+  if (!validation.ok) {
+    throw new Error(`Session replay validation failed: ${validation.failureKind}`);
+  }
+  return validation;
+}
+
+function assertCanonicalImport(session: GameSession) {
+  if (session.scenarioId !== soloScenario.id || session.contentVersion !== soloScenario.contentVersion) {
+    throw new Error("Imported save is incompatible with the current scenario or content version.");
+  }
+  if (session.saveFormatVersion !== "5") {
+    throw new Error("Imported save format is not supported.");
+  }
+  if (stableJson(session.initialState) !== stableJson(soloScenario.initialState)) {
+    throw new Error("Imported save does not start from the canonical scenario initial state.");
+  }
+  assertReplayableSession(session);
 }
 
 async function ensureStore() {
@@ -197,7 +280,10 @@ app.get("/api/sessions/:id", async (request, reply) => {
 
 app.delete("/api/sessions/:id", async (request, reply) => {
   try {
-    await rm(sessionPath((request.params as { id: string }).id));
+    const { id } = request.params as { id: string };
+    await withSessionLock(id, async () => {
+      await rm(sessionPath(id));
+    });
     return { ok: true };
   } catch {
     reply.code(404);
@@ -207,18 +293,12 @@ app.delete("/api/sessions/:id", async (request, reply) => {
 
 app.post("/api/sessions/:id/save", async (request, reply) => {
   try {
-    const body = (request.body ?? {}) as { session?: unknown };
-    const session = gameSessionSchema.parse(body.session);
-    if (session.id !== (request.params as { id: string }).id) {
-      reply.code(400);
-      return { error: "Session id mismatch" };
-    }
-    const next = { ...session, updatedAt: new Date().toISOString() };
-    await writeSession(next);
-    return sessionPayload(next);
+    assertSessionId((request.params as { id: string }).id);
+    reply.code(410);
+    return { error: "Whole-session client saves are disabled. Use authoritative mutation endpoints instead." };
   } catch (error) {
     reply.code(400);
-    return { error: error instanceof Error ? error.message : "Invalid session payload" };
+    return { error: error instanceof Error ? error.message : "Invalid session id" };
   }
 });
 
@@ -249,60 +329,62 @@ app.post("/api/sessions/:id/preview-turn", async (request, reply) => {
 
 app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, reply) => {
   try {
-    const session = await readSession((request.params as { id: string }).id);
-    const { chiefId } = request.params as { id: string; chiefId: string };
+    const { id, chiefId } = request.params as { id: string; chiefId: string };
     const body = (request.body ?? {}) as { memoId?: string; optionId?: string };
     if (!body.memoId || !body.optionId) {
       reply.code(400);
       return { error: "memoId and optionId are required." };
     }
 
-    const chief = soloScenario.chiefs.find((entry) => entry.id === chiefId);
-    if (!chief) {
-      reply.code(404);
-      return { error: "Chief not found" };
-    }
+    return await withSessionLock(id, async () => {
+      const session = await readSession(id);
+      const chief = soloScenario.chiefs.find((entry) => entry.id === chiefId);
+      if (!chief) {
+        reply.code(404);
+        return { error: "Chief not found" };
+      }
 
-    const memos = deriveDecisionMemos(soloScenario, session.state);
-    const memo = memos.find((entry) => entry.id === body.memoId);
-    const option = memo?.options.find((entry) => entry.id === body.optionId);
-    if (!memo || !option) {
-      reply.code(400);
-      return { error: "The selected memo option is no longer valid." };
-    }
+      const memos = deriveDecisionMemos(soloScenario, session.state);
+      const memo = memos.find((entry) => entry.id === body.memoId);
+      const option = memo?.options.find((entry) => entry.id === body.optionId);
+      if (!memo || !option) {
+        reply.code(400);
+        return { error: "The selected memo option is no longer valid." };
+      }
 
-    const existing = getConversationRecordForTurn(session.state, chiefId);
-    if (existing && existing.memoId === memo.id && existing.optionId === option.id) {
+      const existing = getConversationRecordForTurn(session.state, chiefId);
+      if (existing && existing.memoId === memo.id && existing.optionId === option.id) {
+        return {
+          ...sessionPayload(session),
+          conversation: existing,
+        };
+      }
+
+      const position = buildChiefPositions(soloScenario.chiefs, session.state, memo, option).find((entry) => entry.chiefId === chiefId);
+      if (!position) {
+        reply.code(400);
+        return { error: "Could not derive a chief position for this packet." };
+      }
+
+      const conversation = startChiefConversation(chief, memo, option, position, session.state);
+      const updatedSession = gameSessionSchema.parse({
+        ...session,
+        state: {
+          ...session.state,
+          conversationHistory: [
+            ...session.state.conversationHistory.filter((entry) => !(entry.turn === session.state.turn && entry.chiefId === chiefId)),
+            conversation,
+          ],
+        },
+        updatedAt: new Date().toISOString(),
+      });
+
+      await writeSession(updatedSession);
       return {
-        ...sessionPayload(session),
-        conversation: existing,
+        ...sessionPayload(updatedSession),
+        conversation,
       };
-    }
-
-    const position = buildChiefPositions(soloScenario.chiefs, session.state, memo, option).find((entry) => entry.chiefId === chiefId);
-    if (!position) {
-      reply.code(400);
-      return { error: "Could not derive a chief position for this packet." };
-    }
-
-    const conversation = startChiefConversation(chief, memo, option, position, session.state);
-    const updatedSession = gameSessionSchema.parse({
-      ...session,
-      state: {
-        ...session.state,
-        conversationHistory: [
-          ...session.state.conversationHistory.filter((entry) => !(entry.turn === session.state.turn && entry.chiefId === chiefId)),
-          conversation,
-        ],
-      },
-      updatedAt: new Date().toISOString(),
     });
-
-    await writeSession(updatedSession);
-    return {
-      ...sessionPayload(updatedSession),
-      conversation,
-    };
   } catch (error) {
     reply.code(400);
     return { error: error instanceof Error ? error.message : "Failed to open chief conversation" };
@@ -311,68 +393,71 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
 
 app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => {
   try {
-    const session = await readSession((request.params as { id: string }).id);
-    const { chiefId } = request.params as { id: string; chiefId: string };
+    const { id, chiefId } = request.params as { id: string; chiefId: string };
     const body = (request.body ?? {}) as { responseId?: string };
     if (!body.responseId) {
       reply.code(400);
       return { error: "responseId is required." };
     }
+    const responseId = body.responseId;
 
-    const chief = soloScenario.chiefs.find((entry) => entry.id === chiefId);
-    if (!chief) {
-      reply.code(404);
-      return { error: "Chief not found" };
-    }
+    return await withSessionLock(id, async () => {
+      const session = await readSession(id);
+      const chief = soloScenario.chiefs.find((entry) => entry.id === chiefId);
+      if (!chief) {
+        reply.code(404);
+        return { error: "Chief not found" };
+      }
 
-    const conversation = getConversationRecordForTurn(session.state, chiefId);
-    if (!conversation) {
-      reply.code(404);
-      return { error: "No open conversation exists for this chief this month." };
-    }
-    if (conversation.status === "completed") {
-      reply.code(409);
-      return { error: "This chief conversation has already concluded.", conversation };
-    }
+      const conversation = getConversationRecordForTurn(session.state, chiefId);
+      if (!conversation) {
+        reply.code(404);
+        return { error: "No open conversation exists for this chief this month." };
+      }
+      if (conversation.status === "completed") {
+        reply.code(409);
+        return { error: "This chief conversation has already concluded.", conversation };
+      }
 
-    const memos = deriveDecisionMemos(soloScenario, session.state);
-    const memo = memos.find((entry) => entry.id === conversation.memoId);
-    const option = memo?.options.find((entry) => entry.id === conversation.optionId);
-    if (!memo || !option) {
-      reply.code(400);
-      return { error: "The selected memo option is no longer valid." };
-    }
+      const memos = deriveDecisionMemos(soloScenario, session.state);
+      const memo = memos.find((entry) => entry.id === conversation.memoId);
+      const option = memo?.options.find((entry) => entry.id === conversation.optionId);
+      if (!memo || !option) {
+        reply.code(400);
+        return { error: "The selected memo option is no longer valid." };
+      }
 
-    const nextConversation = continueChiefConversation(conversation, chief, memo, option, session.state, body.responseId);
+      const nextConversation = continueChiefConversation(conversation, chief, memo, option, session.state, responseId);
 
-    const updatedSession = gameSessionSchema.parse({
-      ...session,
-      state: {
-        ...session.state,
-        chiefTrust: {
-          ...session.state.chiefTrust,
-          [chiefId]: nextConversation.trustAfter,
+      const updatedSession = gameSessionSchema.parse({
+        ...session,
+        state: {
+          ...session.state,
+          chiefTrust: {
+            ...session.state.chiefTrust,
+            [chiefId]: nextConversation.trustAfter,
+          },
+          conversationHistory: session.state.conversationHistory.map((entry) =>
+            entry.turn === session.state.turn && entry.chiefId === chiefId ? nextConversation : entry,
+          ),
         },
-        conversationHistory: session.state.conversationHistory.map((entry) =>
-          entry.turn === session.state.turn && entry.chiefId === chiefId ? nextConversation : entry,
-        ),
-      },
-      updatedAt: new Date().toISOString(),
-    });
+        updatedAt: new Date().toISOString(),
+      });
 
-    await writeSession(updatedSession);
-    const selectedResponse = conversation.choices.find((entry) => entry.id === body.responseId);
-    return {
-      ...sessionPayload(updatedSession),
-      conversation: nextConversation,
-      response: selectedResponse
-        ? {
-            ...selectedResponse,
-            trustAfter: nextConversation.trustAfter,
-            relationshipEffect: relationshipDeltaLabel(selectedResponse.trustDelta),
-          }
-        : null,
-    };
+      await writeSession(updatedSession);
+      const selectedResponse = conversation.choices.find((entry) => entry.id === responseId);
+      return {
+        ...sessionPayload(updatedSession),
+        conversation: nextConversation,
+        response: selectedResponse
+          ? {
+              ...selectedResponse,
+              trustAfter: nextConversation.trustAfter,
+              relationshipEffect: relationshipDeltaLabel(selectedResponse.trustDelta),
+            }
+          : null,
+      };
+    });
   } catch (error) {
     reply.code(400);
     return { error: error instanceof Error ? error.message : "Failed to update chief relationship" };
@@ -381,24 +466,27 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
 
 app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
   try {
-    const session = await readSession((request.params as { id: string }).id);
+    const { id } = request.params as { id: string };
     const body = (request.body ?? {}) as { input?: unknown };
     const input = turnInputSchema.parse(body.input);
-    const result = resolveTurn(soloScenario, session.state, input);
-    const nextSession = gameSessionSchema.parse({
-      ...session,
-      state: result.nextState,
-      turnInputs: [...session.turnInputs, input],
-      history: [...session.history, result],
-      updatedAt: new Date().toISOString(),
+    return await withSessionLock(id, async () => {
+      const session = await readSession(id);
+      const result = resolveTurn(soloScenario, session.state, input);
+      const nextSession = gameSessionSchema.parse({
+        ...session,
+        state: result.nextState,
+        turnInputs: [...session.turnInputs, input],
+        history: [...session.history, result],
+        updatedAt: new Date().toISOString(),
+      });
+      const validation: ReplayValidation = assertReplayableSession(nextSession);
+      await writeSession(nextSession);
+      return {
+        result,
+        validation,
+        ...sessionPayload(nextSession),
+      };
     });
-    const validation: ReplayValidation = replayValidationSchema.parse(validateReplaySession(soloScenario, nextSession));
-    await writeSession(nextSession);
-    return {
-      result,
-      validation,
-      ...sessionPayload(nextSession),
-    };
   } catch (error) {
     reply.code(400);
     return { error: error instanceof Error ? error.message : "Failed to resolve turn" };
@@ -423,9 +511,11 @@ app.post("/api/sessions/import", async (request, reply) => {
     const body = (request.body ?? {}) as { exportData?: unknown };
     const parsed = sessionExportSchema.parse(body.exportData);
     const session = parsed.session;
-    if (session.scenarioId !== soloScenario.id || session.contentVersion !== soloScenario.contentVersion) {
+    try {
+      assertCanonicalImport(session);
+    } catch (error) {
       reply.code(409);
-      return { error: "Imported save is incompatible with the current scenario or content version." };
+      return { error: error instanceof Error ? error.message : "Imported save failed validation." };
     }
     const importedSession = {
       ...session,
