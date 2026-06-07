@@ -15,6 +15,21 @@ export const soloScenario = scenarioDefinitionSchema.parse({
     { id: "sato", name: "Gen. Mina Sato", genderPresentation: "female", directorate: "plans", title: "Chief of Plans", doctrineBias: "shape the theater before it hardens against you", temperament: "strategic and political", competence: 0.82, riskTolerance: 0.48, preferredTags: ["alliance", "modernization", "program", "public-commitment"], concernTags: ["ad-hoc", "hollow"] },
     { id: "navarro", name: "Lt. Gen. Elena Navarro", genderPresentation: "female", directorate: "training", title: "Chief of Training", doctrineBias: "repetition before prestige", temperament: "exacting and unsentimental", competence: 0.85, riskTolerance: 0.38, preferredTags: ["training", "recovery", "simulation", "standardization"], concernTags: ["tempo-spike", "hollow"] },
   ],
+  staffCapacities: [
+    { directorate: "people", capacity: 3, strainedAt: 3, overloadedAt: 5 },
+    { directorate: "intelligence", capacity: 3, strainedAt: 3, overloadedAt: 5 },
+    { directorate: "operations", capacity: 4, strainedAt: 4, overloadedAt: 6 },
+    { directorate: "sustainment", capacity: 4, strainedAt: 4, overloadedAt: 6 },
+    { directorate: "plans", capacity: 3, strainedAt: 3, overloadedAt: 5 },
+    { directorate: "training", capacity: 3, strainedAt: 3, overloadedAt: 5 },
+  ],
+  staffFunctions: [
+    { id: "S1", label: "Personnel", shortLabel: "S1", directorates: ["people"], doctrineNote: "Protect force generation, retention, reserve predictability, and recovery debt.", metricLabels: ["Deployable units", "Reserve strain", "Personnel shortfalls"] },
+    { id: "S2", label: "Intelligence", shortLabel: "S2", directorates: ["intelligence"], doctrineNote: "Keep warning confidence honest under collection gaps and deception pressure.", metricLabels: ["Confidence", "Warning reliability", "Deception pressure"] },
+    { id: "S3", label: "Operations", shortLabel: "S3", directorates: ["operations", "training"], doctrineNote: "Convert posture and training guidance into executable readiness.", metricLabels: ["Deployable units", "Training throughput", "Incident ladder"] },
+    { id: "S4", label: "Logistics", shortLabel: "S4", directorates: ["sustainment"], doctrineNote: "Keep depot, munitions, fuel, and lift constraints inside the promise envelope.", metricLabels: ["Depot backlog", "Munitions", "Lift availability"] },
+    { id: "S5", label: "Plans", shortLabel: "S5", directorates: ["plans"], doctrineNote: "Sequence alliance, political, and modernization choices into a coherent campaign.", metricLabels: ["Cabinet cover", "Alliance alignment", "Committee tolerance"] },
+  ],
   capabilityPrograms: [
     { id: "fires-network", label: "Joint Fires Network", summary: "Long-range targeting and fires integration across the theater force.", absorbingDirectorate: "operations", payoff: "Creates a credible operational deterrent once integrated and trained.", fragility: "Moves fastest on paper; stalls if training and sustainment do not keep up.", preferredTags: ["fires", "deterrence", "simulation"] },
     { id: "counter-deception-grid", label: "Counter-Deception Grid", summary: "Collection, validation, and red-team measures that improve warning reliability.", absorbingDirectorate: "intelligence", payoff: "Improves warning time and protects commander confidence.", fragility: "Looks effective early, but collapses if the brief is overclaimed.", preferredTags: ["counter-deception", "collection", "warning"] },
@@ -136,6 +151,13 @@ export const soloScenario = scenarioDefinitionSchema.parse({
       alliance: { reassurance: 48, politicalAlignment: 50, partnerParticipation: 44, partnerPublicSupport: 46 },
       domestic: { cabinetCover: 51, committeeTolerance: 54, mediaHeat: 39, publicPatience: 56 },
       escalation: { probeTempo: 43, warningTime: 38, incidentLadder: 34, crisisSensitivity: 48 },
+    },
+    staffMechanics: {
+      s1: { recoveryDebt: 42, reservePredictability: 51 },
+      s2: { externalEstimateConfidence: 46, visibility: "ESTIMATED", deceptionRisk: 44 },
+      s3: { visiblePosture: 48, executablePosture: 50 },
+      s4: { stockpileDepth: 47, liftBurn: 41 },
+      s5: { strategicCoherence: 52, doctrineAlignment: 50 },
     },
     resources: {
       budgetAuthority: 61,

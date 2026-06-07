@@ -4,6 +4,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { soloScenario } from "@brass-ledger/content";
 import {
   buildAdvisorPortraitSvg,
+  buildDirectorateBurden,
+  buildStaffFunctionReadouts,
   createInitialGameSession,
   gameSessionSchema,
   sessionExportSchema,
@@ -132,6 +134,13 @@ async function runHeadlessCampaign(options: CliOptions) {
       turn: input.turn,
       summary: result.summary,
       replayHash: result.replayHash,
+      staffFunctions: result.staffFunctions.map((entry) => ({
+        id: entry.id,
+        status: entry.status,
+        burdenPoints: entry.burdenPoints,
+        capacity: entry.capacity,
+        warnings: entry.warnings,
+      })),
       triggeredEvents: result.triggeredEvents.map((event) => event.id),
     });
   }
@@ -164,6 +173,11 @@ async function runHeadlessCampaign(options: CliOptions) {
       status: session.state.campaignStatus,
       score: session.state.campaignScore,
       outcome: session.state.campaignOutcome,
+      staffFunctions: buildStaffFunctionReadouts(
+        soloScenario.staffFunctions,
+        buildDirectorateBurden(deriveDecisionMemos(soloScenario, session.state), [], soloScenario.staffCapacities),
+        session.state,
+      ),
     },
     turnSummaries,
     validation,

@@ -1,24 +1,36 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { soloScenario } from "@brass-ledger/content";
-import { buildChiefPositions, campaignStateSchema, continueChiefConversation, startChiefConversation } from "@brass-ledger/shared";
+import { buildChiefPositions, campaignStateSchema, continueChiefConversation, startChiefConversation, type TurnInput } from "@brass-ledger/shared";
 import { resolveTurn, validateReplaySession } from "./index";
 
-test("resolveTurn is deterministic for the same memo selections", () => {
-  const input = {
-    turn: 1,
-    selectedActionIds: [],
-    selections: [
-      { memoId: "posture", optionId: "measured-deterrence" },
-      { memoId: "intelligence-focus", optionId: "deception-hunt" },
-      { memoId: "sustainment-focus", optionId: "repair-first" },
-      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
-      { memoId: "force-development", optionId: "training-reset" },
-    ],
-  };
+const balancedInput: TurnInput = {
+  turn: 1,
+  selectedActionIds: [],
+  selections: [
+    { memoId: "posture", optionId: "measured-deterrence" },
+    { memoId: "intelligence-focus", optionId: "deception-hunt" },
+    { memoId: "sustainment-focus", optionId: "repair-first" },
+    { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+    { memoId: "force-development", optionId: "training-reset" },
+  ],
+};
 
-  const left = resolveTurn(soloScenario, soloScenario.initialState, input);
-  const right = resolveTurn(soloScenario, soloScenario.initialState, input);
+const highTempoInput: TurnInput = {
+  turn: 1,
+  selectedActionIds: [],
+  selections: [
+    { memoId: "posture", optionId: "surge-exercises" },
+    { memoId: "intelligence-focus", optionId: "industrial-watch" },
+    { memoId: "sustainment-focus", optionId: "munitions-hedge" },
+    { memoId: "alliance-frame", optionId: "modernization-case" },
+    { memoId: "force-development", optionId: "fires-prototype" },
+  ],
+};
+
+test("resolveTurn is deterministic for the same memo selections", () => {
+  const left = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const right = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
 
   assert.equal(left.replayHash, right.replayHash);
   assert.deepEqual(left.nextState, right.nextState);
@@ -41,6 +53,29 @@ test("resolveTurn advances the month and emits directorate burden and chiefs pos
   assert.ok(result.directorateBurden.length === 6);
   assert.ok(result.chiefPositions.length >= 20);
   assert.ok(result.summary.includes("Turn 2/12"));
+});
+
+test("resolveTurn emits S1-S5 staff readouts and causal explainability", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+
+  assert.deepEqual(result.staffFunctions.map((entry) => entry.id), ["S1", "S2", "S3", "S4", "S5"]);
+  assert.ok(result.staffFunctions.every((entry) => entry.metrics.length >= 3));
+  assert.ok(result.staffFunctions.some((entry) => entry.warnings.length > 0));
+  assert.ok(result.explainability.length >= 4);
+  assert.ok(result.explainability.every((entry) => entry.causalRefs.length > 0 || entry.label === "Events"));
+});
+
+test("resolveTurn advances S1-S5 core mechanics", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
+
+  assert.ok(result.nextState.staffMechanics.s1.recoveryDebt > soloScenario.initialState.staffMechanics.s1.recoveryDebt);
+  assert.ok(result.nextState.staffMechanics.s2.externalEstimateConfidence > soloScenario.initialState.staffMechanics.s2.externalEstimateConfidence);
+  assert.ok(["RUMORED", "ESTIMATED", "KNOWN"].includes(result.nextState.staffMechanics.s2.visibility));
+  assert.ok(result.nextState.staffMechanics.s3.visiblePosture > soloScenario.initialState.staffMechanics.s3.visiblePosture);
+  assert.ok(result.nextState.staffMechanics.s4.liftBurn > soloScenario.initialState.staffMechanics.s4.liftBurn);
+  assert.ok(result.nextState.staffMechanics.s5.strategicCoherence !== soloScenario.initialState.staffMechanics.s5.strategicCoherence);
+  assert.ok(result.afterAction.some((entry) => entry.heading === "S1-S5 consequences"));
+  assert.ok(result.explainability.some((entry) => entry.label === "S1-S5 mechanics"));
 });
 
 test("chief trust influences future positions on the same packet", () => {
@@ -113,21 +148,9 @@ test("chief conversations branch across multiple stages and update trust deltas"
 });
 
 test("validateReplaySession reports mismatched history length without throwing", () => {
-  const input = {
-    turn: 1,
-    selectedActionIds: [],
-    selections: [
-      { memoId: "posture", optionId: "measured-deterrence" },
-      { memoId: "intelligence-focus", optionId: "deception-hunt" },
-      { memoId: "sustainment-focus", optionId: "repair-first" },
-      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
-      { memoId: "force-development", optionId: "training-reset" },
-    ],
-  };
-
   const validation = validateReplaySession(soloScenario, {
     initialState: soloScenario.initialState,
-    turnInputs: [input],
+    turnInputs: [balancedInput],
     history: [],
     state: soloScenario.initialState,
   });
@@ -135,6 +158,86 @@ test("validateReplaySession reports mismatched history length without throwing",
   assert.equal(validation.ok, false);
   assert.equal(validation.failureKind, "history_length_mismatch");
   assert.equal(validation.checkedTurns, 0);
+});
+
+test("validateReplaySession reports replay hash corruption", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const validation = validateReplaySession(soloScenario, {
+    initialState: soloScenario.initialState,
+    turnInputs: [balancedInput],
+    history: [{ ...result, replayHash: "forged" }],
+    state: result.nextState,
+  });
+
+  assert.equal(validation.ok, false);
+  assert.equal(validation.failureKind, "replay_hash_mismatch");
+});
+
+test("validateReplaySession reports altered final state corruption", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const alteredState = {
+    ...result.nextState,
+    strategic: {
+      ...result.nextState.strategic,
+      domestic: {
+        ...result.nextState.strategic.domestic,
+        cabinetCover: result.nextState.strategic.domestic.cabinetCover + 1,
+      },
+    },
+    domestic: {
+      ...result.nextState.domestic,
+      cabinetCover: result.nextState.domestic.cabinetCover + 1,
+    },
+  };
+  const validation = validateReplaySession(soloScenario, {
+    initialState: soloScenario.initialState,
+    turnInputs: [balancedInput],
+    history: [result],
+    state: alteredState,
+  });
+
+  assert.equal(validation.ok, false);
+  assert.equal(validation.failureKind, "final_state_mismatch");
+});
+
+test("validateReplaySession reports altered initial state corruption", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const alteredInitialState = {
+    ...soloScenario.initialState,
+    strategic: {
+      ...soloScenario.initialState.strategic,
+      intelligence: {
+        ...soloScenario.initialState.strategic.intelligence,
+        confidence: soloScenario.initialState.strategic.intelligence.confidence + 1,
+      },
+    },
+    intel: {
+      ...soloScenario.initialState.intel,
+      confidence: soloScenario.initialState.intel.confidence + 1,
+    },
+  };
+  const validation = validateReplaySession(soloScenario, {
+    initialState: alteredInitialState,
+    turnInputs: [balancedInput],
+    history: [result],
+    state: result.nextState,
+  });
+
+  assert.equal(validation.ok, false);
+  assert.equal(validation.failureKind, "replay_hash_mismatch");
+});
+
+test("validateReplaySession reports extra history length corruption", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const validation = validateReplaySession(soloScenario, {
+    initialState: soloScenario.initialState,
+    turnInputs: [balancedInput],
+    history: [result, result],
+    state: result.nextState,
+  });
+
+  assert.equal(validation.ok, false);
+  assert.equal(validation.failureKind, "history_length_mismatch");
 });
 
 test("campaign state schema rejects impossible persisted metric ranges", () => {

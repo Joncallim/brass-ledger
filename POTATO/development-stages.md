@@ -18,31 +18,31 @@ Status: active.
 
 Goals:
 
-- Consolidate all Obsidian notes into [[POTATO]].
-- Treat POTATO as the source of truth.
+- Consolidate all Obsidian notes into [[../GROCER/GROCER]].
+- Treat GROCER as the vault source of truth and POTATO as the engine/mechanics domain.
 - Keep browser UI reduced to an engine workbench.
 - Add compiled CLI route.
 
 Exit criteria:
 
 - `apps/cli` builds and runs.
-- POTATO contains architecture, S1-S5, sprite, and design notes.
+- GROCER contains architecture, S1-S5, sprite, doctrine, world, and design notes.
 - Browser is no longer the main game interface.
 
 ## Stage 1: Engine Contract Stabilization
 
 Goals:
 
-- Define `StaffFunctionReadout`.
-- Emit S1-S5 readouts from scenario/session payloads and turn previews.
-- Add explainability entries to every turn result.
+- Define `StaffFunctionReadout`. Implemented: shared schema and helper now emit S1-S5 readouts from scenario-owned staff function definitions.
+- Emit S1-S5 readouts from scenario/session payloads and turn previews. Implemented: server session payloads, preview/resolve results, and CLI headless summaries expose `staffFunctions`.
+- Add explainability entries to every turn result. Implemented: `TurnResult.explainability` now includes decision packet, staff capacity, state movement, and event causal references.
 - Canonicalize save validation around replay.
-- Move staff capacities and thresholds into content data.
+- Move staff capacities and thresholds into content data. Implemented: scenario `staffCapacities` owns directorate capacity, strain, and overload thresholds.
 
 Exit criteria:
 
-- CLI can run a campaign and output S1-S5 consequences.
-- Tests cover each S1-S5 function.
+- CLI can run a campaign and output S1-S5 consequences. Implemented for headless turn summaries and final session output.
+- Tests cover each S1-S5 function. Implemented for readout emission; deeper per-function mechanics remain Stage 2 work.
 - Save/replay hardening findings from [[backend-review/review-summary]] are addressed.
 
 ## Stage 2: S1-S5 Core Mechanic
@@ -50,16 +50,16 @@ Exit criteria:
 Goals:
 
 - Make S1-S5 burden the primary action economy.
-- Add S1 recovery debt.
-- Add S2 fog-of-war confidence/visibility.
-- Add S3 visible versus executable posture.
-- Add S4 stockpile/lift burn.
-- Add S5 strategic coherence and doctrine.
+- Add S1 recovery debt. Started: `staffMechanics.s1` tracks recovery debt and reserve predictability.
+- Add S2 fog-of-war confidence/visibility. Started: `staffMechanics.s2` tracks external estimate confidence, visibility, and deception risk.
+- Add S3 visible versus executable posture. Started: `staffMechanics.s3` tracks visible and executable posture separately.
+- Add S4 stockpile/lift burn. Started: `staffMechanics.s4` tracks stockpile depth and lift burn.
+- Add S5 strategic coherence and doctrine. Started: `staffMechanics.s5` tracks strategic coherence and doctrine alignment.
 
 Exit criteria:
 
 - Every decision option has S1-S5 costs and warnings.
-- After-action explains outcomes by S-function.
+- After-action explains outcomes by S-function. Started: after-action now includes an S1-S5 consequence note.
 - No decision can bypass staff capacity.
 
 ## Stage 3: Dual Tech Tree And Industry Model

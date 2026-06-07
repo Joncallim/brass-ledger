@@ -1,6 +1,6 @@
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -71,6 +71,16 @@ test("whole-session save is disabled and invalid session ids are rejected", asyn
     payload: { session: created.session },
   });
   assert.equal(invalidId.statusCode, 400);
+});
+
+test("scenario and session payloads expose S1-S5 staff contracts", async () => {
+  const scenario = await app.inject({ method: "GET", url: "/api/scenario" });
+  assert.equal(scenario.statusCode, 200);
+  assert.deepEqual(scenario.json().scenario.staffFunctions.map((entry: { id: string }) => entry.id), ["S1", "S2", "S3", "S4", "S5"]);
+  assert.ok(scenario.json().scenario.staffCapacities.length >= 6);
+
+  const created = await createSession();
+  assert.deepEqual(created.staffFunctions.map((entry: { id: string }) => entry.id), ["S1", "S2", "S3", "S4", "S5"]);
 });
 
 test("resolve-turn persists a revision and rejects stale expected revisions", async () => {
@@ -167,6 +177,33 @@ test("import rejects forged session exports and accepts replayable exports under
   assert.equal(acceptedBody.session.revision, 0);
 });
 
+test("import rejects replay-corrupted session exports", async () => {
+  const created = await createSession();
+  const input = {
+    turn: created.session.state.turn,
+    selectedActionIds: [],
+    selections: firstOptionSelections(created.memos),
+  };
+  const resolved = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${created.session.id}/resolve-turn`,
+    payload: { input },
+  });
+  assert.equal(resolved.statusCode, 200);
+
+  const exported = await app.inject({ method: "GET", url: `/api/sessions/${created.session.id}/export` });
+  const exportData = exported.json();
+  exportData.session.history[0].replayHash = "forged";
+  const rejected = await app.inject({
+    method: "POST",
+    url: "/api/sessions/import",
+    payload: { exportData },
+  });
+
+  assert.equal(rejected.statusCode, 409);
+  assert.match(rejected.json().error, /replay validation failed/i);
+});
+
 test("replay endpoint validates current session history", async () => {
   const created = await createSession();
   const replay = await app.inject({ method: "GET", url: `/api/sessions/${created.session.id}/replay` });
@@ -185,6 +222,43 @@ test("delete removes a session and rejects later reads", async () => {
 
   const missing = await app.inject({ method: "GET", url: `/api/sessions/${id}` });
   assert.equal(missing.statusCode, 404);
+});
+
+test("session listing skips malformed persisted save files", async () => {
+  await writeFile(path.join(saveDir, "malformed.json"), "{not valid json", "utf8");
+  const listed = await app.inject({ method: "GET", url: "/api/sessions" });
+
+  assert.equal(listed.statusCode, 200);
+  assert.ok(Array.isArray(listed.json().sessions));
+});
+
+test("simultaneous authoritative mutations do not both apply against one revision", async () => {
+  const created = await createSession();
+  const id = created.session.id;
+  const input = {
+    turn: created.session.state.turn,
+    selectedActionIds: [],
+    selections: firstOptionSelections(created.memos),
+  };
+  const memo = created.memos[0];
+  const option = memo.options[0];
+  const chiefId = created.session.advisorRoster[0].chiefId;
+
+  const [resolved, opened] = await Promise.all([
+    app.inject({
+      method: "POST",
+      url: `/api/sessions/${id}/resolve-turn`,
+      payload: { input, expectedRevision: 0 },
+    }),
+    app.inject({
+      method: "POST",
+      url: `/api/sessions/${id}/chiefs/${chiefId}/conversation/open`,
+      payload: { memoId: memo.id, optionId: option.id, expectedRevision: 0 },
+    }),
+  ]);
+
+  const statuses = [resolved.statusCode, opened.statusCode].sort();
+  assert.deepEqual(statuses, [200, 409]);
 });
 
 test("static routes serve the client shell and do not expose traversed files", async () => {

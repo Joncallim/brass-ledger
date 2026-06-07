@@ -34,6 +34,9 @@ export const chiefPositionSchema = z.enum([
 ]);
 export type ChiefPositionType = z.infer<typeof chiefPositionSchema>;
 
+export const staffFunctionIdSchema = z.enum(["S1", "S2", "S3", "S4", "S5"]);
+export type StaffFunctionId = z.infer<typeof staffFunctionIdSchema>;
+
 const indexMetricSchema = z.number().min(0).max(100);
 const deployableUnitsSchema = z.number().min(2).max(12);
 const campaignScoreSchema = z.number().min(0).max(100);
@@ -97,6 +100,39 @@ export const strategicStateSchema = z.object({
 });
 export type StrategicState = z.infer<typeof strategicStateSchema>;
 
+export const staffMechanicsStateSchema = z.object({
+  s1: z.object({
+    recoveryDebt: indexMetricSchema,
+    reservePredictability: indexMetricSchema,
+  }),
+  s2: z.object({
+    externalEstimateConfidence: indexMetricSchema,
+    visibility: z.enum(["RUMORED", "ESTIMATED", "KNOWN"]),
+    deceptionRisk: indexMetricSchema,
+  }),
+  s3: z.object({
+    visiblePosture: indexMetricSchema,
+    executablePosture: indexMetricSchema,
+  }),
+  s4: z.object({
+    stockpileDepth: indexMetricSchema,
+    liftBurn: indexMetricSchema,
+  }),
+  s5: z.object({
+    strategicCoherence: indexMetricSchema,
+    doctrineAlignment: indexMetricSchema,
+  }),
+});
+export type StaffMechanicsState = z.infer<typeof staffMechanicsStateSchema>;
+
+const defaultStaffMechanicsState: StaffMechanicsState = {
+  s1: { recoveryDebt: 42, reservePredictability: 51 },
+  s2: { externalEstimateConfidence: 46, visibility: "ESTIMATED", deceptionRisk: 44 },
+  s3: { visiblePosture: 48, executablePosture: 50 },
+  s4: { stockpileDepth: 47, liftBurn: 41 },
+  s5: { strategicCoherence: 52, doctrineAlignment: 50 },
+};
+
 export const resourcesSchema = z.object({
   budgetAuthority: indexMetricSchema,
   readiness: indexMetricSchema,
@@ -151,6 +187,7 @@ export const explainabilityEntrySchema = z.object({
   summary: z.string(),
   positiveDrivers: z.array(z.string()),
   blockers: z.array(z.string()),
+  causalRefs: z.array(z.string()).default([]),
 });
 export type ExplainabilityEntry = z.infer<typeof explainabilityEntrySchema>;
 
@@ -397,6 +434,24 @@ export const chiefPositionEntrySchema = z.object({
 export type ChiefPositionEntry = z.infer<typeof chiefPositionEntrySchema>;
 export type ChiefPosition = ChiefPositionEntry;
 
+export const staffCapacityDefinitionSchema = z.object({
+  directorate: directorateSchema,
+  capacity: nonNegativeNumberSchema,
+  strainedAt: nonNegativeNumberSchema,
+  overloadedAt: nonNegativeNumberSchema,
+});
+export type StaffCapacityDefinition = z.infer<typeof staffCapacityDefinitionSchema>;
+
+export const staffFunctionDefinitionSchema = z.object({
+  id: staffFunctionIdSchema,
+  label: z.string(),
+  shortLabel: z.string(),
+  directorates: z.array(directorateSchema).min(1),
+  doctrineNote: z.string(),
+  metricLabels: z.array(z.string()).min(1),
+});
+export type StaffFunctionDefinition = z.infer<typeof staffFunctionDefinitionSchema>;
+
 export const directorateBurdenSchema = z.object({
   directorate: directorateSchema,
   burdenPoints: nonNegativeNumberSchema,
@@ -408,6 +463,28 @@ export const directorateBurdenSchema = z.object({
   summary: z.string(),
 });
 export type DirectorateBurden = z.infer<typeof directorateBurdenSchema>;
+
+export const staffFunctionMetricSchema = z.object({
+  label: z.string(),
+  value: z.number(),
+  status: z.enum(["healthy", "watch", "risk"]),
+});
+export type StaffFunctionMetric = z.infer<typeof staffFunctionMetricSchema>;
+
+export const staffFunctionReadoutSchema = z.object({
+  id: staffFunctionIdSchema,
+  label: z.string(),
+  shortLabel: z.string(),
+  directorates: z.array(directorateSchema),
+  status: z.enum(["ready", "strained", "overloaded", "compromised"]),
+  burdenPoints: nonNegativeNumberSchema,
+  capacity: nonNegativeNumberSchema,
+  headroom: z.number(),
+  warnings: z.array(z.string()),
+  consequence: z.string(),
+  metrics: z.array(staffFunctionMetricSchema),
+});
+export type StaffFunctionReadout = z.infer<typeof staffFunctionReadoutSchema>;
 
 export const monthlyEstimateSchema = z.object({
   chiefsPaperTitle: z.string(),
@@ -492,6 +569,7 @@ export const campaignStateSchema = z.object({
   campaignScore: campaignScoreSchema.default(0),
   campaignOutcome: z.string().nullable().default(null),
   strategic: strategicStateSchema,
+  staffMechanics: staffMechanicsStateSchema.default(defaultStaffMechanicsState),
   resources: resourcesSchema,
   forceGeneration: forceGenerationStateSchema,
   intel: intelStateSchema,
@@ -577,6 +655,7 @@ export const turnResultSchema = z.object({
   chiefPositions: z.array(chiefPositionEntrySchema),
   monthlyEstimate: monthlyEstimateSchema,
   directorateBurden: z.array(directorateBurdenSchema),
+  staffFunctions: z.array(staffFunctionReadoutSchema).default([]),
   explainability: z.array(explainabilityEntrySchema).default([]),
   portfolioLoad: z.array(z.object({
     directorate: directorateSchema,
@@ -602,6 +681,8 @@ export const scenarioDefinitionSchema = z.object({
   contentVersion: z.string(),
   maxTurns: z.number().int(),
   chiefs: z.array(chiefArchetypeSchema),
+  staffCapacities: z.array(staffCapacityDefinitionSchema).default([]),
+  staffFunctions: z.array(staffFunctionDefinitionSchema).default([]),
   capabilityPrograms: z.array(capabilityProgramDefinitionSchema),
   externalConstraints: z.array(externalConstraintDefinitionSchema),
   memoTemplates: z.array(decisionMemoSchema),
@@ -655,6 +736,8 @@ export const scenarioSummarySchema = z.object({
   contentVersion: z.string(),
   maxTurns: z.number().int(),
   chiefs: z.array(chiefArchetypeSchema),
+  staffCapacities: z.array(staffCapacityDefinitionSchema).default([]),
+  staffFunctions: z.array(staffFunctionDefinitionSchema).default([]),
   capabilityPrograms: z.array(capabilityProgramDefinitionSchema),
   externalConstraints: z.array(externalConstraintDefinitionSchema),
 });
@@ -761,6 +844,58 @@ export const directorateMeta: Record<DirectorateId, { label: string; shortLabel:
     summary: "Course cycles, certification tempo, simulation, and the conversion of plans into real skill.",
   },
 };
+
+const defaultStaffCapacities: StaffCapacityDefinition[] = [
+  { directorate: "people", capacity: 3, strainedAt: 3, overloadedAt: 5 },
+  { directorate: "intelligence", capacity: 3, strainedAt: 3, overloadedAt: 5 },
+  { directorate: "operations", capacity: 4, strainedAt: 4, overloadedAt: 6 },
+  { directorate: "sustainment", capacity: 4, strainedAt: 4, overloadedAt: 6 },
+  { directorate: "plans", capacity: 3, strainedAt: 3, overloadedAt: 5 },
+  { directorate: "training", capacity: 3, strainedAt: 3, overloadedAt: 5 },
+];
+
+export const defaultStaffFunctionDefinitions: StaffFunctionDefinition[] = [
+  {
+    id: "S1",
+    label: "Personnel",
+    shortLabel: "S1",
+    directorates: ["people"],
+    doctrineNote: "Protect force generation, retention, reserve predictability, and recovery debt.",
+    metricLabels: ["Deployable units", "Reserve strain", "Personnel shortfalls"],
+  },
+  {
+    id: "S2",
+    label: "Intelligence",
+    shortLabel: "S2",
+    directorates: ["intelligence"],
+    doctrineNote: "Keep warning confidence honest under collection gaps and deception pressure.",
+    metricLabels: ["Confidence", "Warning reliability", "Deception pressure"],
+  },
+  {
+    id: "S3",
+    label: "Operations",
+    shortLabel: "S3",
+    directorates: ["operations", "training"],
+    doctrineNote: "Convert posture and training guidance into executable readiness.",
+    metricLabels: ["Deployable units", "Training throughput", "Incident ladder"],
+  },
+  {
+    id: "S4",
+    label: "Logistics",
+    shortLabel: "S4",
+    directorates: ["sustainment"],
+    doctrineNote: "Keep depot, munitions, fuel, and lift constraints inside the promise envelope.",
+    metricLabels: ["Depot backlog", "Munitions", "Lift availability"],
+  },
+  {
+    id: "S5",
+    label: "Plans",
+    shortLabel: "S5",
+    directorates: ["plans"],
+    doctrineNote: "Sequence alliance, political, and modernization choices into a coherent campaign.",
+    metricLabels: ["Cabinet cover", "Alliance alignment", "Committee tolerance"],
+  },
+];
 
 export function buildStrategicMetricBriefs(state: CampaignState): StrategicMetricBrief[] {
   const force = state.strategic.forceGeneration;
@@ -869,16 +1004,10 @@ export function buildStrategicMetricBriefs(state: CampaignState): StrategicMetri
 export function buildDirectorateBurden(
   memos: DecisionMemo[],
   selections: MemoSelection[],
+  staffCapacities: StaffCapacityDefinition[] = defaultStaffCapacities,
 ): DirectorateBurden[] {
   const selectedByMemo = new Map(selections.map((selection) => [selection.memoId, selection.optionId]));
-  const capacities: Record<DirectorateId, number> = {
-    people: 3,
-    intelligence: 3,
-    operations: 4,
-    sustainment: 4,
-    plans: 3,
-    training: 3,
-  };
+  const capacities = new Map(staffCapacities.map((entry) => [entry.directorate, entry]));
   const totals: Record<DirectorateId, number> = {
     people: 0,
     intelligence: 0,
@@ -901,10 +1030,13 @@ export function buildDirectorateBurden(
 
   return directorateSchema.options.map((directorate) => {
     const burdenPoints = totals[directorate];
-    const capacity = capacities[directorate];
+    const config = capacities.get(directorate) ?? defaultStaffCapacities.find((entry) => entry.directorate === directorate);
+    const capacity = config?.capacity ?? 3;
+    const strainedAt = config?.strainedAt ?? capacity;
+    const overloadedAt = config?.overloadedAt ?? capacity + 2;
     const excess = Math.max(0, burdenPoints - capacity);
     const burdenLevel: BurdenLevel =
-      excess > 1 ? "overloaded" : burdenPoints >= capacity ? "strained" : "light";
+      burdenPoints >= overloadedAt ? "overloaded" : burdenPoints >= strainedAt ? "strained" : "light";
 
     const failureMode =
       directorate === "people"
@@ -936,6 +1068,86 @@ export function buildDirectorateBurden(
           : burdenLevel === "strained"
             ? `${directorateLabel(directorate)} is at the edge of monthly capacity.`
             : `${directorateLabel(directorate)} has enough slack to absorb the current guidance.`,
+    };
+  });
+}
+
+function staffMetricStatus(value: number, inverted = false): StaffFunctionMetric["status"] {
+  const risk = inverted ? value >= 62 : value <= 42;
+  const watch = inverted ? value >= 48 : value <= 55;
+  if (risk) return "risk";
+  if (watch) return "watch";
+  return "healthy";
+}
+
+function staffFunctionMetrics(id: StaffFunctionId, state: CampaignState): StaffFunctionMetric[] {
+  switch (id) {
+    case "S1":
+      return [
+        { label: "Recovery debt", value: state.staffMechanics.s1.recoveryDebt, status: staffMetricStatus(state.staffMechanics.s1.recoveryDebt, true) },
+        { label: "Reserve predictability", value: state.staffMechanics.s1.reservePredictability, status: staffMetricStatus(state.staffMechanics.s1.reservePredictability) },
+        { label: "Deployable units", value: state.strategic.forceGeneration.deployableUnits, status: state.strategic.forceGeneration.deployableUnits < 5 ? "risk" : state.strategic.forceGeneration.deployableUnits < 7 ? "watch" : "healthy" },
+      ];
+    case "S2":
+      return [
+        { label: "External estimate confidence", value: state.staffMechanics.s2.externalEstimateConfidence, status: staffMetricStatus(state.staffMechanics.s2.externalEstimateConfidence) },
+        { label: "Deception risk", value: state.staffMechanics.s2.deceptionRisk, status: staffMetricStatus(state.staffMechanics.s2.deceptionRisk, true) },
+        { label: "Confidence", value: state.strategic.intelligence.confidence, status: staffMetricStatus(state.strategic.intelligence.confidence) },
+      ];
+    case "S3":
+      return [
+        { label: "Visible posture", value: state.staffMechanics.s3.visiblePosture, status: staffMetricStatus(state.staffMechanics.s3.visiblePosture) },
+        { label: "Executable posture", value: state.staffMechanics.s3.executablePosture, status: staffMetricStatus(state.staffMechanics.s3.executablePosture) },
+        { label: "Deployable units", value: state.strategic.forceGeneration.deployableUnits, status: state.strategic.forceGeneration.deployableUnits < 5 ? "risk" : state.strategic.forceGeneration.deployableUnits < 7 ? "watch" : "healthy" },
+      ];
+    case "S4":
+      return [
+        { label: "Stockpile depth", value: state.staffMechanics.s4.stockpileDepth, status: staffMetricStatus(state.staffMechanics.s4.stockpileDepth) },
+        { label: "Lift burn", value: state.staffMechanics.s4.liftBurn, status: staffMetricStatus(state.staffMechanics.s4.liftBurn, true) },
+        { label: "Depot backlog", value: state.strategic.sustainment.depotBacklog, status: staffMetricStatus(state.strategic.sustainment.depotBacklog, true) },
+      ];
+    case "S5":
+      return [
+        { label: "Strategic coherence", value: state.staffMechanics.s5.strategicCoherence, status: staffMetricStatus(state.staffMechanics.s5.strategicCoherence) },
+        { label: "Doctrine alignment", value: state.staffMechanics.s5.doctrineAlignment, status: staffMetricStatus(state.staffMechanics.s5.doctrineAlignment) },
+        { label: "Cabinet cover", value: state.strategic.domestic.cabinetCover, status: staffMetricStatus(state.strategic.domestic.cabinetCover) },
+      ];
+  }
+}
+
+export function buildStaffFunctionReadouts(
+  definitions: StaffFunctionDefinition[] = defaultStaffFunctionDefinitions,
+  burdens: DirectorateBurden[],
+  state: CampaignState,
+): StaffFunctionReadout[] {
+  const burdenByDirectorate = new Map(burdens.map((entry) => [entry.directorate, entry]));
+  return definitions.map((definition) => {
+    const entries = definition.directorates.map((directorate) => burdenByDirectorate.get(directorate)).filter((entry): entry is DirectorateBurden => Boolean(entry));
+    const burdenPoints = entries.reduce((sum, entry) => sum + entry.burdenPoints, 0);
+    const capacity = entries.reduce((sum, entry) => sum + entry.capacity, 0);
+    const headroom = capacity - burdenPoints;
+    const hasOverloaded = entries.some((entry) => entry.burdenLevel === "overloaded");
+    const hasStrained = entries.some((entry) => entry.burdenLevel === "strained");
+    const metrics = staffFunctionMetrics(definition.id, state);
+    const hasMetricRisk = metrics.some((metric) => metric.status === "risk");
+    const status: StaffFunctionReadout["status"] = hasOverloaded && hasMetricRisk ? "compromised" : hasOverloaded ? "overloaded" : hasStrained ? "strained" : "ready";
+    const warnings = [
+      ...entries.filter((entry) => entry.burdenLevel !== "light").map((entry) => entry.summary),
+      ...metrics.filter((metric) => metric.status === "risk").map((metric) => `${metric.label} is in the risk band.`),
+    ];
+
+    return {
+      id: definition.id,
+      label: definition.label,
+      shortLabel: definition.shortLabel,
+      directorates: definition.directorates,
+      status,
+      burdenPoints,
+      capacity,
+      headroom,
+      warnings,
+      consequence: warnings[0] ?? definition.doctrineNote,
+      metrics,
     };
   });
 }
