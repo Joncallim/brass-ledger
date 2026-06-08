@@ -8,6 +8,8 @@ import cors from "@fastify/cors";
 import { soloScenario } from "@brass-ledger/content";
 import {
   buildChiefPositions,
+  buildDirectorateBurden,
+  buildStaffFunctionReadouts,
   continueChiefConversation,
   createInitialGameSession,
   gameSessionSchema,
@@ -266,10 +268,13 @@ function summarizeSession(session: GameSession) {
 }
 
 function sessionPayload(session: GameSession) {
+  const memos = deriveDecisionMemos(soloScenario, session.state);
+  const directorateBurden = buildDirectorateBurden(memos, [], soloScenario.staffCapacities);
   return {
     session,
     summary: summarizeSession(session),
-    memos: deriveDecisionMemos(soloScenario, session.state),
+    memos,
+    staffFunctions: buildStaffFunctionReadouts(soloScenario.staffFunctions, directorateBurden, session.state),
   };
 }
 
@@ -285,6 +290,8 @@ app.get("/api/scenario", async () => ({
     contentVersion: soloScenario.contentVersion,
     maxTurns: soloScenario.maxTurns,
     chiefs: soloScenario.chiefs,
+    staffCapacities: soloScenario.staffCapacities,
+    staffFunctions: soloScenario.staffFunctions,
     decisionMemos: soloScenario.memoTemplates,
     capabilityPrograms: soloScenario.capabilityPrograms,
     externalConstraints: soloScenario.externalConstraints,

@@ -1,6 +1,9 @@
 const { soloScenario } = (await import(new URL("./scenario.ts", import.meta.url).href)) as typeof import("./scenario");
 
 const chiefIds = new Set<string>();
+const capacityDirectorates = new Set<string>();
+const functionIds = new Set<string>();
+const functionDirectorates = new Set<string>();
 const memoIds = new Set<string>();
 const optionIds = new Set<string>();
 const programIds = new Set(soloScenario.capabilityPrograms.map((program) => program.id));
@@ -28,6 +31,47 @@ for (const chief of soloScenario.chiefs) {
     throw new Error(`Duplicate chief id: ${chief.id}`);
   }
   chiefIds.add(chief.id);
+}
+
+for (const capacity of soloScenario.staffCapacities) {
+  if (capacityDirectorates.has(capacity.directorate)) {
+    throw new Error(`Duplicate staff capacity directorate: ${capacity.directorate}`);
+  }
+  if (capacity.strainedAt > capacity.overloadedAt) {
+    throw new Error(`Staff capacity ${capacity.directorate} has strainedAt greater than overloadedAt.`);
+  }
+  capacityDirectorates.add(capacity.directorate);
+}
+
+for (const directorate of ["people", "intelligence", "operations", "sustainment", "plans", "training"]) {
+  if (!capacityDirectorates.has(directorate)) {
+    throw new Error(`Missing staff capacity for directorate ${directorate}`);
+  }
+}
+
+for (const staffFunction of soloScenario.staffFunctions) {
+  if (functionIds.has(staffFunction.id)) {
+    throw new Error(`Duplicate staff function id: ${staffFunction.id}`);
+  }
+  functionIds.add(staffFunction.id);
+  for (const directorate of staffFunction.directorates) {
+    if (!capacityDirectorates.has(directorate)) {
+      throw new Error(`Staff function ${staffFunction.id} references unknown capacity directorate ${directorate}`);
+    }
+    functionDirectorates.add(directorate);
+  }
+}
+
+for (const requiredFunction of ["S1", "S2", "S3", "S4", "S5"]) {
+  if (!functionIds.has(requiredFunction)) {
+    throw new Error(`Missing player-facing staff function ${requiredFunction}`);
+  }
+}
+
+for (const directorate of ["people", "intelligence", "operations", "sustainment", "plans", "training"]) {
+  if (!functionDirectorates.has(directorate)) {
+    throw new Error(`Directorate ${directorate} is not represented in a staff function.`);
+  }
 }
 
 for (const memo of soloScenario.memoTemplates) {

@@ -1,3 +1,7 @@
+# GROCER
+
+GROCER is the single Obsidian-style knowledge vault and development workspace for Brass Ledger. Open [[GROCER/GROCER|GROCER]] for the canonical vault index. The former vegetable codenames now live as internal domains: [[GROCER/POTATO/POTATO|POTATO]], [[GROCER/CELERY/CELERY|CELERY]], [[GROCER/CARROT/CARROT|CARROT]], and [[GROCER/CAPSICUM/README|CAPSICUM]].
+
 # Brass Ledger
 
 Single-player browser-based strategic leadership simulator built as a solo-developer-friendly monorepo with strong AI-assisted workflows.
@@ -13,6 +17,7 @@ Single-player browser-based strategic leadership simulator built as a solo-devel
 ## Getting Started
 ```bash
 npm install
+npm run lint:grocer
 npm run lint:content
 npm test
 npm run build

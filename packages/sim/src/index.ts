@@ -6,17 +6,20 @@ import {
   type DecisionMemo,
   type DirectorateBurden,
   type EventDefinition,
+  type ExplainabilityEntry,
   type ExternalConstraintState,
   type MemoOption,
   type MemoSelection,
   type ReplayValidation,
   type ScenarioDefinition,
+  type StaffMechanicsState,
   type StateDelta,
   type StrategicState,
   type TurnInput,
   type TurnResult,
   buildChiefPositions,
   buildDirectorateBurden,
+  buildStaffFunctionReadouts,
   summarizeState,
 } from "@brass-ledger/shared";
 
@@ -369,7 +372,97 @@ function afterAction(previousState: CampaignState, nextState: CampaignState, bur
     });
   }
 
+  const mechanics = nextState.staffMechanics;
+  notes.push({
+    heading: "S1-S5 consequences",
+    detail:
+      `S1 recovery debt is ${round(mechanics.s1.recoveryDebt)}, S2 visibility is ${mechanics.s2.visibility.toLowerCase()}, ` +
+      `S3 executable posture is ${round(mechanics.s3.executablePosture)}, S4 lift burn is ${round(mechanics.s4.liftBurn)}, ` +
+      `and S5 strategic coherence is ${round(mechanics.s5.strategicCoherence)}.`,
+  });
+
   return notes;
+}
+
+function createExplainability(
+  selectedPairs: Array<{ memo: DecisionMemo; option: MemoOption }>,
+  burdens: DirectorateBurden[],
+  events: EventDefinition[],
+  previousState: CampaignState,
+  nextState: CampaignState,
+): ExplainabilityEntry[] {
+  const overloaded = burdens.filter((entry) => entry.burdenLevel === "overloaded");
+  const strained = burdens.filter((entry) => entry.burdenLevel === "strained");
+  const deployableDelta = round(nextState.strategic.forceGeneration.deployableUnits - previousState.strategic.forceGeneration.deployableUnits);
+  const cabinetDelta = round(nextState.strategic.domestic.cabinetCover - previousState.strategic.domestic.cabinetCover);
+  const incidentDelta = round(nextState.strategic.escalation.incidentLadder - previousState.strategic.escalation.incidentLadder);
+
+  return [
+    {
+      label: "Decision packet",
+      summary: `${selectedPairs.length} memo selections shaped the month before events and staff capacity penalties were applied.`,
+      positiveDrivers: selectedPairs.map(({ memo, option }) => `${memo.title}: ${option.label}`),
+      blockers: selectedPairs.flatMap(({ option }) => option.tradeoffs.slice(0, 1)),
+      causalRefs: selectedPairs.map(({ memo, option }) => `memo:${memo.id}/option:${option.id}`),
+    },
+    {
+      label: "Staff capacity",
+      summary:
+        overloaded.length > 0
+          ? `${overloaded.length} staff lanes overloaded and reduced execution quality.`
+          : strained.length > 0
+            ? `${strained.length} staff lanes were strained but still inside a recoverable envelope.`
+            : "Staff burden remained inside declared scenario capacity.",
+      positiveDrivers: burdens.filter((entry) => entry.burdenLevel === "light").map((entry) => `${entry.directorate} retained slack`),
+      blockers: [...overloaded, ...strained].map((entry) => entry.failureMode),
+      causalRefs: burdens.map((entry) => `staff:${entry.directorate}`),
+    },
+    {
+      label: "State movement",
+      summary: `Deployable force shifted ${deployableDelta >= 0 ? "+" : ""}${deployableDelta}; cabinet cover shifted ${cabinetDelta >= 0 ? "+" : ""}${cabinetDelta}; incident ladder shifted ${incidentDelta >= 0 ? "+" : ""}${incidentDelta}.`,
+      positiveDrivers: [
+        deployableDelta > 0 ? "readiness improved" : "",
+        cabinetDelta > 0 ? "cabinet cover improved" : "",
+        incidentDelta < 0 ? "escalation pressure eased" : "",
+      ].filter(Boolean),
+      blockers: [
+        deployableDelta < 0 ? "readiness slipped" : "",
+        cabinetDelta < 0 ? "cabinet cover was spent" : "",
+        incidentDelta > 0 ? "incident ladder rose" : "",
+      ].filter(Boolean),
+      causalRefs: ["state:forceGeneration.deployableUnits", "state:domestic.cabinetCover", "state:escalation.incidentLadder"],
+    },
+    {
+      label: "S1-S5 mechanics",
+      summary:
+        `S1 recovery debt ${nextState.staffMechanics.s1.recoveryDebt}; ` +
+        `S2 estimate confidence ${nextState.staffMechanics.s2.externalEstimateConfidence} (${nextState.staffMechanics.s2.visibility}); ` +
+        `S3 executable posture ${nextState.staffMechanics.s3.executablePosture}; ` +
+        `S4 stockpile/lift ${nextState.staffMechanics.s4.stockpileDepth}/${nextState.staffMechanics.s4.liftBurn}; ` +
+        `S5 coherence ${nextState.staffMechanics.s5.strategicCoherence}.`,
+      positiveDrivers: [
+        nextState.staffMechanics.s1.recoveryDebt < previousState.staffMechanics.s1.recoveryDebt ? "S1 recovery debt improved" : "",
+        nextState.staffMechanics.s2.externalEstimateConfidence > previousState.staffMechanics.s2.externalEstimateConfidence ? "S2 estimate confidence improved" : "",
+        nextState.staffMechanics.s3.executablePosture > previousState.staffMechanics.s3.executablePosture ? "S3 executable posture improved" : "",
+        nextState.staffMechanics.s4.stockpileDepth > previousState.staffMechanics.s4.stockpileDepth ? "S4 stockpile depth improved" : "",
+        nextState.staffMechanics.s5.strategicCoherence > previousState.staffMechanics.s5.strategicCoherence ? "S5 strategic coherence improved" : "",
+      ].filter(Boolean),
+      blockers: [
+        nextState.staffMechanics.s1.recoveryDebt > previousState.staffMechanics.s1.recoveryDebt ? "S1 recovery debt worsened" : "",
+        nextState.staffMechanics.s2.deceptionRisk > previousState.staffMechanics.s2.deceptionRisk ? "S2 deception risk rose" : "",
+        nextState.staffMechanics.s4.liftBurn > previousState.staffMechanics.s4.liftBurn ? "S4 lift burn rose" : "",
+        nextState.staffMechanics.s5.strategicCoherence < previousState.staffMechanics.s5.strategicCoherence ? "S5 strategic coherence slipped" : "",
+      ].filter(Boolean),
+      causalRefs: ["staff:S1", "staff:S2", "staff:S3", "staff:S4", "staff:S5"],
+    },
+    {
+      label: "Events",
+      summary: events.length > 0 ? `${events.length} event(s) triggered from selected tags.` : "No event triggered this turn.",
+      positiveDrivers: events.length > 0 ? [] : ["no additional shock entered the month"],
+      blockers: events.map((event) => event.summary),
+      causalRefs: events.map((event) => `event:${event.id}`),
+    },
+  ];
 }
 
 function updateChiefTrust(previousState: CampaignState, chiefPositions: ChiefPositionEntry[]) {
@@ -403,6 +496,153 @@ function updateConstraints(
       .reduce((sum, entry) => sum + entry.delta, 0);
     return updateConstraint(constraint, optionDelta + eventDelta);
   });
+}
+
+function visibilityFor(confidence: number): StaffMechanicsState["s2"]["visibility"] {
+  if (confidence >= 72) return "KNOWN";
+  if (confidence >= 40) return "ESTIMATED";
+  return "RUMORED";
+}
+
+function updateStaffMechanics(
+  previousState: CampaignState,
+  selectedOptions: MemoOption[],
+  burdens: DirectorateBurden[],
+  events: EventDefinition[],
+): StaffMechanicsState {
+  const tags = new Set(selectedOptions.flatMap((option) => option.tags));
+  const burdenById = new Map(burdens.map((entry) => [entry.directorate, entry]));
+  const people = burdenById.get("people")?.executionPenalty ?? 0;
+  const intel = burdenById.get("intelligence")?.confidencePenalty ?? 0;
+  const operations = burdenById.get("operations")?.executionPenalty ?? 0;
+  const sustainment = burdenById.get("sustainment")?.executionPenalty ?? 0;
+  const plans = burdenById.get("plans")?.confidencePenalty ?? 0;
+  const training = burdenById.get("training")?.executionPenalty ?? 0;
+  const eventPressure = events.length * 3;
+  const mechanics = previousState.staffMechanics;
+
+  const recoveryRelief =
+    (tags.has("recovery") ? 6 : 0) +
+    (tags.has("retention") ? 4 : 0) +
+    (tags.has("training") && !tags.has("tempo-spike") ? 2 : 0);
+  const tempoPressure = tags.has("tempo-spike") ? 9 : tags.has("exercise") ? 5 : 0;
+  const recoveryDebt = clamp(
+    mechanics.s1.recoveryDebt + people * 0.45 + tempoPressure + eventPressure - recoveryRelief,
+    0,
+    100,
+  );
+  const reservePredictability = clamp(
+    mechanics.s1.reservePredictability + recoveryRelief * 0.7 - tempoPressure * 0.6 - people * 0.35,
+    0,
+    100,
+  );
+
+  const collectionGain =
+    (tags.has("collection") ? 5 : 0) +
+    (tags.has("warning") ? 4 : 0) +
+    (tags.has("industrial-watch") ? 6 : 0) +
+    (tags.has("counter-deception") ? 4 : 0);
+  const deceptionRisk = clamp(
+    mechanics.s2.deceptionRisk + previousState.strategic.intelligence.deceptionPressure * 0.03 + eventPressure - (tags.has("counter-deception") ? 8 : 0) - collectionGain * 0.2,
+    0,
+    100,
+  );
+  const externalEstimateConfidence = clamp(
+    mechanics.s2.externalEstimateConfidence + collectionGain - intel * 0.4 - deceptionRisk * 0.03,
+    0,
+    100,
+  );
+
+  const visiblePosture = clamp(
+    mechanics.s3.visiblePosture +
+      (tags.has("deterrence") ? 7 : 0) +
+      (tags.has("exercise") ? 8 : 0) +
+      (tags.has("forward-posture") ? 6 : 0) -
+      (tags.has("quiet") || tags.has("slow-burn") ? 4 : 0),
+    0,
+    100,
+  );
+  const executablePosture = clamp(
+    mechanics.s3.executablePosture +
+      previousState.strategic.forceGeneration.trainingThroughput * 0.03 +
+      previousState.strategic.sustainment.liftAvailability * 0.02 -
+      operations * 0.35 -
+      training * 0.45 -
+      sustainment * 0.25 +
+      (tags.has("standardization") ? 5 : 0),
+    0,
+    100,
+  );
+
+  const stockpileDepth = clamp(
+    mechanics.s4.stockpileDepth +
+      (tags.has("munitions") ? 8 : 0) +
+      (tags.has("repair") ? 3 : 0) +
+      previousState.strategic.sustainment.munitionsSufficiency * 0.03 -
+      visiblePosture * 0.04 -
+      sustainment * 0.25,
+    0,
+    100,
+  );
+  const liftBurn = clamp(
+    mechanics.s4.liftBurn +
+      (tags.has("lift") ? 4 : 0) +
+      (tags.has("exercise") ? 8 : 0) +
+      (tags.has("forward-posture") ? 6 : 0) +
+      sustainment * 0.3 -
+      previousState.strategic.sustainment.liftAvailability * 0.04,
+    0,
+    100,
+  );
+
+  const coherenceGain =
+    (tags.has("alliance") ? 4 : 0) +
+    (tags.has("modernization") ? 4 : 0) +
+    (tags.has("program") ? 3 : 0) +
+    (tags.has("quiet") ? 2 : 0);
+  const contradictionPenalty =
+    (visiblePosture > executablePosture + 15 ? 6 : 0) +
+    (liftBurn > stockpileDepth + 15 ? 5 : 0) +
+    (recoveryDebt > reservePredictability + 15 ? 5 : 0);
+  const strategicCoherence = clamp(
+    mechanics.s5.strategicCoherence + coherenceGain - plans * 0.35 - contradictionPenalty + previousState.strategic.alliance.politicalAlignment * 0.02,
+    0,
+    100,
+  );
+  const doctrineAlignment = clamp(
+    mechanics.s5.doctrineAlignment +
+      (tags.has("ad-hoc") ? -7 : 0) +
+      (tags.has("hollow") ? -5 : 0) +
+      (tags.has("standardization") ? 4 : 0) +
+      coherenceGain * 0.3 -
+      contradictionPenalty * 0.4,
+    0,
+    100,
+  );
+
+  return {
+    s1: {
+      recoveryDebt: round(recoveryDebt),
+      reservePredictability: round(reservePredictability),
+    },
+    s2: {
+      externalEstimateConfidence: round(externalEstimateConfidence),
+      visibility: visibilityFor(externalEstimateConfidence),
+      deceptionRisk: round(deceptionRisk),
+    },
+    s3: {
+      visiblePosture: round(visiblePosture),
+      executablePosture: round(executablePosture),
+    },
+    s4: {
+      stockpileDepth: round(stockpileDepth),
+      liftBurn: round(liftBurn),
+    },
+    s5: {
+      strategicCoherence: round(strategicCoherence),
+      doctrineAlignment: round(doctrineAlignment),
+    },
+  };
 }
 
 function assessOutcome(state: CampaignState) {
@@ -497,7 +737,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   const rng = mulberry32(previousState.seed + previousState.turn * 97 + input.selections.length * 17);
   const selectedPairs = input.selections.map((selection) => findOption(memos, selection));
   const selectedOptions = selectedPairs.map((entry) => entry.option);
-  const directorateBurden = buildDirectorateBurden(memos, input.selections);
+  const directorateBurden = buildDirectorateBurden(memos, input.selections, scenario.staffCapacities);
 
   let nextStrategic = cloneState(previousState.strategic);
   let nextResources = cloneState(previousState.resources);
@@ -521,6 +761,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   const nextPrograms = updatePrograms(scenario, previousState, input.selections, directorateBurden);
   const nextConstraints = updateConstraints(previousState, selectedOptions, triggeredEvents);
   const nextTrust = updateChiefTrust(previousState, chiefPositions);
+  const nextStaffMechanics = updateStaffMechanics(previousState, selectedOptions, directorateBurden, triggeredEvents);
 
   const nextFlags = triggeredEvents.reduce<Record<string, boolean>>((flags, event) => {
     const updated = { ...flags };
@@ -538,6 +779,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     ...previousState,
     turn: nextTurn,
     resources: nextResources,
+    staffMechanics: nextStaffMechanics,
     forceGeneration: nextStrategic.forceGeneration,
     intel: nextStrategic.intelligence,
     sustainment: nextStrategic.sustainment,
@@ -592,6 +834,8 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
 
   const monthlyEstimate = createMonthlyEstimate(previousState, nextState, chiefPositions, directorateBurden);
   const resultAfterAction = afterAction(previousState, nextState, directorateBurden, triggeredEvents);
+  const staffFunctions = buildStaffFunctionReadouts(scenario.staffFunctions, directorateBurden, nextState);
+  const explainability = createExplainability(selectedPairs, directorateBurden, triggeredEvents, previousState, nextState);
   const summary = nextState.campaignStatus === "active" ? summarizeState(nextState) : nextState.campaignOutcome ?? summarizeState(nextState);
 
   const replayHash = createHash("sha256")
@@ -621,7 +865,8 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     chiefPositions,
     monthlyEstimate,
     directorateBurden,
-    explainability: [],
+    staffFunctions,
+    explainability,
     portfolioLoad: [],
     triggeredEvents,
     afterAction: resultAfterAction,

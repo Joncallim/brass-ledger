@@ -1,8 +1,22 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
-const root = path.resolve("POTATO");
+const root = path.resolve("GROCER");
 const wikiLinkPattern = /\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|[^\]]+)?\]\]/g;
+const indexNotes = new Map([
+  ["GROCER", "GROCER.md"],
+  ["POTATO", "POTATO/POTATO.md"],
+  ["CELERY", "CELERY/CELERY.md"],
+  ["CARROT", "CARROT/CARROT.md"],
+  ["CAPSICUM", "CAPSICUM/README.md"],
+]);
+const indexNotePaths = new Set([
+  ...indexNotes.values(),
+  "POTATO/README.md",
+  "CELERY/README.md",
+  "CARROT/README.md",
+  "CAPSICUM/README.md",
+].map((file) => path.resolve(root, file)));
 
 async function listMarkdownFiles(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -33,11 +47,14 @@ function parseFrontmatter(markdown) {
 
 function linkCandidates(filePath, target) {
   const normalized = target.replace(/\\([|#[\]])/g, "$1").replace(/\\$/g, "").replace(/\\/g, "/").replace(/\.md$/i, "");
-  return [
+  const candidates = [
     path.resolve(path.dirname(filePath), `${normalized}.md`),
     path.resolve(root, `${normalized}.md`),
     path.resolve(root, `${path.basename(normalized)}.md`),
   ];
+  const indexNote = indexNotes.get(normalized) ?? indexNotes.get(path.basename(normalized));
+  if (indexNote) candidates.push(path.resolve(root, indexNote));
+  return candidates;
 }
 
 const files = await listMarkdownFiles(root);
@@ -56,8 +73,8 @@ for (const file of files) {
   if (!frontmatter.has("type")) {
     failures.push(`${relative}: frontmatter must include type`);
   }
-  if (path.basename(file) !== "POTATO.md" && !markdown.includes("Backlink: [[POTATO]]")) {
-    failures.push(`${relative}: missing Backlink: [[POTATO]]`);
+  if (!indexNotePaths.has(path.resolve(file)) && !markdown.includes("Backlink: [[")) {
+    failures.push(`${relative}: missing Backlink`);
   }
 
   for (const match of markdown.matchAll(wikiLinkPattern)) {
@@ -70,8 +87,8 @@ for (const file of files) {
   }
 }
 
-if (!fileSet.has(path.resolve(root, "POTATO.md"))) {
-  failures.push("POTATO/POTATO.md: source-of-truth index is required");
+if (!fileSet.has(path.resolve(root, "GROCER.md"))) {
+  failures.push("GROCER/GROCER.md: vault index is required");
 }
 
 if (failures.length > 0) {
@@ -79,4 +96,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Validated ${files.length} POTATO notes.`);
+console.log(`Validated ${files.length} GROCER notes.`);
