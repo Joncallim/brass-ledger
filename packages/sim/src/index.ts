@@ -266,6 +266,11 @@ function updatePrograms(
     if (definition?.absorbingDirectorate === "operations" && state.strategic.sustainment.munitionsSufficiency < 50) blockers.push("munitions depth");
     if (definition?.absorbingDirectorate === "sustainment" && (state.externalConstraints.find((entry) => entry.id === "electronics-chain")?.severity ?? 0) > 60) blockers.push("trusted electronics");
     if (definition?.absorbingDirectorate === "people" && state.strategic.domestic.publicPatience < 45) blockers.push("public patience");
+    // S1-S5 gates: programs stall when staff prerequisites are not met
+    if (program.id === "fires-network" && state.staffMechanics.s3.executablePosture < 35) blockers.push("S3 executable posture");
+    if (program.id === "counter-deception-grid" && state.staffMechanics.s2.externalEstimateConfidence < 30) blockers.push("S2 collection confidence");
+    if (program.id === "sustainment-ledger" && state.staffMechanics.s4.liftBurn > 70) blockers.push("S4 lift burn saturation");
+    if (program.id === "reserve-rebuild" && state.staffMechanics.s1.recoveryDebt > 75) blockers.push("S1 recovery debt");
 
     return {
       ...program,
@@ -346,7 +351,13 @@ function createMonthlyEstimate(
   };
 }
 
-function afterAction(previousState: CampaignState, nextState: CampaignState, burdens: DirectorateBurden[], events: EventDefinition[]) {
+function afterAction(
+  previousState: CampaignState,
+  nextState: CampaignState,
+  burdens: DirectorateBurden[],
+  events: EventDefinition[],
+  acceptedRiskOverrides: Array<{ staffFunctionId: string; warningText: string }> = [],
+) {
   const notes = [];
   const deployableDelta = nextState.strategic.forceGeneration.deployableUnits - previousState.strategic.forceGeneration.deployableUnits;
   const politicalDelta = nextState.strategic.domestic.cabinetCover - previousState.strategic.domestic.cabinetCover;
@@ -377,9 +388,53 @@ function afterAction(previousState: CampaignState, nextState: CampaignState, bur
     heading: "S1-S5 consequences",
     detail:
       `S1 recovery debt is ${round(mechanics.s1.recoveryDebt)}, S2 visibility is ${mechanics.s2.visibility.toLowerCase()}, ` +
-      `S3 executable posture is ${round(mechanics.s3.executablePosture)}, S4 lift burn is ${round(mechanics.s4.liftBurn)}, ` +
+      `S3 credible deterrence is ${round(mechanics.s3.credibleDeterrence)} (visible ${round(mechanics.s3.visiblePosture)} / executable ${round(mechanics.s3.executablePosture)}), ` +
+      `S4 supportable tempo is ${round(mechanics.s4.supportableTempo)}, ` +
       `and S5 strategic coherence is ${round(mechanics.s5.strategicCoherence)}.`,
   });
+
+  // S1: warn when deployable units improved but recovery debt also worsened
+  if (
+    deployableDelta > 0.3 &&
+    nextState.staffMechanics.s1.recoveryDebt > previousState.staffMechanics.s1.recoveryDebt + 5
+  ) {
+    notes.push({
+      heading: "S1 personnel warning",
+      detail: `Deployable units improved by ${round(deployableDelta)} but recovery debt rose from ${round(previousState.staffMechanics.s1.recoveryDebt)} to ${round(nextState.staffMechanics.s1.recoveryDebt)}. The gain is real but the people cost is accumulating.`,
+    });
+  }
+
+  // S3: warn when visible posture outpaces executable by more than 15
+  if (nextState.staffMechanics.s3.visiblePosture > nextState.staffMechanics.s3.executablePosture + 15) {
+    notes.push({
+      heading: "S3 posture warning",
+      detail: `Visible posture (${round(nextState.staffMechanics.s3.visiblePosture)}) exceeds executable posture (${round(nextState.staffMechanics.s3.executablePosture)}) by more than 15 points. Deterrence credibility is lower than the visible activity level suggests.`,
+    });
+  }
+
+  // S4: warn when supportable tempo is critically low
+  if (nextState.staffMechanics.s4.supportableTempo < 15) {
+    notes.push({
+      heading: "S4 support warning",
+      detail: `Supportable tempo is ${round(nextState.staffMechanics.s4.supportableTempo)}. Support reality is the binding constraint on further operational activity this month.`,
+    });
+  }
+
+  // S5: doctrine bet after-action when doctrine alignment drops sharply
+  if (nextState.staffMechanics.s5.doctrineAlignment < previousState.staffMechanics.s5.doctrineAlignment - 5) {
+    notes.push({
+      heading: "S5 doctrine bet",
+      detail: `Doctrine alignment dropped from ${round(previousState.staffMechanics.s5.doctrineAlignment)} to ${round(nextState.staffMechanics.s5.doctrineAlignment)}. This was a conscious departure from coherent sequencing — the consequence depends on whether the campaign can absorb it.`,
+    });
+  }
+
+  // Accepted-risk summary
+  if (acceptedRiskOverrides.length > 0) {
+    notes.push({
+      heading: "Accepted risks",
+      detail: `The commander explicitly accepted ${acceptedRiskOverrides.length} staff warning(s): ${acceptedRiskOverrides.map((r) => `${r.staffFunctionId} — ${r.warningText}`).join("; ")}.`,
+    });
+  }
 
   return notes;
 }
@@ -526,8 +581,11 @@ function updateStaffMechanics(
     (tags.has("retention") ? 4 : 0) +
     (tags.has("training") && !tags.has("tempo-spike") ? 2 : 0);
   const tempoPressure = tags.has("tempo-spike") ? 9 : tags.has("exercise") ? 5 : 0;
+  // Natural decay when debt is low and no surge; compounding retention pressure when debt is persistently high
+  const naturalDecay = mechanics.s1.recoveryDebt < 30 && tempoPressure === 0 && eventPressure === 0 ? 2 : 0;
+  const retentionPressure = mechanics.s1.recoveryDebt > 65 ? 4 : 0;
   const recoveryDebt = clamp(
-    mechanics.s1.recoveryDebt + people * 0.45 + tempoPressure + eventPressure - recoveryRelief,
+    mechanics.s1.recoveryDebt + people * 0.45 + tempoPressure + eventPressure + retentionPressure - recoveryRelief - naturalDecay,
     0,
     100,
   );
@@ -547,11 +605,14 @@ function updateStaffMechanics(
     0,
     100,
   );
-  const externalEstimateConfidence = clamp(
+  const baseConfidence = clamp(
     mechanics.s2.externalEstimateConfidence + collectionGain - intel * 0.4 - deceptionRisk * 0.03,
     0,
     100,
   );
+  // High-confidence + high-deception is dangerous: apparent precision masks unreliable estimates
+  const dangerousPrecisionPenalty = baseConfidence > 65 && deceptionRisk > 55 ? 6 : 0;
+  const externalEstimateConfidence = clamp(baseConfidence - dangerousPrecisionPenalty, 0, 100);
 
   const visiblePosture = clamp(
     mechanics.s3.visiblePosture +
@@ -573,7 +634,6 @@ function updateStaffMechanics(
     0,
     100,
   );
-
   const stockpileDepth = clamp(
     mechanics.s4.stockpileDepth +
       (tags.has("munitions") ? 8 : 0) +
@@ -594,6 +654,18 @@ function updateStaffMechanics(
     0,
     100,
   );
+  // credible_deterrence = min(visible, executable, sustainment_support, intel_confidence)
+  const sustainmentSupport = (stockpileDepth + (100 - liftBurn)) / 2;
+  const credibleDeterrence = clamp(
+    Math.min(visiblePosture, executablePosture, sustainmentSupport, externalEstimateConfidence),
+    0,
+    100,
+  );
+
+  // supportable_tempo = min(lift, fuel, munitions, depot_capacity) - liftBurn
+  const s = previousState.strategic.sustainment;
+  const sustainableCapacity = Math.min(s.liftAvailability, s.fuelSufficiency, s.munitionsSufficiency, 100 - s.depotBacklog);
+  const supportableTempo = clamp(sustainableCapacity - liftBurn, 0, 100);
 
   const coherenceGain =
     (tags.has("alliance") ? 4 : 0) +
@@ -604,8 +676,10 @@ function updateStaffMechanics(
     (visiblePosture > executablePosture + 15 ? 6 : 0) +
     (liftBurn > stockpileDepth + 15 ? 5 : 0) +
     (recoveryDebt > reservePredictability + 15 ? 5 : 0);
+  // Extra coherence penalty when selected options have explicit contradictionTags
+  const contradictionTagPenalty = selectedOptions.reduce((sum, option) => sum + option.contradictionTags.length * 2, 0);
   const strategicCoherence = clamp(
-    mechanics.s5.strategicCoherence + coherenceGain - plans * 0.35 - contradictionPenalty + previousState.strategic.alliance.politicalAlignment * 0.02,
+    mechanics.s5.strategicCoherence + coherenceGain - plans * 0.35 - contradictionPenalty - contradictionTagPenalty * 0.5 + previousState.strategic.alliance.politicalAlignment * 0.02,
     0,
     100,
   );
@@ -615,7 +689,8 @@ function updateStaffMechanics(
       (tags.has("hollow") ? -5 : 0) +
       (tags.has("standardization") ? 4 : 0) +
       coherenceGain * 0.3 -
-      contradictionPenalty * 0.4,
+      contradictionPenalty * 0.4 -
+      contradictionTagPenalty * 0.3,
     0,
     100,
   );
@@ -633,10 +708,12 @@ function updateStaffMechanics(
     s3: {
       visiblePosture: round(visiblePosture),
       executablePosture: round(executablePosture),
+      credibleDeterrence: round(credibleDeterrence),
     },
     s4: {
       stockpileDepth: round(stockpileDepth),
       liftBurn: round(liftBurn),
+      supportableTempo: round(supportableTempo),
     },
     s5: {
       strategicCoherence: round(strategicCoherence),
@@ -711,6 +788,43 @@ function diffStates(expected: unknown, actual: unknown, path = "state", acc: Arr
   return acc;
 }
 
+type CommitmentEntry = CampaignState["activeCommitments"][number];
+
+function updateCommitments(
+  previous: CommitmentEntry[],
+  selectedTags: Set<string>,
+  currentTurn: number,
+  nextMechanics: StaffMechanicsState,
+): CommitmentEntry[] {
+  const next: CommitmentEntry[] = [];
+
+  for (const commitment of previous) {
+    if (commitment.fulfilled !== null) continue;
+    const isBroken =
+      (commitment.type === "alliance" && (selectedTags.has("ad-hoc") || selectedTags.has("hollow"))) ||
+      (commitment.type === "program" && nextMechanics.s4.supportableTempo < 5);
+    const isFulfilled =
+      (commitment.type === "alliance" && nextMechanics.s5.strategicCoherence >= 60) ||
+      (commitment.type === "program" && nextMechanics.s5.doctrineAlignment >= 55) ||
+      (commitment.type === "doctrine" && nextMechanics.s5.doctrineAlignment >= 60) ||
+      (commitment.type === "cabinet" && nextMechanics.s5.strategicCoherence >= 65);
+    next.push({ ...commitment, fulfilled: isFulfilled ? true : isBroken ? false : null });
+  }
+
+  const turn = currentTurn + 1;
+  if (selectedTags.has("alliance") && !next.some((c) => c.type === "alliance" && c.fulfilled === null)) {
+    next.push({ id: `alliance-t${currentTurn}`, type: "alliance", label: "Alliance reassurance commitment", turnMade: turn, fulfilled: null });
+  }
+  if ((selectedTags.has("program") || selectedTags.has("modernization")) && !next.some((c) => c.type === "program" && c.fulfilled === null)) {
+    next.push({ id: `program-t${currentTurn}`, type: "program", label: "Modernization or capability commitment", turnMade: turn, fulfilled: null });
+  }
+  if (selectedTags.has("public-commitment") && !next.some((c) => c.type === "cabinet" && c.fulfilled === null)) {
+    next.push({ id: `cabinet-t${currentTurn}`, type: "cabinet", label: "Public commitment to cabinet and allies", turnMade: turn, fulfilled: null });
+  }
+
+  return next;
+}
+
 export function previewTurn(scenario: ScenarioDefinition, state: CampaignState, input: TurnInput) {
   const projectedResult = resolveTurn(scenario, state, input);
   const disagreements = deriveDecisionMemos(scenario, state).flatMap((memo) => {
@@ -775,6 +889,8 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   }
 
   const nextTurn = previousState.turn + 1;
+  const nextCommitments = updateCommitments(previousState.activeCommitments, selectedTags, previousState.turn, nextStaffMechanics);
+
   const nextState: CampaignState = {
     ...previousState,
     turn: nextTurn,
@@ -790,6 +906,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     capabilityPrograms: nextPrograms,
     externalConstraints: nextConstraints,
     chiefTrust: nextTrust,
+    activeCommitments: nextCommitments,
     eventHistory: [...previousState.eventHistory, ...triggeredEvents.map((event) => event.id)],
     eventFlags: nextFlags,
     briefing: {
@@ -833,10 +950,16 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   nextState.campaignOutcome = outcome.outcome;
 
   const monthlyEstimate = createMonthlyEstimate(previousState, nextState, chiefPositions, directorateBurden);
-  const resultAfterAction = afterAction(previousState, nextState, directorateBurden, triggeredEvents);
+  const resultAfterAction = afterAction(previousState, nextState, directorateBurden, triggeredEvents, input.acceptedRiskOverrides);
   const staffFunctions = buildStaffFunctionReadouts(scenario.staffFunctions, directorateBurden, nextState);
   const explainability = createExplainability(selectedPairs, directorateBurden, triggeredEvents, previousState, nextState);
   const summary = nextState.campaignStatus === "active" ? summarizeState(nextState) : nextState.campaignOutcome ?? summarizeState(nextState);
+
+  const acceptedRisks = (input.acceptedRiskOverrides ?? []).map((override) => ({
+    staffFunctionId: override.staffFunctionId,
+    warningText: override.warningText,
+    accepted: true as const,
+  }));
 
   const replayHash = createHash("sha256")
     .update(JSON.stringify({ previousState: normalizeState(previousState), input, nextState: normalizeState(nextState) }))
@@ -870,6 +993,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     portfolioLoad: [],
     triggeredEvents,
     afterAction: resultAfterAction,
+    acceptedRisks,
     replayHash,
     summary,
   };

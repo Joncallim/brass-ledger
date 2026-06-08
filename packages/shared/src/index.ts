@@ -113,10 +113,12 @@ export const staffMechanicsStateSchema = z.object({
   s3: z.object({
     visiblePosture: indexMetricSchema,
     executablePosture: indexMetricSchema,
+    credibleDeterrence: indexMetricSchema.default(50),
   }),
   s4: z.object({
     stockpileDepth: indexMetricSchema,
     liftBurn: indexMetricSchema,
+    supportableTempo: indexMetricSchema.default(50),
   }),
   s5: z.object({
     strategicCoherence: indexMetricSchema,
@@ -128,8 +130,8 @@ export type StaffMechanicsState = z.infer<typeof staffMechanicsStateSchema>;
 const defaultStaffMechanicsState: StaffMechanicsState = {
   s1: { recoveryDebt: 42, reservePredictability: 51 },
   s2: { externalEstimateConfidence: 46, visibility: "ESTIMATED", deceptionRisk: 44 },
-  s3: { visiblePosture: 48, executablePosture: 50 },
-  s4: { stockpileDepth: 47, liftBurn: 41 },
+  s3: { visiblePosture: 48, executablePosture: 50, credibleDeterrence: 46 },
+  s4: { stockpileDepth: 47, liftBurn: 41, supportableTempo: 13 },
   s5: { strategicCoherence: 52, doctrineAlignment: 50 },
 };
 
@@ -393,6 +395,7 @@ export const memoOptionSchema = z.object({
   stateDelta: stateDeltaSchema.default(emptyStateDelta),
   programPushes: z.array(programPushSchema).default([]),
   constraintShifts: z.array(constraintShiftSchema).default([]),
+  contradictionTags: z.array(z.string()).default([]),
 });
 export type MemoOption = z.infer<typeof memoOptionSchema>;
 
@@ -597,6 +600,13 @@ export const campaignStateSchema = z.object({
   eventHistory: z.array(z.string()).default([]),
   eventFlags: z.record(z.string(), z.boolean()).default({}),
   conversationHistory: z.array(chiefConversationRecordSchema).default([]),
+  activeCommitments: z.array(z.object({
+    id: z.string(),
+    type: z.enum(["doctrine", "alliance", "cabinet", "program"]),
+    label: z.string(),
+    turnMade: z.number().int().min(1),
+    fulfilled: z.boolean().nullable().default(null),
+  })).default([]),
   briefing: campaignBriefSchema,
 }).superRefine((state, ctx) => {
   if (state.turn > state.maxTurns + 1) {
@@ -636,10 +646,17 @@ export const campaignStateSchema = z.object({
 });
 export type CampaignState = z.infer<typeof campaignStateSchema>;
 
+export const acceptedRiskOverrideSchema = z.object({
+  staffFunctionId: staffFunctionIdSchema,
+  warningText: z.string(),
+});
+export type AcceptedRiskOverride = z.infer<typeof acceptedRiskOverrideSchema>;
+
 export const turnInputSchema = z.object({
   turn: z.number().int().min(1),
   selectedActionIds: z.array(z.string()).default([]),
   selections: z.array(memoSelectionSchema),
+  acceptedRiskOverrides: z.array(acceptedRiskOverrideSchema).default([]),
 });
 export type TurnInput = z.infer<typeof turnInputSchema>;
 
@@ -669,6 +686,11 @@ export const turnResultSchema = z.object({
   })).default([]),
   triggeredEvents: z.array(eventDefinitionSchema),
   afterAction: z.array(afterActionNoteSchema),
+  acceptedRisks: z.array(z.object({
+    staffFunctionId: staffFunctionIdSchema,
+    warningText: z.string(),
+    accepted: z.boolean(),
+  })).default([]),
   replayHash: z.string(),
   summary: z.string(),
 });
@@ -1087,23 +1109,30 @@ function staffFunctionMetrics(id: StaffFunctionId, state: CampaignState): StaffF
         { label: "Recovery debt", value: state.staffMechanics.s1.recoveryDebt, status: staffMetricStatus(state.staffMechanics.s1.recoveryDebt, true) },
         { label: "Reserve predictability", value: state.staffMechanics.s1.reservePredictability, status: staffMetricStatus(state.staffMechanics.s1.reservePredictability) },
         { label: "Deployable units", value: state.strategic.forceGeneration.deployableUnits, status: state.strategic.forceGeneration.deployableUnits < 5 ? "risk" : state.strategic.forceGeneration.deployableUnits < 7 ? "watch" : "healthy" },
+        { label: "Reserve strain", value: state.strategic.forceGeneration.reserveStrain, status: staffMetricStatus(state.strategic.forceGeneration.reserveStrain, true) },
       ];
-    case "S2":
+    case "S2": {
+      const visValue = state.staffMechanics.s2.visibility === "KNOWN" ? 100 : state.staffMechanics.s2.visibility === "ESTIMATED" ? 50 : 0;
+      const visStatus: StaffFunctionMetric["status"] = state.staffMechanics.s2.visibility === "KNOWN" ? "healthy" : state.staffMechanics.s2.visibility === "ESTIMATED" ? "watch" : "risk";
       return [
         { label: "External estimate confidence", value: state.staffMechanics.s2.externalEstimateConfidence, status: staffMetricStatus(state.staffMechanics.s2.externalEstimateConfidence) },
         { label: "Deception risk", value: state.staffMechanics.s2.deceptionRisk, status: staffMetricStatus(state.staffMechanics.s2.deceptionRisk, true) },
         { label: "Confidence", value: state.strategic.intelligence.confidence, status: staffMetricStatus(state.strategic.intelligence.confidence) },
+        { label: `Picture class: ${state.staffMechanics.s2.visibility.toLowerCase()}`, value: visValue, status: visStatus },
       ];
+    }
     case "S3":
       return [
         { label: "Visible posture", value: state.staffMechanics.s3.visiblePosture, status: staffMetricStatus(state.staffMechanics.s3.visiblePosture) },
         { label: "Executable posture", value: state.staffMechanics.s3.executablePosture, status: staffMetricStatus(state.staffMechanics.s3.executablePosture) },
+        { label: "Credible deterrence", value: state.staffMechanics.s3.credibleDeterrence, status: staffMetricStatus(state.staffMechanics.s3.credibleDeterrence) },
         { label: "Deployable units", value: state.strategic.forceGeneration.deployableUnits, status: state.strategic.forceGeneration.deployableUnits < 5 ? "risk" : state.strategic.forceGeneration.deployableUnits < 7 ? "watch" : "healthy" },
       ];
     case "S4":
       return [
         { label: "Stockpile depth", value: state.staffMechanics.s4.stockpileDepth, status: staffMetricStatus(state.staffMechanics.s4.stockpileDepth) },
         { label: "Lift burn", value: state.staffMechanics.s4.liftBurn, status: staffMetricStatus(state.staffMechanics.s4.liftBurn, true) },
+        { label: "Supportable tempo", value: state.staffMechanics.s4.supportableTempo, status: staffMetricStatus(state.staffMechanics.s4.supportableTempo) },
         { label: "Depot backlog", value: state.strategic.sustainment.depotBacklog, status: staffMetricStatus(state.strategic.sustainment.depotBacklog, true) },
       ];
     case "S5":
@@ -1111,6 +1140,7 @@ function staffFunctionMetrics(id: StaffFunctionId, state: CampaignState): StaffF
         { label: "Strategic coherence", value: state.staffMechanics.s5.strategicCoherence, status: staffMetricStatus(state.staffMechanics.s5.strategicCoherence) },
         { label: "Doctrine alignment", value: state.staffMechanics.s5.doctrineAlignment, status: staffMetricStatus(state.staffMechanics.s5.doctrineAlignment) },
         { label: "Cabinet cover", value: state.strategic.domestic.cabinetCover, status: staffMetricStatus(state.strategic.domestic.cabinetCover) },
+        { label: "Alliance alignment", value: state.strategic.alliance.politicalAlignment, status: staffMetricStatus(state.strategic.alliance.politicalAlignment) },
       ];
   }
 }
