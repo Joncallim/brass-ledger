@@ -31,6 +31,19 @@ function firstOptionSelections(memos: Array<{ id: string; optional?: boolean; op
     }));
 }
 
+async function withAcceptedRiskCandidates(sessionId: string, input: Record<string, unknown>) {
+  const preview = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${sessionId}/preview-turn`,
+    payload: { input },
+  });
+  assert.equal(preview.statusCode, 200);
+  return {
+    ...input,
+    acceptedRiskOverrides: preview.json().acceptedRiskCandidates,
+  };
+}
+
 test("CORS accepts configured local origins and rejects unknown origins", async () => {
   const allowed = await app.inject({
     method: "OPTIONS",
@@ -92,24 +105,43 @@ test("resolve-turn persists a revision and rejects stale expected revisions", as
   const input = {
     turn: created.session.state.turn,
     selectedActionIds: [],
+    acceptedRiskOverrides: [],
     selections: firstOptionSelections(created.memos),
   };
+
+  const preview = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/preview-turn`,
+    payload: { input },
+  });
+  assert.equal(preview.statusCode, 200);
+  const previewBody = preview.json();
+  assert.ok(previewBody.acceptedRiskCandidates.length > 0);
+
+  const unacceptedRisk = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/resolve-turn`,
+    payload: { input, expectedRevision: 0 },
+  });
+  assert.equal(unacceptedRisk.statusCode, 428);
+  assert.match(unacceptedRisk.json().error, /acceptedRiskOverrides/i);
 
   const resolved = await app.inject({
     method: "POST",
     url: `/api/sessions/${id}/resolve-turn`,
-    payload: { input, expectedRevision: 0 },
+    payload: { input: { ...input, acceptedRiskOverrides: previewBody.acceptedRiskCandidates }, expectedRevision: 0 },
   });
   assert.equal(resolved.statusCode, 200);
   const resolvedBody = resolved.json();
   assert.equal(resolvedBody.session.revision, 1);
   assert.equal(resolvedBody.summary.revision, 1);
   assert.equal(resolvedBody.validation.ok, true);
+  assert.deepEqual(resolvedBody.result.acceptedRisks.map((risk: { accepted: boolean }) => risk.accepted), previewBody.acceptedRiskCandidates.map(() => true));
 
   const stale = await app.inject({
     method: "POST",
     url: `/api/sessions/${id}/resolve-turn`,
-    payload: { input: { ...input, turn: 2 }, expectedRevision: 0 },
+    payload: { input: { ...input, turn: 2, acceptedRiskOverrides: previewBody.acceptedRiskCandidates }, expectedRevision: 0 },
   });
   assert.equal(stale.statusCode, 409);
   assert.match(stale.json().error, /revision mismatch/i);
@@ -182,12 +214,14 @@ test("import rejects replay-corrupted session exports", async () => {
   const input = {
     turn: created.session.state.turn,
     selectedActionIds: [],
+    acceptedRiskOverrides: [],
     selections: firstOptionSelections(created.memos),
   };
+  const acceptedInput = await withAcceptedRiskCandidates(created.session.id, input);
   const resolved = await app.inject({
     method: "POST",
     url: `/api/sessions/${created.session.id}/resolve-turn`,
-    payload: { input },
+    payload: { input: acceptedInput },
   });
   assert.equal(resolved.statusCode, 200);
 
@@ -238,8 +272,10 @@ test("simultaneous authoritative mutations do not both apply against one revisio
   const input = {
     turn: created.session.state.turn,
     selectedActionIds: [],
+    acceptedRiskOverrides: [],
     selections: firstOptionSelections(created.memos),
   };
+  const acceptedInput = await withAcceptedRiskCandidates(id, input);
   const memo = created.memos[0];
   const option = memo.options[0];
   const chiefId = created.session.advisorRoster[0].chiefId;
@@ -248,7 +284,7 @@ test("simultaneous authoritative mutations do not both apply against one revisio
     app.inject({
       method: "POST",
       url: `/api/sessions/${id}/resolve-turn`,
-      payload: { input, expectedRevision: 0 },
+      payload: { input: acceptedInput, expectedRevision: 0 },
     }),
     app.inject({
       method: "POST",
