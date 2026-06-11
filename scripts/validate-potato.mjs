@@ -1,7 +1,8 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
-const root = path.resolve("GROCER");
+const documentationRoot = "Brass Ledge Documentation";
+const root = path.resolve(documentationRoot, "GROCER");
 const wikiLinkPattern = /\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|[^\]]+)?\]\]/g;
 const indexNotes = new Map([
   ["GROCER", "GROCER.md"],
@@ -88,7 +89,7 @@ for (const file of files) {
 }
 
 if (!fileSet.has(path.resolve(root, "GROCER.md"))) {
-  failures.push("GROCER/GROCER.md: vault index is required");
+  failures.push(`${documentationRoot}/GROCER/GROCER.md: vault index is required`);
 }
 
 if (failures.length > 0) {
@@ -96,4 +97,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Validated ${files.length} GROCER notes.`);
+console.log(`Validated ${files.length} GROCER notes in ${documentationRoot}.`);

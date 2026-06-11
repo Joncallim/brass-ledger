@@ -15,7 +15,7 @@ Backlink: [[GROCER]]
 
 ## Consolidation Result
 
-GROCER is now the canonical vault root. The former top-level note repositories have been copied into one vault:
+`Brass Ledge Documentation/` is now the folder to open directly in Obsidian. GROCER remains the canonical vault section inside that umbrella. The former root-level note repositories have been moved into the documentation folder:
 
 | Former vault | New GROCER path | Status |
 | --- | --- | --- |
@@ -24,7 +24,7 @@ GROCER is now the canonical vault root. The former top-level note repositories h
 | CARROT | [[CARROT/CARROT]] | Active world/scenario domain. |
 | CAPSICUM | [[CAPSICUM/README]] | Framed design domain; mostly unpopulated. |
 
-The legacy top-level folders remain in place for comparison during migration. New notes should be created inside `GROCER/`.
+The legacy comparison folders remain inside `Brass Ledge Documentation/` during migration. New notes should be created inside `GROCER/`.
 
 ## Corrected Inconsistencies
 
@@ -61,7 +61,7 @@ These claims match the current TypeScript implementation and should be treated a
 
 ## Required Follow-Up Before Engine Expansion
 
-1. Add a migration decision: either remove the legacy top-level vault folders after review or mark them as archived.
+1. Add a migration decision: either remove the legacy comparison folders under `Brass Ledge Documentation/` after review or mark them as archived.
 2. Populate CAPSICUM by moving or summarizing visual rules from [[POTATO/sprite-design-logic]] and [[POTATO/game-engine-review/05-browser-design-system]].
 3. Convert CARROT faction balance into scenario data only after the S1-S5 contract and doctrine-profile schema are stable.
 4. Add tests when doctrine mechanics move from notes into `packages/sim`.

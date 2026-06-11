@@ -104,6 +104,7 @@ function defaultInput(session: GameSession): TurnInput {
   return {
     turn: session.state.turn,
     selectedActionIds: [],
+    acceptedRiskOverrides: [],
     selections: memos
       .filter((memo) => !memo.optional)
       .map((memo) => ({

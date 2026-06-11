@@ -1,6 +1,8 @@
-# GROCER
+# Brass Ledge Documentation
 
-GROCER is the single Obsidian-style knowledge vault and development workspace for Brass Ledger. Open [[GROCER/GROCER|GROCER]] for the canonical vault index. The former vegetable codenames now live as internal domains: [[GROCER/POTATO/POTATO|POTATO]], [[GROCER/CELERY/CELERY|CELERY]], [[GROCER/CARROT/CARROT|CARROT]], and [[GROCER/CAPSICUM/README|CAPSICUM]].
+Open `Brass Ledge Documentation/` directly in Obsidian. It contains the GROCER vault index plus the POTATO, CELERY, CARROT, CAPSICUM, and planning documentation that used to sit as multiple folders in the project root.
+
+The canonical vault index is `Brass Ledge Documentation/GROCER/GROCER.md`. The former vegetable codenames now live under that documentation umbrella as internal knowledge domains.
 
 # Brass Ledger
 
@@ -12,7 +14,8 @@ Single-player browser-based strategic leadership simulator built as a solo-devel
 - `packages/shared`: canonical schemas and shared types
 - `packages/content`: scenario definitions and content validation
 - `packages/sim`: deterministic turn resolver and tests
-- `docs/planning`: original planning documents
+- `Brass Ledge Documentation/`: Obsidian vault and project documentation
+- `Brass Ledge Documentation/docs/planning`: original planning documents
 
 ## Getting Started
 ```bash

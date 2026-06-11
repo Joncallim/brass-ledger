@@ -10,7 +10,7 @@ tags:
 
 # GROCER
 
-GROCER is the single Obsidian-style vault for Brass Ledger. Open [[GROCER/GROCER]] for the canonical vault index.
+Open the `Brass Ledge Documentation/` folder directly in Obsidian. GROCER is the canonical vault section inside that folder; open [[GROCER/GROCER]] for the main index.
 
 The folders inside `GROCER/` preserve the vegetable codenames as internal knowledge domains:
 
@@ -19,7 +19,7 @@ The folders inside `GROCER/` preserve the vegetable codenames as internal knowle
 - `CARROT/` for scenario worldbuilding, faction and theater generation, campaign templates, and narrative continuity.
 - `CAPSICUM/` for visual language, UI/UX framework, sprite rules, layout patterns, and product tone.
 
-Legacy top-level folders are retained for comparison during migration. New vault work should happen under `GROCER/`.
+Legacy comparison folders are retained inside `Brass Ledge Documentation/` during migration. New vault work should happen under `GROCER/`.
 
 ## Subordinate Vaults
 

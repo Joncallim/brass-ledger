@@ -660,6 +660,26 @@ export const turnInputSchema = z.object({
 });
 export type TurnInput = z.infer<typeof turnInputSchema>;
 
+export const decisionPreviewEntrySchema = z.object({
+  memoId: z.string(),
+  memoTitle: z.string(),
+  optionId: z.string(),
+  optionLabel: z.string(),
+  staffCosts: z.array(burdenContributionSchema),
+  staffWarnings: z.array(acceptedRiskOverrideSchema),
+  projectedReadouts: z.array(staffFunctionReadoutSchema),
+  projectedBlockers: z.array(z.string()),
+  acceptedRiskCandidateCount: z.number().int().min(0),
+});
+export type DecisionPreviewEntry = z.infer<typeof decisionPreviewEntrySchema>;
+
+export const turnPreviewSchema = z.object({
+  decisionPreviews: z.array(decisionPreviewEntrySchema),
+  acceptedRiskCandidates: z.array(acceptedRiskOverrideSchema),
+  predictedEvents: z.array(eventDefinitionSchema),
+});
+export type TurnPreview = z.infer<typeof turnPreviewSchema>;
+
 export const turnResultSchema = z.object({
   input: turnInputSchema,
   previousState: campaignStateSchema,

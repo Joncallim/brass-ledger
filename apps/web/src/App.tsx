@@ -4,6 +4,7 @@ import {
   type DecisionMemo,
   type GameSession,
   type ScenarioSummary,
+  type TurnPreview,
   type TurnResult,
 } from "@brass-ledger/shared";
 
@@ -24,8 +25,7 @@ type SessionSummary = SessionEnvelope["summary"];
 
 type PreviewPayload = {
   projectedResult: TurnResult;
-  predictedEvents: TurnResult["triggeredEvents"];
-};
+} & TurnPreview;
 
 const apiBase = "/api";
 
@@ -48,6 +48,8 @@ async function fetchJson<T>(url: string, init?: RequestInit) {
 function defaultTurnInput(session: GameSession, memos: DecisionMemo[]) {
   return {
     turn: session.state.turn,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
     selections: memos
       .filter((memo) => !memo.optional)
       .map((memo) => ({

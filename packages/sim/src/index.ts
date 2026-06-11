@@ -1,8 +1,10 @@
 import { createHash } from "node:crypto";
 import {
+  type AcceptedRiskOverride,
   type CampaignObjective,
   type CampaignState,
   type ChiefPositionEntry,
+  type DecisionPreviewEntry,
   type DecisionMemo,
   type DirectorateBurden,
   type EventDefinition,
@@ -827,7 +829,34 @@ function updateCommitments(
 
 export function previewTurn(scenario: ScenarioDefinition, state: CampaignState, input: TurnInput) {
   const projectedResult = resolveTurn(scenario, state, input);
-  const disagreements = deriveDecisionMemos(scenario, state).flatMap((memo) => {
+  const memos = deriveDecisionMemos(scenario, state);
+  const acceptedRiskCandidates: AcceptedRiskOverride[] = projectedResult.staffFunctions.flatMap((readout) =>
+    readout.warnings.map((warningText) => ({
+      staffFunctionId: readout.id,
+      warningText,
+    })),
+  );
+  const projectedBlockers = projectedResult.directorateBurden
+    .filter((entry) => entry.burdenLevel === "strained" || entry.burdenLevel === "overloaded")
+    .map((entry) => entry.summary);
+  const decisionPreviews: DecisionPreviewEntry[] = memos.flatMap((memo) => {
+    const selected = input.selections.find((entry) => entry.memoId === memo.id);
+    if (!selected) return [];
+    const option = memo.options.find((entry) => entry.id === selected.optionId);
+    if (!option) return [];
+    return [{
+      memoId: memo.id,
+      memoTitle: memo.title,
+      optionId: option.id,
+      optionLabel: option.label,
+      staffCosts: option.burden,
+      staffWarnings: acceptedRiskCandidates,
+      projectedReadouts: projectedResult.staffFunctions,
+      projectedBlockers,
+      acceptedRiskCandidateCount: acceptedRiskCandidates.length,
+    }];
+  });
+  const disagreements = memos.flatMap((memo) => {
     const selected = input.selections.find((entry) => entry.memoId === memo.id);
     if (!selected) return [];
     const positions = projectedResult.chiefPositions.filter((entry) => entry.memoId === memo.id && entry.optionId === selected.optionId);
@@ -839,7 +868,7 @@ export function previewTurn(scenario: ScenarioDefinition, state: CampaignState, 
       supportedBy: positions.filter((entry) => entry.position === "support").map((entry) => entry.chiefId),
     }];
   });
-  return { projectedResult, disagreements, predictedEvents: projectedResult.triggeredEvents };
+  return { projectedResult, disagreements, decisionPreviews, acceptedRiskCandidates, predictedEvents: projectedResult.triggeredEvents };
 }
 
 export function resolveTurn(scenario: ScenarioDefinition, previousState: CampaignState, input: TurnInput): TurnResult {
