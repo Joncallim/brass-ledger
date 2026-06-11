@@ -47,36 +47,50 @@ Exit criteria:
 
 ## Stage 2: S1-S5 Core Mechanic
 
+Status: complete.
+
 Goals:
 
 - Make S1-S5 burden the primary action economy.
-- Add S1 recovery debt. Started: `staffMechanics.s1` tracks recovery debt and reserve predictability.
-- Add S2 fog-of-war confidence/visibility. Started: `staffMechanics.s2` tracks external estimate confidence, visibility, and deception risk.
-- Add S3 visible versus executable posture. Started: `staffMechanics.s3` tracks visible and executable posture separately.
-- Add S4 stockpile/lift burn. Started: `staffMechanics.s4` tracks stockpile depth and lift burn.
-- Add S5 strategic coherence and doctrine. Started: `staffMechanics.s5` tracks strategic coherence and doctrine alignment.
+- Add S1 recovery debt. Implemented: `staffMechanics.s1` tracks recovery debt and reserve predictability with natural decay, retention-pressure compounding, and per-turn after-action warnings.
+- Add S2 fog-of-war confidence/visibility. Implemented: `staffMechanics.s2` tracks external estimate confidence, visibility class (RUMORED/ESTIMATED/KNOWN), and deception risk including dangerous-precision penalty.
+- Add S3 visible versus executable posture. Implemented: `staffMechanics.s3` tracks visible and executable posture separately; credible deterrence is bounded by the minimum of visible, executable, sustainment support, and S2 estimate confidence.
+- Add S4 stockpile/lift burn. Implemented: `staffMechanics.s4` tracks stockpile depth, lift burn, and supportable tempo derived from live sustainment state.
+- Add S5 strategic coherence and doctrine. Implemented: `staffMechanics.s5` tracks strategic coherence and doctrine alignment; commitment entries (alliance, program, cabinet, doctrine) are created from tags and resolved as fulfilled or broken across turns. High S2 deception risk (>60) now directly penalises S5 coherence via contradiction logic.
 
 Exit criteria:
 
-- Every decision option has S1-S5 costs and warnings.
-- After-action explains outcomes by S-function. Started: after-action now includes an S1-S5 consequence note.
-- No decision can bypass staff capacity.
+- Every decision option has S1-S5 costs and warnings. Met: all memo options carry directorate burden arrays that drive S1-S5 mechanic updates; warnings surface through `previewTurn` accepted-risk candidates and after-action headings.
+- After-action explains outcomes by S-function. Met: after-action includes S1-S5 consequences note, S1 personnel warning, S3 posture warning, S4 support warning, S5 doctrine-bet, and accepted-risk summary.
+- No decision can bypass staff capacity. Met: `previewTurn` exposes accepted-risk candidates for every staff warning; `resolveTurn` requires explicit `acceptedRiskOverrides` to record acknowledged bypasses and surfaces them in after-action output.
+
+Cross-staff interlocks covered:
+
+- S1→S3: after-action warns when deployable units improve but recovery debt worsens.
+- S2→S3: low estimate confidence caps credible deterrence.
+- S2→S5: deception risk above 60 degrades strategic coherence.
+- S3→S4: visible posture exercises increase lift burn.
+- S4→S5: programs are blocked by lift-burn saturation.
+- S5→S1: reserve-rebuild is blocked by critical recovery debt.
+
+Test coverage: 40 engine tests and 12 server integration tests; all cross-staff interlocks, boundary values, fog-of-war determinism, commitment fulfillment/breaking, and terminal-campaign replay are covered.
 
 ## Stage 3: Dual Tech Tree And Industry Model
 
 Goals:
 
-- Implement internal capability nodes.
-- Implement external industry nodes.
-- Implement S2 estimates for external nodes.
-- Link S4 constraints to external industry maturity.
-- Link S5 plans to internal prerequisites and alliance feasibility.
+- Implement internal capability nodes that progress through phases (concept → prototype → fielded) driven by program pushes and staff absorb capacity.
+- Implement external industry nodes (shipping-market, electronics-chain, propellant-market) with maturity scores that constrain S4 stockpile depth and S2 collection options.
+- Implement S2 estimates for external nodes: each node carries a confidence class (RUMORED/ESTIMATED/KNOWN) derived from collection tags and deception pressure.
+- Link S4 constraints to external industry maturity: when electronics-chain or propellant-market degrade, stockpile depth and supportable tempo inherit penalties.
+- Link S5 plans to internal prerequisites and alliance feasibility: commitment fulfillment checks should include whether prerequisite programs are fielded before new ones are committed.
+- Expose tech-tree and industry state in `TurnResult` so headless CLI can report capability progress and constraint degradation.
 
 Exit criteria:
 
-- Tech tree can be simulated from CLI.
-- Node changes emit explainability.
-- Fog-of-war is deterministic under replay.
+- Tech tree can be simulated from CLI: `apps/cli` headless run emits program phase and external constraint state per turn.
+- Node changes emit explainability: internal phase transitions and external maturity shifts appear in `TurnResult.explainability`.
+- Fog-of-war is deterministic under replay: external industry estimates with S2 confidence class replay identically under `validateReplaySession`.
 
 ## Stage 4: Agent Chiefs And Negotiation
 

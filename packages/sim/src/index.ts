@@ -674,10 +674,13 @@ function updateStaffMechanics(
     (tags.has("modernization") ? 4 : 0) +
     (tags.has("program") ? 3 : 0) +
     (tags.has("quiet") ? 2 : 0);
+  // S2 deception risk above 60 erodes S5 coherence: operating under a compromised picture is itself a strategic contradiction
+  const deceptionCoherencePenalty = mechanics.s2.deceptionRisk > 60 ? 4 : 0;
   const contradictionPenalty =
     (visiblePosture > executablePosture + 15 ? 6 : 0) +
     (liftBurn > stockpileDepth + 15 ? 5 : 0) +
-    (recoveryDebt > reservePredictability + 15 ? 5 : 0);
+    (recoveryDebt > reservePredictability + 15 ? 5 : 0) +
+    deceptionCoherencePenalty;
   // Extra coherence penalty when selected options have explicit contradictionTags
   const contradictionTagPenalty = selectedOptions.reduce((sum, option) => sum + option.contradictionTags.length * 2, 0);
   const strategicCoherence = clamp(
