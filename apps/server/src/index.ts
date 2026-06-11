@@ -20,8 +20,10 @@ import {
   startChiefConversation,
   summarizeState,
   turnInputSchema,
+  type AcceptedRiskOverride,
   type GameSession,
   type ReplayValidation,
+  type TurnInput,
 } from "@brass-ledger/shared";
 import { deriveDecisionMemos, previewTurn, resolveTurn, validateReplaySession } from "@brass-ledger/sim";
 
@@ -278,6 +280,16 @@ function sessionPayload(session: GameSession) {
   };
 }
 
+function riskKey(risk: AcceptedRiskOverride) {
+  return `${risk.staffFunctionId}\u0000${risk.warningText}`;
+}
+
+function missingAcceptedRiskCandidates(session: GameSession, input: TurnInput) {
+  const preview = previewTurn(soloScenario, session.state, { ...input, acceptedRiskOverrides: [] });
+  const accepted = new Set((input.acceptedRiskOverrides ?? []).map(riskKey));
+  return preview.acceptedRiskCandidates.filter((candidate) => !accepted.has(riskKey(candidate)));
+}
+
 app.get("/", async (_request, reply) => serveClientShell(reply));
 
 app.get("/api/health", async () => ({ ok: true }));
@@ -513,6 +525,14 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
     return await withSessionLock(id, async () => {
       const session = await readSession(id);
       assertExpectedRevision(session, body.expectedRevision);
+      const missingAcceptedRisks = missingAcceptedRiskCandidates(session, input);
+      if (missingAcceptedRisks.length > 0) {
+        reply.code(428);
+        return {
+          error: "Resolve turn requires explicit acceptedRiskOverrides for projected S1-S5 staff warnings.",
+          acceptedRiskCandidates: missingAcceptedRisks,
+        };
+      }
       const result = resolveTurn(soloScenario, session.state, input);
       const nextSession = gameSessionSchema.parse(advanceSessionRevision({
         ...session,

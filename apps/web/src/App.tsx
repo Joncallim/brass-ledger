@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  type AcceptedRiskOverride,
   buildAdvisorPortraitDataUri,
   type DecisionMemo,
   type GameSession,
@@ -45,11 +46,11 @@ async function fetchJson<T>(url: string, init?: RequestInit) {
   return data as T;
 }
 
-function defaultTurnInput(session: GameSession, memos: DecisionMemo[]) {
+function defaultTurnInput(session: GameSession, memos: DecisionMemo[], acceptedRiskOverrides: AcceptedRiskOverride[] = []) {
   return {
     turn: session.state.turn,
     selectedActionIds: [],
-    acceptedRiskOverrides: [],
+    acceptedRiskOverrides,
     selections: memos
       .filter((memo) => !memo.optional)
       .map((memo) => ({
@@ -57,6 +58,18 @@ function defaultTurnInput(session: GameSession, memos: DecisionMemo[]) {
         optionId: memo.options[0]?.id ?? "",
       }))
       .filter((selection) => selection.optionId.length > 0),
+  };
+}
+
+function previewSnapshot(preview: PreviewPayload) {
+  return {
+    decisionPreviews: preview.decisionPreviews,
+    acceptedRiskCandidates: preview.acceptedRiskCandidates,
+    predictedEvents: preview.predictedEvents,
+    projectedSummary: preview.projectedResult.summary,
+    projectedStaffFunctions: preview.projectedResult.staffFunctions,
+    projectedAfterAction: preview.projectedResult.afterAction,
+    replayHash: preview.projectedResult.replayHash,
   };
 }
 
@@ -182,12 +195,16 @@ export function App() {
 
   async function resolveDefaultTurn() {
     if (!session) return;
+    if (!preview || preview.projectedResult.input.turn !== session.state.turn) {
+      setError("Preview the text turn before resolving so S1-S5 warnings can be accepted explicitly.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       const data = await fetchJson<SessionEnvelope & { result: TurnResult }>(`${apiBase}/sessions/${session.id}/resolve-turn`, {
         method: "POST",
-        body: JSON.stringify({ input: defaultTurnInput(session, memos) }),
+        body: JSON.stringify({ input: defaultTurnInput(session, memos, preview.acceptedRiskCandidates) }),
       });
       setSession(data.session);
       setMemos(data.memos);
@@ -244,7 +261,7 @@ export function App() {
             Preview text turn
           </button>
           <button type="button" onClick={() => void resolveDefaultTurn()} disabled={busy || !session}>
-            Resolve text turn
+            Resolve accepted turn
           </button>
         </div>
       </section>
@@ -255,7 +272,7 @@ export function App() {
       <section className="engine-grid">
         <article className="engine-panel">
           <h2>Engine Output</h2>
-          <pre>{JSON.stringify(preview?.projectedResult ?? snapshot, null, 2)}</pre>
+          <pre>{JSON.stringify(preview ? previewSnapshot(preview) : snapshot, null, 2)}</pre>
         </article>
 
         <aside className="engine-panel">
