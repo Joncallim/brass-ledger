@@ -582,3 +582,67 @@ test("S5-S1 interlock: reserve-rebuild program is blocked when S1 recovery debt 
   assert.ok(reserveRebuild, "Reserve rebuild program should exist");
   assert.ok(reserveRebuild.blockers.some((b) => b.includes("S1") || b.includes("recovery")), "Reserve rebuild should be blocked by S1 recovery debt");
 });
+
+// Stage 2: S2-S5 interlock test
+test("S2-S5 interlock: high deception risk degrades S5 strategic coherence via contradiction penalty", () => {
+  const highDeceptionState = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s2: { externalEstimateConfidence: 55, visibility: "ESTIMATED" as const, deceptionRisk: 72 },
+    },
+  };
+  const normalResult = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const highDeceptionResult = resolveTurn(soloScenario, highDeceptionState, balancedInput);
+  assert.ok(
+    highDeceptionResult.nextState.staffMechanics.s5.strategicCoherence <
+      normalResult.nextState.staffMechanics.s5.strategicCoherence,
+    "High S2 deception risk should reduce S5 strategic coherence via deception-coherence penalty",
+  );
+});
+
+// Stage 2: S5 commitment fulfillment test
+test("S5 alliance commitment is marked fulfilled when strategic coherence rises to threshold", () => {
+  const stateWithCommitment = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s5: { strategicCoherence: 57, doctrineAlignment: 50 },
+    },
+    activeCommitments: [
+      { id: "alliance-t0", type: "alliance" as const, label: "Alliance reassurance commitment", turnMade: 1, fulfilled: null },
+    ],
+  };
+  // balancedInput selects quiet-reassurance (alliance + quiet tags) — coherence gain ≥ 6 from starting 57 should exceed 60
+  const result = resolveTurn(soloScenario, stateWithCommitment, balancedInput);
+  const entry = result.nextState.activeCommitments.find((c) => c.id === "alliance-t0");
+  if (result.nextState.staffMechanics.s5.strategicCoherence >= 60) {
+    assert.ok(entry, "Fulfilled commitment should still appear in activeCommitments with fulfilled=true on resolution turn");
+    assert.equal(entry?.fulfilled, true, "Alliance commitment should be marked fulfilled when coherence ≥ 60");
+  } else {
+    assert.ok(entry?.fulfilled === null, "Commitment remains pending when coherence is below threshold");
+  }
+});
+
+// Stage 2: S5 commitment broken test
+test("S5 program commitment is marked broken when S4 supportable tempo collapses below threshold", () => {
+  const stateWithCommitment = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s4: { stockpileDepth: 40, liftBurn: 78, supportableTempo: 5 },
+    },
+    activeCommitments: [
+      { id: "program-t0", type: "program" as const, label: "Modernization or capability commitment", turnMade: 1, fulfilled: null },
+    ],
+  };
+  // highTempoInput includes surge-exercises (exercise tag, +8 liftBurn); starting at 78 will push supportableTempo to 0
+  const result = resolveTurn(soloScenario, stateWithCommitment, highTempoInput);
+  const entry = result.nextState.activeCommitments.find((c) => c.id === "program-t0");
+  if (result.nextState.staffMechanics.s4.supportableTempo < 5) {
+    assert.ok(entry, "Broken commitment should still appear in activeCommitments with fulfilled=false on resolution turn");
+    assert.equal(entry?.fulfilled, false, "Program commitment should be marked broken when supportable tempo < 5");
+  } else {
+    assert.ok(entry?.fulfilled === null, "Commitment remains pending when supportable tempo is still viable");
+  }
+});
