@@ -219,8 +219,17 @@ export const soloScenario = scenarioDefinitionSchema.parse({
     activeEventIds: [],
     eventHistory: [],
     eventFlags: {},
-    internalTech: [],
-    externalTech: [],
+    internalTech: [
+      { id: "fires-network",          level: 0, progress: 45 },
+      { id: "counter-deception-grid", level: 0, progress: 28 },
+      { id: "sustainment-ledger",     level: 0, progress: 52 },
+      { id: "reserve-rebuild",        level: 0, progress: 28 },
+    ],
+    externalTech: [
+      { id: "shipping-market",   level: 1, progress: 44, estimate: { estimatedLevel: 1, confidence: 48, visibility: "ESTIMATED", lastVerifiedTurn: null } },
+      { id: "electronics-chain", level: 1, progress: 48, estimate: { estimatedLevel: 1, confidence: 52, visibility: "ESTIMATED", lastVerifiedTurn: null } },
+      { id: "propellant-market", level: 1, progress: 51, estimate: { estimatedLevel: 1, confidence: 45, visibility: "ESTIMATED", lastVerifiedTurn: null } },
+    ],
     briefing: {
       theater: "Northern Frontier",
       monthLabel: "Month 1",

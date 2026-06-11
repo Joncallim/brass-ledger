@@ -10,6 +10,7 @@ import {
   type EventDefinition,
   type ExplainabilityEntry,
   type ExternalConstraintState,
+  type ExternalTechNode,
   type MemoOption,
   type MemoSelection,
   type ReplayValidation,
@@ -17,6 +18,7 @@ import {
   type StaffMechanicsState,
   type StateDelta,
   type StrategicState,
+  type TechProgressNode,
   type TurnInput,
   type TurnResult,
   buildChiefPositions,
@@ -69,6 +71,19 @@ function phaseAt(index: number) {
   const phases = ["concept", "funded", "procured", "integrated", "trained", "operational"] as const;
   return phases[clamp(index, 0, phases.length - 1)] as (typeof phases)[number];
 }
+
+function phaseToLevel(phase: string): 0 | 1 | 2 {
+  const idx = phaseIndex(phase);
+  if (idx <= 1) return 0;
+  if (idx <= 3) return 1;
+  return 2;
+}
+
+const defaultExternalTech: ExternalTechNode[] = [
+  { id: "shipping-market",   level: 1, progress: 50, estimate: { estimatedLevel: 1, confidence: 45, visibility: "ESTIMATED", lastVerifiedTurn: null } },
+  { id: "electronics-chain", level: 1, progress: 50, estimate: { estimatedLevel: 1, confidence: 45, visibility: "ESTIMATED", lastVerifiedTurn: null } },
+  { id: "propellant-market", level: 1, progress: 50, estimate: { estimatedLevel: 1, confidence: 45, visibility: "ESTIMATED", lastVerifiedTurn: null } },
+];
 
 function strategicMetric(state: CampaignState, metric: CampaignObjective["metric"]) {
   if (metric === "deployableUnits") return state.strategic.forceGeneration.deployableUnits;
@@ -438,6 +453,36 @@ function afterAction(
     });
   }
 
+  // Industry level changes: note when an external node degrades or recovers
+  const prevTechById = new Map((previousState.externalTech.length > 0 ? previousState.externalTech : defaultExternalTech).map((n) => [n.id, n]));
+  for (const node of nextState.externalTech) {
+    const prev = prevTechById.get(node.id);
+    if (!prev || prev.level === node.level) continue;
+    if (node.level < prev.level) {
+      notes.push({
+        heading: "Industry degradation",
+        detail: `${node.id} fell from level ${prev.level} to level ${node.level}. S4 constraints are likely to tighten in coming turns.`,
+      });
+    } else {
+      notes.push({
+        heading: "Industry recovery",
+        detail: `${node.id} improved from level ${prev.level} to level ${node.level}. S4 pressure from this node has eased.`,
+      });
+    }
+  }
+
+  // Program level advances: note when a capability reaches a new milestone
+  const prevProgramById = new Map(previousState.internalTech.map((n) => [n.id, n]));
+  for (const node of nextState.internalTech) {
+    const prev = prevProgramById.get(node.id);
+    if (!prev || prev.level === node.level) continue;
+    const levelLabel = node.level === 1 ? "prototype" : "fielded";
+    notes.push({
+      heading: "Program milestone",
+      detail: `${node.id} advanced to ${levelLabel} (level ${node.level}). The capability is now available for operational planning.`,
+    });
+  }
+
   return notes;
 }
 
@@ -519,6 +564,20 @@ function createExplainability(
       blockers: events.map((event) => event.summary),
       causalRefs: events.map((event) => `event:${event.id}`),
     },
+    {
+      label: "Tech tree and industry",
+      summary: (() => {
+        const operationalCount = nextState.internalTech.filter((n) => n.level === 2).length;
+        const disruptedCount = nextState.externalTech.filter((n) => n.level === 0).length;
+        return `${operationalCount} program(s) fielded; ${disruptedCount} industry node(s) disrupted.`;
+      })(),
+      positiveDrivers: nextState.internalTech.filter((n) => n.level === 2).map((n) => `${n.id} fielded`),
+      blockers: nextState.externalTech.filter((n) => n.level === 0).map((n) => `${n.id} disrupted`),
+      causalRefs: [
+        ...nextState.internalTech.map((n) => `tech:${n.id}/level:${n.level}`),
+        ...nextState.externalTech.map((n) => `industry:${n.id}/level:${n.level}/estimate:${n.estimate.estimatedLevel}`),
+      ],
+    },
   ];
 }
 
@@ -555,6 +614,59 @@ function updateConstraints(
   });
 }
 
+function severityToLevel(severity: number): 0 | 1 | 2 {
+  if (severity >= 65) return 0;
+  if (severity >= 35) return 1;
+  return 2;
+}
+
+function industryVisibilityFor(confidence: number): ExternalTechNode["estimate"]["visibility"] {
+  if (confidence >= 65) return "KNOWN";
+  if (confidence >= 40) return "ESTIMATED";
+  return "RUMORED";
+}
+
+function updateExternalTech(
+  previousState: CampaignState,
+  nextConstraints: ExternalConstraintState[],
+  selectedTags: Set<string>,
+  nextMechanics: StaffMechanicsState,
+): ExternalTechNode[] {
+  const constraintById = new Map(nextConstraints.map((c) => [c.id, c]));
+  const previous = previousState.externalTech.length > 0 ? previousState.externalTech : defaultExternalTech;
+  const industryGain = selectedTags.has("industrial-watch") ? 8 : selectedTags.has("collection") ? 3 : 0;
+
+  return previous.map((node) => {
+    const constraint = constraintById.get(node.id);
+    if (!constraint) return node;
+
+    const trueLevel = severityToLevel(constraint.severity);
+    const estimateConf = clamp(
+      node.estimate.confidence + industryGain - nextMechanics.s2.deceptionRisk * 0.06,
+      0, 100,
+    );
+    const estimateVisibility = industryVisibilityFor(estimateConf);
+    // Under RUMORED visibility with elevated deception risk, adversary manipulation makes constraints look less severe
+    const estimatedLevel = (estimateVisibility === "RUMORED" && nextMechanics.s2.deceptionRisk > 50)
+      ? Math.min(2, trueLevel + 1) as 0 | 1 | 2
+      : trueLevel;
+    // Progress within current level toward improving: inverse of how deep into the bad zone severity is
+    const progress = round(clamp(100 - constraint.severity, 0, 100));
+
+    return {
+      id: node.id,
+      level: trueLevel,
+      progress,
+      estimate: {
+        estimatedLevel,
+        confidence: round(estimateConf),
+        visibility: estimateVisibility,
+        lastVerifiedTurn: industryGain > 0 ? previousState.turn : node.estimate.lastVerifiedTurn,
+      },
+    };
+  });
+}
+
 function visibilityFor(confidence: number): StaffMechanicsState["s2"]["visibility"] {
   if (confidence >= 72) return "KNOWN";
   if (confidence >= 40) return "ESTIMATED";
@@ -566,6 +678,7 @@ function updateStaffMechanics(
   selectedOptions: MemoOption[],
   burdens: DirectorateBurden[],
   events: EventDefinition[],
+  nextConstraints: ExternalConstraintState[] = [],
 ): StaffMechanicsState {
   const tags = new Set(selectedOptions.flatMap((option) => option.tags));
   const burdenById = new Map(burdens.map((entry) => [entry.directorate, entry]));
@@ -577,6 +690,12 @@ function updateStaffMechanics(
   const training = burdenById.get("training")?.executionPenalty ?? 0;
   const eventPressure = events.length * 3;
   const mechanics = previousState.staffMechanics;
+
+  // S4 industry penalties: disrupted external nodes degrade stockpile depth and lift burn
+  const constraintById = new Map(nextConstraints.map((c) => [c.id, c]));
+  const propellantDisrupted = (constraintById.get("propellant-market")?.severity ?? 0) >= 65;
+  const electronicsDisrupted = (constraintById.get("electronics-chain")?.severity ?? 0) >= 65;
+  const shippingDisrupted = (constraintById.get("shipping-market")?.severity ?? 0) >= 65;
 
   const recoveryRelief =
     (tags.has("recovery") ? 6 : 0) +
@@ -642,7 +761,9 @@ function updateStaffMechanics(
       (tags.has("repair") ? 3 : 0) +
       previousState.strategic.sustainment.munitionsSufficiency * 0.03 -
       visiblePosture * 0.04 -
-      sustainment * 0.25,
+      sustainment * 0.25 -
+      (propellantDisrupted ? 6 : 0) -
+      (electronicsDisrupted ? 4 : 0),
     0,
     100,
   );
@@ -652,7 +773,8 @@ function updateStaffMechanics(
       (tags.has("exercise") ? 8 : 0) +
       (tags.has("forward-posture") ? 6 : 0) +
       sustainment * 0.3 -
-      previousState.strategic.sustainment.liftAvailability * 0.04,
+      previousState.strategic.sustainment.liftAvailability * 0.04 +
+      (shippingDisrupted ? 5 : 0),
     0,
     100,
   );
@@ -907,7 +1029,13 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   const nextPrograms = updatePrograms(scenario, previousState, input.selections, directorateBurden);
   const nextConstraints = updateConstraints(previousState, selectedOptions, triggeredEvents);
   const nextTrust = updateChiefTrust(previousState, chiefPositions);
-  const nextStaffMechanics = updateStaffMechanics(previousState, selectedOptions, directorateBurden, triggeredEvents);
+  const nextStaffMechanics = updateStaffMechanics(previousState, selectedOptions, directorateBurden, triggeredEvents, nextConstraints);
+  const nextInternalTech: TechProgressNode[] = nextPrograms.map((program) => ({
+    id: program.id,
+    level: phaseToLevel(program.phase),
+    progress: program.progress,
+  }));
+  const nextExternalTech = updateExternalTech(previousState, nextConstraints, selectedTags, nextStaffMechanics);
 
   const nextFlags = triggeredEvents.reduce<Record<string, boolean>>((flags, event) => {
     const updated = { ...flags };
@@ -937,6 +1065,8 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     strategic: nextStrategic,
     capabilityPrograms: nextPrograms,
     externalConstraints: nextConstraints,
+    internalTech: nextInternalTech,
+    externalTech: nextExternalTech,
     chiefTrust: nextTrust,
     activeCommitments: nextCommitments,
     eventHistory: [...previousState.eventHistory, ...triggeredEvents.map((event) => event.id)],
@@ -1026,6 +1156,8 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     triggeredEvents,
     afterAction: resultAfterAction,
     acceptedRisks,
+    internalTech: nextInternalTech,
+    externalTech: nextExternalTech,
     replayHash,
     summary,
   };

@@ -143,6 +143,11 @@ async function runHeadlessCampaign(options: CliOptions) {
         warnings: entry.warnings,
       })),
       triggeredEvents: result.triggeredEvents.map((event) => event.id),
+      internalTech: result.internalTech.map((n) => ({ id: n.id, level: n.level, progress: n.progress })),
+      externalTech: result.externalTech.map((n) => ({
+        id: n.id, level: n.level, estimatedLevel: n.estimate.estimatedLevel,
+        confidence: n.estimate.confidence, visibility: n.estimate.visibility,
+      })),
     });
   }
 

@@ -646,3 +646,100 @@ test("S5 program commitment is marked broken when S4 supportable tempo collapses
     assert.ok(entry?.fulfilled === null, "Commitment remains pending when supportable tempo is still viable");
   }
 });
+
+// Stage 3: tech tree and industry tests
+test("internalTech nodes are populated from capability program phases in TurnResult", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  assert.ok(result.internalTech.length > 0, "TurnResult should include internalTech nodes");
+  assert.ok(result.internalTech.every((n) => n.level >= 0 && n.level <= 2), "All internalTech levels should be 0, 1, or 2");
+  assert.ok(result.internalTech.every((n) => n.progress >= 0 && n.progress <= 100), "All internalTech progress values should be in range");
+  // Each program in the scenario should map to exactly one internalTech node
+  const programIds = soloScenario.capabilityPrograms.map((p) => p.id);
+  assert.ok(programIds.every((id) => result.internalTech.some((n) => n.id === id)), "Each program should have a corresponding internalTech node");
+});
+
+test("externalTech nodes are populated with S2 estimates in TurnResult", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  assert.ok(result.externalTech.length > 0, "TurnResult should include externalTech nodes");
+  assert.ok(result.externalTech.every((n) => ["RUMORED", "ESTIMATED", "KNOWN"].includes(n.estimate.visibility)), "All externalTech nodes should have a visibility class");
+  assert.ok(result.externalTech.every((n) => n.estimate.confidence >= 0 && n.estimate.confidence <= 100), "All estimate confidence values should be in range");
+  // Each external constraint should map to exactly one externalTech node
+  const constraintIds = soloScenario.externalConstraints.map((c) => c.id);
+  assert.ok(constraintIds.every((id) => result.externalTech.some((n) => n.id === id)), "Each external constraint should have a corresponding externalTech node");
+});
+
+test("externalTech estimate confidence improves when industrial-watch tag is selected", () => {
+  const result1 = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);         // no industrial-watch
+  const result2 = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);        // has industrial-watch
+  const avgConf1 = result1.externalTech.reduce((s, n) => s + n.estimate.confidence, 0) / result1.externalTech.length;
+  const avgConf2 = result2.externalTech.reduce((s, n) => s + n.estimate.confidence, 0) / result2.externalTech.length;
+  assert.ok(avgConf2 > avgConf1, "industrial-watch selection should increase external tech estimate confidence");
+});
+
+test("externalTech estimate confidence degrades under high deception risk", () => {
+  const highDeceptionState = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s2: { externalEstimateConfidence: 55, visibility: "ESTIMATED" as const, deceptionRisk: 80 },
+    },
+  };
+  const normalResult = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const highDeceptionResult = resolveTurn(soloScenario, highDeceptionState, balancedInput);
+  const avgConfNormal = normalResult.externalTech.reduce((s, n) => s + n.estimate.confidence, 0) / normalResult.externalTech.length;
+  const avgConfDeception = highDeceptionResult.externalTech.reduce((s, n) => s + n.estimate.confidence, 0) / highDeceptionResult.externalTech.length;
+  assert.ok(avgConfDeception < avgConfNormal, "High deception risk should degrade external tech estimate confidence");
+});
+
+test("S4 stockpile depth is penalised when propellant-market and electronics-chain are disrupted", () => {
+  const disruptedState = {
+    ...soloScenario.initialState,
+    externalConstraints: [
+      { id: "shipping-market",   severity: 40, trend: "steady" as const },
+      { id: "electronics-chain", severity: 72, trend: "worsening" as const },
+      { id: "propellant-market", severity: 70, trend: "worsening" as const },
+    ],
+  };
+  const normalResult  = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const disruptedResult = resolveTurn(soloScenario, disruptedState, balancedInput);
+  assert.ok(
+    disruptedResult.nextState.staffMechanics.s4.stockpileDepth <
+      normalResult.nextState.staffMechanics.s4.stockpileDepth,
+    "Disrupted propellant and electronics supply should reduce S4 stockpile depth",
+  );
+});
+
+test("S4 lift burn increases when shipping-market is disrupted", () => {
+  const disruptedState = {
+    ...soloScenario.initialState,
+    externalConstraints: [
+      { id: "shipping-market",   severity: 75, trend: "worsening" as const },
+      { id: "electronics-chain", severity: 52, trend: "steady" as const },
+      { id: "propellant-market", severity: 49, trend: "steady" as const },
+    ],
+  };
+  const normalResult    = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const disruptedResult = resolveTurn(soloScenario, disruptedState, balancedInput);
+  assert.ok(
+    disruptedResult.nextState.staffMechanics.s4.liftBurn >
+      normalResult.nextState.staffMechanics.s4.liftBurn,
+    "Disrupted shipping market should increase S4 lift burn",
+  );
+});
+
+test("tech tree and industry explainability entry is included in TurnResult", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const techEntry = result.explainability.find((e) => e.label === "Tech tree and industry");
+  assert.ok(techEntry, "Explainability should include a tech-tree-and-industry entry");
+  assert.ok(techEntry.causalRefs.length > 0, "Tech explainability should have causal refs");
+  assert.ok(techEntry.causalRefs.some((ref) => ref.startsWith("tech:")), "Causal refs should include internal tech nodes");
+  assert.ok(techEntry.causalRefs.some((ref) => ref.startsWith("industry:")), "Causal refs should include industry nodes");
+});
+
+test("Stage 3 tech and industry state is deterministic under replay", () => {
+  const result1 = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
+  const result2 = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
+  assert.deepEqual(result1.internalTech, result2.internalTech, "internalTech should be deterministic");
+  assert.deepEqual(result1.externalTech, result2.externalTech, "externalTech should be deterministic");
+  assert.equal(result1.replayHash, result2.replayHash, "replayHash should be identical");
+});
