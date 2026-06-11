@@ -18,7 +18,7 @@ Status: active.
 
 Goals:
 
-- Consolidate all Obsidian notes into [[../GROCER]].
+- Consolidate all Obsidian-facing folders under `Brass Ledge Documentation/`, with [[../GROCER]] as the canonical vault section.
 - Treat GROCER as the vault source of truth and POTATO as the engine/mechanics domain.
 - Keep browser UI reduced to an engine workbench.
 - Add compiled CLI route.

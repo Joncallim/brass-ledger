@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { soloScenario } from "@brass-ledger/content";
 import { buildChiefPositions, campaignStateSchema, continueChiefConversation, startChiefConversation, type TurnInput } from "@brass-ledger/shared";
-import { resolveTurn, validateReplaySession } from "./index";
+import { previewTurn, resolveTurn, validateReplaySession } from "./index";
 
 const balancedInput: TurnInput = {
   turn: 1,
@@ -63,6 +63,17 @@ test("resolveTurn emits S1-S5 staff readouts and causal explainability", () => {
   assert.ok(result.staffFunctions.some((entry) => entry.warnings.length > 0));
   assert.ok(result.explainability.length >= 4);
   assert.ok(result.explainability.every((entry) => entry.causalRefs.length > 0 || entry.label === "Events"));
+});
+
+test("previewTurn exposes replay-safe decision previews and accepted-risk candidates", () => {
+  const preview = previewTurn(soloScenario, soloScenario.initialState, highTempoInput);
+
+  assert.equal(preview.decisionPreviews.length, highTempoInput.selections.length);
+  assert.ok(preview.acceptedRiskCandidates.length > 0);
+  assert.ok(preview.decisionPreviews.every((entry) => entry.projectedReadouts.length === 5));
+  assert.ok(preview.decisionPreviews.every((entry) => entry.staffCosts.length > 0));
+  assert.ok(preview.decisionPreviews.every((entry) => entry.acceptedRiskCandidateCount === preview.acceptedRiskCandidates.length));
+  assert.deepEqual(preview.predictedEvents, preview.projectedResult.triggeredEvents);
 });
 
 test("resolveTurn advances S1-S5 core mechanics", () => {
