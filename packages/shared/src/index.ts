@@ -553,7 +553,21 @@ export const afterActionNoteSchema = z.object({
 });
 export type AfterActionNote = z.infer<typeof afterActionNoteSchema>;
 
-const techProgressSchema = z.object({ id: z.string(), level: z.number().int().min(0), progress: indexMetricSchema });
+export const techProgressSchema = z.object({ id: z.string(), level: z.number().int().min(0), progress: indexMetricSchema });
+export type TechProgressNode = z.infer<typeof techProgressSchema>;
+
+export const externalTechNodeSchema = z.object({
+  id: z.string(),
+  level: z.number().int().min(0).max(2),
+  progress: indexMetricSchema,
+  estimate: z.object({
+    estimatedLevel: z.number().int().min(0).max(2),
+    confidence: indexMetricSchema,
+    visibility: z.enum(["RUMORED", "ESTIMATED", "KNOWN"]),
+    lastVerifiedTurn: z.number().int().min(1).nullable(),
+  }),
+});
+export type ExternalTechNode = z.infer<typeof externalTechNodeSchema>;
 
 function addMirrorIssue(ctx: z.RefinementCtx, path: string, message: string) {
   ctx.addIssue({
@@ -583,17 +597,7 @@ export const campaignStateSchema = z.object({
   capabilityPrograms: z.array(capabilityProgramStateSchema),
   externalConstraints: z.array(externalConstraintStateSchema),
   internalTech: z.array(techProgressSchema).default([]),
-  externalTech: z.array(z.object({
-    id: z.string(),
-    level: z.number().int().min(0),
-    progress: indexMetricSchema,
-    estimate: z.object({
-      estimatedLevel: z.number().int().min(0),
-      confidence: indexMetricSchema,
-      visibility: z.enum(["RUMORED", "ESTIMATED", "KNOWN"]),
-      lastVerifiedTurn: z.number().int().min(1).nullable(),
-    }),
-  })).default([]),
+  externalTech: z.array(externalTechNodeSchema).default([]),
   chiefTrust: z.record(z.string(), indexMetricSchema),
   advisorTrust: z.record(z.string(), indexMetricSchema).default({}),
   activeEventIds: z.array(z.string()).default([]),
@@ -711,6 +715,8 @@ export const turnResultSchema = z.object({
     warningText: z.string(),
     accepted: z.boolean(),
   })).default([]),
+  internalTech: z.array(techProgressSchema).default([]),
+  externalTech: z.array(externalTechNodeSchema).default([]),
   replayHash: z.string(),
   summary: z.string(),
 });

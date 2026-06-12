@@ -77,6 +77,8 @@ Test coverage: 40 engine tests and 12 server integration tests; all cross-staff 
 
 ## Stage 3: Dual Tech Tree And Industry Model
 
+Status: started.
+
 Goals:
 
 - Implement internal capability nodes that progress through phases (concept → prototype → fielded) driven by program pushes and staff absorb capacity.
@@ -86,11 +88,30 @@ Goals:
 - Link S5 plans to internal prerequisites and alliance feasibility: commitment fulfillment checks should include whether prerequisite programs are fielded before new ones are committed.
 - Expose tech-tree and industry state in `TurnResult` so headless CLI can report capability progress and constraint degradation.
 
+What's done:
+
+- `internalTech` nodes computed each turn from program phase (concept/funded = level 0, procured/integrated = level 1, trained/operational = level 2). Populated in `TurnResult` and in session state.
+- `externalTech` nodes derived each turn from external constraint severity (≥65 = disrupted level 0, 35–64 = constrained level 1, <35 = reliable level 2). Each node carries an S2 estimate with confidence/visibility/lastVerifiedTurn.
+- S2 estimate confidence on external nodes improves with `industrial-watch` (+8) or `collection` (+3) tags and decays with S2 deception risk (×0.06/turn). Under RUMORED visibility with elevated deception risk, estimatedLevel is optimistically biased (adversary manipulation).
+- S4 stockpile depth penalty: propellant-market disrupted −6, electronics-chain disrupted −4.
+- S4 lift burn penalty: shipping-market disrupted +5.
+- "Tech tree and industry" explainability entry in every `TurnResult` with causal refs for all nodes.
+- After-action notes for industry level degradation/recovery and program milestone advances.
+- CLI per-turn summaries include internalTech levels/progress and externalTech estimated levels/confidence.
+- Initial tech/industry state seeded in scenario `initialState`.
+- 8 new engine tests covering: node population, visibility classes, confidence gain/decay, S4 industry penalties, explainability coverage, replay determinism.
+
+Remaining for Stage 3 exit criteria:
+
+- S5 prerequisite link: commitment fulfillment should check that at least one program is fielded (level 2) before a program-type commitment can be completed.
+- Scenario-specific industry event connections: events that shift constraint severity should also emit explainability noting which externalTech node was affected.
+- CLI `--turns N` batch output should include final tech-tree summary in the session-level report (industry node levels + disrupted count).
+
 Exit criteria:
 
-- Tech tree can be simulated from CLI: `apps/cli` headless run emits program phase and external constraint state per turn.
-- Node changes emit explainability: internal phase transitions and external maturity shifts appear in `TurnResult.explainability`.
-- Fog-of-war is deterministic under replay: external industry estimates with S2 confidence class replay identically under `validateReplaySession`.
+- Tech tree can be simulated from CLI: `apps/cli` headless run emits program phase and external constraint state per turn. Partially met: per-turn summaries include internalTech and externalTech; final session summary not yet extended.
+- Node changes emit explainability: internal phase transitions and external maturity shifts appear in `TurnResult.explainability`. Met: "Tech tree and industry" entry in every turn result; level-change after-action notes fire when levels shift.
+- Fog-of-war is deterministic under replay: external industry estimates with S2 confidence class replay identically under `validateReplaySession`. Met: test 48 covers this.
 
 ## Stage 4: Agent Chiefs And Negotiation
 

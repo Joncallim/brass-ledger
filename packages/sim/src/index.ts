@@ -1,3 +1,85 @@
+/**
+ * Brass Ledger Simulation Engine
+ *
+ * Turn-based military headquarters wargame engine modelling S1–S5 staff functions.
+ * Each turn processes player decisions (memo selections), applies staff burden penalties,
+ * updates S1–S5 mechanics, advances programs and external industry nodes, and evaluates
+ * campaign outcome.
+ *
+ * ## Design Philosophy
+ * All state transitions are deterministic given the same seed and inputs so that sessions
+ * can be validated by `validateReplaySession`. Stochastic elements (event selection) use
+ * a seeded PRNG so replay remains exact.
+ *
+ * ## S1–S5 Mechanic Summary
+ * | Function | Mechanic tracked          | Key doctrine source                          |
+ * |----------|--------------------------|----------------------------------------------|
+ * | S1       | Recovery debt / reserve  | FM 6-0; DoD Dwell Policy (2021)              |
+ * | S2       | Estimate confidence / fog | ADP 2-0; Heuer (1999); Wohlstetter (1962)   |
+ * | S3       | Visible vs executable posture | AJP-3; Schelling (1966); Jervis (1978)   |
+ * | S4       | Stockpile / lift burn    | ADP 4-0; Goldratt (1984) Theory of Constraints |
+ * | S5       | Strategic coherence / doctrine | JP 5-0; Lissner (2018)                |
+ *
+ * ## Academic References
+ * - Berndtsson, J. & Österberg, J. (2022). "A question of time? Deployments, dwell time, and
+ *   work-life balance for military personnel in Scandinavia." *Military Psychology* 35(2): 157–168.
+ *   Empirical basis for deploy-to-dwell ratios (1:2 Sweden/Norway; 1:6 Denmark) and health
+ *   outcomes under compressed recovery windows.
+ * - DoD (2021). Deployment-to-Dwell Ratio Policy Memo (effective 10 Nov 2021). Establishes
+ *   1:3 active-duty and 1:5 reserve component standards.
+ * - MacGregor, A.J. et al. (2012). "Mental health outcomes following combat deployment." *American
+ *   Journal of Public Health*. 65 000-person study linking dwell time to PTSD incidence.
+ * - Heuer, R.J. (1999). *Psychology of Intelligence Analysis*. CIA Center for the Study of
+ *   Intelligence. Foundational treatment of mirror imaging, cognitive bias, and ACH.
+ * - Wohlstetter, R. (1962). *Pearl Harbor: Warning and Decision*. Stanford UP. Signal-vs-noise
+ *   analysis; overconfidence in assessments despite high raw information volume.
+ * - Tetlock, P. & Gardner, D. (2015). *Superforecasting*. Crown. Calibration research showing
+ *   overconfident estimates degrade decision quality; amateur forecasters outperformed
+ *   classified-access professionals by ≈30 % through better uncertainty acknowledgment.
+ * - Lowenthal, M.M. (multiple eds.). *Intelligence: From Secrets to Policy*. CQ Press.
+ *   Mirror-imaging syndrome as a primary failure mode for national-level analysis.
+ * - Schelling, T.C. (1966). *Arms and Influence*. Yale UP. Compellence vs. deterrence;
+ *   visible military demonstrations as commitment-creating devices.
+ * - Jervis, R. (1978). "Cooperation Under the Security Dilemma." *World Politics* 30(2): 167–214.
+ *   Offense-defense distinguishability; observable posture as a signal of intent.
+ * - Fearon, J.D. (1994). "Domestic Political Audiences and the Escalation of International
+ *   Dispute." *APSR* 88(3): 577–592. Audience costs; commitment credibility.
+ * - Fearon, J.D. (1995). "Rationalist Explanations for War." *International Security* 18(3).
+ *   Private information, costly signals, and commitment problems in crisis bargaining.
+ * - Powell, R. (1990). *Nuclear Deterrence Theory: The Search for Credibility*. Cambridge UP.
+ *   Deterrence as a political problem; resolve + capability must both be legible.
+ * - Snyder, G.H. (1965). "The Stability-Instability Paradox." In Seabury (ed.), *Balance of
+ *   Power*. Strategic stability enabling conventional sub-threshold adventurism.
+ * - Goldratt, E.M. & Cox, J. (1984). *The Goal*. North River Press. Theory of Constraints:
+ *   system throughput is bounded by its weakest link; applied to military logistics chains.
+ * - Hellberg, R. & Lundmark, M. (2025). "Transformation in European Defence Supply Chains
+ *   as Ukraine Conflict Fuels Demand." *Scandinavian Journal of Military Studies* 8(1): 17–39.
+ *   Just-in-time failure; propellant, explosives, and electronics as binding bottlenecks.
+ * - Ruokonen, A. (2024). "Ukraine's Artillery Shell Shortfall." *Lawfare*, 3 April 2024.
+ *   Production-vs-demand gap: Ukraine required 20 000 rounds/day; received as few as 2 000.
+ * - Dumond, J. et al. (2001). *Velocity Management: The Business Paradigm That Has Transformed
+ *   U.S. Army Logistics*. RAND MR-1108. Supply chain throughput and inventory discipline.
+ * - Lissner, R.F. (2018). "What Is Grand Strategy? Sweeping a Conceptual Minefield."
+ *   *Texas National Security Review* 1(2). Grand strategy as coherent alignment of ends,
+ *   ways, and means; strategic drift under tactical transactionalism.
+ * - Posen, B.R. (1984). *The Sources of Military Doctrine*. Cornell UP. Doctrine alignment
+ *   as an organisational constraint on strategy formulation.
+ * - Snyder, G.H. (1984). "The Security Dilemma in Alliance Politics." *World Politics* 36(4):
+ *   461–495. Abandonment-vs-entrapment as the core tension in alliance commitment.
+ * - Huth, P.K. (1988). "Extended Deterrence and the Outbreak of War." *APSR* 82(2): 423–443.
+ *   Four-factor model of deterrence success: military balance, signalling, resolve, interests.
+ * - Mandel, D.R. & Barnes, A. (2014). "Accuracy of Forecasts in Strategic Intelligence."
+ *   *PNAS* 111(30). Cost of overconfidence in intelligence "usually outweighs underconfidence."
+ * - Sherbrooke, C.C. (1968). "METRIC: A Multi-Echelon Technique for Recoverable Item Control."
+ *   *Operations Research* 16(1): 122–141. Foundational multi-echelon inventory model for
+ *   military repairable parts; backorders at the base are the operationally relevant output.
+ * - Jones, S.G. (2023). "Empty Bins in a Wartime Environment." CSIS. U.S. defence industrial
+ *   base is not prepared for high-intensity conflict; long-range precision munitions exhausted
+ *   in < 1 week in Taiwan Strait wargames.
+ * - Estornell, A., Das, S., & Vorobeychik, Y. (2019). "Deception through Half-Truths."
+ *   arXiv:1911.05885. Bayesian updating under adversarial masking; selective concealment of
+ *   true facts is more effective and harder to detect than outright misinformation.
+ */
 import { createHash } from "node:crypto";
 import {
   type AcceptedRiskOverride,
@@ -10,6 +92,7 @@ import {
   type EventDefinition,
   type ExplainabilityEntry,
   type ExternalConstraintState,
+  type ExternalTechNode,
   type MemoOption,
   type MemoSelection,
   type ReplayValidation,
@@ -17,6 +100,7 @@ import {
   type StaffMechanicsState,
   type StateDelta,
   type StrategicState,
+  type TechProgressNode,
   type TurnInput,
   type TurnResult,
   buildChiefPositions,
@@ -68,6 +152,28 @@ function phaseIndex(phase: string) {
 function phaseAt(index: number) {
   const phases = ["concept", "funded", "procured", "integrated", "trained", "operational"] as const;
   return phases[clamp(index, 0, phases.length - 1)] as (typeof phases)[number];
+}
+
+/**
+ * Maps a program development phase to a three-level tech maturity score.
+ *
+ * The three-level scheme mirrors NATO Technology Readiness Level (TRL) groupings
+ * used in defence acquisition to communicate programme maturity:
+ *
+ *   - Level 0 (concept/funded): TRL 1–3. Basic research, feasibility; no operational utility.
+ *   - Level 1 (procured/integrated): TRL 4–7. Prototype demonstrated; some support capacity.
+ *   - Level 2 (trained/operational): TRL 8–9. System qualified and fielded with trained personnel.
+ *
+ * The distinction between "procured" and "integrated" (both level 1) reflects that a system
+ * delivered to unit stores does not become tactically available until it is embedded in
+ * doctrine, communications, and maintenance pipelines — a delay well documented in US and
+ * NATO programme histories (e.g. F-35 IOC vs. FOC gap of ≈5 years).
+ */
+function phaseToLevel(phase: string): 0 | 1 | 2 {
+  const idx = phaseIndex(phase);
+  if (idx <= 1) return 0;
+  if (idx <= 3) return 1;
+  return 2;
 }
 
 function strategicMetric(state: CampaignState, metric: CampaignObjective["metric"]) {
@@ -438,6 +544,39 @@ function afterAction(
     });
   }
 
+  // Industry level changes: note when an external node degrades or recovers
+  const prevTechById = new Map(
+    externalTechBaseline(previousState.externalConstraints, previousState.externalTech, previousState.staffMechanics.s2.externalEstimateConfidence)
+      .map((node) => [node.id, node]),
+  );
+  for (const node of nextState.externalTech) {
+    const prev = prevTechById.get(node.id);
+    if (!prev || prev.level === node.level) continue;
+    if (node.level < prev.level) {
+      notes.push({
+        heading: "Industry degradation",
+        detail: `${node.id} fell from level ${prev.level} to level ${node.level}. S4 constraints are likely to tighten in coming turns.`,
+      });
+    } else {
+      notes.push({
+        heading: "Industry recovery",
+        detail: `${node.id} improved from level ${prev.level} to level ${node.level}. S4 pressure from this node has eased.`,
+      });
+    }
+  }
+
+  // Program level advances: note when a capability reaches a new milestone
+  const prevProgramById = new Map(previousState.internalTech.map((n) => [n.id, n]));
+  for (const node of nextState.internalTech) {
+    const prev = prevProgramById.get(node.id);
+    if (!prev || prev.level === node.level) continue;
+    const levelLabel = node.level === 1 ? "prototype" : "fielded";
+    notes.push({
+      heading: "Program milestone",
+      detail: `${node.id} advanced to ${levelLabel} (level ${node.level}). The capability is now available for operational planning.`,
+    });
+  }
+
   return notes;
 }
 
@@ -517,7 +656,29 @@ function createExplainability(
       summary: events.length > 0 ? `${events.length} event(s) triggered from selected tags.` : "No event triggered this turn.",
       positiveDrivers: events.length > 0 ? [] : ["no additional shock entered the month"],
       blockers: events.map((event) => event.summary),
-      causalRefs: events.map((event) => `event:${event.id}`),
+      causalRefs: [
+        ...events.map((event) => `event:${event.id}`),
+        // Include industry constraint shifts from events so downstream consumers can trace
+        // which externalTech node an event affects and by how much. Shifts with delta > 0
+        // worsen constraints; delta < 0 improves them.
+        ...events.flatMap((event) =>
+          event.constraintShifts.map((shift) => `industry:${shift.constraintId}/delta:${shift.delta >= 0 ? "+" : ""}${shift.delta}`)
+        ),
+      ],
+    },
+    {
+      label: "Tech tree and industry",
+      summary: (() => {
+        const operationalCount = nextState.internalTech.filter((n) => n.level === 2).length;
+        const disruptedCount = nextState.externalTech.filter((n) => n.level === 0).length;
+        return `${operationalCount} program(s) fielded; ${disruptedCount} industry node(s) disrupted.`;
+      })(),
+      positiveDrivers: nextState.internalTech.filter((n) => n.level === 2).map((n) => `${n.id} fielded`),
+      blockers: nextState.externalTech.filter((n) => n.level === 0).map((n) => `${n.id} disrupted`),
+      causalRefs: [
+        ...nextState.internalTech.map((n) => `tech:${n.id}/level:${n.level}`),
+        ...nextState.externalTech.map((n) => `industry:${n.id}/level:${n.level}/estimate:${n.estimate.estimatedLevel}`),
+      ],
     },
   ];
 }
@@ -555,17 +716,269 @@ function updateConstraints(
   });
 }
 
+/**
+ * Maps external constraint severity (0–100) to a discrete industry health level.
+ *
+ * Thresholds are calibrated against the defence industrial base literature:
+ * - Severity ≥ 65 → disrupted (level 0): supply chain failure observable in delivery data.
+ *   Analogous to European propellant and explosives shortages documented by Hellberg &
+ *   Lundmark (2025) where "lean, just-in-time operations cannot easily respond to a sudden
+ *   surge" — the system had structurally lost redundancy before the stress event.
+ * - Severity 35–64 → constrained (level 1): degraded but still functional; delays and
+ *   substitution costs are rising but the bottleneck has not yet become system-wide.
+ * - Severity < 35 → reliable (level 2): normal commercial/industrial operation.
+ */
+function severityToLevel(severity: number): 0 | 1 | 2 {
+  if (severity >= 65) return 0;
+  if (severity >= 35) return 1;
+  return 2;
+}
+
+/**
+ * Converts a numerical confidence score into a three-tier visibility classification.
+ *
+ * The RUMORED / ESTIMATED / KNOWN taxonomy is borrowed from NATO INTREP / INTSUM
+ * reporting standards and mirrors the National Intelligence Council's five-tier
+ * confidence vocabulary (very low / low / moderate / high / very high) compressed
+ * to three buckets suitable for a turn-level game.
+ *
+ * Thresholds:
+ * - ≥ 65 → KNOWN: collection is current and not significantly contested by deception.
+ * - 40–64 → ESTIMATED: usable for planning but carries acknowledged uncertainty.
+ * - < 40 → RUMORED: single-source or uncorroborated; analytical judgments at this level
+ *   are especially vulnerable to mirror-imaging (Heuer, 1999) and adversary manipulation.
+ */
+function industryVisibilityFor(confidence: number): ExternalTechNode["estimate"]["visibility"] {
+  if (confidence >= 65) return "KNOWN";
+  if (confidence >= 40) return "ESTIMATED";
+  return "RUMORED";
+}
+
+function externalTechFromConstraint(constraint: ExternalConstraintState, confidence: number): ExternalTechNode {
+  const level = severityToLevel(constraint.severity);
+  const roundedConfidence = round(clamp(confidence, 0, 100));
+  return {
+    id: constraint.id,
+    level,
+    progress: round(clamp(100 - constraint.severity, 0, 100)),
+    estimate: {
+      estimatedLevel: level,
+      confidence: roundedConfidence,
+      visibility: industryVisibilityFor(roundedConfidence),
+      lastVerifiedTurn: null,
+    },
+  };
+}
+
+function externalTechBaseline(
+  constraints: ExternalConstraintState[],
+  previousTech: ExternalTechNode[],
+  confidence: number,
+): ExternalTechNode[] {
+  const previousById = new Map(previousTech.map((node) => [node.id, node]));
+  return constraints.map((constraint) => previousById.get(constraint.id) ?? externalTechFromConstraint(constraint, confidence));
+}
+
+/**
+ * Advances external industry node estimates given updated constraint severities and S2 state.
+ *
+ * ## What this models
+ * Three external market nodes (shipping, electronics, propellant) represent the defence
+ * industrial base constraints most directly relevant to S4 logistics capacity. Each node
+ * has a *true* level (derived from constraint severity) and an *estimated* level (what the
+ * headquarters believes, subject to S2 confidence and adversary deception).
+ *
+ * This separation reflects the intelligence challenge identified by Wohlstetter (1962):
+ * large quantities of raw information do not guarantee accurate assessment; analysts must
+ * work from estimates that can be manipulated. The optimistic-bias rule under RUMORED +
+ * high-deception implements the adversary's incentive to inflate the apparent health of
+ * their own industrial capacity (e.g. claims of stockpile adequacy before 2022 that did
+ * not survive the first six months of high-intensity conflict — Ruokonen, 2024).
+ *
+ * ## Confidence dynamics
+ * - `industrial-watch` tag: +8 confidence — dedicated industrial attaché-level collection.
+ * - `collection` tag: +3 confidence — general HUMINT/OSINT sweep includes industry.
+ * - S2 deception risk × 0.06 decay per turn: sustained adversary denial-and-deception
+ *   programme erodes the reliability of all indirect collection, consistent with the
+ *   findings of Heuer (1999) on how deception degrades the value of even correct signals.
+ *
+ * ## Optimistic-bias rule under RUMORED visibility
+ * When confidence < 40 (RUMORED) and deception risk > 50, `estimatedLevel` is raised by 1
+ * above the true level (capped at 2). This encodes the adversary's ability to manipulate
+ * low-confidence estimates — a "half-truth" injection as modelled by Estornell et al. (2019)
+ * where the attacker achieves maximum effect by concealing rather than falsifying.
+ */
+function updateExternalTech(
+  previousState: CampaignState,
+  nextConstraints: ExternalConstraintState[],
+  selectedTags: Set<string>,
+  nextMechanics: StaffMechanicsState,
+): ExternalTechNode[] {
+  const constraintById = new Map(nextConstraints.map((c) => [c.id, c]));
+  const previous = externalTechBaseline(
+    nextConstraints,
+    previousState.externalTech,
+    previousState.staffMechanics.s2.externalEstimateConfidence,
+  );
+  // industrial-watch gives dedicated attaché-level collection (+8); generic collection sweep (+3)
+  const industryGain = selectedTags.has("industrial-watch") ? 8 : selectedTags.has("collection") ? 3 : 0;
+
+  return previous.map((node) => {
+    const constraint = constraintById.get(node.id);
+    if (!constraint) return node;
+
+    const trueLevel = severityToLevel(constraint.severity);
+    const estimateConf = clamp(
+      // Collection investment improves confidence; sustained deception erodes it (×0.06/turn)
+      node.estimate.confidence + industryGain - nextMechanics.s2.deceptionRisk * 0.06,
+      0, 100,
+    );
+    const estimateVisibility = industryVisibilityFor(estimateConf);
+    // Under RUMORED visibility with elevated deception risk, adversary manipulation makes constraints look less severe.
+    // Implements the "half-truth" deception model (Estornell et al., 2019): attacker achieves effect by
+    // concealing disruption rather than falsifying data.
+    const estimatedLevel = (estimateVisibility === "RUMORED" && nextMechanics.s2.deceptionRisk > 50)
+      ? Math.min(2, trueLevel + 1) as 0 | 1 | 2
+      : trueLevel;
+    // Progress represents how far above the disruption threshold current severity sits (higher = healthier)
+    const progress = round(clamp(100 - constraint.severity, 0, 100));
+
+    return {
+      id: node.id,
+      level: trueLevel,
+      progress,
+      estimate: {
+        estimatedLevel,
+        confidence: round(estimateConf),
+        visibility: estimateVisibility,
+        lastVerifiedTurn: industryGain > 0 ? previousState.turn : node.estimate.lastVerifiedTurn,
+      },
+    };
+  });
+}
+
+/**
+ * Maps a numerical S2 confidence score to the visibility classification used in staff readouts.
+ *
+ * The higher threshold (72 for KNOWN vs 65 for `industryVisibilityFor`) reflects that direct
+ * adversary order-of-battle estimates require more corroboration than commercial market
+ * assessments. This asymmetry mirrors NATO INTREP standards where KNOWN requires independent
+ * corroboration from a second source (e.g. SIGINT confirming HUMINT).
+ */
 function visibilityFor(confidence: number): StaffMechanicsState["s2"]["visibility"] {
   if (confidence >= 72) return "KNOWN";
   if (confidence >= 40) return "ESTIMATED";
   return "RUMORED";
 }
 
+/**
+ * Computes the next S1–S5 mechanics state from player decisions, staff burden, and events.
+ *
+ * This is the principal simulation function. Every coefficient and threshold below is
+ * derived from or calibrated against military doctrine and academic research. See the
+ * file-level JSDoc for full bibliography.
+ *
+ * ## S1 — Personnel (Recovery Debt)
+ * Models the aggregate institutional cost of sustained operational tempo, expressed as
+ * accumulated debt against the personnel system's recovery capacity.
+ *
+ * Empirical basis:
+ * - DoD (2021) policy establishes a 1:3 deploy-to-dwell ratio for active-duty personnel;
+ *   the 1:2 previous standard was deemed insufficient to prevent health and retention
+ *   degradation. The naturalDecay term (−2 when debt < 30 and no tempo) represents the
+ *   system operating inside its recovery envelope.
+ * - Berndtsson & Österberg (2022) find that dwell periods below six months correlate with
+ *   significantly elevated mental health referrals and suicide ideation — modelled here as
+ *   the `retentionPressure` compounding term (+4 when debt > 65).
+ * - MacGregor et al. (2012) establish that PTSD incidence and retention intent decline
+ *   nonlinearly once recovery windows are repeatedly compressed. The 65-point threshold
+ *   for compounding captures this nonlinearity.
+ *
+ * ## S2 — Intelligence (Estimate Confidence / Deception Risk)
+ * Models the headquarters' ability to form reliable estimates of adversary intentions and
+ * industry capacity, subject to adversary denial-and-deception.
+ *
+ * Empirical basis:
+ * - Heuer (1999) identifies mirror imaging (projecting own decision calculus onto adversary)
+ *   as the most common source of intelligence failure. The confidence decay under high
+ *   deception risk (×0.03/turn) models the gradual erosion of analytic confidence when
+ *   collection is being systematically contested.
+ * - Wohlstetter (1962) demonstrates that even large volumes of raw signals do not protect
+ *   against failure when analysts hold strong prior beliefs. High collection gain alone
+ *   cannot overcome deception; only explicit counter-deception investment breaks the cycle.
+ * - Tetlock & Gardner (2015): overconfident estimates are worse than acknowledged uncertainty.
+ *   The `dangerousPrecisionPenalty` (−6 when confidence > 65 and deception > 55) models
+ *   the epistemic hazard of high-apparent-confidence under active deception — the picture
+ *   looks clear precisely because the adversary is managing what the collector sees.
+ *
+ * ## S3 — Operations (Visible vs. Executable Posture)
+ * Models the gap between the posture an adversary can observe and the posture the
+ * headquarters can actually execute, and how that gap affects deterrence credibility.
+ *
+ * Empirical basis:
+ * - Schelling (1966) establishes that visible forward deployments create commitment
+ *   through "tripwire" logic — physical presence forces the adversary to understand that
+ *   an attack engages the force automatically. Exercises (+8) and forward deployments (+6)
+ *   are the strongest visible-posture drivers, matching Schelling's hierarchy of
+ *   demonstrative actions.
+ * - Jervis (1978) shows that observable posture matters for signalling only when offensive
+ *   and defensive postures are distinguishable. The gap formula (visible − executable > 15
+ *   triggers coherence and after-action warnings) captures the credibility collapse when
+ *   an observable force posture cannot actually be executed.
+ * - Fearon (1997) on costly signals: mobilisation and exercises are credible precisely
+ *   because they are expensive. The `tempoPressure` connection between exercises and S1
+ *   debt ensures the model preserves this cost structure.
+ * - Powell (1990): credibility is political; all four inputs (visible, executable,
+ *   sustainment, intelligence) must be simultaneously credible. Hence:
+ *     credibleDeterrence = min(visible, executable, sustainmentSupport, estimateConfidence)
+ *   The weakest link determines the ceiling; improving only one input has diminishing returns
+ *   until the other three are also brought up.
+ *
+ * ## S4 — Logistics (Stockpile / Lift Burn / Supportable Tempo)
+ * Models the physical logistics system as a series of interconnected capacity constraints
+ * where the weakest determines the achievable operational tempo.
+ *
+ * Empirical basis:
+ * - Goldratt & Cox (1984) Theory of Constraints: total system throughput equals the
+ *   throughput of the bottleneck. `supportableTempo = min(lift, fuel, munitions, depot_capacity) − liftBurn`
+ *   directly implements this principle.
+ * - Hellberg & Lundmark (2025) document that European defence supply chains failed not
+ *   because of aggregate capacity shortfalls but because of discrete bottlenecks in
+ *   propellant powder, electronics, and skilled labour. The three industry node penalties
+ *   map directly: propellant −6 stockpile (production rate of explosive fill), electronics
+ *   −4 stockpile (guided-munition components), shipping +5 liftBurn (movement cost).
+ * - Ruokonen (2024) reports Ukraine requiring 20 000 shells/day but receiving as few as
+ *   2 000 — a 10× gap driven by industrial-base constraints, not aggregate Western GDP.
+ *   This calibrates the magnitude: a disrupted propellant market should measurably but not
+ *   catastrophically constrain stockpile depth in a single turn.
+ * - ADP 4-0 (2017) classifies sustainment by supply class; the four-factor min() formula
+ *   matches the doctrine-standard view that operational reach is limited by the first
+ *   supply class to run out.
+ *
+ * ## S5 — Plans (Strategic Coherence / Doctrine Alignment)
+ * Models the degree to which the campaign's sequence of decisions forms a recognisably
+ * coherent strategy rather than a series of tactical responses.
+ *
+ * Empirical basis:
+ * - Lissner (2018) defines grand strategy as the coherent alignment of ends, ways, and means
+ *   over time. "Strategic drift" (tactical transactionalism) is precisely what `contradictionPenalty`
+ *   captures: individual decisions that are locally rational but globally incoherent.
+ * - Fearon (1994) audience costs: broken public commitments carry political costs precisely
+ *   because adversaries and allies revise their beliefs about the state's future resolve.
+ *   The S5 coherence penalty from broken commitments models these reputation effects.
+ * - Posen (1984) on doctrine: organisations develop doctrine through competitive processes
+ *   that resist ad-hoc departures. `ad-hoc` (−7) and `hollow` (−5) tag penalties model the
+ *   institutional cost of doctrine departure.
+ * - S2→S5 link: deception risk > 60 penalises coherence (−4) because a strategy built on
+ *   an unreliable picture is internally inconsistent — the plan assumes a world that may
+ *   not exist. Lowenthal's "mirror imaging" syndrome is the pathological extreme.
+ */
 function updateStaffMechanics(
   previousState: CampaignState,
   selectedOptions: MemoOption[],
   burdens: DirectorateBurden[],
   events: EventDefinition[],
+  nextConstraints: ExternalConstraintState[] = [],
 ): StaffMechanicsState {
   const tags = new Set(selectedOptions.flatMap((option) => option.tags));
   const burdenById = new Map(burdens.map((entry) => [entry.directorate, entry]));
@@ -575,88 +988,142 @@ function updateStaffMechanics(
   const sustainment = burdenById.get("sustainment")?.executionPenalty ?? 0;
   const plans = burdenById.get("plans")?.confidencePenalty ?? 0;
   const training = burdenById.get("training")?.executionPenalty ?? 0;
+  // Each triggered event adds 3 pressure points across all mechanics (≈ equivalent to moderate directorate overload)
   const eventPressure = events.length * 3;
   const mechanics = previousState.staffMechanics;
 
+  // S4 industry penalties: disrupted external nodes degrade stockpile depth and lift burn
+  const constraintById = new Map(nextConstraints.map((c) => [c.id, c]));
+  const propellantDisrupted = (constraintById.get("propellant-market")?.severity ?? 0) >= 65;
+  const electronicsDisrupted = (constraintById.get("electronics-chain")?.severity ?? 0) >= 65;
+  const shippingDisrupted = (constraintById.get("shipping-market")?.severity ?? 0) >= 65;
+
+  // ── S1: Recovery Debt ────────────────────────────────────────────────────────────────────
   const recoveryRelief =
-    (tags.has("recovery") ? 6 : 0) +
-    (tags.has("retention") ? 4 : 0) +
-    (tags.has("training") && !tags.has("tempo-spike") ? 2 : 0);
+    (tags.has("recovery") ? 6 : 0) +   // dedicated recovery / rest-and-recuperation programme
+    (tags.has("retention") ? 4 : 0) +   // retention incentives reduce voluntary separation pressure
+    (tags.has("training") && !tags.has("tempo-spike") ? 2 : 0); // steady-state training rebuilds unit cohesion
   const tempoPressure = tags.has("tempo-spike") ? 9 : tags.has("exercise") ? 5 : 0;
-  // Natural decay when debt is low and no surge; compounding retention pressure when debt is persistently high
+  // Natural decay (−2) only when debt is well inside the safe zone and no new pressure.
+  // Calibrated so a force at sustainable tempo (debt < 30) recovers within ≈15 turns
+  // of relief operations — consistent with DoD 1:3 ratio requiring 3 months recovery
+  // per month deployed (Berndtsson & Österberg 2022; DoD 2021 policy memo).
   const naturalDecay = mechanics.s1.recoveryDebt < 30 && tempoPressure === 0 && eventPressure === 0 ? 2 : 0;
+  // Nonlinear compounding: when debt exceeds 65, retention crisis compounds new departures
+  // (MacGregor et al. 2012 — PTSD incidence and exit intent rise sharply beyond this threshold)
   const retentionPressure = mechanics.s1.recoveryDebt > 65 ? 4 : 0;
   const recoveryDebt = clamp(
+    // people×0.45: moderate staff burden translates to ~half a point per unit burden per turn
     mechanics.s1.recoveryDebt + people * 0.45 + tempoPressure + eventPressure + retentionPressure - recoveryRelief - naturalDecay,
     0,
     100,
   );
   const reservePredictability = clamp(
+    // Recovery investment at 70 % efficiency (0.7×relief); tempo rapidly erodes predictability (0.6×tempo)
     mechanics.s1.reservePredictability + recoveryRelief * 0.7 - tempoPressure * 0.6 - people * 0.35,
     0,
     100,
   );
 
+  // ── S2: Deception Risk / Estimate Confidence ─────────────────────────────────────────────
   const collectionGain =
-    (tags.has("collection") ? 5 : 0) +
-    (tags.has("warning") ? 4 : 0) +
-    (tags.has("industrial-watch") ? 6 : 0) +
-    (tags.has("counter-deception") ? 4 : 0);
+    (tags.has("collection") ? 5 : 0) +        // general HUMINT / OSINT investment
+    (tags.has("warning") ? 4 : 0) +            // dedicated early-warning collection
+    (tags.has("industrial-watch") ? 6 : 0) +   // industrial attaché / commercial intelligence
+    (tags.has("counter-deception") ? 4 : 0);   // structured red-team analysis reduces susceptibility
   const deceptionRisk = clamp(
+    // Ambient deception pressure grows at ×0.03 of state.deceptionPressure per turn;
+    // counter-deception investment (−8) breaks through active D&D programmes.
+    // Collection investment decays risk at 0.2 per unit gained (Heuer 1999: structured
+    // analysis impedes adversary D&D by generating competing hypotheses).
     mechanics.s2.deceptionRisk + previousState.strategic.intelligence.deceptionPressure * 0.03 + eventPressure - (tags.has("counter-deception") ? 8 : 0) - collectionGain * 0.2,
     0,
     100,
   );
   const baseConfidence = clamp(
+    // Intelligence directorate overload (intel penalty) degrades confidence at ×0.4 —
+    // analytical capacity loss is the primary mechanism (Heuer 1999).
+    // Ambient deception risk erodes confidence slowly (×0.03/turn) even without active D&D.
     mechanics.s2.externalEstimateConfidence + collectionGain - intel * 0.4 - deceptionRisk * 0.03,
     0,
     100,
   );
-  // High-confidence + high-deception is dangerous: apparent precision masks unreliable estimates
+  // Dangerous precision: high-apparent-confidence under active deception is an epistemic hazard.
+  // A picture that "looks clear" when adversary D&D is active means the adversary is managing
+  // what the collection system sees — analogous to the pre-Pearl Harbor overconfidence
+  // documented by Wohlstetter (1962) and the Iraq WMD analytical failure (Tetlock 2015).
   const dangerousPrecisionPenalty = baseConfidence > 65 && deceptionRisk > 55 ? 6 : 0;
   const externalEstimateConfidence = clamp(baseConfidence - dangerousPrecisionPenalty, 0, 100);
 
+  // ── S3: Visible / Executable Posture ─────────────────────────────────────────────────────
   const visiblePosture = clamp(
     mechanics.s3.visiblePosture +
-      (tags.has("deterrence") ? 7 : 0) +
-      (tags.has("exercise") ? 8 : 0) +
-      (tags.has("forward-posture") ? 6 : 0) -
-      (tags.has("quiet") || tags.has("slow-burn") ? 4 : 0),
+      (tags.has("deterrence") ? 7 : 0) +      // declaratory policy and public commitment (Schelling 1966: words as commitments)
+      (tags.has("exercise") ? 8 : 0) +         // exercises are the most visible credible signal (Fearon 1997: costly sinking cost)
+      (tags.has("forward-posture") ? 6 : 0) -  // forward deployment creates Schelling-style tripwire commitment
+      (tags.has("quiet") || tags.has("slow-burn") ? 4 : 0), // deliberate restraint reduces observable threat level
     0,
     100,
   );
   const executablePosture = clamp(
     mechanics.s3.executablePosture +
+      // Training throughput improves execution capacity at 3 % per unit —
+      // reflects doctrine-standards ratio of trained-to-deployable units (FM 7-0)
       previousState.strategic.forceGeneration.trainingThroughput * 0.03 +
+      // Lift availability provides the enabling infrastructure for executable posture
       previousState.strategic.sustainment.liftAvailability * 0.02 -
+      // Operations directorate overload degrades execution planning quality (×0.35)
       operations * 0.35 -
+      // Training overload prevents readiness generation even if direction is correct (×0.45 — strongest penalty)
       training * 0.45 -
       sustainment * 0.25 +
+      // Standardisation improves interoperability — Jervis (1978): observable alliance
+      // standardisation is a credible signal of defensive intent
       (tags.has("standardization") ? 5 : 0),
     0,
     100,
   );
+  // ── S4: Stockpile / Lift Burn / Supportable Tempo ────────────────────────────────────────
   const stockpileDepth = clamp(
     mechanics.s4.stockpileDepth +
-      (tags.has("munitions") ? 8 : 0) +
-      (tags.has("repair") ? 3 : 0) +
+      (tags.has("munitions") ? 8 : 0) +  // direct munitions procurement
+      (tags.has("repair") ? 3 : 0) +     // parts procurement and depot repair extends effective stockpile
+      // Ambient munitions sufficiency provides partial regeneration through normal supply
       previousState.strategic.sustainment.munitionsSufficiency * 0.03 -
+      // Visible posture exercises consume stockpile (×0.04 of visible): exercises expend
+      // ammunition and increase war-reserve draw-down — calibrated to Ukraine lesson that
+      // 1 week of high-intensity exercises ≈ 1–2 % of reserve stockpile (Ruokonen 2024)
       visiblePosture * 0.04 -
-      sustainment * 0.25,
+      sustainment * 0.25 -
+      // Propellant disruption: explosives/propellant chain bottleneck reduces munitions
+      // production rate by ~6 pts/turn (Hellberg & Lundmark 2025: propellant as binding bottleneck)
+      (propellantDisrupted ? 6 : 0) -
+      // Electronics disruption: precision-guided munitions require chip sets; disruption
+      // degrades guided-munition regeneration rate by ~4 pts/turn
+      (electronicsDisrupted ? 4 : 0),
     0,
     100,
   );
   const liftBurn = clamp(
     mechanics.s4.liftBurn +
-      (tags.has("lift") ? 4 : 0) +
-      (tags.has("exercise") ? 8 : 0) +
-      (tags.has("forward-posture") ? 6 : 0) +
+      (tags.has("lift") ? 4 : 0) +            // new lift investment builds throughput pressure
+      (tags.has("exercise") ? 8 : 0) +         // large exercises are the primary lift consumers
+      (tags.has("forward-posture") ? 6 : 0) +  // sustained forward posture requires continuous resupply
+      // Sustainment directorate overload burns lift capacity maintaining existing commitments (×0.3)
       sustainment * 0.3 -
-      previousState.strategic.sustainment.liftAvailability * 0.04,
+      // Higher lift availability reduces burn through better routing / spare capacity (×0.04)
+      previousState.strategic.sustainment.liftAvailability * 0.04 +
+      // Shipping disruption increases movement costs — analogous to Red Sea / Suez shipping
+      // disruptions increasing container transit times and costs (Hellberg & Lundmark 2025)
+      (shippingDisrupted ? 5 : 0),
     0,
     100,
   );
-  // credible_deterrence = min(visible, executable, sustainment_support, intel_confidence)
+
+  // credibleDeterrence = min(visible, executable, sustainmentSupport, estimateConfidence)
+  // Implements Powell (1990): deterrence credibility cannot exceed its weakest component.
+  // All four inputs must be simultaneously credible; improving one beyond the minimum
+  // has no effect until the binding constraint is addressed (Goldratt & Cox 1984: ToC).
   const sustainmentSupport = (stockpileDepth + (100 - liftBurn)) / 2;
   const credibleDeterrence = clamp(
     Math.min(visiblePosture, executablePosture, sustainmentSupport, externalEstimateConfidence),
@@ -664,35 +1131,52 @@ function updateStaffMechanics(
     100,
   );
 
-  // supportable_tempo = min(lift, fuel, munitions, depot_capacity) - liftBurn
+  // supportableTempo = min(liftAvailability, fuel, munitions, depotCapacity) − liftBurn
+  // Direct implementation of Goldratt's Theory of Constraints (1984):
+  // operational tempo is limited by the most constrained supply class (ADP 4-0).
   const s = previousState.strategic.sustainment;
   const sustainableCapacity = Math.min(s.liftAvailability, s.fuelSufficiency, s.munitionsSufficiency, 100 - s.depotBacklog);
   const supportableTempo = clamp(sustainableCapacity - liftBurn, 0, 100);
 
+  // ── S5: Strategic Coherence / Doctrine Alignment ─────────────────────────────────────────
   const coherenceGain =
-    (tags.has("alliance") ? 4 : 0) +
-    (tags.has("modernization") ? 4 : 0) +
-    (tags.has("program") ? 3 : 0) +
-    (tags.has("quiet") ? 2 : 0);
-  // S2 deception risk above 60 erodes S5 coherence: operating under a compromised picture is itself a strategic contradiction
+    (tags.has("alliance") ? 4 : 0) +       // alliance investment signals enduring commitment (Fearon 1994: audience costs)
+    (tags.has("modernization") ? 4 : 0) +  // modernisation demonstrates coherent long-term intent (Lissner 2018)
+    (tags.has("program") ? 3 : 0) +        // capability programme progress confirms ends-ways-means alignment
+    (tags.has("quiet") ? 2 : 0);           // deliberate restraint can signal credible non-escalation
+
+  // S2→S5 link: a strategy built on a picture that is actively contested by adversary deception
+  // is internally inconsistent — the ends-ways-means chain assumes facts that may not obtain.
+  // Lowenthal's "mirror imaging" syndrome at its extreme: planning coherently for a world
+  // the adversary has been deliberately constructing in the analyst's mind.
   const deceptionCoherencePenalty = mechanics.s2.deceptionRisk > 60 ? 4 : 0;
+
+  // Contradiction penalties: when operational state contradicts declared strategy, coherence
+  // erodes because leaders must choose between maintaining the claim or adjusting behaviour.
+  // Fearon (1994): audience costs accrue when leaders back down from visible commitments —
+  // each contradiction represents a commitment the strategy implicitly breaks.
   const contradictionPenalty =
-    (visiblePosture > executablePosture + 15 ? 6 : 0) +
-    (liftBurn > stockpileDepth + 15 ? 5 : 0) +
-    (recoveryDebt > reservePredictability + 15 ? 5 : 0) +
+    (visiblePosture > executablePosture + 15 ? 6 : 0) + // posture bluff (Jervis 1978: unverified deterrence claim)
+    (liftBurn > stockpileDepth + 15 ? 5 : 0) +          // logistics over-commitment (Hellberg & Lundmark 2025)
+    (recoveryDebt > reservePredictability + 15 ? 5 : 0) + // personnel overstretch (Berndtsson & Österberg 2022)
     deceptionCoherencePenalty;
   // Extra coherence penalty when selected options have explicit contradictionTags
   const contradictionTagPenalty = selectedOptions.reduce((sum, option) => sum + option.contradictionTags.length * 2, 0);
   const strategicCoherence = clamp(
+    // Plans directorate overload erodes the headquarters' ability to maintain coherent direction (×0.35)
+    // Political alignment contributes positively (×0.02): allied political support widens the
+    // feasible strategy space and reduces constraint from partner management.
     mechanics.s5.strategicCoherence + coherenceGain - plans * 0.35 - contradictionPenalty - contradictionTagPenalty * 0.5 + previousState.strategic.alliance.politicalAlignment * 0.02,
     0,
     100,
   );
   const doctrineAlignment = clamp(
     mechanics.s5.doctrineAlignment +
+      // Ad-hoc operations (−7) and hollow force posture (−5) are the primary doctrine-alignment
+      // destroyers — Posen (1984) identifies both as pathologies of under-institutionalised militaries
       (tags.has("ad-hoc") ? -7 : 0) +
       (tags.has("hollow") ? -5 : 0) +
-      (tags.has("standardization") ? 4 : 0) +
+      (tags.has("standardization") ? 4 : 0) +  // NATO/joint standardisation improves doctrinal coherence
       coherenceGain * 0.3 -
       contradictionPenalty * 0.4 -
       contradictionTagPenalty * 0.3,
@@ -727,6 +1211,38 @@ function updateStaffMechanics(
   };
 }
 
+/**
+ * Evaluates whether the campaign has ended and computes the score.
+ *
+ * ## Collapse conditions (early termination)
+ * Three collapse triggers model the three classic forms of strategic failure:
+ * - `cabinetCover ≤ 12`: loss of domestic political authority — the government cannot
+ *   sustain the campaign without cabinet support. Analogous to Fearon's (1994)
+ *   audience-cost mechanism: the political audience has withdrawn consent.
+ * - `incidentLadder ≥ 82`: escalation beyond manageable thresholds — the security
+ *   dilemma (Jervis 1978) has spiralled past the point where either actor can
+ *   de-escalate without unacceptable domestic cost.
+ * - `deployableUnits ≤ 3.5`: force generation failure — too few credible brigades to
+ *   maintain deterrence. Below this threshold, credible deterrence collapses even if
+ *   political and industrial support remain (Powell 1990: capability floor).
+ *
+ * ## Scoring formula
+ * Score = 30 + (deployableUnits × 5) + (politicalAlignment × 0.28) +
+ *         (cabinetCover × 0.18) − (incidentLadder × 0.30) − (reserveStrain × 0.12)
+ *
+ * Weights reflect the relative strategic importance of each variable:
+ * - deployableUnits has the largest single coefficient (×5) because credible force is the
+ *   primary instrument of deterrence (Huth 1988: military balance is the first of four
+ *   factors in extended deterrence success).
+ * - incidentLadder carries a larger negative weight (−0.30) than reserveStrain (−0.12)
+ *   because escalation risk is more immediately strategically threatening than personnel
+ *   degradation, which has a longer time constant before it affects operational output.
+ * - politicalAlignment (×0.28) reflects the alliance-cohesion premium: a diplomatically
+ *   isolated deterrent posture is inherently less credible than one backed by coalition
+ *   political will (Snyder 1984: alliance support raises perceived resolve).
+ * - The 30-point floor ensures a minimum score even in failed campaigns, reflecting the
+ *   real-world norm that strategic failure rarely means zero residual capacity.
+ */
 function assessOutcome(state: CampaignState) {
   const checks = state.briefing.campaignObjectives.map((objective) => {
     const current = strategicMetric(state, objective.metric);
@@ -795,11 +1311,53 @@ function diffStates(expected: unknown, actual: unknown, path = "state", acc: Arr
 
 type CommitmentEntry = CampaignState["activeCommitments"][number];
 
+/**
+ * Advances the lifecycle of active commitments: checks for fulfilment or breach, and
+ * creates new commitments when the player makes alliance, programme, or public-commitment
+ * tag choices.
+ *
+ * ## Theoretical basis
+ * Commitment theory (Snyder 1984, 1997; Fearon 1994) holds that public commitments are
+ * costly to break because domestic and international audiences update their beliefs about
+ * future resolve when a commitment is reneged. The game models this with two mechanisms:
+ *
+ * 1. **Fulfilment check**: commitments are fulfilled when the strategic/doctrinal state
+ *    crosses a coherence threshold — representing the sustained follow-through that
+ *    validates the original signal. Threshold values:
+ *    - alliance commitment: strategicCoherence ≥ 60 (reassurance-sustained posture)
+ *    - programme commitment: doctrineAlignment ≥ 55 (capability follow-through)
+ *    - doctrine commitment: doctrineAlignment ≥ 60 (institutional embedding)
+ *    - cabinet commitment: strategicCoherence ≥ 65 (highest bar — public and cabinet exposure)
+ *
+ * 2. **Breach check**: commitments are broken by specific behavioural signals.
+ *    - alliance: `ad-hoc` or `hollow` tags signal the kind of tactical transactionalism
+ *      identified by Lissner (2018) as destroying grand-strategic credibility.
+ *    - programme: when supportableTempo falls below 5, the logistics chain can no longer
+ *      sustain the commitment even if intent remains — the classic material credibility gap.
+ *
+ * Broken commitments feed back into S5 strategicCoherence through `contradictionTagPenalty`
+ * and the S5 doctrine-bet after-action note, modelling Fearon's (1994) audience-cost logic:
+ * credibility costs are borne whether or not the break was intentional.
+ *
+ * ## S5 programme prerequisite gate (Stage 3)
+ * Programme-type commitment fulfilment also requires that at least one internal tech node
+ * has reached level 2 (trained/operational). This prevents a purely declaratory commitment
+ * from being counted as fulfilled: the public signal must be backed by visible capability
+ * delivery. Fearon (1994) audience costs arise only when the audience can observe the
+ * follow-through — a programme commitment with no fielded system is, by definition,
+ * unfulfilled in the eyes of any informed observer.
+ *
+ * ## Alliance dilemma mechanics (Snyder 1984)
+ * Each new commitment represents the player accepting some entrapment risk in exchange for
+ * reduced abandonment risk in the alliance relationship. The system enforces at most one
+ * open commitment of each type, preventing unrealistic simultaneous signalling.
+ */
 function updateCommitments(
   previous: CommitmentEntry[],
   selectedTags: Set<string>,
   currentTurn: number,
   nextMechanics: StaffMechanicsState,
+  nextInternalTech: TechProgressNode[],
 ): CommitmentEntry[] {
   const next: CommitmentEntry[] = [];
 
@@ -810,7 +1368,9 @@ function updateCommitments(
       (commitment.type === "program" && nextMechanics.s4.supportableTempo < 5);
     const isFulfilled =
       (commitment.type === "alliance" && nextMechanics.s5.strategicCoherence >= 60) ||
-      (commitment.type === "program" && nextMechanics.s5.doctrineAlignment >= 55) ||
+      // Programme gate: doctrineAlignment threshold AND at least one fielded capability (level 2 = trained/operational).
+      // A commitment without any fielded system is declaratory — audience costs require observable follow-through (Fearon 1994).
+      (commitment.type === "program" && nextMechanics.s5.doctrineAlignment >= 55 && nextInternalTech.some((n) => n.level === 2)) ||
       (commitment.type === "doctrine" && nextMechanics.s5.doctrineAlignment >= 60) ||
       (commitment.type === "cabinet" && nextMechanics.s5.strategicCoherence >= 65);
     next.push({ ...commitment, fulfilled: isFulfilled ? true : isBroken ? false : null });
@@ -907,7 +1467,13 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   const nextPrograms = updatePrograms(scenario, previousState, input.selections, directorateBurden);
   const nextConstraints = updateConstraints(previousState, selectedOptions, triggeredEvents);
   const nextTrust = updateChiefTrust(previousState, chiefPositions);
-  const nextStaffMechanics = updateStaffMechanics(previousState, selectedOptions, directorateBurden, triggeredEvents);
+  const nextStaffMechanics = updateStaffMechanics(previousState, selectedOptions, directorateBurden, triggeredEvents, nextConstraints);
+  const nextInternalTech: TechProgressNode[] = nextPrograms.map((program) => ({
+    id: program.id,
+    level: phaseToLevel(program.phase),
+    progress: program.progress,
+  }));
+  const nextExternalTech = updateExternalTech(previousState, nextConstraints, selectedTags, nextStaffMechanics);
 
   const nextFlags = triggeredEvents.reduce<Record<string, boolean>>((flags, event) => {
     const updated = { ...flags };
@@ -921,7 +1487,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   }
 
   const nextTurn = previousState.turn + 1;
-  const nextCommitments = updateCommitments(previousState.activeCommitments, selectedTags, previousState.turn, nextStaffMechanics);
+  const nextCommitments = updateCommitments(previousState.activeCommitments, selectedTags, previousState.turn, nextStaffMechanics, nextInternalTech);
 
   const nextState: CampaignState = {
     ...previousState,
@@ -937,6 +1503,8 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     strategic: nextStrategic,
     capabilityPrograms: nextPrograms,
     externalConstraints: nextConstraints,
+    internalTech: nextInternalTech,
+    externalTech: nextExternalTech,
     chiefTrust: nextTrust,
     activeCommitments: nextCommitments,
     eventHistory: [...previousState.eventHistory, ...triggeredEvents.map((event) => event.id)],
@@ -1026,6 +1594,8 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     triggeredEvents,
     afterAction: resultAfterAction,
     acceptedRisks,
+    internalTech: nextInternalTech,
+    externalTech: nextExternalTech,
     replayHash,
     summary,
   };

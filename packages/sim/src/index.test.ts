@@ -646,3 +646,221 @@ test("S5 program commitment is marked broken when S4 supportable tempo collapses
     assert.ok(entry?.fulfilled === null, "Commitment remains pending when supportable tempo is still viable");
   }
 });
+
+// Stage 3: tech tree and industry tests
+test("internalTech nodes are populated from capability program phases in TurnResult", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  assert.ok(result.internalTech.length > 0, "TurnResult should include internalTech nodes");
+  assert.ok(result.internalTech.every((n) => n.level >= 0 && n.level <= 2), "All internalTech levels should be 0, 1, or 2");
+  assert.ok(result.internalTech.every((n) => n.progress >= 0 && n.progress <= 100), "All internalTech progress values should be in range");
+  // Each program in the scenario should map to exactly one internalTech node
+  const programIds = soloScenario.capabilityPrograms.map((p) => p.id);
+  assert.ok(programIds.every((id) => result.internalTech.some((n) => n.id === id)), "Each program should have a corresponding internalTech node");
+});
+
+test("externalTech nodes are populated with S2 estimates in TurnResult", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  assert.ok(result.externalTech.length > 0, "TurnResult should include externalTech nodes");
+  assert.ok(result.externalTech.every((n) => ["RUMORED", "ESTIMATED", "KNOWN"].includes(n.estimate.visibility)), "All externalTech nodes should have a visibility class");
+  assert.ok(result.externalTech.every((n) => n.estimate.confidence >= 0 && n.estimate.confidence <= 100), "All estimate confidence values should be in range");
+  // Each external constraint should map to exactly one externalTech node
+  const constraintIds = soloScenario.externalConstraints.map((c) => c.id);
+  assert.ok(constraintIds.every((id) => result.externalTech.some((n) => n.id === id)), "Each external constraint should have a corresponding externalTech node");
+});
+
+test("externalTech fallback is derived from scenario constraints and preserves matching prior estimates", () => {
+  const customScenario = {
+    ...soloScenario,
+    externalConstraints: [
+      { id: "rare-earths", label: "Rare Earths", summary: "Permanent magnet and rare earth supply." },
+      { id: "battery-cells", label: "Battery Cells", summary: "Military and commercial battery cell capacity." },
+    ],
+  };
+  const customState = {
+    ...soloScenario.initialState,
+    externalConstraints: [
+      { id: "rare-earths", severity: 68, trend: "worsening" as const },
+      { id: "battery-cells", severity: 24, trend: "steady" as const },
+    ],
+    externalTech: [
+      {
+        id: "rare-earths",
+        level: 1,
+        progress: 67,
+        estimate: { estimatedLevel: 1, confidence: 77, visibility: "KNOWN" as const, lastVerifiedTurn: 1 },
+      },
+    ],
+  };
+
+  const result = resolveTurn(customScenario, customState, balancedInput);
+  assert.deepEqual(result.externalTech.map((node) => node.id), ["rare-earths", "battery-cells"]);
+  assert.ok(!result.externalTech.some((node) => node.id === "shipping-market"));
+  const preserved = result.externalTech.find((node) => node.id === "rare-earths");
+  const created = result.externalTech.find((node) => node.id === "battery-cells");
+  assert.ok(preserved);
+  assert.ok(created);
+  assert.ok(preserved.estimate.confidence > created.estimate.confidence, "Matching previous estimate confidence should be preserved before turn adjustment");
+  assert.equal(created.level, 2);
+  assert.equal(created.estimate.lastVerifiedTurn, null);
+});
+
+test("externalTech estimate confidence improves when industrial-watch tag is selected", () => {
+  const result1 = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);         // no industrial-watch
+  const result2 = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);        // has industrial-watch
+  const avgConf1 = result1.externalTech.reduce((s, n) => s + n.estimate.confidence, 0) / result1.externalTech.length;
+  const avgConf2 = result2.externalTech.reduce((s, n) => s + n.estimate.confidence, 0) / result2.externalTech.length;
+  assert.ok(avgConf2 > avgConf1, "industrial-watch selection should increase external tech estimate confidence");
+});
+
+test("externalTech estimate confidence degrades under high deception risk", () => {
+  const highDeceptionState = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s2: { externalEstimateConfidence: 55, visibility: "ESTIMATED" as const, deceptionRisk: 80 },
+    },
+  };
+  const normalResult = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const highDeceptionResult = resolveTurn(soloScenario, highDeceptionState, balancedInput);
+  const avgConfNormal = normalResult.externalTech.reduce((s, n) => s + n.estimate.confidence, 0) / normalResult.externalTech.length;
+  const avgConfDeception = highDeceptionResult.externalTech.reduce((s, n) => s + n.estimate.confidence, 0) / highDeceptionResult.externalTech.length;
+  assert.ok(avgConfDeception < avgConfNormal, "High deception risk should degrade external tech estimate confidence");
+});
+
+test("S4 stockpile depth is penalised when propellant-market and electronics-chain are disrupted", () => {
+  const disruptedState = {
+    ...soloScenario.initialState,
+    externalConstraints: [
+      { id: "shipping-market",   severity: 40, trend: "steady" as const },
+      { id: "electronics-chain", severity: 72, trend: "worsening" as const },
+      { id: "propellant-market", severity: 70, trend: "worsening" as const },
+    ],
+  };
+  const normalResult  = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const disruptedResult = resolveTurn(soloScenario, disruptedState, balancedInput);
+  assert.ok(
+    disruptedResult.nextState.staffMechanics.s4.stockpileDepth <
+      normalResult.nextState.staffMechanics.s4.stockpileDepth,
+    "Disrupted propellant and electronics supply should reduce S4 stockpile depth",
+  );
+});
+
+test("S4 lift burn increases when shipping-market is disrupted", () => {
+  const disruptedState = {
+    ...soloScenario.initialState,
+    externalConstraints: [
+      { id: "shipping-market",   severity: 75, trend: "worsening" as const },
+      { id: "electronics-chain", severity: 52, trend: "steady" as const },
+      { id: "propellant-market", severity: 49, trend: "steady" as const },
+    ],
+  };
+  const normalResult    = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const disruptedResult = resolveTurn(soloScenario, disruptedState, balancedInput);
+  assert.ok(
+    disruptedResult.nextState.staffMechanics.s4.liftBurn >
+      normalResult.nextState.staffMechanics.s4.liftBurn,
+    "Disrupted shipping market should increase S4 lift burn",
+  );
+});
+
+test("tech tree and industry explainability entry is included in TurnResult", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const techEntry = result.explainability.find((e) => e.label === "Tech tree and industry");
+  assert.ok(techEntry, "Explainability should include a tech-tree-and-industry entry");
+  assert.ok(techEntry.causalRefs.length > 0, "Tech explainability should have causal refs");
+  assert.ok(techEntry.causalRefs.some((ref) => ref.startsWith("tech:")), "Causal refs should include internal tech nodes");
+  assert.ok(techEntry.causalRefs.some((ref) => ref.startsWith("industry:")), "Causal refs should include industry nodes");
+});
+
+test("Stage 3 tech and industry state is deterministic under replay", () => {
+  const result1 = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
+  const result2 = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
+  assert.deepEqual(result1.internalTech, result2.internalTech, "internalTech should be deterministic");
+  assert.deepEqual(result1.externalTech, result2.externalTech, "externalTech should be deterministic");
+  assert.equal(result1.replayHash, result2.replayHash, "replayHash should be identical");
+});
+
+// Stage 3: S5 prerequisite gate — programme commitment needs a fielded capability
+test("S5 program commitment is not fulfilled when no program has reached level 2", () => {
+  // doctrineAlignment starts at 50; balancedInput adds coherenceGain (alliance+quiet ≈ 6) and
+  // programme-type coherenceGain ≈ 3, but no programme is at level 2 in initial state.
+  const stateWithProgramCommitment = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s5: { strategicCoherence: 58, doctrineAlignment: 57 },
+    },
+    activeCommitments: [
+      { id: "program-t0", type: "program" as const, label: "Modernization or capability commitment", turnMade: 1, fulfilled: null },
+    ],
+    // All programs at concept/funded → level 0; no level-2 capability yet
+    internalTech: soloScenario.initialState.internalTech.map((n) => ({ ...n, level: 0 as const })),
+    capabilityPrograms: soloScenario.initialState.capabilityPrograms.map((p) => ({ ...p, phase: "concept" as const, progress: 10 })),
+  };
+  const result = resolveTurn(soloScenario, stateWithProgramCommitment, balancedInput);
+  const entry = result.nextState.activeCommitments.find((c) => c.id === "program-t0");
+  assert.ok(entry, "Program commitment entry should still be present");
+  // Even if doctrineAlignment is above 55, the commitment cannot be fulfilled without a fielded program
+  if (result.nextState.internalTech.every((n) => n.level < 2)) {
+    assert.notEqual(entry?.fulfilled, true, "Program commitment should not be fulfilled when no program is at level 2");
+  }
+});
+
+test("S5 program commitment is fulfilled when doctrineAlignment threshold is met and a program is fielded", () => {
+  const fieldedState = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s5: { strategicCoherence: 58, doctrineAlignment: 57 },
+    },
+    activeCommitments: [
+      { id: "program-t0", type: "program" as const, label: "Modernization or capability commitment", turnMade: 1, fulfilled: null },
+    ],
+    // One program at operational → level 2
+    internalTech: soloScenario.initialState.internalTech.map((n, idx) =>
+      idx === 0 ? { ...n, level: 2 as const } : { ...n, level: 0 as const }
+    ),
+    capabilityPrograms: soloScenario.initialState.capabilityPrograms.map((p, idx) =>
+      idx === 0 ? { ...p, phase: "operational" as const, progress: 80 } : { ...p, phase: "concept" as const, progress: 10 }
+    ),
+  };
+  const result = resolveTurn(soloScenario, fieldedState, balancedInput);
+  const entry = result.nextState.activeCommitments.find((c) => c.id === "program-t0");
+  assert.ok(entry, "Program commitment entry should still be present");
+  // If doctrineAlignment crosses 55 AND a level-2 program exists, the commitment should fulfil
+  if (result.nextState.staffMechanics.s5.doctrineAlignment >= 55 && result.nextState.internalTech.some((n) => n.level === 2)) {
+    assert.equal(entry?.fulfilled, true, "Program commitment should be fulfilled when doctrineAlignment ≥ 55 and a program is fielded");
+  }
+});
+
+// Stage 3: industry event explainability — events with constraintShifts link to externalTech nodes
+test("Events with constraint shifts emit industry causalRefs in explainability", () => {
+  // firing-prototype option has constraintShifts for electronics-chain and propellant-market;
+  // checking that when these shifts occur via options or events, the explainability reflects it.
+  // We test directly: any event or option constraintShift should appear as an industry causalRef.
+  const turn2State = { ...soloScenario.initialState, turn: 2 };
+  // lift-assurance has "lift" tag; modernization-case has "public-commitment" — both needed for shipping-jam
+  const triggerInput: TurnInput = {
+    turn: 2,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    selections: [
+      { memoId: "posture", optionId: "measured-deterrence" },
+      { memoId: "intelligence-focus", optionId: "deception-hunt" },
+      { memoId: "sustainment-focus", optionId: "lift-assurance" },
+      { memoId: "alliance-frame", optionId: "modernization-case" },
+    ],
+  };
+  const result = resolveTurn(soloScenario, turn2State, triggerInput);
+  const eventsEntry = result.explainability.find((e) => e.label === "Events");
+  assert.ok(eventsEntry, "Events explainability entry should always be present");
+  // Verify: for every triggered event that has constraintShifts, a corresponding industry causalRef exists
+  for (const event of result.triggeredEvents) {
+    for (const shift of event.constraintShifts) {
+      assert.ok(
+        eventsEntry.causalRefs.some((ref) => ref.includes(shift.constraintId)),
+        `Events explainability should include causalRef for ${shift.constraintId} when event ${event.id} fires`,
+      );
+    }
+  }
+});
