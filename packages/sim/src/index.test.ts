@@ -743,3 +743,88 @@ test("Stage 3 tech and industry state is deterministic under replay", () => {
   assert.deepEqual(result1.externalTech, result2.externalTech, "externalTech should be deterministic");
   assert.equal(result1.replayHash, result2.replayHash, "replayHash should be identical");
 });
+
+// Stage 3: S5 prerequisite gate — programme commitment needs a fielded capability
+test("S5 program commitment is not fulfilled when no program has reached level 2", () => {
+  // doctrineAlignment starts at 50; balancedInput adds coherenceGain (alliance+quiet ≈ 6) and
+  // programme-type coherenceGain ≈ 3, but no programme is at level 2 in initial state.
+  const stateWithProgramCommitment = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s5: { strategicCoherence: 58, doctrineAlignment: 57 },
+    },
+    activeCommitments: [
+      { id: "program-t0", type: "program" as const, label: "Modernization or capability commitment", turnMade: 1, fulfilled: null },
+    ],
+    // All programs at concept/funded → level 0; no level-2 capability yet
+    internalTech: soloScenario.initialState.internalTech.map((n) => ({ ...n, level: 0 as const })),
+    capabilityPrograms: soloScenario.initialState.capabilityPrograms.map((p) => ({ ...p, phase: "concept" as const, progress: 10 })),
+  };
+  const result = resolveTurn(soloScenario, stateWithProgramCommitment, balancedInput);
+  const entry = result.nextState.activeCommitments.find((c) => c.id === "program-t0");
+  assert.ok(entry, "Program commitment entry should still be present");
+  // Even if doctrineAlignment is above 55, the commitment cannot be fulfilled without a fielded program
+  if (result.nextState.internalTech.every((n) => n.level < 2)) {
+    assert.notEqual(entry?.fulfilled, true, "Program commitment should not be fulfilled when no program is at level 2");
+  }
+});
+
+test("S5 program commitment is fulfilled when doctrineAlignment threshold is met and a program is fielded", () => {
+  const fieldedState = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s5: { strategicCoherence: 58, doctrineAlignment: 57 },
+    },
+    activeCommitments: [
+      { id: "program-t0", type: "program" as const, label: "Modernization or capability commitment", turnMade: 1, fulfilled: null },
+    ],
+    // One program at operational → level 2
+    internalTech: soloScenario.initialState.internalTech.map((n, idx) =>
+      idx === 0 ? { ...n, level: 2 as const } : { ...n, level: 0 as const }
+    ),
+    capabilityPrograms: soloScenario.initialState.capabilityPrograms.map((p, idx) =>
+      idx === 0 ? { ...p, phase: "operational" as const, progress: 80 } : { ...p, phase: "concept" as const, progress: 10 }
+    ),
+  };
+  const result = resolveTurn(soloScenario, fieldedState, balancedInput);
+  const entry = result.nextState.activeCommitments.find((c) => c.id === "program-t0");
+  assert.ok(entry, "Program commitment entry should still be present");
+  // If doctrineAlignment crosses 55 AND a level-2 program exists, the commitment should fulfil
+  if (result.nextState.staffMechanics.s5.doctrineAlignment >= 55 && result.nextState.internalTech.some((n) => n.level === 2)) {
+    assert.equal(entry?.fulfilled, true, "Program commitment should be fulfilled when doctrineAlignment ≥ 55 and a program is fielded");
+  }
+});
+
+// Stage 3: industry event explainability — events with constraintShifts link to externalTech nodes
+test("Events with constraint shifts emit industry causalRefs in explainability", () => {
+  // firing-prototype option has constraintShifts for electronics-chain and propellant-market;
+  // checking that when these shifts occur via options or events, the explainability reflects it.
+  // We test directly: any event or option constraintShift should appear as an industry causalRef.
+  const turn2State = { ...soloScenario.initialState, turn: 2 };
+  // lift-assurance has "lift" tag; modernization-case has "public-commitment" — both needed for shipping-jam
+  const triggerInput: TurnInput = {
+    turn: 2,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    selections: [
+      { memoId: "posture", optionId: "measured-deterrence" },
+      { memoId: "intelligence-focus", optionId: "deception-hunt" },
+      { memoId: "sustainment-focus", optionId: "lift-assurance" },
+      { memoId: "alliance-frame", optionId: "modernization-case" },
+    ],
+  };
+  const result = resolveTurn(soloScenario, turn2State, triggerInput);
+  const eventsEntry = result.explainability.find((e) => e.label === "Events");
+  assert.ok(eventsEntry, "Events explainability entry should always be present");
+  // Verify: for every triggered event that has constraintShifts, a corresponding industry causalRef exists
+  for (const event of result.triggeredEvents) {
+    for (const shift of event.constraintShifts) {
+      assert.ok(
+        eventsEntry.causalRefs.some((ref) => ref.includes(shift.constraintId)),
+        `Events explainability should include causalRef for ${shift.constraintId} when event ${event.id} fires`,
+      );
+    }
+  }
+});

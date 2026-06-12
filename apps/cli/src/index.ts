@@ -184,6 +184,18 @@ async function runHeadlessCampaign(options: CliOptions) {
         buildDirectorateBurden(deriveDecisionMemos(soloScenario, session.state), [], soloScenario.staffCapacities),
         session.state,
       ),
+      techTree: {
+        internalTech: session.state.internalTech.map((n) => ({ id: n.id, level: n.level, progress: n.progress })),
+        externalTech: session.state.externalTech.map((n) => ({
+          id: n.id,
+          level: n.level,
+          estimatedLevel: n.estimate.estimatedLevel,
+          confidence: n.estimate.confidence,
+          visibility: n.estimate.visibility,
+        })),
+        fieldedCount: session.state.internalTech.filter((n) => n.level === 2).length,
+        disruptedCount: session.state.externalTech.filter((n) => n.level === 0).length,
+      },
     },
     turnSummaries,
     validation,
@@ -210,6 +222,14 @@ if (options.json) {
   console.log(`Session ${output.session.id}: turn ${output.session.turn}, status ${output.session.status}, score ${output.session.score}`);
   for (const summary of output.turnSummaries) {
     console.log(`Turn ${summary.turn}: ${summary.summary} replay=${summary.replayHash}`);
+  }
+  const tt = output.session.techTree;
+  console.log(`Tech tree: ${tt.fieldedCount} program(s) fielded, ${tt.disruptedCount} industry node(s) disrupted`);
+  for (const n of tt.internalTech) {
+    console.log(`  program ${n.id}: level ${n.level}, progress ${n.progress}`);
+  }
+  for (const n of tt.externalTech) {
+    console.log(`  industry ${n.id}: true level ${n.level}, estimated ${n.estimatedLevel} (${n.visibility} conf ${n.confidence})`);
   }
   if (output.validation) {
     console.log(`Replay validation: ${output.validation.ok ? "ok" : output.validation.failureKind}`);

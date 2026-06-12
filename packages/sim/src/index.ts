@@ -659,7 +659,15 @@ function createExplainability(
       summary: events.length > 0 ? `${events.length} event(s) triggered from selected tags.` : "No event triggered this turn.",
       positiveDrivers: events.length > 0 ? [] : ["no additional shock entered the month"],
       blockers: events.map((event) => event.summary),
-      causalRefs: events.map((event) => `event:${event.id}`),
+      causalRefs: [
+        ...events.map((event) => `event:${event.id}`),
+        // Include industry constraint shifts from events so downstream consumers can trace
+        // which externalTech node an event affects and by how much. Shifts with delta > 0
+        // worsen constraints; delta < 0 improves them.
+        ...events.flatMap((event) =>
+          event.constraintShifts.map((shift) => `industry:${shift.constraintId}/delta:${shift.delta >= 0 ? "+" : ""}${shift.delta}`)
+        ),
+      ],
     },
     {
       label: "Tech tree and industry",
@@ -1305,6 +1313,14 @@ type CommitmentEntry = CampaignState["activeCommitments"][number];
  * and the S5 doctrine-bet after-action note, modelling Fearon's (1994) audience-cost logic:
  * credibility costs are borne whether or not the break was intentional.
  *
+ * ## S5 programme prerequisite gate (Stage 3)
+ * Programme-type commitment fulfilment also requires that at least one internal tech node
+ * has reached level 2 (trained/operational). This prevents a purely declaratory commitment
+ * from being counted as fulfilled: the public signal must be backed by visible capability
+ * delivery. Fearon (1994) audience costs arise only when the audience can observe the
+ * follow-through — a programme commitment with no fielded system is, by definition,
+ * unfulfilled in the eyes of any informed observer.
+ *
  * ## Alliance dilemma mechanics (Snyder 1984)
  * Each new commitment represents the player accepting some entrapment risk in exchange for
  * reduced abandonment risk in the alliance relationship. The system enforces at most one
@@ -1315,6 +1331,7 @@ function updateCommitments(
   selectedTags: Set<string>,
   currentTurn: number,
   nextMechanics: StaffMechanicsState,
+  nextInternalTech: TechProgressNode[],
 ): CommitmentEntry[] {
   const next: CommitmentEntry[] = [];
 
@@ -1325,7 +1342,9 @@ function updateCommitments(
       (commitment.type === "program" && nextMechanics.s4.supportableTempo < 5);
     const isFulfilled =
       (commitment.type === "alliance" && nextMechanics.s5.strategicCoherence >= 60) ||
-      (commitment.type === "program" && nextMechanics.s5.doctrineAlignment >= 55) ||
+      // Programme gate: doctrineAlignment threshold AND at least one fielded capability (level 2 = trained/operational).
+      // A commitment without any fielded system is declaratory — audience costs require observable follow-through (Fearon 1994).
+      (commitment.type === "program" && nextMechanics.s5.doctrineAlignment >= 55 && nextInternalTech.some((n) => n.level === 2)) ||
       (commitment.type === "doctrine" && nextMechanics.s5.doctrineAlignment >= 60) ||
       (commitment.type === "cabinet" && nextMechanics.s5.strategicCoherence >= 65);
     next.push({ ...commitment, fulfilled: isFulfilled ? true : isBroken ? false : null });
@@ -1442,7 +1461,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   }
 
   const nextTurn = previousState.turn + 1;
-  const nextCommitments = updateCommitments(previousState.activeCommitments, selectedTags, previousState.turn, nextStaffMechanics);
+  const nextCommitments = updateCommitments(previousState.activeCommitments, selectedTags, previousState.turn, nextStaffMechanics, nextInternalTech);
 
   const nextState: CampaignState = {
     ...previousState,
