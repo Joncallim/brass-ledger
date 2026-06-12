@@ -668,6 +668,42 @@ test("externalTech nodes are populated with S2 estimates in TurnResult", () => {
   assert.ok(constraintIds.every((id) => result.externalTech.some((n) => n.id === id)), "Each external constraint should have a corresponding externalTech node");
 });
 
+test("externalTech fallback is derived from scenario constraints and preserves matching prior estimates", () => {
+  const customScenario = {
+    ...soloScenario,
+    externalConstraints: [
+      { id: "rare-earths", label: "Rare Earths", summary: "Permanent magnet and rare earth supply." },
+      { id: "battery-cells", label: "Battery Cells", summary: "Military and commercial battery cell capacity." },
+    ],
+  };
+  const customState = {
+    ...soloScenario.initialState,
+    externalConstraints: [
+      { id: "rare-earths", severity: 68, trend: "worsening" as const },
+      { id: "battery-cells", severity: 24, trend: "steady" as const },
+    ],
+    externalTech: [
+      {
+        id: "rare-earths",
+        level: 1,
+        progress: 67,
+        estimate: { estimatedLevel: 1, confidence: 77, visibility: "KNOWN" as const, lastVerifiedTurn: 1 },
+      },
+    ],
+  };
+
+  const result = resolveTurn(customScenario, customState, balancedInput);
+  assert.deepEqual(result.externalTech.map((node) => node.id), ["rare-earths", "battery-cells"]);
+  assert.ok(!result.externalTech.some((node) => node.id === "shipping-market"));
+  const preserved = result.externalTech.find((node) => node.id === "rare-earths");
+  const created = result.externalTech.find((node) => node.id === "battery-cells");
+  assert.ok(preserved);
+  assert.ok(created);
+  assert.ok(preserved.estimate.confidence > created.estimate.confidence, "Matching previous estimate confidence should be preserved before turn adjustment");
+  assert.equal(created.level, 2);
+  assert.equal(created.estimate.lastVerifiedTurn, null);
+});
+
 test("externalTech estimate confidence improves when industrial-watch tag is selected", () => {
   const result1 = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);         // no industrial-watch
   const result2 = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);        // has industrial-watch

@@ -176,12 +176,6 @@ function phaseToLevel(phase: string): 0 | 1 | 2 {
   return 2;
 }
 
-const defaultExternalTech: ExternalTechNode[] = [
-  { id: "shipping-market",   level: 1, progress: 50, estimate: { estimatedLevel: 1, confidence: 45, visibility: "ESTIMATED", lastVerifiedTurn: null } },
-  { id: "electronics-chain", level: 1, progress: 50, estimate: { estimatedLevel: 1, confidence: 45, visibility: "ESTIMATED", lastVerifiedTurn: null } },
-  { id: "propellant-market", level: 1, progress: 50, estimate: { estimatedLevel: 1, confidence: 45, visibility: "ESTIMATED", lastVerifiedTurn: null } },
-];
-
 function strategicMetric(state: CampaignState, metric: CampaignObjective["metric"]) {
   if (metric === "deployableUnits") return state.strategic.forceGeneration.deployableUnits;
   if (metric === "politicalAlignment") return state.strategic.alliance.politicalAlignment;
@@ -551,7 +545,10 @@ function afterAction(
   }
 
   // Industry level changes: note when an external node degrades or recovers
-  const prevTechById = new Map((previousState.externalTech.length > 0 ? previousState.externalTech : defaultExternalTech).map((n) => [n.id, n]));
+  const prevTechById = new Map(
+    externalTechBaseline(previousState.externalConstraints, previousState.externalTech, previousState.staffMechanics.s2.externalEstimateConfidence)
+      .map((node) => [node.id, node]),
+  );
   for (const node of nextState.externalTech) {
     const prev = prevTechById.get(node.id);
     if (!prev || prev.level === node.level) continue;
@@ -757,6 +754,31 @@ function industryVisibilityFor(confidence: number): ExternalTechNode["estimate"]
   return "RUMORED";
 }
 
+function externalTechFromConstraint(constraint: ExternalConstraintState, confidence: number): ExternalTechNode {
+  const level = severityToLevel(constraint.severity);
+  const roundedConfidence = round(clamp(confidence, 0, 100));
+  return {
+    id: constraint.id,
+    level,
+    progress: round(clamp(100 - constraint.severity, 0, 100)),
+    estimate: {
+      estimatedLevel: level,
+      confidence: roundedConfidence,
+      visibility: industryVisibilityFor(roundedConfidence),
+      lastVerifiedTurn: null,
+    },
+  };
+}
+
+function externalTechBaseline(
+  constraints: ExternalConstraintState[],
+  previousTech: ExternalTechNode[],
+  confidence: number,
+): ExternalTechNode[] {
+  const previousById = new Map(previousTech.map((node) => [node.id, node]));
+  return constraints.map((constraint) => previousById.get(constraint.id) ?? externalTechFromConstraint(constraint, confidence));
+}
+
 /**
  * Advances external industry node estimates given updated constraint severities and S2 state.
  *
@@ -793,7 +815,11 @@ function updateExternalTech(
   nextMechanics: StaffMechanicsState,
 ): ExternalTechNode[] {
   const constraintById = new Map(nextConstraints.map((c) => [c.id, c]));
-  const previous = previousState.externalTech.length > 0 ? previousState.externalTech : defaultExternalTech;
+  const previous = externalTechBaseline(
+    nextConstraints,
+    previousState.externalTech,
+    previousState.staffMechanics.s2.externalEstimateConfidence,
+  );
   // industrial-watch gives dedicated attaché-level collection (+8); generic collection sweep (+3)
   const industryGain = selectedTags.has("industrial-watch") ? 8 : selectedTags.has("collection") ? 3 : 0;
 
