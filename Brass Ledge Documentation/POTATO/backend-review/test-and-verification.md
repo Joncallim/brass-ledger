@@ -54,6 +54,12 @@ Backlink: [[POTATO]]
 - simultaneous authoritative mutation conflict behavior
 - static client shell serving and traversal-style static lookup rejection
 
+`apps/cli/test/index.test.ts` currently covers:
+
+- JSON headless runs recording accepted risks and validating replay
+- supplied input rejection when accepted-risk overrides are omitted
+- `--auto-accept-risks` filling supplied input risks and writing a replayable export
+
 `apps/web/test/acceptedRiskUi.test.ts` currently covers:
 
 - accepted-risk preview candidates starting unresolved
@@ -63,9 +69,8 @@ Backlink: [[POTATO]]
 ## Coverage Gaps
 
 - No storage-level compare-and-swap test because the current store is single-process and lock-backed.
-- No committed CLI subprocess test for `--auto-accept-risks`; API coverage exercises the shared runner, and manual CLI smoke testing covers the command path.
 
 ## Suggested Tests
 
 - File-store tests for invalid save skipping and storage-level compare-and-swap if the persistence layer becomes multi-process.
-- CLI subprocess smoke test for JSON output, export, and supplied input risk rejection.
+- CLI subprocess tests for session continuation from an exported campaign when that workflow becomes user-facing.

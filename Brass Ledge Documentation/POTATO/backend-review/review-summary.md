@@ -36,7 +36,7 @@ The following checks passed during review:
 
 | Command | Result |
 | --- | --- |
-| `npm test` | Passed: 14/14 server route tests, 3/3 web tests, and 52/52 sim tests |
+| `npm test` | Passed: 3/3 CLI tests, 14/14 server route tests, 3/3 web tests, and 52/52 sim tests |
 | `npm run build` | Passed: cli, server, web, content, headless, shared, sim |
 | `npm run lint:content` | Passed: scenario validation |
 | `npm run lint:potato` | Passed: 68 notes |
@@ -45,4 +45,4 @@ The following checks passed during review:
 
 1. Add storage-level compare-and-swap if the file save store ever becomes multi-process or networked.
 2. Continue broadening route tests as new mutation endpoints are added.
-3. Add a CLI subprocess smoke test for supplied-input accepted-risk behavior.
+3. Continue adding subprocess coverage as CLI workflows become user-facing.
