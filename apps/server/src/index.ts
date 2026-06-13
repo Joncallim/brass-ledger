@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import Fastify, { type FastifyReply } from "fastify";
 import cors from "@fastify/cors";
 import { soloScenario } from "@brass-ledger/content";
+import { HeadlessAcceptedRiskError, runHeadlessCampaign } from "@brass-ledger/headless";
 import {
   buildChiefPositions,
   buildDirectorateBurden,
@@ -290,6 +291,34 @@ function missingAcceptedRiskCandidates(session: GameSession, input: TurnInput) {
   return preview.acceptedRiskCandidates.filter((candidate) => !accepted.has(riskKey(candidate)));
 }
 
+function parseHeadlessRunBody(body: unknown) {
+  const value = (body ?? {}) as Record<string, unknown>;
+  const turns = value.turns === undefined ? 1 : Number(value.turns);
+  if (!Number.isInteger(turns) || turns < 0) {
+    throw new Error("turns must be a non-negative integer.");
+  }
+
+  const rawInputs = value.inputs ?? value.input;
+  const inputs = rawInputs === undefined
+    ? []
+    : (Array.isArray(rawInputs) ? rawInputs : [rawInputs]).map((entry) => turnInputSchema.parse(entry));
+
+  const session = value.session
+    ? gameSessionSchema.parse(value.session)
+    : value.exportData
+      ? sessionExportSchema.parse(value.exportData).session
+      : undefined;
+
+  return {
+    turns,
+    session,
+    inputs,
+    validate: value.validate === true,
+    includeSprites: value.includeSprites === true || value.sprites === true,
+    autoAcceptRisks: value.autoAcceptRisks === true,
+  };
+}
+
 app.get("/", async (_request, reply) => serveClientShell(reply));
 
 app.get("/api/health", async () => ({ ok: true }));
@@ -309,6 +338,23 @@ app.get("/api/scenario", async () => ({
     externalConstraints: soloScenario.externalConstraints,
   },
 }));
+
+app.post("/api/headless/run", async (request, reply) => {
+  try {
+    const options = parseHeadlessRunBody(request.body);
+    return await runHeadlessCampaign(options);
+  } catch (error) {
+    if (error instanceof HeadlessAcceptedRiskError) {
+      reply.code(428);
+      return {
+        error: error.message,
+        acceptedRiskCandidates: error.acceptedRiskCandidates,
+      };
+    }
+    reply.code(400);
+    return { error: error instanceof Error ? error.message : "Failed to run headless campaign" };
+  }
+});
 
 app.get("/api/sessions", async () => {
   const sessions = await listSessions();

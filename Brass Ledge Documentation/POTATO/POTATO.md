@@ -36,7 +36,14 @@ Always consult this domain before changing game rules, interface direction, spri
 
 ## Current Direction
 
-Brass Ledger should become a compile-able, headless-first game engine with browser, CLI, and future native shells as presentation clients. The browser is no longer the source of truth. The engine is.
+Brass Ledger is now a compile-able, headless-first game engine with browser, CLI, and API entrypoints. The browser is no longer the source of truth. The deterministic engine and shared headless runner are.
+
+Current implementation state:
+
+- Stage 3 tech/industry model is complete.
+- `@brass-ledger/headless` is shared by the compiled CLI and `POST /api/headless/run`.
+- Accepted-risk turns are explicit: supplied inputs must acknowledge projected S1-S5 warnings or opt into unattended auto-acceptance.
+- Stage 4 agent chiefs and negotiation is the next roadmap phase.
 
 ## Knowledge Repository Split
 

@@ -24,21 +24,22 @@ Backlink: [[POTATO]]
 
 ## Next Engine Pass
 
-1. Implement S2 fog-of-war for external industry estimates. Started with external estimate confidence, visibility, and deception risk in `staffMechanics.s2`.
-2. Promote capability programs into internal/external tech node structures.
-3. Add S1 personnel debt and recovery mechanics. Started with deterministic recovery debt and reserve predictability updates.
-4. Add S4 stockpile/lift burn mechanics. Started with deterministic stockpile depth and lift burn updates.
-5. Add S5 doctrine/alliance commitments. Started with strategic coherence and doctrine alignment; commitments remain future work.
+The S1-S5 core mechanic and Stage 3 tech/industry model are implemented and covered by engine tests. The next engine pass is Stage 4: agent chiefs and negotiation.
+
+1. Give chiefs agenda memory across turns.
+2. Let chiefs form support/objection coalitions around memo options and staff constraints.
+3. Let conversations create replayable commitments and trust effects.
+4. Let the player negotiate staff constraints before committing a turn.
 
 ## Browser Rebuild Gate
 
 Do not rebuild the full interface until these engine contracts exist:
 
-- `staffFunctions` array with S1-S5 labels and current values.
-- `explainability` entries with causal references.
-- `spriteSpecs` or `assetPrompts` for generated images.
-- `availableActions` or `decisionPackets` that are already presentation-ready.
-- replay-safe save/import hardening from the backend review.
+- `staffFunctions` array with S1-S5 labels and current values. Implemented.
+- `explainability` entries with causal references. Implemented.
+- `spriteSpecs` or `assetPrompts` for generated images. Advisor SVG payloads are available through CLI output; broader asset prompts remain future work.
+- `availableActions` or `decisionPackets` that are already presentation-ready. Memo packets exist; Stage 4 negotiation should stabilize the next contract.
+- replay-safe save/import hardening from the backend review. Implemented.
 
 ## Long-Term USP Protection
 

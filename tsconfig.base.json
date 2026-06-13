@@ -8,6 +8,9 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    "types": [
+      "node"
+    ],
     "declaration": true,
     "sourceMap": true,
     "baseUrl": ".",
@@ -29,8 +32,13 @@
       ],
       "@brass-ledger/sim/*": [
         "packages/sim/src/*"
+      ],
+      "@brass-ledger/headless": [
+        "packages/headless/src/index.ts"
+      ],
+      "@brass-ledger/headless/*": [
+        "packages/headless/src/*"
       ]
     }
   }
 }
-

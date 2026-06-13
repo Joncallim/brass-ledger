@@ -77,7 +77,7 @@ Test coverage: 40 engine tests and 12 server integration tests; all cross-staff 
 
 ## Stage 3: Dual Tech Tree And Industry Model
 
-Status: started.
+Status: complete.
 
 Goals:
 
@@ -101,19 +101,17 @@ What's done:
 - Initial tech/industry state seeded in scenario `initialState`.
 - 8 new engine tests covering: node population, visibility classes, confidence gain/decay, S4 industry penalties, explainability coverage, replay determinism.
 
-Remaining for Stage 3 exit criteria:
-
-- S5 prerequisite link: commitment fulfillment should check that at least one program is fielded (level 2) before a program-type commitment can be completed.
-- Scenario-specific industry event connections: events that shift constraint severity should also emit explainability noting which externalTech node was affected.
-- CLI `--turns N` batch output should include final tech-tree summary in the session-level report (industry node levels + disrupted count).
-
 Exit criteria:
 
-- Tech tree can be simulated from CLI: `apps/cli` headless run emits program phase and external constraint state per turn. Partially met: per-turn summaries include internalTech and externalTech; final session summary not yet extended.
+- Tech tree can be simulated from CLI: `apps/cli` headless run emits program phase and external constraint state per turn, plus final session-level tech-tree summary.
 - Node changes emit explainability: internal phase transitions and external maturity shifts appear in `TurnResult.explainability`. Met: "Tech tree and industry" entry in every turn result; level-change after-action notes fire when levels shift.
 - Fog-of-war is deterministic under replay: external industry estimates with S2 confidence class replay identically under `validateReplaySession`. Met: test 48 covers this.
+- S5 prerequisite link is enforced: program commitments require at least one fielded level-2 internal tech node before fulfillment.
+- Scenario-specific industry event connections are traceable: events with `constraintShifts` emit `industry:{constraintId}/delta:{value}` causal refs.
 
 ## Stage 4: Agent Chiefs And Negotiation
+
+Status: next.
 
 Goals:
 
