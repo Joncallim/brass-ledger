@@ -33,6 +33,7 @@ Backlink: [[POTATO]]
 - chief coalition output for selected memo options, staff constraints, preview parity, and negotiation levers
 - multi-stage chief conversation progression and trust deltas
 - deterministic active commitment creation from completed chief conversations
+- staff negotiation turn inputs reducing directorate burden, charging explicit costs, and replaying deterministically
 - replay validation reporting history length mismatches without throwing
 - replay validation reporting altered replay hashes, altered initial state, altered final state, and extra history
 - schema rejection for out-of-range persisted campaign metrics
@@ -48,6 +49,7 @@ Backlink: [[POTATO]]
 - headless API rejection for supplied turns that omit accepted-risk overrides
 - chief conversation completion persisting agenda memory while preserving revision checks
 - chief conversation completion persisting active commitments through the authoritative route
+- resolve-turn preserving staff negotiations through preview/resolve and after-action output
 - disabled whole-session save endpoint
 - invalid session id rejection on save
 - resolve-turn persistence, replay validation, revision increment, and stale `expectedRevision` rejection

@@ -4,6 +4,7 @@ import {
   type DecisionMemo,
   type GameSession,
   type ScenarioSummary,
+  type StaffNegotiation,
   type TurnPreview,
   type TurnResult,
 } from "@brass-ledger/shared";
@@ -119,6 +120,8 @@ export function App() {
   const [preview, setPreview] = useState<PreviewPayload | null>(null);
   const [latestResult, setLatestResult] = useState<TurnResult | null>(null);
   const [acceptedRiskChoices, setAcceptedRiskChoices] = useState<AcceptedRiskChoiceState>({});
+  const [staffNegotiations, setStaffNegotiations] = useState<StaffNegotiation[]>([]);
+  const [negotiationCandidates, setNegotiationCandidates] = useState<StaffNegotiation["directorate"][]>([]);
   const [status, setStatus] = useState("Loading engine...");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -129,6 +132,16 @@ export function App() {
   const acceptedRiskCandidates = previewMatchesCurrentTurn && preview ? preview.acceptedRiskCandidates : [];
   const acceptedRiskCount = acceptedRiskOverridesFromChoices(acceptedRiskCandidates, acceptedRiskChoices).length;
   const acceptedRisksReady = previewMatchesCurrentTurn && allAcceptedRiskCandidatesChosen(acceptedRiskCandidates, acceptedRiskChoices);
+
+  function updateNegotiation(directorate: StaffNegotiation["directorate"], enabled: boolean) {
+    setStaffNegotiations((entries) => {
+      const rest = entries.filter((entry) => entry.directorate !== directorate);
+      return enabled ? [...rest, { directorate, reliefPoints: 1, cost: "political_cover" }] : rest;
+    });
+    setPreview(null);
+    setAcceptedRiskChoices({});
+    setStatus("Staff negotiation changed. Preview the turn again before resolving.");
+  }
 
   async function refreshRecords() {
     const data = await fetchJson<{ sessions: SessionSummary[] }>(`${apiBase}/sessions`);
@@ -144,6 +157,8 @@ export function App() {
       setMemos(data.memos);
       setPreview(null);
       setAcceptedRiskChoices({});
+      setStaffNegotiations([]);
+      setNegotiationCandidates([]);
       setLatestResult(data.session.history.at(-1) ?? null);
       setStatus("Engine session created.");
       await refreshRecords();
@@ -169,6 +184,8 @@ export function App() {
       setMemos(data.memos);
       setPreview(null);
       setAcceptedRiskChoices({});
+      setStaffNegotiations([]);
+      setNegotiationCandidates([]);
       setLatestResult(data.session.history.at(-1) ?? null);
       setStatus("Latest engine session loaded.");
     } catch (err) {
@@ -185,9 +202,10 @@ export function App() {
     try {
       const data = await fetchJson<PreviewPayload>(`${apiBase}/sessions/${session.id}/preview-turn`, {
         method: "POST",
-        body: JSON.stringify({ input: defaultTurnInput(session, memos) }),
+        body: JSON.stringify({ input: defaultTurnInput(session, memos, [], staffNegotiations) }),
       });
       setPreview(data);
+      setNegotiationCandidates(Array.from(new Set(data.chiefCoalitions.flatMap((entry) => entry.staffConstraintDirectorates))));
       setAcceptedRiskChoices(initialAcceptedRiskChoices(data.acceptedRiskCandidates));
       setStatus("Default text simulation preview generated.");
     } catch (err) {
@@ -213,12 +231,14 @@ export function App() {
     try {
       const data = await fetchJson<SessionEnvelope & { result: TurnResult }>(`${apiBase}/sessions/${session.id}/resolve-turn`, {
         method: "POST",
-        body: JSON.stringify({ input: defaultTurnInput(session, memos, acceptedRiskOverrides) }),
+        body: JSON.stringify({ input: defaultTurnInput(session, memos, acceptedRiskOverrides, staffNegotiations) }),
       });
       setSession(data.session);
       setMemos(data.memos);
       setPreview(null);
       setAcceptedRiskChoices({});
+      setStaffNegotiations([]);
+      setNegotiationCandidates([]);
       setLatestResult(data.result);
       setStatus("Default text simulation turn resolved.");
       await refreshRecords();
@@ -338,6 +358,38 @@ export function App() {
                   <span>
                     <strong>{risk.staffFunctionId}</strong>
                     {risk.warningText}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="engine-panel" aria-labelledby="staff-negotiation-heading">
+        <div className="accepted-risk-header">
+          <div>
+            <p className="engine-kicker">Before commit</p>
+            <h2 id="staff-negotiation-heading">Staff Negotiations</h2>
+          </div>
+          <span className="risk-count">{staffNegotiations.length} active</span>
+        </div>
+        {negotiationCandidates.length === 0 ? (
+          <p>Preview a turn to identify constrained staff lanes.</p>
+        ) : (
+          <div className="risk-choice-list">
+            {negotiationCandidates.map((directorate) => {
+              const active = staffNegotiations.some((entry) => entry.directorate === directorate);
+              return (
+                <label className="risk-choice" key={directorate}>
+                  <input
+                    type="checkbox"
+                    checked={active}
+                    onChange={(event) => updateNegotiation(directorate, event.currentTarget.checked)}
+                  />
+                  <span>
+                    <strong>{directorate}</strong>
+                    Relieve 1 burden point for political cover.
                   </span>
                 </label>
               );

@@ -78,6 +78,31 @@ test("resolveTurn emits chief coalitions tied to memo options and staff constrai
   assert.deepEqual(preview.chiefCoalitions, result.chiefCoalitions);
 });
 
+test("staff negotiations reduce burden before commit and record their cost", () => {
+  const negotiatedInput: TurnInput = {
+    ...highTempoInput,
+    staffNegotiations: [{ directorate: "sustainment", reliefPoints: 2, cost: "budget_overtime" }],
+  };
+  const baseline = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
+  const negotiated = resolveTurn(soloScenario, soloScenario.initialState, negotiatedInput);
+
+  const baselineSustainment = baseline.directorateBurden.find((entry) => entry.directorate === "sustainment");
+  const negotiatedSustainment = negotiated.directorateBurden.find((entry) => entry.directorate === "sustainment");
+  assert.ok(baselineSustainment);
+  assert.ok(negotiatedSustainment);
+  assert.equal(negotiatedSustainment.burdenPoints, baselineSustainment.burdenPoints - 2);
+  assert.ok(negotiated.nextState.resources.budgetAuthority < baseline.nextState.resources.budgetAuthority);
+  assert.ok(negotiated.afterAction.some((entry) => entry.heading === "Staff negotiations" && entry.detail.includes("sustainment")));
+
+  const replay = validateReplaySession(soloScenario, {
+    initialState: soloScenario.initialState,
+    turnInputs: [negotiatedInput],
+    history: [negotiated],
+    state: negotiated.nextState,
+  });
+  assert.equal(replay.ok, true);
+});
+
 test("resolveTurn emits S1-S5 staff readouts and causal explainability", () => {
   const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
 

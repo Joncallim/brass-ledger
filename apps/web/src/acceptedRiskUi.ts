@@ -1,4 +1,4 @@
-import type { AcceptedRiskOverride, DecisionMemo, GameSession } from "@brass-ledger/shared";
+import type { AcceptedRiskOverride, DecisionMemo, GameSession, StaffNegotiation } from "@brass-ledger/shared";
 
 export type AcceptedRiskChoiceState = Record<string, boolean>;
 
@@ -35,11 +35,17 @@ export function allAcceptedRiskCandidatesChosen(
   return candidates.every((risk) => choices[acceptedRiskKey(risk)] === true);
 }
 
-export function defaultTurnInput(session: GameSession, memos: DecisionMemo[], acceptedRiskOverrides: AcceptedRiskOverride[] = []) {
+export function defaultTurnInput(
+  session: GameSession,
+  memos: DecisionMemo[],
+  acceptedRiskOverrides: AcceptedRiskOverride[] = [],
+  staffNegotiations: StaffNegotiation[] = [],
+) {
   return {
     turn: session.state.turn,
     selectedActionIds: [],
     acceptedRiskOverrides,
+    staffNegotiations,
     selections: memos
       .filter((memo) => !memo.optional)
       .map((memo) => ({
