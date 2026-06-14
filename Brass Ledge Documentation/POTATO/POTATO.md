@@ -43,7 +43,7 @@ Current implementation state:
 - Stage 3 tech/industry model is complete.
 - `@brass-ledger/headless` is shared by the compiled CLI and `POST /api/headless/run`.
 - Accepted-risk turns are explicit: supplied inputs must acknowledge projected S1-S5 warnings or opt into unattended auto-acceptance.
-- Stage 4 agent chiefs and negotiation is the next roadmap phase.
+- Stage 4 agent chiefs and negotiation is active. Chief agenda memory is now persisted by turn resolution and completed chief conversations; coalition behavior, commitment creation, and staff-constraint negotiation remain next.
 
 ## Knowledge Repository Split
 

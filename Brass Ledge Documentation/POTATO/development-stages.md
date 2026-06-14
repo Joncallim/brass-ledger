@@ -105,24 +105,24 @@ Exit criteria:
 
 - Tech tree can be simulated from CLI: `apps/cli` headless run emits program phase and external constraint state per turn, plus final session-level tech-tree summary.
 - Node changes emit explainability: internal phase transitions and external maturity shifts appear in `TurnResult.explainability`. Met: "Tech tree and industry" entry in every turn result; level-change after-action notes fire when levels shift.
-- Fog-of-war is deterministic under replay: external industry estimates with S2 confidence class replay identically under `validateReplaySession`. Met: test 48 covers this.
+- Fog-of-war is deterministic under replay: external industry estimates with S2 confidence class replay identically under `validateReplaySession`.
 - S5 prerequisite link is enforced: program commitments require at least one fielded level-2 internal tech node before fulfillment.
 - Scenario-specific industry event connections are traceable: events with `constraintShifts` emit `industry:{constraintId}/delta:{value}` causal refs.
 
 ## Stage 4: Agent Chiefs And Negotiation
 
-Status: next.
+Status: started.
 
 Goals:
 
-- Chiefs maintain agenda memory.
+- Chiefs maintain agenda memory. Started: turn resolution and completed chief conversations persist per-chief focus tags, concern tags, prior position, pressure, and notes; future chief advice uses that memory as a bounded bias.
 - Chiefs form support/objection coalitions.
 - Conversations create commitments and trust effects.
 - Player can negotiate staff constraints before commit.
 
 Exit criteria:
 
-- Chief advice is mechanically tied to S1-S5 readouts.
+- Chief advice is mechanically tied to S1-S5 readouts and persistent chief agenda memory.
 - Commitments can be fulfilled or broken in later turns.
 - Conversation state remains replayable.
 

@@ -107,6 +107,7 @@ import {
   buildDirectorateBurden,
   buildStaffFunctionReadouts,
   summarizeState,
+  updateChiefAgendaMemoryFromPositions,
 } from "@brass-ledger/shared";
 
 type Rng = () => number;
@@ -1464,6 +1465,15 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   nextStrategic.forceGeneration.reserveStrain = round(nextStrategic.forceGeneration.reserveStrain);
 
   const chiefPositions = selectedPairs.flatMap(({ memo, option }) => buildChiefPositions(scenario.chiefs, previousState, memo, option));
+  const nextChiefAgendaMemory = updateChiefAgendaMemoryFromPositions(
+    previousState,
+    scenario.chiefs,
+    selectedPairs.map(({ memo, option }) => ({
+      memo,
+      option,
+      positions: chiefPositions.filter((entry) => entry.memoId === memo.id && entry.optionId === option.id),
+    })),
+  );
   const nextPrograms = updatePrograms(scenario, previousState, input.selections, directorateBurden);
   const nextConstraints = updateConstraints(previousState, selectedOptions, triggeredEvents);
   const nextTrust = updateChiefTrust(previousState, chiefPositions);
@@ -1506,6 +1516,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     internalTech: nextInternalTech,
     externalTech: nextExternalTech,
     chiefTrust: nextTrust,
+    chiefAgendaMemory: nextChiefAgendaMemory,
     activeCommitments: nextCommitments,
     eventHistory: [...previousState.eventHistory, ...triggeredEvents.map((event) => event.id)],
     eventFlags: nextFlags,

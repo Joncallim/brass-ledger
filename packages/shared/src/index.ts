@@ -284,6 +284,7 @@ export const chiefConversationRecordSchema = z.object({
   requiredCondition: z.string(),
   confidenceNote: z.string(),
   consequenceIfIgnored: z.string(),
+  agendaMemoryNote: z.string().optional(),
   transcript: z.array(chiefConversationTurnSchema),
   choices: z.array(chiefConversationChoiceSchema),
   choiceTrail: z.array(z.string()).default([]),
@@ -433,9 +434,23 @@ export const chiefPositionEntrySchema = z.object({
   requiredCondition: z.string(),
   confidenceNote: z.string(),
   consequenceIfIgnored: z.string(),
+  agendaMemoryNote: z.string().optional(),
 });
 export type ChiefPositionEntry = z.infer<typeof chiefPositionEntrySchema>;
 export type ChiefPosition = ChiefPositionEntry;
+
+export const chiefAgendaMemoryEntrySchema = z.object({
+  chiefId: z.string(),
+  focusTags: z.array(z.string()).default([]),
+  concernTags: z.array(z.string()).default([]),
+  lastMemoId: z.string().nullable().default(null),
+  lastOptionId: z.string().nullable().default(null),
+  lastPosition: chiefPositionSchema.nullable().default(null),
+  pressure: z.number().min(0).max(10).default(0),
+  lastTurn: z.number().int().min(0).default(0),
+  notes: z.array(z.string()).default([]),
+});
+export type ChiefAgendaMemoryEntry = z.infer<typeof chiefAgendaMemoryEntrySchema>;
 
 export const staffCapacityDefinitionSchema = z.object({
   directorate: directorateSchema,
@@ -599,6 +614,7 @@ export const campaignStateSchema = z.object({
   internalTech: z.array(techProgressSchema).default([]),
   externalTech: z.array(externalTechNodeSchema).default([]),
   chiefTrust: z.record(z.string(), indexMetricSchema),
+  chiefAgendaMemory: z.record(z.string(), chiefAgendaMemoryEntrySchema).default({}),
   advisorTrust: z.record(z.string(), indexMetricSchema).default({}),
   activeEventIds: z.array(z.string()).default([]),
   eventHistory: z.array(z.string()).default([]),
@@ -1208,6 +1224,115 @@ export function buildStaffFunctionReadouts(
   });
 }
 
+function uniqueLimited(values: string[], limit: number) {
+  return Array.from(new Set(values.filter(Boolean))).slice(0, limit);
+}
+
+function defaultChiefAgendaMemory(chiefId: string): ChiefAgendaMemoryEntry {
+  return {
+    chiefId,
+    focusTags: [],
+    concernTags: [],
+    lastMemoId: null,
+    lastOptionId: null,
+    lastPosition: null,
+    pressure: 0,
+    lastTurn: 0,
+    notes: [],
+  };
+}
+
+function agendaMemoryFor(state: CampaignState, chiefId: string) {
+  return state.chiefAgendaMemory[chiefId] ?? defaultChiefAgendaMemory(chiefId);
+}
+
+function agendaTagsFor(chief: ChiefArchetype, option: MemoOption) {
+  const preferred = option.tags.filter((tag) => chief.preferredTags.includes(tag));
+  const concerns = option.tags.filter((tag) => chief.concernTags.includes(tag));
+  return {
+    focusTags: uniqueLimited(preferred.length > 0 ? preferred : option.tags, 4),
+    concernTags: uniqueLimited(concerns, 4),
+  };
+}
+
+function pressureDeltaFor(position: ChiefPositionType) {
+  if (position === "support") return -1;
+  if (position === "accept_risk") return 0;
+  if (position === "request_conditions") return 1;
+  return 2;
+}
+
+function agendaMemoryNote(memory: ChiefAgendaMemoryEntry) {
+  if (!memory.lastMemoId || !memory.lastOptionId || !memory.lastPosition || memory.notes.length === 0) return null;
+  const pressureLine = memory.pressure >= 7 ? "Pressure remains high" : memory.pressure >= 4 ? "Pressure remains active" : "Prior concern is logged";
+  return `${pressureLine}: ${memory.notes[0]}`;
+}
+
+function updateChiefAgendaMemoryEntry(
+  state: CampaignState,
+  chief: ChiefArchetype,
+  memo: DecisionMemo,
+  option: MemoOption,
+  position: ChiefPositionType,
+  noteSuffix?: string,
+) {
+  const previous = agendaMemoryFor(state, chief.id);
+  const tags = agendaTagsFor(chief, option);
+  const nextPressure = clamp(previous.pressure + pressureDeltaFor(position), 0, 10);
+  const positionText = position.replace("_", " ");
+  const suffix = noteSuffix ? ` ${noteSuffix}` : "";
+  const note = `${memo.title}: ${positionText} on ${option.label}.${suffix}`;
+
+  return {
+    chiefId: chief.id,
+    focusTags: uniqueLimited([...tags.focusTags, ...previous.focusTags], 4),
+    concernTags: uniqueLimited([...tags.concernTags, ...previous.concernTags], 4),
+    lastMemoId: memo.id,
+    lastOptionId: option.id,
+    lastPosition: position,
+    pressure: nextPressure,
+    lastTurn: state.turn,
+    notes: uniqueLimited([note, ...previous.notes], 4),
+  };
+}
+
+export function updateChiefAgendaMemoryFromPositions(
+  state: CampaignState,
+  chiefs: ChiefArchetype[],
+  selections: Array<{ memo: DecisionMemo; option: MemoOption; positions: ChiefPositionEntry[] }>,
+) {
+  const nextMemory = { ...state.chiefAgendaMemory };
+  for (const chief of chiefs) {
+    for (const selection of selections) {
+      const position = selection.positions.find((entry) => entry.chiefId === chief.id);
+      if (!position) continue;
+      const memoryState = { ...state, chiefAgendaMemory: nextMemory };
+      nextMemory[chief.id] = updateChiefAgendaMemoryEntry(memoryState, chief, selection.memo, selection.option, position.position);
+    }
+  }
+  return nextMemory;
+}
+
+export function updateChiefAgendaMemoryFromConversation(
+  state: CampaignState,
+  chief: ChiefArchetype,
+  memo: DecisionMemo,
+  option: MemoOption,
+  conversation: ChiefConversationRecord,
+) {
+  return {
+    ...state.chiefAgendaMemory,
+    [chief.id]: updateChiefAgendaMemoryEntry(
+      state,
+      chief,
+      memo,
+      option,
+      conversation.position,
+      `Conversation closed ${conversation.totalTrustDelta >= 0 ? "with alignment" : "with friction"}.`,
+    ),
+  };
+}
+
 export function buildChiefPositions(
   chiefs: ChiefArchetype[],
   state: CampaignState,
@@ -1219,6 +1344,10 @@ export function buildChiefPositions(
     const relationshipBias = trust >= 72 ? 2 : trust >= 60 ? 1 : trust <= 32 ? -2 : trust <= 44 ? -1 : 0;
     const preferredMatches = option.tags.filter((tag) => chief.preferredTags.includes(tag)).length;
     const concernMatches = option.tags.filter((tag) => chief.concernTags.includes(tag)).length;
+    const memory = agendaMemoryFor(state, chief.id);
+    const memoryPreferredMatches = option.tags.filter((tag) => memory.focusTags.includes(tag)).length;
+    const memoryConcernMatches = option.tags.filter((tag) => memory.concernTags.includes(tag)).length;
+    const memoryPressurePenalty = memory.pressure >= 7 && memory.lastPosition === "oppose" ? 1 : 0;
     const sponsorAffinity = chief.directorate === memo.sponsorDirectorate ? 1 : 0;
     const objectorPenalty = chief.directorate === memo.objectorDirectorate ? 1 : 0;
     const riskPenalty =
@@ -1227,7 +1356,8 @@ export function buildChiefPositions(
         : option.tags.includes("slow-burn") && chief.directorate === "operations"
           ? 1
           : 0;
-    const score = preferredMatches * 2 + sponsorAffinity + relationshipBias - concernMatches * 2 - objectorPenalty - riskPenalty;
+    const memoryBias = Math.min(memoryPreferredMatches, 2) - Math.min(memoryConcernMatches, 2) - memoryPressurePenalty;
+    const score = preferredMatches * 2 + sponsorAffinity + relationshipBias + memoryBias - concernMatches * 2 - objectorPenalty - riskPenalty;
 
     const position: ChiefPositionType =
       score >= 2
@@ -1291,6 +1421,7 @@ export function buildChiefPositions(
       requiredCondition,
       confidenceNote,
       consequenceIfIgnored,
+      agendaMemoryNote: agendaMemoryNote(memory) ?? undefined,
     };
   });
 }
@@ -1700,6 +1831,7 @@ function stageIntro(
   return [
     { speaker: chief.name, role: "advisor" as const, text: `${pick(voice.opener, seed)} ${positionLine}` },
     { speaker: chief.name, role: "advisor" as const, text: `${position.institutionalReason} ${topic.hiddenRisk}` },
+    ...(position.agendaMemoryNote ? [{ speaker: chief.name, role: "advisor" as const, text: position.agendaMemoryNote }] : []),
     { speaker: chief.name, role: "advisor" as const, text: `${statePressureLine(chief, state)} ${optionBurdenLine(chief, option)}` },
     { speaker: chief.name, role: "advisor" as const, text: `${trustColorText(trust)} ${topic.operationalPayoff}` },
   ];
@@ -2118,6 +2250,7 @@ export function startChiefConversation(
     requiredCondition: position.requiredCondition,
     confidenceNote: position.confidenceNote,
     consequenceIfIgnored: position.consequenceIfIgnored,
+    agendaMemoryNote: position.agendaMemoryNote,
     transcript: stageIntro(chief, memo, option, position, state),
     choices: buildChiefConversationChoices(chief, memo, option, position, "opening", state, []),
     choiceTrail: [],
@@ -2152,6 +2285,7 @@ export function continueChiefConversation(
     requiredCondition: record.requiredCondition,
     confidenceNote: record.confidenceNote,
     consequenceIfIgnored: record.consequenceIfIgnored,
+    agendaMemoryNote: record.agendaMemoryNote,
   };
 
   const nextState = {

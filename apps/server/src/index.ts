@@ -21,6 +21,7 @@ import {
   startChiefConversation,
   summarizeState,
   turnInputSchema,
+  updateChiefAgendaMemoryFromConversation,
   type AcceptedRiskOverride,
   type GameSession,
   type ReplayValidation,
@@ -528,6 +529,10 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
       }
 
       const nextConversation = continueChiefConversation(conversation, chief, memo, option, session.state, responseId);
+      const nextChiefAgendaMemory =
+        nextConversation.status === "completed"
+          ? updateChiefAgendaMemoryFromConversation(session.state, chief, memo, option, nextConversation)
+          : session.state.chiefAgendaMemory;
 
       const updatedSession = gameSessionSchema.parse(advanceSessionRevision({
         ...session,
@@ -537,6 +542,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
             ...session.state.chiefTrust,
             [chiefId]: nextConversation.trustAfter,
           },
+          chiefAgendaMemory: nextChiefAgendaMemory,
           conversationHistory: session.state.conversationHistory.map((entry) =>
             entry.turn === session.state.turn && entry.chiefId === chiefId ? nextConversation : entry,
           ),
