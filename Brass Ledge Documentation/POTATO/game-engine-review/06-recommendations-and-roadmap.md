@@ -28,7 +28,7 @@ The S1-S5 core mechanic and Stage 3 tech/industry model are implemented and cove
 
 1. Give chiefs agenda memory across turns. Started: each chief now carries persistent focus tags, concern tags, last position, pressure, and notes from turn resolution and completed conversations.
 2. Let chiefs form support/objection coalitions around memo options and staff constraints. Started: resolved and previewed turns now expose chief coalitions with support, conditional, objection, staff-constraint, and negotiation-lever fields.
-3. Let conversations create replayable commitments and trust effects.
+3. Let conversations create replayable commitments and trust effects. Started: completed chief conversations update trust and create deterministic active commitments unless the commander closes by deferring.
 4. Let the player negotiate staff constraints before committing a turn.
 
 ## Browser Rebuild Gate

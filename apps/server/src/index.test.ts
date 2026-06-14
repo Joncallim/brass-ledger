@@ -244,6 +244,13 @@ test("chief conversation routes persist revisions and reject stale responses", a
   assert.equal(agendaMemory.lastTurn, 1);
   assert.ok(agendaMemory.lastPosition);
   assert.ok(agendaMemory.notes.some((entry: string) => entry.includes("Conversation closed")));
+
+  const commitment = responseBody.session.state.activeCommitments.find((entry: { id: string }) => entry.id === `conversation-1-${chiefId}-${memo.id}-${option.id}`);
+  assert.ok(commitment);
+  assert.equal(commitment.type, "doctrine");
+  assert.equal(commitment.turnMade, 1);
+  assert.equal(commitment.fulfilled, null);
+  assert.match(commitment.label, /bounded order/i);
 });
 
 test("import rejects forged session exports and accepts replayable exports under a fresh revision", async () => {
