@@ -1326,6 +1326,17 @@ function normalizeState(state: CampaignState) {
   return JSON.parse(JSON.stringify(state, (_key, value) => (typeof value === "number" ? Number(value.toFixed(3)) : value))) as CampaignState;
 }
 
+function turnReplayComparableState(state: CampaignState) {
+  const comparable = normalizeState(state);
+  return {
+    ...comparable,
+    chiefTrust: {},
+    chiefAgendaMemory: {},
+    activeCommitments: [],
+    conversationHistory: [],
+  };
+}
+
 function diffStates(expected: unknown, actual: unknown, path = "state", acc: Array<{ path: string; expected: unknown; actual: unknown }> = []) {
   if (acc.length >= 12) return acc;
   if (Object.is(expected, actual)) return acc;
@@ -1516,7 +1527,9 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   nextStrategic.forceGeneration.deployableUnits = round(nextStrategic.forceGeneration.deployableUnits);
   nextStrategic.forceGeneration.reserveStrain = round(nextStrategic.forceGeneration.reserveStrain);
 
-  const chiefPositions = selectedPairs.flatMap(({ memo, option }) => buildChiefPositions(scenario.chiefs, previousState, memo, option));
+  const chiefPositions = selectedPairs.flatMap(({ memo, option }) =>
+    buildChiefPositions(scenario.chiefs, previousState, memo, option, directorateBurden, scenario.staffFunctions)
+  );
   const chiefCoalitions: ChiefCoalitionEntry[] = buildChiefCoalitions(selectedPairs, chiefPositions, directorateBurden);
   const nextChiefAgendaMemory = updateChiefAgendaMemoryFromPositions(
     previousState,
@@ -1691,8 +1704,21 @@ export function validateReplaySession(scenario: ScenarioDefinition, session: { i
   }
 
   for (let index = 0; index < session.turnInputs.length; index += 1) {
-    const expected = resolveTurn(scenario, current, session.turnInputs[index]);
     const actual = session.history[index];
+    const preTurnDiffs = diffStates(turnReplayComparableState(current), turnReplayComparableState(actual.previousState)).map((entry) => ({
+      turn: actual.input.turn,
+      path: entry.path,
+      expected: JSON.stringify(entry.expected),
+      actual: JSON.stringify(entry.actual),
+    }));
+    if (preTurnDiffs.length > 0) {
+      failedAtTurn = actual.input.turn;
+      failureKind = "state_mismatch";
+      diffs.push(...preTurnDiffs);
+      break;
+    }
+
+    const expected = resolveTurn(scenario, actual.previousState, session.turnInputs[index]);
     if (expected.replayHash !== actual.replayHash) {
       failedAtTurn = actual.input.turn;
       failureKind = "replay_hash_mismatch";
@@ -1716,7 +1742,7 @@ export function validateReplaySession(scenario: ScenarioDefinition, session: { i
   }
 
   if (failedAtTurn == null) {
-    const finalStateDiffs = diffStates(normalizeState(current), normalizeState(session.state)).map((entry) => ({
+    const finalStateDiffs = diffStates(turnReplayComparableState(current), turnReplayComparableState(session.state)).map((entry) => ({
       turn: session.state.turn,
       path: entry.path,
       expected: JSON.stringify(entry.expected),

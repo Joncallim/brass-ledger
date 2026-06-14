@@ -463,7 +463,19 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
         };
       }
 
-      const position = buildChiefPositions(soloScenario.chiefs, session.state, memo, option).find((entry) => entry.chiefId === chiefId);
+      const selectedBurden = buildDirectorateBurden(
+        memos,
+        [{ memoId: memo.id, optionId: option.id }],
+        soloScenario.staffCapacities,
+      );
+      const position = buildChiefPositions(
+        soloScenario.chiefs,
+        session.state,
+        memo,
+        option,
+        selectedBurden,
+        soloScenario.staffFunctions,
+      ).find((entry) => entry.chiefId === chiefId);
       if (!position) {
         reply.code(400);
         return { error: "Could not derive a chief position for this packet." };

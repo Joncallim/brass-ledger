@@ -24,17 +24,17 @@ Backlink: [[POTATO]]
 
 ## Next Engine Pass
 
-The S1-S5 core mechanic and Stage 3 tech/industry model are implemented and covered by engine tests. Stage 4 agent chiefs and negotiation is implemented enough to use, but it needs one hardening pass before the roadmap should move to Stage 5 content and balance.
+The S1-S5 core mechanic, Stage 3 tech/industry model, and Stage 4 agent chiefs/negotiation layer are implemented and covered by engine/server tests. The active engine pass is Stage 5: content expansion and balance.
 
 1. Give chiefs agenda memory across turns. Implemented: each chief now carries persistent focus tags, concern tags, last position, pressure, and notes from turn resolution and completed conversations.
 2. Let chiefs form support/objection coalitions around memo options and staff constraints. Implemented: resolved and previewed turns now expose chief coalitions with support, conditional, objection, staff-constraint, and negotiation-lever fields.
 3. Let conversations create replayable commitments and trust effects. Implemented: completed chief conversations update trust and create deterministic active commitments unless the commander closes by deferring.
 4. Let the player negotiate staff constraints before committing a turn. Implemented: `TurnInput.staffNegotiations` applies bounded relief to a chosen directorate before resolution and charges an explicit political, readiness, or budget cost.
-5. Tie chief advice to explicit S1-S5 readout evidence. Next PR: add structured per-chief staff evidence to `ChiefPositionEntry`, show it in conversations and headless/workbench summaries, and test conversation state plus subsequent turn replay.
+5. Tie chief advice to explicit S1-S5 readout evidence. Implemented: `ChiefPositionEntry.staffReadoutEvidence` records the S1-S5 metric and burden rationale, conversations/headless/workbench surfaces expose it, and replay validation covers completed conversations followed by turn resolution.
 
 ## Stage 5 Adjustment
 
-Stage 5 should start with balance instrumentation, not raw content volume. The next content PR should first add headless batch telemetry for outcome distribution, staff overload frequency, accepted-risk acknowledgements, staff negotiation use, commitment fulfillment/breach, and selected-option frequency. After that baseline exists, expand events and memo variants against measured gaps instead of adding content blind.
+Stage 5 should start with balance instrumentation, not raw content volume. The next content PR should add headless batch telemetry for outcome distribution, staff overload frequency, accepted-risk acknowledgements, staff negotiation use, commitment fulfillment/breach, and selected-option frequency. After that baseline exists, expand events and memo variants against measured gaps instead of adding content blind.
 
 The Stage 5 plan should also add content validation for chief preferred/concern tags against memo option tags. The current content validator catches duplicate chiefs, memos, options, events, and staff-capacity coverage, but tag drift can still silently weaken chief positions and coalition behavior as the content set grows.
 
@@ -45,7 +45,7 @@ Do not rebuild the full interface until these engine contracts exist:
 - `staffFunctions` array with S1-S5 labels and current values. Implemented.
 - `explainability` entries with causal references. Implemented.
 - `spriteSpecs` or `assetPrompts` for generated images. Advisor SVG payloads are available through CLI output; broader asset prompts remain future work.
-- `availableActions` or `decisionPackets` that are already presentation-ready. Memo packets exist; Stage 4 negotiation and coalition contracts are now usable, but chief-position staff evidence should be added before a full browser rebuild.
+- `availableActions` or `decisionPackets` that are already presentation-ready. Memo packets exist; Stage 4 negotiation, coalition, and chief-position evidence contracts are now usable.
 - replay-safe save/import hardening from the backend review. Implemented.
 
 ## Long-Term USP Protection

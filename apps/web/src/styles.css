@@ -199,6 +199,40 @@ pre {
   color: #7b5f28;
 }
 
+.chief-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.chief-evidence-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid #d7d0c0;
+  background: #fffdf7;
+  padding: 10px;
+}
+
+.chief-evidence-card div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 13px;
+}
+
+.chief-evidence-card strong,
+.chief-evidence-card span,
+.chief-evidence-card p {
+  overflow-wrap: anywhere;
+}
+
+.chief-evidence-card span {
+  color: #7b5f28;
+  font-size: 12px;
+}
+
 .sprite-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

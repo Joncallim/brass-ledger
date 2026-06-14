@@ -43,8 +43,8 @@ Current implementation state:
 - Stage 3 tech/industry model is complete.
 - `@brass-ledger/headless` is shared by the compiled CLI and `POST /api/headless/run`.
 - Accepted-risk turns are explicit: supplied inputs must acknowledge projected S1-S5 warnings or opt into unattended auto-acceptance.
-- Stage 4 agent chiefs and negotiation is in hardening. Chief agenda memory is persisted by turn resolution and completed chief conversations. Chief support/objection coalitions are exposed for selected memo options with staff-constraint negotiation levers. Completed chief conversations create deterministic active commitments unless the commander explicitly defers. Staff-constraint negotiations are explicit turn-input choices that relieve directorate burden before resolution at political, readiness, or budget cost. The remaining Stage 4 hardening task is to persist explicit S1-S5 staff readout evidence on chief positions and prove completed conversations plus subsequent turn resolution remain import/replay safe.
-- Stage 5 content expansion should start only after that chief-position evidence contract is closed. Begin Stage 5 with headless balance telemetry and tag validation, then expand events and memo variants against measured gaps.
+- Stage 4 agent chiefs and negotiation is complete. Chief agenda memory is persisted by turn resolution and completed chief conversations. Chief support/objection coalitions are exposed for selected memo options with staff-constraint negotiation levers. Completed chief conversations create deterministic active commitments unless the commander explicitly defers. Staff-constraint negotiations are explicit turn-input choices that relieve directorate burden before resolution at political, readiness, or budget cost. Chief positions now carry explicit S1-S5 staff readout evidence, and replay validation supports completed conversations followed by later turn resolution.
+- Stage 5 content expansion is active. Begin with headless balance telemetry and tag validation, then expand events and memo variants against measured gaps.
 
 ## Knowledge Repository Split
 

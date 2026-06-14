@@ -42,6 +42,18 @@ const deployableUnitsSchema = z.number().min(2).max(12);
 const campaignScoreSchema = z.number().min(0).max(100);
 const nonNegativeNumberSchema = z.number().min(0);
 
+export const chiefStaffReadoutEvidenceSchema = z.object({
+  staffFunctionId: staffFunctionIdSchema,
+  staffFunctionLabel: z.string(),
+  metricLabel: z.string(),
+  metricValue: z.number(),
+  metricStatus: z.enum(["healthy", "watch", "risk"]),
+  burdenLevel: burdenLevelSchema,
+  burdenPoints: nonNegativeNumberSchema,
+  rationale: z.string(),
+});
+export type ChiefStaffReadoutEvidence = z.infer<typeof chiefStaffReadoutEvidenceSchema>;
+
 export const forceGenerationStateSchema = z.object({
   deployableUnits: deployableUnitsSchema,
   reserveStrain: indexMetricSchema,
@@ -285,6 +297,7 @@ export const chiefConversationRecordSchema = z.object({
   confidenceNote: z.string(),
   consequenceIfIgnored: z.string(),
   agendaMemoryNote: z.string().optional(),
+  staffReadoutEvidence: chiefStaffReadoutEvidenceSchema,
   transcript: z.array(chiefConversationTurnSchema),
   choices: z.array(chiefConversationChoiceSchema),
   choiceTrail: z.array(z.string()).default([]),
@@ -435,6 +448,7 @@ export const chiefPositionEntrySchema = z.object({
   confidenceNote: z.string(),
   consequenceIfIgnored: z.string(),
   agendaMemoryNote: z.string().optional(),
+  staffReadoutEvidence: chiefStaffReadoutEvidenceSchema,
 });
 export type ChiefPositionEntry = z.infer<typeof chiefPositionEntrySchema>;
 export type ChiefPosition = ChiefPositionEntry;
@@ -853,6 +867,10 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function roundMetric(value: number) {
+  return Math.round(value * 10) / 10;
+}
+
 function createSeededRng(seed: number) {
   let t = seed + 0x6d2b79f5;
   return () => {
@@ -1261,6 +1279,62 @@ export function buildStaffFunctionReadouts(
   });
 }
 
+function staffFunctionForDirectorate(definitions: StaffFunctionDefinition[], directorate: DirectorateId) {
+  return (
+    definitions.find((definition) => definition.directorates.includes(directorate)) ??
+    definitions.find((definition) => definition.id === "S3") ??
+    defaultStaffFunctionDefinitions[2]
+  );
+}
+
+function mostUrgentMetric(metrics: StaffFunctionMetric[]) {
+  return (
+    metrics.find((metric) => metric.status === "risk") ??
+    metrics.find((metric) => metric.status === "watch") ??
+    metrics[0] ?? { label: "Staff condition", value: 50, status: "healthy" as const }
+  );
+}
+
+function buildChiefStaffReadoutEvidence(
+  chief: ChiefArchetype,
+  state: CampaignState,
+  burdens: DirectorateBurden[] = [],
+  definitions: StaffFunctionDefinition[] = defaultStaffFunctionDefinitions,
+): ChiefStaffReadoutEvidence {
+  const staffFunction = staffFunctionForDirectorate(definitions, chief.directorate);
+  const metrics = staffFunctionMetrics(staffFunction.id, state);
+  const metric = mostUrgentMetric(metrics);
+  const relevantBurdens = staffFunction.directorates
+    .map((directorate) => burdens.find((entry) => entry.directorate === directorate))
+    .filter((entry): entry is DirectorateBurden => Boolean(entry));
+  const burdenPoints = relevantBurdens.reduce((sum, entry) => sum + entry.burdenPoints, 0);
+  const burdenLevel: BurdenLevel = relevantBurdens.some((entry) => entry.burdenLevel === "overloaded")
+    ? "overloaded"
+    : relevantBurdens.some((entry) => entry.burdenLevel === "strained")
+      ? "strained"
+      : "light";
+  const burdenText =
+    burdenLevel === "overloaded"
+      ? "overloaded"
+      : burdenLevel === "strained"
+        ? "strained"
+        : "inside capacity";
+  const rationale =
+    `${staffFunction.shortLabel} evidence: ${metric.label} is ${Math.round(metric.value)} (${metric.status}); ` +
+    `staff load is ${burdenText} at ${roundMetric(burdenPoints)} point(s).`;
+
+  return {
+    staffFunctionId: staffFunction.id,
+    staffFunctionLabel: staffFunction.label,
+    metricLabel: metric.label,
+    metricValue: roundMetric(metric.value),
+    metricStatus: metric.status,
+    burdenLevel,
+    burdenPoints: roundMetric(burdenPoints),
+    rationale,
+  };
+}
+
 function uniqueLimited<T extends string>(values: T[], limit: number): T[] {
   return Array.from(new Set(values.filter(Boolean))).slice(0, limit);
 }
@@ -1493,9 +1567,12 @@ export function buildChiefPositions(
   state: CampaignState,
   memo: DecisionMemo,
   option: MemoOption,
+  burdens: DirectorateBurden[] = [],
+  staffFunctionDefinitions: StaffFunctionDefinition[] = defaultStaffFunctionDefinitions,
 ): ChiefPositionEntry[] {
   return chiefs.map((chief) => {
     const trust = state.chiefTrust[chief.id] ?? 50;
+    const staffReadoutEvidence = buildChiefStaffReadoutEvidence(chief, state, burdens, staffFunctionDefinitions);
     const relationshipBias = trust >= 72 ? 2 : trust >= 60 ? 1 : trust <= 32 ? -2 : trust <= 44 ? -1 : 0;
     const preferredMatches = option.tags.filter((tag) => chief.preferredTags.includes(tag)).length;
     const concernMatches = option.tags.filter((tag) => chief.concernTags.includes(tag)).length;
@@ -1512,7 +1589,18 @@ export function buildChiefPositions(
           ? 1
           : 0;
     const memoryBias = Math.min(memoryPreferredMatches, 2) - Math.min(memoryConcernMatches, 2) - memoryPressurePenalty;
-    const score = preferredMatches * 2 + sponsorAffinity + relationshipBias + memoryBias - concernMatches * 2 - objectorPenalty - riskPenalty;
+    const staffEvidencePenalty =
+      (staffReadoutEvidence.metricStatus === "risk" ? 1 : 0) +
+      (staffReadoutEvidence.burdenLevel === "overloaded" ? 1 : 0);
+    const score =
+      preferredMatches * 2 +
+      sponsorAffinity +
+      relationshipBias +
+      memoryBias -
+      concernMatches * 2 -
+      objectorPenalty -
+      riskPenalty -
+      staffEvidencePenalty;
 
     const position: ChiefPositionType =
       score >= 2
@@ -1577,6 +1665,7 @@ export function buildChiefPositions(
       confidenceNote,
       consequenceIfIgnored,
       agendaMemoryNote: agendaMemoryNote(memory) ?? undefined,
+      staffReadoutEvidence,
     };
   });
 }
@@ -1986,6 +2075,7 @@ function stageIntro(
   return [
     { speaker: chief.name, role: "advisor" as const, text: `${pick(voice.opener, seed)} ${positionLine}` },
     { speaker: chief.name, role: "advisor" as const, text: `${position.institutionalReason} ${topic.hiddenRisk}` },
+    { speaker: chief.name, role: "advisor" as const, text: position.staffReadoutEvidence.rationale },
     ...(position.agendaMemoryNote ? [{ speaker: chief.name, role: "advisor" as const, text: position.agendaMemoryNote }] : []),
     { speaker: chief.name, role: "advisor" as const, text: `${statePressureLine(chief, state)} ${optionBurdenLine(chief, option)}` },
     { speaker: chief.name, role: "advisor" as const, text: `${trustColorText(trust)} ${topic.operationalPayoff}` },
@@ -2406,6 +2496,7 @@ export function startChiefConversation(
     confidenceNote: position.confidenceNote,
     consequenceIfIgnored: position.consequenceIfIgnored,
     agendaMemoryNote: position.agendaMemoryNote,
+    staffReadoutEvidence: position.staffReadoutEvidence,
     transcript: stageIntro(chief, memo, option, position, state),
     choices: buildChiefConversationChoices(chief, memo, option, position, "opening", state, []),
     choiceTrail: [],
@@ -2441,6 +2532,7 @@ export function continueChiefConversation(
     confidenceNote: record.confidenceNote,
     consequenceIfIgnored: record.consequenceIfIgnored,
     agendaMemoryNote: record.agendaMemoryNote,
+    staffReadoutEvidence: record.staffReadoutEvidence,
   };
 
   const nextState = {

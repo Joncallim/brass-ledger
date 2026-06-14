@@ -61,6 +61,14 @@ function previewSnapshot(preview: PreviewPayload) {
     acceptedRiskCandidates: preview.acceptedRiskCandidates,
     predictedEvents: preview.predictedEvents,
     chiefCoalitions: preview.chiefCoalitions,
+    projectedChiefPositions: preview.projectedResult.chiefPositions.map((position) => ({
+      chiefId: position.chiefId,
+      chiefName: position.chiefName,
+      memoId: position.memoId,
+      optionId: position.optionId,
+      position: position.position,
+      staffReadoutEvidence: position.staffReadoutEvidence,
+    })),
     projectedSummary: preview.projectedResult.summary,
     projectedStaffFunctions: preview.projectedResult.staffFunctions,
     projectedAfterAction: preview.projectedResult.afterAction,
@@ -132,6 +140,7 @@ export function App() {
   const acceptedRiskCandidates = previewMatchesCurrentTurn && preview ? preview.acceptedRiskCandidates : [];
   const acceptedRiskCount = acceptedRiskOverridesFromChoices(acceptedRiskCandidates, acceptedRiskChoices).length;
   const acceptedRisksReady = previewMatchesCurrentTurn && allAcceptedRiskCandidatesChosen(acceptedRiskCandidates, acceptedRiskChoices);
+  const visibleChiefPositions = previewMatchesCurrentTurn && preview ? preview.projectedResult.chiefPositions : latestResult?.chiefPositions ?? [];
 
   function updateNegotiation(directorate: StaffNegotiation["directorate"], enabled: boolean) {
     setStaffNegotiations((entries) => {
@@ -394,6 +403,31 @@ export function App() {
                 </label>
               );
             })}
+          </div>
+        )}
+      </section>
+
+      <section className="engine-panel" aria-labelledby="chief-evidence-heading">
+        <div className="accepted-risk-header">
+          <div>
+            <p className="engine-kicker">Chief positions</p>
+            <h2 id="chief-evidence-heading">S1-S5 Evidence</h2>
+          </div>
+          <span className="risk-count">{visibleChiefPositions.length} reads</span>
+        </div>
+        {visibleChiefPositions.length === 0 ? (
+          <p>No chief positions available.</p>
+        ) : (
+          <div className="chief-evidence-grid">
+            {visibleChiefPositions.slice(0, 12).map((position) => (
+              <article className="chief-evidence-card" key={`${position.chiefId}:${position.memoId}:${position.optionId}`}>
+                <div>
+                  <strong>{position.chiefName}</strong>
+                  <span>{position.position.replace("_", " ")}</span>
+                </div>
+                <p>{position.staffReadoutEvidence.rationale}</p>
+              </article>
+            ))}
           </div>
         )}
       </section>
