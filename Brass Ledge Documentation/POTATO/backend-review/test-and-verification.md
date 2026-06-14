@@ -34,10 +34,14 @@ Backlink: [[POTATO]]
 - replay validation reporting altered replay hashes, altered initial state, altered final state, and extra history
 - schema rejection for out-of-range persisted campaign metrics
 - schema rejection for divergent `state.strategic` mirror fields
+- S5 program commitments requiring fielded level-2 tech before fulfillment
+- industry causal refs for event-driven constraint shifts
 
 `apps/server/src/index.test.ts` currently covers:
 
 - CORS allowlist behavior
+- headless API default runs with explicit accepted-risk records
+- headless API rejection for supplied turns that omit accepted-risk overrides
 - disabled whole-session save endpoint
 - invalid session id rejection on save
 - resolve-turn persistence, replay validation, revision increment, and stale `expectedRevision` rejection
@@ -50,12 +54,23 @@ Backlink: [[POTATO]]
 - simultaneous authoritative mutation conflict behavior
 - static client shell serving and traversal-style static lookup rejection
 
+`apps/cli/test/index.test.ts` currently covers:
+
+- JSON headless runs recording accepted risks and validating replay
+- supplied input rejection when accepted-risk overrides are omitted
+- `--auto-accept-risks` filling supplied input risks and writing a replayable export
+
+`apps/web/test/acceptedRiskUi.test.ts` currently covers:
+
+- accepted-risk preview candidates starting unresolved
+- accepted-risk overrides being created only from checked player choices
+- default workbench turn input not silently copying preview risk candidates
+
 ## Coverage Gaps
 
-- No terminal-campaign replay test for attempts to resolve after campaign completion.
 - No storage-level compare-and-swap test because the current store is single-process and lock-backed.
 
 ## Suggested Tests
 
-- Replay validator tests for terminal campaigns.
 - File-store tests for invalid save skipping and storage-level compare-and-swap if the persistence layer becomes multi-process.
+- CLI subprocess tests for session continuation from an exported campaign when that workflow becomes user-facing.

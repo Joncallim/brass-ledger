@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  type AcceptedRiskOverride,
   buildAdvisorPortraitDataUri,
   type DecisionMemo,
   type GameSession,
@@ -8,6 +7,15 @@ import {
   type TurnPreview,
   type TurnResult,
 } from "@brass-ledger/shared";
+import {
+  acceptedRiskKey,
+  acceptedRiskOverridesFromChoices,
+  allAcceptedRiskCandidatesChosen,
+  defaultTurnInput,
+  initialAcceptedRiskChoices,
+  setAcceptedRiskChoice,
+  type AcceptedRiskChoiceState,
+} from "./acceptedRiskUi";
 
 type SessionEnvelope = {
   session: GameSession;
@@ -44,21 +52,6 @@ async function fetchJson<T>(url: string, init?: RequestInit) {
     throw new Error(data.error ?? `Request failed: ${response.status}`);
   }
   return data as T;
-}
-
-function defaultTurnInput(session: GameSession, memos: DecisionMemo[], acceptedRiskOverrides: AcceptedRiskOverride[] = []) {
-  return {
-    turn: session.state.turn,
-    selectedActionIds: [],
-    acceptedRiskOverrides,
-    selections: memos
-      .filter((memo) => !memo.optional)
-      .map((memo) => ({
-        memoId: memo.id,
-        optionId: memo.options[0]?.id ?? "",
-      }))
-      .filter((selection) => selection.optionId.length > 0),
-  };
 }
 
 function previewSnapshot(preview: PreviewPayload) {
@@ -109,6 +102,7 @@ function engineSnapshot(session: GameSession | null, memos: DecisionMemo[], resu
           replayHash: result.replayHash,
           directorateBurden: result.directorateBurden,
           triggeredEvents: result.triggeredEvents,
+          acceptedRisks: result.acceptedRisks,
           afterAction: result.afterAction,
         }
       : null,
@@ -122,12 +116,17 @@ export function App() {
   const [memos, setMemos] = useState<DecisionMemo[]>([]);
   const [preview, setPreview] = useState<PreviewPayload | null>(null);
   const [latestResult, setLatestResult] = useState<TurnResult | null>(null);
+  const [acceptedRiskChoices, setAcceptedRiskChoices] = useState<AcceptedRiskChoiceState>({});
   const [status, setStatus] = useState("Loading engine...");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const spriteRoster = useMemo(() => session?.advisorRoster ?? [], [session]);
   const snapshot = useMemo(() => engineSnapshot(session, memos, latestResult), [latestResult, memos, session]);
+  const previewMatchesCurrentTurn = Boolean(preview && session && preview.projectedResult.input.turn === session.state.turn);
+  const acceptedRiskCandidates = previewMatchesCurrentTurn && preview ? preview.acceptedRiskCandidates : [];
+  const acceptedRiskCount = acceptedRiskOverridesFromChoices(acceptedRiskCandidates, acceptedRiskChoices).length;
+  const acceptedRisksReady = previewMatchesCurrentTurn && allAcceptedRiskCandidatesChosen(acceptedRiskCandidates, acceptedRiskChoices);
 
   async function refreshRecords() {
     const data = await fetchJson<{ sessions: SessionSummary[] }>(`${apiBase}/sessions`);
@@ -142,6 +141,7 @@ export function App() {
       setSession(data.session);
       setMemos(data.memos);
       setPreview(null);
+      setAcceptedRiskChoices({});
       setLatestResult(data.session.history.at(-1) ?? null);
       setStatus("Engine session created.");
       await refreshRecords();
@@ -166,6 +166,7 @@ export function App() {
       setSession(data.session);
       setMemos(data.memos);
       setPreview(null);
+      setAcceptedRiskChoices({});
       setLatestResult(data.session.history.at(-1) ?? null);
       setStatus("Latest engine session loaded.");
     } catch (err) {
@@ -185,6 +186,7 @@ export function App() {
         body: JSON.stringify({ input: defaultTurnInput(session, memos) }),
       });
       setPreview(data);
+      setAcceptedRiskChoices(initialAcceptedRiskChoices(data.acceptedRiskCandidates));
       setStatus("Default text simulation preview generated.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to preview engine turn");
@@ -199,16 +201,22 @@ export function App() {
       setError("Preview the text turn before resolving so S1-S5 warnings can be accepted explicitly.");
       return;
     }
+    if (!allAcceptedRiskCandidatesChosen(preview.acceptedRiskCandidates, acceptedRiskChoices)) {
+      setError("Resolve turn requires player acceptance for every projected S1-S5 staff warning.");
+      return;
+    }
+    const acceptedRiskOverrides = acceptedRiskOverridesFromChoices(preview.acceptedRiskCandidates, acceptedRiskChoices);
     setBusy(true);
     setError(null);
     try {
       const data = await fetchJson<SessionEnvelope & { result: TurnResult }>(`${apiBase}/sessions/${session.id}/resolve-turn`, {
         method: "POST",
-        body: JSON.stringify({ input: defaultTurnInput(session, memos, preview.acceptedRiskCandidates) }),
+        body: JSON.stringify({ input: defaultTurnInput(session, memos, acceptedRiskOverrides) }),
       });
       setSession(data.session);
       setMemos(data.memos);
       setPreview(null);
+      setAcceptedRiskChoices({});
       setLatestResult(data.result);
       setStatus("Default text simulation turn resolved.");
       await refreshRecords();
@@ -260,7 +268,7 @@ export function App() {
           <button type="button" onClick={() => void previewDefaultTurn()} disabled={busy || !session}>
             Preview text turn
           </button>
-          <button type="button" onClick={() => void resolveDefaultTurn()} disabled={busy || !session}>
+          <button type="button" onClick={() => void resolveDefaultTurn()} disabled={busy || !session || !acceptedRisksReady}>
             Resolve accepted turn
           </button>
         </div>
@@ -293,6 +301,47 @@ export function App() {
             </div>
           )}
         </aside>
+      </section>
+
+      <section className="engine-panel accepted-risk-panel" aria-labelledby="accepted-risk-heading">
+        <div className="accepted-risk-header">
+          <div>
+            <p className="engine-kicker">Turn commitment</p>
+            <h2 id="accepted-risk-heading">Accepted Risk Docket</h2>
+          </div>
+          {previewMatchesCurrentTurn && (
+            <span className={acceptedRisksReady ? "risk-count risk-count-ready" : "risk-count"}>
+              {acceptedRiskCount}/{acceptedRiskCandidates.length} accepted
+            </span>
+          )}
+        </div>
+        {!previewMatchesCurrentTurn ? (
+          <p>Preview a turn to review projected S1-S5 warnings.</p>
+        ) : acceptedRiskCandidates.length === 0 ? (
+          <p>No accepted-risk warnings projected for this turn.</p>
+        ) : (
+          <div className="risk-choice-list">
+            {acceptedRiskCandidates.map((risk) => {
+              const key = acceptedRiskKey(risk);
+              return (
+                <label className="risk-choice" key={key}>
+                  <input
+                    type="checkbox"
+                    checked={acceptedRiskChoices[key] === true}
+                    onChange={(event) => {
+                      const accepted = event.currentTarget.checked;
+                      setAcceptedRiskChoices((choices) => setAcceptedRiskChoice(choices, risk, accepted));
+                    }}
+                  />
+                  <span>
+                    <strong>{risk.staffFunctionId}</strong>
+                    {risk.warningText}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="engine-panel">

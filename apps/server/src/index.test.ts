@@ -96,6 +96,41 @@ test("scenario and session payloads expose S1-S5 staff contracts", async () => {
   assert.deepEqual(created.staffFunctions.map((entry: { id: string }) => entry.id), ["S1", "S2", "S3", "S4", "S5"]);
 });
 
+test("headless API runs default turns with explicit accepted-risk records", async () => {
+  const response = await app.inject({
+    method: "POST",
+    url: "/api/headless/run",
+    payload: { turns: 1, validate: true },
+  });
+
+  assert.equal(response.statusCode, 200);
+  const body = response.json();
+  assert.equal(body.scenario.id, "brass-ledger-jhq");
+  assert.equal(body.turnSummaries.length, 1);
+  assert.ok(body.turnSummaries[0].acceptedRisks.length > 0);
+  assert.equal(body.validation.ok, true);
+});
+
+test("headless API rejects supplied turns that omit accepted-risk overrides", async () => {
+  const created = await createSession();
+  const input = {
+    turn: created.session.state.turn,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    selections: firstOptionSelections(created.memos),
+  };
+
+  const rejected = await app.inject({
+    method: "POST",
+    url: "/api/headless/run",
+    payload: { session: created.session, input },
+  });
+
+  assert.equal(rejected.statusCode, 428);
+  assert.match(rejected.json().error, /acceptedRiskOverrides/i);
+  assert.ok(rejected.json().acceptedRiskCandidates.length > 0);
+});
+
 test("resolve-turn persists a revision and rejects stale expected revisions", async () => {
   const created = await createSession();
   const id = created.session.id;

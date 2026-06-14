@@ -17,6 +17,7 @@ Backlink: [[POTATO]]
 | --- | --- | --- | --- |
 | `GET` | `/api/health` | Returns `{ ok: true }` | Low |
 | `GET` | `/api/scenario` | Returns current scenario summary and memo templates | Low |
+| `POST` | `/api/headless/run` | Runs the shared headless campaign runner without persisting to the save store | Low/medium, strict supplied inputs return accepted-risk candidates when warnings are not acknowledged |
 | `GET` | `/api/sessions` | Lists parsed save files | Medium, depends on save store integrity |
 | `POST` | `/api/sessions` | Creates a new session | Low |
 | `GET` | `/api/sessions/:id` | Reads a save file by id | Medium, id boundary is implicit |
@@ -36,6 +37,8 @@ The server restricts CORS to known development origins by default. Packaged same
 
 ## Recommended API Shape
 
+- Use `POST /api/headless/run` for custom front-ends, batch tools, and external clients that want engine output without server-side save persistence.
+- Headless API calls with supplied `input` or `inputs` should include explicit `acceptedRiskOverrides`; otherwise the route returns `428` with `acceptedRiskCandidates`. Set `autoAcceptRisks` only for unattended simulation runs where accepting all projected warnings is intended.
 - Keep `POST /api/sessions`, `POST /api/sessions/:id/resolve-turn`, and conversation endpoints as authoritative mutation paths.
 - If client preferences are needed, add a narrow preferences endpoint rather than reviving whole-session save.
 - For import, continue validating scenario/version, replay, and canonical `initialState` before writing.

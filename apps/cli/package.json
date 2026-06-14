@@ -10,10 +10,12 @@
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js",
     "start": "node --import tsx src/index.ts",
-    "run": "node dist/index.js"
+    "run": "node dist/index.js",
+    "test": "node --import tsx --test test/**/*.test.ts"
   },
   "dependencies": {
     "@brass-ledger/content": "*",
+    "@brass-ledger/headless": "*",
     "@brass-ledger/shared": "*",
     "@brass-ledger/sim": "*"
   },

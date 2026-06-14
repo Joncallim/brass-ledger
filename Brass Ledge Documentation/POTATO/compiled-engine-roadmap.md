@@ -18,7 +18,7 @@ Brass Ledger should be headless-first and compile-able. Browser UI is a client, 
 
 ## Current Step Completed
 
-A new workspace package exists at `apps/cli`. It builds with `tsc` and runs the engine without React, Vite, Fastify, or a browser.
+A new workspace package exists at `apps/cli`. It builds with `tsc` and runs the engine without React, Vite, Fastify, or a browser. The CLI and server API now share `@brass-ledger/headless`, so batch simulation, accepted-risk handling, replay validation, exports, and tech-tree reporting use one implementation.
 
 Commands:
 
@@ -26,6 +26,15 @@ Commands:
 npm run build --workspace @brass-ledger/cli
 npm run run --workspace @brass-ledger/cli -- --turns 3
 npm run run --workspace @brass-ledger/cli -- --turns 1 --json --sprites
+npm run run --workspace @brass-ledger/cli -- --input turn.json --auto-accept-risks
+```
+
+Default generated turns automatically record projected accepted-risk warnings. Supplied input files must include `acceptedRiskOverrides` unless the caller explicitly passes `--auto-accept-risks`.
+
+The same headless runner is available through the server:
+
+```http
+POST /api/headless/run
 ```
 
 ## Target Architecture
@@ -33,6 +42,9 @@ npm run run --workspace @brass-ledger/cli -- --turns 1 --json --sprites
 ```mermaid
 flowchart TD
   Engine["@brass-ledger/engine core rules"] --> CLI["Compiled CLI"]
+  Engine --> Headless["@brass-ledger/headless runner"]
+  Headless --> CLI
+  Headless --> Server
   Engine --> Server["Local/API server"]
   Engine --> Browser["Browser workbench or future UI"]
   Engine --> Native["Future packaged native shell"]

@@ -1,0 +1,25 @@
+{
+  "name": "@brass-ledger/headless",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && cp dist/headless/src/index.d.ts dist/index.d.ts && esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/index.js"
+  },
+  "dependencies": {
+    "@brass-ledger/content": "*",
+    "@brass-ledger/shared": "*",
+    "@brass-ledger/sim": "*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.0"
+  }
+}
