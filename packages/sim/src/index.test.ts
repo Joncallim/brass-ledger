@@ -59,6 +59,7 @@ test("resolveTurn advances the month and emits directorate burden and chiefs pos
   assert.equal(result.nextState.turn, 2);
   assert.ok(result.directorateBurden.length === 6);
   assert.ok(result.chiefPositions.length >= 20);
+  assert.ok(result.chiefPositions.every((entry) => entry.staffReadoutEvidence.rationale.includes("evidence")));
   assert.ok(result.summary.includes("Turn 2/12"));
 });
 
@@ -165,6 +166,35 @@ test("chief trust influences future positions on the same packet", () => {
   assert.ok(highTrustPosition);
   assert.equal(lowTrustPosition.position, "oppose");
   assert.equal(highTrustPosition.position, "support");
+});
+
+test("chief positions carry S1-S5 evidence and risk-band evidence can harden advice", () => {
+  const memo = soloScenario.memoTemplates.find((entry) => entry.id === "posture");
+  assert.ok(memo);
+  const option = memo.options.find((entry) => entry.id === "measured-deterrence");
+  assert.ok(option);
+
+  const baselinePosition = buildChiefPositions(soloScenario.chiefs, soloScenario.initialState, memo, option).find((entry) => entry.chiefId === "halden");
+  const lowConfidenceState = campaignStateSchema.parse({
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s2: {
+        ...soloScenario.initialState.staffMechanics.s2,
+        externalEstimateConfidence: 18,
+      },
+    },
+  });
+  const riskPosition = buildChiefPositions(soloScenario.chiefs, lowConfidenceState, memo, option).find((entry) => entry.chiefId === "halden");
+
+  assert.ok(baselinePosition);
+  assert.ok(riskPosition);
+  assert.equal(riskPosition.staffReadoutEvidence.staffFunctionId, "S2");
+  assert.equal(riskPosition.staffReadoutEvidence.metricLabel, "External estimate confidence");
+  assert.equal(riskPosition.staffReadoutEvidence.metricStatus, "risk");
+  assert.match(riskPosition.staffReadoutEvidence.rationale, /S2 evidence/);
+  assert.equal(baselinePosition.position, "accept_risk");
+  assert.equal(riskPosition.position, "request_conditions");
 });
 
 test("chief agenda memory persists through turn resolution and biases future positions", () => {
@@ -343,7 +373,8 @@ test("validateReplaySession reports altered initial state corruption", () => {
   });
 
   assert.equal(validation.ok, false);
-  assert.equal(validation.failureKind, "replay_hash_mismatch");
+  assert.equal(validation.failureKind, "state_mismatch");
+  assert.ok(validation.diffs.some((entry) => entry.path.includes("intelligence.confidence")));
 });
 
 test("validateReplaySession reports extra history length corruption", () => {

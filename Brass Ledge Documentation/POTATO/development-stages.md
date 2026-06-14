@@ -111,7 +111,7 @@ Exit criteria:
 
 ## Stage 4: Agent Chiefs And Negotiation
 
-Status: hardening.
+Status: complete.
 
 Goals:
 
@@ -119,26 +119,19 @@ Goals:
 - Chiefs form support/objection coalitions. Implemented: each selected memo option emits support, conditional, and objection groups tied to strained or overloaded staff directorates with negotiation levers.
 - Conversations create commitments and trust effects. Implemented: completed chief conversations update trust and create deterministic active commitments unless the commander explicitly defers.
 - Player can negotiate staff constraints before commit. Implemented: turn input accepts explicit staff negotiations that relieve directorate burden before resolution while applying a chosen political, readiness, or budget cost.
-- Tie chief advice to explicit S1-S5 readout evidence. Next: persist a per-chief staff readout rationale on `ChiefPositionEntry` and surface it in conversation openings, preview payloads, headless summaries, and tests.
+- Tie chief advice to explicit S1-S5 readout evidence. Implemented: `ChiefPositionEntry.staffReadoutEvidence` stores staff function id, metric label/value/status, burden level, burden points, and rationale; conversations, preview/result payloads, headless summaries, and the workbench surface the evidence.
 
 Exit criteria:
 
-- Chief advice is mechanically tied to S1-S5 readouts and persistent chief agenda memory. Partially met: agenda memory is persistent and mechanically biases positions; the remaining hardening task is to store and display the specific S1-S5 readout evidence behind each chief position.
+- Chief advice is mechanically tied to S1-S5 readouts and persistent chief agenda memory. Met: agenda memory biases positions and each chief position now carries deterministic S1-S5 readout evidence, with risk/overload evidence able to harden advice.
 - Chief coalitions identify who supports, conditions, or objects to each selected option and which staff constraints are driving negotiation pressure. Met.
 - Commitments can be created by completed conversations and fulfilled or broken in later turns. Met for deterministic conversation-created commitments using the active commitment lifecycle.
 - Staff constraint negotiations are recorded in the turn input, change burden math before resolution, and surface in after-action notes. Met.
-- Conversation state remains replayable. Partially met: conversation state is deterministic session state and save/import replay validation still covers turn history; the next hardening task should add an explicit import/replay regression around completed conversations plus subsequent turn resolution.
-
-Next implementation slice:
-
-1. Add `staffReadoutEvidence` or equivalent structured field to `ChiefPositionEntry` with staff function id, metric label, metric value, status, and rationale.
-2. Compute that evidence from the current S1-S5 staff mechanics and selected option burden before building chief positions.
-3. Show the evidence in chief conversation openings, preview responses, headless summaries, and workbench chief cards.
-4. Add engine and server tests proving staff metric changes can alter or at least explain chief advice, and that a completed conversation plus following resolved turn remains import/replay safe.
+- Conversation state remains replayable. Met: replay validation now supports deterministic conversation-owned pre-turn state and server tests cover a completed conversation followed by turn resolution, export, and import.
 
 ## Stage 5: Content Expansion And Balance
 
-Status: next, after Stage 4 hardening.
+Status: active.
 
 Goals:
 
@@ -147,6 +140,12 @@ Goals:
 - Add scenario balancing telemetry to headless runs: outcome distribution, staff overload frequency, accepted-risk frequency, negotiation frequency, commitment fulfillment/breach rate, and selected-option frequency.
 - Add dominant-strategy detection from CLI batch runs before broad content expansion, so content growth does not hide broken incentives.
 - Add content validation for chief preferred/concern tags against memo option tags to protect coalition expressiveness as the memo set grows.
+
+Next implementation slice:
+
+1. Add headless balance telemetry to batch/default runs: outcome distribution, staff overload frequency, accepted-risk frequency, staff negotiation use, commitment fulfillment/breach rate, and selected-option frequency.
+2. Add dominant-strategy detection over telemetry before expanding the event and memo catalog.
+3. Add content validation that chief preferred/concern tags are represented by scenario memo option tags.
 
 Exit criteria:
 

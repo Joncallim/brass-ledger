@@ -108,6 +108,8 @@ test("headless API runs default turns with explicit accepted-risk records", asyn
   assert.equal(body.scenario.id, "brass-ledger-jhq");
   assert.equal(body.turnSummaries.length, 1);
   assert.ok(body.turnSummaries[0].acceptedRisks.length > 0);
+  assert.ok(body.turnSummaries[0].chiefPositions.length > 0);
+  assert.ok(body.turnSummaries[0].chiefPositions.every((entry: { staffReadoutEvidence?: { rationale?: string } }) => entry.staffReadoutEvidence?.rationale?.includes("evidence")));
   assert.ok(body.turnSummaries[0].chiefCoalitions.length > 0);
   assert.ok(body.turnSummaries[0].chiefCoalitions.every((entry: { negotiationLevers: string[] }) => entry.negotiationLevers.length > 0));
   assert.equal(body.validation.ok, true);
@@ -207,6 +209,8 @@ test("chief conversation routes persist revisions and reject stale responses", a
   const openedBody = opened.json();
   assert.equal(openedBody.session.revision, 1);
   assert.equal(openedBody.conversation.status, "active");
+  assert.ok(openedBody.conversation.staffReadoutEvidence.rationale.includes("evidence"));
+  assert.ok(openedBody.conversation.transcript.some((entry: { text: string }) => entry.text.includes(openedBody.conversation.staffReadoutEvidence.rationale)));
 
   const responseId = openedBody.conversation.choices[0].id;
   const stale = await app.inject({
@@ -255,6 +259,32 @@ test("chief conversation routes persist revisions and reject stale responses", a
   assert.equal(commitment.turnMade, 1);
   assert.equal(commitment.fulfilled, null);
   assert.match(commitment.label, /bounded order/i);
+
+  const input = {
+    turn: responseBody.session.state.turn,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    selections: firstOptionSelections(responseBody.memos),
+  };
+  const acceptedInput = await withAcceptedRiskCandidates(id, input);
+  const resolved = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/resolve-turn`,
+    payload: { input: acceptedInput, expectedRevision: responseBody.session.revision },
+  });
+  assert.equal(resolved.statusCode, 200);
+  assert.equal(resolved.json().validation.ok, true);
+
+  const exported = await app.inject({ method: "GET", url: `/api/sessions/${id}/export` });
+  assert.equal(exported.statusCode, 200);
+  const imported = await app.inject({
+    method: "POST",
+    url: "/api/sessions/import",
+    payload: { exportData: exported.json() },
+  });
+  assert.equal(imported.statusCode, 200);
+  assert.equal(imported.json().session.history.length, 1);
+  assert.equal(imported.json().session.state.conversationHistory[0].status, "completed");
 });
 
 test("import rejects forged session exports and accepts replayable exports under a fresh revision", async () => {
