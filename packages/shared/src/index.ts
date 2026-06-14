@@ -603,6 +603,15 @@ export const externalTechNodeSchema = z.object({
 });
 export type ExternalTechNode = z.infer<typeof externalTechNodeSchema>;
 
+export const activeCommitmentSchema = z.object({
+  id: z.string(),
+  type: z.enum(["doctrine", "alliance", "cabinet", "program"]),
+  label: z.string(),
+  turnMade: z.number().int().min(1),
+  fulfilled: z.boolean().nullable().default(null),
+});
+export type ActiveCommitment = z.infer<typeof activeCommitmentSchema>;
+
 function addMirrorIssue(ctx: z.RefinementCtx, path: string, message: string) {
   ctx.addIssue({
     code: "custom",
@@ -639,13 +648,7 @@ export const campaignStateSchema = z.object({
   eventHistory: z.array(z.string()).default([]),
   eventFlags: z.record(z.string(), z.boolean()).default({}),
   conversationHistory: z.array(chiefConversationRecordSchema).default([]),
-  activeCommitments: z.array(z.object({
-    id: z.string(),
-    type: z.enum(["doctrine", "alliance", "cabinet", "program"]),
-    label: z.string(),
-    turnMade: z.number().int().min(1),
-    fulfilled: z.boolean().nullable().default(null),
-  })).default([]),
+  activeCommitments: z.array(activeCommitmentSchema).default([]),
   briefing: campaignBriefSchema,
 }).superRefine((state, ctx) => {
   if (state.turn > state.maxTurns + 1) {
@@ -1352,6 +1355,53 @@ export function updateChiefAgendaMemoryFromConversation(
       `Conversation closed ${conversation.totalTrustDelta >= 0 ? "with alignment" : "with friction"}.`,
     ),
   };
+}
+
+function commitmentTypeForOption(option: MemoOption): ActiveCommitment["type"] {
+  if (option.tags.includes("public-commitment")) return "cabinet";
+  if (option.tags.includes("alliance")) return "alliance";
+  if (option.tags.includes("program") || option.tags.includes("modernization")) return "program";
+  return "doctrine";
+}
+
+function conversationCommitmentLabel(chief: ChiefArchetype, option: MemoOption, closingChoice: string) {
+  const closingText =
+    closingChoice === "closing-bounded-order"
+      ? "bounded order"
+      : closingChoice === "closing-dissent-on-record"
+        ? "dissent on record"
+        : closingChoice === "closing-override"
+          ? "overridden risk"
+          : closingChoice === "closing-reframe"
+            ? "tighter packet"
+            : "negotiated commitment";
+  return `${chief.title} ${closingText}: ${option.label}`;
+}
+
+export function updateCommitmentsFromChiefConversation(
+  state: CampaignState,
+  chief: ChiefArchetype,
+  memo: DecisionMemo,
+  option: MemoOption,
+  conversation: ChiefConversationRecord,
+): ActiveCommitment[] {
+  if (conversation.status !== "completed") return state.activeCommitments;
+  const closingChoice = conversation.choiceTrail[conversation.choiceTrail.length - 1] ?? "";
+  if (closingChoice === "closing-defer") return state.activeCommitments;
+
+  const id = `conversation-${state.turn}-${chief.id}-${memo.id}-${option.id}`;
+  if (state.activeCommitments.some((entry) => entry.id === id)) return state.activeCommitments;
+
+  return [
+    ...state.activeCommitments,
+    {
+      id,
+      type: commitmentTypeForOption(option),
+      label: conversationCommitmentLabel(chief, option, closingChoice),
+      turnMade: state.turn,
+      fulfilled: null,
+    },
+  ];
 }
 
 function coalitionPosture(

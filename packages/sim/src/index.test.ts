@@ -1,7 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { soloScenario } from "@brass-ledger/content";
-import { buildChiefPositions, campaignStateSchema, continueChiefConversation, startChiefConversation, type TurnInput } from "@brass-ledger/shared";
+import {
+  buildChiefPositions,
+  campaignStateSchema,
+  continueChiefConversation,
+  startChiefConversation,
+  updateCommitmentsFromChiefConversation,
+  type TurnInput,
+} from "@brass-ledger/shared";
 import { previewTurn, resolveTurn, validateReplaySession } from "./index";
 
 const balancedInput: TurnInput = {
@@ -224,6 +231,14 @@ test("chief conversations branch across multiple stages and update trust deltas"
   assert.equal(completed.choices.length, 0);
   assert.equal(completed.choiceTrail.length, 4);
   assert.ok(completed.totalTrustDelta >= 0);
+
+  const commitments = updateCommitmentsFromChiefConversation(soloScenario.initialState, chief, memo, option, completed);
+  const commitment = commitments.find((entry) => entry.id === "conversation-1-halden-posture-measured-deterrence");
+  assert.ok(commitment);
+  assert.equal(commitment.type, "doctrine");
+  assert.equal(commitment.turnMade, 1);
+  assert.equal(commitment.fulfilled, null);
+  assert.match(commitment.label, /bounded order/i);
 });
 
 test("validateReplaySession reports mismatched history length without throwing", () => {
