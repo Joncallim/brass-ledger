@@ -55,6 +55,22 @@ test("resolveTurn advances the month and emits directorate burden and chiefs pos
   assert.ok(result.summary.includes("Turn 2/12"));
 });
 
+test("resolveTurn emits chief coalitions tied to memo options and staff constraints", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
+
+  assert.equal(result.chiefCoalitions.length, highTempoInput.selections.length);
+  const postureCoalition = result.chiefCoalitions.find((entry) => entry.memoId === "posture" && entry.optionId === "surge-exercises");
+  assert.ok(postureCoalition);
+  assert.equal(postureCoalition.posture, "blocked");
+  assert.deepEqual(postureCoalition.supportChiefIds, ["briggs"]);
+  assert.ok(postureCoalition.objectionChiefIds.includes("halden"));
+  assert.ok(postureCoalition.staffConstraintDirectorates.includes("sustainment"));
+  assert.ok(postureCoalition.negotiationLevers.some((entry) => entry.includes("Reduce operations, training, sustainment load")));
+
+  const preview = previewTurn(soloScenario, soloScenario.initialState, highTempoInput);
+  assert.deepEqual(preview.chiefCoalitions, result.chiefCoalitions);
+});
+
 test("resolveTurn emits S1-S5 staff readouts and causal explainability", () => {
   const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
 

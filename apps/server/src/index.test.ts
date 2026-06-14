@@ -108,6 +108,8 @@ test("headless API runs default turns with explicit accepted-risk records", asyn
   assert.equal(body.scenario.id, "brass-ledger-jhq");
   assert.equal(body.turnSummaries.length, 1);
   assert.ok(body.turnSummaries[0].acceptedRisks.length > 0);
+  assert.ok(body.turnSummaries[0].chiefCoalitions.length > 0);
+  assert.ok(body.turnSummaries[0].chiefCoalitions.every((entry: { negotiationLevers: string[] }) => entry.negotiationLevers.length > 0));
   assert.equal(body.validation.ok, true);
 });
 
@@ -152,6 +154,8 @@ test("resolve-turn persists a revision and rejects stale expected revisions", as
   assert.equal(preview.statusCode, 200);
   const previewBody = preview.json();
   assert.ok(previewBody.acceptedRiskCandidates.length > 0);
+  assert.equal(previewBody.chiefCoalitions.length, input.selections.length);
+  assert.ok(previewBody.chiefCoalitions.every((entry: { negotiationLevers: string[] }) => entry.negotiationLevers.length > 0));
 
   const unacceptedRisk = await app.inject({
     method: "POST",
@@ -172,6 +176,7 @@ test("resolve-turn persists a revision and rejects stale expected revisions", as
   assert.equal(resolvedBody.summary.revision, 1);
   assert.equal(resolvedBody.validation.ok, true);
   assert.deepEqual(resolvedBody.result.acceptedRisks.map((risk: { accepted: boolean }) => risk.accepted), previewBody.acceptedRiskCandidates.map(() => true));
+  assert.deepEqual(resolvedBody.result.chiefCoalitions, previewBody.chiefCoalitions);
 
   const stale = await app.inject({
     method: "POST",

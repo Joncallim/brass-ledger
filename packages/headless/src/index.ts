@@ -93,6 +93,16 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
       summary: result.summary,
       replayHash: result.replayHash,
       acceptedRisks: result.acceptedRisks,
+      chiefCoalitions: result.chiefCoalitions.map((coalition) => ({
+        memoId: coalition.memoId,
+        optionId: coalition.optionId,
+        posture: coalition.posture,
+        supportChiefIds: coalition.supportChiefIds,
+        conditionalChiefIds: coalition.conditionalChiefIds,
+        objectionChiefIds: coalition.objectionChiefIds,
+        staffConstraintDirectorates: coalition.staffConstraintDirectorates,
+        negotiationLevers: coalition.negotiationLevers,
+      })),
       staffFunctions: result.staffFunctions.map((entry) => ({
         id: entry.id,
         status: entry.status,

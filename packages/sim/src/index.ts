@@ -85,6 +85,7 @@ import {
   type AcceptedRiskOverride,
   type CampaignObjective,
   type CampaignState,
+  type ChiefCoalitionEntry,
   type ChiefPositionEntry,
   type DecisionPreviewEntry,
   type DecisionMemo,
@@ -103,6 +104,7 @@ import {
   type TechProgressNode,
   type TurnInput,
   type TurnResult,
+  buildChiefCoalitions,
   buildChiefPositions,
   buildDirectorateBurden,
   buildStaffFunctionReadouts,
@@ -1432,7 +1434,14 @@ export function previewTurn(scenario: ScenarioDefinition, state: CampaignState, 
       supportedBy: positions.filter((entry) => entry.position === "support").map((entry) => entry.chiefId),
     }];
   });
-  return { projectedResult, disagreements, decisionPreviews, acceptedRiskCandidates, predictedEvents: projectedResult.triggeredEvents };
+  return {
+    projectedResult,
+    disagreements,
+    decisionPreviews,
+    acceptedRiskCandidates,
+    predictedEvents: projectedResult.triggeredEvents,
+    chiefCoalitions: projectedResult.chiefCoalitions,
+  };
 }
 
 export function resolveTurn(scenario: ScenarioDefinition, previousState: CampaignState, input: TurnInput): TurnResult {
@@ -1465,6 +1474,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   nextStrategic.forceGeneration.reserveStrain = round(nextStrategic.forceGeneration.reserveStrain);
 
   const chiefPositions = selectedPairs.flatMap(({ memo, option }) => buildChiefPositions(scenario.chiefs, previousState, memo, option));
+  const chiefCoalitions: ChiefCoalitionEntry[] = buildChiefCoalitions(selectedPairs, chiefPositions, directorateBurden);
   const nextChiefAgendaMemory = updateChiefAgendaMemoryFromPositions(
     previousState,
     scenario.chiefs,
@@ -1597,6 +1607,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     commandersEstimate: monthlyEstimate.commandersEstimate,
     memos,
     chiefPositions,
+    chiefCoalitions,
     monthlyEstimate,
     directorateBurden,
     staffFunctions,

@@ -30,6 +30,7 @@ Backlink: [[POTATO]]
 - S1-S5 core mechanics advancement for recovery debt, fog-of-war, executable posture, stockpile/lift, and coherence
 - chief trust effect on future positions
 - chief agenda memory persistence through turn resolution, replay validation, and future-position bias
+- chief coalition output for selected memo options, staff constraints, preview parity, and negotiation levers
 - multi-stage chief conversation progression and trust deltas
 - replay validation reporting history length mismatches without throwing
 - replay validation reporting altered replay hashes, altered initial state, altered final state, and extra history
@@ -42,6 +43,7 @@ Backlink: [[POTATO]]
 
 - CORS allowlist behavior
 - headless API default runs with explicit accepted-risk records
+- headless API and CLI JSON output include compact chief coalition summaries
 - headless API rejection for supplied turns that omit accepted-risk overrides
 - chief conversation completion persisting agenda memory while preserving revision checks
 - disabled whole-session save endpoint
