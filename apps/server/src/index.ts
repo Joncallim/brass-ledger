@@ -411,6 +411,7 @@ app.post("/api/sessions/:id/preview-turn", async (request, reply) => {
     return {
       ...preview,
       chiefPositions: preview.projectedResult.chiefPositions,
+      chiefCoalitions: preview.projectedResult.chiefCoalitions,
       chiefsPaper: preview.projectedResult.chiefsPaper ?? preview.projectedResult.advisoryPaper,
       commandersEstimate: {
         title: preview.projectedResult.monthlyEstimate.chiefsPaperTitle,

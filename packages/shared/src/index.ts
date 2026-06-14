@@ -452,6 +452,25 @@ export const chiefAgendaMemoryEntrySchema = z.object({
 });
 export type ChiefAgendaMemoryEntry = z.infer<typeof chiefAgendaMemoryEntrySchema>;
 
+export const chiefCoalitionEntrySchema = z.object({
+  memoId: z.string(),
+  memoTitle: z.string(),
+  optionId: z.string(),
+  optionLabel: z.string(),
+  posture: z.enum(["supporting", "conditional", "contested", "blocked"]),
+  supportChiefIds: z.array(z.string()).default([]),
+  supportChiefNames: z.array(z.string()).default([]),
+  conditionalChiefIds: z.array(z.string()).default([]),
+  conditionalChiefNames: z.array(z.string()).default([]),
+  objectionChiefIds: z.array(z.string()).default([]),
+  objectionChiefNames: z.array(z.string()).default([]),
+  staffConstraintDirectorates: z.array(directorateSchema).default([]),
+  staffConstraintSummaries: z.array(z.string()).default([]),
+  summary: z.string(),
+  negotiationLevers: z.array(z.string()).default([]),
+});
+export type ChiefCoalitionEntry = z.infer<typeof chiefCoalitionEntrySchema>;
+
 export const staffCapacityDefinitionSchema = z.object({
   directorate: directorateSchema,
   capacity: nonNegativeNumberSchema,
@@ -697,6 +716,7 @@ export const turnPreviewSchema = z.object({
   decisionPreviews: z.array(decisionPreviewEntrySchema),
   acceptedRiskCandidates: z.array(acceptedRiskOverrideSchema),
   predictedEvents: z.array(eventDefinitionSchema),
+  chiefCoalitions: z.array(chiefCoalitionEntrySchema).default([]),
 });
 export type TurnPreview = z.infer<typeof turnPreviewSchema>;
 
@@ -710,6 +730,7 @@ export const turnResultSchema = z.object({
   commandersEstimate: z.string().default(""),
   memos: z.array(decisionMemoSchema),
   chiefPositions: z.array(chiefPositionEntrySchema),
+  chiefCoalitions: z.array(chiefCoalitionEntrySchema).default([]),
   monthlyEstimate: monthlyEstimateSchema,
   directorateBurden: z.array(directorateBurdenSchema),
   staffFunctions: z.array(staffFunctionReadoutSchema).default([]),
@@ -1224,7 +1245,7 @@ export function buildStaffFunctionReadouts(
   });
 }
 
-function uniqueLimited(values: string[], limit: number) {
+function uniqueLimited<T extends string>(values: T[], limit: number): T[] {
   return Array.from(new Set(values.filter(Boolean))).slice(0, limit);
 }
 
@@ -1331,6 +1352,77 @@ export function updateChiefAgendaMemoryFromConversation(
       `Conversation closed ${conversation.totalTrustDelta >= 0 ? "with alignment" : "with friction"}.`,
     ),
   };
+}
+
+function coalitionPosture(
+  supporters: ChiefPositionEntry[],
+  conditional: ChiefPositionEntry[],
+  objectors: ChiefPositionEntry[],
+  staffConstraints: DirectorateBurden[],
+): ChiefCoalitionEntry["posture"] {
+  if (objectors.length > 0 && staffConstraints.length > 0) return "blocked";
+  if (objectors.length > 0) return "contested";
+  if (conditional.length > 0) return "conditional";
+  return "supporting";
+}
+
+function chiefNames(entries: ChiefPositionEntry[]) {
+  return entries.map((entry) => entry.chiefName);
+}
+
+function chiefIds(entries: ChiefPositionEntry[]) {
+  return entries.map((entry) => entry.chiefId);
+}
+
+export function buildChiefCoalitions(
+  selections: Array<{ memo: DecisionMemo; option: MemoOption }>,
+  chiefPositions: ChiefPositionEntry[],
+  burdens: DirectorateBurden[],
+): ChiefCoalitionEntry[] {
+  const burdenByDirectorate = new Map(burdens.map((entry) => [entry.directorate, entry]));
+  return selections.map(({ memo, option }) => {
+    const positions = chiefPositions.filter((entry) => entry.memoId === memo.id && entry.optionId === option.id);
+    const supporters = positions.filter((entry) => entry.position === "support");
+    const conditional = positions.filter((entry) => entry.position === "accept_risk" || entry.position === "request_conditions");
+    const objectors = positions.filter((entry) => entry.position === "oppose");
+    const staffConstraints = option.burden
+      .map((entry) => burdenByDirectorate.get(entry.directorate))
+      .filter((entry): entry is DirectorateBurden => entry !== undefined && (entry.burdenLevel === "strained" || entry.burdenLevel === "overloaded"));
+    const constrainedDirectorates = uniqueLimited(staffConstraints.map((entry) => entry.directorate), 6);
+    const constrainedLabels = constrainedDirectorates.map((directorate) => directorateLabel(directorate).toLowerCase());
+    const objectorNames = chiefNames(objectors);
+    const conditionalNames = chiefNames(conditional);
+    const supporterNames = chiefNames(supporters);
+    const posture = coalitionPosture(supporters, conditional, objectors, staffConstraints);
+    const constraintLine =
+      constrainedDirectorates.length > 0
+        ? `Staff constraint sits in ${constrainedLabels.join(", ")}.`
+        : "No selected staff lane is currently strained or overloaded.";
+    const negotiationLevers = [
+      ...(constrainedDirectorates.length > 0 ? [`Reduce ${constrainedLabels.join(", ")} load before locking ${option.label}.`] : []),
+      ...(objectorNames.length > 0 ? [`Negotiate objections with ${objectorNames.join(", ")}.`] : []),
+      ...(conditionalNames.length > 0 ? [`Convert conditional support from ${conditionalNames.join(", ")} into written conditions.`] : []),
+      ...(supporterNames.length > 0 ? [`Use ${supporterNames.join(", ")} as the support base.`] : []),
+    ].slice(0, 4);
+
+    return {
+      memoId: memo.id,
+      memoTitle: memo.title,
+      optionId: option.id,
+      optionLabel: option.label,
+      posture,
+      supportChiefIds: chiefIds(supporters),
+      supportChiefNames: supporterNames,
+      conditionalChiefIds: chiefIds(conditional),
+      conditionalChiefNames: conditionalNames,
+      objectionChiefIds: chiefIds(objectors),
+      objectionChiefNames: objectorNames,
+      staffConstraintDirectorates: constrainedDirectorates,
+      staffConstraintSummaries: staffConstraints.map((entry) => entry.summary),
+      summary: `${option.label} has ${supporters.length} supporter(s), ${conditional.length} conditional chief(s), and ${objectors.length} objector(s). ${constraintLine}`,
+      negotiationLevers,
+    };
+  });
 }
 
 export function buildChiefPositions(

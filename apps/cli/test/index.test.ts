@@ -70,6 +70,8 @@ test("default JSON run records accepted risks and validates replay", async () =>
   const body = JSON.parse(result.stdout);
   assert.equal(body.validation.ok, true);
   assert.ok(body.turnSummaries[0].acceptedRisks.length > 0);
+  assert.ok(body.turnSummaries[0].chiefCoalitions.length > 0);
+  assert.ok(body.turnSummaries[0].chiefCoalitions.every((entry: { negotiationLevers: string[] }) => entry.negotiationLevers.length > 0));
   assert.equal(body.sessionExport, undefined, "CLI JSON output should not dump the full session by default");
 });
 

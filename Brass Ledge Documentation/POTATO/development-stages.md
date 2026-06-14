@@ -116,13 +116,14 @@ Status: started.
 Goals:
 
 - Chiefs maintain agenda memory. Started: turn resolution and completed chief conversations persist per-chief focus tags, concern tags, prior position, pressure, and notes; future chief advice uses that memory as a bounded bias.
-- Chiefs form support/objection coalitions.
+- Chiefs form support/objection coalitions. Started: each selected memo option now emits support, conditional, and objection groups tied to strained or overloaded staff directorates with negotiation levers.
 - Conversations create commitments and trust effects.
 - Player can negotiate staff constraints before commit.
 
 Exit criteria:
 
 - Chief advice is mechanically tied to S1-S5 readouts and persistent chief agenda memory.
+- Chief coalitions identify who supports, conditions, or objects to each selected option and which staff constraints are driving negotiation pressure.
 - Commitments can be fulfilled or broken in later turns.
 - Conversation state remains replayable.
 
