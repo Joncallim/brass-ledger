@@ -119,6 +119,58 @@ test("chief trust influences future positions on the same packet", () => {
   assert.equal(highTrustPosition.position, "support");
 });
 
+test("chief agenda memory persists through turn resolution and biases future positions", () => {
+  const firstTurn = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
+  const haldenMemory = firstTurn.nextState.chiefAgendaMemory.halden;
+
+  assert.ok(haldenMemory);
+  assert.equal(haldenMemory.chiefId, "halden");
+  assert.equal(haldenMemory.lastTurn, 1);
+  assert.ok(haldenMemory.lastMemoId);
+  assert.ok(haldenMemory.lastOptionId);
+  assert.ok(haldenMemory.lastPosition);
+  assert.ok(haldenMemory.pressure >= 0 && haldenMemory.pressure <= 10);
+  assert.ok(haldenMemory.notes.length > 0);
+
+  const replay = validateReplaySession(soloScenario, {
+    initialState: soloScenario.initialState,
+    turnInputs: [highTempoInput],
+    history: [firstTurn],
+    state: firstTurn.nextState,
+  });
+  assert.equal(replay.ok, true);
+
+  const memo = soloScenario.memoTemplates.find((entry) => entry.id === "posture");
+  assert.ok(memo);
+  const option = memo.options.find((entry) => entry.id === "measured-deterrence");
+  assert.ok(option);
+
+  const baselinePosition = buildChiefPositions(soloScenario.chiefs, soloScenario.initialState, memo, option).find((entry) => entry.chiefId === "halden");
+  const frictionState = campaignStateSchema.parse({
+    ...soloScenario.initialState,
+    chiefAgendaMemory: {
+      halden: {
+        chiefId: "halden",
+        focusTags: [],
+        concernTags: ["deterrence"],
+        lastMemoId: "posture",
+        lastOptionId: "surge-exercises",
+        lastPosition: "oppose",
+        pressure: 8,
+        lastTurn: 1,
+        notes: ["Prior posture dissent"],
+      },
+    },
+  });
+  const memoryPosition = buildChiefPositions(soloScenario.chiefs, frictionState, memo, option).find((entry) => entry.chiefId === "halden");
+
+  assert.ok(baselinePosition);
+  assert.ok(memoryPosition);
+  assert.equal(baselinePosition.position, "accept_risk");
+  assert.equal(memoryPosition.position, "oppose");
+  assert.match(memoryPosition.agendaMemoryNote ?? "", /Pressure remains high/);
+});
+
 test("chief conversations branch across multiple stages and update trust deltas", () => {
   const chief = soloScenario.chiefs.find((entry) => entry.id === "halden");
   const memo = soloScenario.memoTemplates.find((entry) => entry.id === "posture");

@@ -214,7 +214,31 @@ test("chief conversation routes persist revisions and reject stale responses", a
     payload: { responseId, expectedRevision: 1 },
   });
   assert.equal(responded.statusCode, 200);
-  assert.equal(responded.json().session.revision, 2);
+  let responseBody = responded.json();
+  assert.equal(responseBody.session.revision, 2);
+  assert.equal(responseBody.session.state.chiefAgendaMemory[chiefId], undefined);
+
+  while (responseBody.conversation.status !== "completed") {
+    const next = await app.inject({
+      method: "POST",
+      url: `/api/sessions/${id}/chiefs/${chiefId}/respond`,
+      payload: {
+        responseId: responseBody.conversation.choices[0].id,
+        expectedRevision: responseBody.session.revision,
+      },
+    });
+    assert.equal(next.statusCode, 200);
+    responseBody = next.json();
+  }
+
+  const agendaMemory = responseBody.session.state.chiefAgendaMemory[chiefId];
+  assert.ok(agendaMemory);
+  assert.equal(agendaMemory.chiefId, chiefId);
+  assert.equal(agendaMemory.lastMemoId, memo.id);
+  assert.equal(agendaMemory.lastOptionId, option.id);
+  assert.equal(agendaMemory.lastTurn, 1);
+  assert.ok(agendaMemory.lastPosition);
+  assert.ok(agendaMemory.notes.some((entry: string) => entry.includes("Conversation closed")));
 });
 
 test("import rejects forged session exports and accepts replayable exports under a fresh revision", async () => {
