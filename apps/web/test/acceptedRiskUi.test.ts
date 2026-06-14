@@ -8,7 +8,7 @@ import {
   initialAcceptedRiskChoices,
   setAcceptedRiskChoice,
 } from "../src/acceptedRiskUi";
-import type { AcceptedRiskOverride, DecisionMemo, GameSession } from "@brass-ledger/shared";
+import type { AcceptedRiskOverride, DecisionMemo, GameSession, StaffNegotiation } from "@brass-ledger/shared";
 
 const risks: AcceptedRiskOverride[] = [
   { staffFunctionId: "S1", warningText: "Recovery debt will rise." },
@@ -46,8 +46,11 @@ test("default turn input does not silently copy preview accepted-risk candidates
 
   const silentInput = defaultTurnInput(session, memos);
   assert.deepEqual(silentInput.acceptedRiskOverrides, []);
+  assert.deepEqual(silentInput.staffNegotiations, []);
 
   const choices = risks.reduce((state, risk) => setAcceptedRiskChoice(state, risk, true), initialAcceptedRiskChoices(risks));
-  const deliberateInput = defaultTurnInput(session, memos, acceptedRiskOverridesFromChoices(risks, choices));
+  const staffNegotiations: StaffNegotiation[] = [{ directorate: "sustainment", reliefPoints: 1, cost: "political_cover" }];
+  const deliberateInput = defaultTurnInput(session, memos, acceptedRiskOverridesFromChoices(risks, choices), staffNegotiations);
   assert.deepEqual(deliberateInput.acceptedRiskOverrides.map(acceptedRiskKey), risks.map(acceptedRiskKey));
+  assert.deepEqual(deliberateInput.staffNegotiations, staffNegotiations);
 });

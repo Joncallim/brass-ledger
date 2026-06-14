@@ -279,6 +279,35 @@ function applyResourceDelta(current: CampaignState["resources"], delta: MemoOpti
   };
 }
 
+function negotiationCostDelta(negotiation: TurnInput["staffNegotiations"][number]): StateDelta {
+  if (negotiation.cost === "political_cover") {
+    return {
+      resources: { politicalCapital: -2, publicLegitimacy: -1 },
+      domestic: { cabinetCover: -2, mediaHeat: 1 },
+    };
+  }
+  if (negotiation.cost === "readiness_delay") {
+    return {
+      resources: { readiness: -1 },
+      forceGeneration: { deployableUnits: -0.15, trainingThroughput: -1 },
+    };
+  }
+  return {
+    resources: { budgetAuthority: -2 },
+    domestic: { committeeTolerance: -1 },
+  };
+}
+
+function staffNegotiationSummary(negotiation: TurnInput["staffNegotiations"][number]) {
+  const cost =
+    negotiation.cost === "political_cover"
+      ? "political cover"
+      : negotiation.cost === "readiness_delay"
+        ? "readiness delay"
+        : "budget overtime";
+  return `${negotiation.reliefPoints} point(s) from ${negotiation.directorate} for ${cost}`;
+}
+
 function applyBurdenPenalties(state: StrategicState, burdens: DirectorateBurden[]) {
   const burdenById = new Map(burdens.map((entry) => [entry.directorate, entry]));
   const intelligencePenalty = burdenById.get("intelligence")?.confidencePenalty ?? 0;
@@ -468,6 +497,7 @@ function afterAction(
   burdens: DirectorateBurden[],
   events: EventDefinition[],
   acceptedRiskOverrides: Array<{ staffFunctionId: string; warningText: string }> = [],
+  staffNegotiations: TurnInput["staffNegotiations"] = [],
 ) {
   const notes = [];
   const deployableDelta = nextState.strategic.forceGeneration.deployableUnits - previousState.strategic.forceGeneration.deployableUnits;
@@ -544,6 +574,13 @@ function afterAction(
     notes.push({
       heading: "Accepted risks",
       detail: `The commander explicitly accepted ${acceptedRiskOverrides.length} staff warning(s): ${acceptedRiskOverrides.map((r) => `${r.staffFunctionId} — ${r.warningText}`).join("; ")}.`,
+    });
+  }
+
+  if (staffNegotiations.length > 0) {
+    notes.push({
+      heading: "Staff negotiations",
+      detail: `Before committing the turn, the commander negotiated ${staffNegotiations.map(staffNegotiationSummary).join("; ")}.`,
     });
   }
 
@@ -1453,13 +1490,19 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   const rng = mulberry32(previousState.seed + previousState.turn * 97 + input.selections.length * 17);
   const selectedPairs = input.selections.map((selection) => findOption(memos, selection));
   const selectedOptions = selectedPairs.map((entry) => entry.option);
-  const directorateBurden = buildDirectorateBurden(memos, input.selections, scenario.staffCapacities);
+  const staffNegotiations = input.staffNegotiations ?? [];
+  const directorateBurden = buildDirectorateBurden(memos, input.selections, scenario.staffCapacities, staffNegotiations);
 
   let nextStrategic = cloneState(previousState.strategic);
   let nextResources = cloneState(previousState.resources);
   for (const option of selectedOptions) {
     nextStrategic = applyStrategicDelta(nextStrategic, option.stateDelta);
     nextResources = applyResourceDelta(nextResources, option.stateDelta);
+  }
+  for (const negotiation of staffNegotiations) {
+    const delta = negotiationCostDelta(negotiation);
+    nextStrategic = applyStrategicDelta(nextStrategic, delta);
+    nextResources = applyResourceDelta(nextResources, delta);
   }
 
   const selectedTags = new Set(selectedOptions.flatMap((option) => option.tags));
@@ -1571,7 +1614,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   nextState.campaignOutcome = outcome.outcome;
 
   const monthlyEstimate = createMonthlyEstimate(previousState, nextState, chiefPositions, directorateBurden);
-  const resultAfterAction = afterAction(previousState, nextState, directorateBurden, triggeredEvents, input.acceptedRiskOverrides);
+  const resultAfterAction = afterAction(previousState, nextState, directorateBurden, triggeredEvents, input.acceptedRiskOverrides, staffNegotiations);
   const staffFunctions = buildStaffFunctionReadouts(scenario.staffFunctions, directorateBurden, nextState);
   const explainability = createExplainability(selectedPairs, directorateBurden, triggeredEvents, previousState, nextState);
   const summary = nextState.campaignStatus === "active" ? summarizeState(nextState) : nextState.campaignOutcome ?? summarizeState(nextState);

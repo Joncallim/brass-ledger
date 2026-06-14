@@ -694,11 +694,20 @@ export const acceptedRiskOverrideSchema = z.object({
 });
 export type AcceptedRiskOverride = z.infer<typeof acceptedRiskOverrideSchema>;
 
+export const staffNegotiationSchema = z.object({
+  directorate: directorateSchema,
+  reliefPoints: z.number().int().min(1).max(2),
+  cost: z.enum(["political_cover", "readiness_delay", "budget_overtime"]),
+  note: z.string().optional(),
+});
+export type StaffNegotiation = z.infer<typeof staffNegotiationSchema>;
+
 export const turnInputSchema = z.object({
   turn: z.number().int().min(1),
   selectedActionIds: z.array(z.string()).default([]),
   selections: z.array(memoSelectionSchema),
   acceptedRiskOverrides: z.array(acceptedRiskOverrideSchema).default([]),
+  staffNegotiations: z.array(staffNegotiationSchema).default([]),
 });
 export type TurnInput = z.infer<typeof turnInputSchema>;
 
@@ -1093,6 +1102,7 @@ export function buildDirectorateBurden(
   memos: DecisionMemo[],
   selections: MemoSelection[],
   staffCapacities: StaffCapacityDefinition[] = defaultStaffCapacities,
+  staffNegotiations: StaffNegotiation[] = [],
 ): DirectorateBurden[] {
   const selectedByMemo = new Map(selections.map((selection) => [selection.memoId, selection.optionId]));
   const capacities = new Map(staffCapacities.map((entry) => [entry.directorate, entry]));
@@ -1114,6 +1124,9 @@ export function buildDirectorateBurden(
     for (const entry of option.burden) {
       totals[entry.directorate] += entry.points;
     }
+  }
+  for (const negotiation of staffNegotiations) {
+    totals[negotiation.directorate] = Math.max(0, totals[negotiation.directorate] - negotiation.reliefPoints);
   }
 
   return directorateSchema.options.map((directorate) => {

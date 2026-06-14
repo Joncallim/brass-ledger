@@ -119,6 +119,7 @@ test("headless API rejects supplied turns that omit accepted-risk overrides", as
     turn: created.session.state.turn,
     selectedActionIds: [],
     acceptedRiskOverrides: [],
+    staffNegotiations: [{ directorate: "sustainment", reliefPoints: 1, cost: "political_cover" }],
     selections: firstOptionSelections(created.memos),
   };
 
@@ -143,6 +144,7 @@ test("resolve-turn persists a revision and rejects stale expected revisions", as
     turn: created.session.state.turn,
     selectedActionIds: [],
     acceptedRiskOverrides: [],
+    staffNegotiations: [{ directorate: "sustainment", reliefPoints: 1, cost: "political_cover" }],
     selections: firstOptionSelections(created.memos),
   };
 
@@ -177,6 +179,8 @@ test("resolve-turn persists a revision and rejects stale expected revisions", as
   assert.equal(resolvedBody.validation.ok, true);
   assert.deepEqual(resolvedBody.result.acceptedRisks.map((risk: { accepted: boolean }) => risk.accepted), previewBody.acceptedRiskCandidates.map(() => true));
   assert.deepEqual(resolvedBody.result.chiefCoalitions, previewBody.chiefCoalitions);
+  assert.deepEqual(resolvedBody.result.input.staffNegotiations, input.staffNegotiations);
+  assert.ok(resolvedBody.result.afterAction.some((entry: { heading: string }) => entry.heading === "Staff negotiations"));
 
   const stale = await app.inject({
     method: "POST",

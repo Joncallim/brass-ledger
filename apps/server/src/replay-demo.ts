@@ -36,6 +36,7 @@ for (const [index, selections] of turns.entries()) {
     turn: session.state.turn,
     selectedActionIds: selections.map((selection) => selection.optionId),
     acceptedRiskOverrides: [],
+    staffNegotiations: [],
     selections,
   };
   const result = resolveTurn(soloScenario, session.state, input);
