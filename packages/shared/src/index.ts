@@ -532,6 +532,7 @@ export const staffFunctionReadoutSchema = z.object({
   capacity: nonNegativeNumberSchema,
   headroom: z.number(),
   warnings: z.array(z.string()),
+  failureMode: z.string(),
   consequence: z.string(),
   metrics: z.array(staffFunctionMetricSchema),
 });
@@ -1263,6 +1264,10 @@ export function buildStaffFunctionReadouts(
       ...metrics.filter((metric) => metric.status === "risk").map((metric) => `${metric.label} is in the risk band.`),
     ];
 
+    const primaryBurden = entries.find((entry) => entry.burdenLevel === "overloaded")
+      ?? entries.find((entry) => entry.burdenLevel === "strained")
+      ?? entries[0];
+    const failureMode = primaryBurden?.failureMode ?? "";
     return {
       id: definition.id,
       label: definition.label,
@@ -1273,6 +1278,7 @@ export function buildStaffFunctionReadouts(
       capacity,
       headroom,
       warnings,
+      failureMode,
       consequence: warnings[0] ?? definition.doctrineNote,
       metrics,
     };
