@@ -108,6 +108,35 @@ for (const event of soloScenario.events) {
   eventIds.add(event.id);
 }
 
+const allOptionTags = new Set<string>();
+for (const memo of soloScenario.memoTemplates) {
+  for (const option of memo.options) {
+    for (const tag of option.tags) {
+      allOptionTags.add(tag);
+    }
+  }
+}
+
+for (const chief of soloScenario.chiefs) {
+  const coveredPreferred = chief.preferredTags.filter((tag) => allOptionTags.has(tag));
+  if (coveredPreferred.length === 0) {
+    throw new Error(
+      `Chief ${chief.id} has no preferredTags covered by any memo option. ` +
+        `preferredTags: [${chief.preferredTags.join(", ")}]. Add memo options with at least one of these tags.`,
+    );
+  }
+  const coveredConcern = chief.concernTags.filter((tag) => allOptionTags.has(tag));
+  if (coveredConcern.length === 0) {
+    throw new Error(
+      `Chief ${chief.id} has no concernTags covered by any memo option. ` +
+        `concernTags: [${chief.concernTags.join(", ")}]. Add memo options with at least one of these tags.`,
+    );
+  }
+}
+
 console.log(
   `Validated scenario ${soloScenario.id} with ${soloScenario.memoTemplates.length} memos, ${soloScenario.capabilityPrograms.length} programs, and ${soloScenario.events.length} events.`,
+);
+console.log(
+  `Chief tag coverage: ${soloScenario.chiefs.length} chiefs, all preferred/concern tags covered by memo options.`,
 );

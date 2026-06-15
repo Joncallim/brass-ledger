@@ -141,11 +141,19 @@ Goals:
 - Add dominant-strategy detection from CLI batch runs before broad content expansion, so content growth does not hide broken incentives.
 - Add content validation for chief preferred/concern tags against memo option tags to protect coalition expressiveness as the memo set grows.
 
+What's done:
+
+- `runHeadlessBatch(N)` in `@brass-ledger/headless` runs N campaigns with option-cycling policy, collecting outcome distribution, score distribution, overload frequency per directorate, accepted-risk frequency per S-function, negotiation frequency, commitment fulfillment/breach rate, and per-option selection rates.
+- Dominant-option detection flags any option with >75% selection rate for its memo.
+- CLI `--batch N` flag runs the batch runner and emits structured telemetry (text or `--json`).
+- Content validation (`validate-content.ts`) now checks that every chief's `preferredTags` and `concernTags` have at least one matching memo option tag; fails with a clear error if coalition expressiveness is broken.
+- Scenario updated: `surge-exercises` carries `hollow` tag and `public-assurance-tour` carries `ad-hoc` tag, covering Chief Sato and Chief Navarro's concern tags.
+
 Next implementation slice:
 
-1. Add headless balance telemetry to batch/default runs: outcome distribution, staff overload frequency, accepted-risk frequency, staff negotiation use, commitment fulfillment/breach rate, and selected-option frequency.
-2. Add dominant-strategy detection over telemetry before expanding the event and memo catalog.
-3. Add content validation that chief preferred/concern tags are represented by scenario memo option tags.
+1. Expand event set from 6 to 20-30 events covering broader scenario arcs (alliance failures, tech disruption, domestic crises).
+2. Run `--batch 1000` to confirm no replay drift and check dominant-option report after event expansion.
+3. Add memo variants where telemetry shows concentrated selection (overused options) or mechanical redundancy.
 
 Exit criteria:
 
