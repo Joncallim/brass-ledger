@@ -146,14 +146,17 @@ What's done:
 - `runHeadlessBatch(N)` in `@brass-ledger/headless` runs N campaigns with option-cycling policy, collecting outcome distribution, score distribution, overload frequency per directorate, accepted-risk frequency per S-function, negotiation frequency, commitment fulfillment/breach rate, and per-option selection rates.
 - Dominant-option detection flags any option with >75% selection rate for its memo.
 - CLI `--batch N` flag runs the batch runner and emits structured telemetry (text or `--json`).
-- Content validation (`validate-content.ts`) now checks that every chief's `preferredTags` and `concernTags` have at least one matching memo option tag; fails with a clear error if coalition expressiveness is broken.
-- Scenario updated: `surge-exercises` carries `hollow` tag and `public-assurance-tour` carries `ad-hoc` tag, covering Chief Sato and Chief Navarro's concern tags.
+- Content validation (`validate-content.ts`) checks: chief preferred/concern tag coverage, event trigger-tag reachability (no silently-dead events), and event/memo constraint reference integrity.
+- Scenario updated: `surge-exercises` carries `hollow` tag and `public-assurance-tour` carries `ad-hoc` tag, covering Chief Sato and Chief Navarro concern tags.
+- Event set expanded from 6 to 26 events across 5 arcs (alliance, intelligence, domestic, sustainment, escalation). Fixed latent bug in `reserve-backlash` (trigger tag `"reserve"` did not exist in any option; changed to `"tempo-spike"`).
+- Scenario bumped to content version 0.5.0.
+- Batch telemetry from 27 campaigns: 18 won / 9 lost, score range 45–98, no dominant options. Training overload (40% of turns) and high commitment breach rate (75%) are flagged for balance work in next slice.
 
 Next implementation slice:
 
-1. Expand event set from 6 to 20-30 events covering broader scenario arcs (alliance failures, tech disruption, domestic crises).
-2. Run `--batch 1000` to confirm no replay drift and check dominant-option report after event expansion.
-3. Add memo variants where telemetry shows concentrated selection (overused options) or mechanical redundancy.
+1. Run `--batch 1000` to confirm no replay drift and check dominant-option report at scale.
+2. Add memo variants where telemetry shows concentrated selection (overused options) or mechanical redundancy.
+3. Address commitment breach rate: review commitment fulfillment thresholds or add events that aid fulfillment.
 
 Exit criteria:
 
