@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { readFile, writeFile } from "node:fs/promises";
-import { HeadlessAcceptedRiskError, runHeadlessCampaign } from "@brass-ledger/headless";
+import { HeadlessAcceptedRiskError, runHeadlessBatch, runHeadlessCampaign } from "@brass-ledger/headless";
 import {
   gameSessionSchema,
   sessionExportSchema,
@@ -10,6 +10,7 @@ import {
 
 type CliOptions = {
   turns: number;
+  batch: number | null;
   json: boolean;
   sprites: boolean;
   inputPath: string | null;
@@ -22,6 +23,7 @@ type CliOptions = {
 function readOptions(argv: string[]): CliOptions {
   const options: CliOptions = {
     turns: 1,
+    batch: null,
     json: false,
     sprites: false,
     inputPath: null,
@@ -37,6 +39,14 @@ function readOptions(argv: string[]): CliOptions {
     if (arg === "--sprites") options.sprites = true;
     if (arg === "--validate") options.validate = true;
     if (arg === "--auto-accept-risks") options.autoAcceptRisks = true;
+    if (arg === "--batch") {
+      const value = Number(argv[index + 1]);
+      if (!Number.isInteger(value) || value < 1) {
+        throw new Error("--batch must be a positive integer.");
+      }
+      options.batch = value;
+      index += 1;
+    }
     if (arg === "--turns") {
       const value = Number(argv[index + 1]);
       if (!Number.isInteger(value) || value < 0) {
@@ -93,6 +103,42 @@ async function readInputs(filePath: string | null) {
 }
 
 const options = readOptions(process.argv.slice(2));
+
+if (options.batch !== null) {
+  const telemetry = await runHeadlessBatch(options.batch);
+  if (options.json) {
+    console.log(JSON.stringify(telemetry, null, 2));
+  } else {
+    const { outcomeDistribution: od, scoreStats: ss, dominantOptions, overloadFrequency, acceptedRiskFrequency } = telemetry;
+    console.log(`Batch: ${telemetry.campaignCount} campaigns, ${telemetry.totalTurns} total turns`);
+    console.log(`Outcomes: ${od.won} won / ${od.lost} lost / ${od.active} active`);
+    console.log(`Score: min ${ss.min} p25 ${ss.p25} mean ${ss.mean} p75 ${ss.p75} max ${ss.max}`);
+    const fulfil = telemetry.commitmentFulfillmentRate;
+    const breach = telemetry.commitmentBreachRate;
+    if (fulfil !== null && breach !== null) {
+      console.log(`Commitments: ${(fulfil * 100).toFixed(0)}% fulfilled, ${(breach * 100).toFixed(0)}% breached`);
+    }
+    console.log(`Avg negotiations/campaign: ${telemetry.negotiationFrequency.toFixed(2)}`);
+    const overloadKeys = Object.keys(overloadFrequency).sort();
+    if (overloadKeys.length > 0) {
+      console.log(`Overload frequency per turn: ${overloadKeys.map((k) => `${k}=${(overloadFrequency[k] * 100).toFixed(0)}%`).join(" ")}`);
+    }
+    const riskKeys = Object.keys(acceptedRiskFrequency).sort();
+    if (riskKeys.length > 0) {
+      console.log(`Accepted-risk frequency per turn: ${riskKeys.map((k) => `${k}=${(acceptedRiskFrequency[k] * 100).toFixed(0)}%`).join(" ")}`);
+    }
+    if (dominantOptions.length > 0) {
+      console.log("DOMINANT OPTIONS DETECTED (>75% selection rate for their memo):");
+      for (const entry of dominantOptions) {
+        console.log(`  ${entry.memoId}:${entry.optionId} = ${(entry.selectionRate * 100).toFixed(0)}%`);
+      }
+    } else {
+      console.log("No dominant options detected.");
+    }
+  }
+  process.exit(0);
+}
+
 const session = await readSession(options.sessionPath);
 const inputs = await readInputs(options.inputPath);
 let output;
