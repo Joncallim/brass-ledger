@@ -106,6 +106,12 @@ for (const event of soloScenario.events) {
     throw new Error(`Duplicate event id: ${event.id}`);
   }
   eventIds.add(event.id);
+
+  for (const shift of event.constraintShifts) {
+    if (!constraintIds.has(shift.constraintId)) {
+      throw new Error(`Event ${event.id} references unknown constraint ${shift.constraintId}`);
+    }
+  }
 }
 
 const allOptionTags = new Set<string>();
@@ -113,6 +119,17 @@ for (const memo of soloScenario.memoTemplates) {
   for (const option of memo.options) {
     for (const tag of option.tags) {
       allOptionTags.add(tag);
+    }
+  }
+}
+
+for (const event of soloScenario.events) {
+  for (const tag of event.triggerTags) {
+    if (!allOptionTags.has(tag)) {
+      throw new Error(
+        `Event ${event.id} has triggerTag "${tag}" that does not appear in any memo option. ` +
+          `This event can never fire. Add the tag to a memo option or remove it from the event.`,
+      );
     }
   }
 }
