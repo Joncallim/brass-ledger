@@ -24,7 +24,7 @@ Backlink: [[POTATO]]
 
 ## Next Engine Pass
 
-The S1-S5 core mechanic, Stage 3 tech/industry model, and Stage 4 agent chiefs/negotiation layer are implemented and covered by engine/server tests. The active engine pass is Stage 5: content expansion and balance.
+The S1-S5 core mechanic, Stage 3 tech/industry model, Stage 4 agent chiefs/negotiation layer, and Stage 5 content expansion are all implemented and covered by tests. The active engine pass is Stage 6: browser interface rebuild.
 
 1. Give chiefs agenda memory across turns. Implemented: each chief now carries persistent focus tags, concern tags, last position, pressure, and notes from turn resolution and completed conversations.
 2. Let chiefs form support/objection coalitions around memo options and staff constraints. Implemented: resolved and previewed turns now expose chief coalitions with support, conditional, objection, staff-constraint, and negotiation-lever fields.
@@ -32,21 +32,21 @@ The S1-S5 core mechanic, Stage 3 tech/industry model, and Stage 4 agent chiefs/n
 4. Let the player negotiate staff constraints before committing a turn. Implemented: `TurnInput.staffNegotiations` applies bounded relief to a chosen directorate before resolution and charges an explicit political, readiness, or budget cost.
 5. Tie chief advice to explicit S1-S5 readout evidence. Implemented: `ChiefPositionEntry.staffReadoutEvidence` records the S1-S5 metric and burden rationale, conversations/headless/workbench surfaces expose it, and replay validation covers completed conversations followed by turn resolution.
 
-## Stage 5 Adjustment
+## Stage 5 Completion Notes
 
-Stage 5 should start with balance instrumentation, not raw content volume. The next content PR should add headless batch telemetry for outcome distribution, staff overload frequency, accepted-risk acknowledgements, staff negotiation use, commitment fulfillment/breach, and selected-option frequency. After that baseline exists, expand events and memo variants against measured gaps instead of adding content blind.
-
-The Stage 5 plan should also add content validation for chief preferred/concern tags against memo option tags. The current content validator catches duplicate chiefs, memos, options, events, and staff-capacity coverage, but tag drift can still silently weaken chief positions and coalition behavior as the content set grows.
+Stage 5 implemented balance instrumentation first, then content. Key findings from 100-campaign batch telemetry: plans overload (39%) is the primary realistic bottleneck; training overload was eliminated by fixing an optional-memo cycling bug in the batch runner; commitment breach rate (61%) is a cycling-policy artifact, not a player-facing balance problem. Content expanded to 32 events (6 arcs) and 5 memos with 4 posture options (including `tempo-hold`, the only zero-training-burden posture). No dominant options. Score distribution well-balanced. See [[development-stages]] Stage 5 section for full telemetry.
 
 ## Browser Rebuild Gate
 
-Do not rebuild the full interface until these engine contracts exist:
+All gate criteria are met. The Stage 6 rebuild can proceed.
 
-- `staffFunctions` array with S1-S5 labels and current values. Implemented.
+- `staffFunctions` array with S1-S5 labels, current values, and `failureMode`. Implemented.
 - `explainability` entries with causal references. Implemented.
-- `spriteSpecs` or `assetPrompts` for generated images. Advisor SVG payloads are available through CLI output; broader asset prompts remain future work.
-- `availableActions` or `decisionPackets` that are already presentation-ready. Memo packets exist; Stage 4 negotiation, coalition, and chief-position evidence contracts are now usable.
-- replay-safe save/import hardening from the backend review. Implemented.
+- Advisor SVG portraits available in the session roster. Bitmap sprite pipeline is a Stage 7+ concern.
+- Decision memo packets, chief coalitions, chief positions with S1-S5 readout evidence, negotiation candidates, and accepted-risk candidates are all available from the server API.
+- Replay-safe save/import hardening implemented and covered by server integration tests.
+
+See [[stage-6-gui-design]] for the full interface design.
 
 ## Long-Term USP Protection
 

@@ -33,6 +33,7 @@ Always consult this domain before changing game rules, interface direction, spri
 - [[development-stages]]
 - [[sprite-design-logic]]
 - [[backend-review/review-summary]]
+- [[stage-6-gui-design]]
 
 ## Current Direction
 
@@ -40,11 +41,12 @@ Brass Ledger is now a compile-able, headless-first game engine with browser, CLI
 
 Current implementation state:
 
-- Stage 3 tech/industry model is complete.
+- Stages 0–5 are complete. The engine runs deterministically, the CLI runs batch campaigns, and the content set is validated and balanced.
 - `@brass-ledger/headless` is shared by the compiled CLI and `POST /api/headless/run`.
 - Accepted-risk turns are explicit: supplied inputs must acknowledge projected S1-S5 warnings or opt into unattended auto-acceptance.
-- Stage 4 agent chiefs and negotiation is complete. Chief agenda memory is persisted by turn resolution and completed chief conversations. Chief support/objection coalitions are exposed for selected memo options with staff-constraint negotiation levers. Completed chief conversations create deterministic active commitments unless the commander explicitly defers. Staff-constraint negotiations are explicit turn-input choices that relieve directorate burden before resolution at political, readiness, or budget cost. Chief positions now carry explicit S1-S5 staff readout evidence, and replay validation supports completed conversations followed by later turn resolution.
-- Stage 5 content expansion is active. Begin with headless balance telemetry and tag validation, then expand events and memo variants against measured gaps.
+- Stage 4 agent chiefs and negotiation is complete. Chief agenda memory, coalitions, commitments, negotiations, and S1-S5 staff readout evidence are all implemented and test-covered.
+- Stage 5 content expansion is complete. Balance telemetry, dominant-strategy detection, content validation, 32-event catalog (content v0.6.0), and `tempo-hold` posture option are all shipped. No dominant options. Score distribution is well-balanced.
+- Stage 6 browser interface rebuild is next. The server API is complete. The UI model and design system are in [[s1-s5-user-interface-model]] and [[game-engine-review/05-browser-design-system]]. The detailed Stage 6 design is in [[stage-6-gui-design]].
 
 ## Knowledge Repository Split
 
