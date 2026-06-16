@@ -88,16 +88,25 @@ function inputWithAcceptedRiskPolicy(session: GameSession, input: TurnInput, aut
 
 function batchInput(session: GameSession, campaignIndex: number): TurnInput {
   const memos = deriveDecisionMemos(soloScenario, session.state);
+  // Track how many campaigns have actually included the optional memo so far.
+  // Every 3rd campaign (ci % 3 === 0) skips it; the rest include it.
+  // Formula: campaigns included = ci - floor((ci + 2) / 3)
+  // This lets us cycle through the optional memo's options independently of the skip pattern,
+  // so all options (including deception-grid at index 1) get equal selection frequency.
+  const optionalIncludeCount = campaignIndex - Math.floor((campaignIndex + 2) / 3);
   return {
     turn: session.state.turn,
     selectedActionIds: [],
     acceptedRiskOverrides: [],
     staffNegotiations: [],
     selections: memos.map((memo, memoIndex) => {
-      if (memo.optional && campaignIndex % 3 === 0) return null;
+      if (memo.optional) {
+        if (campaignIndex % 3 === 0) return null;
+        const optionId = memo.options[optionalIncludeCount % memo.options.length]?.id ?? "";
+        return { memoId: memo.id, optionId };
+      }
       const optionIndex = (campaignIndex + memoIndex) % memo.options.length;
-      const optionId = memo.options[optionIndex]?.id ?? memo.options[0]?.id ?? "";
-      return { memoId: memo.id, optionId };
+      return { memoId: memo.id, optionId: memo.options[optionIndex]?.id ?? memo.options[0]?.id ?? "" };
     }).filter((sel): sel is { memoId: string; optionId: string } => sel !== null),
   };
 }
