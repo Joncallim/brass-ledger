@@ -2,16 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ================================================================== */
+/* Brass Ledger — Command Workbench design system                     */
+/* Dark "operations console" identity built on the project's          */
+/* committed brand palette (deep teal canvas + brass accent).         */
+/* Reconciles three design skills:                                    */
+/*  - impeccable (product register): restraint, one type family,      */
+/*    semantic state vocabulary, no orchestrated page-load motion,     */
+/*    identity preservation over a fresh palette.                      */
+/*  - ui-ux-pro-max: data-dense dashboard, status colours, a11y/       */
+/*    contrast/focus/reduced-motion checklist, 150–300ms transitions.  */
+/*  - emil-design-eng: GPU-only motion, strong ease-out, press         */
+/*    feedback, interruptible transitions, reduced-motion respected.   */
+/* ================================================================== */
+
 :root {
-  color: #1f2933;
-  background: #f4f1e8;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  /* Surfaces — deep teal command console, brand-tinted neutrals. */
+  --canvas: #091217;
+  --surface: #0f1d24;
+  --surface-2: #13242d;
+  --surface-3: #18313c;
+  --line: #21343d;
+  --line-strong: #2d4651;
+
+  /* Ink — primary/secondary/tertiary, all AA on canvas + surfaces. */
+  --ink: #e6efe9;
+  --ink-dim: #aec3bc;
+  --muted: #8aa39d;
+
+  /* Accent — brass gold. Primary actions, selection, current state. */
+  --accent: #d4af37;
+  --accent-hover: #e2c258;
+  --accent-ink: #0a1014;
+  --accent-soft: rgba(212, 175, 55, 0.14);
+  --accent-line: rgba(212, 175, 55, 0.4);
+
+  /* Semantic status. */
+  --success: #6cc08c;
+  --success-soft: rgba(108, 192, 140, 0.14);
+  --warning: #e0ad48;
+  --danger: #e58072;
+  --danger-soft: rgba(229, 128, 114, 0.13);
+  --danger-line: rgba(229, 128, 114, 0.45);
+
+  /* Type scale — fixed rem, ~1.2 ratio (product register). */
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.625rem;
+
+  /* 4px spacing rhythm. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+
+  /* Elevation — soft, low, dark-native. */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+
+  /* Semantic z-index scale (never arbitrary 999/9999). */
+  --z-sticky: 100;
+  --z-toast: 400;
 
   /* Strong custom curves — built-in CSS easings are too weak. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
+  color: var(--ink);
+  background: var(--canvas);
+  color-scheme: dark;
+  font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 * {
@@ -21,295 +95,480 @@
 body {
   margin: 0;
   min-width: 320px;
-  background: #f4f1e8;
+  min-height: 100dvh;
+  background:
+    radial-gradient(1200px 620px at 78% -8%, rgba(212, 175, 55, 0.05), transparent 60%),
+    radial-gradient(900px 600px at -5% 4%, rgba(40, 84, 96, 0.18), transparent 55%),
+    var(--canvas);
+  background-attachment: fixed;
+  color: var(--ink);
 }
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  text-wrap: balance;
+}
+
+/* Accessible focus ring on every interactive element. */
+:where(button, input, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ------------------------------------------------------------------ */
+/* Buttons — full state set: default/hover/focus/active/disabled.      */
+/* ------------------------------------------------------------------ */
 
 button {
-  border: 1px solid #1f2933;
-  border-radius: 4px;
-  background: #ffffff;
-  color: #1f2933;
-  cursor: pointer;
   font: inherit;
-  padding: 8px 10px;
-  /* GPU-only props; press feedback should feel instant. */
-  transition: transform 140ms var(--ease-out), opacity 140ms var(--ease-out), background-color 140ms ease;
 }
 
-/* Instant feedback on press — the UI confirms it heard the user. */
-button:not(:disabled):active {
-  transform: scale(0.97);
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    transform 140ms var(--ease-out),
+    background-color 160ms ease,
+    border-color 160ms ease,
+    opacity 160ms ease;
 }
 
-/* Gate hover behind a real pointer so touch taps don't trigger false hovers. */
 @media (hover: hover) and (pointer: fine) {
-  button:not(:disabled):hover {
-    background: #fffdf7;
+  .btn:not(:disabled):hover {
+    background: var(--surface-3);
+    border-color: var(--muted);
   }
 }
 
-button:disabled {
+/* Instant press feedback — the UI confirms it heard the user. */
+.btn:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
-button:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
+/* Exactly one primary CTA on the surface (commit the turn). */
+.btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
 }
 
-pre {
-  margin: 0;
-  max-height: 680px;
-  overflow: auto;
-  border: 1px solid #d7d0c0;
-  background: #fffdf7;
-  color: #1f2933;
-  font-size: 12px;
-  line-height: 1.55;
-  padding: 14px;
-  white-space: pre-wrap;
+@media (hover: hover) and (pointer: fine) {
+  .btn--primary:not(:disabled):hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+  }
 }
 
-.engine-shell {
+/* ------------------------------------------------------------------ */
+/* App shell + masthead                                                */
+/* ------------------------------------------------------------------ */
+
+.app {
   display: grid;
-  gap: 16px;
-  min-height: 100vh;
-  padding: 20px;
+  gap: var(--space-4);
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: clamp(var(--space-4), 3vw, var(--space-8));
 }
 
-.engine-header {
+.app-bar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 20px;
-  align-items: start;
-  border: 1px solid #c9c0ad;
-  background: #fffaf0;
-  padding: 18px;
+  gap: var(--space-5);
+  align-items: end;
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  box-shadow: var(--shadow-2);
 }
 
-.engine-header h1 {
-  margin: 0;
-  font-size: 24px;
-  line-height: 1.2;
+.app-bar__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
-.engine-header p {
-  max-width: 860px;
-  margin: 8px 0 0;
-  color: #52606d;
+.app-bar__eyebrow::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.app-bar__title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.app-bar__lede {
+  max-width: 64ch;
+  margin: var(--space-2) 0 0;
+  color: var(--ink-dim);
+  font-size: var(--text-base);
   line-height: 1.6;
+  text-wrap: pretty;
 }
 
-.engine-kicker {
-  margin: 0 0 6px !important;
-  color: #7b5f28 !important;
-  font-size: 12px;
-}
-
-.engine-actions {
+.app-bar__actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: end;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
-.engine-status,
-.engine-error {
-  border: 1px solid #c9c0ad;
-  background: #fffaf0;
-  padding: 10px 12px;
-  font-size: 13px;
+/* ------------------------------------------------------------------ */
+/* Status line + error alert                                           */
+/* ------------------------------------------------------------------ */
+
+.statusline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink-dim);
+  font-size: var(--text-sm);
 }
 
-.engine-error {
-  border-color: #b42318;
-  background: #fff1f0;
-  color: #7a271a;
+.statusline__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 4px var(--success-soft);
 }
 
-.engine-grid {
+.statusline__dot[data-busy="true"] {
+  background: var(--warning);
+  box-shadow: 0 0 0 4px rgba(224, 173, 72, 0.16);
+  animation: pulse 1.4s var(--ease-out) infinite;
+}
+
+.alert {
+  display: flex;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--danger-line);
+  border-radius: var(--radius);
+  background: var(--danger-soft);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  animation: alert-in 200ms var(--ease-out) both;
+}
+
+.alert__icon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--danger);
+}
+
+/* ------------------------------------------------------------------ */
+/* Panels                                                              */
+/* ------------------------------------------------------------------ */
+
+.panel-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: var(--space-4);
   align-items: start;
 }
 
-.engine-panel {
-  border: 1px solid #c9c0ad;
-  background: #fffaf0;
-  padding: 14px;
+.panel {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
 }
 
-.engine-panel h2 {
-  margin: 0 0 12px;
-  font-size: 15px;
+.panel__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: var(--space-4);
 }
 
-.engine-panel p {
+.panel__title {
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.panel__note {
   margin: 0;
-  color: #52606d;
-  font-size: 13px;
+  color: var(--ink-dim);
+  font-size: var(--text-sm);
   line-height: 1.6;
 }
 
-.accepted-risk-panel {
-  display: grid;
-  gap: 12px;
-}
-
-.accepted-risk-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: start;
-}
-
-.accepted-risk-header h2 {
-  margin-bottom: 0;
-}
-
-.risk-count {
-  border: 1px solid #8a6d33;
-  background: #fff5d6;
-  color: #5f4314;
-  font-size: 12px;
-  line-height: 1.2;
-  padding: 6px 8px;
+/* Count pill — neutral / ready / active variants. */
+.pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-dim);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  /* Crossfade the colour when the docket flips to "ready". */
-  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
 }
 
-.risk-count-ready {
-  border-color: #166534;
-  background: #ecfdf3;
-  color: #14532d;
+.pill--ready {
+  border-color: rgba(108, 192, 140, 0.5);
+  background: var(--success-soft);
+  color: var(--success);
 }
 
-.risk-choice-list {
+.pill--active {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------------------ */
+/* Data readout — the engine is the source of truth, so the JSON is    */
+/* a first-class terminal surface, not an afterthought.                */
+/* ------------------------------------------------------------------ */
+
+.readout {
+  margin: 0;
+  max-height: 640px;
+  overflow: auto;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #0a161b;
+  color: var(--ink-dim);
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* ------------------------------------------------------------------ */
+/* Selectable rows (accepted-risk docket + staff negotiations)         */
+/* States: default / hover / focus-within / selected.                  */
+/* ------------------------------------------------------------------ */
+
+.choice-list {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
-.risk-choice {
+.choice {
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
-  gap: 10px;
+  gap: var(--space-3);
   align-items: start;
-  border: 1px solid #d7d0c0;
-  background: #fffdf7;
-  padding: 10px;
-  font-size: 13px;
-  line-height: 1.45;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
 }
 
-.risk-choice input {
+@media (hover: hover) and (pointer: fine) {
+  .choice:hover {
+    border-color: var(--line-strong);
+    background: var(--surface-3);
+  }
+}
+
+.choice:focus-within {
+  border-color: var(--accent-line);
+}
+
+/* Selected state — accent tint, current per product register. */
+.choice:has(input:checked) {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.choice input {
   width: 16px;
   height: 16px;
-  margin: 1px 0 0;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
-.risk-choice span {
+.choice__body {
   display: grid;
-  gap: 3px;
-}
-
-.risk-choice strong {
-  color: #7b5f28;
-}
-
-.chief-evidence-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 10px;
-}
-
-.chief-evidence-card {
-  display: grid;
-  gap: 8px;
+  gap: var(--space-1);
   min-width: 0;
-  border: 1px solid #d7d0c0;
-  background: #fffdf7;
-  padding: 10px;
 }
 
-.chief-evidence-card div {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: baseline;
-  font-size: 13px;
+.choice__code {
+  color: var(--accent);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
-.chief-evidence-card strong,
-.chief-evidence-card span,
-.chief-evidence-card p {
+.choice__text {
+  color: var(--ink-dim);
   overflow-wrap: anywhere;
 }
 
-.chief-evidence-card span {
-  color: #7b5f28;
-  font-size: 12px;
+/* ------------------------------------------------------------------ */
+/* Evidence cards (chief positions)                                    */
+/* ------------------------------------------------------------------ */
+
+.evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
+  gap: var(--space-3);
 }
+
+.evidence {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.evidence__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.evidence__name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.evidence__position {
+  flex: none;
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.evidence__rationale {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------ */
+/* Advisor sprite roster                                               */
+/* ------------------------------------------------------------------ */
 
 .sprite-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
 }
 
-.sprite-grid figure {
+.sprite {
   margin: 0;
-  border: 1px solid #d7d0c0;
-  background: #fffdf7;
-  padding: 10px;
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
 }
 
-.sprite-grid img {
+.sprite img {
   display: block;
   width: 100%;
   aspect-ratio: 6 / 7;
   object-fit: cover;
-  border: 1px solid #e4ded0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
 }
 
-.sprite-grid figcaption {
+.sprite figcaption {
   display: grid;
-  gap: 3px;
-  margin-top: 8px;
-  font-size: 11px;
+  gap: 2px;
+  margin-top: var(--space-2);
+  padding: 0 var(--space-1);
+  font-size: var(--text-xs);
   line-height: 1.35;
 }
 
-.sprite-grid span {
-  color: #52606d;
+.sprite figcaption strong {
+  font-weight: 600;
 }
 
-@media (max-width: 920px) {
-  .engine-header,
-  .engine-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .engine-actions {
-    justify-content: start;
-  }
+.sprite figcaption span {
+  color: var(--muted);
 }
 
 /* ------------------------------------------------------------------ */
 /* Motion                                                              */
-/* Built per the emil-design-eng craft bar: GPU-only transform/opacity,*/
-/* strong custom ease-out, sub-300ms feel, staggered entrances for     */
-/* occasional content, and reduced-motion + hover gating honoured.     */
+/* Product register: motion conveys state, not page-load choreography. */
+/* List items stagger on arrival (data landed); no whole-shell reveal. */
 /* ------------------------------------------------------------------ */
 
-/* Panels enter on first paint, masking the jarring pop-in of loaded
-   content. ease-out so the movement reads immediately. */
-@keyframes panel-enter {
+@keyframes alert-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(-6px);
   }
   to {
     opacity: 1;
@@ -317,110 +576,72 @@ pre {
   }
 }
 
-.engine-shell > * {
-  animation: panel-enter 280ms var(--ease-out) both;
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
 }
 
-/* Short 45ms cascade — long enough to read as sequential, short enough
-   to never feel slow. Stagger is decorative; it blocks nothing. */
-.engine-shell > *:nth-child(1) {
-  animation-delay: 0ms;
+@keyframes item-enter {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.engine-shell > *:nth-child(2) {
+
+/* These nodes mount in response to a user action (load / preview),
+   so a short staggered entrance signals "new data arrived". */
+.choice,
+.evidence,
+.sprite {
+  animation: item-enter 240ms var(--ease-out) both;
+}
+
+.choice-list .choice:nth-child(2),
+.evidence-grid .evidence:nth-child(2),
+.sprite-grid .sprite:nth-child(2) {
   animation-delay: 45ms;
 }
-.engine-shell > *:nth-child(3) {
+.choice-list .choice:nth-child(3),
+.evidence-grid .evidence:nth-child(3),
+.sprite-grid .sprite:nth-child(3) {
   animation-delay: 90ms;
 }
-.engine-shell > *:nth-child(4) {
+.choice-list .choice:nth-child(4),
+.evidence-grid .evidence:nth-child(4),
+.sprite-grid .sprite:nth-child(4) {
   animation-delay: 135ms;
 }
-.engine-shell > *:nth-child(5) {
+.choice-list .choice:nth-child(n + 5),
+.evidence-grid .evidence:nth-child(n + 5),
+.sprite-grid .sprite:nth-child(n + 5) {
   animation-delay: 180ms;
 }
-.engine-shell > *:nth-child(6) {
-  animation-delay: 225ms;
-}
-.engine-shell > *:nth-child(7) {
-  animation-delay: 270ms;
-}
-.engine-shell > *:nth-child(n + 8) {
-  animation-delay: 300ms;
-}
 
-/* The error banner is a status change, not page furniture — re-enter it
-   from its own origin every time it appears so it draws the eye. */
-.engine-error {
-  animation: panel-enter 220ms var(--ease-out) both;
-}
-
-/* Cards arrive after a preview/load (an occasional action), so a light
-   staggered entrance gives feedback that fresh data landed. These nodes
-   re-mount on each preview, replaying the cue. */
-@keyframes card-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.risk-choice,
-.chief-evidence-card,
-.sprite-grid figure {
-  animation: card-enter 280ms var(--ease-out) both;
-}
-
-.risk-choice-list .risk-choice:nth-child(2),
-.chief-evidence-grid .chief-evidence-card:nth-child(2),
-.sprite-grid figure:nth-child(2) {
-  animation-delay: 50ms;
-}
-.risk-choice-list .risk-choice:nth-child(3),
-.chief-evidence-grid .chief-evidence-card:nth-child(3),
-.sprite-grid figure:nth-child(3) {
-  animation-delay: 100ms;
-}
-.risk-choice-list .risk-choice:nth-child(4),
-.chief-evidence-grid .chief-evidence-card:nth-child(4),
-.sprite-grid figure:nth-child(4) {
-  animation-delay: 150ms;
-}
-.risk-choice-list .risk-choice:nth-child(n + 5),
-.chief-evidence-grid .chief-evidence-card:nth-child(n + 5),
-.sprite-grid figure:nth-child(n + 5) {
-  animation-delay: 200ms;
-}
-
-/* Selectable rows respond to hover with a quick border lift — gated so
-   touch taps don't fire a stuck hover state. */
-.risk-choice {
-  transition: border-color 160ms ease, background-color 160ms ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .risk-choice:hover {
-    border-color: #b6ab90;
-    background: #fffef9;
-  }
-}
-
-/* Reduced motion: keep the comprehension cue (a gentle fade) but drop all
-   positional movement and the press-scale. */
+/* Reduced motion: keep a gentle fade for comprehension, drop movement
+   and the press-scale. Not optional. */
 @media (prefers-reduced-motion: reduce) {
-  .engine-shell > *,
-  .engine-error,
-  .risk-choice,
-  .chief-evidence-card,
-  .sprite-grid figure {
-    animation: reduced-fade 200ms ease both;
-    animation-delay: 0ms;
+  .choice,
+  .evidence,
+  .sprite,
+  .alert {
+    animation: reduced-fade 180ms ease both;
+    animation-delay: 0ms !important;
   }
 
-  button:not(:disabled):active {
+  .statusline__dot[data-busy="true"] {
+    animation: none;
+  }
+
+  .btn:not(:disabled):active {
     transform: none;
   }
 
@@ -431,5 +652,30 @@ pre {
     to {
       opacity: 1;
     }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive — structural, not fluid type (product register).        */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 1024px) {
+  .panel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-bar {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .app-bar__actions {
+    justify-content: start;
+  }
+
+  .btn {
+    flex: 1 1 auto;
   }
 }
