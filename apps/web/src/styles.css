@@ -8,6 +8,10 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+
+  /* Strong custom curves — built-in CSS easings are too weak. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
 * {
@@ -28,6 +32,20 @@ button {
   cursor: pointer;
   font: inherit;
   padding: 8px 10px;
+  /* GPU-only props; press feedback should feel instant. */
+  transition: transform 140ms var(--ease-out), opacity 140ms var(--ease-out), background-color 140ms ease;
+}
+
+/* Instant feedback on press — the UI confirms it heard the user. */
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* Gate hover behind a real pointer so touch taps don't trigger false hovers. */
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled):hover {
+    background: #fffdf7;
+  }
 }
 
 button:disabled {
@@ -159,6 +177,8 @@ pre {
   line-height: 1.2;
   padding: 6px 8px;
   white-space: nowrap;
+  /* Crossfade the colour when the docket flips to "ready". */
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
 }
 
 .risk-count-ready {
@@ -274,5 +294,142 @@ pre {
 
   .engine-actions {
     justify-content: start;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion                                                              */
+/* Built per the emil-design-eng craft bar: GPU-only transform/opacity,*/
+/* strong custom ease-out, sub-300ms feel, staggered entrances for     */
+/* occasional content, and reduced-motion + hover gating honoured.     */
+/* ------------------------------------------------------------------ */
+
+/* Panels enter on first paint, masking the jarring pop-in of loaded
+   content. ease-out so the movement reads immediately. */
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.engine-shell > * {
+  animation: panel-enter 280ms var(--ease-out) both;
+}
+
+/* Short 45ms cascade — long enough to read as sequential, short enough
+   to never feel slow. Stagger is decorative; it blocks nothing. */
+.engine-shell > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.engine-shell > *:nth-child(2) {
+  animation-delay: 45ms;
+}
+.engine-shell > *:nth-child(3) {
+  animation-delay: 90ms;
+}
+.engine-shell > *:nth-child(4) {
+  animation-delay: 135ms;
+}
+.engine-shell > *:nth-child(5) {
+  animation-delay: 180ms;
+}
+.engine-shell > *:nth-child(6) {
+  animation-delay: 225ms;
+}
+.engine-shell > *:nth-child(7) {
+  animation-delay: 270ms;
+}
+.engine-shell > *:nth-child(n + 8) {
+  animation-delay: 300ms;
+}
+
+/* The error banner is a status change, not page furniture — re-enter it
+   from its own origin every time it appears so it draws the eye. */
+.engine-error {
+  animation: panel-enter 220ms var(--ease-out) both;
+}
+
+/* Cards arrive after a preview/load (an occasional action), so a light
+   staggered entrance gives feedback that fresh data landed. These nodes
+   re-mount on each preview, replaying the cue. */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.risk-choice,
+.chief-evidence-card,
+.sprite-grid figure {
+  animation: card-enter 280ms var(--ease-out) both;
+}
+
+.risk-choice-list .risk-choice:nth-child(2),
+.chief-evidence-grid .chief-evidence-card:nth-child(2),
+.sprite-grid figure:nth-child(2) {
+  animation-delay: 50ms;
+}
+.risk-choice-list .risk-choice:nth-child(3),
+.chief-evidence-grid .chief-evidence-card:nth-child(3),
+.sprite-grid figure:nth-child(3) {
+  animation-delay: 100ms;
+}
+.risk-choice-list .risk-choice:nth-child(4),
+.chief-evidence-grid .chief-evidence-card:nth-child(4),
+.sprite-grid figure:nth-child(4) {
+  animation-delay: 150ms;
+}
+.risk-choice-list .risk-choice:nth-child(n + 5),
+.chief-evidence-grid .chief-evidence-card:nth-child(n + 5),
+.sprite-grid figure:nth-child(n + 5) {
+  animation-delay: 200ms;
+}
+
+/* Selectable rows respond to hover with a quick border lift — gated so
+   touch taps don't fire a stuck hover state. */
+.risk-choice {
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .risk-choice:hover {
+    border-color: #b6ab90;
+    background: #fffef9;
+  }
+}
+
+/* Reduced motion: keep the comprehension cue (a gentle fade) but drop all
+   positional movement and the press-scale. */
+@media (prefers-reduced-motion: reduce) {
+  .engine-shell > *,
+  .engine-error,
+  .risk-choice,
+  .chief-evidence-card,
+  .sprite-grid figure {
+    animation: reduced-fade 200ms ease both;
+    animation-delay: 0ms;
+  }
+
+  button:not(:disabled):active {
+    transform: none;
+  }
+
+  @keyframes reduced-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 }
