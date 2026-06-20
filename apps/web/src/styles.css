@@ -6,14 +6,13 @@
 /* Brass Ledger — Command Workbench design system                     */
 /* Dark "operations console" identity built on the project's          */
 /* committed brand palette (deep teal canvas + brass accent).         */
-/* Reconciles three design skills:                                    */
-/*  - impeccable (product register): restraint, one type family,      */
-/*    semantic state vocabulary, no orchestrated page-load motion,     */
-/*    identity preservation over a fresh palette.                      */
-/*  - ui-ux-pro-max: data-dense dashboard, status colours, a11y/       */
-/*    contrast/focus/reduced-motion checklist, 150–300ms transitions.  */
-/*  - emil-design-eng: GPU-only motion, strong ease-out, press         */
-/*    feedback, interruptible transitions, reduced-motion respected.   */
+/* Principles:                                                         */
+/*  - Restraint: one type family, semantic state vocabulary, no        */
+/*    orchestrated page-load motion, identity preserved over palette.  */
+/*  - Data density: dashboard-grade layout, status colours, a11y       */
+/*    contrast/focus/reduced-motion handling, 150–300ms transitions.   */
+/*  - Motion: GPU-only transforms, strong ease-out, press feedback,    */
+/*    interruptible transitions, reduced-motion respected.             */
 /* ================================================================== */
 
 :root {
