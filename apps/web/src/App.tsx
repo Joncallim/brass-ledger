@@ -282,46 +282,81 @@ export function App() {
   }, []);
 
   return (
-    <main className="engine-shell">
-      <section className="engine-header">
+    <main className="app">
+      <header className="app-bar">
         <div>
-          <p className="engine-kicker">Brass Ledger engine</p>
-          <h1>Headless text and sprite workbench</h1>
-          <p>{scenario?.description ?? "Scenario metadata is loading from the backend."}</p>
+          <p className="app-bar__eyebrow">Brass Ledger Engine</p>
+          <h1 className="app-bar__title">Command Workbench</h1>
+          <p className="app-bar__lede">{scenario?.description ?? "Scenario metadata is loading from the backend."}</p>
         </div>
-        <div className="engine-actions">
-          <button type="button" onClick={() => void loadLatest()} disabled={busy}>
+        <div className="app-bar__actions">
+          <button type="button" className="btn" onClick={() => void loadLatest()} disabled={busy}>
             Load latest
           </button>
-          <button type="button" onClick={() => void startSession()} disabled={busy}>
+          <button type="button" className="btn" onClick={() => void startSession()} disabled={busy}>
             New session
           </button>
-          <button type="button" onClick={() => void previewDefaultTurn()} disabled={busy || !session}>
+          <button type="button" className="btn" onClick={() => void previewDefaultTurn()} disabled={busy || !session}>
             Preview text turn
           </button>
-          <button type="button" onClick={() => void resolveDefaultTurn()} disabled={busy || !session || !acceptedRisksReady}>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => void resolveDefaultTurn()}
+            disabled={busy || !session || !acceptedRisksReady}
+          >
             Resolve accepted turn
           </button>
         </div>
-      </section>
+      </header>
 
-      {error && <div className="engine-error">{error}</div>}
-      <div className="engine-status">{status}</div>
+      {error && (
+        <div className="alert" role="alert">
+          <svg className="alert__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M12 9v4m0 4h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.7 3.86a2 2 0 0 0-3.42 0Z"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span>{error}</span>
+        </div>
+      )}
 
-      <section className="engine-grid">
-        <article className="engine-panel">
-          <h2>Engine Output</h2>
-          <pre>{JSON.stringify(preview ? previewSnapshot(preview) : snapshot, null, 2)}</pre>
+      <div className="statusline" role="status" aria-live="polite">
+        <span className="statusline__dot" data-busy={busy ? "true" : "false"} aria-hidden="true" />
+        <span>{status}</span>
+      </div>
+
+      <section className="panel-grid">
+        <article className="panel" aria-labelledby="engine-output-heading">
+          <div className="panel__head">
+            <div>
+              <h2 className="panel__title" id="engine-output-heading">
+                Engine Output
+              </h2>
+            </div>
+          </div>
+          <pre className="readout">{JSON.stringify(preview ? previewSnapshot(preview) : snapshot, null, 2)}</pre>
         </article>
 
-        <aside className="engine-panel">
-          <h2>Generated Sprites</h2>
+        <aside className="panel" aria-labelledby="sprites-heading">
+          <div className="panel__head">
+            <div>
+              <h2 className="panel__title" id="sprites-heading">
+                Generated Sprites
+              </h2>
+            </div>
+            {spriteRoster.length > 0 && <span className="pill">{spriteRoster.length} sprites</span>}
+          </div>
           {spriteRoster.length === 0 ? (
-            <p>No sprites yet. Create or load a session to generate the advisor roster.</p>
+            <p className="panel__note">No sprites yet. Create or load a session to generate the advisor roster.</p>
           ) : (
             <div className="sprite-grid">
               {spriteRoster.map((advisor) => (
-                <figure key={advisor.chiefId}>
+                <figure className="sprite" key={advisor.chiefId}>
                   <img src={buildAdvisorPortraitDataUri(advisor.portrait)} alt={`${advisor.displayName} generated sprite`} />
                   <figcaption>
                     <strong>{advisor.displayName}</strong>
@@ -334,28 +369,29 @@ export function App() {
         </aside>
       </section>
 
-      <section className="engine-panel accepted-risk-panel" aria-labelledby="accepted-risk-heading">
-        <div className="accepted-risk-header">
+      <section className="panel" aria-labelledby="accepted-risk-heading">
+        <div className="panel__head">
           <div>
-            <p className="engine-kicker">Turn commitment</p>
-            <h2 id="accepted-risk-heading">Accepted Risk Docket</h2>
+            <h2 className="panel__title" id="accepted-risk-heading">
+              Accepted Risk Docket
+            </h2>
           </div>
           {previewMatchesCurrentTurn && (
-            <span className={acceptedRisksReady ? "risk-count risk-count-ready" : "risk-count"}>
+            <span className={acceptedRisksReady ? "pill pill--ready" : "pill"}>
               {acceptedRiskCount}/{acceptedRiskCandidates.length} accepted
             </span>
           )}
         </div>
         {!previewMatchesCurrentTurn ? (
-          <p>Preview a turn to review projected S1-S5 warnings.</p>
+          <p className="panel__note">Preview a turn to review projected S1-S5 warnings.</p>
         ) : acceptedRiskCandidates.length === 0 ? (
-          <p>No accepted-risk warnings projected for this turn.</p>
+          <p className="panel__note">No accepted-risk warnings projected for this turn.</p>
         ) : (
-          <div className="risk-choice-list">
+          <div className="choice-list">
             {acceptedRiskCandidates.map((risk) => {
               const key = acceptedRiskKey(risk);
               return (
-                <label className="risk-choice" key={key}>
+                <label className="choice" key={key}>
                   <input
                     type="checkbox"
                     checked={acceptedRiskChoices[key] === true}
@@ -364,9 +400,9 @@ export function App() {
                       setAcceptedRiskChoices((choices) => setAcceptedRiskChoice(choices, risk, accepted));
                     }}
                   />
-                  <span>
-                    <strong>{risk.staffFunctionId}</strong>
-                    {risk.warningText}
+                  <span className="choice__body">
+                    <strong className="choice__code">{risk.staffFunctionId}</strong>
+                    <span className="choice__text">{risk.warningText}</span>
                   </span>
                 </label>
               );
@@ -375,30 +411,31 @@ export function App() {
         )}
       </section>
 
-      <section className="engine-panel" aria-labelledby="staff-negotiation-heading">
-        <div className="accepted-risk-header">
+      <section className="panel" aria-labelledby="staff-negotiation-heading">
+        <div className="panel__head">
           <div>
-            <p className="engine-kicker">Before commit</p>
-            <h2 id="staff-negotiation-heading">Staff Negotiations</h2>
+            <h2 className="panel__title" id="staff-negotiation-heading">
+              Staff Negotiations
+            </h2>
           </div>
-          <span className="risk-count">{staffNegotiations.length} active</span>
+          <span className={staffNegotiations.length > 0 ? "pill pill--active" : "pill"}>{staffNegotiations.length} active</span>
         </div>
         {negotiationCandidates.length === 0 ? (
-          <p>Preview a turn to identify constrained staff lanes.</p>
+          <p className="panel__note">Preview a turn to identify constrained staff lanes.</p>
         ) : (
-          <div className="risk-choice-list">
+          <div className="choice-list">
             {negotiationCandidates.map((directorate) => {
               const active = staffNegotiations.some((entry) => entry.directorate === directorate);
               return (
-                <label className="risk-choice" key={directorate}>
+                <label className="choice" key={directorate}>
                   <input
                     type="checkbox"
                     checked={active}
                     onChange={(event) => updateNegotiation(directorate, event.currentTarget.checked)}
                   />
-                  <span>
-                    <strong>{directorate}</strong>
-                    Relieve 1 burden point for political cover.
+                  <span className="choice__body">
+                    <strong className="choice__code">{directorate}</strong>
+                    <span className="choice__text">Relieve 1 burden point for political cover.</span>
                   </span>
                 </label>
               );
@@ -407,34 +444,41 @@ export function App() {
         )}
       </section>
 
-      <section className="engine-panel" aria-labelledby="chief-evidence-heading">
-        <div className="accepted-risk-header">
+      <section className="panel" aria-labelledby="chief-evidence-heading">
+        <div className="panel__head">
           <div>
-            <p className="engine-kicker">Chief positions</p>
-            <h2 id="chief-evidence-heading">S1-S5 Evidence</h2>
+            <h2 className="panel__title" id="chief-evidence-heading">
+              S1-S5 Evidence
+            </h2>
           </div>
-          <span className="risk-count">{visibleChiefPositions.length} reads</span>
+          <span className="pill">{visibleChiefPositions.length} reads</span>
         </div>
         {visibleChiefPositions.length === 0 ? (
-          <p>No chief positions available.</p>
+          <p className="panel__note">No chief positions available.</p>
         ) : (
-          <div className="chief-evidence-grid">
+          <div className="evidence-grid">
             {visibleChiefPositions.slice(0, 12).map((position) => (
-              <article className="chief-evidence-card" key={`${position.chiefId}:${position.memoId}:${position.optionId}`}>
-                <div>
-                  <strong>{position.chiefName}</strong>
-                  <span>{position.position.replace("_", " ")}</span>
+              <article className="evidence" key={`${position.chiefId}:${position.memoId}:${position.optionId}`}>
+                <div className="evidence__head">
+                  <strong className="evidence__name">{position.chiefName}</strong>
+                  <span className="evidence__position">{position.position.replace("_", " ")}</span>
                 </div>
-                <p>{position.staffReadoutEvidence.rationale}</p>
+                <p className="evidence__rationale">{position.staffReadoutEvidence.rationale}</p>
               </article>
             ))}
           </div>
         )}
       </section>
 
-      <section className="engine-panel">
-        <h2>Scenario Contract</h2>
-        <pre>
+      <section className="panel" aria-labelledby="scenario-contract-heading">
+        <div className="panel__head">
+          <div>
+            <h2 className="panel__title" id="scenario-contract-heading">
+              Scenario Contract
+            </h2>
+          </div>
+        </div>
+        <pre className="readout">
           {JSON.stringify(
             {
               scenario,
