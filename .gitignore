@@ -5,6 +5,8 @@ coverage
 .DS_Store
 *.tsbuildinfo
 
+# Claude skills are local tooling for this instance only — never uploaded to GitHub.
+.claude/skills/
 
 # Python bytecode cache
 __pycache__/
