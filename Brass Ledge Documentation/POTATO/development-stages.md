@@ -169,16 +169,28 @@ Exit criteria:
 
 ## Stage 6: Browser Interface Rebuild
 
+Status: complete.
+
 Goals:
 
 - Rebuild the browser around [[s1-s5-user-interface-model]].
 - Use [[game-engine-review/05-browser-design-system]].
 - Keep UI as a client of engine contracts.
 
+What's done:
+
+- Replaced the monolithic JSON-dump workbench `App.tsx` with six screens per [[stage-6-gui-design]]: Session Hub, Briefing, Decision Memos, Chiefs Paper, Pre-Commit, After Action, plus a Records screen reachable from the header.
+- Persistent `AppShell` with `HeaderStrip` (scenario, turn, score, top risk objective) and `StaffRail` (S1-S5 badges, expandable `StaffFunctionDetail` drawer) per the shell layout in [[stage-6-gui-design]].
+- All screens consume `StaffFunctionReadout`, `DecisionMemo`, `TurnPreview`/`TurnResult`, `ChiefPositionEntry`, and explainability fields directly from `@brass-ledger/shared`; no rule logic is duplicated client-side (burden math, chief positions, accepted-risk candidates, and S1-S5 status all come from the server preview/resolve responses).
+- Live debounced turn preview (`usePreview` hook) updates the S1-S5 rail and projected burden as memo selections change, before commit.
+- Chief conversations render as a side sheet (per the design system's interaction pattern), closable via the × button or Escape.
+- Visual language follows [[game-engine-review/05-browser-design-system]] on the dark "operations console" palette already committed in `tailwind.config.js`/`styles.css`: brass/olive accents, escalation/recovery/intel semantic colors, borders over shadows, monospace only for logs/data.
+- Fixed two server defects found while wiring the browser to a packaged build: `CORS_ORIGINS` default excluded the server's own production port (module `<script>` requests send an `Origin` header even same-origin, so the prod bundle 500'd); and `app.listen` ignored `HOST`, preventing non-loopback binding for packaged/remote testing. Both now respect env vars with safe defaults.
+
 Exit criteria:
 
-- Browser consumes `StaffFunctionReadout`, `decisionPackets`, `spriteSpecs`, and `explainability`.
-- No browser-only rule logic.
+- Browser consumes `StaffFunctionReadout`, `decisionPackets`, `spriteSpecs`, and `explainability`. Met.
+- No browser-only rule logic. Met: the browser only renders server-provided preview/resolve payloads and submits intent (selections, accepted-risk overrides, staff negotiations, chief responses).
 
 ## Stage 7: Packaged Game
 
