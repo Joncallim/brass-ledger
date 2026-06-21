@@ -1,496 +1,445 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { ScenarioSummary, MemoSelection, StaffNegotiation, AcceptedRiskOverride, StaffFunctionReadout, ChiefConversationRecord } from "@brass-ledger/shared";
+import { buildStaffFunctionReadouts, buildDirectorateBurden } from "@brass-ledger/shared";
+import type { AppRoute, TurnCycleState, SessionSummary, TurnStep } from "./lib/types";
 import {
-  buildAdvisorPortraitDataUri,
-  type DecisionMemo,
-  type GameSession,
-  type ScenarioSummary,
-  type StaffNegotiation,
-  type TurnPreview,
-  type TurnResult,
-} from "@brass-ledger/shared";
-import {
-  acceptedRiskKey,
-  acceptedRiskOverridesFromChoices,
-  allAcceptedRiskCandidatesChosen,
-  defaultTurnInput,
-  initialAcceptedRiskChoices,
-  setAcceptedRiskChoice,
-  type AcceptedRiskChoiceState,
-} from "./acceptedRiskUi";
+  listSessions, createSession, loadSession, deleteSession,
+  resolveTurn, exportSession, importSession, validateReplay,
+  openChiefConversation, respondToChief,
+} from "./lib/api";
+import { usePreview } from "./hooks/usePreview";
+import { AppShell } from "./components/AppShell";
+import { SessionHub } from "./screens/SessionHub";
+import { BriefingScreen } from "./screens/BriefingScreen";
+import { MemosScreen } from "./screens/MemosScreen";
+import { ChiefsPaperScreen } from "./screens/ChiefsPaperScreen";
+import { PreCommitScreen } from "./screens/PreCommitScreen";
+import { AfterActionScreen } from "./screens/AfterActionScreen";
+import { RecordsScreen } from "./screens/RecordsScreen";
 
-type SessionEnvelope = {
-  session: GameSession;
-  memos: DecisionMemo[];
-  summary: {
-    id: string;
-    turn: number;
-    maxTurns: number;
-    campaignStatus: string;
-    campaignScore: number;
-    summary: string;
-  };
+function riskKey(risk: AcceptedRiskOverride) {
+  return `${risk.staffFunctionId}:${risk.warningText}`;
+}
+
+const emptyTurnCycle: TurnCycleState = {
+  session: null as never,
+  memos: [],
+  selections: [],
+  preview: null,
+  acceptedRiskChoices: {},
+  staffNegotiations: [],
+  latestResult: null,
 };
 
-type SessionSummary = SessionEnvelope["summary"];
-
-type PreviewPayload = {
-  projectedResult: TurnResult;
-} & TurnPreview;
-
-const apiBase = "/api";
-
-async function fetchJson<T>(url: string, init?: RequestInit) {
-  const hasBody = init?.body !== undefined;
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      ...(hasBody ? { "Content-Type": "application/json" } : {}),
-      ...(init?.headers ?? {}),
-    },
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error ?? `Request failed: ${response.status}`);
-  }
-  return data as T;
-}
-
-function previewSnapshot(preview: PreviewPayload) {
-  return {
-    decisionPreviews: preview.decisionPreviews,
-    acceptedRiskCandidates: preview.acceptedRiskCandidates,
-    predictedEvents: preview.predictedEvents,
-    chiefCoalitions: preview.chiefCoalitions,
-    projectedChiefPositions: preview.projectedResult.chiefPositions.map((position) => ({
-      chiefId: position.chiefId,
-      chiefName: position.chiefName,
-      memoId: position.memoId,
-      optionId: position.optionId,
-      position: position.position,
-      staffReadoutEvidence: position.staffReadoutEvidence,
-    })),
-    projectedSummary: preview.projectedResult.summary,
-    projectedStaffFunctions: preview.projectedResult.staffFunctions,
-    projectedAfterAction: preview.projectedResult.afterAction,
-    replayHash: preview.projectedResult.replayHash,
-  };
-}
-
-function engineSnapshot(session: GameSession | null, memos: DecisionMemo[], result: TurnResult | null) {
-  if (!session) {
-    return {
-      mode: "engine-idle",
-      note: "No session loaded.",
-    };
-  }
-
-  return {
-    mode: "engine-session",
-    sessionId: session.id,
-    turn: session.state.turn,
-    maxTurns: session.state.maxTurns,
-    status: session.state.campaignStatus,
-    score: session.state.campaignScore,
-    briefing: session.state.briefing,
-    memos: memos.map((memo) => ({
-      id: memo.id,
-      title: memo.title,
-      required: !memo.optional,
-      options: memo.options.map((option) => ({
-        id: option.id,
-        label: option.label,
-        tags: option.tags,
-        burden: option.burden,
-        stateDelta: option.stateDelta,
-        programPushes: option.programPushes,
-        constraintShifts: option.constraintShifts,
-      })),
-    })),
-    latestResult: result
-      ? {
-          summary: result.summary,
-          replayHash: result.replayHash,
-          directorateBurden: result.directorateBurden,
-          chiefCoalitions: result.chiefCoalitions,
-          triggeredEvents: result.triggeredEvents,
-          acceptedRisks: result.acceptedRisks,
-          afterAction: result.afterAction,
-        }
-      : null,
-  };
-}
-
 export function App() {
+  const [route, setRoute] = useState<AppRoute>({ screen: "hub" });
   const [scenario, setScenario] = useState<ScenarioSummary | null>(null);
-  const [records, setRecords] = useState<SessionSummary[]>([]);
-  const [session, setSession] = useState<GameSession | null>(null);
-  const [memos, setMemos] = useState<DecisionMemo[]>([]);
-  const [preview, setPreview] = useState<PreviewPayload | null>(null);
-  const [latestResult, setLatestResult] = useState<TurnResult | null>(null);
-  const [acceptedRiskChoices, setAcceptedRiskChoices] = useState<AcceptedRiskChoiceState>({});
-  const [staffNegotiations, setStaffNegotiations] = useState<StaffNegotiation[]>([]);
-  const [negotiationCandidates, setNegotiationCandidates] = useState<StaffNegotiation["directorate"][]>([]);
-  const [status, setStatus] = useState("Loading engine...");
-  const [error, setError] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [cycle, setCycle] = useState<TurnCycleState>(emptyTurnCycle);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [activeConversation, setActiveConversation] = useState<ChiefConversationRecord | null>(null);
+  const [conversationBusy, setConversationBusy] = useState(false);
+  const [conversationError, setConversationError] = useState<string | null>(null);
+  const [negotiationCandidates, setNegotiationCandidates] = useState<StaffNegotiation["directorate"][]>([]);
+  const [validationResults, setValidationResults] = useState<Record<string, { ok: boolean; checkedTurns: number; failedAtTurn: number | null }>>({});
 
-  const spriteRoster = useMemo(() => session?.advisorRoster ?? [], [session]);
-  const snapshot = useMemo(() => engineSnapshot(session, memos, latestResult), [latestResult, memos, session]);
-  const previewMatchesCurrentTurn = Boolean(preview && session && preview.projectedResult.input.turn === session.state.turn);
-  const acceptedRiskCandidates = previewMatchesCurrentTurn && preview ? preview.acceptedRiskCandidates : [];
-  const acceptedRiskCount = acceptedRiskOverridesFromChoices(acceptedRiskCandidates, acceptedRiskChoices).length;
-  const acceptedRisksReady = previewMatchesCurrentTurn && allAcceptedRiskCandidatesChosen(acceptedRiskCandidates, acceptedRiskChoices);
-  const visibleChiefPositions = previewMatchesCurrentTurn && preview ? preview.projectedResult.chiefPositions : latestResult?.chiefPositions ?? [];
+  const sessionId = route.screen === "session" ? route.sessionId : null;
+  const { preview, loading: previewLoading, error: previewError, requestPreview, clearPreview, setPreview } = usePreview(sessionId);
 
-  function updateNegotiation(directorate: StaffNegotiation["directorate"], enabled: boolean) {
-    setStaffNegotiations((entries) => {
-      const rest = entries.filter((entry) => entry.directorate !== directorate);
-      return enabled ? [...rest, { directorate, reliefPoints: 1, cost: "political_cover" }] : rest;
+  const currentStaffFunctions: StaffFunctionReadout[] = (() => {
+    if (!cycle.session) return [];
+    const definitions = scenario?.staffFunctions ?? [];
+    const capacities = scenario?.staffCapacities ?? [];
+    const burdens = buildDirectorateBurden(cycle.memos, cycle.selections, capacities, cycle.staffNegotiations);
+    return buildStaffFunctionReadouts(definitions, burdens, cycle.session.state);
+  })();
+
+  const staffReadouts: StaffFunctionReadout[] =
+    (preview?.projectedResult.staffFunctions.length ?? 0) > 0
+      ? preview!.projectedResult.staffFunctions
+      : currentStaffFunctions;
+
+  async function refreshSessions() {
+    const data = await listSessions();
+    setSessions(data.sessions);
+  }
+
+  async function handleLoadSession(id: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      const data = await loadSession(id);
+      const latestResult = data.session.history.at(-1) ?? null;
+      const newCycle: TurnCycleState = { ...emptyTurnCycle, session: data.session, memos: data.memos, latestResult };
+      setCycle(newCycle);
+      clearPreview();
+      setActiveConversation(null);
+      setNegotiationCandidates([]);
+      const step: TurnStep = latestResult && data.session.state.campaignStatus === "active" ? "briefing" : latestResult ? "after-action" : "briefing";
+      setRoute({ screen: "session", sessionId: id, step: latestResult ? "after-action" : "briefing" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load session");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleNewSession() {
+    setBusy(true);
+    setError(null);
+    try {
+      const data = await createSession();
+      const newCycle: TurnCycleState = { ...emptyTurnCycle, session: data.session, memos: data.memos, latestResult: null };
+      setCycle(newCycle);
+      clearPreview();
+      setActiveConversation(null);
+      setNegotiationCandidates([]);
+      await refreshSessions();
+      setRoute({ screen: "session", sessionId: data.session.id, step: "briefing" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create session");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleSelectMemo(memoId: string, optionId: string | null) {
+    setCycle((prev) => {
+      const filtered = prev.selections.filter((s) => s.memoId !== memoId);
+      const nextSelections = optionId ? [...filtered, { memoId, optionId }] : filtered;
+      const nextCycle = { ...prev, selections: nextSelections, preview: null, acceptedRiskChoices: {} };
+      if (nextSelections.length > 0) {
+        requestPreview(nextCycle, nextSelections, prev.staffNegotiations);
+      }
+      return nextCycle;
     });
-    setPreview(null);
-    setAcceptedRiskChoices({});
-    setStatus("Staff negotiation changed. Preview the turn again before resolving.");
   }
 
-  async function refreshRecords() {
-    const data = await fetchJson<{ sessions: SessionSummary[] }>(`${apiBase}/sessions`);
-    setRecords(data.sessions);
+  function handleAcceptRisk(risk: AcceptedRiskOverride, accepted: boolean) {
+    setCycle((prev) => ({
+      ...prev,
+      acceptedRiskChoices: { ...prev.acceptedRiskChoices, [riskKey(risk)]: accepted },
+    }));
   }
 
-  async function startSession() {
+  function handleNegotiation(directorate: StaffNegotiation["directorate"], enabled: boolean) {
+    setCycle((prev) => {
+      const filtered = prev.staffNegotiations.filter((n) => n.directorate !== directorate);
+      const next: StaffNegotiation[] = enabled
+        ? [...filtered, { directorate, reliefPoints: 1, cost: "political_cover" }]
+        : filtered;
+      const nextCycle = { ...prev, staffNegotiations: next, preview: null, acceptedRiskChoices: {} };
+      requestPreview(nextCycle, prev.selections, next);
+      return nextCycle;
+    });
+  }
+
+  async function handleCommit() {
+    if (!sessionId || !cycle.session) return;
+    const candidates = preview?.acceptedRiskCandidates ?? [];
+    const overrides: AcceptedRiskOverride[] = candidates.filter((r) => cycle.acceptedRiskChoices[riskKey(r)] === true);
     setBusy(true);
     setError(null);
     try {
-      const data = await fetchJson<SessionEnvelope>(`${apiBase}/sessions`, { method: "POST" });
-      setSession(data.session);
-      setMemos(data.memos);
+      const data = await resolveTurn(
+        sessionId,
+        cycle.session,
+        cycle.selections,
+        overrides,
+        cycle.staffNegotiations,
+        cycle.session.revision,
+      );
+      const newCycle: TurnCycleState = {
+        ...emptyTurnCycle,
+        session: data.session,
+        memos: data.memos,
+        latestResult: data.result,
+      };
+      setCycle(newCycle);
+      clearPreview();
       setPreview(null);
-      setAcceptedRiskChoices({});
-      setStaffNegotiations([]);
+      setActiveConversation(null);
       setNegotiationCandidates([]);
-      setLatestResult(data.session.history.at(-1) ?? null);
-      setStatus("Engine session created.");
-      await refreshRecords();
+      await refreshSessions();
+      setRoute({ screen: "session", sessionId, step: "after-action" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create engine session");
+      setError(err instanceof Error ? err.message : "Failed to commit turn");
     } finally {
       setBusy(false);
     }
   }
 
-  async function loadLatest() {
-    const latest = records[0];
-    if (!latest) {
-      await startSession();
-      return;
+  async function handleOpenConversation(chiefId: string, memoId: string, optionId: string) {
+    if (!sessionId) return;
+    setConversationBusy(true);
+    setConversationError(null);
+    try {
+      const data = await openChiefConversation(sessionId, chiefId, memoId, optionId, cycle.session?.revision);
+      setActiveConversation(data.conversation);
+      setCycle((prev) => ({ ...prev, session: data.session, memos: data.memos }));
+    } catch (err) {
+      setConversationError(err instanceof Error ? err.message : "Failed to open conversation");
+    } finally {
+      setConversationBusy(false);
     }
+  }
 
+  async function handleRespond(chiefId: string, responseId: string) {
+    if (!sessionId) return;
+    setConversationBusy(true);
+    setConversationError(null);
+    try {
+      const data = await respondToChief(sessionId, chiefId, responseId, cycle.session?.revision);
+      setActiveConversation(data.conversation);
+      setCycle((prev) => ({ ...prev, session: data.session, memos: data.memos }));
+    } catch (err) {
+      setConversationError(err instanceof Error ? err.message : "Failed to respond");
+    } finally {
+      setConversationBusy(false);
+    }
+  }
+
+  async function handleDeleteSession(id: string) {
     setBusy(true);
     setError(null);
     try {
-      const data = await fetchJson<SessionEnvelope>(`${apiBase}/sessions/${latest.id}`);
-      setSession(data.session);
-      setMemos(data.memos);
-      setPreview(null);
-      setAcceptedRiskChoices({});
-      setStaffNegotiations([]);
-      setNegotiationCandidates([]);
-      setLatestResult(data.session.history.at(-1) ?? null);
-      setStatus("Latest engine session loaded.");
+      await deleteSession(id);
+      await refreshSessions();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load engine session");
+      setError(err instanceof Error ? err.message : "Failed to delete session");
     } finally {
       setBusy(false);
     }
   }
 
-  async function previewDefaultTurn() {
-    if (!session) return;
+  async function handleExportSession(id: string) {
+    try {
+      const data = await exportSession(id);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `brass-ledger-${id.slice(0, 8)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export session");
+    }
+  }
+
+  async function handleImportSession(file: File) {
     setBusy(true);
     setError(null);
     try {
-      const data = await fetchJson<PreviewPayload>(`${apiBase}/sessions/${session.id}/preview-turn`, {
-        method: "POST",
-        body: JSON.stringify({ input: defaultTurnInput(session, memos, [], staffNegotiations) }),
-      });
-      setPreview(data);
-      setNegotiationCandidates(Array.from(new Set(data.chiefCoalitions.flatMap((entry) => entry.staffConstraintDirectorates))));
-      setAcceptedRiskChoices(initialAcceptedRiskChoices(data.acceptedRiskCandidates));
-      setStatus("Default text simulation preview generated.");
+      const text = await file.text();
+      const exportData = JSON.parse(text);
+      await importSession(exportData);
+      await refreshSessions();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to preview engine turn");
+      setError(err instanceof Error ? err.message : "Failed to import session");
     } finally {
       setBusy(false);
     }
   }
 
-  async function resolveDefaultTurn() {
-    if (!session) return;
-    if (!preview || preview.projectedResult.input.turn !== session.state.turn) {
-      setError("Preview the text turn before resolving so S1-S5 warnings can be accepted explicitly.");
-      return;
-    }
-    if (!allAcceptedRiskCandidatesChosen(preview.acceptedRiskCandidates, acceptedRiskChoices)) {
-      setError("Resolve turn requires player acceptance for every projected S1-S5 staff warning.");
-      return;
-    }
-    const acceptedRiskOverrides = acceptedRiskOverridesFromChoices(preview.acceptedRiskCandidates, acceptedRiskChoices);
-    setBusy(true);
-    setError(null);
+  async function handleValidateReplay(id: string) {
     try {
-      const data = await fetchJson<SessionEnvelope & { result: TurnResult }>(`${apiBase}/sessions/${session.id}/resolve-turn`, {
-        method: "POST",
-        body: JSON.stringify({ input: defaultTurnInput(session, memos, acceptedRiskOverrides, staffNegotiations) }),
-      });
-      setSession(data.session);
-      setMemos(data.memos);
-      setPreview(null);
-      setAcceptedRiskChoices({});
-      setStaffNegotiations([]);
-      setNegotiationCandidates([]);
-      setLatestResult(data.result);
-      setStatus("Default text simulation turn resolved.");
-      await refreshRecords();
+      const data = await validateReplay(id);
+      setValidationResults((prev) => ({
+        ...prev,
+        [id]: {
+          ok: data.validation.ok,
+          checkedTurns: data.validation.checkedTurns,
+          failedAtTurn: data.validation.failedAtTurn,
+        },
+      }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to resolve engine turn");
-    } finally {
-      setBusy(false);
+      setError(err instanceof Error ? err.message : "Failed to validate replay");
+    }
+  }
+
+  function navigateStep(step: TurnStep) {
+    if (route.screen !== "session") return;
+    setRoute({ ...route, step });
+    setError(null);
+  }
+
+  function handleNextMonth() {
+    if (!cycle.session) return;
+    const latestResult = cycle.session.history.at(-1) ?? null;
+    setCycle((prev) => ({
+      ...prev,
+      selections: [],
+      preview: null,
+      acceptedRiskChoices: {},
+      staffNegotiations: [],
+      latestResult,
+    }));
+    clearPreview();
+    setActiveConversation(null);
+    setNegotiationCandidates([]);
+    if (route.screen === "session") {
+      setRoute({ ...route, step: "briefing" });
     }
   }
 
   useEffect(() => {
-    let cancelled = false;
+    if (preview) {
+      setCycle((prev) => ({
+        ...prev,
+        preview,
+        acceptedRiskChoices: Object.fromEntries(
+          (preview.acceptedRiskCandidates ?? []).map((r) => [riskKey(r), false]),
+        ),
+      }));
+      setNegotiationCandidates(
+        Array.from(new Set(preview.chiefCoalitions.flatMap((c) => c.staffConstraintDirectorates))),
+      );
+    }
+  }, [preview]);
+
+  useEffect(() => {
     async function bootstrap() {
-      setError(null);
       try {
         const [scenarioData, recordsData] = await Promise.all([
-          fetchJson<{ scenario: ScenarioSummary }>(`${apiBase}/scenario`),
-          fetchJson<{ sessions: SessionSummary[] }>(`${apiBase}/sessions`),
+          fetch("/api/scenario").then((r) => r.json()) as Promise<{ scenario: ScenarioSummary }>,
+          listSessions(),
         ]);
-        if (cancelled) return;
         setScenario(scenarioData.scenario);
-        setRecords(recordsData.sessions);
-        setStatus("Engine ready. Load or create a session to generate text and sprites.");
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to initialize engine");
+        setSessions(recordsData.sessions);
+      } catch {
+        setError("Failed to connect to the game server.");
       }
     }
     void bootstrap();
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
-  return (
-    <main className="app">
-      <header className="app-bar">
-        <div>
-          <p className="app-bar__eyebrow">Brass Ledger Engine</p>
-          <h1 className="app-bar__title">Command Workbench</h1>
-          <p className="app-bar__lede">{scenario?.description ?? "Scenario metadata is loading from the backend."}</p>
-        </div>
-        <div className="app-bar__actions">
-          <button type="button" className="btn" onClick={() => void loadLatest()} disabled={busy}>
-            Load latest
-          </button>
-          <button type="button" className="btn" onClick={() => void startSession()} disabled={busy}>
-            New session
-          </button>
-          <button type="button" className="btn" onClick={() => void previewDefaultTurn()} disabled={busy || !session}>
-            Preview text turn
-          </button>
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={() => void resolveDefaultTurn()}
-            disabled={busy || !session || !acceptedRisksReady}
-          >
-            Resolve accepted turn
-          </button>
-        </div>
-      </header>
+  const chiefPositions = preview?.projectedResult.chiefPositions ?? cycle.latestResult?.chiefPositions ?? [];
+  const chiefCoalitions = preview?.chiefCoalitions ?? cycle.latestResult?.chiefCoalitions ?? [];
+  const showRail = route.screen === "session";
 
-      {error && (
-        <div className="alert" role="alert">
-          <svg className="alert__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M12 9v4m0 4h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.7 3.86a2 2 0 0 0-3.42 0Z"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <span>{error}</span>
+  return (
+    <AppShell
+      readouts={staffReadouts}
+      briefing={cycle.session?.state.briefing}
+      state={cycle.session?.state}
+      onNavigateHub={() => { setRoute({ screen: "hub" }); setError(null); }}
+      onNavigateRecords={() => { setRoute({ screen: "records" }); setError(null); }}
+      showRail={showRail}
+    >
+      {route.screen === "hub" && (
+        <SessionHub
+          sessions={sessions}
+          scenarioTitle={scenario?.title ?? "Brass Ledger"}
+          scenarioDescription={scenario?.description ?? "Loading scenario…"}
+          busy={busy}
+          error={error}
+          onLoad={handleLoadSession}
+          onNew={handleNewSession}
+        />
+      )}
+
+      {route.screen === "session" && cycle.session && route.step === "briefing" && (
+        <BriefingScreen
+          session={cycle.session}
+          memos={cycle.memos}
+          staffReadouts={currentStaffFunctions}
+          onProceed={() => navigateStep("memos")}
+        />
+      )}
+
+      {route.screen === "session" && cycle.session && route.step === "memos" && (
+        <MemosScreen
+          memos={cycle.memos}
+          selections={cycle.selections}
+          staffNegotiations={cycle.staffNegotiations}
+          preview={preview}
+          previewLoading={previewLoading}
+          previewError={previewError}
+          canProceed={Boolean(preview && cycle.selections.length > 0)}
+          onSelect={handleSelectMemo}
+          onProceed={() => navigateStep("chiefs")}
+          onBack={() => navigateStep("briefing")}
+        />
+      )}
+
+      {route.screen === "session" && cycle.session && route.step === "chiefs" && (
+        <ChiefsPaperScreen
+          chiefPositions={chiefPositions}
+          chiefCoalitions={chiefCoalitions}
+          advisorRoster={cycle.session.advisorRoster}
+          session={cycle.session}
+          memos={cycle.memos}
+          conversationBusy={conversationBusy}
+          conversationError={conversationError}
+          activeConversation={activeConversation}
+          onOpenConversation={handleOpenConversation}
+          onRespond={handleRespond}
+          onProceed={() => navigateStep("commit")}
+          onBack={() => navigateStep("memos")}
+        />
+      )}
+
+      {route.screen === "session" && cycle.session && route.step === "commit" && (
+        <PreCommitScreen
+          preview={preview}
+          selections={cycle.selections}
+          acceptedRiskChoices={cycle.acceptedRiskChoices}
+          staffNegotiations={cycle.staffNegotiations}
+          negotiationCandidates={negotiationCandidates}
+          turnNumber={cycle.session.state.turn}
+          busy={busy}
+          error={error}
+          onAcceptRisk={handleAcceptRisk}
+          onNegotiation={handleNegotiation}
+          onCommit={handleCommit}
+          onBack={() => navigateStep("chiefs")}
+        />
+      )}
+
+      {route.screen === "session" && cycle.session && route.step === "after-action" && cycle.latestResult && (
+        <AfterActionScreen
+          result={cycle.latestResult}
+          previousStaffFunctions={cycle.latestResult.previousState
+            ? buildStaffFunctionReadouts(
+                scenario?.staffFunctions ?? [],
+                buildDirectorateBurden(
+                  cycle.latestResult.memos,
+                  cycle.latestResult.input.selections,
+                  scenario?.staffCapacities ?? [],
+                ),
+                cycle.latestResult.previousState,
+              )
+            : []}
+          onNextMonth={handleNextMonth}
+          onViewRecords={() => setRoute({ screen: "records" })}
+        />
+      )}
+
+      {route.screen === "session" && cycle.session && route.step === "after-action" && !cycle.latestResult && (
+        <div className="p-6">
+          <p className="text-sm text-ink/50">No turn result available.</p>
+          <button type="button" onClick={() => navigateStep("briefing")} className="mt-3 text-sm border border-border px-3 py-2">
+            Go to briefing
+          </button>
         </div>
       )}
 
-      <div className="statusline" role="status" aria-live="polite">
-        <span className="statusline__dot" data-busy={busy ? "true" : "false"} aria-hidden="true" />
-        <span>{status}</span>
-      </div>
-
-      <section className="panel-grid">
-        <article className="panel" aria-labelledby="engine-output-heading">
-          <div className="panel__head">
-            <div>
-              <h2 className="panel__title" id="engine-output-heading">
-                Engine Output
-              </h2>
-            </div>
-          </div>
-          <pre className="readout">{JSON.stringify(preview ? previewSnapshot(preview) : snapshot, null, 2)}</pre>
-        </article>
-
-        <aside className="panel" aria-labelledby="sprites-heading">
-          <div className="panel__head">
-            <div>
-              <h2 className="panel__title" id="sprites-heading">
-                Generated Sprites
-              </h2>
-            </div>
-            {spriteRoster.length > 0 && <span className="pill">{spriteRoster.length} sprites</span>}
-          </div>
-          {spriteRoster.length === 0 ? (
-            <p className="panel__note">No sprites yet. Create or load a session to generate the advisor roster.</p>
-          ) : (
-            <div className="sprite-grid">
-              {spriteRoster.map((advisor) => (
-                <figure className="sprite" key={advisor.chiefId}>
-                  <img src={buildAdvisorPortraitDataUri(advisor.portrait)} alt={`${advisor.displayName} generated sprite`} />
-                  <figcaption>
-                    <strong>{advisor.displayName}</strong>
-                    <span>{advisor.title}</span>
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
-          )}
-        </aside>
-      </section>
-
-      <section className="panel" aria-labelledby="accepted-risk-heading">
-        <div className="panel__head">
-          <div>
-            <h2 className="panel__title" id="accepted-risk-heading">
-              Accepted Risk Docket
-            </h2>
-          </div>
-          {previewMatchesCurrentTurn && (
-            <span className={acceptedRisksReady ? "pill pill--ready" : "pill"}>
-              {acceptedRiskCount}/{acceptedRiskCandidates.length} accepted
-            </span>
-          )}
-        </div>
-        {!previewMatchesCurrentTurn ? (
-          <p className="panel__note">Preview a turn to review projected S1-S5 warnings.</p>
-        ) : acceptedRiskCandidates.length === 0 ? (
-          <p className="panel__note">No accepted-risk warnings projected for this turn.</p>
-        ) : (
-          <div className="choice-list">
-            {acceptedRiskCandidates.map((risk) => {
-              const key = acceptedRiskKey(risk);
-              return (
-                <label className="choice" key={key}>
-                  <input
-                    type="checkbox"
-                    checked={acceptedRiskChoices[key] === true}
-                    onChange={(event) => {
-                      const accepted = event.currentTarget.checked;
-                      setAcceptedRiskChoices((choices) => setAcceptedRiskChoice(choices, risk, accepted));
-                    }}
-                  />
-                  <span className="choice__body">
-                    <strong className="choice__code">{risk.staffFunctionId}</strong>
-                    <span className="choice__text">{risk.warningText}</span>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <section className="panel" aria-labelledby="staff-negotiation-heading">
-        <div className="panel__head">
-          <div>
-            <h2 className="panel__title" id="staff-negotiation-heading">
-              Staff Negotiations
-            </h2>
-          </div>
-          <span className={staffNegotiations.length > 0 ? "pill pill--active" : "pill"}>{staffNegotiations.length} active</span>
-        </div>
-        {negotiationCandidates.length === 0 ? (
-          <p className="panel__note">Preview a turn to identify constrained staff lanes.</p>
-        ) : (
-          <div className="choice-list">
-            {negotiationCandidates.map((directorate) => {
-              const active = staffNegotiations.some((entry) => entry.directorate === directorate);
-              return (
-                <label className="choice" key={directorate}>
-                  <input
-                    type="checkbox"
-                    checked={active}
-                    onChange={(event) => updateNegotiation(directorate, event.currentTarget.checked)}
-                  />
-                  <span className="choice__body">
-                    <strong className="choice__code">{directorate}</strong>
-                    <span className="choice__text">Relieve 1 burden point for political cover.</span>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <section className="panel" aria-labelledby="chief-evidence-heading">
-        <div className="panel__head">
-          <div>
-            <h2 className="panel__title" id="chief-evidence-heading">
-              S1-S5 Evidence
-            </h2>
-          </div>
-          <span className="pill">{visibleChiefPositions.length} reads</span>
-        </div>
-        {visibleChiefPositions.length === 0 ? (
-          <p className="panel__note">No chief positions available.</p>
-        ) : (
-          <div className="evidence-grid">
-            {visibleChiefPositions.slice(0, 12).map((position) => (
-              <article className="evidence" key={`${position.chiefId}:${position.memoId}:${position.optionId}`}>
-                <div className="evidence__head">
-                  <strong className="evidence__name">{position.chiefName}</strong>
-                  <span className="evidence__position">{position.position.replace("_", " ")}</span>
-                </div>
-                <p className="evidence__rationale">{position.staffReadoutEvidence.rationale}</p>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="panel" aria-labelledby="scenario-contract-heading">
-        <div className="panel__head">
-          <div>
-            <h2 className="panel__title" id="scenario-contract-heading">
-              Scenario Contract
-            </h2>
-          </div>
-        </div>
-        <pre className="readout">
-          {JSON.stringify(
-            {
-              scenario,
-              savedSessionCount: records.length,
-              requiredMemoCount: memos.filter((memo) => !memo.optional).length,
-              optionalMemoCount: memos.filter((memo) => memo.optional).length,
-            },
-            null,
-            2,
-          )}
-        </pre>
-      </section>
-    </main>
+      {route.screen === "records" && (
+        <RecordsScreen
+          sessions={sessions}
+          busy={busy}
+          error={error}
+          onLoad={handleLoadSession}
+          onDelete={handleDeleteSession}
+          onExport={handleExportSession}
+          onImport={handleImportSession}
+          onValidate={handleValidateReplay}
+          onBack={() => setRoute({ screen: "hub" })}
+          validationResults={validationResults}
+        />
+      )}
+    </AppShell>
   );
 }

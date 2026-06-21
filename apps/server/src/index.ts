@@ -33,7 +33,10 @@ import { deriveDecisionMemos, previewTurn, resolveTurn, validateReplaySession } 
 export const app = Fastify({ logger: process.env.NODE_ENV !== "test" });
 
 const allowedCorsOrigins = new Set(
-  (process.env.CORS_ORIGINS ?? "http://127.0.0.1:5173,http://localhost:5173")
+  (
+    process.env.CORS_ORIGINS ??
+    "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4000,http://localhost:4000"
+  )
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
@@ -702,7 +705,8 @@ app.get("/*", async (request, reply) => {
 
 if (process.env.BRASS_LEDGER_NO_LISTEN !== "1") {
   const port = Number(process.env.PORT ?? "4000");
-  app.listen({ port, host: "127.0.0.1" }).catch((error) => {
+  const host = process.env.HOST ?? "127.0.0.1";
+  app.listen({ port, host }).catch((error) => {
     app.log.error(error);
     process.exit(1);
   });

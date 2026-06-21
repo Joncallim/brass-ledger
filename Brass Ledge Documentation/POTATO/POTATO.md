@@ -46,7 +46,8 @@ Current implementation state:
 - Accepted-risk turns are explicit: supplied inputs must acknowledge projected S1-S5 warnings or opt into unattended auto-acceptance.
 - Stage 4 agent chiefs and negotiation is complete. Chief agenda memory, coalitions, commitments, negotiations, and S1-S5 staff readout evidence are all implemented and test-covered.
 - Stage 5 content expansion is complete. Balance telemetry, dominant-strategy detection, content validation, 32-event catalog (content v0.6.0), and `tempo-hold` posture option are all shipped. No dominant options. Score distribution is well-balanced.
-- Stage 6 browser interface rebuild is next. The server API is complete. The UI model and design system are in [[s1-s5-user-interface-model]] and [[game-engine-review/05-browser-design-system]]. The detailed Stage 6 design is in [[stage-6-gui-design]].
+- Stage 6 browser interface rebuild is complete. The monolithic JSON-dump workbench was replaced with the six-screen flow from [[stage-6-gui-design]] (Session Hub, Briefing, Decision Memos, Chiefs Paper, Pre-Commit, After Action, Records), rendered on the dark operations-console palette already committed in the web app, consuming `StaffFunctionReadout`/`TurnPreview`/`TurnResult`/`ChiefPositionEntry` directly with no browser-only rule logic.
+- Alpha work is next: harden the packaged single-process launch path (Stage 7 prerequisites), and close remaining browser-surface gaps (loading/empty states, error recovery, accessibility pass) before treating the browser as alpha-playable end to end.
 
 ## Knowledge Repository Split
 
