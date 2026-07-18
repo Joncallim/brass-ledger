@@ -148,6 +148,13 @@ async function main() {
   });
 
   await win.loadURL(appUrl);
+
+  const testCloseDelay = Number(process.env.BRASS_LEDGER_DESKTOP_TEST_CLOSE_MS);
+  if (Number.isFinite(testCloseDelay) && testCloseDelay >= 0) {
+    setTimeout(() => {
+      if (!win.isDestroyed()) win.close();
+    }, testCloseDelay);
+  }
 }
 
 main().catch((error) => {

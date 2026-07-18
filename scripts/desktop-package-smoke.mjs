@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { mkdtemp, readdir, rm } from "node:fs/promises";
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -86,35 +86,6 @@ async function waitForPortClosed(port, timeoutMs = 15_000) {
   throw new Error(`Utility server still owns port ${port} after the desktop window closed`);
 }
 
-async function closeDesktop(pid) {
-  if (process.platform === "darwin") {
-    const result = spawnSync("osascript", ["-e", 'tell application "Brass Ledger" to quit'], {
-      stdio: "inherit",
-    });
-    if (result.status !== 0) throw new Error("Failed to quit the macOS desktop app");
-    return;
-  }
-  if (process.platform === "win32") {
-    for (let attempt = 0; attempt < 20; attempt += 1) {
-      const command = `$process = Get-Process -Id ${pid}; if (-not $process.CloseMainWindow()) { exit 2 }`;
-      const result = spawnSync("powershell", ["-NoProfile", "-Command", command], {
-        stdio: "inherit",
-      });
-      if (result.status === 0) return;
-      await new Promise((resolve) => setTimeout(resolve, 250));
-    }
-    throw new Error("Failed to close the Windows desktop window");
-  }
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    const result = spawnSync("xdotool", ["search", "--onlyvisible", "--name", "Brass Ledger", "windowclose"], {
-      stdio: "inherit",
-    });
-    if (result.status === 0) return;
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
-  throw new Error("Failed to close the Linux desktop window");
-}
-
 const files = await filesBelow(distDir);
 assertInstaller(files);
 const executable = unpackedExecutable(files);
@@ -127,6 +98,7 @@ if (process.argv.includes("--package-only")) {
 const smokeRoot = await mkdtemp(path.join(os.tmpdir(), "brass-ledger-desktop-smoke-"));
 const childEnv = { ...process.env };
 delete childEnv.BRASS_LEDGER_SAVE_DIR;
+childEnv.BRASS_LEDGER_DESKTOP_TEST_CLOSE_MS = "5000";
 
 let expectedSaveDir;
 if (process.platform === "win32") {
@@ -151,9 +123,7 @@ try {
   const created = await fetch(`http://127.0.0.1:${port}/api/sessions`, { method: "POST" });
   if (!created.ok) throw new Error(`Session creation failed with HTTP ${created.status}`);
   await waitForSave(expectedSaveDir);
-  await new Promise((resolve) => setTimeout(resolve, 1_000));
 
-  await closeDesktop(child.pid);
   const result = await Promise.race([
     exited,
     new Promise((_, reject) => setTimeout(() => reject(new Error("Desktop did not exit after its window closed")), 15_000)),
