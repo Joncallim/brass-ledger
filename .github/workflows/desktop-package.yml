@@ -64,7 +64,11 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
       - name: Install Linux smoke dependencies
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y xvfb xdotool
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xdotool
+          sudo chown root:root release/dist/linux-unpacked/chrome-sandbox
+          sudo chmod 4755 release/dist/linux-unpacked/chrome-sandbox
       - name: Smoke packaged desktop on Linux
         if: runner.os == 'Linux'
         run: xvfb-run -a node scripts/desktop-package-smoke.mjs
