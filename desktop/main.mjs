@@ -108,6 +108,15 @@ function stopServer() {
   }
 }
 
+electronApp.on("window-all-closed", () => {
+  stopServer();
+  electronApp.quit();
+});
+
+electronApp.on("before-quit", () => {
+  stopServer();
+});
+
 async function main() {
   await electronApp.whenReady();
 
@@ -139,15 +148,6 @@ async function main() {
   });
 
   await win.loadURL(appUrl);
-
-  electronApp.on("window-all-closed", () => {
-    stopServer();
-    electronApp.quit();
-  });
-
-  electronApp.on("before-quit", () => {
-    stopServer();
-  });
 }
 
 main().catch((error) => {

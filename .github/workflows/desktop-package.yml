@@ -66,12 +66,12 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xdotool
+          sudo apt-get install -y openbox xvfb xdotool
           sudo chown root:root release/dist/linux-unpacked/chrome-sandbox
           sudo chmod 4755 release/dist/linux-unpacked/chrome-sandbox
       - name: Smoke packaged desktop on Linux
         if: runner.os == 'Linux'
-        run: xvfb-run -a node scripts/desktop-package-smoke.mjs
+        run: xvfb-run -a bash -c 'openbox >/tmp/openbox.log 2>&1 & wm_pid=$!; trap "kill $wm_pid || true" EXIT; node scripts/desktop-package-smoke.mjs'
       - name: Verify macOS package contents
         if: runner.os == 'macOS'
         run: node scripts/desktop-package-smoke.mjs --package-only
