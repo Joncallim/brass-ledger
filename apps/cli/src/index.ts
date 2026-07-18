@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 
 import { readFile, writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { HeadlessAcceptedRiskError, runHeadlessBatch, runHeadlessCampaign } from "@brass-ledger/headless";
+import { createFileSystemSaveStore, resolveSaveDirWithMigration, type SaveStore } from "@brass-ledger/save-store";
 import {
   gameSessionSchema,
   sessionExportSchema,
   turnInputSchema,
+  type GameSession,
 } from "@brass-ledger/shared";
 
 type CliOptions = {
@@ -15,7 +19,10 @@ type CliOptions = {
   sprites: boolean;
   inputPath: string | null;
   sessionPath: string | null;
+  resumeId: string | null;
   exportPath: string | null;
+  save: boolean;
+  listSessions: boolean;
   validate: boolean;
   autoAcceptRisks: boolean;
 };
@@ -28,7 +35,10 @@ function readOptions(argv: string[]): CliOptions {
     sprites: false,
     inputPath: null,
     sessionPath: null,
+    resumeId: null,
     exportPath: null,
+    save: false,
+    listSessions: false,
     validate: false,
     autoAcceptRisks: false,
   };
@@ -39,6 +49,14 @@ function readOptions(argv: string[]): CliOptions {
     if (arg === "--sprites") options.sprites = true;
     if (arg === "--validate") options.validate = true;
     if (arg === "--auto-accept-risks") options.autoAcceptRisks = true;
+    if (arg === "--save") options.save = true;
+    if (arg === "--list" || arg === "--list-sessions") options.listSessions = true;
+    if (arg === "--resume") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--resume requires a session ID.");
+      options.resumeId = value;
+      index += 1;
+    }
     if (arg === "--batch") {
       const value = Number(argv[index + 1]);
       if (!Number.isInteger(value) || value < 1) {
@@ -104,6 +122,28 @@ async function readInputs(filePath: string | null) {
 
 const options = readOptions(process.argv.slice(2));
 
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+const saveDir = resolveSaveDirWithMigration([
+  path.resolve(moduleDir, "../saves"),
+  path.resolve(moduleDir, "../../../../data/saves"),
+  path.resolve(moduleDir, "../../../data/saves"),
+]);
+const saveStore: SaveStore = createFileSystemSaveStore(saveDir);
+
+if (options.listSessions) {
+  const sessions = await saveStore.list();
+  if (sessions.length === 0) {
+    console.log("No saved sessions found.");
+  } else {
+    console.log(`Saved sessions (${saveDir}):`);
+    for (const session of sessions) {
+      const turnLabel = session.state.campaignOutcome ?? `turn ${session.state.turn}/${session.state.maxTurns}`;
+      console.log(`  ${session.id}  revision=${session.revision}  ${session.updatedAt}  ${turnLabel}`);
+    }
+  }
+  process.exit(0);
+}
+
 if (options.batch !== null) {
   const telemetry = await runHeadlessBatch(options.batch);
   if (options.json) {
@@ -139,7 +179,26 @@ if (options.batch !== null) {
   process.exit(0);
 }
 
-const session = await readSession(options.sessionPath);
+let session: GameSession | null = null;
+let initialRevision: number | undefined;
+if (options.sessionPath) {
+  const loaded = await readSession(options.sessionPath);
+  if (!loaded) {
+    console.error(`Failed to read session from ${options.sessionPath}`);
+    process.exit(1);
+  }
+  session = loaded;
+  initialRevision = session.revision;
+} else if (options.resumeId) {
+  try {
+    session = await saveStore.read(options.resumeId);
+    initialRevision = session.revision;
+  } catch {
+    console.error(`Session not found: ${options.resumeId}`);
+    process.exit(1);
+  }
+}
+
 const inputs = await readInputs(options.inputPath);
 let output;
 
@@ -181,6 +240,24 @@ if (options.exportPath) {
     ),
     "utf8",
   );
+}
+
+if (options.save) {
+  try {
+    await saveStore.write(output.sessionExport, initialRevision);
+    if (options.json) {
+      console.error(JSON.stringify({ saved: true, sessionId: output.sessionExport.id, saveDir }));
+    } else {
+      console.log(`Saved session ${output.sessionExport.id} to ${saveDir}`);
+    }
+  } catch (error) {
+    if (options.json) {
+      console.error(JSON.stringify({ saved: false, error: error instanceof Error ? error.message : "unknown error" }));
+    } else {
+      console.error(`Failed to save session: ${error instanceof Error ? error.message : "unknown error"}`);
+    }
+    process.exit(1);
+  }
 }
 
 if (options.json) {

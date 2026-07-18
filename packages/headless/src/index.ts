@@ -1,4 +1,5 @@
 import { soloScenario } from "@brass-ledger/content";
+import { randomUUID } from "node:crypto";
 import {
   buildAdvisorPortraitSvg,
   buildDirectorateBurden,
@@ -228,9 +229,10 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
 }
 
 export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
+  const sessionId = randomUUID();
   let session = options.session ?? {
-    ...createInitialGameSession(soloScenario, "cli-headless"),
-    id: "cli-headless",
+    ...createInitialGameSession(soloScenario, sessionId),
+    id: sessionId,
   };
   const turns = options.turns ?? 1;
   const providedInputs = options.inputs ?? [];

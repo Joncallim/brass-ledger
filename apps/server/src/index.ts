@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -7,6 +7,18 @@ import Fastify, { type FastifyReply } from "fastify";
 import cors from "@fastify/cors";
 import { soloScenario } from "@brass-ledger/content";
 import { HeadlessAcceptedRiskError, runHeadlessCampaign } from "@brass-ledger/headless";
+import {
+  createFileSystemSaveStore,
+  resolveSaveDirWithMigration,
+  InvalidSessionIdError,
+  LockTimeoutError,
+  RevisionMismatchError,
+  SaveStoreCorruptError,
+  SaveStoreIOError,
+  SessionExistsError,
+  SessionNotFoundError,
+  type SaveStore,
+} from "@brass-ledger/save-store";
 import {
   buildChiefPositions,
   buildDirectorateBurden,
@@ -24,6 +36,7 @@ import {
   updateChiefAgendaMemoryFromConversation,
   updateCommitmentsFromChiefConversation,
   type AcceptedRiskOverride,
+  type ChiefConversationRecord,
   type GameSession,
   type ReplayValidation,
   type TurnInput,
@@ -32,11 +45,9 @@ import { deriveDecisionMemos, previewTurn, resolveTurn, validateReplaySession } 
 
 export const app = Fastify({ logger: process.env.NODE_ENV !== "test" });
 
-const allowedCorsOrigins = new Set(
-  (
-    process.env.CORS_ORIGINS ??
-    "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4000,http://localhost:4000"
-  )
+const explicitCorsOrigins = new Set(
+  (process.env.CORS_ORIGINS ||
+    "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4000,http://localhost:4000")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
@@ -44,11 +55,11 @@ const allowedCorsOrigins = new Set(
 
 await app.register(cors, {
   origin(origin, callback) {
-    if (!origin || allowedCorsOrigins.has(origin)) {
+    if (!origin || explicitCorsOrigins.has(origin)) {
       callback(null, true);
       return;
     }
-    callback(new Error("Origin is not allowed by CORS"), false);
+    callback(null, false);
   },
 });
 
@@ -64,9 +75,16 @@ function resolveExistingPath(candidates: string[]) {
   return path.resolve(moduleDir, candidates[0]);
 }
 
-const dataDir = process.env.BRASS_LEDGER_SAVE_DIR
-  ? path.resolve(process.env.BRASS_LEDGER_SAVE_DIR)
-  : resolveExistingPath(["../../../../data/saves", "../../../data/saves"]);
+function resolveDataDir(): string {
+  return resolveSaveDirWithMigration([
+    path.resolve(moduleDir, "../saves"),
+    path.resolve(moduleDir, "../../../../data/saves"),
+    path.resolve(moduleDir, "../../../data/saves"),
+  ]);
+}
+
+const dataDir = resolveDataDir();
+const saveStore: SaveStore = createFileSystemSaveStore(dataDir);
 const webDistDir = process.env.BRASS_LEDGER_WEB_DIST_DIR
   ? path.resolve(process.env.BRASS_LEDGER_WEB_DIST_DIR)
   : resolveExistingPath(["../../../web/dist", "../../web/dist"]);
@@ -88,12 +106,8 @@ function assertExpectedRevision(session: GameSession, expectedRevision: unknown)
     throw new Error("expectedRevision must be a non-negative integer.");
   }
   if (expectedRevision !== session.revision) {
-    throw new Error(`Session revision mismatch: expected ${expectedRevision}, current ${session.revision}.`);
+    throw new RevisionMismatchError(expectedRevision, session.revision);
   }
-}
-
-function isRevisionMismatch(error: unknown) {
-  return error instanceof Error && error.message.startsWith("Session revision mismatch:");
 }
 
 function advanceSessionRevision(session: GameSession) {
@@ -164,11 +178,6 @@ async function serveClientShell(reply: FastifyReply) {
   }
 }
 
-function sessionPath(sessionId: string) {
-  assertSessionId(sessionId);
-  return path.join(dataDir, `${sessionId}.json`);
-}
-
 function stableJson(value: unknown): string {
   if (Array.isArray(value)) {
     return `[${value.map(stableJson).join(",")}]`;
@@ -194,6 +203,9 @@ function assertReplayableSession(session: GameSession) {
 }
 
 function assertCanonicalImport(session: GameSession) {
+  if (session.engineVersion !== "0.1.0") {
+    throw new Error("Imported save was created by a different engine version. Sessions must be exported and imported under the same engine version.");
+  }
   if (session.scenarioId !== soloScenario.id || session.contentVersion !== soloScenario.contentVersion) {
     throw new Error("Imported save is incompatible with the current scenario or content version.");
   }
@@ -206,46 +218,53 @@ function assertCanonicalImport(session: GameSession) {
   assertReplayableSession(session);
 }
 
-async function ensureStore() {
-  await mkdir(dataDir, { recursive: true });
+function mapStorageError(reply: FastifyReply, error: unknown) {
+  if (error instanceof InvalidSessionIdError) {
+    reply.code(400);
+    return { error: error.message };
+  }
+  if (error instanceof SessionNotFoundError) {
+    reply.code(404);
+    return { error: error.message };
+  }
+  if (error instanceof RevisionMismatchError) {
+    reply.code(409);
+    return { error: error.message };
+  }
+  if (error instanceof SessionExistsError) {
+    reply.code(409);
+    return { error: error.message };
+  }
+  if (error instanceof LockTimeoutError) {
+    reply.code(503);
+    app.log.error({ err: error }, "Save store lock timed out");
+    return { error: "The save store is busy. Try again." };
+  }
+  if (error instanceof SaveStoreCorruptError || error instanceof SaveStoreIOError) {
+    reply.code(500);
+    app.log.error({ err: error }, "Save store operation failed");
+    return { error: "The save store could not complete the request." };
+  }
+  return null;
 }
 
-async function writeSession(session: GameSession) {
-  await ensureStore();
-  const destination = sessionPath(session.id);
-  const tempPath = `${destination}.tmp`;
-  await writeFile(tempPath, JSON.stringify(session, null, 2), "utf8");
-  await rename(tempPath, destination);
+function unexpectedServerError(reply: FastifyReply, error: unknown, fallback: string) {
+  app.log.error({ err: error }, fallback);
+  reply.code(500);
+  return { error: fallback };
+}
+
+async function writeSession(session: GameSession, expectedRevision?: number) {
+  await saveStore.write(session, expectedRevision);
 }
 
 async function readSession(sessionId: string) {
-  const raw = await readFile(sessionPath(sessionId), "utf8");
-  return gameSessionSchema.parse(JSON.parse(raw));
+  return saveStore.read(sessionId);
 }
 
 async function listSessions() {
-  await ensureStore();
-  const files = (await readdir(dataDir)).filter((entry) => entry.endsWith(".json"));
-  const sessions = (
-    await Promise.all(
-      files.map(async (fileName) => {
-        try {
-          const raw = await readFile(path.join(dataDir, fileName), "utf8");
-          return gameSessionSchema.parse(JSON.parse(raw));
-        } catch (error) {
-          app.log.warn(
-            {
-              fileName,
-              error: error instanceof Error ? error.message : "Unknown session parse failure",
-            },
-            "Skipping incompatible or invalid save file",
-          );
-          return null;
-        }
-      }),
-    )
-  ).filter((session): session is GameSession => session !== null);
-  return sessions.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  const sessions = await saveStore.list();
+  return sessions.sort((left: GameSession, right: GameSession) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
 function createSession() {
@@ -376,9 +395,10 @@ app.get("/api/sessions/:id", async (request, reply) => {
   try {
     const session = await readSession((request.params as { id: string }).id);
     return sessionPayload(session);
-  } catch {
-    reply.code(404);
-    return { error: "Session not found" };
+  } catch (error) {
+    const mapped = mapStorageError(reply, error);
+    if (mapped) return mapped;
+    return unexpectedServerError(reply, error, "Failed to read session");
   }
 });
 
@@ -386,12 +406,13 @@ app.delete("/api/sessions/:id", async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     await withSessionLock(id, async () => {
-      await rm(sessionPath(id));
+      await saveStore.delete(id);
     });
     return { ok: true };
-  } catch {
-    reply.code(404);
-    return { error: "Session not found" };
+  } catch (error) {
+    const mapped = mapStorageError(reply, error);
+    if (mapped) return mapped;
+    return unexpectedServerError(reply, error, "Failed to delete session");
   }
 });
 
@@ -401,6 +422,8 @@ app.post("/api/sessions/:id/save", async (request, reply) => {
     reply.code(410);
     return { error: "Whole-session client saves are disabled. Use authoritative mutation endpoints instead." };
   } catch (error) {
+    const mapped = mapStorageError(reply, error);
+    if (mapped) return mapped;
     reply.code(400);
     return { error: error instanceof Error ? error.message : "Invalid session id" };
   }
@@ -427,6 +450,8 @@ app.post("/api/sessions/:id/preview-turn", async (request, reply) => {
       memos: preview.projectedResult.memos,
     };
   } catch (error) {
+    const mapped = mapStorageError(reply, error);
+    if (mapped) return mapped;
     reply.code(400);
     return { error: error instanceof Error ? error.message : "Failed to preview turn" };
   }
@@ -490,20 +515,22 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
         state: {
           ...session.state,
           conversationHistory: [
-            ...session.state.conversationHistory.filter((entry) => !(entry.turn === session.state.turn && entry.chiefId === chiefId)),
+            ...session.state.conversationHistory.filter((entry: ChiefConversationRecord) => !(entry.turn === session.state.turn && entry.chiefId === chiefId)),
             conversation,
           ],
         },
       }));
 
-      await writeSession(updatedSession);
+      await writeSession(updatedSession, session.revision);
       return {
         ...sessionPayload(updatedSession),
         conversation,
       };
     });
   } catch (error) {
-    reply.code(isRevisionMismatch(error) ? 409 : 400);
+    const mapped = mapStorageError(reply, error);
+    if (mapped) return mapped;
+    reply.code(400);
     return { error: error instanceof Error ? error.message : "Failed to open chief conversation" };
   }
 });
@@ -565,13 +592,13 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
           },
           chiefAgendaMemory: nextChiefAgendaMemory,
           activeCommitments: nextCommitments,
-          conversationHistory: session.state.conversationHistory.map((entry) =>
+          conversationHistory: session.state.conversationHistory.map((entry: ChiefConversationRecord) =>
             entry.turn === session.state.turn && entry.chiefId === chiefId ? nextConversation : entry,
           ),
         },
       }));
 
-      await writeSession(updatedSession);
+      await writeSession(updatedSession, session.revision);
       const selectedResponse = conversation.choices.find((entry) => entry.id === responseId);
       return {
         ...sessionPayload(updatedSession),
@@ -586,7 +613,9 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
       };
     });
   } catch (error) {
-    reply.code(isRevisionMismatch(error) ? 409 : 400);
+    const mapped = mapStorageError(reply, error);
+    if (mapped) return mapped;
+    reply.code(400);
     return { error: error instanceof Error ? error.message : "Failed to update chief relationship" };
   }
 });
@@ -615,7 +644,7 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
         history: [...session.history, result],
       }));
       const validation: ReplayValidation = assertReplayableSession(nextSession);
-      await writeSession(nextSession);
+      await writeSession(nextSession, session.revision);
       return {
         result,
         validation,
@@ -623,7 +652,9 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
       };
     });
   } catch (error) {
-    reply.code(isRevisionMismatch(error) ? 409 : 400);
+    const mapped = mapStorageError(reply, error);
+    if (mapped) return mapped;
+    reply.code(400);
     return { error: error instanceof Error ? error.message : "Failed to resolve turn" };
   }
 });
@@ -635,9 +666,10 @@ app.get("/api/sessions/:id/export", async (request, reply) => {
       exportedAt: new Date().toISOString(),
       session,
     });
-  } catch {
-    reply.code(404);
-    return { error: "Session not found" };
+  } catch (error) {
+    const mapped = mapStorageError(reply, error);
+    if (mapped) return mapped;
+    return unexpectedServerError(reply, error, "Failed to export session");
   }
 });
 
@@ -661,6 +693,8 @@ app.post("/api/sessions/import", async (request, reply) => {
     await writeSession(importedSession);
     return sessionPayload(importedSession);
   } catch (error) {
+    const mapped = mapStorageError(reply, error);
+    if (mapped) return mapped;
     reply.code(400);
     return { error: error instanceof Error ? error.message : "Invalid import payload" };
   }
@@ -673,9 +707,10 @@ app.get("/api/sessions/:id/replay", async (request, reply) => {
       session,
       validation: replayValidationSchema.parse(validateReplaySession(soloScenario, session)),
     };
-  } catch {
-    reply.code(404);
-    return { error: "Session not found" };
+  } catch (error) {
+    const mapped = mapStorageError(reply, error);
+    if (mapped) return mapped;
+    return unexpectedServerError(reply, error, "Failed to replay session");
   }
 });
 

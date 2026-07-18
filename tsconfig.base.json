@@ -38,6 +38,12 @@
       ],
       "@brass-ledger/headless/*": [
         "packages/headless/src/*"
+      ],
+      "@brass-ledger/save-store": [
+        "packages/save-store/src/index.ts"
+      ],
+      "@brass-ledger/save-store/*": [
+        "packages/save-store/src/*"
       ]
     }
   }

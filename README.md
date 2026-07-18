@@ -45,9 +45,51 @@ npm run dev:split
 
 On macOS, the Finder launcher is:
 
-`[Launch Brass Ledger.command](/Users/jonathanlim/Documents/GitHub/verbose-potato/Launch Brass Ledger.command)`
+The `Launch Brass Ledger.command` script (in the repo root) starts the packaged server, reuses an already running Brass Ledger instance if one exists, and opens the game in your browser. Keep the launcher in the repository root so it can resolve the release files beside it.
 
-Double-clicking it starts the packaged server, reuses an already running Brass Ledger instance if one exists, and opens the game in your browser.
+## Release Build
+
+To produce a self-contained, runnable artifact (no `tsx` or Vite dev server needed at runtime):
+
+```bash
+npm run release
+```
+
+This builds all workspaces, assembles the Node server and CLI with their locked production dependencies, and copies the web client and Electron shell into `release/`. A failed final replacement restores the previous release, and an existing `release/saves/` directory is migrated into the new artifact. Run the browser-hosted server with:
+
+```bash
+cd release && ./start.sh
+```
+
+For a headless CLI run from the release:
+
+```bash
+node release/cli/brass-ledger --turns 3
+```
+
+To launch or package the desktop shell, install the exact dependencies from the committed release lockfile:
+
+```bash
+cd release
+npm ci
+npm start
+```
+
+Create an unpacked platform application with:
+
+```bash
+cd release && npm run package
+```
+
+The unpacked application is written under `release/dist/`. Signing and notarization credentials are intentionally external to the repository and are required before distributing a production installer.
+
+To run the compiled server directly (without `tsx`) during development:
+
+```bash
+npm run start:dist
+```
+
+This boots `node dist/index.js` in the server workspace.
 
 ## Headless CLI
 
@@ -77,6 +119,11 @@ Useful flags:
 | `--validate` | Validate replay after the run. |
 | `--sprites` | Include advisor SVG payloads in JSON output. |
 | `--auto-accept-risks` | Fill missing accepted-risk overrides for supplied inputs. |
+| `--resume id` | Resume a session by ID from the save store. |
+| `--save` | Save the session to the save store after the run. |
+| `--list` | List all saved sessions. |
+
+Saves are stored in a stable per-user directory (e.g. `~/Library/Application Support/Brass Ledger/saves` on macOS, `~/.local/share/brass-ledger/saves` on Linux). Override with `BRASS_LEDGER_SAVE_DIR`. Sessions can be resumed across CLI and server runs; replay hashes are preserved exactly.
 
 ## Headless API
 

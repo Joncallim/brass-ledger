@@ -44,7 +44,7 @@ async function withAcceptedRiskCandidates(sessionId: string, input: Record<strin
   };
 }
 
-test("CORS accepts configured local origins and rejects unknown origins", async () => {
+test("CORS accepts configured origins and rejects unlisted ports", async () => {
   const allowed = await app.inject({
     method: "OPTIONS",
     url: "/api/health",
@@ -60,11 +60,12 @@ test("CORS accepts configured local origins and rejects unknown origins", async 
     method: "OPTIONS",
     url: "/api/health",
     headers: {
-      origin: "https://example.invalid",
+      origin: "http://127.0.0.1:9999",
       "access-control-request-method": "GET",
     },
   });
-  assert.notEqual(rejected.headers["access-control-allow-origin"], "https://example.invalid");
+  assert.notEqual(rejected.statusCode, 500);
+  assert.equal(rejected.headers["access-control-allow-origin"], undefined);
 });
 
 test("whole-session save is disabled and invalid session ids are rejected", async () => {
@@ -363,12 +364,28 @@ test("delete removes a session and rejects later reads", async () => {
   assert.equal(missing.statusCode, 404);
 });
 
+test("invalid session identifiers are rejected as client errors", async () => {
+  const response = await app.inject({ method: "GET", url: "/api/sessions/not-a-uuid" });
+  assert.equal(response.statusCode, 400);
+  assert.match(response.json().error, /invalid session id/i);
+});
+
 test("session listing skips malformed persisted save files", async () => {
   await writeFile(path.join(saveDir, "malformed.json"), "{not valid json", "utf8");
   const listed = await app.inject({ method: "GET", url: "/api/sessions" });
 
   assert.equal(listed.statusCode, 200);
   assert.ok(Array.isArray(listed.json().sessions));
+});
+
+test("corrupt sessions return a storage failure rather than a misleading 404", async () => {
+  const id = "00000000-0000-1000-8000-000000000099";
+  await writeFile(path.join(saveDir, `${id}.json`), "{not valid json", "utf8");
+
+  const response = await app.inject({ method: "GET", url: `/api/sessions/${id}` });
+
+  assert.equal(response.statusCode, 500);
+  assert.match(response.json().error, /save store/i);
 });
 
 test("simultaneous authoritative mutations do not both apply against one revision", async () => {
@@ -409,4 +426,17 @@ test("static routes serve the client shell and do not expose traversed files", a
 
   const traversed = await app.inject({ method: "GET", url: "/../../package.json" });
   assert.notEqual(traversed.statusCode, 200);
+});
+
+test("CORS rejects localhost origins not in the explicit allow list", async () => {
+  const rejected = await app.inject({
+    method: "OPTIONS",
+    url: "/api/health",
+    headers: {
+      origin: "http://127.0.0.1:4001",
+      "access-control-request-method": "GET",
+    },
+  });
+  assert.notEqual(rejected.statusCode, 500);
+  assert.equal(rejected.headers["access-control-allow-origin"], undefined);
 });
