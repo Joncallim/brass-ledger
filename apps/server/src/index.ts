@@ -380,15 +380,27 @@ app.post("/api/headless/run", async (request, reply) => {
   }
 });
 
-app.get("/api/sessions", async () => {
-  const sessions = await listSessions();
-  return { sessions: sessions.map(summarizeSession) };
+app.get("/api/sessions", async (_request, reply) => {
+  try {
+    const sessions = await listSessions();
+    return { sessions: sessions.map(summarizeSession) };
+  } catch (error) {
+    const mapped = mapStorageError(reply, error);
+    if (mapped) return mapped;
+    return unexpectedServerError(reply, error, "Failed to list sessions");
+  }
 });
 
-app.post("/api/sessions", async () => {
-  const session = createSession();
-  await writeSession(session);
-  return sessionPayload(session);
+app.post("/api/sessions", async (_request, reply) => {
+  try {
+    const session = createSession();
+    await writeSession(session);
+    return sessionPayload(session);
+  } catch (error) {
+    const mapped = mapStorageError(reply, error);
+    if (mapped) return mapped;
+    return unexpectedServerError(reply, error, "Failed to create session");
+  }
 });
 
 app.get("/api/sessions/:id", async (request, reply) => {

@@ -1,6 +1,6 @@
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -439,4 +439,20 @@ test("CORS rejects localhost origins not in the explicit allow list", async () =
   });
   assert.notEqual(rejected.statusCode, 500);
   assert.equal(rejected.headers["access-control-allow-origin"], undefined);
+});
+
+// Keep this test last: it plants a save-dir entry that makes list() fail for the
+// rest of the process, so it must run after every listing-dependent test above.
+test("session listing surfaces storage I/O failures through the sanitized mapping", async () => {
+  // A directory named like a save file makes readFile throw EISDIR (not ENOENT),
+  // which list() must surface as SaveStoreIOError rather than skip as corrupt.
+  await mkdir(path.join(saveDir, "00000000-0000-1000-8000-0000000000fe.json"));
+
+  const response = await app.inject({ method: "GET", url: "/api/sessions" });
+
+  assert.equal(response.statusCode, 500);
+  assert.match(response.json().error, /save store/i);
+  // Sanitized contract shape: { error } only, never Fastify's { statusCode, error, message }.
+  assert.equal(response.json().statusCode, undefined);
+  assert.equal(response.json().message, undefined);
 });
