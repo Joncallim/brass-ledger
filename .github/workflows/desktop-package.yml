@@ -1,0 +1,76 @@
+name: Desktop package
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/desktop-package.yml"
+      - "desktop/**"
+      - "scripts/desktop-package-smoke.mjs"
+      - "scripts/release*.mjs"
+      - "apps/server/**"
+      - "apps/web/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/desktop-package.yml"
+      - "desktop/**"
+      - "scripts/desktop-package-smoke.mjs"
+      - "scripts/release*.mjs"
+      - "apps/server/**"
+      - "apps/web/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: macOS DMG
+            os: macos-latest
+            target: mac
+          - label: Linux AppImage
+            os: ubuntu-latest
+            target: linux
+          - label: Windows NSIS
+            os: windows-latest
+            target: win
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run release
+      - run: npm ci
+        working-directory: release
+      - name: Build platform installer
+        run: npm run dist -- --${{ matrix.target }}
+        working-directory: release
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - name: Install Linux smoke dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xvfb xdotool
+      - name: Smoke packaged desktop on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run -a node scripts/desktop-package-smoke.mjs
+      - name: Verify macOS package contents
+        if: runner.os == 'macOS'
+        run: node scripts/desktop-package-smoke.mjs --package-only
+      - name: Smoke packaged desktop on Windows
+        if: runner.os == 'Windows'
+        run: node scripts/desktop-package-smoke.mjs

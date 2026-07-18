@@ -61,6 +61,8 @@ This builds all workspaces, assembles the Node server and CLI with their locked 
 cd release && ./start.sh
 ```
 
+`start.sh` is the POSIX launcher. On Windows, use the packaged desktop target or run `node server/index.js` from the release directory.
+
 For a headless CLI run from the release:
 
 ```bash

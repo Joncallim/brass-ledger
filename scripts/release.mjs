@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { recoverInterruptedRelease } from "./release-state.mjs";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(moduleDir, "..");
@@ -32,6 +33,10 @@ assertFile("desktop wrapper", desktopMain);
 assertFile("desktop package template", desktopPackage);
 assertFile("desktop dependency lockfile", desktopLockfile);
 
+if (await recoverInterruptedRelease(releaseDir, backupDir)) {
+  console.warn("Recovered the previous release from an interrupted replacement.");
+}
+
 // Stage into a temp directory then atomically replace, preserving saves
 await rm(stagingDir, { recursive: true, force: true });
 await mkdir(stagingDir, { recursive: true });
@@ -47,9 +52,12 @@ await cp(desktopPackage, path.join(stagingDir, "package.json"));
 await cp(desktopLockfile, path.join(stagingDir, "package-lock.json"));
 
 console.log("Installing production dependencies...");
-execFileSync("npm", ["ci", "--omit=dev", "--ignore-scripts"], {
+const npmArgs = ["ci", "--omit=dev", "--ignore-scripts"];
+const npmExecPath = process.env.npm_execpath;
+execFileSync(npmExecPath ? process.execPath : "npm", npmExecPath ? [npmExecPath, ...npmArgs] : npmArgs, {
   cwd: stagingDir,
   stdio: "inherit",
+  shell: !npmExecPath && process.platform === "win32",
 });
 
 const startScript = `#!/usr/bin/env bash

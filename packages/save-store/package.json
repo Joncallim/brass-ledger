@@ -20,7 +20,7 @@
     }
   },
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json && cp dist/save-store/src/index.d.ts dist/index.d.ts && cp dist/save-store/src/browser.d.ts dist/browser.d.ts && cp dist/save-store/src/contracts.d.ts dist/contracts.d.ts && esbuild src/contracts.ts --bundle --platform=neutral --format=esm --packages=external --outfile=dist/contracts.js && esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --external:./contracts.js --outfile=dist/index.js && esbuild src/browser.ts --bundle --platform=browser --format=esm --packages=external --external:./contracts.js --outfile=dist/browser.js",
+    "build": "node ../../scripts/workspace-files.mjs clean dist && tsc -p tsconfig.build.json && node ../../scripts/workspace-files.mjs copy dist/save-store/src/index.d.ts dist/index.d.ts && node ../../scripts/workspace-files.mjs copy dist/save-store/src/browser.d.ts dist/browser.d.ts && node ../../scripts/workspace-files.mjs copy dist/save-store/src/contracts.d.ts dist/contracts.d.ts && esbuild src/contracts.ts --bundle --platform=neutral --format=esm --packages=external --outfile=dist/contracts.js && esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --external:./contracts.js --outfile=dist/index.js && esbuild src/browser.ts --bundle --platform=browser --format=esm --packages=external --external:./contracts.js --outfile=dist/browser.js",
     "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
