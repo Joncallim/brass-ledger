@@ -1,0 +1,40 @@
+{
+  "name": "brass-ledger-desktop",
+  "version": "0.1.0",
+  "description": "Desktop release shell for Brass Ledger",
+  "private": true,
+  "type": "module",
+  "main": "main.mjs",
+  "scripts": {
+    "start": "electron main.mjs",
+    "dev": "electron main.mjs",
+    "package": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "ai.brass-ledger.desktop",
+    "productName": "Brass Ledger",
+    "files": [
+      "main.mjs",
+      "server/**/*",
+      "web/**/*"
+    ],
+    "mac": { "target": "dmg" },
+    "linux": { "target": "AppImage" },
+    "win": { "target": "nsis" }
+  },
+  "dependencies": {
+    "@fastify/cors": "11.2.0",
+    "fastify": "5.8.5",
+    "proper-lockfile": "4.1.2",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "electron": "43.1.1",
+    "electron-builder": "26.15.3"
+  },
+  "allowScripts": {
+    "electron@43.1.1": true,
+    "electron-winstaller@5.4.0": true
+  }
+}

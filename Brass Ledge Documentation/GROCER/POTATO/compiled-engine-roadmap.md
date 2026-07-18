@@ -62,8 +62,20 @@ Recommended package boundaries:
 | --- | --- | --- |
 | Now | Node CLI compiled by `tsc` | Implemented as `apps/cli`. |
 | Near | Single-command local executable script | Add bin wiring and release script. |
-| Mid | Desktop wrapper | Use Tauri or Electron only after engine contracts stabilize. |
+| Mid | Desktop wrapper | Electron chosen over Tauri (2026-07). |
 | Later | Native/WASM evaluation | Consider only if deterministic performance or distribution requires it. |
+
+## Desktop Wrapper Decision (2026-07)
+
+**Chosen: Electron.** Rationale:
+
+- The engine is pure TypeScript/Node.js. Electron runs Node.js natively, so the engine can be spawned as a child process with no serialisation bridge.
+- Tauri would require a Rust toolchain + a sidecar protocol (or WASM compilation of the engine), adding a new language build chain for marginal gain at this stage.
+- Engine contracts are stable enough for wrapping — schemas, replay hashes, and the headless API are well-defined.
+- The Electron wrapper is a **thin presentation host** — it spawns the compiled server bundle and opens a webview pointing at the same localhost URL. The shell contains zero rule logic.
+- Keep the `desktop/` directory isolated from workspace builds. Core `npm run build`/`test`/CI pass without Electron installed.
+
+The Tauri path remains open for later if distribution footprint becomes critical (the Electron binary is ~250MB, Tauri + system webview is ~10MB).
 
 ## Rules
 

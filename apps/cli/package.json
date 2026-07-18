@@ -8,7 +8,7 @@
     "brass-ledger": "./dist/index.js"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js",
+    "build": "node ../../scripts/workspace-files.mjs clean dist && tsc -p tsconfig.build.json && esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/index.js",
     "start": "node --import tsx src/index.ts",
     "run": "node dist/index.js",
     "test": "node --import tsx --test test/**/*.test.ts"
@@ -16,10 +16,11 @@
   "dependencies": {
     "@brass-ledger/content": "*",
     "@brass-ledger/headless": "*",
+    "@brass-ledger/save-store": "*",
     "@brass-ledger/shared": "*",
     "@brass-ledger/sim": "*"
   },
   "devDependencies": {
-    "esbuild": "^0.27.0"
+    "esbuild": "^0.28.1"
   }
 }

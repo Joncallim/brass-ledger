@@ -5,8 +5,16 @@ coverage
 .DS_Store
 *.tsbuildinfo
 
+# TypeScript emits belong in dist/, never beside shared source.
+packages/shared/src/index.js
+packages/shared/src/index.js.map
+packages/shared/src/index.d.ts
+
 # Claude skills are local tooling for this instance only — never uploaded to GitHub.
 .claude/skills/
+
+# Release artifact
+release/
 
 # Python bytecode cache
 __pycache__/

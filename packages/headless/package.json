@@ -12,7 +12,7 @@
     }
   },
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json && cp dist/headless/src/index.d.ts dist/index.d.ts && esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/index.js"
+    "build": "node ../../scripts/workspace-files.mjs clean dist && tsc -p tsconfig.build.json && node ../../scripts/workspace-files.mjs copy dist/headless/src/index.d.ts dist/index.d.ts && esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/index.js"
   },
   "dependencies": {
     "@brass-ledger/content": "*",
@@ -20,6 +20,6 @@
     "@brass-ledger/sim": "*"
   },
   "devDependencies": {
-    "esbuild": "^0.27.0"
+    "esbuild": "^0.28.1"
   }
 }

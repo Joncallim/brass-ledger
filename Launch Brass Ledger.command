@@ -73,7 +73,14 @@ launch_on_port() {
   local port="$1"
 
   : > "$LOG_FILE"
-  PORT="$port" npm run start >>"$LOG_FILE" 2>&1 &
+
+  if [[ -f "$ROOT_DIR/release/server/index.js" ]]; then
+    BRASS_LEDGER_WEB_DIST_DIR="$ROOT_DIR/release/web" \
+      PORT="$port" \
+      node "$ROOT_DIR/release/server/index.js" >>"$LOG_FILE" 2>&1 &
+  else
+    PORT="$port" npm run start --prefix "$ROOT_DIR" >>"$LOG_FILE" 2>&1 &
+  fi
   SERVER_PID=$!
 
   for _ in {1..120}; do

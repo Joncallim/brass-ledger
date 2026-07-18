@@ -11,16 +11,23 @@
     "build": "npm run build --workspaces --if-present",
     "dev": "npm run build --workspaces --if-present && npm run dev --workspace @brass-ledger/server",
     "start": "npm run build --workspaces --if-present && npm run start --workspace @brass-ledger/server",
+    "start:dist": "npm run build --workspaces --if-present && npm run start:dist --workspace @brass-ledger/server",
     "dev:split": "npm run dev --workspace @brass-ledger/server & npm run dev --workspace @brass-ledger/web",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && npm run test:release",
+    "test:release": "node --test scripts/*.test.mjs",
     "lint:content": "npm run lint:content --workspace @brass-ledger/content",
     "lint:grocer": "node scripts/validate-potato.mjs",
     "lint:potato": "node scripts/validate-potato.mjs",
-    "replay:demo": "npm run replay:demo --workspace @brass-ledger/server"
+    "replay:demo": "npm run replay:demo --workspace @brass-ledger/server",
+    "release": "npm run build --workspaces --if-present && node scripts/release.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
-    "tsx": "^4.20.5",
+    "tsx": "^4.23.1",
     "typescript": "^5.9.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "fsevents@2.3.3": true
   }
 }

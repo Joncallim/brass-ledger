@@ -806,6 +806,7 @@ export type ScenarioDefinition = z.infer<typeof scenarioDefinitionSchema>;
 export const gameSessionSchema = z.object({
   id: z.string(),
   saveFormatVersion: z.literal("5"),
+  engineVersion: z.literal("0.1.0").default("0.1.0"),
   revision: z.number().int().min(0).default(0),
   scenarioId: z.string(),
   contentVersion: z.string(),
@@ -820,6 +821,7 @@ export type GameSession = z.infer<typeof gameSessionSchema>;
 
 export const sessionExportSchema = z.object({
   exportedAt: z.string(),
+  engineVersion: z.literal("0.1.0").default("0.1.0"),
   session: gameSessionSchema,
 });
 export type SessionExport = z.infer<typeof sessionExportSchema>;
@@ -2713,6 +2715,7 @@ export function createInitialGameSession(scenario: ScenarioDefinition, sessionSe
   return {
     id: scenario.id,
     saveFormatVersion: "5",
+    engineVersion: "0.1.0",
     revision: 0,
     scenarioId: scenario.id,
     contentVersion: scenario.contentVersion,
