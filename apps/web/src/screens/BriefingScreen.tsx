@@ -87,7 +87,17 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
                     <td className="px-3 py-2 font-semibold">{r.shortLabel} {r.label}</td>
                     <td className="px-3 py-2"><StatusBadge status={r.status} /></td>
                     <td className="px-3 py-2 font-mono">{r.burdenPoints}/{r.capacity}</td>
-                    <td className="px-3 py-2 text-ink/60 max-w-xs">{r.consequence}</td>
+                    <td className="px-3 py-2 max-w-xs">
+                      {r.activeWarning ? (
+                        <p className="text-yellow-400">⚠ {r.activeWarning}</p>
+                      ) : (
+                        <p className="text-ink/40">No current warning.</p>
+                      )}
+                      <p className="text-ink/50 mt-1">
+                        <span className="text-ink/40 uppercase tracking-wide text-[10px] mr-1">Role</span>
+                        {r.standingRemit}
+                      </p>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -184,15 +194,18 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
             <section>
               <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Events still in play</p>
               <p className="text-xs text-ink/50 mb-2 leading-relaxed">
-                Shown by event code. Each event was described in full in the after-action report for the month it
-                first appeared.
+                Each event was described in full in the after-action report for the month it first appeared.
               </p>
               <div className="space-y-1">
-                {state.activeEventIds.map((id) => (
-                  <div key={id} className="text-xs border border-yellow-800/60 bg-yellow-950/40 px-3 py-2 text-yellow-300 font-mono">
-                    {id}
-                  </div>
-                ))}
+                {state.activeEventIds.map((id) => {
+                  const summary = labels.eventSummary(id);
+                  return (
+                    <div key={id} className="text-xs border border-yellow-800/60 bg-yellow-950/40 px-3 py-2 text-yellow-300">
+                      <p className="font-semibold">{labels.event(id)}</p>
+                      {summary && <p className="text-yellow-300/70 mt-0.5 leading-relaxed">{summary}</p>}
+                    </div>
+                  );
+                })}
               </div>
             </section>
           )}

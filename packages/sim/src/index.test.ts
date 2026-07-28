@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { soloScenario } from "@brass-ledger/content";
 import {
   buildChiefPositions,
+  buildStaffFunctionReadouts,
   campaignStateSchema,
   continueChiefConversation,
   startChiefConversation,
@@ -112,6 +113,56 @@ test("resolveTurn emits S1-S5 staff readouts and causal explainability", () => {
   assert.ok(result.staffFunctions.some((entry) => entry.warnings.length > 0));
   assert.ok(result.explainability.length >= 4);
   assert.ok(result.explainability.every((entry) => entry.causalRefs.length > 0 || entry.label === "Events"));
+
+  for (const entry of result.staffFunctions) {
+    assert.equal(entry.activeWarning, entry.warnings[0] ?? null);
+    const definition = soloScenario.staffFunctions.find((fn) => fn.id === entry.id);
+    assert.ok(definition);
+    assert.equal(entry.standingRemit, definition.doctrineNote);
+    assert.ok(!("consequence" in entry));
+  }
+});
+
+test("buildStaffFunctionReadouts invariants: activeWarning/standingRemit never conflate", () => {
+  const state = soloScenario.initialState;
+  const noBurden = soloScenario.staffCapacities.map((capacity) => ({
+    directorate: capacity.directorate,
+    burdenPoints: 0,
+    capacity: capacity.capacity,
+    burdenLevel: "light" as const,
+    failureMode: "",
+    confidencePenalty: 0,
+    executionPenalty: 0,
+    summary: "",
+  }));
+  const unwarned = buildStaffFunctionReadouts(soloScenario.staffFunctions, noBurden, state);
+  for (const entry of unwarned) {
+    assert.equal(entry.warnings.length, 0);
+    assert.equal(entry.activeWarning, null);
+    const definition = soloScenario.staffFunctions.find((fn) => fn.id === entry.id);
+    assert.ok(definition);
+    assert.equal(entry.standingRemit, definition.doctrineNote);
+  }
+
+  const overloadedBurden = soloScenario.staffCapacities.map((capacity) => ({
+    directorate: capacity.directorate,
+    burdenPoints: capacity.overloadedAt + 5,
+    capacity: capacity.capacity,
+    burdenLevel: "overloaded" as const,
+    failureMode: "capacity exceeded",
+    confidencePenalty: 1,
+    executionPenalty: 1,
+    summary: `${capacity.directorate} is overloaded and cannot absorb further tasking.`,
+  }));
+  const warned = buildStaffFunctionReadouts(soloScenario.staffFunctions, overloadedBurden, state);
+  for (const entry of warned) {
+    assert.ok(entry.warnings.length > 0);
+    assert.equal(entry.activeWarning, entry.warnings[0]);
+    const definition = soloScenario.staffFunctions.find((fn) => fn.id === entry.id);
+    assert.ok(definition);
+    assert.equal(entry.standingRemit, definition.doctrineNote);
+    assert.notEqual(entry.standingRemit, entry.activeWarning);
+  }
 });
 
 test("previewTurn exposes replay-safe decision previews and accepted-risk candidates", () => {

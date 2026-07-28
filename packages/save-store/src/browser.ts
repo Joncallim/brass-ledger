@@ -9,6 +9,7 @@ import {
   SessionNotFoundError,
   type SaveStore,
 } from "./contracts.js";
+import { migrateSessionPayload } from "./migrations.js";
 
 export * from "./contracts.js";
 
@@ -86,7 +87,7 @@ export function createBrowserSaveStore(_storage?: Storage): SaveStore {
     const sessions = new Map<string, GameSession>();
     let hasCorruption = false;
     for (const [id, entry] of Object.entries(parsed)) {
-      const result = gameSessionSchema.safeParse(entry);
+      const result = gameSessionSchema.safeParse(migrateSessionPayload(entry));
       if (result.success && result.data.id === id) sessions.set(id, result.data);
       else hasCorruption = true;
     }

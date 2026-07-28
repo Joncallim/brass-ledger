@@ -534,7 +534,8 @@ export const staffFunctionReadoutSchema = z.object({
   headroom: z.number(),
   warnings: z.array(z.string()),
   failureMode: z.string(),
-  consequence: z.string(),
+  activeWarning: z.string().nullable(),
+  standingRemit: z.string(),
   metrics: z.array(staffFunctionMetricSchema),
 });
 export type StaffFunctionReadout = z.infer<typeof staffFunctionReadoutSchema>;
@@ -797,7 +798,7 @@ export type ScenarioDefinition = z.infer<typeof scenarioDefinitionSchema>;
 
 export const gameSessionSchema = z.object({
   id: z.string(),
-  saveFormatVersion: z.literal("5"),
+  saveFormatVersion: z.literal("6"),
   engineVersion: z.literal("0.1.0").default("0.1.0"),
   revision: z.number().int().min(0).default(0),
   scenarioId: z.string(),
@@ -846,6 +847,7 @@ export const scenarioSummarySchema = z.object({
   staffFunctions: z.array(staffFunctionDefinitionSchema).default([]),
   capabilityPrograms: z.array(capabilityProgramDefinitionSchema),
   externalConstraints: z.array(externalConstraintDefinitionSchema),
+  events: z.array(eventDefinitionSchema).default([]),
 });
 export type ScenarioSummary = z.infer<typeof scenarioSummarySchema>;
 
@@ -1300,7 +1302,8 @@ export function buildStaffFunctionReadouts(
       headroom,
       warnings,
       failureMode,
-      consequence: warnings[0] ?? definition.doctrineNote,
+      activeWarning: warnings[0] ?? null,
+      standingRemit: definition.doctrineNote,
       metrics,
     };
   });
@@ -2734,7 +2737,7 @@ export function createInitialGameSession(scenario: ScenarioDefinition, sessionSe
   const initialState = deepClone(scenario.initialState);
   return {
     id: scenario.id,
-    saveFormatVersion: "5",
+    saveFormatVersion: "6",
     engineVersion: "0.1.0",
     revision: 0,
     scenarioId: scenario.id,

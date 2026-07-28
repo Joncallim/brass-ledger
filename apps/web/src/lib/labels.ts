@@ -1,4 +1,4 @@
-import type { ProgramPhase, ScenarioSummary } from "@brass-ledger/shared";
+import type { EventDefinition, ProgramPhase, ScenarioSummary } from "@brass-ledger/shared";
 
 /**
  * Canonical player-facing wording for values the engine stores as identifiers or
@@ -86,16 +86,19 @@ export function pluralize(count: number, singular: string, plural = `${singular}
 }
 
 /**
- * Turns capability-program and external-constraint ids into the names the
- * scenario gives them. Falls back to the id so nothing disappears if the
- * scenario has not loaded yet.
+ * Turns capability-program, external-constraint, and event ids into the names
+ * the scenario gives them. Falls back to a generic label rather than the raw
+ * id — an id is an internal identifier, not something a player should see.
  */
 export function scenarioLabels(scenario: ScenarioSummary | null | undefined) {
   const programs = new Map((scenario?.capabilityPrograms ?? []).map((entry) => [entry.id, entry.label]));
   const constraints = new Map((scenario?.externalConstraints ?? []).map((entry) => [entry.id, entry.label]));
+  const events = new Map<string, EventDefinition>((scenario?.events ?? []).map((entry) => [entry.id, entry]));
   return {
-    program: (id: string) => programs.get(id) ?? id,
-    constraint: (id: string) => constraints.get(id) ?? id,
+    program: (id: string) => programs.get(id) ?? "Unknown capability program",
+    constraint: (id: string) => constraints.get(id) ?? "Unknown external constraint",
+    event: (id: string) => events.get(id)?.title ?? "Unknown active event",
+    eventSummary: (id: string) => events.get(id)?.summary ?? null,
   };
 }
 

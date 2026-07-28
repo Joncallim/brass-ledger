@@ -45,7 +45,7 @@ describe("FileSystemSaveStore CRUD", () => {
     const read = await store.read("00000000-0000-1000-8000-000000000001");
     assert.equal(read.id, session.id);
     assert.equal(read.revision, 0);
-    assert.equal(read.saveFormatVersion, "5");
+    assert.equal(read.saveFormatVersion, "6");
   });
 
   it("creating a duplicate session throws", async () => {
@@ -510,6 +510,104 @@ describe("Unreadable store", () => {
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
+  });
+});
+
+describe("v5 to v6 save migration", () => {
+  let saveDir: string;
+  let store: SaveStore;
+
+  before(async () => {
+    saveDir = await mkdtemp(path.join(os.tmpdir(), "brass-ledger-test-migration-"));
+    store = createFileSystemSaveStore(saveDir);
+  });
+
+  after(async () => {
+    await rm(saveDir, { recursive: true, force: true });
+  });
+
+  function toV5Readout(readout: Record<string, unknown>): Record<string, unknown> {
+    const { activeWarning, standingRemit, ...rest } = readout;
+    return { ...rest, consequence: activeWarning ?? standingRemit };
+  }
+
+  function defaultTurnInput() {
+    const defaultSelections = soloScenario.memoTemplates.map((memo) => ({
+      memoId: memo.id,
+      optionId: memo.options[0].id,
+    }));
+    return {
+      turn: 1,
+      selectedActionIds: defaultSelections.map((s) => s.optionId),
+      selections: defaultSelections,
+      acceptedRiskOverrides: [],
+      staffNegotiations: [],
+    };
+  }
+
+  it("migrates a v5 session with warned and unwarned staff functions to v6", async () => {
+    const id = "00000000-0000-1000-8000-000000000200";
+    const session = makeSession({ id });
+    const input = defaultTurnInput();
+    const result = resolveTurn(soloScenario, session.state, input);
+    const v6Session = gameSessionSchema.parse({
+      ...session,
+      state: result.nextState,
+      turnInputs: [input],
+      history: [result],
+    });
+
+    const v5Payload = {
+      ...v6Session,
+      saveFormatVersion: "5",
+      history: v6Session.history.map((turnResult) => ({
+        ...turnResult,
+        staffFunctions: turnResult.staffFunctions.map(toV5Readout),
+      })),
+    };
+
+    const { writeFile } = await import("node:fs/promises");
+    await writeFile(path.join(saveDir, `${id}.json`), JSON.stringify(v5Payload), "utf8");
+
+    const migrated = await store.read(id);
+    assert.equal(migrated.saveFormatVersion, "6");
+    assert.equal(migrated.history.length, v6Session.history.length);
+    for (const [index, turnResult] of migrated.history.entries()) {
+      for (const readout of turnResult.staffFunctions) {
+        assert.ok(!("consequence" in readout));
+        const original = v6Session.history[index].staffFunctions.find((fn) => fn.id === readout.id);
+        assert.ok(original);
+        assert.equal(readout.activeWarning, original.activeWarning);
+        assert.equal(readout.standingRemit, original.standingRemit);
+      }
+    }
+  });
+
+  it("v6-migrated saves remain replay-valid", async () => {
+    const id = "00000000-0000-1000-8000-000000000201";
+    const session = makeSession({ id });
+    const input = defaultTurnInput();
+    const result = resolveTurn(soloScenario, session.state, input);
+    const v6Session = gameSessionSchema.parse({
+      ...session,
+      state: result.nextState,
+      turnInputs: [input],
+      history: [result],
+    });
+    const v5Payload = {
+      ...v6Session,
+      saveFormatVersion: "5",
+      history: v6Session.history.map((turnResult) => ({
+        ...turnResult,
+        staffFunctions: turnResult.staffFunctions.map(toV5Readout),
+      })),
+    };
+
+    const { writeFile } = await import("node:fs/promises");
+    await writeFile(path.join(saveDir, `${id}.json`), JSON.stringify(v5Payload), "utf8");
+
+    const migrated = await store.read(id);
+    assert.equal(migrated.history[0].replayHash, v6Session.history[0].replayHash);
   });
 });
 

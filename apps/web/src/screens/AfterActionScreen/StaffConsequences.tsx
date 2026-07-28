@@ -31,7 +31,7 @@ export function StaffConsequences({ previous, current }: Props) {
                 )}
               </div>
               {fn.warnings.length === 0 ? (
-                <p className="text-sm text-ink/60 leading-relaxed">{fn.consequence}</p>
+                <p className="text-sm text-ink/40 leading-relaxed">No new staff warning this month.</p>
               ) : (
                 <div className="space-y-0.5">
                   {fn.warnings.map((w) => (

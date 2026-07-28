@@ -4,7 +4,12 @@ import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { HeadlessAcceptedRiskError, runHeadlessBatch, runHeadlessCampaign } from "@brass-ledger/headless";
-import { createFileSystemSaveStore, resolveSaveDirWithMigration, type SaveStore } from "@brass-ledger/save-store";
+import {
+  createFileSystemSaveStore,
+  migrateSessionPayload,
+  resolveSaveDirWithMigration,
+  type SaveStore,
+} from "@brass-ledger/save-store";
 import {
   gameSessionSchema,
   sessionExportSchema,
@@ -106,11 +111,14 @@ async function readSession(filePath: string | null) {
   }
 
   const parsed = await readJsonFile(filePath);
-  const exported = sessionExportSchema.safeParse(parsed);
-  if (exported.success) {
-    return exported.data.session;
+  if (parsed && typeof parsed === "object" && "session" in (parsed as Record<string, unknown>)) {
+    const value = parsed as Record<string, unknown>;
+    const exported = sessionExportSchema.safeParse({ ...value, session: migrateSessionPayload(value.session) });
+    if (exported.success) {
+      return exported.data.session;
+    }
   }
-  return gameSessionSchema.parse(parsed);
+  return gameSessionSchema.parse(migrateSessionPayload(parsed));
 }
 
 async function readInputs(filePath: string | null) {

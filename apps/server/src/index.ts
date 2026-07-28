@@ -9,6 +9,7 @@ import { soloScenario } from "@brass-ledger/content";
 import { HeadlessAcceptedRiskError, runHeadlessCampaign } from "@brass-ledger/headless";
 import {
   createFileSystemSaveStore,
+  migrateSessionPayload,
   resolveSaveDirWithMigration,
   InvalidSessionIdError,
   LockTimeoutError,
@@ -206,6 +207,12 @@ function assertReplayableSession(session: GameSession) {
   return validation;
 }
 
+function migrateExportData(exportData: unknown): unknown {
+  if (typeof exportData !== "object" || exportData === null) return exportData;
+  const value = exportData as Record<string, unknown>;
+  return { ...value, session: migrateSessionPayload(value.session) };
+}
+
 function assertCanonicalImport(session: GameSession) {
   if (session.engineVersion !== "0.1.0") {
     throw new Error("This campaign file was saved by a different version of the Brass Ledger engine. A campaign can only be opened by the version that saved it.");
@@ -213,7 +220,7 @@ function assertCanonicalImport(session: GameSession) {
   if (session.scenarioId !== soloScenario.id || session.contentVersion !== soloScenario.contentVersion) {
     throw new Error("This campaign file was played on a different scenario or a different content version, so it cannot be opened here.");
   }
-  if (session.saveFormatVersion !== "5") {
+  if (session.saveFormatVersion !== "6") {
     throw new Error("This campaign file uses a save format this version of Brass Ledger cannot read.");
   }
   if (stableJson(session.initialState) !== stableJson(soloScenario.initialState)) {
@@ -337,9 +344,9 @@ function parseHeadlessRunBody(body: unknown) {
     : (Array.isArray(rawInputs) ? rawInputs : [rawInputs]).map((entry) => turnInputSchema.parse(entry));
 
   const session = value.session
-    ? gameSessionSchema.parse(value.session)
+    ? gameSessionSchema.parse(migrateSessionPayload(value.session))
     : value.exportData
-      ? sessionExportSchema.parse(value.exportData).session
+      ? sessionExportSchema.parse(migrateExportData(value.exportData)).session
       : undefined;
 
   return {
@@ -369,6 +376,7 @@ app.get("/api/scenario", async () => ({
     decisionMemos: soloScenario.memoTemplates,
     capabilityPrograms: soloScenario.capabilityPrograms,
     externalConstraints: soloScenario.externalConstraints,
+    events: soloScenario.events,
   },
 }));
 
@@ -699,7 +707,7 @@ app.get("/api/sessions/:id/export", async (request, reply) => {
 app.post("/api/sessions/import", async (request, reply) => {
   try {
     const body = (request.body ?? {}) as { exportData?: unknown };
-    const parsed = sessionExportSchema.parse(body.exportData);
+    const parsed = sessionExportSchema.parse(migrateExportData(body.exportData));
     const session = parsed.session;
     try {
       assertCanonicalImport(session);
