@@ -17,8 +17,10 @@ export function AcceptedRiskDocket({ candidates, choices, onChange }: Props) {
   if (candidates.length === 0) {
     return (
       <div className="border border-border p-4">
-        <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Accepted risk docket</p>
-        <p className="text-sm text-ink/60">No risk warnings projected. Ready to commit.</p>
+        <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Staff risk warnings</p>
+        <p className="text-sm text-ink/60">
+          No staff function is forecast to raise a warning against these choices.
+        </p>
       </div>
     );
   }
@@ -26,12 +28,15 @@ export function AcceptedRiskDocket({ candidates, choices, onChange }: Props) {
   return (
     <div className="border border-border p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs uppercase tracking-widest text-ink/40">Accepted risk docket</p>
+        <p className="text-xs uppercase tracking-widest text-ink/40">Staff risk warnings</p>
         <span className={`text-xs border px-1.5 py-0.5 font-mono ${allAccepted ? "border-green-700/60 text-green-400 bg-green-950/40" : "border-yellow-700/60 text-yellow-400"}`}>
-          {acceptedCount}/{candidates.length} accepted
+          {acceptedCount} of {candidates.length} accepted
         </span>
       </div>
-      <p className="text-xs text-ink/50 mb-3">Acknowledge each projected S1–S5 warning before committing.</p>
+      <p className="text-xs text-ink/50 mb-3 leading-relaxed">
+        Your choices push these staff functions past what they can comfortably carry. Tick each warning to record
+        that you are going ahead knowing the risk. You cannot commit the month until all of them are ticked.
+      </p>
       <div className="space-y-2">
         {candidates.map((risk) => {
           const key = riskKey(risk);

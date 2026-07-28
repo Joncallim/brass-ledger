@@ -18,7 +18,8 @@ export function StaffRail({ readouts }: Props) {
   return (
     <aside className="w-48 shrink-0 border-r border-border flex flex-col bg-paper/40">
       <div className="px-3 pt-3 pb-2 border-b border-border/60">
-        <p className="text-xs uppercase tracking-widest text-ink/40">S1–S5 Staff</p>
+        <p className="text-xs uppercase tracking-widest text-ink/40">Your staff</p>
+        <p className="text-xs text-ink/30 mt-0.5 leading-snug">Select one for detail</p>
       </div>
 
       <div className="flex-1 flex flex-col gap-px p-2">

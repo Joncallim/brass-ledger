@@ -13,7 +13,8 @@ import type {
 export type SessionSummary = {
   id: string;
   turn: number;
-  maxTurns: number;
+  milestonesMet: number;
+  milestonesTotal: number;
   campaignStatus: string;
   campaignScore: number;
   summary: string;

@@ -3,6 +3,14 @@ import type { PreviewPayload } from "../../lib/types";
 import { MemoPanel } from "./MemoPanel";
 import { StatusBadge } from "../../components/StatusBadge";
 import { BurdenBar } from "../../components/BurdenBar";
+import { coalitionPostureLabel, pluralize } from "../../lib/labels";
+
+const posturePalette: Record<string, string> = {
+  supporting: "text-green-400",
+  conditional: "text-yellow-400",
+  contested: "text-orange-400",
+  blocked: "text-red-400",
+};
 
 type Props = {
   memos: DecisionMemo[];
@@ -49,13 +57,18 @@ export function MemosScreen({
             <p className="text-sm text-ink/60">
               {memos.filter((m) => !m.optional).length} required · {memos.filter((m) => m.optional).length} optional
             </p>
+            <p className="text-xs text-ink/50 mt-1 max-w-lg leading-relaxed">
+              Choose one course of action per memo. The panel on the right updates as you choose, so you can see the
+              work each choice loads onto your staff before you commit anything. The small tags on an option are the
+              themes your chiefs and outside events react to.
+            </p>
           </div>
           <button
             type="button"
             onClick={onBack}
-            className="text-xs text-ink/40 hover:text-ink border border-border px-2 py-1"
+            className="text-xs text-ink/40 hover:text-ink border border-border px-2 py-1 shrink-0"
           >
-            ← Brief
+            ← Back to brief
           </button>
         </div>
 
@@ -78,37 +91,44 @@ export function MemosScreen({
             disabled={!canProceed}
             className="px-5 py-2.5 bg-brass text-white border border-brass hover:bg-brass/90 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
           >
-            Review chiefs paper →
+            Hear from the chiefs →
           </button>
           {!canProceed && (
-            <p className="text-xs text-ink/40 mt-2">Preview must complete before proceeding.</p>
+            <p className="text-xs text-ink/40 mt-2">
+              Choose at least one option to continue. Every required memo needs an option before you can commit the
+              month.
+            </p>
           )}
         </div>
       </div>
 
       <div className="w-64 shrink-0 border-l border-border p-4 bg-paper/40">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs uppercase tracking-widest text-ink/40">Projected S1–S5 burden</p>
+          <p className="text-xs uppercase tracking-widest text-ink/40">Forecast staff burden</p>
           {previewLoading && <span className="text-xs text-ink/40 animate-pulse">Updating…</span>}
         </div>
 
         {previewError && (
-          <p className="text-xs text-red-400 mb-3">{previewError}</p>
+          <p className="text-xs text-red-400 mb-3">Could not update the forecast: {previewError}</p>
         )}
 
         {projectedFunctions.length === 0 && !previewLoading && (
-          <p className="text-xs text-ink/40">Select options to see projected staff burden.</p>
+          <p className="text-xs text-ink/40">Choose an option to see how much work each staff function would carry.</p>
         )}
 
         <div className="space-y-2">
           {projectedFunctions.map((fn) => {
             const level = fn.status === "overloaded" || fn.status === "compromised" ? "overloaded" : fn.status === "strained" ? "strained" : "light";
             return (
-              <div key={fn.id} className="flex items-center gap-2">
-                <span className="text-xs font-semibold w-6 text-ink/70">{fn.shortLabel}</span>
-                <BurdenBar points={fn.burdenPoints} capacity={fn.capacity} level={level} maxSegments={6} />
-                <span className="text-xs font-mono text-ink/50 ml-1">{fn.burdenPoints}/{fn.capacity}</span>
-                <StatusBadge status={fn.status} className="ml-auto shrink-0" />
+              <div key={fn.id}>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-ink/70">{fn.shortLabel}</span>
+                  <span className="text-xs font-mono text-ink/50">{fn.burdenPoints}/{fn.capacity}</span>
+                  <StatusBadge status={fn.status} className="ml-auto shrink-0" />
+                </div>
+                <div className="mt-0.5 overflow-hidden">
+                  <BurdenBar points={fn.burdenPoints} capacity={fn.capacity} level={level} maxSegments={6} />
+                </div>
               </div>
             );
           })}
@@ -116,19 +136,20 @@ export function MemosScreen({
 
         {warningCount > 0 && (
           <div className="mt-4 border border-yellow-700/60 bg-yellow-950/40 px-3 py-2">
-            <p className="text-xs text-yellow-300">{warningCount} warning{warningCount !== 1 ? "s" : ""} projected</p>
+            <p className="text-xs text-yellow-300 leading-relaxed">
+              {warningCount} staff {pluralize(warningCount, "warning")} forecast. You will have to accept
+              {warningCount === 1 ? " it" : " each of them"} before you can commit the month.
+            </p>
           </div>
         )}
 
         {preview?.chiefCoalitions && preview.chiefCoalitions.length > 0 && (
           <div className="mt-4">
-            <p className="text-xs uppercase tracking-widest text-ink/40 mb-2">Coalition snapshot</p>
+            <p className="text-xs uppercase tracking-widest text-ink/40 mb-2">Where the chiefs stand</p>
             <div className="space-y-1">
               {preview.chiefCoalitions.slice(0, 4).map((c) => (
                 <div key={`${c.memoId}:${c.optionId}`} className="text-xs border border-border px-2 py-1.5">
-                  <span className={`font-mono mr-1 ${c.posture === "supporting" ? "text-green-400" : c.posture === "blocked" ? "text-red-400" : "text-yellow-400"}`}>
-                    {c.posture === "supporting" ? "▲" : c.posture === "blocked" ? "▼" : "~"}
-                  </span>
+                  <span className={`block ${posturePalette[c.posture]}`}>{coalitionPostureLabel[c.posture] ?? c.posture}</span>
                   <span className="text-ink/60 truncate">{c.optionLabel}</span>
                 </div>
               ))}

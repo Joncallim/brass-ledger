@@ -367,7 +367,7 @@ test("delete removes a session and rejects later reads", async () => {
 test("invalid session identifiers are rejected as client errors", async () => {
   const response = await app.inject({ method: "GET", url: "/api/sessions/not-a-uuid" });
   assert.equal(response.statusCode, 400);
-  assert.match(response.json().error, /invalid session id/i);
+  assert.match(response.json().error, /not a valid campaign id/i);
 });
 
 test("session listing skips malformed persisted save files", async () => {

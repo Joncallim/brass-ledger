@@ -31,17 +31,17 @@ export function MemoPanel({ memo, selectedOptionId, enabled, onSelect }: Props) 
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-xs uppercase tracking-widest text-ink/40">{memo.category}</span>
             {!memo.optional && (
-              <span className="text-xs border border-ink/30 px-1 text-ink/40">required</span>
+              <span className="text-xs border border-ink/30 px-1 text-ink/40">Required</span>
             )}
             {memo.optional && (
-              <span className="text-xs border border-border px-1 text-ink/30">optional</span>
+              <span className="text-xs border border-border px-1 text-ink/30">Optional</span>
             )}
           </div>
           <h3 className="text-sm font-semibold tracking-tight text-ink">{memo.title}</h3>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {selectedOptionId && (
-            <span className="text-xs font-mono text-brass">✓</span>
+            <span className="text-xs text-brass">Chosen ✓</span>
           )}
           <span className="text-xs text-ink/30">{expanded ? "▲" : "▼"}</span>
         </div>
@@ -61,7 +61,7 @@ export function MemoPanel({ memo, selectedOptionId, enabled, onSelect }: Props) 
                 onChange={(e) => handleOptionalToggle(e.currentTarget.checked)}
                 className="accent-[#b5882e]"
               />
-              Include this memo
+              Take this decision this month
             </label>
           )}
 

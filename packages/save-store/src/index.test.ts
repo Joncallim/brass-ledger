@@ -330,7 +330,7 @@ describe("Child-process concurrency", () => {
       `      await store.write({ ...s, revision: s.revision + 1, updatedAt: new Date().toISOString() }, s.revision);`,
       `      break;`,
       `    } catch (e) {`,
-      `      if (e.message && e.message.includes("revision mismatch")) continue;`,
+      `      if (e.name === "RevisionMismatchError") continue;`,
       `      throw e;`,
       `    }`,
       `  }`,

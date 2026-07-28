@@ -3,11 +3,13 @@ import type { ScenarioSummary, MemoSelection, StaffNegotiation, AcceptedRiskOver
 import { buildStaffFunctionReadouts, buildDirectorateBurden } from "@brass-ledger/shared";
 import type { AppRoute, TurnCycleState, SessionSummary, TurnStep } from "./lib/types";
 import {
+  describeError,
   listSessions, createSession, loadSession, deleteSession,
   resolveTurn, exportSession, importSession, validateReplay,
   openChiefConversation, respondToChief,
 } from "./lib/api";
 import { usePreview } from "./hooks/usePreview";
+import { scenarioLabels } from "./lib/labels";
 import { AppShell } from "./components/AppShell";
 import { SessionHub } from "./screens/SessionHub";
 import { BriefingScreen } from "./screens/BriefingScreen";
@@ -55,6 +57,8 @@ export function App() {
     return buildStaffFunctionReadouts(definitions, burdens, cycle.session.state);
   })();
 
+  const labels = scenarioLabels(scenario);
+
   const staffReadouts: StaffFunctionReadout[] =
     (preview?.projectedResult.staffFunctions.length ?? 0) > 0
       ? preview!.projectedResult.staffFunctions
@@ -79,7 +83,7 @@ export function App() {
       const step: TurnStep = latestResult && data.session.state.campaignStatus === "active" ? "briefing" : latestResult ? "after-action" : "briefing";
       setRoute({ screen: "session", sessionId: id, step: latestResult ? "after-action" : "briefing" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load session");
+      setError(describeError(err, "Could not open that campaign. It may have been deleted. Go back and try another."));
     } finally {
       setBusy(false);
     }
@@ -98,7 +102,7 @@ export function App() {
       await refreshSessions();
       setRoute({ screen: "session", sessionId: data.session.id, step: "briefing" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create session");
+      setError(describeError(err, "Could not start a new campaign. Try again."));
     } finally {
       setBusy(false);
     }
@@ -164,7 +168,7 @@ export function App() {
       await refreshSessions();
       setRoute({ screen: "session", sessionId, step: "after-action" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to commit turn");
+      setError(describeError(err, "The month was not committed. Your choices are still here — try again."));
     } finally {
       setBusy(false);
     }
@@ -179,7 +183,7 @@ export function App() {
       setActiveConversation(data.conversation);
       setCycle((prev) => ({ ...prev, session: data.session, memos: data.memos }));
     } catch (err) {
-      setConversationError(err instanceof Error ? err.message : "Failed to open conversation");
+      setConversationError(describeError(err, "Could not open a conversation with this chief. Close this panel and try again, or commit the month without talking to them."));
     } finally {
       setConversationBusy(false);
     }
@@ -194,7 +198,7 @@ export function App() {
       setActiveConversation(data.conversation);
       setCycle((prev) => ({ ...prev, session: data.session, memos: data.memos }));
     } catch (err) {
-      setConversationError(err instanceof Error ? err.message : "Failed to respond");
+      setConversationError(describeError(err, "Your reply did not reach the chief. Choose it again."));
     } finally {
       setConversationBusy(false);
     }
@@ -207,7 +211,7 @@ export function App() {
       await deleteSession(id);
       await refreshSessions();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete session");
+      setError(describeError(err, "Could not delete that campaign. It is still in your records."));
     } finally {
       setBusy(false);
     }
@@ -224,7 +228,7 @@ export function App() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to export session");
+      setError(describeError(err, "Could not save that campaign to a file."));
     }
   }
 
@@ -237,7 +241,7 @@ export function App() {
       await importSession(exportData);
       await refreshSessions();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to import session");
+      setError(describeError(err, "Could not read that file. It must be a campaign file saved from this version of Brass Ledger."));
     } finally {
       setBusy(false);
     }
@@ -255,7 +259,7 @@ export function App() {
         },
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to validate replay");
+      setError(describeError(err, "Could not check that campaign's replay."));
     }
   }
 
@@ -309,7 +313,7 @@ export function App() {
         setScenario(scenarioData.scenario);
         setSessions(recordsData.sessions);
       } catch {
-        setError("Failed to connect to the game server.");
+        setError("Cannot reach the Brass Ledger server. Check that it is running, then reload this page.");
       }
     }
     void bootstrap();
@@ -332,7 +336,7 @@ export function App() {
         <SessionHub
           sessions={sessions}
           scenarioTitle={scenario?.title ?? "Brass Ledger"}
-          scenarioDescription={scenario?.description ?? "Loading scenario…"}
+          scenarioDescription={scenario?.description ?? "Loading the scenario…"}
           busy={busy}
           error={error}
           onLoad={handleLoadSession}
@@ -345,6 +349,7 @@ export function App() {
           session={cycle.session}
           memos={cycle.memos}
           staffReadouts={currentStaffFunctions}
+          labels={labels}
           onProceed={() => navigateStep("memos")}
         />
       )}
@@ -412,6 +417,7 @@ export function App() {
                 cycle.latestResult.previousState,
               )
             : []}
+          labels={labels}
           onNextMonth={handleNextMonth}
           onViewRecords={() => setRoute({ screen: "records" })}
         />
@@ -419,9 +425,11 @@ export function App() {
 
       {route.screen === "session" && cycle.session && route.step === "after-action" && !cycle.latestResult && (
         <div className="p-6">
-          <p className="text-sm text-ink/50">No turn result available.</p>
+          <p className="text-sm text-ink/50">
+            There is nothing to report yet — this campaign has no committed month.
+          </p>
           <button type="button" onClick={() => navigateStep("briefing")} className="mt-3 text-sm border border-border px-3 py-2">
-            Go to briefing
+            Back to the monthly brief
           </button>
         </div>
       )}

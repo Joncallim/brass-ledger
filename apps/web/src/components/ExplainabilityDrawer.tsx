@@ -17,8 +17,8 @@ export function ExplainabilityDrawer({ entries }: Props) {
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3 bg-paper/50 hover:bg-paper text-left border-none"
       >
-        <span className="text-xs uppercase tracking-widest text-ink/50">Explainability</span>
-        <span className="text-xs text-ink/40 font-mono">{open ? "▲ collapse" : "▼ expand"}</span>
+        <span className="text-xs uppercase tracking-widest text-ink/50">Why the numbers moved</span>
+        <span className="text-xs text-ink/40">{open ? "▲ Hide" : "▼ Show"}</span>
       </button>
 
       {open && (
@@ -29,26 +29,25 @@ export function ExplainabilityDrawer({ entries }: Props) {
               <p className="text-sm text-ink mb-2">{entry.summary}</p>
               {entry.positiveDrivers.length > 0 && (
                 <div className="mb-1">
-                  <span className="text-xs text-ink/50 uppercase tracking-wide">Drivers — </span>
-                  {entry.positiveDrivers.map((d) => (
-                    <span key={d} className="text-xs font-mono text-ink/60 mr-2">{d}</span>
-                  ))}
+                  <span className="text-xs text-ink/50 uppercase tracking-wide">Helped — </span>
+                  <span className="text-xs text-ink/60">{entry.positiveDrivers.join(" · ")}</span>
                 </div>
               )}
               {entry.blockers.length > 0 && (
                 <div className="mb-1">
-                  <span className="text-xs text-ink/50 uppercase tracking-wide">Blockers — </span>
-                  {entry.blockers.map((b) => (
-                    <span key={b} className="text-xs font-mono text-red-400 mr-2">{b}</span>
-                  ))}
+                  <span className="text-xs text-ink/50 uppercase tracking-wide">Held it back — </span>
+                  <span className="text-xs text-red-400">{entry.blockers.join(" · ")}</span>
                 </div>
               )}
               {entry.causalRefs.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {entry.causalRefs.map((ref) => (
-                    <span key={ref} className="text-xs font-mono text-ink/40 border border-border px-1">{ref}</span>
-                  ))}
-                </div>
+                <details className="mt-1">
+                  <summary className="text-xs text-ink/30 cursor-pointer">Engine references</summary>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {entry.causalRefs.map((ref) => (
+                      <span key={ref} className="text-xs font-mono text-ink/40 border border-border px-1">{ref}</span>
+                    ))}
+                  </div>
+                </details>
               )}
             </div>
           ))}

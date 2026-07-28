@@ -83,7 +83,6 @@
 import { createHash } from "node:crypto";
 import {
   type AcceptedRiskOverride,
-  type CampaignObjective,
   type CampaignState,
   type ChiefCoalitionEntry,
   type ChiefPositionEntry,
@@ -108,6 +107,8 @@ import {
   buildChiefPositions,
   buildDirectorateBurden,
   buildStaffFunctionReadouts,
+  directorateLabel,
+  evaluateCampaignObjectives,
   summarizeState,
   updateChiefAgendaMemoryFromPositions,
 } from "@brass-ledger/shared";
@@ -177,13 +178,6 @@ function phaseToLevel(phase: string): 0 | 1 | 2 {
   if (idx <= 1) return 0;
   if (idx <= 3) return 1;
   return 2;
-}
-
-function strategicMetric(state: CampaignState, metric: CampaignObjective["metric"]) {
-  if (metric === "deployableUnits") return state.strategic.forceGeneration.deployableUnits;
-  if (metric === "politicalAlignment") return state.strategic.alliance.politicalAlignment;
-  if (metric === "cabinetCover") return state.strategic.domestic.cabinetCover;
-  return state.strategic.escalation.incidentLadder;
 }
 
 export function deriveDecisionMemos(scenario: ScenarioDefinition, state: CampaignState) {
@@ -298,6 +292,14 @@ function negotiationCostDelta(negotiation: TurnInput["staffNegotiations"][number
   };
 }
 
+/** Scenario-declared names for capability programs and external constraints. */
+function buildNodeNameLookup(scenario: ScenarioDefinition) {
+  const names = new Map<string, string>();
+  for (const program of scenario.capabilityPrograms) names.set(program.id, program.label);
+  for (const constraint of scenario.externalConstraints) names.set(constraint.id, constraint.label);
+  return (id: string) => names.get(id) ?? id;
+}
+
 function staffNegotiationSummary(negotiation: TurnInput["staffNegotiations"][number]) {
   const cost =
     negotiation.cost === "political_cover"
@@ -305,7 +307,8 @@ function staffNegotiationSummary(negotiation: TurnInput["staffNegotiations"][num
       : negotiation.cost === "readiness_delay"
         ? "readiness delay"
         : "budget overtime";
-  return `${negotiation.reliefPoints} point(s) from ${negotiation.directorate} for ${cost}`;
+  const points = `${negotiation.reliefPoints} burden ${negotiation.reliefPoints === 1 ? "point" : "points"}`;
+  return `${directorateLabel(negotiation.directorate)}, lifting ${points} at the cost of ${cost}`;
 }
 
 function applyBurdenPenalties(state: StrategicState, burdens: DirectorateBurden[]) {
@@ -498,6 +501,7 @@ function afterAction(
   events: EventDefinition[],
   acceptedRiskOverrides: Array<{ staffFunctionId: string; warningText: string }> = [],
   staffNegotiations: TurnInput["staffNegotiations"] = [],
+  nodeName: (id: string) => string = (id) => id,
 ) {
   const notes = [];
   const deployableDelta = nextState.strategic.forceGeneration.deployableUnits - previousState.strategic.forceGeneration.deployableUnits;
@@ -505,28 +509,28 @@ function afterAction(
   const escalationDelta = nextState.strategic.escalation.incidentLadder - previousState.strategic.escalation.incidentLadder;
 
   notes.push({
-    heading: "What changed",
+    heading: "What changed this month",
     detail: `Deployable force shifted ${deployableDelta >= 0 ? "+" : ""}${round(deployableDelta)} brigades; cabinet cover shifted ${politicalDelta >= 0 ? "+" : ""}${round(politicalDelta)}; incident ladder shifted ${escalationDelta >= 0 ? "+" : ""}${round(escalationDelta)}.`,
   });
 
   const overloaded = burdens.filter((entry) => entry.burdenLevel === "overloaded");
   if (overloaded.length > 0) {
     notes.push({
-      heading: "What the room underestimated",
-      detail: `${overloaded.map((entry) => entry.failureMode).join("; ")} emerged because the headquarters tabled more than those directorates could absorb cleanly.`,
+      heading: "What the headquarters underestimated",
+      detail: `You asked more of ${overloaded.map((entry) => directorateLabel(entry.directorate)).join(", ")} than ${overloaded.length === 1 ? "it" : "they"} could absorb cleanly, so this followed: ${overloaded.map((entry) => entry.failureMode).join("; ")}.`,
     });
   }
 
   if (events.length > 0) {
     notes.push({
-      heading: "What matured into risk",
+      heading: "What turned into a real problem",
       detail: events.map((event) => event.summary).join(" "),
     });
   }
 
   const mechanics = nextState.staffMechanics;
   notes.push({
-    heading: "S1-S5 consequences",
+    heading: "Where your staff stand now",
     detail:
       `S1 recovery debt is ${round(mechanics.s1.recoveryDebt)}, S2 visibility is ${mechanics.s2.visibility.toLowerCase()}, ` +
       `S3 credible deterrence is ${round(mechanics.s3.credibleDeterrence)} (visible ${round(mechanics.s3.visiblePosture)} / executable ${round(mechanics.s3.executablePosture)}), ` +
@@ -557,7 +561,7 @@ function afterAction(
   if (nextState.staffMechanics.s4.supportableTempo < 15) {
     notes.push({
       heading: "S4 support warning",
-      detail: `Supportable tempo is ${round(nextState.staffMechanics.s4.supportableTempo)}. Support reality is the binding constraint on further operational activity this month.`,
+      detail: `Supportable tempo is ${round(nextState.staffMechanics.s4.supportableTempo)}. What logistics can actually support is now the hard limit on any further activity this month, whatever else the plan says.`,
     });
   }
 
@@ -565,7 +569,7 @@ function afterAction(
   if (nextState.staffMechanics.s5.doctrineAlignment < previousState.staffMechanics.s5.doctrineAlignment - 5) {
     notes.push({
       heading: "S5 doctrine bet",
-      detail: `Doctrine alignment dropped from ${round(previousState.staffMechanics.s5.doctrineAlignment)} to ${round(nextState.staffMechanics.s5.doctrineAlignment)}. This was a conscious departure from coherent sequencing — the consequence depends on whether the campaign can absorb it.`,
+      detail: `Doctrine alignment dropped from ${round(previousState.staffMechanics.s5.doctrineAlignment)} to ${round(nextState.staffMechanics.s5.doctrineAlignment)}. You stepped away from a coherent sequence of moves on purpose. Whether that costs you depends on whether the campaign can absorb it.`,
     });
   }
 
@@ -573,14 +577,14 @@ function afterAction(
   if (acceptedRiskOverrides.length > 0) {
     notes.push({
       heading: "Accepted risks",
-      detail: `The commander explicitly accepted ${acceptedRiskOverrides.length} staff warning(s): ${acceptedRiskOverrides.map((r) => `${r.staffFunctionId} — ${r.warningText}`).join("; ")}.`,
+      detail: `You went ahead knowing ${acceptedRiskOverrides.length} staff ${acceptedRiskOverrides.length === 1 ? "warning" : "warnings"}: ${acceptedRiskOverrides.map((r) => `${r.staffFunctionId} — ${r.warningText}`).join(" ")}`,
     });
   }
 
   if (staffNegotiations.length > 0) {
     notes.push({
       heading: "Staff negotiations",
-      detail: `Before committing the turn, the commander negotiated ${staffNegotiations.map(staffNegotiationSummary).join("; ")}.`,
+      detail: `Before committing the month, you took work off ${staffNegotiations.map(staffNegotiationSummary).join("; ")}.`,
     });
   }
 
@@ -594,13 +598,13 @@ function afterAction(
     if (!prev || prev.level === node.level) continue;
     if (node.level < prev.level) {
       notes.push({
-        heading: "Industry degradation",
-        detail: `${node.id} fell from level ${prev.level} to level ${node.level}. S4 constraints are likely to tighten in coming turns.`,
+        heading: "An outside pressure got worse",
+        detail: `${nodeName(node.id)} fell from level ${prev.level} to level ${node.level}. Expect logistics (S4) to get tighter over the next few months.`,
       });
     } else {
       notes.push({
-        heading: "Industry recovery",
-        detail: `${node.id} improved from level ${prev.level} to level ${node.level}. S4 pressure from this node has eased.`,
+        heading: "An outside pressure eased",
+        detail: `${nodeName(node.id)} improved from level ${prev.level} to level ${node.level}. It puts less pressure on logistics (S4) than it did.`,
       });
     }
   }
@@ -610,10 +614,10 @@ function afterAction(
   for (const node of nextState.internalTech) {
     const prev = prevProgramById.get(node.id);
     if (!prev || prev.level === node.level) continue;
-    const levelLabel = node.level === 1 ? "prototype" : "fielded";
+    const levelLabel = node.level === 1 ? "the prototype stage" : "full fielding";
     notes.push({
-      heading: "Program milestone",
-      detail: `${node.id} advanced to ${levelLabel} (level ${node.level}). The capability is now available for operational planning.`,
+      heading: "A program reached a milestone",
+      detail: `${nodeName(node.id)} reached ${levelLabel}. You can now plan around this capability.`,
     });
   }
 
@@ -626,6 +630,7 @@ function createExplainability(
   events: EventDefinition[],
   previousState: CampaignState,
   nextState: CampaignState,
+  nodeName: (id: string) => string = (id) => id,
 ): ExplainabilityEntry[] {
   const overloaded = burdens.filter((entry) => entry.burdenLevel === "overloaded");
   const strained = burdens.filter((entry) => entry.burdenLevel === "strained");
@@ -635,8 +640,8 @@ function createExplainability(
 
   return [
     {
-      label: "Decision packet",
-      summary: `${selectedPairs.length} memo selections shaped the month before events and staff capacity penalties were applied.`,
+      label: "Your choices",
+      summary: `Your ${selectedPairs.length} ${selectedPairs.length === 1 ? "choice" : "choices"} set the direction for the month. Events and staff overload were applied on top of them.`,
       positiveDrivers: selectedPairs.map(({ memo, option }) => `${memo.title}: ${option.label}`),
       blockers: selectedPairs.flatMap(({ option }) => option.tradeoffs.slice(0, 1)),
       causalRefs: selectedPairs.map(({ memo, option }) => `memo:${memo.id}/option:${option.id}`),
@@ -645,16 +650,16 @@ function createExplainability(
       label: "Staff capacity",
       summary:
         overloaded.length > 0
-          ? `${overloaded.length} staff lanes overloaded and reduced execution quality.`
+          ? `${overloaded.length} ${overloaded.length === 1 ? "directorate was" : "directorates were"} overloaded, which lowered how well the month was carried out.`
           : strained.length > 0
-            ? `${strained.length} staff lanes were strained but still inside a recoverable envelope.`
-            : "Staff burden remained inside declared scenario capacity.",
-      positiveDrivers: burdens.filter((entry) => entry.burdenLevel === "light").map((entry) => `${entry.directorate} retained slack`),
+            ? `${strained.length} ${strained.length === 1 ? "directorate was" : "directorates were"} strained, but not past the point of recovery.`
+            : "Every directorate stayed inside what it can absorb in a month.",
+      positiveDrivers: burdens.filter((entry) => entry.burdenLevel === "light").map((entry) => `${directorateLabel(entry.directorate)} kept room to spare`),
       blockers: [...overloaded, ...strained].map((entry) => entry.failureMode),
       causalRefs: burdens.map((entry) => `staff:${entry.directorate}`),
     },
     {
-      label: "State movement",
+      label: "How the headline numbers moved",
       summary: `Deployable force shifted ${deployableDelta >= 0 ? "+" : ""}${deployableDelta}; cabinet cover shifted ${cabinetDelta >= 0 ? "+" : ""}${cabinetDelta}; incident ladder shifted ${incidentDelta >= 0 ? "+" : ""}${incidentDelta}.`,
       positiveDrivers: [
         deployableDelta > 0 ? "readiness improved" : "",
@@ -693,8 +698,10 @@ function createExplainability(
     },
     {
       label: "Events",
-      summary: events.length > 0 ? `${events.length} event(s) triggered from selected tags.` : "No event triggered this turn.",
-      positiveDrivers: events.length > 0 ? [] : ["no additional shock entered the month"],
+      summary: events.length > 0
+        ? `${events.length} ${events.length === 1 ? "event was" : "events were"} triggered by the tags on the options you chose.`
+        : "No events were triggered this month.",
+      positiveDrivers: events.length > 0 ? [] : ["nothing outside your control hit the month"],
       blockers: events.map((event) => event.summary),
       causalRefs: [
         ...events.map((event) => `event:${event.id}`),
@@ -707,14 +714,15 @@ function createExplainability(
       ],
     },
     {
-      label: "Tech tree and industry",
+      label: "Programs and outside pressures",
       summary: (() => {
         const operationalCount = nextState.internalTech.filter((n) => n.level === 2).length;
         const disruptedCount = nextState.externalTech.filter((n) => n.level === 0).length;
-        return `${operationalCount} program(s) fielded; ${disruptedCount} industry node(s) disrupted.`;
+        return `${operationalCount} ${operationalCount === 1 ? "program is" : "programs are"} fielded; `
+          + `${disruptedCount} outside ${disruptedCount === 1 ? "pressure is" : "pressures are"} disrupted.`;
       })(),
-      positiveDrivers: nextState.internalTech.filter((n) => n.level === 2).map((n) => `${n.id} fielded`),
-      blockers: nextState.externalTech.filter((n) => n.level === 0).map((n) => `${n.id} disrupted`),
+      positiveDrivers: nextState.internalTech.filter((n) => n.level === 2).map((n) => `${nodeName(n.id)} is fielded`),
+      blockers: nextState.externalTech.filter((n) => n.level === 0).map((n) => `${nodeName(n.id)} is disrupted`),
       causalRefs: [
         ...nextState.internalTech.map((n) => `tech:${n.id}/level:${n.level}`),
         ...nextState.externalTech.map((n) => `industry:${n.id}/level:${n.level}/estimate:${n.estimate.estimatedLevel}`),
@@ -1284,17 +1292,16 @@ function updateStaffMechanics(
  *   real-world norm that strategic failure rarely means zero residual capacity.
  */
 function assessOutcome(state: CampaignState) {
-  const checks = state.briefing.campaignObjectives.map((objective) => {
-    const current = strategicMetric(state, objective.metric);
-    const met = objective.direction === "gte" ? current >= objective.target : current <= objective.target;
-    return { ...objective, current, met };
-  });
+  const checks = evaluateCampaignObjectives(state);
   const metCount = checks.filter((entry) => entry.met).length;
   const collapse =
     state.strategic.domestic.cabinetCover <= 12 ||
     state.strategic.escalation.incidentLadder >= 82 ||
     state.strategic.forceGeneration.deployableUnits <= 3.5;
-  const finished = collapse || state.turn > state.microCampaignLength;
+  // maxTurns is the actual length of this campaign — it is scenario data, so a
+  // longer (e.g. multi-year) campaign is just a scenario with a larger
+  // maxTurns. Nothing about ending the campaign should hardcode a turn count.
+  const finished = collapse || state.turn > state.maxTurns;
   const score = clamp(
     Math.round(
       30 +
@@ -1311,14 +1318,22 @@ function assessOutcome(state: CampaignState) {
   if (!finished) return { status: "active" as const, score, outcome: null };
 
   const won = !collapse && metCount >= 3;
+  // Name the condition that actually ended the campaign rather than listing all
+  // three, so the player learns which one they lost control of.
+  const collapseReasons = [
+    state.strategic.domestic.cabinetCover <= 12 ? "domestic cover collapsed" : "",
+    state.strategic.escalation.incidentLadder >= 82 ? "escalation ran beyond control" : "",
+    state.strategic.forceGeneration.deployableUnits <= 3.5 ? "the deployable force fell too low to hold a credible posture" : "",
+  ].filter(Boolean);
+
   return {
     status: won ? ("won" as const) : ("lost" as const),
     score,
     outcome: won
-      ? `Mission accomplished: ${metCount}/${checks.length} command objectives were met and the headquarters finished the opening arc in a credible posture.`
+      ? `You held a credible posture to the end, meeting ${metCount} of ${checks.length} campaign objectives.`
       : collapse
-        ? "Campaign failed early: the headquarters lost either domestic cover, credible readiness, or escalation control."
-        : `Campaign complete but incomplete: only ${metCount}/${checks.length} command objectives were secured.`,
+        ? `The campaign ended early: ${collapseReasons.join(", and ")}.`
+        : `The campaign is over and you met ${metCount} of ${checks.length} campaign objectives. Three were needed to finish in a credible posture.`,
   };
 }
 
@@ -1627,9 +1642,10 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   nextState.campaignOutcome = outcome.outcome;
 
   const monthlyEstimate = createMonthlyEstimate(previousState, nextState, chiefPositions, directorateBurden);
-  const resultAfterAction = afterAction(previousState, nextState, directorateBurden, triggeredEvents, input.acceptedRiskOverrides, staffNegotiations);
+  const nodeName = buildNodeNameLookup(scenario);
+  const resultAfterAction = afterAction(previousState, nextState, directorateBurden, triggeredEvents, input.acceptedRiskOverrides, staffNegotiations, nodeName);
   const staffFunctions = buildStaffFunctionReadouts(scenario.staffFunctions, directorateBurden, nextState);
-  const explainability = createExplainability(selectedPairs, directorateBurden, triggeredEvents, previousState, nextState);
+  const explainability = createExplainability(selectedPairs, directorateBurden, triggeredEvents, previousState, nextState, nodeName);
   const summary = nextState.campaignStatus === "active" ? summarizeState(nextState) : nextState.campaignOutcome ?? summarizeState(nextState);
 
   const acceptedRisks = (input.acceptedRiskOverrides ?? []).map((override) => ({
