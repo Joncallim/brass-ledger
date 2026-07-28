@@ -40,8 +40,8 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
           )}
         </h2>
         <p className="text-xs text-ink/40 mb-2">
-          This campaign is decided by its milestones, not by a fixed number of months. It can end early if the
-          headquarters loses domestic cover, credible readiness, or escalation control.
+          This campaign has a set length, but it is not shown here — track your progress by milestones instead. It
+          can also end early if the headquarters loses domestic cover, credible readiness, or escalation control.
         </p>
         {unmetObjective && (
           <p className="text-sm text-red-400 mb-2">
