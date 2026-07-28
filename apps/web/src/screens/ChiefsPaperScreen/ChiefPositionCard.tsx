@@ -21,8 +21,8 @@ export function ChiefPositionCard({ position, advisor, memos, onTalk }: Props) {
   const meta = positionMeta[position.position] ?? positionMeta.accept_risk;
   const memo = memos.find((m) => m.id === position.memoId);
   const option = memo?.options.find((o) => o.id === position.optionId);
-  const memoTitle = memo?.title ?? position.memoId;
-  const optionLabel = option?.label ?? position.optionId;
+  const memoTitle = memo?.title ?? "Unknown memo";
+  const optionLabel = option?.label ?? "Unknown option";
 
   return (
     <div className={`border ${

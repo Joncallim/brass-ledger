@@ -66,15 +66,21 @@ export function StaffFunctionDetail({ readout, onClose }: Props) {
         </table>
       )}
 
-      {readout.warnings.length > 0 ? (
-        <div className="space-y-0.5">
-          {readout.warnings.map((w) => (
+      <div className="mb-3">
+        <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Current warnings</p>
+        {readout.warnings.length > 0 ? (
+          readout.warnings.map((w) => (
             <p key={w} className="text-xs text-yellow-400 leading-relaxed">⚠ {w}</p>
-          ))}
-        </div>
-      ) : (
-        <p className="text-xs text-ink/60 leading-relaxed">{readout.consequence}</p>
-      )}
+          ))
+        ) : (
+          <p className="text-xs text-ink/40 leading-relaxed">No current warning.</p>
+        )}
+      </div>
+
+      <div>
+        <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Staff role</p>
+        <p className="text-xs text-ink/60 leading-relaxed">{readout.standingRemit}</p>
+      </div>
     </div>
   );
 }

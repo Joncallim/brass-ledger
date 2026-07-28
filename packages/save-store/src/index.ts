@@ -6,6 +6,8 @@ import os from "node:os";
 import { gameSessionSchema, type GameSession } from "@brass-ledger/shared";
 import { lock as acquireFileLock } from "proper-lockfile";
 
+import { migrateSessionPayload } from "./migrations.js";
+
 import {
   InvalidSessionIdError,
   LockTimeoutError,
@@ -18,6 +20,7 @@ import {
 } from "./contracts.js";
 
 export * from "./contracts.js";
+export { migrateSessionPayload } from "./migrations.js";
 
 const sessionIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -154,7 +157,7 @@ async function readSessionFile(destination: string, sessionId: string): Promise<
     throw new SaveStoreCorruptError(sessionId, undefined, { cause: error });
   }
 
-  const result = gameSessionSchema.safeParse(parsed);
+  const result = gameSessionSchema.safeParse(migrateSessionPayload(parsed));
   if (!result.success) {
     throw new SaveStoreCorruptError(sessionId, undefined, { cause: result.error });
   }
