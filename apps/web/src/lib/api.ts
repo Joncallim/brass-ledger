@@ -13,6 +13,20 @@ import type {
 
 const BASE = "/api";
 
+const OFFLINE_MESSAGE =
+  "Cannot reach the Brass Ledger server. Check that it is still running, then try again.";
+
+/**
+ * Turns a thrown value into something worth showing a player. The server sends
+ * an explanation of its own, so prefer that; only fall back to our own wording
+ * when the request never got an answer at all.
+ */
+export function describeError(error: unknown, fallback: string) {
+  if (error instanceof TypeError) return OFFLINE_MESSAGE;
+  if (error instanceof Error && error.message.length > 0) return error.message;
+  return fallback;
+}
+
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const hasBody = init?.body !== undefined;
   const response = await fetch(url, {

@@ -1,4 +1,5 @@
 import type { ChiefPositionEntry, SessionAdvisor, DecisionMemo } from "@brass-ledger/shared";
+import { directorateLabel } from "@brass-ledger/shared";
 import { ChiefPortrait } from "../../components/ChiefPortrait";
 import { StaffReadoutEvidence } from "./StaffReadoutEvidence";
 
@@ -10,10 +11,10 @@ type Props = {
 };
 
 const positionMeta = {
-  support: { symbol: "▲", label: "Support", color: "text-green-400 border-green-700/60 bg-green-950/40" },
-  accept_risk: { symbol: "~", label: "Accept risk", color: "text-yellow-400 border-yellow-700/60 bg-yellow-950/40" },
-  request_conditions: { symbol: "~", label: "Conditions", color: "text-yellow-400 border-yellow-700/60 bg-yellow-950/40" },
-  oppose: { symbol: "▼", label: "Oppose", color: "text-red-400 border-red-600/70/60 bg-red-950/40" },
+  support: { symbol: "▲", label: "Supports", color: "text-green-400 border-green-700/60 bg-green-950/40" },
+  accept_risk: { symbol: "~", label: "Accepts the risk", color: "text-yellow-400 border-yellow-700/60 bg-yellow-950/40" },
+  request_conditions: { symbol: "~", label: "Wants conditions", color: "text-yellow-400 border-yellow-700/60 bg-yellow-950/40" },
+  oppose: { symbol: "▼", label: "Objects", color: "text-red-400 border-red-600/70/60 bg-red-950/40" },
 };
 
 export function ChiefPositionCard({ position, advisor, memos, onTalk }: Props) {
@@ -42,7 +43,7 @@ export function ChiefPositionCard({ position, advisor, memos, onTalk }: Props) {
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="text-sm font-semibold text-ink">{position.chiefName}</p>
-              <p className="text-xs text-ink/50">{position.directorate}</p>
+              <p className="text-xs text-ink/50">{directorateLabel(position.directorate)}</p>
             </div>
             <span className={`text-xs border px-1.5 py-0.5 shrink-0 ${meta.color}`}>
               {meta.symbol} {meta.label}
@@ -57,8 +58,8 @@ export function ChiefPositionCard({ position, advisor, memos, onTalk }: Props) {
       </div>
 
       {position.institutionalReason && (
-        <p className="text-sm text-ink/70 leading-relaxed mb-2 italic">
-          "{position.institutionalReason}"
+        <p className="text-sm text-ink/70 leading-relaxed mb-2">
+          {position.institutionalReason}
         </p>
       )}
 
@@ -74,7 +75,7 @@ export function ChiefPositionCard({ position, advisor, memos, onTalk }: Props) {
           onClick={onTalk}
           className="text-xs border border-border px-2.5 py-1 hover:border-brass hover:text-brass transition-colors"
         >
-          Talk to {position.chiefName.split(" ").at(-1) ?? "chief"}
+          Talk to {position.chiefName.split(" ").at(-1) ?? "this chief"}
         </button>
       </div>
     </div>

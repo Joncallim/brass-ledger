@@ -56,17 +56,21 @@ export function ChiefsPaperScreen({
   return (
     <div className="relative">
       <div className="p-6 max-w-3xl">
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-5 gap-4">
           <div>
             <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Chiefs paper</p>
-            <h2 className="text-xl font-semibold tracking-tight text-ink">Staff positions</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-ink">Where your chiefs stand</h2>
+            <p className="text-xs text-ink/50 mt-1 max-w-xl leading-relaxed">
+              Your chiefs have read the options you picked. Each one tells you whether they back the choice, accept
+              its risk, want conditions attached, or object — and the staff evidence behind that view.
+            </p>
           </div>
           <button
             type="button"
             onClick={onBack}
-            className="text-xs text-ink/40 hover:text-ink border border-border px-2 py-1"
+            className="text-xs text-ink/40 hover:text-ink border border-border px-2 py-1 shrink-0"
           >
-            ← Memos
+            ← Back to memos
           </button>
         </div>
 
@@ -86,7 +90,9 @@ export function ChiefsPaperScreen({
             );
           })}
           {uniquePositions.length === 0 && (
-            <p className="text-sm text-ink/40">No chief positions available. Return to memos and select options.</p>
+            <p className="text-sm text-ink/40">
+              No chief has a position yet, because no option is selected. Go back to the memos and choose an option.
+            </p>
           )}
         </div>
 
@@ -96,9 +102,13 @@ export function ChiefsPaperScreen({
             onClick={onProceed}
             className="px-5 py-2.5 bg-brass text-white border border-brass hover:bg-brass/90 text-sm font-medium"
           >
-            Proceed to commit →
+            Continue to final review →
           </button>
-          <p className="text-xs text-ink/40 mt-2">You may open chief conversations before committing.</p>
+          <p className="text-xs text-ink/40 mt-2 max-w-xl leading-relaxed">
+            Talking to a chief is optional. You can speak to each chief once a month. A conversation changes how much
+            that chief trusts you, and can put a commitment on the record, but it does not change the options you
+            have selected.
+          </p>
         </div>
       </div>
 

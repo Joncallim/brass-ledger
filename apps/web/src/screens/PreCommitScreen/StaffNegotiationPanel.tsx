@@ -1,15 +1,10 @@
 import type { StaffNegotiation } from "@brass-ledger/shared";
+import { directorateLabel } from "@brass-ledger/shared";
 
 type Props = {
   candidates: StaffNegotiation["directorate"][];
   active: StaffNegotiation[];
   onChange: (directorate: StaffNegotiation["directorate"], enabled: boolean) => void;
-};
-
-const costLabel: Record<StaffNegotiation["cost"], string> = {
-  political_cover: "political cover",
-  readiness_delay: "readiness margin",
-  budget_overtime: "budget authority",
 };
 
 export function StaffNegotiationPanel({ candidates, active, onChange }: Props) {
@@ -18,11 +13,12 @@ export function StaffNegotiationPanel({ candidates, active, onChange }: Props) {
   return (
     <div className="border border-border p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs uppercase tracking-widest text-ink/40">Staff negotiations</p>
-        <span className="text-xs font-mono text-ink/40">{active.length} active</span>
+        <p className="text-xs uppercase tracking-widest text-ink/40">Take work off a stretched directorate</p>
+        <span className="text-xs font-mono text-ink/40">{active.length} requested</span>
       </div>
-      <p className="text-xs text-ink/50 mb-3">
-        Relieve constrained staff directorates before committing. Each negotiation costs one resource.
+      <p className="text-xs text-ink/50 mb-3 leading-relaxed">
+        These directorates are carrying more than they should this month. You can lift 1 burden point off any of
+        them, but it spends political cover: cabinet cover and political capital fall, and media heat rises.
       </p>
       <div className="space-y-2">
         {candidates.map((directorate) => {
@@ -35,11 +31,7 @@ export function StaffNegotiationPanel({ candidates, active, onChange }: Props) {
                 onChange={(e) => onChange(directorate, e.currentTarget.checked)}
                 className="mt-0.5 accent-[#b5882e]"
               />
-              <span className="text-sm">
-                <strong className="text-ink/70 capitalize">{directorate}</strong>{" "}
-                <span className="text-ink/50 text-xs">— relieve 1 burden point</span>{" "}
-                <span className="text-ink/40 text-xs">(cost: {costLabel.political_cover})</span>
-              </span>
+              <span className="text-sm text-ink/70">{directorateLabel(directorate)}</span>
             </label>
           );
         })}

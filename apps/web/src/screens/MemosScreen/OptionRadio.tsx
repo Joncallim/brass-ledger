@@ -1,4 +1,6 @@
 import type { MemoOption } from "@brass-ledger/shared";
+import { directorateLabel } from "@brass-ledger/shared";
+import { themeLabel } from "../../lib/labels";
 
 type Props = {
   option: MemoOption;
@@ -7,19 +9,8 @@ type Props = {
   onChange: (optionId: string) => void;
 };
 
-const directorateShort: Record<string, string> = {
-  people: "S1",
-  intelligence: "S2",
-  operations: "S3",
-  sustainment: "S4",
-  plans: "S5",
-  training: "J7",
-};
-
 export function OptionRadio({ option, memoId, selected, onChange }: Props) {
-  const burdenParts = option.burden
-    .filter((b) => b.points > 0)
-    .map((b) => `${directorateShort[b.directorate] ?? b.directorate} ${b.points}`);
+  const burdenParts = option.burden.filter((b) => b.points > 0);
 
   return (
     <label
@@ -39,19 +30,22 @@ export function OptionRadio({ option, memoId, selected, onChange }: Props) {
           className="mt-0.5 shrink-0 accent-[#b5882e]"
         />
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <span className={`text-sm font-medium ${selected ? "text-brass" : "text-ink"}`}>{option.label}</span>
-            {burdenParts.length > 0 && (
-              <span className="text-xs font-mono text-ink/50 shrink-0">{burdenParts.join(", ")}</span>
-            )}
-          </div>
+          <span className={`text-sm font-medium ${selected ? "text-brass" : "text-ink"}`}>{option.label}</span>
           {option.summary && (
-            <p className="text-xs text-ink/60 leading-relaxed mb-1.5">{option.summary}</p>
+            <p className="text-xs text-ink/60 leading-relaxed mt-1 mb-1.5">{option.summary}</p>
+          )}
+          {burdenParts.length > 0 && (
+            <p className="text-xs text-ink/50 mb-1.5">
+              <span className="text-ink/40">Staff work this adds: </span>
+              {burdenParts
+                .map((b) => `${directorateLabel(b.directorate)} ${b.points}`)
+                .join(", ")}
+            </p>
           )}
           {option.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {option.tags.map((tag) => (
-                <span key={tag} className="text-xs font-mono text-ink/40 border border-border/50 px-1">{tag}</span>
+                <span key={tag} className="text-xs text-ink/40 border border-border/50 px-1">{themeLabel(tag)}</span>
               ))}
             </div>
           )}

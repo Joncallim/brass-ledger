@@ -60,7 +60,7 @@ test("resolveTurn advances the month and emits directorate burden and chiefs pos
   assert.ok(result.directorateBurden.length === 6);
   assert.ok(result.chiefPositions.length >= 20);
   assert.ok(result.chiefPositions.every((entry) => entry.staffReadoutEvidence.rationale.includes("evidence")));
-  assert.ok(result.summary.includes("Turn 2/12"));
+  assert.ok(result.summary.includes("Standing at month 2:"));
 });
 
 test("resolveTurn emits chief coalitions tied to memo options and staff constraints", () => {
@@ -93,7 +93,7 @@ test("staff negotiations reduce burden before commit and record their cost", () 
   assert.ok(negotiatedSustainment);
   assert.equal(negotiatedSustainment.burdenPoints, baselineSustainment.burdenPoints - 2);
   assert.ok(negotiated.nextState.resources.budgetAuthority < baseline.nextState.resources.budgetAuthority);
-  assert.ok(negotiated.afterAction.some((entry) => entry.heading === "Staff negotiations" && entry.detail.includes("sustainment")));
+  assert.ok(negotiated.afterAction.some((entry) => entry.heading === "Staff negotiations" && entry.detail.includes("Sustainment")));
 
   const replay = validateReplaySession(soloScenario, {
     initialState: soloScenario.initialState,
@@ -134,7 +134,7 @@ test("resolveTurn advances S1-S5 core mechanics", () => {
   assert.ok(result.nextState.staffMechanics.s3.visiblePosture > soloScenario.initialState.staffMechanics.s3.visiblePosture);
   assert.ok(result.nextState.staffMechanics.s4.liftBurn > soloScenario.initialState.staffMechanics.s4.liftBurn);
   assert.ok(result.nextState.staffMechanics.s5.strategicCoherence !== soloScenario.initialState.staffMechanics.s5.strategicCoherence);
-  assert.ok(result.afterAction.some((entry) => entry.heading === "S1-S5 consequences"));
+  assert.ok(result.afterAction.some((entry) => entry.heading === "Where your staff stand now"));
   assert.ok(result.explainability.some((entry) => entry.label === "S1-S5 mechanics"));
 });
 
@@ -904,7 +904,7 @@ test("S4 lift burn increases when shipping-market is disrupted", () => {
 
 test("tech tree and industry explainability entry is included in TurnResult", () => {
   const result = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
-  const techEntry = result.explainability.find((e) => e.label === "Tech tree and industry");
+  const techEntry = result.explainability.find((e) => e.label === "Programs and outside pressures");
   assert.ok(techEntry, "Explainability should include a tech-tree-and-industry entry");
   assert.ok(techEntry.causalRefs.length > 0, "Tech explainability should have causal refs");
   assert.ok(techEntry.causalRefs.some((ref) => ref.startsWith("tech:")), "Causal refs should include internal tech nodes");

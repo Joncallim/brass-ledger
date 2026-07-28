@@ -11,7 +11,8 @@ export function StaffConsequences({ previous, current }: Props) {
 
   return (
     <section>
-      <p className="text-xs uppercase tracking-widest text-ink/40 mb-3">S1–S5 consequences</p>
+      <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">What this did to your staff</p>
+      <p className="text-xs text-ink/50 mb-3">A highlighted row means that staff function changed status this month.</p>
       <div className="space-y-2">
         {current.map((fn) => {
           const prev = previous.find((p) => p.id === fn.id);
@@ -29,11 +30,12 @@ export function StaffConsequences({ previous, current }: Props) {
                   <StatusBadge status={fn.status} />
                 )}
               </div>
-              <p className="text-sm text-ink/60 leading-relaxed">{fn.consequence}</p>
-              {fn.warnings.length > 0 && (
-                <div className="mt-1.5">
+              {fn.warnings.length === 0 ? (
+                <p className="text-sm text-ink/60 leading-relaxed">{fn.consequence}</p>
+              ) : (
+                <div className="space-y-0.5">
                   {fn.warnings.map((w) => (
-                    <p key={w} className="text-xs text-yellow-400">⚠ {w}</p>
+                    <p key={w} className="text-xs text-yellow-400 leading-relaxed">⚠ {w}</p>
                   ))}
                 </div>
               )}

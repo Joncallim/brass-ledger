@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { ChiefConversationRecord } from "@brass-ledger/shared";
+import { chiefConversationStageMeta } from "@brass-ledger/shared";
 
 type Props = {
   conversation: ChiefConversationRecord;
@@ -11,10 +12,10 @@ type Props = {
 };
 
 const positionLabel: Record<string, string> = {
-  support: "▲ Support",
-  accept_risk: "~ Accept risk",
-  request_conditions: "~ Conditions",
-  oppose: "▼ Oppose",
+  support: "▲ Supports",
+  accept_risk: "~ Accepts the risk",
+  request_conditions: "~ Wants conditions",
+  oppose: "▼ Objects",
 };
 
 export function ChiefConversationSheet({ conversation, chiefName, busy, error, onRespond, onClose }: Props) {
@@ -35,6 +36,7 @@ export function ChiefConversationSheet({ conversation, chiefName, busy, error, o
   }, [conversation.transcript.length]);
 
   const trustDeltaColor = conversation.totalTrustDelta > 0 ? "text-green-400" : conversation.totalTrustDelta < 0 ? "text-red-400" : "text-ink/50";
+  const stage = chiefConversationStageMeta(conversation.stage);
 
   return (
     <div
@@ -44,12 +46,16 @@ export function ChiefConversationSheet({ conversation, chiefName, busy, error, o
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
         <div>
-          <p className="text-xs uppercase tracking-widest text-ink/40 mb-0.5">Chief conversation</p>
+          <p className="text-xs uppercase tracking-widest text-ink/40 mb-0.5">
+            {conversation.status === "completed"
+              ? "Conversation finished"
+              : `${stage.label} — step ${stage.index} of ${stage.total}`}
+          </p>
           <h2 id="conversation-title" className="text-sm font-semibold text-ink">{chiefName}</h2>
         </div>
         <div className="flex items-center gap-3">
-          <span className={`text-xs font-mono ${trustDeltaColor}`}>
-            Trust: {Math.round(conversation.trustBefore)} → {Math.round(conversation.trustAfter)}
+          <span className={`text-xs font-mono ${trustDeltaColor}`} title="How much this chief trusts you, out of 100">
+            Trust {Math.round(conversation.trustBefore)} → {Math.round(conversation.trustAfter)}
             {conversation.totalTrustDelta !== 0 && ` (${conversation.totalTrustDelta > 0 ? "+" : ""}${conversation.totalTrustDelta})`}
           </span>
           <button
@@ -75,7 +81,7 @@ export function ChiefConversationSheet({ conversation, chiefName, busy, error, o
           <span className="text-ink/50">{conversation.memoTitle} — {conversation.optionLabel}</span>
         </div>
         {conversation.institutionalReason && (
-          <p className="text-xs text-ink/60 mt-1.5 leading-relaxed italic">"{conversation.institutionalReason}"</p>
+          <p className="text-xs text-ink/60 mt-1.5 leading-relaxed">{conversation.institutionalReason}</p>
         )}
       </div>
 
@@ -90,7 +96,9 @@ export function ChiefConversationSheet({ conversation, chiefName, busy, error, o
         ))}
         {conversation.status === "completed" && (
           <div className="border border-border bg-paper/80 px-3 py-2 text-center">
-            <p className="text-xs text-ink/50">Conversation concluded — stage {conversation.stage}</p>
+            <p className="text-xs text-ink/50">
+              This conversation is finished. What you agreed is on the record and cannot be reopened this month.
+            </p>
           </div>
         )}
       </div>
@@ -103,7 +111,7 @@ export function ChiefConversationSheet({ conversation, chiefName, busy, error, o
 
       {conversation.status !== "completed" && conversation.choices.length > 0 && (
         <div className="px-4 py-4 border-t border-border shrink-0 space-y-2">
-          <p className="text-xs uppercase tracking-widest text-ink/40 mb-2">Your response</p>
+          <p className="text-xs uppercase tracking-widest text-ink/40 mb-2">How you reply</p>
           {conversation.choices.map((choice) => (
             <button
               key={choice.id}

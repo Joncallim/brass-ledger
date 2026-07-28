@@ -24,6 +24,7 @@ import {
   buildDirectorateBurden,
   buildStaffFunctionReadouts,
   continueChiefConversation,
+  countMetCampaignObjectives,
   createInitialGameSession,
   gameSessionSchema,
   getConversationRecordForTurn,
@@ -94,7 +95,7 @@ const sessionLocks = new Map<string, Promise<unknown>>();
 
 function assertSessionId(sessionId: string) {
   if (!sessionIdPattern.test(sessionId)) {
-    throw new Error("Invalid session id");
+    throw new Error("That is not a valid campaign id.");
   }
 }
 
@@ -193,27 +194,30 @@ function stableJson(value: unknown): string {
 
 function assertReplayableSession(session: GameSession) {
   if (session.turnInputs.length !== session.history.length) {
-    throw new Error("Session turn input and history lengths must match.");
+    throw new Error("This campaign file is inconsistent: it records a different number of choices than results.");
   }
   const validation = replayValidationSchema.parse(validateReplaySession(soloScenario, session));
   if (!validation.ok) {
-    throw new Error(`Session replay validation failed: ${validation.failureKind}`);
+    throw new Error(
+      `This campaign cannot be replayed from its own history, so it may have been edited or corrupted `
+      + `(replay validation failed at: ${validation.failureKind}).`,
+    );
   }
   return validation;
 }
 
 function assertCanonicalImport(session: GameSession) {
   if (session.engineVersion !== "0.1.0") {
-    throw new Error("Imported save was created by a different engine version. Sessions must be exported and imported under the same engine version.");
+    throw new Error("This campaign file was saved by a different version of the Brass Ledger engine. A campaign can only be opened by the version that saved it.");
   }
   if (session.scenarioId !== soloScenario.id || session.contentVersion !== soloScenario.contentVersion) {
-    throw new Error("Imported save is incompatible with the current scenario or content version.");
+    throw new Error("This campaign file was played on a different scenario or a different content version, so it cannot be opened here.");
   }
   if (session.saveFormatVersion !== "5") {
-    throw new Error("Imported save format is not supported.");
+    throw new Error("This campaign file uses a save format this version of Brass Ledger cannot read.");
   }
   if (stableJson(session.initialState) !== stableJson(soloScenario.initialState)) {
-    throw new Error("Imported save does not start from the canonical scenario initial state.");
+    throw new Error("This campaign file does not start from the scenario's opening position, so it cannot be accepted as a genuine campaign.");
   }
   assertReplayableSession(session);
 }
@@ -238,20 +242,24 @@ function mapStorageError(reply: FastifyReply, error: unknown) {
   if (error instanceof LockTimeoutError) {
     reply.code(503);
     app.log.error({ err: error }, "Save store lock timed out");
-    return { error: "The save store is busy. Try again." };
+    return { error: "The save store is busy with another change to this campaign. Wait a moment and try again." };
   }
   if (error instanceof SaveStoreCorruptError || error instanceof SaveStoreIOError) {
     reply.code(500);
     app.log.error({ err: error }, "Save store operation failed");
-    return { error: "The save store could not complete the request." };
+    return { error: "The save store could not complete that request. Your campaign files may be unreadable or the disk may be full." };
   }
   return null;
 }
 
-function unexpectedServerError(reply: FastifyReply, error: unknown, fallback: string) {
-  app.log.error({ err: error }, fallback);
+/**
+ * `logMessage` is for the operator reading the log; `playerMessage` is what the
+ * browser shows. Never let an internal exception reach the player untranslated.
+ */
+function unexpectedServerError(reply: FastifyReply, error: unknown, logMessage: string, playerMessage: string) {
+  app.log.error({ err: error }, logMessage);
   reply.code(500);
-  return { error: fallback };
+  return { error: playerMessage };
 }
 
 async function writeSession(session: GameSession, expectedRevision?: number) {
@@ -276,6 +284,7 @@ function createSession() {
 }
 
 function summarizeSession(session: GameSession) {
+  const milestones = countMetCampaignObjectives(session.state);
   return {
     id: session.id,
     scenarioId: session.scenarioId,
@@ -284,8 +293,8 @@ function summarizeSession(session: GameSession) {
     revision: session.revision,
     updatedAt: session.updatedAt,
     turn: session.state.turn,
-    maxTurns: session.state.maxTurns,
-    microCampaignLength: session.state.microCampaignLength,
+    milestonesMet: milestones.met,
+    milestonesTotal: milestones.total,
     campaignStatus: session.state.campaignStatus,
     campaignScore: session.state.campaignScore,
     campaignOutcome: session.state.campaignOutcome,
@@ -387,7 +396,7 @@ app.get("/api/sessions", async (_request, reply) => {
   } catch (error) {
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
-    return unexpectedServerError(reply, error, "Failed to list sessions");
+    return unexpectedServerError(reply, error, "Failed to list sessions", "Could not list your saved campaigns.");
   }
 });
 
@@ -399,7 +408,7 @@ app.post("/api/sessions", async (_request, reply) => {
   } catch (error) {
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
-    return unexpectedServerError(reply, error, "Failed to create session");
+    return unexpectedServerError(reply, error, "Failed to create session", "Could not start a new campaign.");
   }
 });
 
@@ -410,7 +419,7 @@ app.get("/api/sessions/:id", async (request, reply) => {
   } catch (error) {
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
-    return unexpectedServerError(reply, error, "Failed to read session");
+    return unexpectedServerError(reply, error, "Failed to read session", "Could not open that campaign.");
   }
 });
 
@@ -424,7 +433,7 @@ app.delete("/api/sessions/:id", async (request, reply) => {
   } catch (error) {
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
-    return unexpectedServerError(reply, error, "Failed to delete session");
+    return unexpectedServerError(reply, error, "Failed to delete session", "Could not delete that campaign. It is still in your records.");
   }
 });
 
@@ -437,7 +446,7 @@ app.post("/api/sessions/:id/save", async (request, reply) => {
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
     reply.code(400);
-    return { error: error instanceof Error ? error.message : "Invalid session id" };
+    return { error: error instanceof Error ? error.message : "That is not a valid campaign id." };
   }
 });
 
@@ -465,7 +474,7 @@ app.post("/api/sessions/:id/preview-turn", async (request, reply) => {
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
     reply.code(400);
-    return { error: error instanceof Error ? error.message : "Failed to preview turn" };
+    return { error: error instanceof Error ? error.message : "Could not work out the forecast for these choices." };
   }
 });
 
@@ -475,7 +484,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
     const body = (request.body ?? {}) as { memoId?: string; optionId?: string; expectedRevision?: unknown };
     if (!body.memoId || !body.optionId) {
       reply.code(400);
-      return { error: "memoId and optionId are required." };
+      return { error: "A conversation needs both a memoId and an optionId." };
     }
 
     return await withSessionLock(id, async () => {
@@ -484,7 +493,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
       const chief = soloScenario.chiefs.find((entry) => entry.id === chiefId);
       if (!chief) {
         reply.code(404);
-        return { error: "Chief not found" };
+        return { error: "There is no chief with that id in this scenario." };
       }
 
       const memos = deriveDecisionMemos(soloScenario, session.state);
@@ -492,7 +501,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
       const option = memo?.options.find((entry) => entry.id === body.optionId);
       if (!memo || !option) {
         reply.code(400);
-        return { error: "The selected memo option is no longer valid." };
+        return { error: "That option is no longer on the memo. Reload the campaign and choose again." };
       }
 
       const existing = getConversationRecordForTurn(session.state, chiefId);
@@ -518,7 +527,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
       ).find((entry) => entry.chiefId === chiefId);
       if (!position) {
         reply.code(400);
-        return { error: "Could not derive a chief position for this packet." };
+        return { error: "This chief has no position on that option, so there is nothing to discuss." };
       }
 
       const conversation = startChiefConversation(chief, memo, option, position, session.state);
@@ -543,7 +552,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
     reply.code(400);
-    return { error: error instanceof Error ? error.message : "Failed to open chief conversation" };
+    return { error: error instanceof Error ? error.message : "Could not open a conversation with this chief." };
   }
 });
 
@@ -553,7 +562,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
     const body = (request.body ?? {}) as { responseId?: string; expectedRevision?: unknown };
     if (!body.responseId) {
       reply.code(400);
-      return { error: "responseId is required." };
+      return { error: "A reply needs a responseId." };
     }
     const responseId = body.responseId;
 
@@ -563,17 +572,17 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
       const chief = soloScenario.chiefs.find((entry) => entry.id === chiefId);
       if (!chief) {
         reply.code(404);
-        return { error: "Chief not found" };
+        return { error: "There is no chief with that id in this scenario." };
       }
 
       const conversation = getConversationRecordForTurn(session.state, chiefId);
       if (!conversation) {
         reply.code(404);
-        return { error: "No open conversation exists for this chief this month." };
+        return { error: "You have not opened a conversation with this chief this month." };
       }
       if (conversation.status === "completed") {
         reply.code(409);
-        return { error: "This chief conversation has already concluded.", conversation };
+        return { error: "This conversation is already finished. You can speak to each chief once a month.", conversation };
       }
 
       const memos = deriveDecisionMemos(soloScenario, session.state);
@@ -581,7 +590,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
       const option = memo?.options.find((entry) => entry.id === conversation.optionId);
       if (!memo || !option) {
         reply.code(400);
-        return { error: "The selected memo option is no longer valid." };
+        return { error: "That option is no longer on the memo. Reload the campaign and choose again." };
       }
 
       const nextConversation = continueChiefConversation(conversation, chief, memo, option, session.state, responseId);
@@ -628,7 +637,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
     reply.code(400);
-    return { error: error instanceof Error ? error.message : "Failed to update chief relationship" };
+    return { error: error instanceof Error ? error.message : "Could not record your reply to this chief." };
   }
 });
 
@@ -644,7 +653,9 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
       if (missingAcceptedRisks.length > 0) {
         reply.code(428);
         return {
-          error: "Resolve turn requires explicit acceptedRiskOverrides for projected S1-S5 staff warnings.",
+          error:
+            "This month cannot be committed until every forecast S1-S5 staff warning has been accepted. "
+            + "Accept each warning on the final review screen, or send them back in acceptedRiskOverrides.",
           acceptedRiskCandidates: missingAcceptedRisks,
         };
       }
@@ -667,7 +678,7 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
     reply.code(400);
-    return { error: error instanceof Error ? error.message : "Failed to resolve turn" };
+    return { error: error instanceof Error ? error.message : "Could not commit the month." };
   }
 });
 
@@ -681,7 +692,7 @@ app.get("/api/sessions/:id/export", async (request, reply) => {
   } catch (error) {
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
-    return unexpectedServerError(reply, error, "Failed to export session");
+    return unexpectedServerError(reply, error, "Failed to export session", "Could not save that campaign to a file.");
   }
 });
 
@@ -694,7 +705,7 @@ app.post("/api/sessions/import", async (request, reply) => {
       assertCanonicalImport(session);
     } catch (error) {
       reply.code(409);
-      return { error: error instanceof Error ? error.message : "Imported save failed validation." };
+      return { error: error instanceof Error ? error.message : "That campaign file did not pass its replay check, so it was not brought in." };
     }
     const importedSession = {
       ...session,
@@ -708,7 +719,7 @@ app.post("/api/sessions/import", async (request, reply) => {
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
     reply.code(400);
-    return { error: error instanceof Error ? error.message : "Invalid import payload" };
+    return { error: error instanceof Error ? error.message : "That file is not a Brass Ledger campaign file." };
   }
 });
 
@@ -722,7 +733,7 @@ app.get("/api/sessions/:id/replay", async (request, reply) => {
   } catch (error) {
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
-    return unexpectedServerError(reply, error, "Failed to replay session");
+    return unexpectedServerError(reply, error, "Failed to replay session", "Could not run the replay check on that campaign.");
   }
 });
 

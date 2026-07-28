@@ -171,6 +171,7 @@ export const campaignObjectiveSchema = z.object({
   note: z.string(),
 });
 export type CampaignObjective = z.infer<typeof campaignObjectiveSchema>;
+export type CampaignObjectiveCheck = CampaignObjective & { current: number; met: boolean };
 
 export const campaignBriefSchema = z.object({
   theater: z.string(),
@@ -638,7 +639,6 @@ function addMirrorIssue(ctx: z.RefinementCtx, path: string, message: string) {
 export const campaignStateSchema = z.object({
   turn: z.number().int().min(1),
   maxTurns: z.number().int().min(1),
-  microCampaignLength: z.number().int().min(1).default(6),
   seed: z.number().int(),
   campaignStatus: z.enum(["active", "won", "lost"]).default("active"),
   campaignScore: campaignScoreSchema.default(0),
@@ -671,14 +671,6 @@ export const campaignStateSchema = z.object({
       code: "custom",
       path: ["turn"],
       message: "turn cannot exceed maxTurns + 1",
-    });
-  }
-
-  if (state.microCampaignLength > state.maxTurns) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["microCampaignLength"],
-      message: "microCampaignLength cannot exceed maxTurns",
     });
   }
 
@@ -1015,6 +1007,33 @@ export const defaultStaffFunctionDefinitions: StaffFunctionDefinition[] = [
   },
 ];
 
+function campaignObjectiveMetricValue(state: CampaignState, metric: CampaignObjective["metric"]) {
+  if (metric === "deployableUnits") return state.strategic.forceGeneration.deployableUnits;
+  if (metric === "politicalAlignment") return state.strategic.alliance.politicalAlignment;
+  if (metric === "cabinetCover") return state.strategic.domestic.cabinetCover;
+  return state.strategic.escalation.incidentLadder;
+}
+
+/**
+ * The player-facing milestones for a campaign, each with whether it is
+ * currently met. This is the single source of truth for objective status —
+ * the browser, the records list, and the engine's own win/lose check all read
+ * from here so a milestone never reads "met" in one place and "not met" in
+ * another.
+ */
+export function evaluateCampaignObjectives(state: CampaignState): CampaignObjectiveCheck[] {
+  return state.briefing.campaignObjectives.map((objective) => {
+    const current = campaignObjectiveMetricValue(state, objective.metric);
+    const met = objective.direction === "gte" ? current >= objective.target : current <= objective.target;
+    return { ...objective, current, met };
+  });
+}
+
+export function countMetCampaignObjectives(state: CampaignState) {
+  const checks = evaluateCampaignObjectives(state);
+  return { met: checks.filter((entry) => entry.met).length, total: checks.length };
+}
+
 export function buildStrategicMetricBriefs(state: CampaignState): StrategicMetricBrief[] {
   const force = state.strategic.forceGeneration;
   const intel = state.strategic.intelligence;
@@ -1186,10 +1205,10 @@ export function buildDirectorateBurden(
       executionPenalty,
       summary:
         burdenLevel === "overloaded"
-          ? `${directorateLabel(directorate)} is overloaded; expect ${failureMode}.`
+          ? `${directorateLabel(directorate)} is carrying more than it can absorb this month. Expect ${failureMode}.`
           : burdenLevel === "strained"
-            ? `${directorateLabel(directorate)} is at the edge of monthly capacity.`
-            : `${directorateLabel(directorate)} has enough slack to absorb the current guidance.`,
+            ? `${directorateLabel(directorate)} is right at the limit of what it can absorb this month.`
+            : `${directorateLabel(directorate)} has room to absorb what you have chosen.`,
     };
   });
 }
@@ -1328,8 +1347,9 @@ function buildChiefStaffReadoutEvidence(
         ? "strained"
         : "inside capacity";
   const rationale =
-    `${staffFunction.shortLabel} evidence: ${metric.label} is ${Math.round(metric.value)} (${metric.status}); ` +
-    `staff load is ${burdenText} at ${roundMetric(burdenPoints)} point(s).`;
+    `${staffFunction.shortLabel} evidence: ${metric.label} is ${Math.round(metric.value)} (${metric.status}), ` +
+    `and the staff carrying this work are ${burdenText} at ${roundMetric(burdenPoints)} ` +
+    `${roundMetric(burdenPoints) === 1 ? "burden point" : "burden points"}.`;
 
   return {
     staffFunctionId: staffFunction.id,
@@ -1621,12 +1641,12 @@ export function buildChiefPositions(
 
     const institutionalReason =
       position === "support"
-        ? `${chief.title} sees this option as consistent with ${chief.doctrineBias}.`
+        ? `${chief.title} backs this. It fits the directorate's line — ${chief.doctrineBias}.`
         : position === "accept_risk"
-          ? `${chief.title} can live with this course of action, but expects friction in ${directorateLabel(chief.directorate).toLowerCase()}.`
+          ? `${chief.title} can live with this, but expects friction in ${directorateLabel(chief.directorate).toLowerCase()}.`
           : position === "request_conditions"
-            ? `${chief.title} needs tighter assumptions before backing this line.`
-            : `${chief.title} sees this option as misaligned with the directorate's obligations.`;
+            ? `${chief.title} wants tighter assumptions before backing this.`
+            : `${chief.title} objects. This cuts against what the directorate is responsible for.`;
 
     const requiredCondition =
       chief.directorate === "intelligence"
@@ -2577,7 +2597,7 @@ export function continueChiefConversation(
 }
 
 export function summarizeState(state: CampaignState) {
-  return `Turn ${state.turn}/${state.maxTurns}: ${state.strategic.forceGeneration.deployableUnits.toFixed(1)} brigades deployable, alliance alignment ${state.strategic.alliance.politicalAlignment.toFixed(0)}, cabinet cover ${state.strategic.domestic.cabinetCover.toFixed(0)}, incident ladder ${state.strategic.escalation.incidentLadder.toFixed(0)}.`;
+  return `Standing at month ${state.turn}: ${state.strategic.forceGeneration.deployableUnits.toFixed(1)} brigades deployable, alliance alignment ${state.strategic.alliance.politicalAlignment.toFixed(0)}, cabinet cover ${state.strategic.domestic.cabinetCover.toFixed(0)}, incident ladder ${state.strategic.escalation.incidentLadder.toFixed(0)}.`;
 }
 
 function portraitTrimColor(directorate: DirectorateId) {

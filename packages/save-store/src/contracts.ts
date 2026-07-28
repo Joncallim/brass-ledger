@@ -10,21 +10,21 @@ export interface SaveStore {
 
 export class InvalidSessionIdError extends Error {
   constructor(readonly sessionId: string) {
-    super(`Invalid session id: ${sessionId}`);
+    super(`That is not a valid campaign id: ${sessionId}`);
     this.name = "InvalidSessionIdError";
   }
 }
 
 export class SessionNotFoundError extends Error {
   constructor(readonly sessionId: string) {
-    super(`Session not found: ${sessionId}`);
+    super(`No saved campaign with the id ${sessionId}. It may have been deleted.`);
     this.name = "SessionNotFoundError";
   }
 }
 
 export class SessionExistsError extends Error {
   constructor(readonly sessionId: string) {
-    super(`Session ${sessionId} already exists`);
+    super(`A saved campaign with the id ${sessionId} already exists.`);
     this.name = "SessionExistsError";
   }
 }
@@ -35,7 +35,9 @@ export class RevisionMismatchError extends Error {
     readonly currentRevision: number,
   ) {
     super(
-      `Session revision mismatch: expected ${expectedRevision}, current ${currentRevision}.`,
+      "This campaign has changed since you loaded it, so your change was not applied. "
+      + "Reload the campaign and try again. "
+      + `(revision mismatch: expected ${expectedRevision}, current ${currentRevision})`,
     );
     this.name = "RevisionMismatchError";
   }
@@ -43,7 +45,7 @@ export class RevisionMismatchError extends Error {
 
 export class LockTimeoutError extends Error {
   constructor(readonly sessionId: string) {
-    super(`Timed out acquiring the save lock for session ${sessionId}`);
+    super(`Gave up waiting to save campaign ${sessionId}. Another change to it is still in progress.`);
     this.name = "LockTimeoutError";
   }
 }
@@ -52,8 +54,8 @@ export class SaveStoreCorruptError extends Error {
   constructor(
     readonly sessionId: string | null,
     message = sessionId
-      ? `Saved session ${sessionId} is corrupt`
-      : "The save store contains corrupt data",
+      ? `The saved file for campaign ${sessionId} cannot be read.`
+      : "The save store contains a file that cannot be read.",
     options?: ErrorOptions,
   ) {
     super(message, options);
@@ -69,8 +71,8 @@ export class SaveStoreIOError extends Error {
   ) {
     super(
       sessionId
-        ? `Could not ${operation} saved session ${sessionId}`
-        : `Could not ${operation} the save store`,
+        ? `Could not ${operation} the saved campaign ${sessionId}.`
+        : `Could not ${operation} the save store.`,
       options,
     );
     this.name = "SaveStoreIOError";
