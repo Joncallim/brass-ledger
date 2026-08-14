@@ -55,6 +55,11 @@ const explicitCorsOrigins = new Set(
     .filter(Boolean),
 );
 
+// API routes keep this strict allow-list. The static-shell/asset routes below
+// override it per-route to accept any origin: they serve public, non-credentialed
+// content, and a deployment host that isn't in CORS_ORIGINS must still be able to
+// load its own bundle (see issue #36 - a mismatched allow-list here silently
+// blank-pages the app instead of just rejecting API calls).
 await app.register(cors, {
   origin(origin, callback) {
     if (!origin || explicitCorsOrigins.has(origin)) {
@@ -359,7 +364,7 @@ function parseHeadlessRunBody(body: unknown) {
   };
 }
 
-app.get("/", async (_request, reply) => serveClientShell(reply));
+app.get("/", { config: { cors: { origin: true } } }, async (_request, reply) => serveClientShell(reply));
 
 app.get("/api/health", async () => ({ ok: true }));
 
@@ -745,7 +750,7 @@ app.get("/api/sessions/:id/replay", async (request, reply) => {
   }
 });
 
-app.get("/*", async (request, reply) => {
+app.get("/*", { config: { cors: { origin: true } } }, async (request, reply) => {
   const pathname = new URL(request.url, "http://127.0.0.1").pathname;
   if (pathname.startsWith("/api/")) {
     return reply.callNotFound();
