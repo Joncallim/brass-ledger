@@ -30,6 +30,7 @@ Always consult this domain before changing game rules, interface direction, spri
 - [[compiled-engine-roadmap]]
 - [[roadmap-epics-and-issues]]
 - [[s1-s5-user-interface-model]]
+- [[plain-language-contract-follow-up]]
 - [[doctrine-mechanics-roadmap]]
 - [[detailed-dialogue-and-advisor-styles]]
 - [[development-stages]]

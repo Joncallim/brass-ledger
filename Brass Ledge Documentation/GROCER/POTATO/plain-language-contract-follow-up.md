@@ -2,7 +2,8 @@
 type: implementation-spec
 project: Brass Ledger
 area: browser-interface
-status: proposed
+status: implemented
+priority: P1
 tags:
   - POTATO
   - plain-language
@@ -11,6 +12,14 @@ tags:
 ---
 
 # Plain-language contract follow-up
+
+Backlink: [[POTATO]]
+
+## Implementation status
+
+Delivered by [PR #70](https://github.com/Joncallim/brass-ledger/pull/70), which closed [#66](https://github.com/Joncallim/brass-ledger/issues/66). `StaffFunctionReadout.consequence` was replaced by `activeWarning`/`standingRemit`, `saveFormatVersion` incremented to `6` with a deterministic v5-to-v6 migration, and active event IDs now render through a scenario-backed title lookup with a non-leaking fallback. This document is retained as the historical decision record.
+
+One migration behavior was not specified here and should be noted for future readers: when a persisted readout's `id` does not match any current staff-function definition, the migration falls back to `standingRemit: ""` rather than failing. That satisfies "migrate deterministically" but not "unconditional non-empty standing remit" from the acceptance criteria below as literally written; treat the migration's actual fallback as authoritative.
 
 ## Decision
 
@@ -180,7 +189,7 @@ A snapshot-only test is insufficient for the semantic distinctions. Assertions m
 1. Add failing shared-contract tests.
 2. Change the schema and readout builder.
 3. Implement save migration and replay compatibility.
-4. Update all TypeScript consumers until no `consequence` reference remains.
+4. Update all TypeScript consumers until no `StaffFunctionReadout.consequence` reference remains (the unrelated `consequenceIfIgnored` field on chief positions is out of scope).
 5. Add event title lookup with a non-leaking fallback.
 6. Update browser component tests.
 7. Run a repository-wide search for player-visible raw IDs.
