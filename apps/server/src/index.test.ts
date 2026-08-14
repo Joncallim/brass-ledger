@@ -428,6 +428,21 @@ test("static routes serve the client shell and do not expose traversed files", a
   assert.notEqual(traversed.statusCode, 200);
 });
 
+test("static shell and asset routes accept any origin while API routes stay on the strict allow-list", async () => {
+  const unlistedOrigin = "http://203.0.113.10:4000";
+
+  const shell = await app.inject({ method: "GET", url: "/", headers: { origin: unlistedOrigin } });
+  assert.equal(shell.statusCode, 200);
+  assert.equal(shell.headers["access-control-allow-origin"], unlistedOrigin);
+
+  const asset = await app.inject({ method: "GET", url: "/does-not-exist.js", headers: { origin: unlistedOrigin } });
+  assert.equal(asset.headers["access-control-allow-origin"], unlistedOrigin);
+
+  const api = await app.inject({ method: "GET", url: "/api/health", headers: { origin: unlistedOrigin } });
+  assert.equal(api.statusCode, 200);
+  assert.equal(api.headers["access-control-allow-origin"], undefined);
+});
+
 test("CORS rejects localhost origins not in the explicit allow list", async () => {
   const rejected = await app.inject({
     method: "OPTIONS",
