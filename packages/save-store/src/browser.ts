@@ -72,13 +72,13 @@ function readLockRecord(storage: Storage): LockRecord | null {
   return null;
 }
 
-function writeLockRecord(storage: Storage, record: LockRecord | null) {
-  try {
-    if (record) storage.setItem(LOCK_KEY, JSON.stringify(record));
-    else storage.removeItem(LOCK_KEY);
-  } catch {
-    // Best-effort: a failed write simply fails the read-back verification below.
-  }
+function writeLockRecord(storage: Storage, record: LockRecord | null): void {
+  // Deliberately does not catch: a real write failure (quota exceeded, Safari
+  // private-browsing restrictions, ...) must reach the caller so it can be
+  // surfaced immediately instead of masked behind 8s of pointless polling
+  // that can only ever end in a misleading LockTimeoutError.
+  if (record) storage.setItem(LOCK_KEY, JSON.stringify(record));
+  else storage.removeItem(LOCK_KEY);
 }
 
 function jitterDelayMs(): number {
@@ -99,17 +99,41 @@ function sleep(ms: number): Promise<void> {
  * therefore a valid compare-and-swap, even across tabs. A short lease bounds
  * how long a lock can wedge other tabs if its owning tab is closed, crashes,
  * or is suspended mid-operation.
+ *
+ * A lease alone is not enough: if a holder's operation runs long enough for
+ * its lease to expire, another tab can legitimately take over while the first
+ * tab is still mid-write, and both would otherwise commit. Callers must call
+ * the returned `assertStillLocked` immediately before their mutating write so
+ * a lease that expired out from under them fails loudly instead of silently
+ * losing an update (a "fencing token" check, not just an acquire-time one).
  */
-async function acquireStorageLock(storage: Storage, sessionId: string): Promise<string> {
+async function acquireStorageLock(
+  storage: Storage,
+  sessionId: string,
+): Promise<{ token: string; assertStillLocked: () => void }> {
   const token = randomToken();
   const deadline = Date.now() + LOCK_ACQUIRE_TIMEOUT_MS;
   for (;;) {
     const now = Date.now();
     const current = readLockRecord(storage);
     if (!current || current.expiresAt <= now) {
-      writeLockRecord(storage, { token, expiresAt: now + LOCK_LEASE_MS });
+      try {
+        writeLockRecord(storage, { token, expiresAt: now + LOCK_LEASE_MS });
+      } catch (error) {
+        throw new SaveStoreIOError("acquire the lock for", sessionId, { cause: error });
+      }
       const confirmed = readLockRecord(storage);
-      if (confirmed?.token === token) return token;
+      if (confirmed?.token === token) {
+        return {
+          token,
+          assertStillLocked: () => {
+            const held = readLockRecord(storage);
+            if (held?.token !== token || held.expiresAt <= Date.now()) {
+              throw new LockTimeoutError(sessionId);
+            }
+          },
+        };
+      }
     }
     if (Date.now() >= deadline) throw new LockTimeoutError(sessionId);
     await sleep(jitterDelayMs());
@@ -117,31 +141,40 @@ async function acquireStorageLock(storage: Storage, sessionId: string): Promise<
 }
 
 function releaseStorageLock(storage: Storage, token: string) {
-  const current = readLockRecord(storage);
-  if (current?.token === token) writeLockRecord(storage, null);
+  try {
+    const current = readLockRecord(storage);
+    if (current?.token === token) writeLockRecord(storage, null);
+  } catch {
+    // Best-effort: a failed release just lets the lease expire naturally.
+  }
 }
 
 async function withFallbackLock<T>(
   storage: Storage,
   sessionId: string,
-  operation: () => Promise<T>,
+  operation: (assertStillLocked: () => void) => Promise<T>,
 ): Promise<T> {
-  const token = await acquireStorageLock(storage, sessionId);
+  const { token, assertStillLocked } = await acquireStorageLock(storage, sessionId);
   try {
-    return await operation();
+    return await operation(assertStillLocked);
   } finally {
     releaseStorageLock(storage, token);
   }
 }
 
+const noopAssertStillLocked = () => {};
+
 async function withStorageLock<T>(
   storage: Storage,
   sessionId: string,
-  operation: () => Promise<T>,
+  operation: (assertStillLocked: () => void) => Promise<T>,
 ): Promise<T> {
   const locks = browserLockManager();
   if (locks) {
-    return locks.request("brass-ledger-save-store", { mode: "exclusive" }, operation);
+    // A native Web Locks hold is not lease-based - the browser holds it until
+    // release, so there is nothing for the fencing check to verify.
+    return locks.request("brass-ledger-save-store", { mode: "exclusive" }, () =>
+      operation(noopAssertStillLocked));
   }
   return withFallbackLock(storage, sessionId, operation);
 }
@@ -201,11 +234,12 @@ export function createBrowserSaveStore(_storage?: Storage): SaveStore {
   return {
     async create(session: GameSession) {
       assertSessionId(session.id);
-      await withStorageLock(storage, session.id, async () => {
+      await withStorageLock(storage, session.id, async (assertStillLocked) => {
         const { sessions, hasCorruption } = readAll();
         assertSafeToMutate(hasCorruption);
         if (sessions.has(session.id)) throw new SessionExistsError(session.id);
         sessions.set(session.id, gameSessionSchema.parse(session));
+        assertStillLocked();
         writeAll(sessions);
       });
     },
@@ -221,7 +255,7 @@ export function createBrowserSaveStore(_storage?: Storage): SaveStore {
 
     async write(session: GameSession, expectedRevision?: number) {
       assertSessionId(session.id);
-      await withStorageLock(storage, session.id, async () => {
+      await withStorageLock(storage, session.id, async (assertStillLocked) => {
         const { sessions, hasCorruption } = readAll();
         assertSafeToMutate(hasCorruption);
         const current = sessions.get(session.id);
@@ -232,17 +266,19 @@ export function createBrowserSaveStore(_storage?: Storage): SaveStore {
           }
         }
         sessions.set(session.id, gameSessionSchema.parse(session));
+        assertStillLocked();
         writeAll(sessions);
       });
     },
 
     async delete(sessionId: string) {
       assertSessionId(sessionId);
-      await withStorageLock(storage, sessionId, async () => {
+      await withStorageLock(storage, sessionId, async (assertStillLocked) => {
         const { sessions, hasCorruption } = readAll();
         assertSafeToMutate(hasCorruption);
         if (!sessions.has(sessionId)) throw new SessionNotFoundError(sessionId);
         sessions.delete(sessionId);
+        assertStillLocked();
         writeAll(sessions);
       });
     },
