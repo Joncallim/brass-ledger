@@ -41,6 +41,8 @@ const LOCK_LEASE_MS = 4_000;
 const LOCK_ACQUIRE_TIMEOUT_MS = 8_000;
 const LOCK_POLL_MIN_MS = 15;
 const LOCK_POLL_MAX_MS = 60;
+const LOCK_SETTLE_MIN_MS = 2;
+const LOCK_SETTLE_MAX_MS = 8;
 
 interface LockRecord {
   token: string;
@@ -85,6 +87,10 @@ function jitterDelayMs(): number {
   return LOCK_POLL_MIN_MS + Math.random() * (LOCK_POLL_MAX_MS - LOCK_POLL_MIN_MS);
 }
 
+function settleDelayMs(): number {
+  return LOCK_SETTLE_MIN_MS + Math.random() * (LOCK_SETTLE_MAX_MS - LOCK_SETTLE_MIN_MS);
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -93,19 +99,29 @@ function sleep(ms: number): Promise<void> {
  * Cross-tab-safe mutex over localStorage alone, used when the Web Locks API is
  * unavailable. Each tab holds a *distinct* `Storage` object, so no in-process
  * state (a WeakMap, a Promise queue) can coordinate them - the lock has to live
- * in the storage itself. This relies on the HTML Standard's per-origin
- * "storage mutex", which serializes localStorage access across every same-
- * origin browsing context: a write-then-read-back of a unique token is
- * therefore a valid compare-and-swap, even across tabs. A short lease bounds
- * how long a lock can wedge other tabs if its owning tab is closed, crashes,
- * or is suspended mid-operation.
+ * in the storage itself.
  *
- * A lease alone is not enough: if a holder's operation runs long enough for
- * its lease to expire, another tab can legitimately take over while the first
- * tab is still mid-write, and both would otherwise commit. Callers must call
- * the returned `assertStillLocked` immediately before their mutating write so
- * a lease that expired out from under them fails loudly instead of silently
- * losing an update (a "fencing token" check, not just an acquire-time one).
+ * IMPORTANT: this is a best-effort mutex, not a provably airtight one. The
+ * HTML Standard's per-origin "storage mutex" only guarantees that each
+ * individual localStorage call (one getItem, one setItem) is atomic with
+ * respect to other tabs - it does not make a multi-call read-then-write
+ * sequence atomic as a whole. Two tabs can therefore both observe "unlocked"
+ * before either writes, and both pass their own read-back check, believing
+ * they hold the lock simultaneously. Plain localStorage has no native
+ * check-and-set primitive to close this gap outright (that is exactly what
+ * the Web Locks branch above exists to provide, and is preferred whenever
+ * available). Three independent, randomly-jittered checks narrow the window
+ * enough to make this practically safe rather than theoretically airtight:
+ *
+ *  1. an initial write-then-read-back after observing "unlocked";
+ *  2. a second read-back after a short random settle delay, to catch a
+ *     concurrent writer whose own write landed a few milliseconds later;
+ *  3. a "fencing" check (`assertStillLocked`, returned to the caller) run
+ *     immediately before the actual mutating write, catching a lease that
+ *     expired - or was raced - during a slow operation.
+ *
+ * A short lease additionally bounds how long a lock can wedge other tabs if
+ * its owning tab is closed, crashes, or is suspended mid-operation.
  */
 async function acquireStorageLock(
   storage: Storage,
@@ -122,17 +138,24 @@ async function acquireStorageLock(
       } catch (error) {
         throw new SaveStoreIOError("acquire the lock for", sessionId, { cause: error });
       }
-      const confirmed = readLockRecord(storage);
-      if (confirmed?.token === token) {
-        return {
-          token,
-          assertStillLocked: () => {
-            const held = readLockRecord(storage);
-            if (held?.token !== token || held.expiresAt <= Date.now()) {
-              throw new LockTimeoutError(sessionId);
-            }
-          },
-        };
+      if (readLockRecord(storage)?.token === token) {
+        // Re-check after a short, independently-jittered settle delay: a
+        // concurrent tab's own write could have landed in the microseconds
+        // between our write and our first read-back.
+        await sleep(settleDelayMs());
+        if (readLockRecord(storage)?.token === token) {
+          return {
+            token,
+            assertStillLocked: () => {
+              const held = readLockRecord(storage);
+              if (held?.token !== token || held.expiresAt <= Date.now()) {
+                throw new LockTimeoutError(sessionId);
+              }
+            },
+          };
+        }
+        // A concurrent tab's write raced ours in during the settle delay;
+        // fall through and retry rather than proceeding as if we won.
       }
     }
     if (Date.now() >= deadline) throw new LockTimeoutError(sessionId);

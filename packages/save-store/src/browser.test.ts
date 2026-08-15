@@ -310,6 +310,66 @@ describe("BrowserSaveStore", () => {
     });
   });
 
+  it("settle recheck catches a concurrent acquirer that raced in between reads", async () => {
+    await withoutWebLocks(async () => {
+      // Plain localStorage has no atomic check-and-set: two tabs can both
+      // observe "unlocked", and a single write-then-read-back cannot tell
+      // the difference between "I won" and "I won this microsecond, but the
+      // other tab is about to overwrite me." Simulate exactly that: inject
+      // a second tab's write right after this tab's *first* read-back
+      // succeeds, and confirm the settle recheck (not the first read-back
+      // alone) is what actually decides whether this tab holds the lock.
+      const backing = new Map<string, string>();
+      const lockKey = "brass-ledger-saves:lock";
+      let lockGetCalls = 0;
+      let injected = false;
+
+      const racingStorage: Storage = {
+        get length() {
+          return backing.size;
+        },
+        clear() {
+          backing.clear();
+        },
+        getItem(key: string) {
+          if (key !== lockKey) return backing.get(key) ?? null;
+          lockGetCalls += 1;
+          // Capture the value BEFORE injecting interference, so this call
+          // still returns this tab's own just-written token (a genuine
+          // "I won" read) - the race is that another tab's write lands
+          // immediately *after*, before the settle recheck runs.
+          const value = backing.get(key) ?? null;
+          if (lockGetCalls === 2 && !injected) {
+            injected = true;
+            // A short-lived lease: this tab's next poll iteration will see
+            // it as expired and cleanly take over, so the test resolves
+            // quickly instead of waiting out a full 4s lease.
+            backing.set(lockKey, JSON.stringify({ token: "tab-b-token", expiresAt: Date.now() + 10 }));
+          }
+          return value;
+        },
+        key(index: number) {
+          return [...backing.keys()][index] ?? null;
+        },
+        removeItem(key: string) {
+          backing.delete(key);
+        },
+        setItem(key: string, value: string) {
+          backing.set(key, value);
+        },
+      };
+
+      const store = createBrowserSaveStore(racingStorage);
+      const session = makeSession({ id: "00000000-0000-1000-8000-00000000010d" });
+
+      await store.create(session);
+
+      assert.ok(injected, "the race must actually have been exercised");
+      assert.equal((await store.read(session.id)).id, session.id);
+      assert.equal(backing.get(lockKey), undefined, "the lock must be released after success");
+    });
+  });
+
   it("also serializes compare-and-swap through the native Web Locks API when available", async () => {
     // Sanity check for the branch the tests above deliberately bypass: on a
     // runtime that does provide navigator.locks (real browsers, and Node
