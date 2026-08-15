@@ -46,13 +46,12 @@ test("create, play, and record a full campaign month", async ({ page }) => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     const replyButtons = dialog.locator('button:not([aria-label="Close conversation"])');
-    if ((await replyButtons.count()) > 0) {
-      const [response] = await Promise.all([
-        page.waitForResponse((r) => r.url().includes("/respond") && r.request().method() === "POST"),
-        replyButtons.first().click(),
-      ]);
-      expect(response.ok()).toBeTruthy();
-    }
+    await expect(replyButtons.first()).toBeVisible();
+    const [response] = await Promise.all([
+      page.waitForResponse((r) => r.url().includes("/respond") && r.request().method() === "POST"),
+      replyButtons.first().click(),
+    ]);
+    expect(response.ok()).toBeTruthy();
     await dialog.getByRole("button", { name: "Close conversation" }).click();
     await expect(dialog).not.toBeVisible();
 

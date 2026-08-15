@@ -28,7 +28,12 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run build --workspace @brass-ledger/web && npm run start --workspace @brass-ledger/server",
+    // The server (run from source via tsx) imports @brass-ledger/content, headless, sim,
+    // shared, and save-store through their package.json "exports", which point at dist/ -
+    // so on a clean checkout every workspace must be built, not just web, or the server
+    // fails to start when this script is run standalone (outside the CI job, which happens
+    // to already run a full `npm run build` first).
+    command: "npm run build && npm run start --workspace @brass-ledger/server",
     cwd: repoRoot,
     url: `http://127.0.0.1:${port}/api/health`,
     reuseExistingServer: false,
