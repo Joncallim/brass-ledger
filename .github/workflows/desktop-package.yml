@@ -72,9 +72,9 @@ jobs:
       - name: Smoke packaged desktop on Linux
         if: runner.os == 'Linux'
         run: xvfb-run -a node scripts/desktop-package-smoke.mjs
-      - name: Verify macOS package contents
+      - name: Smoke packaged desktop on macOS
         if: runner.os == 'macOS'
-        run: node scripts/desktop-package-smoke.mjs --package-only
+        run: node scripts/desktop-package-smoke.mjs
       - name: Smoke packaged desktop on Windows
         if: runner.os == 'Windows'
         run: node scripts/desktop-package-smoke.mjs

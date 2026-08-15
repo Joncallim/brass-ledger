@@ -107,6 +107,11 @@ if (process.platform === "win32") {
 } else if (process.platform === "linux") {
   childEnv.XDG_DATA_HOME = path.join(smokeRoot, "xdg-data");
   expectedSaveDir = path.join(childEnv.XDG_DATA_HOME, "brass-ledger", "saves");
+} else if (process.platform === "darwin") {
+  // Node's os.homedir() reads $HOME on POSIX, so this exercises the real
+  // darwin branch of resolveDefaultSaveDir() instead of bypassing it.
+  childEnv.HOME = path.join(smokeRoot, "home");
+  expectedSaveDir = path.join(childEnv.HOME, "Library", "Application Support", "Brass Ledger", "saves");
 } else {
   childEnv.BRASS_LEDGER_SAVE_DIR = path.join(smokeRoot, "saves");
   expectedSaveDir = childEnv.BRASS_LEDGER_SAVE_DIR;
@@ -122,7 +127,38 @@ try {
   const port = await waitForHealth();
   const created = await fetch(`http://127.0.0.1:${port}/api/sessions`, { method: "POST" });
   if (!created.ok) throw new Error(`Session creation failed with HTTP ${created.status}`);
+  const { session, memos } = await created.json();
   await waitForSave(expectedSaveDir);
+
+  // Exercise a full campaign turn cycle against the packaged, dev-toolchain-free
+  // release: preview a turn, accept any forecast staff warnings, then resolve it.
+  const selections = memos
+    .filter((memo) => !memo.optional)
+    .map((memo) => ({ memoId: memo.id, optionId: memo.options[0]?.id ?? "" }));
+  const baseInput = { turn: session.state.turn, selections };
+
+  const preview = await fetch(`http://127.0.0.1:${port}/api/sessions/${session.id}/preview-turn`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ input: baseInput }),
+  });
+  if (!preview.ok) throw new Error(`Preview-turn failed with HTTP ${preview.status}`);
+  const { acceptedRiskCandidates } = await preview.json();
+
+  const resolved = await fetch(`http://127.0.0.1:${port}/api/sessions/${session.id}/resolve-turn`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      input: { ...baseInput, acceptedRiskOverrides: acceptedRiskCandidates ?? [] },
+      expectedRevision: session.revision,
+    }),
+  });
+  if (!resolved.ok) throw new Error(`Resolve-turn failed with HTTP ${resolved.status}: ${await resolved.text()}`);
+  const resolvedBody = await resolved.json();
+  if (resolvedBody.session.state.turn <= session.state.turn) {
+    throw new Error("Resolve-turn did not advance the campaign turn");
+  }
+  console.log(`Resolved one turn: turn ${session.state.turn} -> ${resolvedBody.session.state.turn}`);
 
   const result = await Promise.race([
     exited,
