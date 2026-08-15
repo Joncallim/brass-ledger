@@ -44,6 +44,35 @@ class MemoryStorage implements Storage {
   }
 }
 
+/**
+ * Wraps a shared backing Map so two instances behave like two browser tabs:
+ * distinct `Storage` *objects* (as `window.localStorage` is per-realm) backed
+ * by the same underlying per-origin storage, which is how real cross-tab
+ * localStorage behaves.
+ */
+function sharedStorageTab(backing: Map<string, string>): Storage {
+  return {
+    get length() {
+      return backing.size;
+    },
+    clear() {
+      backing.clear();
+    },
+    getItem(key: string) {
+      return backing.get(key) ?? null;
+    },
+    key(index: number) {
+      return [...backing.keys()][index] ?? null;
+    },
+    removeItem(key: string) {
+      backing.delete(key);
+    },
+    setItem(key: string, value: string) {
+      backing.set(key, value);
+    },
+  };
+}
+
 function makeSession(overrides?: Partial<GameSession>): GameSession {
   return gameSessionSchema.parse({
     ...createInitialGameSession(soloScenario, "browser-test-seed"),
@@ -132,5 +161,72 @@ describe("BrowserSaveStore", () => {
     assert.ok(rejected?.status === "rejected");
     assert.ok(rejected.reason instanceof RevisionMismatchError);
     assert.equal((await first.read(session.id)).revision, 1);
+  });
+
+  it("serializes compare-and-swap across two tabs with distinct Storage objects (issue #64)", async () => {
+    // Real browser tabs each hold a different `Storage` *object* for the same origin;
+    // an in-process lock keyed by object identity (e.g. a WeakMap<Storage, ...>) cannot
+    // coordinate them. Model that here with two Storage instances over one shared Map.
+    const backing = new Map<string, string>();
+    const tabA = createBrowserSaveStore(sharedStorageTab(backing));
+    const tabB = createBrowserSaveStore(sharedStorageTab(backing));
+    const session = makeSession({
+      id: "00000000-0000-1000-8000-000000000107",
+      revision: 0,
+    });
+    await tabA.create(session);
+
+    const results = await Promise.allSettled([
+      tabA.write({ ...session, revision: 1, updatedAt: "2026-01-01T00:00:00.000Z" }, 0),
+      tabB.write({ ...session, revision: 1, updatedAt: "2026-02-01T00:00:00.000Z" }, 0),
+    ]);
+
+    assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
+    const rejected = results.find((result) => result.status === "rejected");
+    assert.ok(rejected?.status === "rejected");
+    assert.ok(rejected.reason instanceof RevisionMismatchError);
+    assert.equal((await tabA.read(session.id)).revision, 1);
+  });
+
+  it("interleaves many concurrent cross-tab writers without ever losing an update", async () => {
+    const backing = new Map<string, string>();
+    const tabs = Array.from({ length: 6 }, () => createBrowserSaveStore(sharedStorageTab(backing)));
+    const session = makeSession({
+      id: "00000000-0000-1000-8000-000000000108",
+      revision: 0,
+    });
+    await tabs[0].create(session);
+
+    let revision = 0;
+    for (let round = 0; round < 8; round += 1) {
+      const expected = revision;
+      const results = await Promise.allSettled(
+        tabs.map((tab, i) =>
+          tab.write(
+            { ...session, revision: expected + 1, updatedAt: `2026-01-01T00:00:0${i}.000Z` },
+            expected,
+          ),
+        ),
+      );
+      const fulfilledCount = results.filter((result) => result.status === "fulfilled").length;
+      assert.equal(fulfilledCount, 1, `round ${round}: exactly one writer should win`);
+      revision = expected + 1;
+    }
+
+    assert.equal((await tabs[0].read(session.id)).revision, 8);
+  });
+
+  it("a lease expires so a wedged lock does not permanently starve other tabs", async () => {
+    const backing = new Map<string, string>();
+    // Simulate a tab that crashed mid-write: it wrote a lock record and never released it.
+    backing.set(
+      "brass-ledger-saves:lock",
+      JSON.stringify({ token: "stale-owner", expiresAt: Date.now() - 1 }),
+    );
+    const tab = createBrowserSaveStore(sharedStorageTab(backing));
+    const session = makeSession({ id: "00000000-0000-1000-8000-000000000109" });
+
+    await tab.create(session);
+    assert.equal((await tab.read(session.id)).id, session.id);
   });
 });
