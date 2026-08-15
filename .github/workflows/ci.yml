@@ -18,3 +18,14 @@ jobs:
       - run: npm run lint:potato
       - run: npm test
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - run: npm run test:e2e --workspace @brass-ledger/web
+        env:
+          CI: "true"
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
