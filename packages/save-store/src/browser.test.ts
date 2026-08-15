@@ -36,6 +36,39 @@ async function withoutWebLocks<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
+/**
+ * The inverse of withoutWebLocks: whether the CI runtime's Node version
+ * happens to implement navigator.locks is not something a test should
+ * depend on to exercise the native-lock branch. Inject a minimal, real
+ * LockManager (in-process FIFO queue over the exclusive mode this module
+ * uses) so that branch is deterministically tested on any runtime.
+ */
+async function withMockWebLocks<T>(fn: () => Promise<T>): Promise<T> {
+  const realDescriptor = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  let queue = Promise.resolve();
+  const mockLocks = {
+    request<R>(_name: string, _options: { mode: "exclusive" }, callback: () => Promise<R>): Promise<R> {
+      const result = queue.then(callback, callback);
+      queue = result.then(
+        () => undefined,
+        () => undefined,
+      );
+      return result;
+    },
+  };
+  Object.defineProperty(globalThis, "navigator", {
+    value: { locks: mockLocks },
+    configurable: true,
+    writable: true,
+  });
+  try {
+    return await fn();
+  } finally {
+    if (realDescriptor) Object.defineProperty(globalThis, "navigator", realDescriptor);
+    else delete (globalThis as { navigator?: unknown }).navigator;
+  }
+}
+
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
 
@@ -371,24 +404,28 @@ describe("BrowserSaveStore", () => {
   });
 
   it("also serializes compare-and-swap through the native Web Locks API when available", async () => {
-    // Sanity check for the branch the tests above deliberately bypass: on a
-    // runtime that does provide navigator.locks (real browsers, and Node
-    // itself since ~v21), the store must still serialize correctly.
-    const storage = new MemoryStorage();
-    const first = createBrowserSaveStore(storage);
-    const second = createBrowserSaveStore(storage);
-    const session = makeSession({
-      id: "00000000-0000-1000-8000-00000000010b",
-      revision: 0,
+    // Sanity check for the branch the tests above deliberately bypass. This
+    // must not rely on the *ambient* CI runtime happening to provide
+    // navigator.locks (that varies by Node version and isn't guaranteed) -
+    // inject a real minimal LockManager so this branch is deterministically
+    // exercised on any runtime.
+    await withMockWebLocks(async () => {
+      const storage = new MemoryStorage();
+      const first = createBrowserSaveStore(storage);
+      const second = createBrowserSaveStore(storage);
+      const session = makeSession({
+        id: "00000000-0000-1000-8000-00000000010b",
+        revision: 0,
+      });
+      await first.create(session);
+
+      const results = await Promise.allSettled([
+        first.write({ ...session, revision: 1, updatedAt: "2026-01-01T00:00:00.000Z" }, 0),
+        second.write({ ...session, revision: 1, updatedAt: "2026-02-01T00:00:00.000Z" }, 0),
+      ]);
+
+      assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
+      assert.equal((await first.read(session.id)).revision, 1);
     });
-    await first.create(session);
-
-    const results = await Promise.allSettled([
-      first.write({ ...session, revision: 1, updatedAt: "2026-01-01T00:00:00.000Z" }, 0),
-      second.write({ ...session, revision: 1, updatedAt: "2026-02-01T00:00:00.000Z" }, 0),
-    ]);
-
-    assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
-    assert.equal((await first.read(session.id)).revision, 1);
   });
 });

@@ -122,6 +122,22 @@ function sleep(ms: number): Promise<void> {
  *
  * A short lease additionally bounds how long a lock can wedge other tabs if
  * its owning tab is closed, crashes, or is suspended mid-operation.
+ *
+ * A residual gap is structural, not an oversight: `assertStillLocked()` and
+ * the mutating write it guards are still two separate localStorage calls, so
+ * a vanishingly narrow window remains between "confirmed still locked" and
+ * "wrote" where another tab's own call could in principle land - and no
+ * finite number of additional read-verify checks can close that to zero
+ * without a true atomic primitive, which plain localStorage does not have.
+ * Unlike the acquire-time races above (which span an explicit `await`/sleep
+ * boundary, giving two tabs real time to collide), this specific gap spans
+ * two synchronous statements with no yield point in between, making it
+ * dramatically narrower still. Closing it outright would mean either
+ * requiring Web Locks and refusing to persist without it, or moving this
+ * store to IndexedDB transactions (which are genuinely atomic) - both
+ * larger decisions than this lease-lock's scope. `createBrowserSaveStore`
+ * has no caller yet in this codebase; that product decision should be made
+ * before one is wired up, not silently defaulted here.
  */
 async function acquireStorageLock(
   storage: Storage,
