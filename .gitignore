@@ -16,6 +16,11 @@ packages/shared/src/index.d.ts
 # Release artifact
 release/
 
+# Playwright e2e artifacts
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/blob-report/
+
 # Python bytecode cache
 __pycache__/
 *.pyc
