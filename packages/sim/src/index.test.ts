@@ -1359,3 +1359,78 @@ test("doctrine: contradiction debt fires when memo selections pull the campaign 
   assert.ok(note, "expected a contradiction-debt after-action note");
   assert.ok(note.detail.includes("opposite directions"));
 });
+
+test("doctrine: campaignAimClarity settles at a bounded equilibrium rather than getting pinned at an extreme under sustained balanced play", () => {
+  // Regression test: measured-deterrence carries "deterrence" and quiet-reassurance carries
+  // "quiet" — repeatedly selecting this scenario's own balanced baseline combination must never
+  // be treated as a doctrinal contradiction, and the positive branch must not ratchet unbounded.
+  let state = soloScenario.initialState;
+  const history = [state.doctrineMechanics.campaignAimClarity];
+  for (let turn = 1; turn <= 10; turn += 1) {
+    const result = resolveTurn(soloScenario, state, { ...balancedInput, turn });
+    history.push(result.nextState.doctrineMechanics.campaignAimClarity);
+    state = result.nextState;
+    if (state.campaignStatus !== "active") break;
+  }
+  const final = history[history.length - 1];
+  assert.ok(final > 10 && final < 90, `expected campaignAimClarity to settle away from the extremes under balanced play, got ${final} (history: ${history.join(", ")})`);
+  // Should be monotonically non-decreasing then flat once it reaches equilibrium — never
+  // dropping back toward 0 the way it did before both fixes.
+  for (let i = 1; i < history.length; i += 1) {
+    assert.ok(history[i] >= history[i - 1] - 0.01, `campaignAimClarity should not regress toward 0 under sustained balanced play: ${history.join(", ")}`);
+  }
+});
+
+test("doctrine: order clarity fires when many distinct tags dilute an otherwise gaining turn", () => {
+  // Well-supported S1/S2/S4 baseline so tempo pays off cleanly (no overreach/culmination noise),
+  // isolating orderClarity's own effect. highTempoInput's five options carry 14 distinct tags.
+  const complexButSupportedState = {
+    ...soloScenario.initialState,
+    doctrineMechanics: { ...soloScenario.initialState.doctrineMechanics, orderClarity: 35 },
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s1: { recoveryDebt: 15, reservePredictability: 85 },
+      s2: { externalEstimateConfidence: 80, visibility: "KNOWN" as const, deceptionRisk: 10 },
+    },
+    strategic: {
+      ...soloScenario.initialState.strategic,
+      sustainment: { depotBacklog: 10, munitionsSufficiency: 90, fuelSufficiency: 90, liftAvailability: 90 },
+    },
+    sustainment: { depotBacklog: 10, munitionsSufficiency: 90, fuelSufficiency: 90, liftAvailability: 90 },
+  };
+  const result = resolveTurn(soloScenario, complexButSupportedState, highTempoInput);
+
+  assert.ok(result.nextState.doctrineMechanics.orderClarity < 40, "14 distinct tags should push order clarity below the dilution threshold");
+  assert.ok(
+    result.nextState.strategic.forceGeneration.deployableUnits > complexButSupportedState.strategic.forceGeneration.deployableUnits,
+    "this turn should otherwise be a net gain before the dilution penalty",
+  );
+  const note = result.afterAction.find((entry) => entry.heading === "Doctrine: order clarity");
+  assert.ok(note, "expected an order-clarity after-action note");
+  assert.ok(note.detail.includes("diluted"));
+});
+
+test("doctrine: support ceiling fires when S4 support is thin even though the turn is otherwise net-positive", () => {
+  const weakSupportState = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s4: { stockpileDepth: 5, liftBurn: 90, supportableTempo: 5 },
+    },
+    strategic: {
+      ...soloScenario.initialState.strategic,
+      sustainment: { depotBacklog: 90, munitionsSufficiency: 10, fuelSufficiency: 10, liftAvailability: 10 },
+    },
+    sustainment: { depotBacklog: 90, munitionsSufficiency: 10, fuelSufficiency: 10, liftAvailability: 10 },
+  };
+  const result = resolveTurn(soloScenario, weakSupportState, balancedInput);
+
+  assert.ok(result.nextState.doctrineMechanics.operationalReach < 35, "weak stockpile/lift/depot/fuel should push operational reach below the ceiling threshold");
+  assert.ok(
+    result.nextState.strategic.forceGeneration.deployableUnits > weakSupportState.strategic.forceGeneration.deployableUnits,
+    "this turn should otherwise be a net gain before the support-ceiling penalty",
+  );
+  const note = result.afterAction.find((entry) => entry.heading === "Doctrine: support ceiling");
+  assert.ok(note, "expected a support-ceiling after-action note");
+  assert.ok(note.detail.includes("ceiling"));
+});

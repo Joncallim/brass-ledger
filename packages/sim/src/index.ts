@@ -1291,11 +1291,15 @@ function updateStaffMechanics(
  *   as force multipliers under uncertainty and compressed decision cycles; reserves as the
  *   commander's only means of influencing a fight not yet fought.
  */
+// "deterrence"+"quiet" is deliberately NOT listed here: a measured operational posture paired
+// with quiet, private ally reassurance is coherent restraint, not doctrinal incoherence — and
+// both tags co-occur in this scenario's own "balanced" baseline turn (measured-deterrence +
+// quiet-reassurance), so flagging that pairing pinned campaignAimClarity at 0 within ~7 turns
+// of ordinary play. Only list pairs that are genuinely incompatible on their face.
 const CONTRADICTORY_TAG_PAIRS: Array<[string, string]> = [
   ["ad-hoc", "program"],
   ["quiet", "public-commitment"],
   ["hollow", "standardization"],
-  ["deterrence", "quiet"],
 ];
 
 /** Pulls a persisted doctrine variable toward its neutral baseline when no explicit signal fires this turn. */
@@ -1364,11 +1368,17 @@ function resolveDoctrineMechanics({
   // ── Objective: campaignAimClarity ────────────────────────────────────────────────────────
   // Gate: S5 coherence and memo-tag consistency. Failure event: contradiction debt.
   const contradictingPairs = CONTRADICTORY_TAG_PAIRS.filter(([a, b]) => tags.has(a) && tags.has(b)).length;
+  // Both non-contradiction branches use pullToNeutral (unlike a flat increment) so this
+  // variable settles at a bounded equilibrium under sustained play instead of ratcheting to an
+  // extreme: coherent play drifts toward a healthy-but-not-maxed 70, everything else drifts
+  // back toward the neutral 55 baseline. Every other persisted doctrine variable in this
+  // function already follows this pattern; campaignAimClarity previously didn't, which combined
+  // with a contradiction pair that could re-fire every turn to pin it at 0 permanently.
   const aimSignal =
     contradictingPairs > 0
       ? -8 * contradictingPairs
       : nextStaffMechanics.s5.strategicCoherence > 55
-        ? 3
+        ? pullToNeutral(prev.campaignAimClarity, 70, 3)
         : pullToNeutral(prev.campaignAimClarity, 55, 3);
   const campaignAimClarity = clamp(prev.campaignAimClarity + aimSignal, 0, 100);
   if (contradictingPairs > 0 && campaignAimClarity < 45) {
@@ -1546,7 +1556,12 @@ function resolveDoctrineMechanics({
   // Gate: low complexity load. Failure: lower upside on multi-lane actions.
   const complexityScore = clamp(100 - Math.max(0, tags.size - 4) * 8, 0, 100);
   const orderClarity = clamp(round(prev.orderClarity * 0.5 + complexityScore * 0.5), 0, 100);
-  if (orderClarity < 40 && strategic.forceGeneration.deployableUnits > strategicIn.forceGeneration.deployableUnits) {
+  // Compares against previousState (the turn's true starting point), not strategicIn (which
+  // already includes this turn's own option/event/burden deltas) — strategicIn only moves when
+  // an earlier doctrine gate (tempo/main-effort) has already nudged deployableUnits, so using it
+  // here would make this guard fire only in that narrow case instead of reflecting whether the
+  // turn as a whole was actually gaining ground.
+  if (orderClarity < 40 && strategic.forceGeneration.deployableUnits > previousState.strategic.forceGeneration.deployableUnits) {
     strategic = { ...strategic, forceGeneration: { ...strategic.forceGeneration, deployableUnits: clamp(strategic.forceGeneration.deployableUnits - 0.1, 2, 12) } };
     notes.push({
       heading: "Doctrine: order clarity",
@@ -1592,7 +1607,15 @@ function resolveDoctrineMechanics({
     0,
     100,
   );
-  if (operationalReach < 35 && strategic.forceGeneration.deployableUnits > strategicIn.forceGeneration.deployableUnits) {
+  // Compares against previousState, same as orderClarity above (see that comment for why
+  // strategicIn is the wrong baseline). Because culmination runs between the two checks and can
+  // also touch deployableUnits, a culmination hit earlier this turn can bring this comparison
+  // back below previousState's value even when orderClarity's identical-shaped check passed
+  // moments earlier — which is the intended behavior: if culmination already inflicted a hard
+  // readiness loss this turn, the turn is no longer "ahead of where it started," so this note
+  // correctly stays quiet instead of stacking a second, redundant support-ceiling narrative on
+  // top of the culmination note for the same underlying capacity problem.
+  if (operationalReach < 35 && strategic.forceGeneration.deployableUnits > previousState.strategic.forceGeneration.deployableUnits) {
     strategic = { ...strategic, forceGeneration: { ...strategic.forceGeneration, deployableUnits: clamp(strategic.forceGeneration.deployableUnits - 0.1, 2, 12) } };
     notes.push({
       heading: "Doctrine: support ceiling",
