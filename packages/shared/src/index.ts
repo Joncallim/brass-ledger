@@ -147,6 +147,47 @@ const defaultStaffMechanicsState: StaffMechanicsState = {
   s5: { strategicCoherence: 52, doctrineAlignment: 50 },
 };
 
+// Doctrine variables from the CELERY pattern-to-mechanic map (see
+// POTATO/doctrine-mechanics-roadmap.md). Neutral-initialized per faction; a scenario's
+// DoctrineProfile (Phase 2, issue #56) will later bias these away from neutral.
+// Every field is 0-100. Risk/pressure-type fields (culminationRisk, systemPressure) are
+// neutral near their low end (little accumulated risk at campaign start); quality/capacity
+// fields are neutral near the midpoint.
+export const doctrineMechanicsStateSchema = z.object({
+  campaignAimClarity: indexMetricSchema.default(55),
+  relativeTempo: indexMetricSchema.default(50),
+  mainEffortFocus: indexMetricSchema.default(50),
+  secondaryRiskAccepted: indexMetricSchema.default(50),
+  optionDislocation: indexMetricSchema.default(40),
+  signatureControl: indexMetricSchema.default(45),
+  exposureControl: indexMetricSchema.default(50),
+  orderClarity: indexMetricSchema.default(60),
+  culminationRisk: indexMetricSchema.default(18),
+  uncommittedCapacity: indexMetricSchema.default(45),
+  operationalReach: indexMetricSchema.default(48),
+  staffSynchronization: indexMetricSchema.default(55),
+  commanderIntentClarity: indexMetricSchema.default(55),
+  systemPressure: indexMetricSchema.default(45),
+});
+export type DoctrineMechanicsState = z.infer<typeof doctrineMechanicsStateSchema>;
+
+export const defaultDoctrineMechanicsState: DoctrineMechanicsState = {
+  campaignAimClarity: 55,
+  relativeTempo: 50,
+  mainEffortFocus: 50,
+  secondaryRiskAccepted: 50,
+  optionDislocation: 40,
+  signatureControl: 45,
+  exposureControl: 50,
+  orderClarity: 60,
+  culminationRisk: 18,
+  uncommittedCapacity: 45,
+  operationalReach: 48,
+  staffSynchronization: 55,
+  commanderIntentClarity: 55,
+  systemPressure: 45,
+};
+
 export const resourcesSchema = z.object({
   budgetAuthority: indexMetricSchema,
   readiness: indexMetricSchema,
@@ -646,6 +687,7 @@ export const campaignStateSchema = z.object({
   campaignOutcome: z.string().nullable().default(null),
   strategic: strategicStateSchema,
   staffMechanics: staffMechanicsStateSchema.default(defaultStaffMechanicsState),
+  doctrineMechanics: doctrineMechanicsStateSchema.default(defaultDoctrineMechanicsState),
   resources: resourcesSchema,
   forceGeneration: forceGenerationStateSchema,
   intel: intelStateSchema,

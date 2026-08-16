@@ -89,6 +89,8 @@ import {
   type DecisionPreviewEntry,
   type DecisionMemo,
   type DirectorateBurden,
+  type DirectorateId,
+  type DoctrineMechanicsState,
   type EventDefinition,
   type ExplainabilityEntry,
   type ExternalConstraintState,
@@ -1260,6 +1262,358 @@ function updateStaffMechanics(
 }
 
 /**
+ * Doctrine Mechanics (Phase 1 of the faction-gene roadmap; issue #55)
+ *
+ * Implements the CELERY pattern-to-mechanic map from
+ * POTATO/doctrine-mechanics-roadmap.md. Doctrine variables never rewrite S1-S5 formulas
+ * directly — this is a read-only layer computed from the already-resolved S1-S5 state and
+ * this turn's decisions, applied back onto strategic/resource state only through small,
+ * bounded counterweight deltas. That keeps the S1-S5 core (and its existing test suite)
+ * untouched, which matters because faction genes (issue #56) will later bias these same
+ * variables without needing to know anything about S1-S5 internals.
+ *
+ * Every benefit needs a counterweight (roadmap "Player-Facing Rules"). Four gates carry
+ * concrete strategic-state counterweights, matching the issue #55 acceptance criteria:
+ * tempo, main effort, reserve, and culmination. The remaining ten variables are computed
+ * from their documented gate inputs and reported in after-action notes when their failure
+ * condition matures, without mutating strategic state directly — full faction-scale
+ * counterweights for all fourteen arrive with the gene system in issues #56-59.
+ *
+ * Doctrine sources:
+ * - Clausewitz, C. von (1832). *On War*, Book 7, Ch. 22. "Culminating point of the attack" —
+ *   an offensive that outruns its logistics and cohesion collapses past a threshold rather
+ *   than degrading gracefully.
+ * - Boyd, J. (1976). "Destruction and Creation" (unpublished briefing). Main-effort
+ *   concentration vs. economy-of-force distribution as a command-attention allocation problem.
+ * - Liddell Hart, B.H. (1954). *Strategy*. Faber. The indirect approach: dislocation before
+ *   destruction; maneuver credibility depends on the picture the adversary is denied.
+ * - USMC (1997). *Warfighting* (MCDP 1). Simplicity, mission command, and commander's intent
+ *   as force multipliers under uncertainty and compressed decision cycles; reserves as the
+ *   commander's only means of influencing a fight not yet fought.
+ */
+const CONTRADICTORY_TAG_PAIRS: Array<[string, string]> = [
+  ["ad-hoc", "program"],
+  ["quiet", "public-commitment"],
+  ["hollow", "standardization"],
+  ["deterrence", "quiet"],
+];
+
+/** Pulls a persisted doctrine variable toward its neutral baseline when no explicit signal fires this turn. */
+function pullToNeutral(current: number, neutral: number, magnitude: number) {
+  if (current === neutral) return 0;
+  return Math.sign(neutral - current) * Math.min(magnitude, Math.abs(neutral - current));
+}
+
+type DoctrineNote = { heading: string; detail: string };
+
+type DoctrineResolution = {
+  doctrineMechanics: DoctrineMechanicsState;
+  strategic: StrategicState;
+  resources: CampaignState["resources"];
+  notes: DoctrineNote[];
+};
+
+function resolveDoctrineMechanics(
+  previousState: CampaignState,
+  selectedOptions: MemoOption[],
+  directorateBurden: DirectorateBurden[],
+  nextStaffMechanics: StaffMechanicsState,
+  strategicIn: StrategicState,
+  resourcesIn: CampaignState["resources"],
+  triggeredEvents: EventDefinition[],
+  chiefs: ScenarioDefinition["chiefs"],
+  previousChiefTrust: Record<string, number>,
+  acceptedRiskOverrides: AcceptedRiskOverride[],
+): DoctrineResolution {
+  const tags = new Set(selectedOptions.flatMap((option) => option.tags));
+  const prev = previousState.doctrineMechanics;
+  const notes: DoctrineNote[] = [];
+  let strategic = strategicIn;
+  let resources = resourcesIn;
+
+  // ── Objective: campaignAimClarity ────────────────────────────────────────────────────────
+  // Gate: S5 coherence and memo-tag consistency. Failure event: contradiction debt.
+  const contradictingPairs = CONTRADICTORY_TAG_PAIRS.filter(([a, b]) => tags.has(a) && tags.has(b)).length;
+  const aimSignal =
+    contradictingPairs > 0
+      ? -8 * contradictingPairs
+      : nextStaffMechanics.s5.strategicCoherence > 55
+        ? 3
+        : pullToNeutral(prev.campaignAimClarity, 55, 3);
+  const campaignAimClarity = clamp(prev.campaignAimClarity + aimSignal, 0, 100);
+  if (contradictingPairs > 0 && campaignAimClarity < 45) {
+    notes.push({
+      heading: "Doctrine: contradiction debt",
+      detail: `This month's selections pulled in opposite directions (${contradictingPairs} contradicting tag pair${contradictingPairs > 1 ? "s" : ""} across the memos you chose). Campaign aim clarity fell to ${round(campaignAimClarity)}.`,
+    });
+  }
+
+  // ── Tempo: relativeTempo (REQUIRED gate) ─────────────────────────────────────────────────
+  // Gate: S1 recovery debt, S2 estimate confidence, S4 supportable tempo. Failure: early culmination.
+  const tempoSignal = tags.has("tempo-spike")
+    ? 22
+    : tags.has("exercise")
+      ? 13
+      : tags.has("quiet") || tags.has("slow-burn")
+        ? -14
+        : pullToNeutral(prev.relativeTempo, 50, 4);
+  const relativeTempo = clamp(prev.relativeTempo + tempoSignal, 0, 100);
+  const tempoSupported =
+    nextStaffMechanics.s1.recoveryDebt < 62 &&
+    nextStaffMechanics.s2.externalEstimateConfidence > 42 &&
+    nextStaffMechanics.s4.supportableTempo > 15;
+  const tempoOverreach = relativeTempo > 65 && !tempoSupported;
+  const tempoPaidOff = relativeTempo > 65 && tempoSupported;
+  if (tempoOverreach) {
+    strategic = {
+      ...strategic,
+      forceGeneration: { ...strategic.forceGeneration, deployableUnits: clamp(strategic.forceGeneration.deployableUnits - 0.4, 2, 12) },
+      escalation: { ...strategic.escalation, incidentLadder: clamp(strategic.escalation.incidentLadder + 3, 0, 100) },
+    };
+    notes.push({
+      heading: "Doctrine bet: tempo",
+      detail: `Tempo (${round(relativeTempo)}) outran what S1 debt, S2 confidence, and S4 supportable tempo could carry this month. The push culminated early — deployable strength and the incident ladder both paid for it.`,
+    });
+  } else if (tempoPaidOff) {
+    strategic = {
+      ...strategic,
+      forceGeneration: { ...strategic.forceGeneration, deployableUnits: clamp(strategic.forceGeneration.deployableUnits + 0.15, 2, 12) },
+    };
+    notes.push({
+      heading: "Doctrine bet: tempo",
+      detail: `High tempo (${round(relativeTempo)}) was genuinely supportable this month — S1 debt, S2 confidence, and S4 supportable tempo all held. The bet paid off in a small extra readiness gain.`,
+    });
+  }
+
+  // ── Main effort: mainEffortFocus (REQUIRED gate) ─────────────────────────────────────────
+  // Gate: declared priority (burden concentration) and support allocation across the rest
+  // of the staff. Failure event: neglected-lane failure.
+  const burdenByDirectorate = new Map<DirectorateId, number>();
+  for (const option of selectedOptions) {
+    for (const contribution of option.burden) {
+      burdenByDirectorate.set(contribution.directorate, (burdenByDirectorate.get(contribution.directorate) ?? 0) + contribution.points);
+    }
+  }
+  const totalBurdenPoints = [...burdenByDirectorate.values()].reduce((sum, value) => sum + value, 0);
+  const maxDirectoratePoints = burdenByDirectorate.size > 0 ? Math.max(...burdenByDirectorate.values()) : 0;
+  const mainEffortFocus = totalBurdenPoints > 0 ? clamp(round((100 * maxDirectoratePoints) / totalBurdenPoints), 0, 100) : 50;
+  const mainEffortDirectorate = [...burdenByDirectorate.entries()].find(([, points]) => points === maxDirectoratePoints)?.[0];
+  const neglectedLanes = directorateBurden.filter((entry) => entry.directorate !== mainEffortDirectorate && entry.burdenLevel === "overloaded");
+  // Threshold calibrated to this scenario's content: every memo option spreads points across
+  // 2-4 directorates by design, so a perfectly even 6-lane split sits near 17% and the
+  // maximum concentration any real 5-memo turn can reach is ~41%. >35 requires genuinely
+  // favoring one lane over the others, not just an artifact of how burden happens to fall.
+  const mainEffortConcentrated = mainEffortFocus > 35 && totalBurdenPoints > 0;
+  if (mainEffortConcentrated && neglectedLanes.length > 0 && mainEffortDirectorate) {
+    resources = { ...resources, readiness: clamp(resources.readiness - Math.min(4, neglectedLanes.length * 2), 0, 100) };
+    notes.push({
+      heading: "Doctrine bet: main effort",
+      detail: `The month concentrated on ${directorateLabel(mainEffortDirectorate)} while ${neglectedLanes.map((entry) => directorateLabel(entry.directorate)).join(", ")} went unsupported and overloaded. That neglect cost readiness.`,
+    });
+  } else if (mainEffortConcentrated && mainEffortDirectorate) {
+    resources = { ...resources, readiness: clamp(resources.readiness + 1, 0, 100) };
+    notes.push({
+      heading: "Doctrine bet: main effort",
+      detail: `Effort concentrated on ${directorateLabel(mainEffortDirectorate)} without leaving another lane overloaded. A focused main effort with covered flanks paid a small readiness dividend.`,
+    });
+  }
+
+  // ── Reserve: uncommittedCapacity (REQUIRED gate) ─────────────────────────────────────────
+  // Gate: unspent staff/action capacity. Failure event (the tradeoff itself): lower
+  // immediate progress. Test idea: reserve held during a crisis reduces event penalty.
+  const totalCapacity = directorateBurden.reduce((sum, entry) => sum + entry.capacity, 0);
+  const totalCommitted = directorateBurden.reduce((sum, entry) => sum + entry.burdenPoints, 0);
+  const uncommittedCapacity = totalCapacity > 0 ? clamp(round((100 * (totalCapacity - totalCommitted)) / totalCapacity), 0, 100) : 50;
+  // Threshold calibrated to this scenario's content: even the lightest legal 5-memo turn
+  // commits most of the staff's 20 points of capacity, so >30 already requires deliberately
+  // restrained selections (typically skipping the optional force-development memo) rather
+  // than being reachable by accident.
+  const reserveHeld = uncommittedCapacity > 30;
+  if (reserveHeld) {
+    resources = { ...resources, readiness: clamp(resources.readiness - 1.5, 0, 100) };
+    if (triggeredEvents.length > 0) {
+      resources = { ...resources, readiness: clamp(resources.readiness + 2 * triggeredEvents.length, 0, 100) };
+      notes.push({
+        heading: "Doctrine bet: reserve",
+        detail: `You held ${round(uncommittedCapacity)} points of staff capacity uncommitted going into the month. When ${triggeredEvents.length === 1 ? "a shock" : "shocks"} hit, that reserve absorbed part of the blow instead of the line taking it cold — at the cost of somewhat slower immediate progress.`,
+      });
+    } else {
+      notes.push({
+        heading: "Doctrine bet: reserve",
+        detail: `You held ${round(uncommittedCapacity)} points of staff capacity uncommitted. Nothing forced your hand this month, so the reserve cost you a little immediate progress without a matching payoff — yet.`,
+      });
+    }
+  }
+
+  // ── Economy of force: secondaryRiskAccepted ──────────────────────────────────────────────
+  // Gate: explicit accepted risk. Failure: surprise from an under-resourced lane.
+  const strainedLanes = directorateBurden.filter((entry) => entry.burdenLevel !== "light").length;
+  const secondaryRiskAccepted =
+    strainedLanes === 0 ? 50 : clamp(round((100 * Math.min(acceptedRiskOverrides.length, strainedLanes)) / strainedLanes), 0, 100);
+  if (strainedLanes > 0 && acceptedRiskOverrides.length === 0) {
+    notes.push({
+      heading: "Doctrine: unacknowledged risk",
+      detail: `${strainedLanes} staff lane${strainedLanes > 1 ? "s were" : " was"} strained or overloaded this month and none of it was explicitly accepted going in. An under-resourced lane can still surprise you even when the headline numbers look fine.`,
+    });
+  }
+
+  // ── Maneuver: optionDislocation ───────────────────────────────────────────────────────────
+  // Gate: S2 confidence and S4 lift/support. Failure: hollow movement or revealed posture.
+  const maneuverTagsPresent = tags.has("forward-posture") || tags.has("lift") || tags.has("exercise");
+  const maneuverSignal = maneuverTagsPresent
+    ? (tags.has("forward-posture") ? 10 : 0) + (tags.has("lift") ? 6 : 0) + (tags.has("exercise") ? 4 : 0)
+    : pullToNeutral(prev.optionDislocation, 40, 4);
+  const optionDislocation = clamp(prev.optionDislocation + maneuverSignal, 0, 100);
+  const maneuverSupported = nextStaffMechanics.s2.externalEstimateConfidence > 42 && nextStaffMechanics.s4.liftBurn < 65;
+  if (optionDislocation > 60 && !maneuverSupported) {
+    strategic = { ...strategic, escalation: { ...strategic.escalation, crisisSensitivity: clamp(strategic.escalation.crisisSensitivity + 2, 0, 100) } };
+    notes.push({
+      heading: "Doctrine: maneuver revealed",
+      detail: `Movement this month (${round(optionDislocation)}) outran S2 confidence and S4 lift headroom. The maneuver read as hollow or exposed rather than dislocating, and crisis sensitivity ticked up.`,
+    });
+  }
+
+  // ── Deception: signatureControl ───────────────────────────────────────────────────────────
+  // Gate: S2 counter-deception and S3 synchronization. Failure: exposure or self-deception.
+  const signatureTagsPresent = tags.has("counter-deception") || tags.has("quiet") || tags.has("public-commitment");
+  const signatureSignal = signatureTagsPresent
+    ? (tags.has("counter-deception") ? 8 : 0) + (tags.has("quiet") ? 4 : 0) - (tags.has("public-commitment") ? 6 : 0)
+    : pullToNeutral(prev.signatureControl, 45, 3);
+  const signatureControl = clamp(prev.signatureControl + signatureSignal, 0, 100);
+  if (signatureControl > 60 && nextStaffMechanics.s2.deceptionRisk >= 55) {
+    resources = { ...resources, publicLegitimacy: clamp(resources.publicLegitimacy - 1, 0, 100) };
+    notes.push({
+      heading: "Doctrine: self-deception risk",
+      detail: `Signature management (${round(signatureControl)}) is high, but S2 deception risk never actually came down. A confident-sounding brief may be managing your own picture, not the adversary's.`,
+    });
+  }
+
+  // ── Security: exposureControl ─────────────────────────────────────────────────────────────
+  // Gate: S2/S4 risk control. Failure: tempo drag.
+  const exposureTagsPresent = tags.has("counter-deception") || tags.has("quiet") || tags.has("forward-posture") || tags.has("public-commitment");
+  const exposureSignal = exposureTagsPresent
+    ? (tags.has("counter-deception") ? 4 : 0) + (tags.has("quiet") ? 5 : 0) - (tags.has("forward-posture") ? 5 : 0) - (tags.has("public-commitment") ? 4 : 0)
+    : pullToNeutral(prev.exposureControl, 50, 3);
+  const exposureControl = clamp(prev.exposureControl + exposureSignal, 0, 100);
+  if (exposureControl < 35 && (nextStaffMechanics.s2.externalEstimateConfidence <= 42 || nextStaffMechanics.s4.stockpileDepth <= 42)) {
+    strategic = { ...strategic, forceGeneration: { ...strategic.forceGeneration, trainingThroughput: clamp(strategic.forceGeneration.trainingThroughput - 1, 0, 100) } };
+    notes.push({
+      heading: "Doctrine: security gap",
+      detail: `Exposure control fell to ${round(exposureControl)} without S2 or S4 headroom to cover it. The drag showed up as slower training throughput.`,
+    });
+  }
+
+  // ── Simplicity: orderClarity ──────────────────────────────────────────────────────────────
+  // Gate: low complexity load. Failure: lower upside on multi-lane actions.
+  const complexityScore = clamp(100 - Math.max(0, tags.size - 4) * 8, 0, 100);
+  const orderClarity = clamp(round(prev.orderClarity * 0.5 + complexityScore * 0.5), 0, 100);
+  if (orderClarity < 40 && strategic.forceGeneration.deployableUnits > strategicIn.forceGeneration.deployableUnits) {
+    strategic = { ...strategic, forceGeneration: { ...strategic.forceGeneration, deployableUnits: clamp(strategic.forceGeneration.deployableUnits - 0.1, 2, 12) } };
+    notes.push({
+      heading: "Doctrine: order clarity",
+      detail: `Running ${tags.size} distinct threads at once (order clarity ${round(orderClarity)}) diluted the upside of an otherwise good month.`,
+    });
+  }
+
+  // ── Culmination: culminationRisk (REQUIRED gate) ─────────────────────────────────────────
+  // Gate: combined S1/S4/S3 condition, sharpened by an unsupported tempo bet this same turn.
+  // Failure event: hard readiness/support loss once the culminating point is crossed.
+  const culminationPressure =
+    (nextStaffMechanics.s1.recoveryDebt > 62 ? 6 : 0) +
+    (nextStaffMechanics.s4.supportableTempo < 15 ? 8 : 0) +
+    (nextStaffMechanics.s3.executablePosture < 35 ? 6 : 0) +
+    (tempoOverreach ? 12 : 0);
+  const culminationRelief = nextStaffMechanics.s1.recoveryDebt < 40 && nextStaffMechanics.s4.supportableTempo > 40 ? 10 : 3;
+  const culminationRisk = clamp(prev.culminationRisk + culminationPressure - culminationRelief, 0, 100);
+  if (culminationRisk > 72) {
+    strategic = {
+      ...strategic,
+      forceGeneration: { ...strategic.forceGeneration, deployableUnits: clamp(strategic.forceGeneration.deployableUnits - 0.6, 2, 12) },
+      sustainment: { ...strategic.sustainment, liftAvailability: clamp(strategic.sustainment.liftAvailability - 4, 0, 100) },
+    };
+    notes.push({
+      heading: "Doctrine bet: culmination",
+      detail: `S1, S3, and S4 condition crossed the culminating point this month (culmination risk ${round(culminationRisk)}). The headquarters took a hard readiness and support loss rather than a graceful slowdown.`,
+    });
+  }
+
+  // ── Sustainment reach: operationalReach ───────────────────────────────────────────────────
+  // Gate: S4 stock, lift, repair, and fuel support. Failure: support ceiling.
+  const operationalReach = clamp(
+    round((nextStaffMechanics.s4.stockpileDepth + (100 - nextStaffMechanics.s4.liftBurn) + previousState.strategic.sustainment.fuelSufficiency) / 3),
+    0,
+    100,
+  );
+  if (operationalReach < 35 && strategic.forceGeneration.deployableUnits > strategicIn.forceGeneration.deployableUnits) {
+    strategic = { ...strategic, forceGeneration: { ...strategic.forceGeneration, deployableUnits: clamp(strategic.forceGeneration.deployableUnits - 0.1, 2, 12) } };
+    notes.push({
+      heading: "Doctrine: support ceiling",
+      detail: `Operational reach is only ${round(operationalReach)}. Further gains this month ran into a hard support ceiling rather than a soft constraint.`,
+    });
+  }
+
+  // ── Staff synchronization: staffSynchronization ──────────────────────────────────────────
+  // Not in the CELERY pattern table; derived from how evenly loaded the staff is this turn.
+  // Low variance in burden ratios across directorates reads as a well-synchronized staff.
+  const burdenRatios = directorateBurden.map((entry) => (entry.capacity > 0 ? entry.burdenPoints / entry.capacity : 0));
+  const meanRatio = burdenRatios.length > 0 ? burdenRatios.reduce((sum, value) => sum + value, 0) / burdenRatios.length : 0;
+  const ratioVariance = burdenRatios.length > 0 ? burdenRatios.reduce((sum, value) => sum + (value - meanRatio) ** 2, 0) / burdenRatios.length : 0;
+  const staffSynchronization = clamp(round(100 - Math.sqrt(ratioVariance) * 90), 0, 100);
+
+  // ── Mission command: commanderIntentClarity ──────────────────────────────────────────────
+  // Gate: trust and chief competence. Failure: handoff friction.
+  const trustValues = chiefs.map((chief) => previousChiefTrust[chief.id] ?? 50);
+  const meanTrust = trustValues.length > 0 ? trustValues.reduce((sum, value) => sum + value, 0) / trustValues.length : 50;
+  const meanCompetence = chiefs.length > 0 ? (chiefs.reduce((sum, chief) => sum + chief.competence, 0) / chiefs.length) * 100 : 70;
+  const commanderIntentClarity = clamp(round(meanTrust * 0.6 + meanCompetence * 0.4), 0, 100);
+  if (commanderIntentClarity < 40) {
+    resources = { ...resources, politicalCapital: clamp(resources.politicalCapital - 1, 0, 100) };
+    notes.push({
+      heading: "Doctrine: handoff friction",
+      detail: `Commander's intent is landing poorly right now (clarity ${round(commanderIntentClarity)}) — low trust and thin competence coverage are compressing planning into friction at the handoff.`,
+    });
+  }
+
+  // ── System competition: systemPressure ────────────────────────────────────────────────────
+  // Gate: S2 estimate confidence (optional J6/C2 modules arrive in issue #59). Failure:
+  // mis-targeting or dependency blowback.
+  const systemPressure = clamp(
+    round(100 - nextStaffMechanics.s2.externalEstimateConfidence + nextStaffMechanics.s2.deceptionRisk * 0.3),
+    0,
+    100,
+  );
+  if (systemPressure > 65) {
+    strategic = { ...strategic, escalation: { ...strategic.escalation, incidentLadder: clamp(strategic.escalation.incidentLadder + 1, 0, 100) } };
+    notes.push({
+      heading: "Doctrine: system pressure",
+      detail: `The contested information picture (system pressure ${round(systemPressure)}) is thin enough that mis-targeting or dependency blowback is a live risk this month.`,
+    });
+  }
+
+  return {
+    doctrineMechanics: {
+      campaignAimClarity: round(campaignAimClarity),
+      relativeTempo: round(relativeTempo),
+      mainEffortFocus: round(mainEffortFocus),
+      secondaryRiskAccepted: round(secondaryRiskAccepted),
+      optionDislocation: round(optionDislocation),
+      signatureControl: round(signatureControl),
+      exposureControl: round(exposureControl),
+      orderClarity: round(orderClarity),
+      culminationRisk: round(culminationRisk),
+      uncommittedCapacity: round(uncommittedCapacity),
+      operationalReach: round(operationalReach),
+      staffSynchronization: round(staffSynchronization),
+      commanderIntentClarity: round(commanderIntentClarity),
+      systemPressure: round(systemPressure),
+    },
+    strategic,
+    resources,
+    notes,
+  };
+}
+
+/**
  * Evaluates whether the campaign has ended and computes the score.
  *
  * ## Collapse conditions (early termination)
@@ -1559,6 +1913,22 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   const nextConstraints = updateConstraints(previousState, selectedOptions, triggeredEvents);
   const nextTrust = updateChiefTrust(previousState, chiefPositions);
   const nextStaffMechanics = updateStaffMechanics(previousState, selectedOptions, directorateBurden, triggeredEvents, nextConstraints);
+  const doctrineResolution = resolveDoctrineMechanics(
+    previousState,
+    selectedOptions,
+    directorateBurden,
+    nextStaffMechanics,
+    nextStrategic,
+    nextResources,
+    triggeredEvents,
+    scenario.chiefs,
+    previousState.chiefTrust,
+    input.acceptedRiskOverrides ?? [],
+  );
+  nextStrategic = doctrineResolution.strategic;
+  nextStrategic.forceGeneration.deployableUnits = round(nextStrategic.forceGeneration.deployableUnits);
+  nextResources = doctrineResolution.resources;
+  const nextDoctrineMechanics = doctrineResolution.doctrineMechanics;
   const nextInternalTech: TechProgressNode[] = nextPrograms.map((program) => ({
     id: program.id,
     level: phaseToLevel(program.phase),
@@ -1585,6 +1955,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     turn: nextTurn,
     resources: nextResources,
     staffMechanics: nextStaffMechanics,
+    doctrineMechanics: nextDoctrineMechanics,
     forceGeneration: nextStrategic.forceGeneration,
     intel: nextStrategic.intelligence,
     sustainment: nextStrategic.sustainment,
@@ -1643,7 +2014,10 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
 
   const monthlyEstimate = createMonthlyEstimate(previousState, nextState, chiefPositions, directorateBurden);
   const nodeName = buildNodeNameLookup(scenario);
-  const resultAfterAction = afterAction(previousState, nextState, directorateBurden, triggeredEvents, input.acceptedRiskOverrides, staffNegotiations, nodeName);
+  const resultAfterAction = [
+    ...afterAction(previousState, nextState, directorateBurden, triggeredEvents, input.acceptedRiskOverrides, staffNegotiations, nodeName),
+    ...doctrineResolution.notes,
+  ];
   const staffFunctions = buildStaffFunctionReadouts(scenario.staffFunctions, directorateBurden, nextState);
   const explainability = createExplainability(selectedPairs, directorateBurden, triggeredEvents, previousState, nextState, nodeName);
   const summary = nextState.campaignStatus === "active" ? summarizeState(nextState) : nextState.campaignOutcome ?? summarizeState(nextState);

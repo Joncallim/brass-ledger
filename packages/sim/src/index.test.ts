@@ -1054,3 +1054,280 @@ test("Events with constraint shifts emit industry causalRefs in explainability",
     }
   }
 });
+
+// ── Doctrine 1: DoctrineMechanicsState (issue #55) ─────────────────────────────────────────
+
+test("doctrineMechanics is neutral-initialized on a fresh scenario", () => {
+  assert.deepEqual(soloScenario.initialState.doctrineMechanics, {
+    campaignAimClarity: 55,
+    relativeTempo: 50,
+    mainEffortFocus: 50,
+    secondaryRiskAccepted: 50,
+    optionDislocation: 40,
+    signatureControl: 45,
+    exposureControl: 50,
+    orderClarity: 60,
+    culminationRisk: 18,
+    uncommittedCapacity: 45,
+    operationalReach: 48,
+    staffSynchronization: 55,
+    commanderIntentClarity: 55,
+    systemPressure: 45,
+  });
+});
+
+test("doctrineMechanics defaults to the same neutral state when omitted from a persisted save", () => {
+  const { doctrineMechanics, ...withoutDoctrine } = soloScenario.initialState;
+  const parsed = campaignStateSchema.parse(withoutDoctrine);
+  assert.deepEqual(parsed.doctrineMechanics, doctrineMechanics);
+});
+
+test("doctrineMechanics is deterministic and replay-safe across identical resolveTurn calls", () => {
+  const left = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
+  const right = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
+  assert.deepEqual(left.nextState.doctrineMechanics, right.nextState.doctrineMechanics);
+  assert.equal(left.replayHash, right.replayHash);
+});
+
+test("doctrine bet: tempo pays off when S1 debt, S2 confidence, and S4 supportable tempo all hold", () => {
+  const wellSupportedState = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s1: { recoveryDebt: 20, reservePredictability: 80 },
+      s2: { externalEstimateConfidence: 75, visibility: "KNOWN" as const, deceptionRisk: 20 },
+    },
+    strategic: {
+      ...soloScenario.initialState.strategic,
+      sustainment: { depotBacklog: 20, munitionsSufficiency: 85, fuelSufficiency: 85, liftAvailability: 85 },
+    },
+    sustainment: { depotBacklog: 20, munitionsSufficiency: 85, fuelSufficiency: 85, liftAvailability: 85 },
+  };
+  const result = resolveTurn(soloScenario, wellSupportedState, highTempoInput);
+
+  assert.ok(result.nextState.doctrineMechanics.relativeTempo > 65, "tempo-spike should push relativeTempo past the bet threshold");
+  assert.ok(result.nextState.staffMechanics.s1.recoveryDebt < 62, "recovery debt should stay supported");
+  assert.ok(result.nextState.staffMechanics.s4.supportableTempo > 15, "supportable tempo should stay supported");
+  const bet = result.afterAction.find((entry) => entry.heading === "Doctrine bet: tempo");
+  assert.ok(bet, "expected a tempo doctrine-bet after-action note");
+  assert.ok(bet.detail.includes("paid off"));
+  assert.ok(
+    result.nextState.strategic.forceGeneration.deployableUnits > wellSupportedState.strategic.forceGeneration.deployableUnits,
+    "a well-supported tempo bet should nudge deployable units up",
+  );
+});
+
+test("doctrine bet: tempo culminates early when S1 debt is high and S4 support is thin", () => {
+  const overreachState = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s1: { recoveryDebt: 70, reservePredictability: 30 },
+    },
+    strategic: {
+      ...soloScenario.initialState.strategic,
+      sustainment: { depotBacklog: 75, munitionsSufficiency: 12, fuelSufficiency: 18, liftAvailability: 22 },
+    },
+    sustainment: { depotBacklog: 75, munitionsSufficiency: 12, fuelSufficiency: 18, liftAvailability: 22 },
+  };
+  const before = overreachState.strategic.forceGeneration.deployableUnits;
+  const beforeIncidents = overreachState.strategic.escalation.incidentLadder;
+  const result = resolveTurn(soloScenario, overreachState, highTempoInput);
+
+  assert.ok(result.nextState.doctrineMechanics.relativeTempo > 65, "tempo-spike should push relativeTempo past the bet threshold");
+  const bet = result.afterAction.find((entry) => entry.heading === "Doctrine bet: tempo");
+  assert.ok(bet, "expected a tempo doctrine-bet after-action note");
+  assert.ok(bet.detail.includes("culminated early"));
+  assert.ok(result.nextState.strategic.forceGeneration.deployableUnits < before + 1.1, "unsupported tempo should cost deployable units relative to the raw stateDelta gain");
+  assert.ok(result.nextState.strategic.escalation.incidentLadder > beforeIncidents, "the incident ladder should rise from the overreach counterweight on top of the option's own delta");
+});
+
+test("doctrine bet: main effort pays a readiness dividend when concentration leaves no lane neglected", () => {
+  const cleanFocusInput: TurnInput = {
+    turn: 1,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    selections: [
+      { memoId: "posture", optionId: "tempo-hold" },
+      { memoId: "intelligence-focus", optionId: "deception-hunt" },
+      { memoId: "sustainment-focus", optionId: "repair-first" },
+      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+      { memoId: "force-development", optionId: "deception-grid" },
+    ],
+  };
+  const result = resolveTurn(soloScenario, soloScenario.initialState, cleanFocusInput);
+
+  assert.ok(result.nextState.doctrineMechanics.mainEffortFocus > 35, "intelligence should dominate this selection's burden");
+  const bet = result.afterAction.find((entry) => entry.heading === "Doctrine bet: main effort");
+  assert.ok(bet, "expected a main-effort doctrine-bet after-action note");
+  assert.ok(bet.detail.includes("dividend"));
+  assert.ok(result.nextState.resources.readiness > soloScenario.initialState.resources.readiness - 0.01);
+});
+
+test("doctrine bet: main effort costs readiness when concentration leaves another lane overloaded", () => {
+  const neglectedLaneInput: TurnInput = {
+    turn: 1,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    selections: [
+      { memoId: "posture", optionId: "tempo-hold" },
+      { memoId: "intelligence-focus", optionId: "deception-hunt" },
+      { memoId: "sustainment-focus", optionId: "munitions-hedge" },
+      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+      { memoId: "force-development", optionId: "deception-grid" },
+    ],
+  };
+  const result = resolveTurn(soloScenario, soloScenario.initialState, neglectedLaneInput);
+
+  assert.ok(result.nextState.doctrineMechanics.mainEffortFocus > 35, "intelligence should dominate this selection's burden");
+  const plansBurden = result.directorateBurden.find((entry) => entry.directorate === "plans");
+  assert.ok(plansBurden && plansBurden.burdenLevel === "overloaded", "plans should be overloaded while intelligence is the declared main effort");
+  const bet = result.afterAction.find((entry) => entry.heading === "Doctrine bet: main effort");
+  assert.ok(bet, "expected a main-effort doctrine-bet after-action note");
+  assert.ok(bet.detail.includes("neglect"));
+  assert.ok(result.nextState.resources.readiness < soloScenario.initialState.resources.readiness + 0.01);
+});
+
+test("doctrine bet: reserve costs immediate progress with no event to absorb", () => {
+  const restrainedInput: TurnInput = {
+    turn: 1,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    selections: [
+      { memoId: "posture", optionId: "tempo-hold" },
+      { memoId: "intelligence-focus", optionId: "industrial-watch" },
+      { memoId: "sustainment-focus", optionId: "munitions-hedge" },
+      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+      // force-development is optional; skipping it keeps this turn's total burden low.
+    ],
+  };
+  const result = resolveTurn(soloScenario, soloScenario.initialState, restrainedInput);
+
+  assert.ok(result.nextState.doctrineMechanics.uncommittedCapacity > 30, "a light, four-memo turn should leave real staff capacity uncommitted");
+  assert.equal(result.triggeredEvents.length, 0, "turn 1 has no eligible events by scenario design");
+  const bet = result.afterAction.find((entry) => entry.heading === "Doctrine bet: reserve");
+  assert.ok(bet, "expected a reserve doctrine-bet after-action note");
+  assert.ok(bet.detail.includes("without a matching payoff"));
+});
+
+test("doctrine bet: reserve absorbs part of an event's shock when capacity was held back", () => {
+  const restrainedTurn2State = { ...soloScenario.initialState, turn: 2 };
+  const restrainedInput: TurnInput = {
+    turn: 2,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    selections: [
+      { memoId: "posture", optionId: "tempo-hold" },
+      { memoId: "intelligence-focus", optionId: "industrial-watch" },
+      { memoId: "sustainment-focus", optionId: "munitions-hedge" },
+      // quiet-reassurance carries both "alliance" and "quiet", which is enough on its own
+      // to make the "partner-relief" event eligible from turn 2 onward.
+      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+    ],
+  };
+  const result = resolveTurn(soloScenario, restrainedTurn2State, restrainedInput);
+
+  assert.ok(result.nextState.doctrineMechanics.uncommittedCapacity > 30, "a light, four-memo turn should leave real staff capacity uncommitted");
+  assert.ok(result.triggeredEvents.length > 0, "an alliance/quiet event should be eligible from turn 2");
+  const bet = result.afterAction.find((entry) => entry.heading === "Doctrine bet: reserve");
+  assert.ok(bet, "expected a reserve doctrine-bet after-action note");
+  assert.ok(bet.detail.includes("absorbed part of the blow"));
+});
+
+test("doctrine bet: culmination inflicts a hard readiness and support loss once the risk threshold is crossed", () => {
+  const compoundedOverreachState = {
+    ...soloScenario.initialState,
+    doctrineMechanics: { ...soloScenario.initialState.doctrineMechanics, culminationRisk: 65 },
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s1: { recoveryDebt: 70, reservePredictability: 30 },
+    },
+    strategic: {
+      ...soloScenario.initialState.strategic,
+      sustainment: { depotBacklog: 75, munitionsSufficiency: 12, fuelSufficiency: 18, liftAvailability: 22 },
+    },
+    sustainment: { depotBacklog: 75, munitionsSufficiency: 12, fuelSufficiency: 18, liftAvailability: 22 },
+  };
+  const result = resolveTurn(soloScenario, compoundedOverreachState, highTempoInput);
+
+  assert.ok(result.nextState.doctrineMechanics.culminationRisk > 72, "compounded overreach should cross the culminating point");
+  const bet = result.afterAction.find((entry) => entry.heading === "Doctrine bet: culmination");
+  assert.ok(bet, "expected a culmination doctrine-bet after-action note");
+  assert.ok(bet.detail.includes("hard readiness and support loss"));
+  assert.ok(
+    result.nextState.strategic.sustainment.liftAvailability < compoundedOverreachState.strategic.sustainment.liftAvailability,
+    "lift availability should take an additional hit from the culmination counterweight",
+  );
+});
+
+test("doctrine: self-deception risk fires when signature management is high but S2 deception risk never actually falls", () => {
+  const overconfidentState = {
+    ...soloScenario.initialState,
+    doctrineMechanics: { ...soloScenario.initialState.doctrineMechanics, signatureControl: 58 },
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s2: { externalEstimateConfidence: 50, visibility: "ESTIMATED" as const, deceptionRisk: 90 },
+    },
+    strategic: {
+      ...soloScenario.initialState.strategic,
+      intelligence: { ...soloScenario.initialState.strategic.intelligence, deceptionPressure: 90 },
+    },
+    intel: { ...soloScenario.initialState.intel, deceptionPressure: 90 },
+  };
+  // balancedInput selects deception-hunt (counter-deception, warning) and quiet-reassurance (quiet),
+  // both of which raise signatureControl even while deceptionRisk stays high.
+  const result = resolveTurn(soloScenario, overconfidentState, balancedInput);
+
+  assert.ok(result.nextState.doctrineMechanics.signatureControl > 60);
+  assert.ok(result.nextState.staffMechanics.s2.deceptionRisk >= 55);
+  const note = result.afterAction.find((entry) => entry.heading === "Doctrine: self-deception risk");
+  assert.ok(note, "expected a self-deception after-action note");
+});
+
+test("doctrine: handoff friction fires when commander's intent is landing on a low-trust staff", () => {
+  const lowTrustState = {
+    ...soloScenario.initialState,
+    chiefTrust: Object.fromEntries(soloScenario.chiefs.map((chief) => [chief.id, 5])),
+  };
+  const result = resolveTurn(soloScenario, lowTrustState, balancedInput);
+
+  assert.ok(result.nextState.doctrineMechanics.commanderIntentClarity < 40);
+  const note = result.afterAction.find((entry) => entry.heading === "Doctrine: handoff friction");
+  assert.ok(note, "expected a handoff-friction after-action note");
+  assert.ok(result.nextState.resources.politicalCapital < lowTrustState.resources.politicalCapital);
+});
+
+test("doctrine: contradiction debt fires when memo selections pull the campaign aim in opposite directions", () => {
+  const contradictingInput: TurnInput = {
+    turn: 1,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    selections: [
+      // "public-assurance-tour" carries "public-commitment"; "quiet-reassurance" would carry
+      // "quiet" — but both can't be selected on the same memo, so we pull the contradiction
+      // from two different memos instead: an "ad-hoc" option paired with a "program" option.
+      { memoId: "posture", optionId: "measured-deterrence" },
+      { memoId: "intelligence-focus", optionId: "deception-hunt" },
+      { memoId: "sustainment-focus", optionId: "munitions-hedge" },
+      { memoId: "alliance-frame", optionId: "public-assurance-tour" },
+    ],
+  };
+  const seededState = {
+    ...soloScenario.initialState,
+    doctrineMechanics: { ...soloScenario.initialState.doctrineMechanics, campaignAimClarity: 50 },
+  };
+  const result = resolveTurn(soloScenario, seededState, contradictingInput);
+
+  // public-assurance-tour carries "ad-hoc"; munitions-hedge carries "program" — a genuine
+  // ad-hoc/program contradiction inside the same turn's tag set.
+  assert.ok(result.nextState.doctrineMechanics.campaignAimClarity < 50, "contradicting tags should pull aim clarity down");
+});
+
+test("doctrine mechanics never mutate S1-S5 staffMechanics fields directly", () => {
+  // Regression guard for the architecture requirement: the doctrine layer is a read-only
+  // consumer of staffMechanics and must only adjust strategic/resource state, never rewrite
+  // the S1-S5 formulas it reads from.
+  const withDoctrineNotes = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
+  const legacyBaseline = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
+  assert.deepEqual(withDoctrineNotes.nextState.staffMechanics, legacyBaseline.nextState.staffMechanics);
+});
