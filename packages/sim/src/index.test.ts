@@ -1434,3 +1434,28 @@ test("doctrine: support ceiling fires when S4 support is thin even though the tu
   assert.ok(note, "expected a support-ceiling after-action note");
   assert.ok(note.detail.includes("ceiling"));
 });
+
+test("doctrine: signatureControl and exposureControl settle at bounded equilibria rather than saturating under sustained balanced play", () => {
+  // Regression test for the same bug class as campaignAimClarity, found by the same multi-turn
+  // simulation technique: balancedInput selects deception-hunt (counter-deception) and
+  // quiet-reassurance (quiet) every turn, and the old flat-additive-with-no-decay formula drove
+  // both variables to a permanent 100 within 6 turns, losing all descriptive resolution.
+  let state = soloScenario.initialState;
+  const signatureHistory = [state.doctrineMechanics.signatureControl];
+  const exposureHistory = [state.doctrineMechanics.exposureControl];
+  for (let turn = 1; turn <= 10; turn += 1) {
+    const result = resolveTurn(soloScenario, state, { ...balancedInput, turn });
+    signatureHistory.push(result.nextState.doctrineMechanics.signatureControl);
+    exposureHistory.push(result.nextState.doctrineMechanics.exposureControl);
+    state = result.nextState;
+    if (state.campaignStatus !== "active") break;
+  }
+  const finalSignature = signatureHistory[signatureHistory.length - 1];
+  const finalExposure = exposureHistory[exposureHistory.length - 1];
+  assert.ok(finalSignature < 100, `expected signatureControl to settle below saturation, got ${finalSignature} (history: ${signatureHistory.join(", ")})`);
+  assert.ok(finalExposure < 100, `expected exposureControl to settle below saturation, got ${finalExposure} (history: ${exposureHistory.join(", ")})`);
+  // Both should still have risen substantially (the underlying signal is genuinely positive
+  // here), just not to a saturated, uninformative ceiling.
+  assert.ok(finalSignature > 60, `expected signatureControl to still rise meaningfully, got ${finalSignature}`);
+  assert.ok(finalExposure > 60, `expected exposureControl to still rise meaningfully, got ${finalExposure}`);
+});

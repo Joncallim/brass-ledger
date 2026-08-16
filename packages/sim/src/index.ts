@@ -1509,8 +1509,14 @@ function resolveDoctrineMechanics({
   // ── Maneuver: optionDislocation ───────────────────────────────────────────────────────────
   // Gate: S2 confidence and S4 lift/support. Failure: hollow movement or revealed posture.
   const maneuverTagsPresent = tags.has("forward-posture") || tags.has("lift") || tags.has("exercise");
+  const maneuverRaw = (tags.has("forward-posture") ? 10 : 0) + (tags.has("lift") ? 6 : 0) + (tags.has("exercise") ? 4 : 0);
+  // Pulls toward a target derived from the raw tag signal (neutral 40, scaled by strength)
+  // rather than adding the raw signal every turn — a flat additive delta with no decay would
+  // ratchet this variable to the 100 ceiling and pin it there under any playstyle that sustains
+  // the same maneuver tags turn after turn (this was a real, verified bug in a sibling variable,
+  // campaignAimClarity, before it was fixed the same way).
   const maneuverSignal = maneuverTagsPresent
-    ? (tags.has("forward-posture") ? 10 : 0) + (tags.has("lift") ? 6 : 0) + (tags.has("exercise") ? 4 : 0)
+    ? pullToNeutral(prev.optionDislocation, clamp(40 + maneuverRaw * 3, 0, 100), Math.max(3, maneuverRaw))
     : pullToNeutral(prev.optionDislocation, 40, 4);
   const optionDislocation = clamp(prev.optionDislocation + maneuverSignal, 0, 100);
   const maneuverSupported = nextStaffMechanics.s2.externalEstimateConfidence > 42 && nextStaffMechanics.s4.liftBurn < 65;
@@ -1525,8 +1531,12 @@ function resolveDoctrineMechanics({
   // ── Deception: signatureControl ───────────────────────────────────────────────────────────
   // Gate: S2 counter-deception and S3 synchronization. Failure: exposure or self-deception.
   const signatureTagsPresent = tags.has("counter-deception") || tags.has("quiet") || tags.has("public-commitment");
+  const signatureRaw = (tags.has("counter-deception") ? 8 : 0) + (tags.has("quiet") ? 4 : 0) - (tags.has("public-commitment") ? 6 : 0);
+  // Same target/pull pattern as optionDislocation above, for the same reason: sustained
+  // counter-deception+quiet selections (this scenario's own moderate baseline) would otherwise
+  // ratchet this to a permanent 100 with no way back, verified by simulating balanced play.
   const signatureSignal = signatureTagsPresent
-    ? (tags.has("counter-deception") ? 8 : 0) + (tags.has("quiet") ? 4 : 0) - (tags.has("public-commitment") ? 6 : 0)
+    ? pullToNeutral(prev.signatureControl, clamp(45 + signatureRaw * 4, 0, 100), Math.max(3, Math.abs(signatureRaw)))
     : pullToNeutral(prev.signatureControl, 45, 3);
   const signatureControl = clamp(prev.signatureControl + signatureSignal, 0, 100);
   if (signatureControl > 60 && nextStaffMechanics.s2.deceptionRisk >= 55) {
@@ -1540,8 +1550,10 @@ function resolveDoctrineMechanics({
   // ── Security: exposureControl ─────────────────────────────────────────────────────────────
   // Gate: S2/S4 risk control. Failure: tempo drag.
   const exposureTagsPresent = tags.has("counter-deception") || tags.has("quiet") || tags.has("forward-posture") || tags.has("public-commitment");
+  const exposureRaw = (tags.has("counter-deception") ? 4 : 0) + (tags.has("quiet") ? 5 : 0) - (tags.has("forward-posture") ? 5 : 0) - (tags.has("public-commitment") ? 4 : 0);
+  // Same target/pull pattern as optionDislocation/signatureControl above, for the same reason.
   const exposureSignal = exposureTagsPresent
-    ? (tags.has("counter-deception") ? 4 : 0) + (tags.has("quiet") ? 5 : 0) - (tags.has("forward-posture") ? 5 : 0) - (tags.has("public-commitment") ? 4 : 0)
+    ? pullToNeutral(prev.exposureControl, clamp(50 + exposureRaw * 4, 0, 100), Math.max(3, Math.abs(exposureRaw)))
     : pullToNeutral(prev.exposureControl, 50, 3);
   const exposureControl = clamp(prev.exposureControl + exposureSignal, 0, 100);
   if (exposureControl < 35 && (nextStaffMechanics.s2.externalEstimateConfidence <= 42 || nextStaffMechanics.s4.stockpileDepth <= 42)) {
