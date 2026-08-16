@@ -1210,7 +1210,36 @@ test("doctrine bet: reserve costs immediate progress with no event to absorb", (
   assert.ok(bet.detail.includes("without a matching payoff"));
 });
 
-test("doctrine bet: reserve absorbs part of an event's shock when capacity was held back", () => {
+test("doctrine bet: reserve absorbs part of a genuine crisis event's penalty when capacity was held back", () => {
+  const restrainedTurn2State = { ...soloScenario.initialState, turn: 2 };
+  const restrainedInput: TurnInput = {
+    turn: 2,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    selections: [
+      { memoId: "posture", optionId: "tempo-hold" },
+      { memoId: "intelligence-focus", optionId: "industrial-watch" },
+      // lift-assurance carries "lift" and public-assurance-tour carries "public-commitment" —
+      // together they make the "shipping-jam" event eligible, which is a genuine crisis
+      // (liftAvailability -7, depotBacklog +4, incidentLadder +1), not a beneficial event.
+      { memoId: "sustainment-focus", optionId: "lift-assurance" },
+      { memoId: "alliance-frame", optionId: "public-assurance-tour" },
+    ],
+  };
+  const result = resolveTurn(soloScenario, restrainedTurn2State, restrainedInput);
+
+  assert.ok(result.nextState.doctrineMechanics.uncommittedCapacity > 25, "a light, four-memo turn should leave real staff capacity uncommitted");
+  assert.ok(result.triggeredEvents.length > 0, "shipping-jam should be eligible from turn 2 with lift + public-commitment tags");
+  assert.ok(
+    result.triggeredEvents.some((event) => (event.stateDelta.sustainment?.liftAvailability ?? 0) < 0 || (event.stateDelta.escalation?.incidentLadder ?? 0) > 0),
+    "the triggered event should be a genuine crisis, not a beneficial one",
+  );
+  const bet = result.afterAction.find((entry) => entry.heading === "Doctrine bet: reserve");
+  assert.ok(bet, "expected a reserve doctrine-bet after-action note");
+  assert.ok(bet.detail.includes("absorbed part of the blow"));
+});
+
+test("doctrine bet: reserve does not credit a purely beneficial event as a crisis absorbed", () => {
   const restrainedTurn2State = { ...soloScenario.initialState, turn: 2 };
   const restrainedInput: TurnInput = {
     turn: 2,
@@ -1220,18 +1249,23 @@ test("doctrine bet: reserve absorbs part of an event's shock when capacity was h
       { memoId: "posture", optionId: "tempo-hold" },
       { memoId: "intelligence-focus", optionId: "industrial-watch" },
       { memoId: "sustainment-focus", optionId: "munitions-hedge" },
-      // quiet-reassurance carries both "alliance" and "quiet", which is enough on its own
-      // to make the "partner-relief" event eligible from turn 2 onward.
+      // quiet-reassurance carries "alliance" and "quiet", making the purely beneficial
+      // "partner-relief" event eligible (reassurance/politicalAlignment/participation only —
+      // no negative stateDelta anywhere), which should NOT count as a crisis.
       { memoId: "alliance-frame", optionId: "quiet-reassurance" },
     ],
   };
   const result = resolveTurn(soloScenario, restrainedTurn2State, restrainedInput);
 
-  assert.ok(result.nextState.doctrineMechanics.uncommittedCapacity > 30, "a light, four-memo turn should leave real staff capacity uncommitted");
+  assert.ok(result.nextState.doctrineMechanics.uncommittedCapacity > 25, "a light, four-memo turn should leave real staff capacity uncommitted");
   assert.ok(result.triggeredEvents.length > 0, "an alliance/quiet event should be eligible from turn 2");
+  assert.ok(
+    result.triggeredEvents.every((event) => (event.stateDelta.sustainment?.liftAvailability ?? 0) >= 0 && (event.stateDelta.escalation?.incidentLadder ?? 0) <= 0),
+    "the triggered event should be purely beneficial, not a crisis",
+  );
   const bet = result.afterAction.find((entry) => entry.heading === "Doctrine bet: reserve");
   assert.ok(bet, "expected a reserve doctrine-bet after-action note");
-  assert.ok(bet.detail.includes("absorbed part of the blow"));
+  assert.ok(bet.detail.includes("without a matching payoff"), "a non-crisis event should not be credited as absorbing a shock");
 });
 
 test("doctrine bet: culmination inflicts a hard readiness and support loss once the risk threshold is crossed", () => {
@@ -1321,13 +1355,7 @@ test("doctrine: contradiction debt fires when memo selections pull the campaign 
   // public-assurance-tour carries "ad-hoc"; munitions-hedge carries "program" — a genuine
   // ad-hoc/program contradiction inside the same turn's tag set.
   assert.ok(result.nextState.doctrineMechanics.campaignAimClarity < 50, "contradicting tags should pull aim clarity down");
-});
-
-test("doctrine mechanics never mutate S1-S5 staffMechanics fields directly", () => {
-  // Regression guard for the architecture requirement: the doctrine layer is a read-only
-  // consumer of staffMechanics and must only adjust strategic/resource state, never rewrite
-  // the S1-S5 formulas it reads from.
-  const withDoctrineNotes = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
-  const legacyBaseline = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
-  assert.deepEqual(withDoctrineNotes.nextState.staffMechanics, legacyBaseline.nextState.staffMechanics);
+  const note = result.afterAction.find((entry) => entry.heading === "Doctrine: contradiction debt");
+  assert.ok(note, "expected a contradiction-debt after-action note");
+  assert.ok(note.detail.includes("opposite directions"));
 });

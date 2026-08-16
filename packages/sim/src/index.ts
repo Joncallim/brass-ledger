@@ -1304,6 +1304,23 @@ function pullToNeutral(current: number, neutral: number, magnitude: number) {
   return Math.sign(neutral - current) * Math.min(magnitude, Math.abs(neutral - current));
 }
 
+/**
+ * An event counts as a "crisis" for the reserve gate when its own stateDelta directionally
+ * hurts core readiness/legitimacy metrics. This is what the reserve doctrine test idea means
+ * by "reserve held during a crisis reduces event penalty" — the dampening below only fires
+ * against a genuine shock, not against any event regardless of whether it helped or hurt.
+ */
+function isCrisisEvent(event: EventDefinition): boolean {
+  const delta = event.stateDelta;
+  return (
+    (delta.domestic?.cabinetCover ?? 0) < 0 ||
+    (delta.domestic?.mediaHeat ?? 0) > 0 ||
+    (delta.escalation?.incidentLadder ?? 0) > 0 ||
+    (delta.forceGeneration?.reserveStrain ?? 0) > 0 ||
+    (delta.sustainment?.liftAvailability ?? 0) < 0
+  );
+}
+
 type DoctrineNote = { heading: string; detail: string };
 
 type DoctrineResolution = {
@@ -1313,18 +1330,31 @@ type DoctrineResolution = {
   notes: DoctrineNote[];
 };
 
-function resolveDoctrineMechanics(
-  previousState: CampaignState,
-  selectedOptions: MemoOption[],
-  directorateBurden: DirectorateBurden[],
-  nextStaffMechanics: StaffMechanicsState,
-  strategicIn: StrategicState,
-  resourcesIn: CampaignState["resources"],
-  triggeredEvents: EventDefinition[],
-  chiefs: ScenarioDefinition["chiefs"],
-  previousChiefTrust: Record<string, number>,
-  acceptedRiskOverrides: AcceptedRiskOverride[],
-): DoctrineResolution {
+type DoctrineResolutionInput = {
+  previousState: CampaignState;
+  selectedOptions: MemoOption[];
+  directorateBurden: DirectorateBurden[];
+  nextStaffMechanics: StaffMechanicsState;
+  strategic: StrategicState;
+  resources: CampaignState["resources"];
+  triggeredEvents: EventDefinition[];
+  chiefs: ScenarioDefinition["chiefs"];
+  previousChiefTrust: Record<string, number>;
+  acceptedRiskOverrides: AcceptedRiskOverride[];
+};
+
+function resolveDoctrineMechanics({
+  previousState,
+  selectedOptions,
+  directorateBurden,
+  nextStaffMechanics,
+  strategic: strategicIn,
+  resources: resourcesIn,
+  triggeredEvents,
+  chiefs,
+  previousChiefTrust,
+  acceptedRiskOverrides,
+}: DoctrineResolutionInput): DoctrineResolution {
   const tags = new Set(selectedOptions.flatMap((option) => option.tags));
   const prev = previousState.doctrineMechanics;
   const notes: DoctrineNote[] = [];
@@ -1375,6 +1405,10 @@ function resolveDoctrineMechanics(
       detail: `Tempo (${round(relativeTempo)}) outran what S1 debt, S2 confidence, and S4 supportable tempo could carry this month. The push culminated early — deployable strength and the incident ladder both paid for it.`,
     });
   } else if (tempoPaidOff) {
+    // No same-turn tax on this branch: the counterweight is the precondition itself. Reaching
+    // it required S1 debt, S2 confidence, and S4 supportable tempo to already be healthy —
+    // capacity that could otherwise have gone toward a different bet. See tempoOverreach above
+    // for the paired cost this same lever pays when the precondition isn't met.
     strategic = {
       ...strategic,
       forceGeneration: { ...strategic.forceGeneration, deployableUnits: clamp(strategic.forceGeneration.deployableUnits + 0.15, 2, 12) },
@@ -1411,6 +1445,9 @@ function resolveDoctrineMechanics(
       detail: `The month concentrated on ${directorateLabel(mainEffortDirectorate)} while ${neglectedLanes.map((entry) => directorateLabel(entry.directorate)).join(", ")} went unsupported and overloaded. That neglect cost readiness.`,
     });
   } else if (mainEffortConcentrated && mainEffortDirectorate) {
+    // Same principle as the tempo payoff above: the counterweight is that covering every other
+    // lane while still concentrating on one required enough capacity that overload didn't
+    // happen — not a same-turn tax on the dividend itself.
     resources = { ...resources, readiness: clamp(resources.readiness + 1, 0, 100) };
     notes.push({
       heading: "Doctrine bet: main effort",
@@ -1424,18 +1461,20 @@ function resolveDoctrineMechanics(
   const totalCapacity = directorateBurden.reduce((sum, entry) => sum + entry.capacity, 0);
   const totalCommitted = directorateBurden.reduce((sum, entry) => sum + entry.burdenPoints, 0);
   const uncommittedCapacity = totalCapacity > 0 ? clamp(round((100 * (totalCapacity - totalCommitted)) / totalCapacity), 0, 100) : 50;
-  // Threshold calibrated to this scenario's content: even the lightest legal 5-memo turn
-  // commits most of the staff's 20 points of capacity, so >30 already requires deliberately
-  // restrained selections (typically skipping the optional force-development memo) rather
-  // than being reachable by accident.
-  const reserveHeld = uncommittedCapacity > 30;
+  // Threshold calibrated to this scenario's content: even the lightest legal 4-memo turn that
+  // still reaches a genuine crisis event's trigger tags commits 14 of the staff's 20 points of
+  // capacity (verified against packages/content/src/scenario.ts), landing at exactly 30%
+  // uncommitted — so >25 stays reachable by a crisis-triggering turn while still requiring
+  // deliberately restrained selections rather than being reachable by accident.
+  const reserveHeld = uncommittedCapacity > 25;
+  const crisisEvents = triggeredEvents.filter(isCrisisEvent);
   if (reserveHeld) {
     resources = { ...resources, readiness: clamp(resources.readiness - 1.5, 0, 100) };
-    if (triggeredEvents.length > 0) {
-      resources = { ...resources, readiness: clamp(resources.readiness + 2 * triggeredEvents.length, 0, 100) };
+    if (crisisEvents.length > 0) {
+      resources = { ...resources, readiness: clamp(resources.readiness + 2 * crisisEvents.length, 0, 100) };
       notes.push({
         heading: "Doctrine bet: reserve",
-        detail: `You held ${round(uncommittedCapacity)} points of staff capacity uncommitted going into the month. When ${triggeredEvents.length === 1 ? "a shock" : "shocks"} hit, that reserve absorbed part of the blow instead of the line taking it cold — at the cost of somewhat slower immediate progress.`,
+        detail: `You held ${round(uncommittedCapacity)} points of staff capacity uncommitted going into the month. When ${crisisEvents.length === 1 ? "a crisis" : "crises"} hit, that reserve absorbed part of the blow instead of the line taking it cold — at the cost of somewhat slower immediate progress.`,
       });
     } else {
       notes.push({
@@ -1538,9 +1577,18 @@ function resolveDoctrineMechanics(
   }
 
   // ── Sustainment reach: operationalReach ───────────────────────────────────────────────────
-  // Gate: S4 stock, lift, repair, and fuel support. Failure: support ceiling.
+  // Gate: S4 stock, lift, repair, and fuel support — one term per factor, averaged. Repair
+  // capacity is depot throughput (inverse of depot backlog). Reads strategicIn (this turn's
+  // already-resolved sustainment state), not previousState, so the gate reflects current
+  // conditions rather than lagging by a turn. Failure: support ceiling.
   const operationalReach = clamp(
-    round((nextStaffMechanics.s4.stockpileDepth + (100 - nextStaffMechanics.s4.liftBurn) + previousState.strategic.sustainment.fuelSufficiency) / 3),
+    round(
+      (nextStaffMechanics.s4.stockpileDepth +
+        (100 - nextStaffMechanics.s4.liftBurn) +
+        (100 - strategicIn.sustainment.depotBacklog) +
+        strategicIn.sustainment.fuelSufficiency) /
+        4,
+    ),
     0,
     100,
   );
@@ -1562,7 +1610,10 @@ function resolveDoctrineMechanics(
 
   // ── Mission command: commanderIntentClarity ──────────────────────────────────────────────
   // Gate: trust and chief competence. Failure: handoff friction.
-  const trustValues = chiefs.map((chief) => previousChiefTrust[chief.id] ?? 50);
+  // Object.hasOwn (not `?? 50`) guards against a chief id like "__proto__" resolving through
+  // the prototype chain to a truthy Object.prototype instead of falling back to the default —
+  // which would otherwise inject NaN into commanderIntentClarity and corrupt persisted state.
+  const trustValues = chiefs.map((chief) => (Object.hasOwn(previousChiefTrust, chief.id) ? previousChiefTrust[chief.id] : 50));
   const meanTrust = trustValues.length > 0 ? trustValues.reduce((sum, value) => sum + value, 0) / trustValues.length : 50;
   const meanCompetence = chiefs.length > 0 ? (chiefs.reduce((sum, chief) => sum + chief.competence, 0) / chiefs.length) * 100 : 70;
   const commanderIntentClarity = clamp(round(meanTrust * 0.6 + meanCompetence * 0.4), 0, 100);
@@ -1913,18 +1964,18 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   const nextConstraints = updateConstraints(previousState, selectedOptions, triggeredEvents);
   const nextTrust = updateChiefTrust(previousState, chiefPositions);
   const nextStaffMechanics = updateStaffMechanics(previousState, selectedOptions, directorateBurden, triggeredEvents, nextConstraints);
-  const doctrineResolution = resolveDoctrineMechanics(
+  const doctrineResolution = resolveDoctrineMechanics({
     previousState,
     selectedOptions,
     directorateBurden,
     nextStaffMechanics,
-    nextStrategic,
-    nextResources,
+    strategic: nextStrategic,
+    resources: nextResources,
     triggeredEvents,
-    scenario.chiefs,
-    previousState.chiefTrust,
-    input.acceptedRiskOverrides ?? [],
-  );
+    chiefs: scenario.chiefs,
+    previousChiefTrust: previousState.chiefTrust,
+    acceptedRiskOverrides: input.acceptedRiskOverrides ?? [],
+  });
   nextStrategic = doctrineResolution.strategic;
   nextStrategic.forceGeneration.deployableUnits = round(nextStrategic.forceGeneration.deployableUnits);
   nextResources = doctrineResolution.resources;

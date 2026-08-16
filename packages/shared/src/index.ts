@@ -154,24 +154,24 @@ const defaultStaffMechanicsState: StaffMechanicsState = {
 // neutral near their low end (little accumulated risk at campaign start); quality/capacity
 // fields are neutral near the midpoint.
 export const doctrineMechanicsStateSchema = z.object({
-  campaignAimClarity: indexMetricSchema.default(55),
-  relativeTempo: indexMetricSchema.default(50),
-  mainEffortFocus: indexMetricSchema.default(50),
-  secondaryRiskAccepted: indexMetricSchema.default(50),
-  optionDislocation: indexMetricSchema.default(40),
-  signatureControl: indexMetricSchema.default(45),
-  exposureControl: indexMetricSchema.default(50),
-  orderClarity: indexMetricSchema.default(60),
-  culminationRisk: indexMetricSchema.default(18),
-  uncommittedCapacity: indexMetricSchema.default(45),
-  operationalReach: indexMetricSchema.default(48),
-  staffSynchronization: indexMetricSchema.default(55),
-  commanderIntentClarity: indexMetricSchema.default(55),
-  systemPressure: indexMetricSchema.default(45),
+  campaignAimClarity: indexMetricSchema,
+  relativeTempo: indexMetricSchema,
+  mainEffortFocus: indexMetricSchema,
+  secondaryRiskAccepted: indexMetricSchema,
+  optionDislocation: indexMetricSchema,
+  signatureControl: indexMetricSchema,
+  exposureControl: indexMetricSchema,
+  orderClarity: indexMetricSchema,
+  culminationRisk: indexMetricSchema,
+  uncommittedCapacity: indexMetricSchema,
+  operationalReach: indexMetricSchema,
+  staffSynchronization: indexMetricSchema,
+  commanderIntentClarity: indexMetricSchema,
+  systemPressure: indexMetricSchema,
 });
 export type DoctrineMechanicsState = z.infer<typeof doctrineMechanicsStateSchema>;
 
-export const defaultDoctrineMechanicsState: DoctrineMechanicsState = {
+const defaultDoctrineMechanicsState: DoctrineMechanicsState = {
   campaignAimClarity: 55,
   relativeTempo: 50,
   mainEffortFocus: 50,
