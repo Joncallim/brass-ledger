@@ -147,6 +147,47 @@ const defaultStaffMechanicsState: StaffMechanicsState = {
   s5: { strategicCoherence: 52, doctrineAlignment: 50 },
 };
 
+// Doctrine variables from the CELERY pattern-to-mechanic map (see
+// POTATO/doctrine-mechanics-roadmap.md). Neutral-initialized per faction; a scenario's
+// DoctrineProfile (Phase 2, issue #56) will later bias these away from neutral.
+// Every field is 0-100. Risk/pressure-type fields (culminationRisk, systemPressure) are
+// neutral near their low end (little accumulated risk at campaign start); quality/capacity
+// fields are neutral near the midpoint.
+export const doctrineMechanicsStateSchema = z.object({
+  campaignAimClarity: indexMetricSchema,
+  relativeTempo: indexMetricSchema,
+  mainEffortFocus: indexMetricSchema,
+  secondaryRiskAccepted: indexMetricSchema,
+  optionDislocation: indexMetricSchema,
+  signatureControl: indexMetricSchema,
+  exposureControl: indexMetricSchema,
+  orderClarity: indexMetricSchema,
+  culminationRisk: indexMetricSchema,
+  uncommittedCapacity: indexMetricSchema,
+  operationalReach: indexMetricSchema,
+  staffSynchronization: indexMetricSchema,
+  commanderIntentClarity: indexMetricSchema,
+  systemPressure: indexMetricSchema,
+});
+export type DoctrineMechanicsState = z.infer<typeof doctrineMechanicsStateSchema>;
+
+const defaultDoctrineMechanicsState: DoctrineMechanicsState = {
+  campaignAimClarity: 55,
+  relativeTempo: 50,
+  mainEffortFocus: 50,
+  secondaryRiskAccepted: 50,
+  optionDislocation: 40,
+  signatureControl: 45,
+  exposureControl: 50,
+  orderClarity: 60,
+  culminationRisk: 18,
+  uncommittedCapacity: 45,
+  operationalReach: 48,
+  staffSynchronization: 55,
+  commanderIntentClarity: 55,
+  systemPressure: 45,
+};
+
 export const resourcesSchema = z.object({
   budgetAuthority: indexMetricSchema,
   readiness: indexMetricSchema,
@@ -646,6 +687,7 @@ export const campaignStateSchema = z.object({
   campaignOutcome: z.string().nullable().default(null),
   strategic: strategicStateSchema,
   staffMechanics: staffMechanicsStateSchema.default(defaultStaffMechanicsState),
+  doctrineMechanics: doctrineMechanicsStateSchema.default(defaultDoctrineMechanicsState),
   resources: resourcesSchema,
   forceGeneration: forceGenerationStateSchema,
   intel: intelStateSchema,
