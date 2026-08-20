@@ -1350,8 +1350,10 @@ test("relativeTempo pulls toward the biased faction anchor when no tempo tags ar
 
 test("system-pressure gate is not an always-on tax under balanced play", () => {
   // Regression for the +11 offset that pushed the >65 gate permanently on: with capped
-  // counterweights the gate must discriminate (fires on genuinely thin turns, not every
-  // month). Balanced play builds confidence via deception-hunt, which should quiet it.
+  // counterweights the gate must discriminate — fires on genuinely thin turns (at
+  // least once: the opening information picture starts thin) but not every month
+  // (deception-hunt builds confidence and quiets it). Both bounds are asserted so a
+  // future regression disabling the gate entirely also fails.
   let state = soloScenario.initialState;
   let pressureFires = 0;
   for (let turn = 1; turn <= 10; turn += 1) {
@@ -1362,6 +1364,10 @@ test("system-pressure gate is not an always-on tax under balanced play", () => {
     state = result.nextState;
     if (state.campaignStatus !== "active") break;
   }
+  assert.ok(
+    pressureFires >= 1,
+    `system pressure should fire at least once from the thin opening picture, fired ${pressureFires}/10`,
+  );
   assert.ok(
     pressureFires < 5,
     `system pressure should fire on a minority of balanced turns, fired ${pressureFires}/10`,
