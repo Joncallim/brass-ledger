@@ -1,13 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { soloScenario } from "@brass-ledger/content";
+import { doctrineGenes, resolveDoctrineGenes, soloScenario } from "@brass-ledger/content";
 import {
+  applyDoctrineGenes,
   buildChiefPositions,
   buildStaffFunctionReadouts,
   campaignStateSchema,
   continueChiefConversation,
+  defaultDoctrineMechanicsState,
+  doctrineGeneSchema,
+  doctrineRiskKeys,
   startChiefConversation,
   updateCommitmentsFromChiefConversation,
+  type DoctrineGene,
   type TurnInput,
 } from "@brass-ledger/shared";
 import { previewTurn, resolveTurn, validateReplaySession } from "./index";
@@ -1057,29 +1062,35 @@ test("Events with constraint shifts emit industry causalRefs in explainability",
 
 // ── Doctrine 1: DoctrineMechanicsState (issue #55) ─────────────────────────────────────────
 
-test("doctrineMechanics is neutral-initialized on a fresh scenario", () => {
-  assert.deepEqual(soloScenario.initialState.doctrineMechanics, {
-    campaignAimClarity: 55,
-    relativeTempo: 50,
-    mainEffortFocus: 50,
-    secondaryRiskAccepted: 50,
-    optionDislocation: 40,
-    signatureControl: 45,
-    exposureControl: 50,
-    orderClarity: 60,
-    culminationRisk: 18,
-    uncommittedCapacity: 45,
-    operationalReach: 48,
-    staffSynchronization: 55,
-    commanderIntentClarity: 55,
-    systemPressure: 45,
-  });
+test("doctrineMechanics opening position equals the profile-applied baseline (issue #56)", () => {
+  // Doctrine 2 biases the neutral baseline at scenario-definition time; the opening
+  // position is exactly what applyDoctrineGenes produces from the declared profile.
+  const expected = applyDoctrineGenes(
+    defaultDoctrineMechanicsState,
+    resolveDoctrineGenes(soloScenario.doctrineProfile),
+  );
+  assert.deepEqual(soloScenario.initialState.doctrineMechanics, expected);
+  assert.notDeepEqual(
+    soloScenario.initialState.doctrineMechanics,
+    defaultDoctrineMechanicsState,
+    "the scenario's doctrine profile must measurably shift the neutral baseline",
+  );
+  // Spot-check the coalition-composite mix: sustainment-first and coalition caveats
+  // lower tempo culture, coalition-native raises synchronization, adaptive cells
+  // consume spare capacity and diffuse the main effort.
+  assert.equal(soloScenario.initialState.doctrineMechanics.relativeTempo, 42);
+  assert.equal(soloScenario.initialState.doctrineMechanics.staffSynchronization, 67);
+  assert.equal(soloScenario.initialState.doctrineMechanics.uncommittedCapacity, 42);
 });
 
-test("doctrineMechanics defaults to the same neutral state when omitted from a persisted save", () => {
+test("doctrineMechanics omitted from a persisted save defaults to neutral, not the scenario baseline", () => {
+  // The schema default is the *neutral* state; a save that omits doctrineMechanics
+  // (e.g. written before Doctrine 1) parses as neutral. The canonical-import check
+  // rejects such a save against the biased opening position at the server boundary.
   const { doctrineMechanics, ...withoutDoctrine } = soloScenario.initialState;
+  assert.notDeepEqual(doctrineMechanics, defaultDoctrineMechanicsState);
   const parsed = campaignStateSchema.parse(withoutDoctrine);
-  assert.deepEqual(parsed.doctrineMechanics, doctrineMechanics);
+  assert.deepEqual(parsed.doctrineMechanics, defaultDoctrineMechanicsState);
 });
 
 test("doctrineMechanics is deterministic and replay-safe across identical resolveTurn calls", () => {
@@ -1089,9 +1100,340 @@ test("doctrineMechanics is deterministic and replay-safe across identical resolv
   assert.equal(left.replayHash, right.replayHash);
 });
 
+// ── Doctrine 2: scenario-level doctrine genes / DoctrineProfile (issue #56) ────────────────
+
+test("applyDoctrineGenes sums modifiers across genes in order and is deterministic", () => {
+  const genes: DoctrineGene[] = [
+    {
+      id: "g1",
+      label: "G1",
+      evidenceRefs: ["e1"],
+      strengths: ["s"],
+      vulnerabilities: ["v"],
+      variableModifiers: { relativeTempo: 10, systemPressure: 5 },
+      staffAdviceStyle: {},
+    },
+    {
+      id: "g2",
+      label: "G2",
+      evidenceRefs: ["e2"],
+      strengths: ["s"],
+      vulnerabilities: ["v"],
+      variableModifiers: { relativeTempo: 7, campaignAimClarity: -4 },
+      staffAdviceStyle: {},
+    },
+  ];
+  const first = applyDoctrineGenes(defaultDoctrineMechanicsState, genes);
+  const second = applyDoctrineGenes(defaultDoctrineMechanicsState, genes);
+  assert.deepEqual(first, second, "gene application must be deterministic");
+  assert.equal(first.relativeTempo, 67, "modifiers should sum (50 + 10 + 7)");
+  assert.equal(first.systemPressure, 50, "single-gene modifier applies (45 + 5)");
+  assert.equal(first.campaignAimClarity, 51, "negative modifiers apply (55 - 4)");
+});
+
+test("applyDoctrineGenes clamps the summed result to the 0-100 index range", () => {
+  const high: DoctrineGene = {
+    id: "high",
+    label: "High",
+    evidenceRefs: ["e"],
+    strengths: ["s"],
+    vulnerabilities: ["v"],
+    variableModifiers: { relativeTempo: 50, staffSynchronization: 50 },
+    staffAdviceStyle: {},
+  };
+  const low: DoctrineGene = {
+    id: "low",
+    label: "Low",
+    evidenceRefs: ["e"],
+    strengths: ["s"],
+    vulnerabilities: ["v"],
+    variableModifiers: { relativeTempo: -50, culminationRisk: -50 },
+    staffAdviceStyle: {},
+  };
+  // 50 + 50 = 100 (clamped at the top); 55 + 50 = 105 → 100.
+  assert.equal(applyDoctrineGenes(defaultDoctrineMechanicsState, [high]).relativeTempo, 100);
+  assert.equal(
+    applyDoctrineGenes(defaultDoctrineMechanicsState, [high]).staffSynchronization,
+    100,
+  );
+  // 50 - 50 = 0 (clamped at the bottom); 18 - 50 = -32 → 0.
+  assert.equal(applyDoctrineGenes(defaultDoctrineMechanicsState, [low]).relativeTempo, 0);
+  assert.equal(applyDoctrineGenes(defaultDoctrineMechanicsState, [low]).culminationRisk, 0);
+});
+
+test("applyDoctrineGenes with no genes returns the neutral baseline unchanged", () => {
+  assert.deepEqual(applyDoctrineGenes(defaultDoctrineMechanicsState, []), defaultDoctrineMechanicsState);
+});
+
+test("applyDoctrineGenes accumulates before clamping, so results are order-independent", () => {
+  const push: DoctrineGene = {
+    id: "push",
+    label: "Push",
+    evidenceRefs: ["e"],
+    strengths: ["s"],
+    vulnerabilities: ["v"],
+    variableModifiers: { relativeTempo: 50 },
+    staffAdviceStyle: {},
+  };
+  const pull: DoctrineGene = {
+    id: "pull",
+    label: "Pull",
+    evidenceRefs: ["e"],
+    strengths: ["s"],
+    vulnerabilities: ["v"],
+    variableModifiers: { relativeTempo: -50 },
+    staffAdviceStyle: {},
+  };
+  const base = { ...defaultDoctrineMechanicsState, relativeTempo: 80 };
+  const upDown = applyDoctrineGenes(base, [push, pull]);
+  const downUp = applyDoctrineGenes(base, [pull, push]);
+  assert.equal(upDown.relativeTempo, 80, "+50 then -50 on 80 must return 80, not 50");
+  assert.deepEqual(upDown, downUp, "application must not depend on gene order");
+});
+
+test("doctrine genes resolve from the content registry and carry evidence, benefits, and counterweights", () => {
+  // The profile's geneIds must all resolve, and EVERY registry gene (not just the
+  // profile's referenced ones) must satisfy the CELERY guardrails: >=1 evidenceRef,
+  // at least one strength and vulnerability, a measurable shift, and counterweight
+  // mass at least equal to benefit mass — so a Doctrine 3/4 gene added to the
+  // registry before it is wired into a scenario still fails loudly.
+  const profile = soloScenario.doctrineProfile;
+  const resolved = resolveDoctrineGenes(profile);
+  assert.equal(resolved.length, profile.geneIds.length);
+
+  for (const gene of doctrineGenes) {
+    assert.ok(gene.evidenceRefs.length >= 1, `gene ${gene.id} needs evidenceRefs`);
+    assert.ok(gene.strengths.length >= 1, `gene ${gene.id} needs at least one strength`);
+    assert.ok(gene.vulnerabilities.length >= 1, `gene ${gene.id} needs at least one vulnerability`);
+
+    const entries = Object.entries(gene.variableModifiers) as Array<[string, number | undefined]>;
+    const riskKeys = doctrineRiskKeys as readonly string[];
+    // Mirrors lint:content: risk-key REDUCTIONS are benefits, not counterweights.
+    const benefitMass =
+      entries
+        .filter(([key, delta]) => (delta ?? 0) > 0 && !riskKeys.includes(key))
+        .reduce((sum, [, delta]) => sum + (delta ?? 0), 0) +
+      entries
+        .filter(([key, delta]) => (delta ?? 0) < 0 && riskKeys.includes(key))
+        .reduce((sum, [, delta]) => sum + Math.abs(delta ?? 0), 0);
+    const counterweightMass =
+      entries
+        .filter(([key, delta]) => (delta ?? 0) < 0 && !riskKeys.includes(key))
+        .reduce((sum, [, delta]) => sum + Math.abs(delta ?? 0), 0) +
+      entries
+        .filter(([key, delta]) => (delta ?? 0) > 0 && riskKeys.includes(key))
+        .reduce((sum, [, delta]) => sum + (delta ?? 0), 0);
+    assert.ok(
+      entries.some(([, delta]) => delta !== undefined && delta !== 0),
+      `gene ${gene.id} must measurably shift at least one doctrine variable`,
+    );
+    assert.ok(
+      counterweightMass >= benefitMass,
+      `gene ${gene.id} must carry counterweight mass (${counterweightMass}) >= benefit mass (${benefitMass})`,
+    );
+  }
+});
+
+test("resolveDoctrineGenes rejects an unknown gene id loudly", () => {
+  assert.throws(
+    () =>
+      resolveDoctrineGenes({
+        id: "typo-profile",
+        label: "Typo profile",
+        evidenceRefs: ["e"],
+        geneIds: ["coalition-native-staff", "no-such-gene"],
+        optionalStaffModules: [],
+      }),
+    /unknown gene id/,
+  );
+});
+
+test("doctrineGeneSchema rejects unknown variable modifier keys loudly (no silent stripping)", () => {
+  // Regression guard for the supportableTempo bug class: an unsupported key must fail
+  // at gene-definition time, not be silently dropped by Zod.
+  assert.throws(
+    () =>
+      doctrineGeneSchema.parse({
+        id: "bad-key",
+        label: "Bad key",
+        evidenceRefs: ["e"],
+        strengths: ["s"],
+        vulnerabilities: ["v"],
+        variableModifiers: { supportableTempo: -5 },
+        staffAdviceStyle: {},
+      }),
+    /Unrecognized key/,
+  );
+});
+
+test("the biased doctrine baseline survives serialization (replay-safe opening position)", () => {
+  // The opening position is part of the serialized state: parse/serialize round-trip
+  // must preserve the profile-applied values, and the profile must not re-apply.
+  const parsed = campaignStateSchema.parse(JSON.parse(JSON.stringify(soloScenario.initialState)));
+  assert.deepEqual(parsed.doctrineMechanics, soloScenario.initialState.doctrineMechanics);
+});
+
+test("the doctrine profile's bias is durable: gene-touched variables stay biased after a resolved turn", () => {
+  // The sim derives its pull targets and recompute offsets from the scenario's opening
+  // doctrine baseline (the faction anchor), so the profile is not erased within a turn
+  // or two by hard-coded neutral anchors. Balanced play must keep every gene-touched
+  // variable on the biased side of neutral after a full resolution — and stay there
+  // into a second resolved turn.
+  const first = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const second = resolveTurn(soloScenario, first.nextState, { ...balancedInput, turn: 2 });
+  const neutral = defaultDoctrineMechanicsState;
+
+  for (const next of [first.nextState.doctrineMechanics, second.nextState.doctrineMechanics]) {
+    // Recomputed variables carry the faction offset (anchor - neutral).
+    assert.ok(
+      next.staffSynchronization > neutral.staffSynchronization + 5,
+      `staffSynchronization ${next.staffSynchronization} should stay well above neutral ${neutral.staffSynchronization}`,
+    );
+    assert.ok(
+      next.systemPressure > neutral.systemPressure,
+      `systemPressure ${next.systemPressure} should stay above neutral ${neutral.systemPressure}`,
+    );
+    assert.ok(
+      next.uncommittedCapacity < neutral.uncommittedCapacity,
+      `uncommittedCapacity ${next.uncommittedCapacity} should stay below neutral ${neutral.uncommittedCapacity}`,
+    );
+    assert.ok(
+      next.operationalReach > neutral.operationalReach,
+      `operationalReach ${next.operationalReach} should stay above neutral ${neutral.operationalReach}`,
+    );
+    assert.ok(
+      next.commanderIntentClarity > neutral.commanderIntentClarity,
+      `commanderIntentClarity ${next.commanderIntentClarity} should stay above neutral ${neutral.commanderIntentClarity}`,
+    );
+    // Pulled variables settle toward the biased anchor rather than a hard-coded neutral.
+    assert.ok(
+      next.campaignAimClarity > neutral.campaignAimClarity,
+      `campaignAimClarity ${next.campaignAimClarity} should stay above neutral ${neutral.campaignAimClarity}`,
+    );
+    assert.ok(
+      next.relativeTempo < neutral.relativeTempo,
+      `relativeTempo ${next.relativeTempo} should stay below neutral ${neutral.relativeTempo}`,
+    );
+  }
+});
+
+test("relativeTempo pulls toward the biased faction anchor when no tempo tags are selected", () => {
+  // Isolates the anchor's pull from the quiet/slow-burn tag signals: with no tempo
+  // tags, the pull target is the faction anchor (42), not the hard-coded neutral 50.
+  const noTempoInput: TurnInput = {
+    turn: 1,
+    selectedActionIds: [],
+    selections: [
+      { memoId: "posture", optionId: "measured-deterrence" },
+      { memoId: "intelligence-focus", optionId: "warning-net" },
+      { memoId: "sustainment-focus", optionId: "munitions-hedge" },
+      { memoId: "alliance-frame", optionId: "public-assurance-tour" },
+      { memoId: "force-development", optionId: "training-reset" },
+    ],
+  };
+  // Seed the state at the neutral 50: the pull must move it toward the anchor 42.
+  const seeded = {
+    ...soloScenario.initialState,
+    doctrineMechanics: { ...soloScenario.initialState.doctrineMechanics, relativeTempo: 50 },
+  };
+  const result = resolveTurn(soloScenario, seeded, noTempoInput);
+  assert.equal(
+    result.nextState.doctrineMechanics.relativeTempo,
+    46,
+    "pull toward the 42 anchor should move 50 by -4",
+  );
+});
+
+test("system-pressure gate is not an always-on tax under balanced play", () => {
+  // Regression for the +11 offset that pushed the >65 gate permanently on: with capped
+  // counterweights the gate must discriminate — fires on genuinely thin turns (at
+  // least once: the opening information picture starts thin) but not every month
+  // (deception-hunt builds confidence and quiets it). Both bounds are asserted so a
+  // future regression disabling the gate entirely also fails.
+  let state = soloScenario.initialState;
+  let pressureFires = 0;
+  for (let turn = 1; turn <= 10; turn += 1) {
+    const result = resolveTurn(soloScenario, state, { ...balancedInput, turn });
+    if (result.afterAction.some((entry) => entry.heading === "Doctrine: system pressure")) {
+      pressureFires += 1;
+    }
+    state = result.nextState;
+    if (state.campaignStatus !== "active") break;
+  }
+  assert.ok(
+    pressureFires >= 1,
+    `system pressure should fire at least once from the thin opening picture, fired ${pressureFires}/10`,
+  );
+  assert.ok(
+    pressureFires < 5,
+    `system pressure should fire on a minority of balanced turns, fired ${pressureFires}/10`,
+  );
+});
+
+test("applyDoctrineGenes clamps the summed total across multiple genes", () => {
+  const up1: DoctrineGene = { id: "u1", label: "U1", evidenceRefs: ["e"], strengths: ["s"], vulnerabilities: ["v"], variableModifiers: { campaignAimClarity: 30 }, staffAdviceStyle: {} };
+  const up2: DoctrineGene = { id: "u2", label: "U2", evidenceRefs: ["e"], strengths: ["s"], vulnerabilities: ["v"], variableModifiers: { campaignAimClarity: 30 }, staffAdviceStyle: {} };
+  const down1: DoctrineGene = { id: "d1", label: "D1", evidenceRefs: ["e"], strengths: ["s"], vulnerabilities: ["v"], variableModifiers: { culminationRisk: -30 }, staffAdviceStyle: {} };
+  const down2: DoctrineGene = { id: "d2", label: "D2", evidenceRefs: ["e"], strengths: ["s"], vulnerabilities: ["v"], variableModifiers: { culminationRisk: -30 }, staffAdviceStyle: {} };
+  // 55 + 30 + 30 = 115 -> clamped to 100; 18 - 30 - 30 = -42 -> clamped to 0.
+  assert.equal(applyDoctrineGenes(defaultDoctrineMechanicsState, [up1, up2]).campaignAimClarity, 100);
+  assert.equal(applyDoctrineGenes(defaultDoctrineMechanicsState, [down1, down2]).culminationRisk, 0);
+});
+
+test("applyDoctrineGenes with net-zero genes returns the neutral baseline (degenerate anchor)", () => {
+  const up: DoctrineGene = { id: "up", label: "Up", evidenceRefs: ["e"], strengths: ["s"], vulnerabilities: ["v"], variableModifiers: { relativeTempo: 10, staffSynchronization: 7 }, staffAdviceStyle: {} };
+  const down: DoctrineGene = { id: "down", label: "Down", evidenceRefs: ["e"], strengths: ["s"], vulnerabilities: ["v"], variableModifiers: { relativeTempo: -10, staffSynchronization: -7 }, staffAdviceStyle: {} };
+  // A profile whose genes net to zero yields the neutral baseline: offsets all 0, so
+  // the sim's faction-anchor mechanic degenerates to the pre-Doctrine-2 behavior.
+  assert.deepEqual(applyDoctrineGenes(defaultDoctrineMechanicsState, [up, down]), defaultDoctrineMechanicsState);
+});
+
+test("tempo doctrine bet fires on the second consecutive spike from the faction's real opening baseline", () => {
+  // The coalition+sustainment tempo counterweights (-8) put the opening relativeTempo
+  // at 42, so a single spike (42+22=64) stays under the >65 bet threshold; the bet is
+  // a two-spike affair for this faction — documented sustainment-first character.
+  const supportedState = {
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s1: { recoveryDebt: 20, reservePredictability: 80 },
+      s2: { externalEstimateConfidence: 75, visibility: "KNOWN" as const, deceptionRisk: 20 },
+    },
+    strategic: {
+      ...soloScenario.initialState.strategic,
+      sustainment: { depotBacklog: 20, munitionsSufficiency: 85, fuelSufficiency: 85, liftAvailability: 85 },
+    },
+    sustainment: { depotBacklog: 20, munitionsSufficiency: 85, fuelSufficiency: 85, liftAvailability: 85 },
+  };
+  const first = resolveTurn(soloScenario, supportedState, { ...highTempoInput, turn: 1 });
+  assert.ok(
+    first.nextState.doctrineMechanics.relativeTempo <= 65,
+    "a single spike from the real baseline must not fire the bet",
+  );
+  // Chain turn 2 WITHOUT re-seeding: the first spike already burned staff support
+  // (surge costs), so the second spike clears the threshold but lands in the overreach
+  // branch — the intended consequence, and exactly the claim this test isolates:
+  // the bet is REACHABLE from the real opening, and it takes two spikes.
+  const second = resolveTurn(
+    soloScenario,
+    { ...first.nextState, turn: 2 },
+    { ...highTempoInput, turn: 2 },
+  );
+  assert.ok(
+    second.nextState.doctrineMechanics.relativeTempo > 65,
+    "a second consecutive spike must clear the bet threshold",
+  );
+  const bet = second.afterAction.find((entry) => entry.heading === "Doctrine bet: tempo");
+  assert.ok(bet, "expected the tempo bet on the second spike");
+});
+
 test("doctrine bet: tempo pays off when S1 debt, S2 confidence, and S4 supportable tempo all hold", () => {
   const wellSupportedState = {
     ...soloScenario.initialState,
+    // The faction baseline settles relativeTempo low (42); seed an explicit starting
+    // value so the tempo-spike (+22) clears the >65 bet threshold — this test verifies
+    // the bet mechanic, not the faction's tempo posture.
+    doctrineMechanics: { ...soloScenario.initialState.doctrineMechanics, relativeTempo: 55 },
     staffMechanics: {
       ...soloScenario.initialState.staffMechanics,
       s1: { recoveryDebt: 20, reservePredictability: 80 },
@@ -1120,6 +1462,9 @@ test("doctrine bet: tempo pays off when S1 debt, S2 confidence, and S4 supportab
 test("doctrine bet: tempo culminates early when S1 debt is high and S4 support is thin", () => {
   const overreachState = {
     ...soloScenario.initialState,
+    // Same explicit seeding as the payoff test above: 55 + tempo-spike 22 clears >65
+    // so the overreach branch is what's exercised, not the faction's low tempo posture.
+    doctrineMechanics: { ...soloScenario.initialState.doctrineMechanics, relativeTempo: 55 },
     staffMechanics: {
       ...soloScenario.initialState.staffMechanics,
       s1: { recoveryDebt: 70, reservePredictability: 30 },
@@ -1319,9 +1664,11 @@ test("doctrine: self-deception risk fires when signature management is high but 
 });
 
 test("doctrine: handoff friction fires when commander's intent is landing on a low-trust staff", () => {
+  // Trust 1 (not 5): the faction's commanderIntentClarity offset (+4, coalition-native)
+  // shifts the friction threshold, so the fixture must dip lower to land under 40.
   const lowTrustState = {
     ...soloScenario.initialState,
-    chiefTrust: Object.fromEntries(soloScenario.chiefs.map((chief) => [chief.id, 5])),
+    chiefTrust: Object.fromEntries(soloScenario.chiefs.map((chief) => [chief.id, 1])),
   };
   const result = resolveTurn(soloScenario, lowTrustState, balancedInput);
 

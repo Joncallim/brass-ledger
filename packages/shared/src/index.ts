@@ -149,7 +149,8 @@ const defaultStaffMechanicsState: StaffMechanicsState = {
 
 // Doctrine variables from the CELERY pattern-to-mechanic map (see
 // POTATO/doctrine-mechanics-roadmap.md). Neutral-initialized per faction; a scenario's
-// DoctrineProfile (Phase 2, issue #56) will later bias these away from neutral.
+// DoctrineProfile (Phase 2, issue #56) biases these away from neutral via doctrine genes
+// applied once at scenario-definition time (see applyDoctrineGenes below).
 // Every field is 0-100. Risk/pressure-type fields (culminationRisk, systemPressure) are
 // neutral near their low end (little accumulated risk at campaign start); quality/capacity
 // fields are neutral near the midpoint.
@@ -171,7 +172,7 @@ export const doctrineMechanicsStateSchema = z.object({
 });
 export type DoctrineMechanicsState = z.infer<typeof doctrineMechanicsStateSchema>;
 
-const defaultDoctrineMechanicsState: DoctrineMechanicsState = {
+export const defaultDoctrineMechanicsState: DoctrineMechanicsState = {
   campaignAimClarity: 55,
   relativeTempo: 50,
   mainEffortFocus: 50,
@@ -187,6 +188,120 @@ const defaultDoctrineMechanicsState: DoctrineMechanicsState = {
   commanderIntentClarity: 55,
   systemPressure: 45,
 };
+
+// Optional staff modules a faction may field on top of the mandatory S1-S5 contract
+// (Doctrine 5, issue #59, will give them mechanics; Doctrine 2 only declares them).
+// Sources: POTATO/s1-s5-mechanics-translation.md (Faction Variable Frame), issue #56 scope.
+export const optionalStaffModuleSchema = z.enum([
+  "J6",
+  "J7",
+  "J8",
+  "J9",
+  "STRATCOM",
+  "MED",
+  "ENGINEER",
+]);
+export type OptionalStaffModule = z.infer<typeof optionalStaffModuleSchema>;
+
+// Doctrine variables whose increase is a cost (accumulated risk or accepted risk)
+// rather than a capability gain. Under the mass-balance rule in lint:content, a
+// POSITIVE modifier on one of these keys counts as counterweight mass, while a
+// NEGATIVE modifier on one of these keys is a BENEFIT (risk reduction) — see
+// packages/content/src/validate-content.ts.
+// NOTE: secondaryRiskAccepted is dual-direction — the sim treats LOW unacknowledged
+// risk (strained lanes with no accepted-risk override) as the warning state, so
+// "increase = cost" is the correct classification for counterweight purposes but a
+// future gene using +secondaryRiskAccepted as a benefit would be silently reclassified.
+// NOTE: culminationRisk modifiers are transient by design — the sim recomputes it
+// from staff condition each turn and does not anchor it (see resolveDoctrineMechanics).
+export const doctrineRiskKeys = [
+  "culminationRisk",
+  "systemPressure",
+  "secondaryRiskAccepted",
+] as const;
+export type DoctrineRiskKey = (typeof doctrineRiskKeys)[number];
+
+// A gene may modify any subset of the doctrine variables. Modifiers are additive
+// deltas (not absolute values), bounded to +/-50 so a single gene cannot overwhelm
+// the neutral baseline; the summed result is clamped to the 0-100 index range by
+// applyDoctrineGenes.
+const doctrineVariableKeys = Object.keys(
+  doctrineMechanicsStateSchema.shape,
+) as Array<keyof DoctrineMechanicsState>;
+const doctrineVariableModifierShape = Object.fromEntries(
+  doctrineVariableKeys.map((key) => [key, z.number().int().min(-50).max(50).optional()]),
+) as { [K in keyof DoctrineMechanicsState]?: z.ZodOptional<z.ZodNumber> };
+// .strict(): an unknown modifier key must fail loudly at gene-definition time rather
+// than being silently stripped by Zod (a real bug — supportableTempo was declared as a
+// modifier before it existed as a doctrine key, and the -5 never applied).
+export const doctrineVariableModifierSchema = z.object(doctrineVariableModifierShape).strict();
+export type DoctrineVariableModifiers = z.infer<typeof doctrineVariableModifierSchema>;
+
+// A single doctrine gene: a fictionalized, evidence-linked ingredient sourced from the
+// CELERY gene bank (CELERY/faction-doctrine-gene-bank.md). Genes are content data, never
+// hard-coded into the engine — the sim only ever sees the applied baseline.
+export const doctrineGeneSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  // Every doctrine-derived trait must trace to at least one CELERY evidence anchor.
+  evidenceRefs: z.array(z.string()).min(1),
+  strengths: z.array(z.string()).min(1),
+  vulnerabilities: z.array(z.string()).min(1),
+  variableModifiers: doctrineVariableModifierSchema,
+  staffAdviceStyle: z
+    .object({
+      S1: z.string().optional(),
+      S2: z.string().optional(),
+      S3: z.string().optional(),
+      S4: z.string().optional(),
+      S5: z.string().optional(),
+    })
+    .default({}),
+});
+export type DoctrineGene = z.infer<typeof doctrineGeneSchema>;
+
+// Scenario-level doctrine identity: a composition of genes from the content registry,
+// plus any optional staff modules the scenario fields. The profile is declared on the
+// scenario definition; the engine consumes only the baseline it produces.
+export const doctrineProfileSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  evidenceRefs: z.array(z.string()).min(1),
+  geneIds: z.array(z.string()).min(1),
+  optionalStaffModules: z.array(optionalStaffModuleSchema).default([]),
+});
+export type DoctrineProfile = z.infer<typeof doctrineProfileSchema>;
+
+// Apply a scenario's doctrine genes to the neutral doctrine baseline. Pure and
+// deterministic: every delta accumulates per variable first (order-independent), then
+// the final total is clamped to the 0-100 index range once. Called at
+// scenario-definition time, so serialized saves carry the biased opening position and
+// replay never re-applies genes.
+export function applyDoctrineGenes(
+  neutral: DoctrineMechanicsState,
+  genes: readonly DoctrineGene[],
+): DoctrineMechanicsState {
+  // Accumulate-then-clamp (not clamp-per-gene): clamping inside the loop would make
+  // the result order-dependent — e.g. +50 then -50 on an 80 baseline would yield 50
+  // instead of the true summed result 80.
+  const deltas: Partial<Record<keyof DoctrineMechanicsState, number>> = {};
+  for (const gene of genes) {
+    for (const [key, delta] of Object.entries(
+      gene.variableModifiers,
+    ) as Array<[keyof DoctrineMechanicsState, number | undefined]>) {
+      if (delta === undefined) continue;
+      deltas[key] = (deltas[key] ?? 0) + delta;
+    }
+  }
+  const result: DoctrineMechanicsState = { ...neutral };
+  for (const key of doctrineVariableKeys) {
+    const delta = deltas[key];
+    if (delta !== undefined) {
+      result[key] = Math.min(100, Math.max(0, result[key] + delta));
+    }
+  }
+  return result;
+}
 
 export const resourcesSchema = z.object({
   budgetAuthority: indexMetricSchema,
@@ -835,6 +950,7 @@ export const scenarioDefinitionSchema = z.object({
   memoTemplates: z.array(decisionMemoSchema),
   events: z.array(eventDefinitionSchema),
   initialState: campaignStateSchema,
+  doctrineProfile: doctrineProfileSchema,
 });
 export type ScenarioDefinition = z.infer<typeof scenarioDefinitionSchema>;
 
