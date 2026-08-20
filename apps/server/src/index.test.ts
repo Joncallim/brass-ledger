@@ -1,6 +1,6 @@
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -462,6 +462,27 @@ test("delete removes a session and rejects later reads", async () => {
   const created = await createSession();
   const id = created.session.id;
 
+  const deleted = await app.inject({ method: "DELETE", url: `/api/sessions/${id}` });
+  assert.equal(deleted.statusCode, 200);
+  assert.equal(deleted.json().ok, true);
+
+  const missing = await app.inject({ method: "GET", url: `/api/sessions/${id}` });
+  assert.equal(missing.statusCode, 404);
+});
+
+test("delete removes an incompatible stale save that the canonical read refuses (round-2 F7)", async () => {
+  const created = await createSession();
+  const id = created.session.id;
+  const savePath = path.join(saveDir, `${id}.json`);
+  const persisted = JSON.parse(await readFile(savePath, "utf8"));
+  persisted.contentVersion = "0.9.0"; // stale: the canonical read rejects it
+  await writeFile(savePath, JSON.stringify(persisted), "utf8");
+
+  // Load still refuses the stale save…
+  const refused = await app.inject({ method: "GET", url: `/api/sessions/${id}` });
+  assert.notEqual(refused.statusCode, 200);
+
+  // …but deletion is id-level and must succeed without a canonical parse.
   const deleted = await app.inject({ method: "DELETE", url: `/api/sessions/${id}` });
   assert.equal(deleted.statusCode, 200);
   assert.equal(deleted.json().ok, true);

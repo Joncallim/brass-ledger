@@ -224,7 +224,20 @@ export const soloScenario = scenarioDefinitionSchema.parse({
       summary: "The headquarters keeps waiting for a fully supportable posture while the public and cabinet demand visible action; political room contracts around an otherwise sound sustainment plan.",
       minTurn: 3, maxTurn: 11, triggerTags: ["slow-burn"], requiredFlags: [], excludedFlags: [],
       setsFlags: ["doctrine_sustainment_patience_blowback"], clearsFlags: [],
-      stateDelta: { domestic: { cabinetCover: -10, publicPatience: -10, mediaHeat: 6 }, resources: { politicalCapital: -6 } }, constraintShifts: [],
+      // Round-2 calibration (F3b): the counterweight must be OBSERVED in the
+      // score/win/objective formulas, which read deployableUnits, politicalAlignment,
+      // cabinetCover, incidentLadder, reserveStrain. Political blowback from the
+      // patience gap: partner alignment erodes (politicalAlignment -18), cabinet
+      // cover contracts (cabinetCover -10), the public pressure forces visible
+      // demonstrations that burn the reserve base and raise escalation risk
+      // (reserveStrain +16, incidentLadder +28 — enough to flip the escalation
+      // objective in the weakest replicates), and readiness-building loses
+      // momentum while the HQ defends its posture (deployableUnits -1.5). Flavor
+      // lanes trimmed (publicPatience -8, mediaHeat +5, politicalCapital -4).
+      // Measured (N=240): sustainment-delay drops from 100/100% to ~95/82% —
+      // observed cost below the score ceiling, no dominance, control cohort
+      // stays viable (no deployableUnits collapse).
+      stateDelta: { alliance: { politicalAlignment: -18 }, domestic: { cabinetCover: -10, publicPatience: -8, mediaHeat: 5 }, resources: { politicalCapital: -4 }, forceGeneration: { reserveStrain: 16, deployableUnits: -1.5 }, escalation: { incidentLadder: 28 } }, constraintShifts: [],
       doctrineTrigger: { sourceGeneId: "sustainment-first-operational-reach", sourceGeneLabel: "Sustainment-First Operational Reach", patternId: "tempo", vulnerability: "Slower visible posture; political frustration when the public wants immediate action", evidenceRefs: ["CELERY/doctrine-proof-register#US Army ADP 4-0 Sustainment", "CELERY/doctrine-proof-register#Sustainment Warfighting Function Elements"], conditions: [{ variable: "relativeTempo", comparison: "lte", threshold: 30 }], sustainedTurns: 3 },
       causalContext: { betLabel: "Repeated slow-burn sequencing until supportability was earned", maturedRiskLabel: "Relative tempo stayed at or below 30 for three slow-burn turns", staffFunctionRefs: ["S4", "S5"] },
     },

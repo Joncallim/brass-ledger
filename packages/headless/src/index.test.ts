@@ -72,3 +72,18 @@ test("two N=240 runs deep-equal telemetry", async () => {
   const second = await runHeadlessBatch(240);
   assert.deepEqual(first, second, "paired-seed batches are fully deterministic in telemetry");
 });
+
+test("balanced cohort rotates through every posture option (round-2 F2)", async () => {
+  const telemetry = await runHeadlessBatch(240);
+  const balancedPosture = telemetry.strategyOptionSelectionRates["balanced-cycle"].filter((entry) => entry.memoId === "posture");
+  // Pre-round-2, the balanced cohort's sparse campaign index (ci ∈ {0,4,8,…})
+  // pinned a 4-option memo to option 0 in every campaign. The dense per-cohort
+  // replicate rotation must select all four posture options; per-selection rates
+  // skew by campaign length (measured-deterrence campaigns run longest), so the
+  // lock is: every option appears, and no option is pinned at ~100%.
+  assert.equal(balancedPosture.length, 4, "all four posture options must be selected across the balanced cohort");
+  for (const entry of balancedPosture) {
+    assert.ok(entry.selectionRate > 0, `posture option ${entry.optionId} never selected in the balanced cohort`);
+    assert.ok(entry.selectionRate < 0.6, `posture option ${entry.optionId} selection rate ${entry.selectionRate} shows a pinned rotation`);
+  }
+});

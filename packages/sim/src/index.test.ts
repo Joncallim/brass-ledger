@@ -2227,12 +2227,54 @@ function countOrdinaryEligible(state: CampaignState, tags: Set<string>, scenario
 
 test("doctrine 4: a scenario without doctrine events is bit-identical on ordinary inputs", () => {
   const noDoctrine: ScenarioDefinition = { ...soloScenario, events: soloScenario.events.filter((event) => !event.doctrineTrigger) };
+
+  // Turn 1 with the plain balanced input: fully bit-identical (no doctrine activity).
   const withDoctrine = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
   const withoutDoctrine = resolveTurn(noDoctrine, soloScenario.initialState, balancedInput);
   assert.deepEqual(withoutDoctrine.triggeredEvents.map((event) => event.id), withDoctrine.triggeredEvents.map((event) => event.id));
   assert.deepEqual(withoutDoctrine.nextState, withDoctrine.nextState);
   assert.deepEqual(withoutDoctrine.afterAction, withDoctrine.afterAction);
   assert.equal(withoutDoctrine.replayHash, withDoctrine.replayHash);
+
+  // Turns 1-6: mature the sustainment streak (slow-burn on turns 1-2 reaches the
+  // sustainedTurns-1 firing threshold), then drop the tags (turns 3-6) so the
+  // matured-but-unfired record resets. The doctrine machinery must never perturb
+  // the ordinary event stream, next state, notes, or replay hash across a window
+  // long enough for maturity to accumulate and eligibility to be reached — the
+  // only permissible divergence while the streak exists is the doctrineMaturity
+  // record itself (round-2 F5).
+  const slowBurnInput = (turn: number): TurnInput => ({ turn, selectedActionIds: [], acceptedRiskOverrides: [], staffNegotiations: [], selections: slowBurnSelections() });
+  let withState: CampaignState = structuredClone(soloScenario.initialState) as CampaignState;
+  let withoutState: CampaignState = structuredClone(soloScenario.initialState) as CampaignState;
+  for (let turn = 1; turn <= 6; turn += 1) {
+    const input = turn <= 2 ? slowBurnInput(turn) : ({ ...balancedInput, turn } satisfies TurnInput);
+    const withResult = resolveTurn(soloScenario, withState, input);
+    const withoutResult = resolveTurn(noDoctrine, withoutState, input);
+    assert.deepEqual(withoutResult.triggeredEvents.map((event) => event.id), withResult.triggeredEvents.map((event) => event.id), `turn ${turn} event ids/order`);
+    assert.deepEqual(withoutResult.afterAction, withResult.afterAction, `turn ${turn} after-action notes`);
+    if (turn <= 2) {
+      const withNormalized = { ...withResult.nextState, doctrineMaturity: {} };
+      assert.deepEqual(withoutResult.nextState, withNormalized, `turn ${turn} next state is bit-identical modulo the accumulating maturity record`);
+      assert.ok(withResult.nextState.doctrineMaturity["doctrine-sustainment-patience-gap"], `turn ${turn} the streak must be accumulating`);
+      // The maturity record lives in nextState (and therefore in the next turn's
+      // hash input), so replay hashes legitimately differ while it exists; each
+      // scenario must still be self-deterministic.
+      assert.equal(resolveTurn(soloScenario, withState, input).replayHash, withResult.replayHash, `turn ${turn} full-scenario determinism`);
+      assert.equal(resolveTurn(noDoctrine, withoutState, input).replayHash, withoutResult.replayHash, `turn ${turn} stripped-scenario determinism`);
+    } else if (turn === 3) {
+      // The streak resets this turn (tags dropped): next state is fully
+      // bit-identical, but the previousState fed to the hash still carried the
+      // streak record in the full scenario, so the hash itself still differs.
+      assert.deepEqual(withoutResult.nextState, withResult.nextState, `turn ${turn} next state is fully bit-identical after the streak resets`);
+      assert.equal(resolveTurn(soloScenario, withState, input).replayHash, withResult.replayHash, `turn ${turn} full-scenario determinism`);
+      assert.equal(resolveTurn(noDoctrine, withoutState, input).replayHash, withoutResult.replayHash, `turn ${turn} stripped-scenario determinism`);
+    } else {
+      assert.deepEqual(withoutResult.nextState, withResult.nextState, `turn ${turn} next state is fully bit-identical after the streak resets`);
+      assert.equal(withoutResult.replayHash, withResult.replayHash, `turn ${turn} replay hash`);
+    }
+    withState = withResult.nextState;
+    withoutState = withoutResult.nextState;
+  }
 });
 
 test("doctrine 4: chooseEvents draws exactly once per eligible ordinary event including index 0, even when doctrine events consume capacity", () => {

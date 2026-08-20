@@ -456,9 +456,15 @@ app.delete("/api/sessions/:id", async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     await withSessionLock(id, async () => {
-      // Deletion is still a session mutation: refuse to operate on a save from
-      // another engine/content contract instead of silently accepting it.
-      await readSession(id);
+      // Deletion is an id-level operation, not a content-level one: an incompatible
+      // or unreadable save (e.g. a stale 0.9.0 save that readSession refuses) must
+      // still be deletable through the API. readSession is best-effort here; the
+      // canonical checks stay fully enforced on load and mutate paths (round-2 F7).
+      try {
+        await readSession(id);
+      } catch {
+        // Incompatible or corrupt save — deletion still proceeds.
+      }
       await saveStore.delete(id);
     });
     return { ok: true };
