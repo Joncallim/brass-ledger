@@ -40,13 +40,19 @@ export const doctrineGenes: readonly DoctrineGene[] = [
       campaignAimClarity: 6,
       staffSynchronization: 7,
       commanderIntentClarity: 4,
-      // Counterweights (mass 8+4+5 = 17 >= benefits 17): caveat/legal/policy load,
-      // slower decision tempo from added constraints, and harder signature management
-      // under public and partner scrutiny. Deliberately NOT on uncommittedCapacity so
-      // the reserve gate stays reachable for this faction.
-      systemPressure: 8,
-      relativeTempo: -4,
-      signatureControl: -5,
+      // Counterweights (mass 2+5+7+3 = 17 >= benefits 17): caveat/legal/policy load
+      // (+2 baseline system pressure), slower decision tempo (-5), harder signature
+      // management under public and partner scrutiny (-7), and constrained maneuver
+      // from coalition coordination (-3). Magnitudes are capped so no REQUIRED gate
+      // becomes always-on or unreachable: systemPressure offset totals +5 across the
+      // profile (gate 65, balanced play ~64 — fires on genuinely thin turns only),
+      // and tempo requires two consecutive spikes from the opening baseline
+      // (sustainment-first character; see the sustainment gene). Deliberately NOT on
+      // uncommittedCapacity so the reserve gate stays reachable.
+      systemPressure: 2,
+      relativeTempo: -5,
+      signatureControl: -7,
+      optionDislocation: -3,
     },
     staffAdviceStyle: {
       S5: "Frames every option in alliance terms first and warns when a commitment outruns what partners have actually signed up to.",

@@ -204,12 +204,16 @@ export const optionalStaffModuleSchema = z.enum([
 export type OptionalStaffModule = z.infer<typeof optionalStaffModuleSchema>;
 
 // Doctrine variables whose increase is a cost (accumulated risk or accepted risk)
-// rather than a capability gain. A positive modifier on one of these keys can serve
-// as a gene's counterweight under the "every benefit needs a counterweight" guardrail.
+// rather than a capability gain. Under the mass-balance rule in lint:content, a
+// POSITIVE modifier on one of these keys counts as counterweight mass, while a
+// NEGATIVE modifier on one of these keys is a BENEFIT (risk reduction) — see
+// packages/content/src/validate-content.ts.
 // NOTE: secondaryRiskAccepted is dual-direction — the sim treats LOW unacknowledged
 // risk (strained lanes with no accepted-risk override) as the warning state, so
 // "increase = cost" is the correct classification for counterweight purposes but a
 // future gene using +secondaryRiskAccepted as a benefit would be silently reclassified.
+// NOTE: culminationRisk modifiers are transient by design — the sim recomputes it
+// from staff condition each turn and does not anchor it (see resolveDoctrineMechanics).
 export const doctrineRiskKeys = [
   "culminationRisk",
   "systemPressure",

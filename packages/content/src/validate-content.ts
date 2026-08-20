@@ -175,19 +175,26 @@ if (soloScenario.doctrineProfile) {
     const entries = Object.entries(gene.variableModifiers) as Array<
       [string, number | undefined]
     >;
-    // Tradeoff guardrail: counterweight mass (negative modifiers plus positive modifiers
-    // on doctrine risk keys) must be at least the benefit mass (positive modifiers on
-    // quality keys), so no gene is a free lunch. The strict variableModifiers schema
+    // Tradeoff guardrail: counterweight mass must be at least benefit mass, so no gene
+    // is a free lunch. A REDUCTION on a doctrine risk key (lowering accumulated or
+    // accepted risk) is a benefit, not a counterweight — this closes the hole where a
+    // gene like { campaignAimClarity: +10, systemPressure: -10 } would pass as
+    // "balanced" while being pure upside. The strict variableModifiers schema
     // guarantees no modifier can be hidden by stripping — an unknown key fails parse.
-    const benefitMass = entries
-      .filter(([key, delta]) => (delta ?? 0) > 0 && !(doctrineRiskKeys as readonly string[]).includes(key))
-      .reduce((sum, [, delta]) => sum + (delta ?? 0), 0);
+    const riskKeys = doctrineRiskKeys as readonly string[];
+    const benefitMass =
+      entries
+        .filter(([key, delta]) => (delta ?? 0) > 0 && !riskKeys.includes(key))
+        .reduce((sum, [, delta]) => sum + (delta ?? 0), 0) +
+      entries
+        .filter(([key, delta]) => (delta ?? 0) < 0 && riskKeys.includes(key))
+        .reduce((sum, [, delta]) => sum + Math.abs(delta ?? 0), 0);
     const counterweightMass =
       entries
-        .filter(([, delta]) => (delta ?? 0) < 0)
+        .filter(([key, delta]) => (delta ?? 0) < 0 && !riskKeys.includes(key))
         .reduce((sum, [, delta]) => sum + Math.abs(delta ?? 0), 0) +
       entries
-        .filter(([key, delta]) => (delta ?? 0) > 0 && (doctrineRiskKeys as readonly string[]).includes(key))
+        .filter(([key, delta]) => (delta ?? 0) > 0 && riskKeys.includes(key))
         .reduce((sum, [, delta]) => sum + (delta ?? 0), 0);
     if (counterweightMass < benefitMass) {
       throw new Error(

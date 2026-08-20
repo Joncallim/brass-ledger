@@ -1368,8 +1368,11 @@ function resolveDoctrineMechanics({
   // position serialized in scenario.initialState). Pull targets below derive from it,
   // and recomputed variables receive its offset vs the neutral default, so a
   // scenario's doctrine genes produce a DURABLE bias instead of being erased by
-  // hard-coded neutral anchors within a turn or two. For a profile-less scenario the
-  // anchor equals the neutral default and every offset is 0 — behavior is unchanged.
+  // hard-coded neutral anchors within a turn or two. For a profile whose genes net to
+  // zero, the anchor equals the neutral default and every offset is 0 — behavior is
+  // unchanged. orderClarity's equilibrium shifts via the offset on its complexity
+  // term; culminationRisk is intentionally signal-driven (staff condition), so
+  // doctrine modifiers on it are transient by design.
   const factionOffset: Partial<Record<keyof DoctrineMechanicsState, number>> = {};
   for (const key of Object.keys(defaultDoctrineMechanicsState) as Array<keyof DoctrineMechanicsState>) {
     factionOffset[key] = doctrineAnchor[key] - defaultDoctrineMechanicsState[key];
@@ -1457,7 +1460,7 @@ function resolveDoctrineMechanics({
   const mainEffortFocus =
     totalBurdenPoints > 0
       ? clamp(round((100 * maxDirectoratePoints) / totalBurdenPoints) + (factionOffset.mainEffortFocus ?? 0), 0, 100)
-      : 50 + (factionOffset.mainEffortFocus ?? 0);
+      : clamp(defaultDoctrineMechanicsState.mainEffortFocus + (factionOffset.mainEffortFocus ?? 0), 0, 100);
   const mainEffortDirectorate = [...burdenByDirectorate.entries()].find(([, points]) => points === maxDirectoratePoints)?.[0];
   const neglectedLanes = directorateBurden.filter((entry) => entry.directorate !== mainEffortDirectorate && entry.burdenLevel === "overloaded");
   // Threshold calibrated to this scenario's content: every memo option spreads points across
@@ -1490,7 +1493,7 @@ function resolveDoctrineMechanics({
   const uncommittedCapacity =
     totalCapacity > 0
       ? clamp(round((100 * (totalCapacity - totalCommitted)) / totalCapacity) + (factionOffset.uncommittedCapacity ?? 0), 0, 100)
-      : 50 + (factionOffset.uncommittedCapacity ?? 0);
+      : clamp(defaultDoctrineMechanicsState.uncommittedCapacity + (factionOffset.uncommittedCapacity ?? 0), 0, 100);
   // Threshold calibrated to this scenario's content: even the lightest legal 4-memo turn that
   // still reaches a genuine crisis event's trigger tags commits 14 of the staff's 20 points of
   // capacity (verified against packages/content/src/scenario.ts), landing at exactly 30%
@@ -1519,7 +1522,7 @@ function resolveDoctrineMechanics({
   const strainedLanes = directorateBurden.filter((entry) => entry.burdenLevel !== "light").length;
   const secondaryRiskAccepted =
     strainedLanes === 0
-      ? 50 + (factionOffset.secondaryRiskAccepted ?? 0)
+      ? clamp(defaultDoctrineMechanicsState.secondaryRiskAccepted + (factionOffset.secondaryRiskAccepted ?? 0), 0, 100)
       : clamp(round((100 * Math.min(acceptedRiskOverrides.length, strainedLanes)) / strainedLanes) + (factionOffset.secondaryRiskAccepted ?? 0), 0, 100);
   if (strainedLanes > 0 && acceptedRiskOverrides.length === 0) {
     notes.push({
@@ -1589,7 +1592,14 @@ function resolveDoctrineMechanics({
   // ── Simplicity: orderClarity ──────────────────────────────────────────────────────────────
   // Gate: low complexity load. Failure: lower upside on multi-lane actions.
   const complexityScore = clamp(100 - Math.max(0, tags.size - 4) * 8, 0, 100);
-  const orderClarity = clamp(round(prev.orderClarity * 0.5 + complexityScore * 0.5), 0, 100);
+  // The faction offset shifts the complexity term, so a doctrine gene on orderClarity
+  // moves the equilibrium durably (the variable still settles at complexity + offset
+  // instead of ratcheting to an extreme).
+  const orderClarity = clamp(
+    round(prev.orderClarity * 0.5 + (complexityScore + (factionOffset.orderClarity ?? 0)) * 0.5),
+    0,
+    100,
+  );
   // Compares against previousState (the turn's true starting point), not strategicIn (which
   // already includes this turn's own option/event/burden deltas) — strategicIn only moves when
   // an earlier doctrine gate (tempo/main-effort) has already nudged deployableUnits, so using it

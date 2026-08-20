@@ -39,6 +39,10 @@ type AcceptedRisk = {
   evidenceRefs: string[];
 };
 
+// The implemented schema (packages/shared doctrineMechanicsStateSchema) is
+// authoritative. handoffFriction, supportableTempo, and planningCompression were
+// dropped from the doctrine variable set during Doctrine 1 (issue #55):
+// supportableTempo lives in staffMechanics.s4 as the S4 staff metric.
 type DoctrineMechanicsState = {
   campaignAimClarity: number;
   relativeTempo: number;
@@ -48,14 +52,11 @@ type DoctrineMechanicsState = {
   signatureControl: number;
   exposureControl: number;
   orderClarity: number;
-  handoffFriction: number;
   culminationRisk: number;
   uncommittedCapacity: number;
-  supportableTempo: number;
   operationalReach: number;
   staffSynchronization: number;
   commanderIntentClarity: number;
-  planningCompression: number;
   systemPressure: number;
 };
 
@@ -101,15 +102,11 @@ type DoctrineGene = {
 
 ## Faction-Gene Implementation
 
-Phase 1: Add doctrine variables to state, initialized neutrally.
-
-Phase 2: Add scenario-level doctrine genes from [[../CELERY/faction-doctrine-gene-bank]].
-
-Phase 3: Let genes alter chief advice style and burden routing.
-
-Phase 4: Add faction-specific events that mature from overused doctrine.
-
-Phase 5: Add optional staff modules: J6/C2, J8 finance, J9 policy/civil affairs, STRATCOM, medical, engineering.
+- ✅ Phase 1: Add doctrine variables to state, initialized neutrally. *(Landed — issue #55.)*
+- ✅ Phase 2: Add scenario-level doctrine genes from [[../CELERY/faction-doctrine-gene-bank]]. *(Landed — issue #56: DoctrineGene/DoctrineProfile in shared, content gene registry, profile applied to the opening baseline at scenario-definition time; the sim derives its pull targets and recompute offsets from the biased baseline so the bias is durable.)*
+- Phase 3: Let genes alter chief advice style and burden routing. *(Issue #57.)*
+- Phase 4: Add faction-specific events that mature from overused doctrine. *(Issue #58.)*
+- Phase 5: Add optional staff modules: J6/C2, J8 finance, J9 policy/civil affairs, STRATCOM, medical, engineering. *(Issue #59.)*
 
 ## Player-Facing Rules
 
