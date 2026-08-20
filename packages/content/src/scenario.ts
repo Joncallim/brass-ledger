@@ -1,5 +1,6 @@
 import {
   applyDoctrineGenes,
+  composeDoctrineLens,
   defaultDoctrineMechanicsState,
   doctrineProfileSchema,
   scenarioDefinitionSchema,
@@ -31,7 +32,7 @@ export const soloScenario = scenarioDefinitionSchema.parse({
   title: "Brass Ledger",
   description:
     "You run a joint headquarters trying to rebuild a credible defense during a slow-burning crisis. Warning about the adversary's intentions is never quite clean, the reserve force is already strained, and sustainment cannot support everything you would like to do at once. Every month you weigh deterrence, force generation, alliance politics, and how much political cover you can afford to spend, and you live with what each choice costs the next month.",
-  contentVersion: "0.8.0",
+  contentVersion: "0.9.0",
   maxTurns: 12,
   chiefs: [
     { id: "warden", name: "Maj. Gen. Ruth Warden", genderPresentation: "female", directorate: "people", title: "Chief of People", doctrineBias: "preserve deployable experience before chasing visible tempo", temperament: "plainspoken and protective", competence: 0.78, riskTolerance: 0.34, preferredTags: ["retention", "reserve", "recovery", "training"], concernTags: ["escalatory", "tempo-spike"] },
@@ -321,5 +322,11 @@ export const soloScenario = scenarioDefinitionSchema.parse({
       geopoliticalSummary: "Pressure is rising, but the picture still favors a controlled recovery if the headquarters keeps its line of effort tight.",
     },
   },
+  // Doctrine 3 (issue #57): the composed advice/burden lens, computed once here from the
+  // profile's genes (mirroring the initialState.doctrineMechanics pattern above). The
+  // engine consumes only this lens; replay re-runs resolveTurn against the scenario, so
+  // the lens is always in scope. lint:content enforces the invariant that this equals
+  // composeDoctrineLens(resolveDoctrineGenes(doctrineProfile)).
+  doctrineLens: composeDoctrineLens(resolveDoctrineGenes(doctrineProfile)),
   doctrineProfile,
 });

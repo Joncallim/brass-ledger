@@ -83,6 +83,7 @@
 import { createHash } from "node:crypto";
 import {
   type AcceptedRiskOverride,
+  type BurdenBias,
   type CampaignState,
   type ChiefCoalitionEntry,
   type ChiefPositionEntry,
@@ -90,6 +91,7 @@ import {
   type DecisionMemo,
   type DirectorateBurden,
   type DirectorateId,
+  type DoctrineLens,
   type DoctrineMechanicsState,
   type EventDefinition,
   type ExplainabilityEntry,
@@ -99,6 +101,7 @@ import {
   type MemoSelection,
   type ReplayValidation,
   type ScenarioDefinition,
+  type StaffFunctionDefinition,
   type StaffMechanicsState,
   type StateDelta,
   type StrategicState,
@@ -112,6 +115,7 @@ import {
   defaultDoctrineMechanicsState,
   directorateLabel,
   evaluateCampaignObjectives,
+  staffFunctionForDirectorate,
   summarizeState,
   updateChiefAgendaMemoryFromPositions,
 } from "@brass-ledger/shared";
@@ -1329,6 +1333,63 @@ function isCrisisEvent(event: EventDefinition): boolean {
 
 type DoctrineNote = { heading: string; detail: string };
 
+// Doctrine 3 (issue #57): after-action notes for burden-routing attention. Pure and
+// deterministic — iterates directorateBurden in directorateSchema order, no RNG.
+// Override matching is PER STAFF FUNCTION (not the global length check the
+// "unacknowledged risk" note uses), which is what makes the dissent note complementary
+// to that aggregate note rather than a duplicate. Branch reachability:
+//   - Interactive UI / headless autoAcceptRisks: the 428 gate / policy always fills
+//     overrides, so the accepted-risk variant fires and chief-position dissent is
+//     visible pre-commit in the preview (underpricedDissent lean).
+//   - Direct sim calls with no overrides: the dissent variant fires alongside the
+//     existing "Doctrine: unacknowledged risk" aggregate note.
+function resolveBurdenDissent(
+  directorateBurden: DirectorateBurden[],
+  burdenBias: BurdenBias,
+  acceptedRiskOverrides: AcceptedRiskOverride[],
+  staffFunctionDefinitions: StaffFunctionDefinition[],
+): DoctrineNote[] {
+  const notes: DoctrineNote[] = [];
+
+  // Underpriced lanes that went strained/overloaded: dissent (no override for the
+  // lane's staff function) or explicit accepted risk (override present).
+  for (const entry of directorateBurden) {
+    if (!burdenBias.underpricedLanes.includes(entry.directorate)) continue;
+    if (entry.burdenLevel === "light") continue;
+    const staffFunction = staffFunctionForDirectorate(staffFunctionDefinitions, entry.directorate);
+    const hasOverride = acceptedRiskOverrides.some((override) => override.staffFunctionId === staffFunction.id);
+    if (hasOverride) {
+      notes.push({
+        heading: "Doctrine: accepted risk in an underpriced lane",
+        detail: `You explicitly accepted the risk in ${directorateLabel(entry.directorate)}, a lane the staff normally underprices.`,
+      });
+    } else {
+      notes.push({
+        heading: "Doctrine: underpriced-lane dissent",
+        detail: `The staff underprices ${directorateLabel(entry.directorate)}; it went under-resourced this month and surfaced as staff dissent rather than a clean warning.`,
+      });
+    }
+  }
+
+  // Neglected priority lane: a priority lane left light while >=1 NON-priority lane
+  // overloads (a priority lane left light while another priority lane overloads is a
+  // different story and would over-fire). Labels reflect post-negotiation burden.
+  const priorityLaneLight = directorateBurden.filter(
+    (entry) => burdenBias.priorityLanes.includes(entry.directorate) && entry.burdenLevel === "light",
+  );
+  const nonPriorityOverloaded = directorateBurden.filter(
+    (entry) => !burdenBias.priorityLanes.includes(entry.directorate) && entry.burdenLevel === "overloaded",
+  );
+  if (priorityLaneLight.length > 0 && nonPriorityOverloaded.length > 0) {
+    notes.push({
+      heading: "Doctrine: neglected priority lane",
+      detail: `The staff's natural priority (${priorityLaneLight.map((entry) => directorateLabel(entry.directorate)).join(", ")}) was left light while ${nonPriorityOverloaded.map((entry) => directorateLabel(entry.directorate)).join(", ")} ran overloaded.`,
+    });
+  }
+
+  return notes;
+}
+
 type DoctrineResolution = {
   doctrineMechanics: DoctrineMechanicsState;
   strategic: StrategicState;
@@ -1999,7 +2060,11 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   const selectedPairs = input.selections.map((selection) => findOption(memos, selection));
   const selectedOptions = selectedPairs.map((entry) => entry.option);
   const staffNegotiations = input.staffNegotiations ?? [];
-  const directorateBurden = buildDirectorateBurden(memos, input.selections, scenario.staffCapacities, staffNegotiations);
+  // Doctrine 3 (issue #57): the composed lens serialized on the scenario definition
+  // (schema default guarantees existence). Threaded through every call-site that shapes
+  // attention — burden routing, chief positions, readout warnings, after-action notes.
+  const lens = scenario.doctrineLens;
+  const directorateBurden = buildDirectorateBurden(memos, input.selections, scenario.staffCapacities, staffNegotiations, lens.burdenBias);
 
   let nextStrategic = cloneState(previousState.strategic);
   let nextResources = cloneState(previousState.resources);
@@ -2025,7 +2090,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   nextStrategic.forceGeneration.reserveStrain = round(nextStrategic.forceGeneration.reserveStrain);
 
   const chiefPositions = selectedPairs.flatMap(({ memo, option }) =>
-    buildChiefPositions(scenario.chiefs, previousState, memo, option, directorateBurden, scenario.staffFunctions)
+    buildChiefPositions(scenario.chiefs, previousState, memo, option, directorateBurden, scenario.staffFunctions, lens)
   );
   const chiefCoalitions: ChiefCoalitionEntry[] = buildChiefCoalitions(selectedPairs, chiefPositions, directorateBurden);
   const nextChiefAgendaMemory = updateChiefAgendaMemoryFromPositions(
@@ -2146,8 +2211,9 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   const resultAfterAction = [
     ...afterAction(previousState, nextState, directorateBurden, triggeredEvents, input.acceptedRiskOverrides, staffNegotiations, nodeName),
     ...doctrineResolution.notes,
+    ...resolveBurdenDissent(directorateBurden, lens.burdenBias, input.acceptedRiskOverrides ?? [], scenario.staffFunctions),
   ];
-  const staffFunctions = buildStaffFunctionReadouts(scenario.staffFunctions, directorateBurden, nextState);
+  const staffFunctions = buildStaffFunctionReadouts(scenario.staffFunctions, directorateBurden, nextState, lens.burdenBias);
   const explainability = createExplainability(selectedPairs, directorateBurden, triggeredEvents, previousState, nextState, nodeName);
   const summary = nextState.campaignStatus === "active" ? summarizeState(nextState) : nextState.campaignOutcome ?? summarizeState(nextState);
 

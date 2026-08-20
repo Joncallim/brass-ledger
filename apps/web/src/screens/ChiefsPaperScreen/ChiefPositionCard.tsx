@@ -69,6 +69,10 @@ export function ChiefPositionCard({ position, advisor, memos, onTalk }: Props) {
         <p className="text-xs text-ink/40 mt-2 italic">{position.agendaMemoryNote}</p>
       )}
 
+      {position.adviceStyleNote && (
+        <p className="text-xs text-ink/40 mt-2 italic">{position.adviceStyleNote}</p>
+      )}
+
       <div className="mt-3">
         <button
           type="button"

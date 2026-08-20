@@ -55,9 +55,37 @@ export const doctrineGenes: readonly DoctrineGene[] = [
       optionDislocation: -3,
     },
     staffAdviceStyle: {
-      S5: "Frames every option in alliance terms first and warns when a commitment outruns what partners have actually signed up to.",
-      S3: "Treats multinational coordination as the default and reads partner caveats as constraints, not noise.",
-      S2: "Trusts partner-derived collection only when the partner's own confidence is high enough to cite it.",
+      // Doctrine 3 (issue #57): each directive is the authored gene-bank string
+      // (verbatim as `summary`) plus mechanical anchors — option tags the gene weighs
+      // MORE (biasTags) or treats as RISK (cautionTags), and a readout-gated
+      // positionLean (fires only when the chief's own S1-S5 readout signals risk or a
+      // non-light burden level; negative = dig in / veto, positive = champion the fix).
+      // Every tag is lint-verified against the scenario's memo option vocabulary.
+      S5: {
+        summary: "Frames every option in alliance terms first and warns when a commitment outruns what partners have actually signed up to.",
+        biasTags: ["alliance"],
+        cautionTags: ["public-commitment", "modernization"],
+        positionLean: 0,
+      },
+      S3: {
+        summary: "Treats multinational coordination as the default and reads partner caveats as constraints, not noise.",
+        biasTags: ["alliance"],
+        cautionTags: ["ad-hoc", "hollow"],
+        positionLean: 0,
+      },
+      S2: {
+        summary: "Trusts partner-derived collection only when the partner's own confidence is high enough to cite it.",
+        biasTags: ["collection"],
+        cautionTags: ["warning"],
+        positionLean: -1,
+      },
+    },
+    // Doctrine 3 burden-routing bias (gene-bank "Staff expression" + "Vulnerability"):
+    // S5/J9 + S3 + S2 staff expression with no S4 lane -> coalition staff over-prioritizes
+    // plans and under-attends sustainment logistics reality.
+    burdenBias: {
+      priorityLanes: ["plans"],
+      underpricedLanes: ["sustainment"],
     },
   }),
   doctrineGeneSchema.parse({
@@ -83,8 +111,25 @@ export const doctrineGenes: readonly DoctrineGene[] = [
       mainEffortFocus: -2,
     },
     staffAdviceStyle: {
-      S1: "Asks whether a new cell is worth its coordination cost before approving headcount moves.",
-      S3: "Prefers temporary cross-functional cells over pure stovepipe routing for multi-lane problems.",
+      S1: {
+        summary: "Asks whether a new cell is worth its coordination cost before approving headcount moves.",
+        biasTags: [],
+        cautionTags: ["modernization", "exercise"],
+        positionLean: 0,
+      },
+      S3: {
+        summary: "Prefers temporary cross-functional cells over pure stovepipe routing for multi-lane problems.",
+        biasTags: ["program", "modernization"],
+        cautionTags: [],
+        positionLean: 1,
+      },
+    },
+    // Doctrine 3 burden-routing bias: cross-functional cells live in the S3/operations
+    // hub; the vulnerability is coordination cost when temporary cells displace
+    // repeatable training standardization.
+    burdenBias: {
+      priorityLanes: ["operations"],
+      underpricedLanes: ["training"],
     },
   }),
   doctrineGeneSchema.parse({
@@ -111,9 +156,30 @@ export const doctrineGenes: readonly DoctrineGene[] = [
       systemPressure: 3,
     },
     staffAdviceStyle: {
-      S4: "Holds an effective veto over tempo promises and frames every plan as a supportability question first.",
-      S3: "Accepts sustainment-driven sequencing and argues for it publicly instead of hiding the constraint.",
-      S1: "Credits readiness only when the force can actually be sustained, not when it merely looks ready.",
+      S4: {
+        summary: "Holds an effective veto over tempo promises and frames every plan as a supportability question first.",
+        biasTags: ["repair", "fuel", "lift", "munitions"],
+        cautionTags: ["tempo-spike", "escalatory"],
+        positionLean: -1,
+      },
+      S3: {
+        summary: "Accepts sustainment-driven sequencing and argues for it publicly instead of hiding the constraint.",
+        biasTags: ["repair", "recovery"],
+        cautionTags: ["escalatory"],
+        positionLean: 0,
+      },
+      S1: {
+        summary: "Credits readiness only when the force can actually be sustained, not when it merely looks ready.",
+        biasTags: ["recovery"],
+        cautionTags: ["tempo-spike"],
+        positionLean: 0,
+      },
+    },
+    // Doctrine 3 burden-routing bias: the S4 veto over-prioritizes sustainment; the
+    // vulnerability ("slower visible posture") underprices visible operations.
+    burdenBias: {
+      priorityLanes: ["sustainment"],
+      underpricedLanes: ["operations"],
     },
   }),
 ];
