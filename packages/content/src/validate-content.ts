@@ -7,10 +7,39 @@ import {
   directorateSchema,
   type DoctrineGene,
   type EventDefinition,
+  type ChiefArchetype,
 } from "@brass-ledger/shared";
+import { portraitTrimColor, spriteVisualLanguageSchema } from "@brass-ledger/shared";
+import { spriteVisualLanguage } from "./sprite-visual-language";
 import { resolveDoctrineGenes, doctrineGenes } from "./doctrine-genes";
 import { doctrineEventCostMass } from "./index";
 const { soloScenario } = (await import(new URL("./scenario.ts", import.meta.url).href)) as typeof import("./scenario");
+
+const spriteRoles = ["S1", "S2", "S3", "S4", "S5", "training"] as const;
+const directorateRoles = { people: "S1", intelligence: "S2", operations: "S3", sustainment: "S4", plans: "S5", training: "training" } as const;
+const roadmapRows = {
+  S1: ["rounded shoulders, grounded stance", "muted green", "protective, concerned"],
+  S2: ["narrow framing, sharper contrast", "cool blue", "skeptical, precise"],
+  S3: ["square posture, forward lean", "brass/amber", "direct, impatient"],
+  S4: ["broad base, practical uniform detail", "clay/red-brown", "methodical, constraint-aware"],
+  S5: ["composed silhouette, cleaner lines", "muted indigo", "strategic, reserved"],
+} as const;
+export function validateSpriteVisualLanguage(value: unknown, chiefs: readonly ChiefArchetype[] = []): void {
+  const parsed = spriteVisualLanguageSchema.parse(value);
+  if (new Set(spriteRoles.map((role) => parsed[role].shapeLanguage)).size !== spriteRoles.length) throw new Error("Sprite visual-language shapes must be distinct.");
+  for (const role of Object.keys(roadmapRows) as (keyof typeof roadmapRows)[]) {
+    const entry = parsed[role];
+    const expected = roadmapRows[role];
+    if (entry.shapeLanguage !== expected[0] || entry.paletteCue !== expected[1] || entry.expressionBias !== expected[2] || entry.sourceRef !== "POTATO/sprite-design-logic#Visual Language") throw new Error(`Sprite roadmap transcription mismatch for ${role}`);
+  }
+  if (parsed.training.sourceRef !== "POTATO/sprite-design-logic#Visual Language (training guidance; authored extension)") throw new Error("Training sprite row must be marked as an authored extension.");
+  for (const chief of chiefs) {
+    const role = directorateRoles[chief.directorate];
+    if (parsed[role].accentColor !== portraitTrimColor(chief.directorate)) throw new Error(`Sprite accent mismatch for ${chief.directorate}`);
+  }
+}
+
+validateSpriteVisualLanguage(spriteVisualLanguage, soloScenario.chiefs);
 
 const chiefIds = new Set<string>();
 const capacityDirectorates = new Set<string>();

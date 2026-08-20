@@ -1,5 +1,6 @@
 export { soloScenario } from "./scenario";
 export { doctrineGenes, resolveDoctrineGenes } from "./doctrine-genes";
+export { spriteVisualLanguage } from "./sprite-visual-language";
 import type { EventDefinition } from "@brass-ledger/shared";
 
 /** Doctrine 4 authored adverse mass, shared by static balance lint and batch telemetry. */

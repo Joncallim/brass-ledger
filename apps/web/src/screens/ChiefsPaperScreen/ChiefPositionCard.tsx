@@ -1,4 +1,4 @@
-import type { ChiefPositionEntry, SessionAdvisor, DecisionMemo } from "@brass-ledger/shared";
+import type { ChiefPositionEntry, SessionAdvisor, DecisionMemo, SpriteSpec } from "@brass-ledger/shared";
 import { directorateLabel } from "@brass-ledger/shared";
 import { ChiefPortrait } from "../../components/ChiefPortrait";
 import { StaffReadoutEvidence } from "./StaffReadoutEvidence";
@@ -6,6 +6,7 @@ import { StaffReadoutEvidence } from "./StaffReadoutEvidence";
 type Props = {
   position: ChiefPositionEntry;
   advisor: SessionAdvisor | undefined;
+  sprite: SpriteSpec | undefined;
   memos: DecisionMemo[];
   onTalk: () => void;
 };
@@ -17,7 +18,7 @@ const positionMeta = {
   oppose: { symbol: "▼", label: "Objects", color: "text-red-400 border-red-600/70/60 bg-red-950/40" },
 };
 
-export function ChiefPositionCard({ position, advisor, memos, onTalk }: Props) {
+export function ChiefPositionCard({ position, advisor, sprite, memos, onTalk }: Props) {
   const meta = positionMeta[position.position] ?? positionMeta.accept_risk;
   const memo = memos.find((m) => m.id === position.memoId);
   const option = memo?.options.find((o) => o.id === position.optionId);
@@ -31,10 +32,9 @@ export function ChiefPositionCard({ position, advisor, memos, onTalk }: Props) {
       "border-border"
     } p-4`}>
       <div className="flex gap-3 mb-3">
-        {advisor && (
+        {advisor && sprite && (
           <ChiefPortrait
-            portrait={advisor.portrait}
-            displayName={advisor.displayName}
+            sprite={sprite}
             title={advisor.title}
             size="sm"
           />

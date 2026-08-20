@@ -1,7 +1,9 @@
-import { doctrineEventCostMass, soloScenario } from "@brass-ledger/content";
+import { doctrineEventCostMass, soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
 import { randomUUID } from "node:crypto";
 import {
   buildAdvisorPortraitSvg,
+  buildChiefSpriteSpec,
+  relationshipLabel,
   buildDirectorateBurden,
   buildStaffFunctionReadouts,
   createInitialGameSession,
@@ -574,13 +576,24 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
     turnSummaries,
     validation,
     sprites: options.includeSprites
-      ? session.advisorRoster.map((advisor) => ({
+      ? session.advisorRoster.map((advisor) => {
+        const chief = soloScenario.chiefs.find((candidate) => candidate.id === advisor.chiefId);
+        if (!chief) throw new Error(`Missing chief for advisor ${advisor.chiefId}`);
+        const position = session.history.at(-1)?.chiefPositions.find((candidate) => candidate.chiefId === advisor.chiefId);
+        const spec = buildChiefSpriteSpec({
+          chief, portrait: advisor.portrait, sessionSeed: session.id,
+          trustBand: relationshipLabel(session.state.chiefTrust[chief.id] ?? 50),
+          burdenLevel: position?.staffReadoutEvidence.burdenLevel ?? "light",
+          campaignStatus: session.state.campaignStatus, visualLanguage: spriteVisualLanguage,
+        });
+        return {
           chiefId: advisor.chiefId,
           displayName: advisor.displayName,
           title: advisor.title,
           directorate: advisor.directorate,
-          svg: buildAdvisorPortraitSvg(advisor.portrait),
-        }))
+          svg: buildAdvisorPortraitSvg(spec), spec,
+        };
+      })
       : undefined,
     sessionExport: session,
   };

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { soloScenario } from "@brass-ledger/content";
-import { createInitialGameSession, type TurnInput } from "@brass-ledger/shared";
+import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
+import { buildAdvisorPortraitSvg, spriteSpecSchema, createInitialGameSession, type TurnInput } from "@brass-ledger/shared";
 import { acceptedRiskCandidatesForInput, createBatchSession, replicateSeedFor, runHeadlessBatch, runHeadlessCampaign } from "./index";
 
 test("batch campaigns use paired replicate seeds across strategies", () => {
@@ -14,6 +14,30 @@ test("batch campaigns use paired replicate seeds across strategies", () => {
   assert.notEqual(balanced.state.seed, nextReplicate.state.seed, "different replicates get different seeds");
   assert.equal(replicateSeedFor(0), soloScenario.initialState.seed);
   assert.equal(replicateSeedFor(1), soloScenario.initialState.seed + 1009);
+});
+
+test("sprite output is additive, schema-valid, and renderer-equivalent", async () => {
+  const without = await runHeadlessCampaign({ turns: 0 });
+  assert.equal(without.sprites, undefined);
+  const withSprites = await runHeadlessCampaign({ turns: 1, includeSprites: true });
+  assert.equal(withSprites.sprites?.length, 6);
+  for (const sprite of withSprites.sprites ?? []) {
+    assert.deepEqual(spriteSpecSchema.parse(sprite.spec), sprite.spec);
+    assert.equal(sprite.svg, buildAdvisorPortraitSvg(sprite.spec));
+    assert.match(sprite.svg, /^<svg/);
+  }
+});
+
+test("sprite output is deterministic for the same supplied session", async () => {
+  const session = createInitialGameSession(soloScenario, "sprite-headless-session");
+  const first = await runHeadlessCampaign({ session: structuredClone(session), turns: 0, includeSprites: true });
+  const second = await runHeadlessCampaign({ session: structuredClone(session), turns: 0, includeSprites: true });
+  assert.deepEqual(first.sprites, second.sprites);
+  // Zero history means the burden falls back to "light" and trust is not strained, so no
+  // precedence override fires — expression must be the authored base expression.
+  for (const sprite of first.sprites ?? []) {
+    assert.equal(sprite.spec.expression, spriteVisualLanguage[sprite.spec.role].baseExpression, `${sprite.spec.role} must fall through to its authored base expression`);
+  }
 });
 
 test("a small batch is deterministic across independent runs", async () => {

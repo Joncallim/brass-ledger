@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { soloScenario } from "@brass-ledger/content";
+import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
 import type { ScenarioSummary } from "@brass-ledger/shared";
 
 import { scenarioLabels } from "../src/lib/labels.ts";
@@ -19,6 +19,7 @@ function toScenarioSummary(): ScenarioSummary {
     externalConstraints: soloScenario.externalConstraints,
     events: soloScenario.events,
     doctrineLens: soloScenario.doctrineLens,
+    spriteVisualLanguage,
   };
 }
 
