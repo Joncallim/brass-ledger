@@ -340,7 +340,7 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
       const [memoId, optionId] = key.split(":");
       const total = strategyMemoCampaignCounts.get(strategyId)?.[memoId] ?? 1;
       return { memoId, optionId, selectionRate: count / total };
-    }).sort((a, b) => b.selectionRate - a.selectionRate);
+    }).sort((a, b) => a.optionId.localeCompare(b.optionId) || a.memoId.localeCompare(b.memoId));
   }
 
   const doctrineStrategies = strategies.map((strategyId) => { const stat = strategyStats.get(strategyId)!; return { profileId: soloScenario.doctrineProfile.id, strategyId, campaigns: stat.campaigns, meanScore: stat.campaigns ? stat.score / stat.campaigns : 0, winRate: stat.campaigns ? stat.wins / stat.campaigns : 0, meanDoctrineEvents: stat.campaigns ? stat.events / stat.campaigns : 0, meanDoctrineEventCostMass: stat.campaigns ? stat.cost / stat.campaigns : 0, doctrineCampaignHitRate: stat.campaigns ? stat.doctrineCampaigns / stat.campaigns : 0 }; }).sort((a, b) => a.strategyId.localeCompare(b.strategyId));
@@ -372,6 +372,9 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
   if (campaignCount >= 240) {
     for (const entry of doctrineEvents) {
       if (entry.attemptedCampaigns > 0 && (entry.maturationRate < 0.70 || entry.maturationRate > 1)) balanceWarnings.push(`${entry.eventId} maturation rate is outside the 0.70–1.00 target.`);
+      // Invariant guard, not a live gate: eligibility → firing is deterministic, so
+      // firingReliability is always 1.0 today. Kept to surface breakage if an RNG is
+      // ever introduced between qualification and firing.
       if (entry.firingReliability !== 1 && entry.qualifyingCampaigns > 0) balanceWarnings.push(`${entry.eventId} has non-deterministic firing after qualification.`);
       const targetStrategy = doctrineStrategies.find((strategy) => strategy.strategyId === targetStrategyForEvent(entry.eventId));
       if (!targetStrategy || targetStrategy.meanDoctrineEventCostMass <= 0) balanceWarnings.push(`${entry.eventId} has no authored adverse event cost in its target strategy.`);

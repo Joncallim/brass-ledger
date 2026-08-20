@@ -73,7 +73,7 @@ const sustainmentEvent = {
   excludedFlags: [],
   setsFlags: ["doctrine_sustainment_patience_blowback"],
   clearsFlags: [],
-  stateDelta: { domestic: { cabinetCover: -10, publicPatience: -10, mediaHeat: 6 }, resources: { politicalCapital: -6 } },
+  stateDelta: { alliance: { politicalAlignment: -18 }, domestic: { cabinetCover: -10, publicPatience: -8, mediaHeat: 5 }, resources: { politicalCapital: -4 }, forceGeneration: { reserveStrain: 16, deployableUnits: -1.5 }, escalation: { incidentLadder: 28 } },
   constraintShifts: [],
   doctrineTrigger: {
     sourceGeneId: "sustainment-first-operational-reach",
