@@ -10,8 +10,11 @@ import { doctrineGeneSchema, type DoctrineGene, type DoctrineProfile } from "@br
 // Mapping convention (gene bank "POTATO variables" → engine variables):
 // The gene bank predates Doctrine 1 and uses its own frame vocabulary
 // (e.g. interoperabilityBias, processFlexibility). Each gene below translates that
-// intent onto the actual DoctrineMechanicsState keys, with at least one counterweight
-// per benefit (negative modifier, or a positive modifier on a doctrineRiskKeys key).
+// intent onto the actual DoctrineMechanicsState keys, with counterweight mass at
+// least equal to benefit mass (negative modifiers and positive modifiers on
+// doctrineRiskKeys keys count as counterweights).
+// VariableModifiers is a STRICT schema: an unknown key (e.g. supportableTempo, which
+// lives in staffMechanics.s4 rather than the doctrine state) fails loudly at parse.
 //
 // Remaining gene-bank entries (Commander-Compressed Planning, Expeditionary Operational
 // HQ, C4-Resilient Territorial Staff, Whole-Of-State Mobilizer, System-Pressure Operator,
@@ -37,7 +40,13 @@ export const doctrineGenes: readonly DoctrineGene[] = [
       campaignAimClarity: 6,
       staffSynchronization: 7,
       commanderIntentClarity: 4,
-      systemPressure: 8, // counterweight: caveat and legal/policy load
+      // Counterweights (mass 8+4+5 = 17 >= benefits 17): caveat/legal/policy load,
+      // slower decision tempo from added constraints, and harder signature management
+      // under public and partner scrutiny. Deliberately NOT on uncommittedCapacity so
+      // the reserve gate stays reachable for this faction.
+      systemPressure: 8,
+      relativeTempo: -4,
+      signatureControl: -5,
     },
     staffAdviceStyle: {
       S5: "Frames every option in alliance terms first and warns when a commitment outruns what partners have actually signed up to.",
@@ -60,9 +69,12 @@ export const doctrineGenes: readonly DoctrineGene[] = [
       "Coordination cost rises when too many temporary cells compete for attention",
     ],
     variableModifiers: {
+      // Counterweight mass 3+2 = 5 >= benefit 5: cells consume coordination capacity
+      // and competing temporary cells diffuse the main effort's concentration. The
+      // capacity cost is capped at -3 so the reserve gate stays reachable.
       staffSynchronization: 5,
-      orderClarity: 4,
-      uncommittedCapacity: -5, // counterweight: cells consume coordination capacity
+      uncommittedCapacity: -3,
+      mainEffortFocus: -2,
     },
     staffAdviceStyle: {
       S1: "Asks whether a new cell is worth its coordination cost before approving headcount moves.",
@@ -84,10 +96,13 @@ export const doctrineGenes: readonly DoctrineGene[] = [
       "Slower visible posture; political frustration when the public wants immediate action",
     ],
     variableModifiers: {
+      // Counterweight mass 3+3 = 6 >= benefit 6: tempo must be earned (slower visible
+      // posture) and political frustration pressure rises. NOTE: supportableTempo is a
+      // staffMechanics.s4 metric, not a doctrine variable — a staff-level modifier is
+      // out of scope for Doctrine 2 (see packages/sim doctrine anchor design).
       operationalReach: 6,
-      supportableTempo: -5, // counterweight: doctrine insists tempo be earned, not claimed
-      relativeTempo: -3, // counterweight: slower visible posture
-      systemPressure: 3, // counterweight: political frustration pressure
+      relativeTempo: -3,
+      systemPressure: 3,
     },
     staffAdviceStyle: {
       S4: "Holds an effective veto over tempo promises and frames every plan as a supportability question first.",

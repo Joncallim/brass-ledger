@@ -175,20 +175,24 @@ if (soloScenario.doctrineProfile) {
     const entries = Object.entries(gene.variableModifiers) as Array<
       [string, number | undefined]
     >;
-    const qualityBenefits = entries.filter(
-      ([key, delta]) =>
-        (delta ?? 0) > 0 && !(doctrineRiskKeys as readonly string[]).includes(key),
-    );
-    const hasCounterweight = entries.some(
-      ([key, delta]) =>
-        (delta ?? 0) < 0 ||
-        ((delta ?? 0) > 0 && (doctrineRiskKeys as readonly string[]).includes(key)),
-    );
-    if (qualityBenefits.length > 0 && !hasCounterweight) {
+    // Tradeoff guardrail: counterweight mass (negative modifiers plus positive modifiers
+    // on doctrine risk keys) must be at least the benefit mass (positive modifiers on
+    // quality keys), so no gene is a free lunch. The strict variableModifiers schema
+    // guarantees no modifier can be hidden by stripping — an unknown key fails parse.
+    const benefitMass = entries
+      .filter(([key, delta]) => (delta ?? 0) > 0 && !(doctrineRiskKeys as readonly string[]).includes(key))
+      .reduce((sum, [, delta]) => sum + (delta ?? 0), 0);
+    const counterweightMass =
+      entries
+        .filter(([, delta]) => (delta ?? 0) < 0)
+        .reduce((sum, [, delta]) => sum + Math.abs(delta ?? 0), 0) +
+      entries
+        .filter(([key, delta]) => (delta ?? 0) > 0 && (doctrineRiskKeys as readonly string[]).includes(key))
+        .reduce((sum, [, delta]) => sum + (delta ?? 0), 0);
+    if (counterweightMass < benefitMass) {
       throw new Error(
-        `Doctrine gene ${gene.id} has a benefit (${qualityBenefits.map(([k]) => k).join(", ")}) ` +
-          `without a counterweight. Every benefit needs a negative modifier or a positive ` +
-          `modifier on a doctrine risk key (${doctrineRiskKeys.join(", ")}).`,
+        `Doctrine gene ${gene.id} has benefit mass ${benefitMass} exceeding counterweight mass ${counterweightMass}. ` +
+          `Every benefit needs a counterweight: negative modifiers or positive modifiers on doctrine risk keys (${doctrineRiskKeys.join(", ")}).`,
       );
     }
 
@@ -212,6 +216,8 @@ if (soloScenario.doctrineProfile) {
     `Doctrine profile ${profile.id}: ${resolved.length} gene(s) [${resolved.map((g) => g.id).join(", ")}] applied, baseline verified against initialState.`,
   );
 } else {
+  // doctrineProfile is required on the scenario definition schema; this branch is
+  // defensive only.
   throw new Error("Scenario must declare a doctrineProfile (Doctrine 2, issue #56).");
 }
 

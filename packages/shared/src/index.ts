@@ -206,6 +206,10 @@ export type OptionalStaffModule = z.infer<typeof optionalStaffModuleSchema>;
 // Doctrine variables whose increase is a cost (accumulated risk or accepted risk)
 // rather than a capability gain. A positive modifier on one of these keys can serve
 // as a gene's counterweight under the "every benefit needs a counterweight" guardrail.
+// NOTE: secondaryRiskAccepted is dual-direction — the sim treats LOW unacknowledged
+// risk (strained lanes with no accepted-risk override) as the warning state, so
+// "increase = cost" is the correct classification for counterweight purposes but a
+// future gene using +secondaryRiskAccepted as a benefit would be silently reclassified.
 export const doctrineRiskKeys = [
   "culminationRisk",
   "systemPressure",
@@ -223,7 +227,10 @@ const doctrineVariableKeys = Object.keys(
 const doctrineVariableModifierShape = Object.fromEntries(
   doctrineVariableKeys.map((key) => [key, z.number().int().min(-50).max(50).optional()]),
 ) as { [K in keyof DoctrineMechanicsState]?: z.ZodOptional<z.ZodNumber> };
-export const doctrineVariableModifierSchema = z.object(doctrineVariableModifierShape);
+// .strict(): an unknown modifier key must fail loudly at gene-definition time rather
+// than being silently stripped by Zod (a real bug — supportableTempo was declared as a
+// modifier before it existed as a doctrine key, and the -5 never applied).
+export const doctrineVariableModifierSchema = z.object(doctrineVariableModifierShape).strict();
 export type DoctrineVariableModifiers = z.infer<typeof doctrineVariableModifierSchema>;
 
 // A single doctrine gene: a fictionalized, evidence-linked ingredient sourced from the
@@ -262,19 +269,30 @@ export const doctrineProfileSchema = z.object({
 export type DoctrineProfile = z.infer<typeof doctrineProfileSchema>;
 
 // Apply a scenario's doctrine genes to the neutral doctrine baseline. Pure and
-// deterministic: modifiers sum per variable in gene order, and the result is clamped
-// to the 0-100 index range. Called once at scenario-definition time, so serialized
-// saves carry the biased opening position and replay never re-applies genes.
+// deterministic: every delta accumulates per variable first (order-independent), then
+// the final total is clamped to the 0-100 index range once. Called at
+// scenario-definition time, so serialized saves carry the biased opening position and
+// replay never re-applies genes.
 export function applyDoctrineGenes(
   neutral: DoctrineMechanicsState,
   genes: readonly DoctrineGene[],
 ): DoctrineMechanicsState {
-  const result: DoctrineMechanicsState = { ...neutral };
+  // Accumulate-then-clamp (not clamp-per-gene): clamping inside the loop would make
+  // the result order-dependent — e.g. +50 then -50 on an 80 baseline would yield 50
+  // instead of the true summed result 80.
+  const deltas: Partial<Record<keyof DoctrineMechanicsState, number>> = {};
   for (const gene of genes) {
     for (const [key, delta] of Object.entries(
       gene.variableModifiers,
     ) as Array<[keyof DoctrineMechanicsState, number | undefined]>) {
       if (delta === undefined) continue;
+      deltas[key] = (deltas[key] ?? 0) + delta;
+    }
+  }
+  const result: DoctrineMechanicsState = { ...neutral };
+  for (const key of doctrineVariableKeys) {
+    const delta = deltas[key];
+    if (delta !== undefined) {
       result[key] = Math.min(100, Math.max(0, result[key] + delta));
     }
   }
@@ -928,7 +946,7 @@ export const scenarioDefinitionSchema = z.object({
   memoTemplates: z.array(decisionMemoSchema),
   events: z.array(eventDefinitionSchema),
   initialState: campaignStateSchema,
-  doctrineProfile: doctrineProfileSchema.optional(),
+  doctrineProfile: doctrineProfileSchema,
 });
 export type ScenarioDefinition = z.infer<typeof scenarioDefinitionSchema>;
 

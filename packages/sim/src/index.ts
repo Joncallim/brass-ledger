@@ -109,6 +109,7 @@ import {
   buildChiefPositions,
   buildDirectorateBurden,
   buildStaffFunctionReadouts,
+  defaultDoctrineMechanicsState,
   directorateLabel,
   evaluateCampaignObjectives,
   summarizeState,
@@ -1336,6 +1337,7 @@ type DoctrineResolution = {
 
 type DoctrineResolutionInput = {
   previousState: CampaignState;
+  doctrineAnchor: DoctrineMechanicsState;
   selectedOptions: MemoOption[];
   directorateBurden: DirectorateBurden[];
   nextStaffMechanics: StaffMechanicsState;
@@ -1349,6 +1351,7 @@ type DoctrineResolutionInput = {
 
 function resolveDoctrineMechanics({
   previousState,
+  doctrineAnchor,
   selectedOptions,
   directorateBurden,
   nextStaffMechanics,
@@ -1361,6 +1364,16 @@ function resolveDoctrineMechanics({
 }: DoctrineResolutionInput): DoctrineResolution {
   const tags = new Set(selectedOptions.flatMap((option) => option.tags));
   const prev = previousState.doctrineMechanics;
+  // Faction anchor: the scenario's opening doctrine baseline (the profile-applied
+  // position serialized in scenario.initialState). Pull targets below derive from it,
+  // and recomputed variables receive its offset vs the neutral default, so a
+  // scenario's doctrine genes produce a DURABLE bias instead of being erased by
+  // hard-coded neutral anchors within a turn or two. For a profile-less scenario the
+  // anchor equals the neutral default and every offset is 0 — behavior is unchanged.
+  const factionOffset: Partial<Record<keyof DoctrineMechanicsState, number>> = {};
+  for (const key of Object.keys(defaultDoctrineMechanicsState) as Array<keyof DoctrineMechanicsState>) {
+    factionOffset[key] = doctrineAnchor[key] - defaultDoctrineMechanicsState[key];
+  }
   const notes: DoctrineNote[] = [];
   let strategic = strategicIn;
   let resources = resourcesIn;
@@ -1370,16 +1383,17 @@ function resolveDoctrineMechanics({
   const contradictingPairs = CONTRADICTORY_TAG_PAIRS.filter(([a, b]) => tags.has(a) && tags.has(b)).length;
   // Both non-contradiction branches use pullToNeutral (unlike a flat increment) so this
   // variable settles at a bounded equilibrium under sustained play instead of ratcheting to an
-  // extreme: coherent play drifts toward a healthy-but-not-maxed 70, everything else drifts
-  // back toward the neutral 55 baseline. Every other persisted doctrine variable in this
+  // extreme: coherent play drifts toward a healthy-but-not-maxed target (neutral 55 + 15,
+  // shifted by the faction anchor), everything else drifts back toward the faction's baseline
+  // (the profile-applied opening value). Every other persisted doctrine variable in this
   // function already follows this pattern; campaignAimClarity previously didn't, which combined
   // with a contradiction pair that could re-fire every turn to pin it at 0 permanently.
   const aimSignal =
     contradictingPairs > 0
       ? -8 * contradictingPairs
       : nextStaffMechanics.s5.strategicCoherence > 55
-        ? pullToNeutral(prev.campaignAimClarity, 70, 3)
-        : pullToNeutral(prev.campaignAimClarity, 55, 3);
+        ? pullToNeutral(prev.campaignAimClarity, clamp(doctrineAnchor.campaignAimClarity + 15, 0, 100), 3)
+        : pullToNeutral(prev.campaignAimClarity, doctrineAnchor.campaignAimClarity, 3);
   const campaignAimClarity = clamp(prev.campaignAimClarity + aimSignal, 0, 100);
   if (contradictingPairs > 0 && campaignAimClarity < 45) {
     notes.push({
@@ -1396,7 +1410,7 @@ function resolveDoctrineMechanics({
       ? 13
       : tags.has("quiet") || tags.has("slow-burn")
         ? -14
-        : pullToNeutral(prev.relativeTempo, 50, 4);
+        : pullToNeutral(prev.relativeTempo, doctrineAnchor.relativeTempo, 4);
   const relativeTempo = clamp(prev.relativeTempo + tempoSignal, 0, 100);
   const tempoSupported =
     nextStaffMechanics.s1.recoveryDebt < 62 &&
@@ -1440,7 +1454,10 @@ function resolveDoctrineMechanics({
   }
   const totalBurdenPoints = [...burdenByDirectorate.values()].reduce((sum, value) => sum + value, 0);
   const maxDirectoratePoints = burdenByDirectorate.size > 0 ? Math.max(...burdenByDirectorate.values()) : 0;
-  const mainEffortFocus = totalBurdenPoints > 0 ? clamp(round((100 * maxDirectoratePoints) / totalBurdenPoints), 0, 100) : 50;
+  const mainEffortFocus =
+    totalBurdenPoints > 0
+      ? clamp(round((100 * maxDirectoratePoints) / totalBurdenPoints) + (factionOffset.mainEffortFocus ?? 0), 0, 100)
+      : 50 + (factionOffset.mainEffortFocus ?? 0);
   const mainEffortDirectorate = [...burdenByDirectorate.entries()].find(([, points]) => points === maxDirectoratePoints)?.[0];
   const neglectedLanes = directorateBurden.filter((entry) => entry.directorate !== mainEffortDirectorate && entry.burdenLevel === "overloaded");
   // Threshold calibrated to this scenario's content: every memo option spreads points across
@@ -1470,7 +1487,10 @@ function resolveDoctrineMechanics({
   // immediate progress. Test idea: reserve held during a crisis reduces event penalty.
   const totalCapacity = directorateBurden.reduce((sum, entry) => sum + entry.capacity, 0);
   const totalCommitted = directorateBurden.reduce((sum, entry) => sum + entry.burdenPoints, 0);
-  const uncommittedCapacity = totalCapacity > 0 ? clamp(round((100 * (totalCapacity - totalCommitted)) / totalCapacity), 0, 100) : 50;
+  const uncommittedCapacity =
+    totalCapacity > 0
+      ? clamp(round((100 * (totalCapacity - totalCommitted)) / totalCapacity) + (factionOffset.uncommittedCapacity ?? 0), 0, 100)
+      : 50 + (factionOffset.uncommittedCapacity ?? 0);
   // Threshold calibrated to this scenario's content: even the lightest legal 4-memo turn that
   // still reaches a genuine crisis event's trigger tags commits 14 of the staff's 20 points of
   // capacity (verified against packages/content/src/scenario.ts), landing at exactly 30%
@@ -1498,7 +1518,9 @@ function resolveDoctrineMechanics({
   // Gate: explicit accepted risk. Failure: surprise from an under-resourced lane.
   const strainedLanes = directorateBurden.filter((entry) => entry.burdenLevel !== "light").length;
   const secondaryRiskAccepted =
-    strainedLanes === 0 ? 50 : clamp(round((100 * Math.min(acceptedRiskOverrides.length, strainedLanes)) / strainedLanes), 0, 100);
+    strainedLanes === 0
+      ? 50 + (factionOffset.secondaryRiskAccepted ?? 0)
+      : clamp(round((100 * Math.min(acceptedRiskOverrides.length, strainedLanes)) / strainedLanes) + (factionOffset.secondaryRiskAccepted ?? 0), 0, 100);
   if (strainedLanes > 0 && acceptedRiskOverrides.length === 0) {
     notes.push({
       heading: "Doctrine: unacknowledged risk",
@@ -1510,14 +1532,14 @@ function resolveDoctrineMechanics({
   // Gate: S2 confidence and S4 lift/support. Failure: hollow movement or revealed posture.
   const maneuverTagsPresent = tags.has("forward-posture") || tags.has("lift") || tags.has("exercise");
   const maneuverRaw = (tags.has("forward-posture") ? 10 : 0) + (tags.has("lift") ? 6 : 0) + (tags.has("exercise") ? 4 : 0);
-  // Pulls toward a target derived from the raw tag signal (neutral 40, scaled by strength)
-  // rather than adding the raw signal every turn — a flat additive delta with no decay would
-  // ratchet this variable to the 100 ceiling and pin it there under any playstyle that sustains
-  // the same maneuver tags turn after turn (this was a real, verified bug in a sibling variable,
-  // campaignAimClarity, before it was fixed the same way).
+  // Pulls toward a target derived from the raw tag signal (faction anchor base, scaled by
+  // strength) rather than adding the raw signal every turn — a flat additive delta with no
+  // decay would ratchet this variable to the 100 ceiling and pin it there under any playstyle
+  // that sustains the same maneuver tags turn after turn (this was a real, verified bug in a
+  // sibling variable, campaignAimClarity, before it was fixed the same way).
   const maneuverSignal = maneuverTagsPresent
-    ? pullToNeutral(prev.optionDislocation, clamp(40 + maneuverRaw * 3, 0, 100), Math.max(3, maneuverRaw))
-    : pullToNeutral(prev.optionDislocation, 40, 4);
+    ? pullToNeutral(prev.optionDislocation, clamp(doctrineAnchor.optionDislocation + maneuverRaw * 3, 0, 100), Math.max(3, maneuverRaw))
+    : pullToNeutral(prev.optionDislocation, doctrineAnchor.optionDislocation, 4);
   const optionDislocation = clamp(prev.optionDislocation + maneuverSignal, 0, 100);
   const maneuverSupported = nextStaffMechanics.s2.externalEstimateConfidence > 42 && nextStaffMechanics.s4.liftBurn < 65;
   if (optionDislocation > 60 && !maneuverSupported) {
@@ -1536,8 +1558,8 @@ function resolveDoctrineMechanics({
   // counter-deception+quiet selections (this scenario's own moderate baseline) would otherwise
   // ratchet this to a permanent 100 with no way back, verified by simulating balanced play.
   const signatureSignal = signatureTagsPresent
-    ? pullToNeutral(prev.signatureControl, clamp(45 + signatureRaw * 4, 0, 100), Math.max(3, Math.abs(signatureRaw)))
-    : pullToNeutral(prev.signatureControl, 45, 3);
+    ? pullToNeutral(prev.signatureControl, clamp(doctrineAnchor.signatureControl + signatureRaw * 4, 0, 100), Math.max(3, Math.abs(signatureRaw)))
+    : pullToNeutral(prev.signatureControl, doctrineAnchor.signatureControl, 3);
   const signatureControl = clamp(prev.signatureControl + signatureSignal, 0, 100);
   if (signatureControl > 60 && nextStaffMechanics.s2.deceptionRisk >= 55) {
     resources = { ...resources, publicLegitimacy: clamp(resources.publicLegitimacy - 1, 0, 100) };
@@ -1553,8 +1575,8 @@ function resolveDoctrineMechanics({
   const exposureRaw = (tags.has("counter-deception") ? 4 : 0) + (tags.has("quiet") ? 5 : 0) - (tags.has("forward-posture") ? 5 : 0) - (tags.has("public-commitment") ? 4 : 0);
   // Same target/pull pattern as optionDislocation/signatureControl above, for the same reason.
   const exposureSignal = exposureTagsPresent
-    ? pullToNeutral(prev.exposureControl, clamp(50 + exposureRaw * 4, 0, 100), Math.max(3, Math.abs(exposureRaw)))
-    : pullToNeutral(prev.exposureControl, 50, 3);
+    ? pullToNeutral(prev.exposureControl, clamp(doctrineAnchor.exposureControl + exposureRaw * 4, 0, 100), Math.max(3, Math.abs(exposureRaw)))
+    : pullToNeutral(prev.exposureControl, doctrineAnchor.exposureControl, 3);
   const exposureControl = clamp(prev.exposureControl + exposureSignal, 0, 100);
   if (exposureControl < 35 && (nextStaffMechanics.s2.externalEstimateConfidence <= 42 || nextStaffMechanics.s4.stockpileDepth <= 42)) {
     strategic = { ...strategic, forceGeneration: { ...strategic.forceGeneration, trainingThroughput: clamp(strategic.forceGeneration.trainingThroughput - 1, 0, 100) } };
@@ -1615,7 +1637,7 @@ function resolveDoctrineMechanics({
         (100 - strategicIn.sustainment.depotBacklog) +
         strategicIn.sustainment.fuelSufficiency) /
         4,
-    ),
+    ) + (factionOffset.operationalReach ?? 0),
     0,
     100,
   );
@@ -1641,7 +1663,11 @@ function resolveDoctrineMechanics({
   const burdenRatios = directorateBurden.map((entry) => (entry.capacity > 0 ? entry.burdenPoints / entry.capacity : 0));
   const meanRatio = burdenRatios.length > 0 ? burdenRatios.reduce((sum, value) => sum + value, 0) / burdenRatios.length : 0;
   const ratioVariance = burdenRatios.length > 0 ? burdenRatios.reduce((sum, value) => sum + (value - meanRatio) ** 2, 0) / burdenRatios.length : 0;
-  const staffSynchronization = clamp(round(100 - Math.sqrt(ratioVariance) * 90), 0, 100);
+  const staffSynchronization = clamp(
+    round(100 - Math.sqrt(ratioVariance) * 90) + (factionOffset.staffSynchronization ?? 0),
+    0,
+    100,
+  );
 
   // ── Mission command: commanderIntentClarity ──────────────────────────────────────────────
   // Gate: trust and chief competence. Failure: handoff friction.
@@ -1651,7 +1677,11 @@ function resolveDoctrineMechanics({
   const trustValues = chiefs.map((chief) => (Object.hasOwn(previousChiefTrust, chief.id) ? previousChiefTrust[chief.id] : 50));
   const meanTrust = trustValues.length > 0 ? trustValues.reduce((sum, value) => sum + value, 0) / trustValues.length : 50;
   const meanCompetence = chiefs.length > 0 ? (chiefs.reduce((sum, chief) => sum + chief.competence, 0) / chiefs.length) * 100 : 70;
-  const commanderIntentClarity = clamp(round(meanTrust * 0.6 + meanCompetence * 0.4), 0, 100);
+  const commanderIntentClarity = clamp(
+    round(meanTrust * 0.6 + meanCompetence * 0.4) + (factionOffset.commanderIntentClarity ?? 0),
+    0,
+    100,
+  );
   if (commanderIntentClarity < 40) {
     resources = { ...resources, politicalCapital: clamp(resources.politicalCapital - 1, 0, 100) };
     notes.push({
@@ -1664,7 +1694,8 @@ function resolveDoctrineMechanics({
   // Gate: S2 estimate confidence (optional J6/C2 modules arrive in issue #59). Failure:
   // mis-targeting or dependency blowback.
   const systemPressure = clamp(
-    round(100 - nextStaffMechanics.s2.externalEstimateConfidence + nextStaffMechanics.s2.deceptionRisk * 0.3),
+    round(100 - nextStaffMechanics.s2.externalEstimateConfidence + nextStaffMechanics.s2.deceptionRisk * 0.3) +
+      (factionOffset.systemPressure ?? 0),
     0,
     100,
   );
@@ -2001,6 +2032,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   const nextStaffMechanics = updateStaffMechanics(previousState, selectedOptions, directorateBurden, triggeredEvents, nextConstraints);
   const doctrineResolution = resolveDoctrineMechanics({
     previousState,
+    doctrineAnchor: scenario.initialState.doctrineMechanics,
     selectedOptions,
     directorateBurden,
     nextStaffMechanics,
