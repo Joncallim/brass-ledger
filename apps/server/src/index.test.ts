@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { scenarioSummarySchema } from "@brass-ledger/shared";
+import { scenarioSummarySchema, chiefSpriteDeterministicSeed } from "@brass-ledger/shared";
 
 const saveDir = await mkdtemp(path.join(tmpdir(), "brass-ledger-routes-"));
 process.env.NODE_ENV = "test";
@@ -364,6 +364,31 @@ test("import rejects forged session exports and accepts replayable exports under
   const acceptedBody = accepted.json();
   assert.notEqual(acceptedBody.session.id, id);
   assert.equal(acceptedBody.session.revision, 0);
+});
+
+test("imported copies keep byte-identical portraits under a new session id (deterministic seed namespace)", async () => {
+  const created = await createSession();
+  const source = created.session;
+  const exported = await app.inject({ method: "GET", url: `/api/sessions/${source.id}/export` });
+  assert.equal(exported.statusCode, 200);
+  const exportData = exported.json();
+
+  const imported = await app.inject({
+    method: "POST",
+    url: "/api/sessions/import",
+    payload: { exportData },
+  });
+  assert.equal(imported.statusCode, 200);
+  const importedSession = imported.json().session;
+
+  assert.notEqual(importedSession.id, source.id, "imported session must get a new id (new deterministic seed namespace)");
+  assert.deepEqual(importedSession.advisorRoster, exportData.session.advisorRoster, "stored advisorRoster portraits must remain byte-identical across import");
+  const chiefId = importedSession.advisorRoster[0].chiefId;
+  assert.notEqual(
+    chiefSpriteDeterministicSeed(importedSession.id, chiefId),
+    chiefSpriteDeterministicSeed(source.id, chiefId),
+    "the deterministic seed derived from the new session id must differ from the source's",
+  );
 });
 
 test("import rejects replay-corrupted session exports", async () => {

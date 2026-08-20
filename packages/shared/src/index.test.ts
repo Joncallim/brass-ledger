@@ -320,6 +320,7 @@ test("chief sprite derivation is deterministic and preserves legacy SVG bytes", 
   assert.equal(buildAdvisorPortraitDataUri(sprite), `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(legacySvg)}`);
   assert.equal(sprite.expression, "calm");
   assert.equal(sprite.deterministicSeed, chiefSpriteDeterministicSeed("session-a", "sprite-chief"));
+  assert.deepEqual(sprite.palette, [spritePortrait.skinTone, spritePortrait.hairColor, spritePortrait.eyeColor, spritePortrait.uniformColor, spritePortrait.trimColor, spritePortrait.backgroundColor, spritePortrait.panelColor], "palette must preserve the 7 legacy colors in canonical order");
   assert.throws(() => chiefSpriteDeterministicSeed("", "sprite-chief"), /sessionSeed/);
   assert.throws(() => chiefSpriteDeterministicSeed("session-a", ""), /chiefId/);
 });
@@ -343,6 +344,19 @@ test("trust thresholds and expression precedence are total", () => {
   assert.equal(buildChiefSpriteSpec({ ...base, burdenLevel: "strained" }).expression, "strained");
 });
 
+test("S2 and S3 authored base expressions win for neutral input (fall-through precedence)", () => {
+  const biasedLanguage = {
+    ...spriteVisualLanguage,
+    S2: { ...spriteVisualLanguage.S2, baseExpression: "skeptical" },
+    S3: { ...spriteVisualLanguage.S3, baseExpression: "urgent" },
+  } as any;
+  const neutral = { portrait: spritePortrait, sessionSeed: "session-a", trustBand: "steady" as const, burdenLevel: "light" as const, campaignStatus: "active" as const };
+  const s2Chief = { ...spriteChief, id: "s2-chief", directorate: "intelligence" as const };
+  const s3Chief = { ...spriteChief, id: "s3-chief", directorate: "operations" as const };
+  assert.equal(buildChiefSpriteSpec({ ...neutral, chief: s2Chief, visualLanguage: biasedLanguage }).expression, "skeptical");
+  assert.equal(buildChiefSpriteSpec({ ...neutral, chief: s3Chief, visualLanguage: biasedLanguage }).expression, "urgent");
+});
+
 test("roster identity is order-independent and sprite derivation does not mutate sessions", () => {
   const chiefs = [spriteChief, { ...spriteChief, id: "other", name: "Other Chief" }];
   const first = generateAdvisorRoster(chiefs, "order-session");
@@ -353,6 +367,8 @@ test("roster identity is order-independent and sprite derivation does not mutate
   buildChiefSpriteSpec({ chief: spriteChief, portrait: session.advisorRoster[0].portrait, sessionSeed: session.id, trustBand: "steady", burdenLevel: "light", campaignStatus: session.state.campaignStatus, visualLanguage: spriteVisualLanguage });
   assert.equal(JSON.stringify(session), snapshot);
   assert.equal("prompt" in session, false);
+  assert.equal("negativePrompt" in session, false);
+  assert.equal("deterministicSeed" in session, false);
 });
 
 test("turnResultSchema accepts a doctrine event in triggeredEvents", () => {
@@ -405,4 +421,24 @@ test("gameSessionSchema round-trips a mid-streak doctrineMaturity state", () => 
   assert.equal(parsed.state.doctrineMaturity["doctrine-sustainment-patience-gap"]?.consecutiveTurns, 2);
   assert.equal(parsed.state.doctrineMaturity["doctrine-sustainment-patience-gap"]?.startedTurn, 1);
   assert.equal(parsed.state.doctrineMaturity["doctrine-sustainment-patience-gap"]?.acceptedRiskRefs.length, 1);
+});
+
+test("gameSessionSchema parses a legacy-only v6 session roster (no sprite fields stored)", () => {
+  const parsed = gameSessionSchema.parse({
+    id: "00000000-0000-0000-0000-000000000001",
+    saveFormatVersion: "6",
+    engineVersion: "0.1.0",
+    revision: 0,
+    scenarioId: "test-scenario",
+    contentVersion: "0.10.0",
+    advisorRoster: [{ chiefId: "chief-1", displayName: "Chief One", title: "Chief of Plans", directorate: "plans", genderPresentation: "female", portrait: spritePortrait }],
+    state: validState(),
+    initialState: validState(),
+    turnInputs: [],
+    history: [],
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  });
+  assert.equal(parsed.advisorRoster.length, 1);
+  assert.equal(parsed.advisorRoster[0].portrait.skinTone, spritePortrait.skinTone);
+  assert.equal("deterministicSeed" in parsed.advisorRoster[0].portrait, false, "sprite-only fields must never be stored on a session portrait");
 });

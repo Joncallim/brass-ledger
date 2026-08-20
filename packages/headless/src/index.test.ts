@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { soloScenario } from "@brass-ledger/content";
+import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
 import { buildAdvisorPortraitSvg, spriteSpecSchema, createInitialGameSession, type TurnInput } from "@brass-ledger/shared";
 import { acceptedRiskCandidatesForInput, createBatchSession, replicateSeedFor, runHeadlessBatch, runHeadlessCampaign } from "./index";
 
@@ -33,6 +33,11 @@ test("sprite output is deterministic for the same supplied session", async () =>
   const first = await runHeadlessCampaign({ session: structuredClone(session), turns: 0, includeSprites: true });
   const second = await runHeadlessCampaign({ session: structuredClone(session), turns: 0, includeSprites: true });
   assert.deepEqual(first.sprites, second.sprites);
+  // Zero history means the burden falls back to "light" and trust is steady, so no
+  // precedence override fires — expression must be the authored base expression.
+  for (const sprite of first.sprites ?? []) {
+    assert.equal(sprite.spec.expression, spriteVisualLanguage[sprite.spec.role].baseExpression, `${sprite.spec.role} must fall through to its authored base expression`);
+  }
 });
 
 test("a small batch is deterministic across independent runs", async () => {
