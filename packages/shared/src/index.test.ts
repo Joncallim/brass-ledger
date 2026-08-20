@@ -3,14 +3,28 @@ import assert from "node:assert/strict";
 import { z } from "zod";
 import {
   campaignStateSchema,
+  buildAdvisorPortraitDataUri,
+  buildAdvisorPortraitSvg,
+  buildChiefSpriteSpec,
+  chiefSpriteDeterministicSeed,
   doctrineAcceptedRiskRefSchema,
   doctrineMaturityEntrySchema,
   eventDefinitionSchema,
   gameSessionSchema,
   scenarioSummarySchema,
+  spriteSpecSchema,
+  generateAdvisorRoster,
+  relationshipLabel,
   turnResultSchema,
   type EventDefinition,
 } from "./index";
+
+const spriteVisualLanguage = Object.fromEntries(["S1", "S2", "S3", "S4", "S5", "training"].map((role) => [role, {
+  shapeLanguage: `${role} shape`, paletteCue: "cue", accentColor: "#8fcf88", expressionBias: "bias", baseExpression: "calm", uniformLanguage: "uniform", sourceRef: "source",
+}])) as any;
+
+const spriteChief = { id: "sprite-chief", name: "Sprite Chief", genderPresentation: "female" as const, directorate: "people" as const, title: "Chief", doctrineBias: "bias", temperament: "calm", competence: 0.8, riskTolerance: 0.5, preferredTags: [], concernTags: [] };
+const spritePortrait = { genderPresentation: "female" as const, skinTone: "#f0d2ba", hairColor: "#181513", eyeColor: "#202b36", uniformColor: "#2e3736", trimColor: "#8fcf88", backgroundColor: "#142129", panelColor: "#22313b", faceShape: "oval" as const, hairStyle: "bun" as const, accessory: "none" as const, browTilt: 0, mouthCurve: 0 };
 
 const coalitionEvent = {
   id: "doctrine-coalition-caveat-exposure",
@@ -115,6 +129,14 @@ function baseScenarioSummary(events: EventDefinition[]) {
     capabilityPrograms: [{ id: "program-1", label: "Program One", summary: "A program", absorbingDirectorate: "plans", payoff: "payoff", fragility: "fragility", preferredTags: ["program"] }],
     externalConstraints: [{ id: "constraint-1", label: "Constraint One", summary: "A constraint" }],
     events,
+    spriteVisualLanguage: {
+      S1: { shapeLanguage: "s1", paletteCue: "green", accentColor: "#8fcf88", expressionBias: "calm", baseExpression: "calm", uniformLanguage: "uniform", sourceRef: "source" },
+      S2: { shapeLanguage: "s2", paletteCue: "blue", accentColor: "#78c4d4", expressionBias: "skeptical", baseExpression: "skeptical", uniformLanguage: "uniform", sourceRef: "source" },
+      S3: { shapeLanguage: "s3", paletteCue: "amber", accentColor: "#e2b36c", expressionBias: "urgent", baseExpression: "urgent", uniformLanguage: "uniform", sourceRef: "source" },
+      S4: { shapeLanguage: "s4", paletteCue: "red", accentColor: "#d68d77", expressionBias: "calm", baseExpression: "calm", uniformLanguage: "uniform", sourceRef: "source" },
+      S5: { shapeLanguage: "s5", paletteCue: "indigo", accentColor: "#8ea4d6", expressionBias: "calm", baseExpression: "calm", uniformLanguage: "uniform", sourceRef: "source" },
+      training: { shapeLanguage: "training", paletteCue: "teal", accentColor: "#79c6ae", expressionBias: "calm", baseExpression: "calm", uniformLanguage: "uniform", sourceRef: "source" },
+    },
   };
 }
 
@@ -288,6 +310,49 @@ test("doctrine metadata parses inside scenario summary and arrays (superRefine p
   const array = z.array(eventDefinitionSchema).parse([ordinaryEvent, sustainmentEvent]);
   assert.equal(array.length, 2);
   assert.throws(() => z.array(eventDefinitionSchema).parse([{ ...coalitionEvent, causalContext: undefined }]), /must appear together/);
+});
+
+test("chief sprite derivation is deterministic and preserves legacy SVG bytes", () => {
+  const input = { chief: spriteChief, portrait: spritePortrait, sessionSeed: "session-a", trustBand: "steady" as const, burdenLevel: "light" as const, campaignStatus: "active" as const, visualLanguage: spriteVisualLanguage };
+  const sprite = buildChiefSpriteSpec(input);
+  const legacySvg = buildAdvisorPortraitSvg(spritePortrait);
+  assert.equal(buildAdvisorPortraitSvg(sprite), legacySvg);
+  assert.equal(buildAdvisorPortraitDataUri(sprite), `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(legacySvg)}`);
+  assert.equal(sprite.expression, "calm");
+  assert.equal(sprite.deterministicSeed, chiefSpriteDeterministicSeed("session-a", "sprite-chief"));
+  assert.throws(() => chiefSpriteDeterministicSeed("", "sprite-chief"), /sessionSeed/);
+  assert.throws(() => chiefSpriteDeterministicSeed("session-a", ""), /chiefId/);
+});
+
+test("SpriteSpec strict validation retains legacy fields and rejects incomplete or unknown payloads", () => {
+  const sprite = buildChiefSpriteSpec({ chief: spriteChief, portrait: spritePortrait, sessionSeed: "session-a", trustBand: "steady", burdenLevel: "light", campaignStatus: "active", visualLanguage: spriteVisualLanguage });
+  assert.deepEqual(Object.keys(sprite).sort(), ["accessory", "backgroundColor", "browTilt", "deterministicSeed", "displayName", "eyeColor", "expression", "faceShape", "genderPresentation", "hairColor", "hairStyle", "id", "mouthCurve", "negativePrompt", "palette", "panelColor", "prompt", "role", "skinTone", "subjectType", "trimColor", "trustBand", "uniform", "uniformColor", "silhouette"].sort());
+  assert.throws(() => spriteSpecSchema.parse({ ...sprite, unknown: true }));
+  assert.throws(() => spriteSpecSchema.parse({ ...sprite, prompt: undefined }));
+  assert.throws(() => spriteSpecSchema.parse({ ...sprite, palette: [] }));
+  assert.throws(() => spriteSpecSchema.parse({ ...sprite, expression: "severe" }));
+});
+
+test("trust thresholds and expression precedence are total", () => {
+  assert.deepEqual([43, 44, 57, 58, 71, 72].map((trust) => relationshipLabel(trust)), ["strained", "watchful", "watchful", "steady", "steady", "solid"]);
+  const base = { chief: spriteChief, portrait: spritePortrait, sessionSeed: "session-a", trustBand: "steady" as const, burdenLevel: "light" as const, campaignStatus: "active" as const, visualLanguage: spriteVisualLanguage };
+  assert.equal(buildChiefSpriteSpec({ ...base, campaignStatus: "won" }).expression, "resolved");
+  assert.equal(buildChiefSpriteSpec({ ...base, campaignStatus: "lost" }).expression, "strained");
+  assert.equal(buildChiefSpriteSpec({ ...base, burdenLevel: "overloaded" }).expression, "strained");
+  assert.equal(buildChiefSpriteSpec({ ...base, trustBand: "strained" }).expression, "skeptical");
+  assert.equal(buildChiefSpriteSpec({ ...base, burdenLevel: "strained" }).expression, "strained");
+});
+
+test("roster identity is order-independent and sprite derivation does not mutate sessions", () => {
+  const chiefs = [spriteChief, { ...spriteChief, id: "other", name: "Other Chief" }];
+  const first = generateAdvisorRoster(chiefs, "order-session");
+  const second = generateAdvisorRoster([...chiefs].reverse(), "order-session");
+  assert.deepEqual(Object.fromEntries(first.map((entry) => [entry.chiefId, entry.portrait])), Object.fromEntries(second.map((entry) => [entry.chiefId, entry.portrait])));
+  const session = { id: "nonmutation-session", advisorRoster: [{ portrait: spritePortrait }], state: { campaignStatus: "active" } } as any;
+  const snapshot = JSON.stringify(session);
+  buildChiefSpriteSpec({ chief: spriteChief, portrait: session.advisorRoster[0].portrait, sessionSeed: session.id, trustBand: "steady", burdenLevel: "light", campaignStatus: session.state.campaignStatus, visualLanguage: spriteVisualLanguage });
+  assert.equal(JSON.stringify(session), snapshot);
+  assert.equal("prompt" in session, false);
 });
 
 test("turnResultSchema accepts a doctrine event in triggeredEvents", () => {

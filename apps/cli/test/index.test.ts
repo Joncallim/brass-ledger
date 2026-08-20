@@ -77,6 +77,20 @@ test("default JSON run records accepted risks and validates replay", async () =>
   assert.equal(body.sessionExport, undefined, "CLI JSON output should not dump the full session by default");
 });
 
+test("--sprites adds schema payloads to JSON and preserves plain-text count output", async () => {
+  const json = await runCli(["--turns", "1", "--sprites", "--json"]);
+  assert.equal(json.code, 0, json.stderr);
+  const body = JSON.parse(json.stdout);
+  assert.equal(body.sprites.length, 6);
+  assert.equal(body.sprites[0].spec.prompt, "");
+  assert.match(body.sprites[0].svg, /^<svg/);
+  assert.equal(body.sessionExport, undefined);
+
+  const text = await runCli(["--turns", "1", "--sprites"]);
+  assert.equal(text.code, 0, text.stderr);
+  assert.match(text.stdout, /Generated 6 advisor sprite SVG payloads\./);
+});
+
 test("supplied input without accepted-risk overrides is rejected", async () => {
   const inputPath = await defaultInputPath("strict-input.json");
   const result = await runCli(["--input", inputPath]);

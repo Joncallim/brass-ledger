@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import Fastify, { type FastifyReply } from "fastify";
 import cors from "@fastify/cors";
-import { soloScenario } from "@brass-ledger/content";
+import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
 import { HeadlessAcceptedRiskError, runHeadlessCampaign } from "@brass-ledger/headless";
 import {
   createFileSystemSaveStore,
@@ -398,6 +398,7 @@ app.get("/api/scenario", async () => ({
     externalConstraints: soloScenario.externalConstraints,
     events: soloScenario.events,
     doctrineLens: soloScenario.doctrineLens,
+    spriteVisualLanguage,
   },
 }));
 

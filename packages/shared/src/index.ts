@@ -514,6 +514,7 @@ export const chiefArchetypeSchema = z.object({
 });
 export type ChiefArchetype = z.infer<typeof chiefArchetypeSchema>;
 
+/** @deprecated Use `spriteSpecSchema` for newly derived visual output; retained for saved-session compatibility. */
 export const advisorPortraitSpecSchema = z.object({
   genderPresentation: genderPresentationSchema,
   skinTone: z.string(),
@@ -530,6 +531,41 @@ export const advisorPortraitSpecSchema = z.object({
   mouthCurve: z.number(),
 });
 export type AdvisorPortraitSpec = z.infer<typeof advisorPortraitSpecSchema>;
+
+export const spriteSubjectTypeSchema = z.enum(["chief", "staff", "event", "program"]);
+export type SpriteSubjectType = z.infer<typeof spriteSubjectTypeSchema>;
+export const spriteRoleSchema = z.enum(["S1", "S2", "S3", "S4", "S5", "training"]);
+export type SpriteRole = z.infer<typeof spriteRoleSchema>;
+export const spriteExpressionSchema = z.enum(["calm", "skeptical", "strained", "urgent", "resolved"]);
+export type SpriteExpression = z.infer<typeof spriteExpressionSchema>;
+export const spriteTrustBandSchema = z.enum(["strained", "watchful", "steady", "solid"]);
+export type SpriteTrustBand = z.infer<typeof spriteTrustBandSchema>;
+
+export const spriteVisualLanguageEntrySchema = z.object({
+  shapeLanguage: z.string().min(1), paletteCue: z.string().min(1),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/), expressionBias: z.string().min(1),
+  baseExpression: spriteExpressionSchema, uniformLanguage: z.string().min(1), sourceRef: z.string().min(1),
+}).strict();
+export type SpriteVisualLanguageEntry = z.infer<typeof spriteVisualLanguageEntrySchema>;
+export const spriteVisualLanguageSchema = z.object({
+  S1: spriteVisualLanguageEntrySchema, S2: spriteVisualLanguageEntrySchema,
+  S3: spriteVisualLanguageEntrySchema, S4: spriteVisualLanguageEntrySchema,
+  S5: spriteVisualLanguageEntrySchema, training: spriteVisualLanguageEntrySchema,
+}).strict();
+export type SpriteVisualLanguage = z.infer<typeof spriteVisualLanguageSchema>;
+
+export const spriteSpecSchema = advisorPortraitSpecSchema.extend({
+  id: z.string().min(1), subjectType: spriteSubjectTypeSchema, role: spriteRoleSchema,
+  displayName: z.string().min(1), silhouette: z.string().min(1), palette: z.array(z.string().min(1)).min(1),
+  uniform: z.string().min(1), expression: spriteExpressionSchema, trustBand: spriteTrustBandSchema.optional(),
+  prompt: z.string(), negativePrompt: z.string(), deterministicSeed: z.string().min(1),
+}).strict();
+export type SpriteSpec = z.infer<typeof spriteSpecSchema>;
+
+export type ChiefSpriteSpecInput = {
+  chief: ChiefArchetype; portrait: AdvisorPortraitSpec; sessionSeed: string; trustBand: SpriteTrustBand;
+  burdenLevel: BurdenLevel; campaignStatus: CampaignState["campaignStatus"]; visualLanguage: SpriteVisualLanguage;
+};
 
 export const sessionAdvisorSchema = z.object({
   chiefId: z.string(),
@@ -1217,6 +1253,7 @@ export const scenarioSummarySchema = z.object({
   externalConstraints: z.array(externalConstraintDefinitionSchema),
   events: z.array(eventDefinitionSchema).default([]),
   doctrineLens: doctrineLensSchema.default(neutralDoctrineLens),
+  spriteVisualLanguage: spriteVisualLanguageSchema,
 });
 export type ScenarioSummary = z.infer<typeof scenarioSummarySchema>;
 
@@ -3061,7 +3098,7 @@ export function summarizeState(state: CampaignState) {
   return `Standing at month ${state.turn}: ${state.strategic.forceGeneration.deployableUnits.toFixed(1)} brigades deployable, alliance alignment ${state.strategic.alliance.politicalAlignment.toFixed(0)}, cabinet cover ${state.strategic.domestic.cabinetCover.toFixed(0)}, incident ladder ${state.strategic.escalation.incidentLadder.toFixed(0)}.`;
 }
 
-function portraitTrimColor(directorate: DirectorateId) {
+export function portraitTrimColor(directorate: DirectorateId) {
   switch (directorate) {
     case "people":
       return "#8fcf88";
@@ -3108,8 +3145,8 @@ function createAdvisorPortrait(chief: ChiefArchetype, rng: () => number): Adviso
 }
 
 export function generateAdvisorRoster(chiefs: ChiefArchetype[], seedSource: string) {
-  return chiefs.map((chief, index) => {
-    const rng = createSeededRng(hashString(`${seedSource}:${chief.id}:${index}`));
+  return chiefs.map((chief) => {
+    const rng = createSeededRng(hashString(chiefSpriteDeterministicSeed(seedSource, chief.id)));
     return {
       chiefId: chief.id,
       displayName: chief.name,
@@ -3118,6 +3155,47 @@ export function generateAdvisorRoster(chiefs: ChiefArchetype[], seedSource: stri
       genderPresentation: chief.genderPresentation,
       portrait: createAdvisorPortrait(chief, rng),
     };
+  });
+}
+
+export function roleForChiefDirectorate(directorate: DirectorateId): SpriteRole {
+  switch (directorate) {
+    case "people": return "S1";
+    case "intelligence": return "S2";
+    case "operations": return "S3";
+    case "sustainment": return "S4";
+    case "plans": return "S5";
+    case "training": return "training";
+  }
+}
+
+export function chiefSpriteDeterministicSeed(sessionSeed: string, chiefId: string): string {
+  if (sessionSeed.length === 0) throw new Error("sessionSeed must not be empty");
+  if (chiefId.length === 0) throw new Error("chiefId must not be empty");
+  return "brass-ledger:sprite:v1" + `|session=${JSON.stringify(sessionSeed)}` + "|subjectType=chief" + `|subjectId=${JSON.stringify(chiefId)}`;
+}
+
+function expressionFor(input: Pick<ChiefSpriteSpecInput, "trustBand" | "burdenLevel" | "campaignStatus"> & { baseExpression: SpriteExpression }): SpriteExpression {
+  if (input.campaignStatus === "won") return "resolved";
+  if (input.campaignStatus === "lost") return "strained";
+  if (input.burdenLevel === "overloaded") return "strained";
+  if (input.trustBand === "strained") return "skeptical";
+  if (input.burdenLevel === "strained") return "strained";
+  return input.baseExpression;
+}
+
+export function buildChiefSpriteSpec(input: ChiefSpriteSpecInput): SpriteSpec {
+  const role = roleForChiefDirectorate(input.chief.directorate);
+  const visual = input.visualLanguage[role];
+  return spriteSpecSchema.parse({
+    ...input.portrait,
+    id: `chief:${input.chief.id}`, subjectType: "chief", role, displayName: input.chief.name,
+    silhouette: visual.shapeLanguage,
+    palette: [input.portrait.skinTone, input.portrait.hairColor, input.portrait.eyeColor, input.portrait.uniformColor, input.portrait.trimColor, input.portrait.backgroundColor, input.portrait.panelColor],
+    uniform: visual.uniformLanguage,
+    expression: expressionFor({ baseExpression: visual.baseExpression, trustBand: input.trustBand, burdenLevel: input.burdenLevel, campaignStatus: input.campaignStatus }),
+    trustBand: input.trustBand, prompt: "", negativePrompt: "",
+    deterministicSeed: chiefSpriteDeterministicSeed(input.sessionSeed, input.chief.id),
   });
 }
 

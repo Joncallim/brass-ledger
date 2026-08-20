@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { scenarioSummarySchema } from "@brass-ledger/shared";
 
 const saveDir = await mkdtemp(path.join(tmpdir(), "brass-ledger-routes-"));
 process.env.NODE_ENV = "test";
@@ -95,6 +96,13 @@ test("scenario and session payloads expose S1-S5 staff contracts", async () => {
 
   const created = await createSession();
   assert.deepEqual(created.staffFunctions.map((entry: { id: string }) => entry.id), ["S1", "S2", "S3", "S4", "S5"]);
+});
+
+test("scenario response carries the schema-valid sprite visual language registry", async () => {
+  const response = await app.inject({ method: "GET", url: "/api/scenario" });
+  const payload = response.json().scenario;
+  const summary = scenarioSummarySchema.parse({ ...payload, memoTemplates: payload.decisionMemos });
+  assert.deepEqual(summary.spriteVisualLanguage, payload.spriteVisualLanguage);
 });
 
 test("session payload readouts carry doctrine 3 routing attention consistent with turn results", async () => {

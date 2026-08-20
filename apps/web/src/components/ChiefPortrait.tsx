@@ -1,8 +1,7 @@
-import { buildAdvisorPortraitDataUri, type AdvisorPortraitSpec } from "@brass-ledger/shared";
+import { buildAdvisorPortraitDataUri, type SpriteSpec } from "@brass-ledger/shared";
 
 type Props = {
-  portrait: AdvisorPortraitSpec;
-  displayName: string;
+  sprite: SpriteSpec;
   title: string;
   size?: "sm" | "md" | "lg";
 };
@@ -13,12 +12,12 @@ const sizeClasses = {
   lg: "w-24 h-28",
 };
 
-export function ChiefPortrait({ portrait, displayName, title, size = "md" }: Props) {
-  const uri = buildAdvisorPortraitDataUri(portrait);
+export function ChiefPortrait({ sprite, title, size = "md" }: Props) {
+  const uri = buildAdvisorPortraitDataUri(sprite);
   return (
     <img
       src={uri}
-      alt={`${displayName} — ${title}`}
+      alt={`${sprite.displayName} — ${title}`}
       className={`${sizeClasses[size]} object-cover border border-border shrink-0`}
     />
   );

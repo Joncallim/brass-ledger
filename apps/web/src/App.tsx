@@ -376,6 +376,7 @@ export function App() {
       {route.screen === "session" && cycle.session && route.step === "chiefs" && (
         <ChiefsPaperScreen
           chiefPositions={chiefPositions}
+          scenario={scenario}
           chiefCoalitions={chiefCoalitions}
           advisorRoster={cycle.session.advisorRoster}
           session={cycle.session}

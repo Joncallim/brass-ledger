@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ChiefPositionEntry, ChiefCoalitionEntry, SessionAdvisor, ChiefConversationRecord, GameSession, DecisionMemo } from "@brass-ledger/shared";
+import { buildChiefSpriteSpec, relationshipLabel, type ChiefPositionEntry, type ChiefCoalitionEntry, type SessionAdvisor, type ChiefConversationRecord, type GameSession, type DecisionMemo, type ScenarioSummary } from "@brass-ledger/shared";
 import { CoalitionSummary } from "./CoalitionSummary";
 import { ChiefPositionCard } from "./ChiefPositionCard";
 import { ChiefConversationSheet } from "./ChiefConversationSheet";
@@ -9,6 +9,7 @@ type Props = {
   chiefCoalitions: ChiefCoalitionEntry[];
   advisorRoster: SessionAdvisor[];
   session: GameSession;
+  scenario: ScenarioSummary | null;
   memos: DecisionMemo[];
   conversationBusy: boolean;
   conversationError: string | null;
@@ -24,6 +25,7 @@ export function ChiefsPaperScreen({
   chiefCoalitions,
   advisorRoster,
   session,
+  scenario,
   memos,
   conversationBusy,
   conversationError,
@@ -79,11 +81,22 @@ export function ChiefsPaperScreen({
         <div className="space-y-3 mb-8">
           {uniquePositions.map((position) => {
             const advisor = advisorRoster.find((a) => a.chiefId === position.chiefId);
+            const chief = scenario?.chiefs.find((candidate) => candidate.id === position.chiefId);
+            const sprite = advisor && chief && scenario
+              ? buildChiefSpriteSpec({
+                chief, portrait: advisor.portrait, sessionSeed: session.id,
+                trustBand: relationshipLabel(session.state.chiefTrust[chief.id] ?? 50),
+                burdenLevel: position.staffReadoutEvidence.burdenLevel,
+                campaignStatus: session.state.campaignStatus,
+                visualLanguage: scenario.spriteVisualLanguage,
+              })
+              : undefined;
             return (
               <ChiefPositionCard
                 key={position.chiefId}
                 position={position}
                 advisor={advisor}
+                sprite={sprite}
                 memos={memos}
                 onTalk={() => handleTalk(position)}
               />

@@ -1,0 +1,10 @@
+import { spriteVisualLanguageSchema } from "@brass-ledger/shared";
+
+export const spriteVisualLanguage = spriteVisualLanguageSchema.parse({
+  S1: { shapeLanguage: "rounded shoulders, grounded stance", paletteCue: "muted green", accentColor: "#8fcf88", expressionBias: "protective, concerned", baseExpression: "calm", uniformLanguage: "grounded service uniform with rounded shoulder lines", sourceRef: "POTATO/sprite-design-logic#Visual Language" },
+  S2: { shapeLanguage: "narrow framing, sharper contrast", paletteCue: "cool blue", accentColor: "#78c4d4", expressionBias: "skeptical, precise", baseExpression: "skeptical", uniformLanguage: "close-cut analytical uniform with restrained sharp trim", sourceRef: "POTATO/sprite-design-logic#Visual Language" },
+  S3: { shapeLanguage: "square posture, forward lean", paletteCue: "brass/amber", accentColor: "#e2b36c", expressionBias: "direct, impatient", baseExpression: "urgent", uniformLanguage: "square command uniform with a forward-weighted collar line", sourceRef: "POTATO/sprite-design-logic#Visual Language" },
+  S4: { shapeLanguage: "broad base, practical uniform detail", paletteCue: "clay/red-brown", accentColor: "#d68d77", expressionBias: "methodical, constraint-aware", baseExpression: "calm", uniformLanguage: "practical support uniform with broad, utilitarian detailing", sourceRef: "POTATO/sprite-design-logic#Visual Language" },
+  S5: { shapeLanguage: "composed silhouette, cleaner lines", paletteCue: "muted indigo", accentColor: "#8ea4d6", expressionBias: "strategic, reserved", baseExpression: "calm", uniformLanguage: "clean planning uniform with composed, minimal lines", sourceRef: "POTATO/sprite-design-logic#Visual Language" },
+  training: { shapeLanguage: "upright instructional posture, repeated training-tab geometry", paletteCue: "teal accents", accentColor: "#79c6ae", expressionBias: "exacting, instructional", baseExpression: "calm", uniformLanguage: "structured instructional uniform with a distinct upright training silhouette", sourceRef: "POTATO/sprite-design-logic#Visual Language (training guidance; authored extension)" },
+});
