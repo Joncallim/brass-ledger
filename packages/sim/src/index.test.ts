@@ -1434,7 +1434,7 @@ test("tempo doctrine bet fires on the second consecutive spike from the faction'
 test("doctrine bet: tempo pays off when S1 debt, S2 confidence, and S4 supportable tempo all hold", () => {
   const wellSupportedState = {
     ...soloScenario.initialState,
-    // The faction baseline settles relativeTempo low (43); seed an explicit starting
+    // The faction baseline settles relativeTempo low (42); seed an explicit starting
     // value so the tempo-spike (+22) clears the >65 bet threshold — this test verifies
     // the bet mechanic, not the faction's tempo posture.
     doctrineMechanics: { ...soloScenario.initialState.doctrineMechanics, relativeTempo: 55 },

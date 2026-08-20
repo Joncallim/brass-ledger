@@ -1270,8 +1270,9 @@ function updateStaffMechanics(
  * directly — this is a read-only layer computed from the already-resolved S1-S5 state and
  * this turn's decisions, applied back onto strategic/resource state only through small,
  * bounded counterweight deltas. That keeps the S1-S5 core (and its existing test suite)
- * untouched, which matters because faction genes (issue #56) will later bias these same
- * variables without needing to know anything about S1-S5 internals.
+ * untouched, which matters because faction genes (issue #56) bias these same
+ * variables through the faction anchor without needing to know anything about S1-S5
+ * internals.
  *
  * Every benefit needs a counterweight (roadmap "Player-Facing Rules"). Four gates carry
  * concrete strategic-state counterweights, matching the issue #55 acceptance criteria:
@@ -1303,7 +1304,7 @@ const CONTRADICTORY_TAG_PAIRS: Array<[string, string]> = [
   ["hollow", "standardization"],
 ];
 
-/** Pulls a persisted doctrine variable toward its neutral baseline when no explicit signal fires this turn. */
+/** Pulls a persisted doctrine variable toward a target equilibrium when no explicit signal fires this turn. The target is usually the faction anchor (the scenario's profile-applied baseline) or a tag-derived equilibrium — not necessarily the hard-coded neutral. */
 function pullToNeutral(current: number, neutral: number, magnitude: number) {
   if (current === neutral) return 0;
   return Math.sign(neutral - current) * Math.min(magnitude, Math.abs(neutral - current));
