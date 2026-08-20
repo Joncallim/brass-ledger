@@ -92,6 +92,7 @@ import {
   type DirectorateBurden,
   type DirectorateId,
   type DoctrineLens,
+  type DoctrineCondition,
   type DoctrineMechanicsState,
   type EventDefinition,
   type ExplainabilityEntry,
@@ -121,7 +122,7 @@ import {
   underpricedLaneWarningSuffix,
 } from "@brass-ledger/shared";
 
-type Rng = () => number;
+export type Rng = () => number;
 
 function mulberry32(seed: number): Rng {
   let t = seed + 0x6d2b79f5;
@@ -441,14 +442,71 @@ function eventEligible(event: EventDefinition, state: CampaignState, selectedTag
   return true;
 }
 
-function chooseEvents(
+function conditionMet(condition: DoctrineCondition, mechanics: DoctrineMechanicsState) {
+  const value = mechanics[condition.variable];
+  return condition.comparison === "gte" ? value >= condition.threshold : value <= condition.threshold;
+}
+
+function doctrinePredicateMet(event: EventDefinition, mechanics: DoctrineMechanicsState) {
+  return event.doctrineTrigger?.conditions.every((condition) => conditionMet(condition, mechanics)) ?? false;
+}
+
+export function doctrineEventEligible(event: EventDefinition, state: CampaignState, selectedTags: Set<string>) {
+  if (!event.doctrineTrigger) return false;
+  if (state.turn < event.minTurn || state.turn > event.maxTurn) return false;
+  if (state.eventHistory.includes(event.id)) return false;
+  if (!event.triggerTags.every((tag) => selectedTags.has(tag))) return false;
+  if (!event.requiredFlags.every((flag) => state.eventFlags[flag])) return false;
+  if (event.excludedFlags.some((flag) => state.eventFlags[flag])) return false;
+  if (!doctrinePredicateMet(event, state.doctrineMechanics)) return false;
+  return (state.doctrineMaturity[event.id]?.consecutiveTurns ?? 0) >= event.doctrineTrigger.sustainedTurns - 1;
+}
+
+export function chooseEvents(
   scenario: ScenarioDefinition,
   previousState: CampaignState,
   selectedTags: Set<string>,
   rng: Rng,
 ) {
-  const eligible = scenario.events.filter((event) => eventEligible(event, previousState, selectedTags));
-  return eligible.filter((_event, index) => rng() > 0.35 || index === 0).slice(0, 2);
+  const doctrineEligible = scenario.events.filter((event) => doctrineEventEligible(event, previousState, selectedTags));
+  const ordinaryEligible = scenario.events.filter((event) => !event.doctrineTrigger && eventEligible(event, previousState, selectedTags));
+  const ordinaryPassed = ordinaryEligible.filter((_event, index) => rng() > 0.35 || index === 0);
+  const ordinaryChosen = ordinaryPassed.slice(0, Math.max(0, 2 - doctrineEligible.length));
+  const chosen = new Set([...doctrineEligible, ...ordinaryChosen].map((event) => event.id));
+  return scenario.events.filter((event) => chosen.has(event.id));
+}
+
+function updateDoctrineMaturity(args: {
+  previousState: CampaignState;
+  nextDoctrineMechanics: DoctrineMechanicsState;
+  selectedTags: Set<string>;
+  acceptedRiskOverrides: AcceptedRiskOverride[];
+  events: EventDefinition[];
+  triggeredEvents: EventDefinition[];
+  turn: number;
+}) {
+  const fired = new Set(args.triggeredEvents.map((event) => event.id));
+  const next: CampaignState["doctrineMaturity"] = {};
+  for (const event of args.events) {
+    const trigger = event.doctrineTrigger;
+    if (!trigger || fired.has(event.id) || args.previousState.eventHistory.includes(event.id)) continue;
+    if (args.turn > event.maxTurn || !event.requiredFlags.every((flag) => args.previousState.eventFlags[flag])) continue;
+    if (event.excludedFlags.some((flag) => args.previousState.eventFlags[flag])) continue;
+    if (!event.triggerTags.every((tag) => args.selectedTags.has(tag)) || !doctrinePredicateMet(event, args.nextDoctrineMechanics)) continue;
+    const refs = args.acceptedRiskOverrides
+      .filter((risk) => trigger && event.causalContext?.staffFunctionRefs.includes(risk.staffFunctionId))
+      .map((risk) => ({ turn: args.turn, staffFunctionId: risk.staffFunctionId, warningText: risk.warningText }));
+    const prior = args.previousState.doctrineMaturity[event.id];
+    const acceptedRiskRefs = [...(prior?.acceptedRiskRefs ?? []), ...refs].filter((risk, index, all) =>
+      all.findIndex((candidate) => candidate.turn === risk.turn && candidate.staffFunctionId === risk.staffFunctionId && candidate.warningText === risk.warningText) === index,
+    );
+    next[event.id] = {
+      consecutiveTurns: Math.min(trigger.sustainedTurns, (prior?.consecutiveTurns ?? 0) + 1),
+      startedTurn: prior?.startedTurn ?? args.turn,
+      acceptedRiskRefs,
+    };
+  }
+  return next;
 }
 
 function chiefsPaperText(burdens: DirectorateBurden[]) {
@@ -2132,6 +2190,15 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   nextStrategic.forceGeneration.deployableUnits = round(nextStrategic.forceGeneration.deployableUnits);
   nextResources = doctrineResolution.resources;
   const nextDoctrineMechanics = doctrineResolution.doctrineMechanics;
+  const nextDoctrineMaturity = updateDoctrineMaturity({
+    previousState,
+    nextDoctrineMechanics,
+    selectedTags,
+    acceptedRiskOverrides: input.acceptedRiskOverrides ?? [],
+    events: scenario.events,
+    triggeredEvents,
+    turn: input.turn,
+  });
   const nextInternalTech: TechProgressNode[] = nextPrograms.map((program) => ({
     id: program.id,
     level: phaseToLevel(program.phase),
@@ -2159,6 +2226,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     resources: nextResources,
     staffMechanics: nextStaffMechanics,
     doctrineMechanics: nextDoctrineMechanics,
+    doctrineMaturity: nextDoctrineMaturity,
     forceGeneration: nextStrategic.forceGeneration,
     intel: nextStrategic.intelligence,
     sustainment: nextStrategic.sustainment,
@@ -2220,6 +2288,19 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   const resultAfterAction = [
     ...afterAction(previousState, nextState, directorateBurden, triggeredEvents, input.acceptedRiskOverrides, staffNegotiations, nodeName),
     ...doctrineResolution.notes,
+    ...triggeredEvents.filter((event) => event.doctrineTrigger && event.causalContext).map((event) => {
+      const trigger = event.doctrineTrigger!;
+      const context = event.causalContext!;
+      const prior = previousState.doctrineMaturity[event.id];
+      const currentRefs = (input.acceptedRiskOverrides ?? [])
+        .filter((risk) => context.staffFunctionRefs.includes(risk.staffFunctionId))
+        .map((risk) => `${risk.staffFunctionId} — ${risk.warningText}`);
+      const refs = [...(prior?.acceptedRiskRefs ?? []).map((risk) => `${risk.staffFunctionId} — ${risk.warningText}`), ...currentRefs];
+      return {
+        heading: `Doctrine risk matured: ${event.title}`,
+        detail: `${context.betLabel} Repeated tags: ${event.triggerTags.join(", ")}. ${context.maturedRiskLabel}; observed ${trigger.conditions.map((condition) => `${condition.variable} ${condition.comparison} ${condition.threshold}`).join(" and ")} for ${trigger.sustainedTurns} consecutive turns. Vulnerability: ${trigger.vulnerability} (${trigger.sourceGeneLabel}; gene ${trigger.sourceGeneId}). Consequence: ${event.summary} ${refs.length > 0 ? `Matching accepted risks: ${refs.join("; ")}.` : "No matching warning was accepted."}`,
+      };
+    }),
     ...resolveBurdenDissent(directorateBurden, lens.burdenBias, input.acceptedRiskOverrides ?? [], scenario.staffFunctions),
   ];
   const staffFunctions = buildStaffFunctionReadouts(scenario.staffFunctions, directorateBurden, nextState, lens.burdenBias);

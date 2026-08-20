@@ -13,7 +13,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "lint:content": "node --import tsx src/validate-content.ts"
+    "lint:content": "node --import tsx src/validate-content.ts",
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "@brass-ledger/shared": "*"

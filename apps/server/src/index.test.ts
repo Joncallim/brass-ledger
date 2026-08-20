@@ -1,6 +1,6 @@
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -387,6 +387,69 @@ test("import rejects replay-corrupted session exports", async () => {
   assert.match(rejected.json().error, /replay validation failed/i);
 });
 
+test("/api/scenario returns doctrineLens and doctrine event metadata", async () => {
+  const scenario = await app.inject({ method: "GET", url: "/api/scenario" });
+  assert.equal(scenario.statusCode, 200);
+  const body = scenario.json().scenario;
+  assert.ok(body.doctrineLens, "/api/scenario must return doctrineLens");
+  assert.ok(body.doctrineLens.burdenBias);
+  const doctrineEvents = body.events.filter((event: { doctrineTrigger?: unknown; causalContext?: unknown }) => event.doctrineTrigger && event.causalContext);
+  assert.equal(doctrineEvents.length, 3);
+  assert.ok(doctrineEvents.every((event: { doctrineTrigger: { sourceGeneLabel?: string } }) => event.doctrineTrigger.sourceGeneLabel));
+  const sustainment = doctrineEvents.find((event: { id: string }) => event.id === "doctrine-sustainment-patience-gap");
+  assert.ok(sustainment);
+  assert.equal(sustainment.doctrineTrigger.sustainedTurns, 3);
+  assert.deepEqual(sustainment.causalContext.staffFunctionRefs, ["S4", "S5"]);
+});
+
+test("import rejects old 0.9.0 content-version exports", async () => {
+  const created = await createSession();
+  const id = created.session.id;
+  const exported = await app.inject({ method: "GET", url: `/api/sessions/${id}/export` });
+  assert.equal(exported.statusCode, 200);
+  const exportData = exported.json();
+  exportData.session.contentVersion = "0.9.0";
+
+  const rejected = await app.inject({
+    method: "POST",
+    url: "/api/sessions/import",
+    payload: { exportData },
+  });
+  assert.equal(rejected.statusCode, 409);
+  assert.match(rejected.json().error, /content version/i);
+});
+
+test("resolve-turn persists doctrine maturity and the after-action causal note", async () => {
+  const created = await createSession();
+  const id = created.session.id;
+  const selections = [
+    { memoId: "posture", optionId: "quiet-recovery" },
+    { memoId: "intelligence-focus", optionId: "warning-net" },
+    { memoId: "sustainment-focus", optionId: "repair-first" },
+    { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+  ];
+  let input = { turn: 1, selectedActionIds: [], acceptedRiskOverrides: [], staffNegotiations: [], selections };
+  let body: { session: { state: { doctrineMaturity: Record<string, { consecutiveTurns: number; startedTurn: number }> } }; result: { afterAction: Array<{ heading: string; detail: string }> } };
+  for (const turn of [1, 2, 3]) {
+    const preview = await app.inject({ method: "POST", url: `/api/sessions/${id}/preview-turn`, payload: { input: { ...input, turn } } });
+    assert.equal(preview.statusCode, 200);
+    input = { ...input, turn, acceptedRiskOverrides: preview.json().acceptedRiskCandidates };
+    const resolved = await app.inject({ method: "POST", url: `/api/sessions/${id}/resolve-turn`, payload: { input, expectedRevision: turn - 1 } });
+    assert.equal(resolved.statusCode, 200, resolved.body as unknown as string);
+    body = resolved.json();
+    if (turn === 2) {
+      const streak = body.session.state.doctrineMaturity["doctrine-sustainment-patience-gap"];
+      assert.ok(streak, "mid-streak maturity persisted on the server session");
+      assert.equal(streak.consecutiveTurns, 2);
+      assert.equal(streak.startedTurn, 1);
+    }
+  }
+  const note = body!.result.afterAction.find((entry: { heading: string }) => entry.heading === "Doctrine risk matured: The patience gap becomes policy blowback");
+  assert.ok(note, "resolve-turn returns the doctrine after-action note");
+  assert.match(note.detail, /Sustainment-First Operational Reach/);
+  assert.match(note.detail, /slow-burn/);
+});
+
 test("replay endpoint validates current session history", async () => {
   const created = await createSession();
   const replay = await app.inject({ method: "GET", url: `/api/sessions/${created.session.id}/replay` });
@@ -399,6 +462,27 @@ test("delete removes a session and rejects later reads", async () => {
   const created = await createSession();
   const id = created.session.id;
 
+  const deleted = await app.inject({ method: "DELETE", url: `/api/sessions/${id}` });
+  assert.equal(deleted.statusCode, 200);
+  assert.equal(deleted.json().ok, true);
+
+  const missing = await app.inject({ method: "GET", url: `/api/sessions/${id}` });
+  assert.equal(missing.statusCode, 404);
+});
+
+test("delete removes an incompatible stale save that the canonical read refuses (round-2 F7)", async () => {
+  const created = await createSession();
+  const id = created.session.id;
+  const savePath = path.join(saveDir, `${id}.json`);
+  const persisted = JSON.parse(await readFile(savePath, "utf8"));
+  persisted.contentVersion = "0.9.0"; // stale: the canonical read rejects it
+  await writeFile(savePath, JSON.stringify(persisted), "utf8");
+
+  // Load still refuses the stale save…
+  const refused = await app.inject({ method: "GET", url: `/api/sessions/${id}` });
+  assert.notEqual(refused.statusCode, 200);
+
+  // …but deletion is id-level and must succeed without a canonical parse.
   const deleted = await app.inject({ method: "DELETE", url: `/api/sessions/${id}` });
   assert.equal(deleted.statusCode, 200);
   assert.equal(deleted.json().ok, true);

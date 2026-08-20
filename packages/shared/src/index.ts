@@ -886,6 +886,39 @@ export const externalConstraintStateSchema = z.object({
 });
 export type ExternalConstraintState = z.infer<typeof externalConstraintStateSchema>;
 
+export const doctrineVariableSchema = z.enum([
+  "campaignAimClarity", "relativeTempo", "mainEffortFocus", "secondaryRiskAccepted",
+  "optionDislocation", "signatureControl", "exposureControl", "orderClarity",
+  "culminationRisk", "uncommittedCapacity", "operationalReach", "staffSynchronization",
+  "commanderIntentClarity", "systemPressure",
+]);
+export type DoctrineVariable = z.infer<typeof doctrineVariableSchema>;
+
+export const doctrineConditionSchema = z.object({
+  variable: doctrineVariableSchema,
+  comparison: z.enum(["gte", "lte"]),
+  threshold: z.number().int().min(0).max(100),
+}).strict();
+export type DoctrineCondition = z.infer<typeof doctrineConditionSchema>;
+
+export const doctrineEventTriggerSchema = z.object({
+  sourceGeneId: z.string().min(1),
+  sourceGeneLabel: z.string().min(1),
+  patternId: z.string().min(1),
+  vulnerability: z.string().min(1),
+  evidenceRefs: z.array(z.string().min(1)).min(1),
+  conditions: z.array(doctrineConditionSchema).min(1),
+  sustainedTurns: z.number().int().min(2).max(4),
+}).strict();
+export type DoctrineEventTrigger = z.infer<typeof doctrineEventTriggerSchema>;
+
+export const doctrineEventCausalContextSchema = z.object({
+  betLabel: z.string().min(1),
+  maturedRiskLabel: z.string().min(1),
+  staffFunctionRefs: z.array(staffFunctionIdSchema).min(1),
+}).strict();
+export type DoctrineEventCausalContext = z.infer<typeof doctrineEventCausalContextSchema>;
+
 export const eventDefinitionSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -899,6 +932,16 @@ export const eventDefinitionSchema = z.object({
   clearsFlags: z.array(z.string()).default([]),
   stateDelta: stateDeltaSchema.default(emptyStateDelta),
   constraintShifts: z.array(constraintShiftSchema).default([]),
+  doctrineTrigger: doctrineEventTriggerSchema.optional(),
+  causalContext: doctrineEventCausalContextSchema.optional(),
+}).superRefine((event, ctx) => {
+  if (Boolean(event.doctrineTrigger) !== Boolean(event.causalContext)) {
+    ctx.addIssue({
+      code: "custom",
+      path: [event.doctrineTrigger ? "causalContext" : "doctrineTrigger"],
+      message: "doctrineTrigger and causalContext must appear together",
+    });
+  }
 });
 export type EventDefinition = z.infer<typeof eventDefinitionSchema>;
 
@@ -907,6 +950,20 @@ export const afterActionNoteSchema = z.object({
   detail: z.string(),
 });
 export type AfterActionNote = z.infer<typeof afterActionNoteSchema>;
+
+export const doctrineAcceptedRiskRefSchema = z.object({
+  turn: z.number().int().min(1),
+  staffFunctionId: staffFunctionIdSchema,
+  warningText: z.string().min(1),
+}).strict();
+export type DoctrineAcceptedRiskRef = z.infer<typeof doctrineAcceptedRiskRefSchema>;
+
+export const doctrineMaturityEntrySchema = z.object({
+  consecutiveTurns: z.number().int().min(1).max(4),
+  startedTurn: z.number().int().min(1),
+  acceptedRiskRefs: z.array(doctrineAcceptedRiskRefSchema).default([]),
+}).strict();
+export type DoctrineMaturityEntry = z.infer<typeof doctrineMaturityEntrySchema>;
 
 export const techProgressSchema = z.object({ id: z.string(), level: z.number().int().min(0), progress: indexMetricSchema });
 export type TechProgressNode = z.infer<typeof techProgressSchema>;
@@ -951,6 +1008,7 @@ export const campaignStateSchema = z.object({
   strategic: strategicStateSchema,
   staffMechanics: staffMechanicsStateSchema.default(defaultStaffMechanicsState),
   doctrineMechanics: doctrineMechanicsStateSchema.default(defaultDoctrineMechanicsState),
+  doctrineMaturity: z.record(z.string(), doctrineMaturityEntrySchema).default({}),
   resources: resourcesSchema,
   forceGeneration: forceGenerationStateSchema,
   intel: intelStateSchema,
@@ -1158,6 +1216,7 @@ export const scenarioSummarySchema = z.object({
   capabilityPrograms: z.array(capabilityProgramDefinitionSchema),
   externalConstraints: z.array(externalConstraintDefinitionSchema),
   events: z.array(eventDefinitionSchema).default([]),
+  doctrineLens: doctrineLensSchema.default(neutralDoctrineLens),
 });
 export type ScenarioSummary = z.infer<typeof scenarioSummarySchema>;
 

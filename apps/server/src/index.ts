@@ -234,6 +234,16 @@ function assertCanonicalImport(session: GameSession) {
   assertReplayableSession(session);
 }
 
+function assertCanonicalSession(session: GameSession) {
+  if (session.engineVersion !== "0.1.0" || session.scenarioId !== soloScenario.id || session.contentVersion !== soloScenario.contentVersion || session.saveFormatVersion !== "6") {
+    throw new Error("This saved campaign belongs to an incompatible engine, scenario, content version, or save format.");
+  }
+  if (stableJson(session.initialState) !== stableJson(soloScenario.initialState)) {
+    throw new Error("This saved campaign does not match the current scenario opening state.");
+  }
+  return session;
+}
+
 function mapStorageError(reply: FastifyReply, error: unknown) {
   if (error instanceof InvalidSessionIdError) {
     reply.code(400);
@@ -275,16 +285,19 @@ function unexpectedServerError(reply: FastifyReply, error: unknown, logMessage: 
 }
 
 async function writeSession(session: GameSession, expectedRevision?: number) {
+  assertCanonicalSession(session);
   await saveStore.write(session, expectedRevision);
 }
 
 async function readSession(sessionId: string) {
-  return saveStore.read(sessionId);
+  return assertCanonicalSession(await saveStore.read(sessionId));
 }
 
 async function listSessions() {
   const sessions = await saveStore.list();
-  return sessions.sort((left: GameSession, right: GameSession) => right.updatedAt.localeCompare(left.updatedAt));
+  return sessions.filter((session) => {
+    try { assertCanonicalSession(session); return true; } catch { return false; }
+  }).sort((left: GameSession, right: GameSession) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
 function createSession() {
@@ -384,6 +397,7 @@ app.get("/api/scenario", async () => ({
     capabilityPrograms: soloScenario.capabilityPrograms,
     externalConstraints: soloScenario.externalConstraints,
     events: soloScenario.events,
+    doctrineLens: soloScenario.doctrineLens,
   },
 }));
 
@@ -442,6 +456,15 @@ app.delete("/api/sessions/:id", async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     await withSessionLock(id, async () => {
+      // Deletion is an id-level operation, not a content-level one: an incompatible
+      // or unreadable save (e.g. a stale 0.9.0 save that readSession refuses) must
+      // still be deletable through the API. readSession is best-effort here; the
+      // canonical checks stay fully enforced on load and mutate paths (round-2 F7).
+      try {
+        await readSession(id);
+      } catch {
+        // Incompatible or corrupt save — deletion still proceeds.
+      }
       await saveStore.delete(id);
     });
     return { ok: true };

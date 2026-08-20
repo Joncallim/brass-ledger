@@ -65,6 +65,22 @@ export function PreCommitScreen({
       )}
 
       <div className="space-y-4 mb-6">
+        {(preview?.predictedEvents ?? []).filter((event) => event.doctrineTrigger && event.causalContext).length > 0 && (
+          <section className="border border-yellow-800/60 bg-yellow-950/30 px-4 py-3">
+            <p className="text-xs uppercase tracking-widest text-yellow-300/80 mb-2">Doctrine risks that may mature</p>
+            <div className="space-y-3">
+              {(preview?.predictedEvents ?? []).filter((event) => event.doctrineTrigger && event.causalContext).map((event) => (
+                <div key={event.id}>
+                  <p className="text-sm font-semibold text-yellow-200">{event.title}</p>
+                  <p className="text-xs text-yellow-100/70">Bet: {event.causalContext!.betLabel}</p>
+                  <p className="text-xs text-yellow-100/70">{event.causalContext!.maturedRiskLabel}; threshold: {event.doctrineTrigger!.conditions.map((condition) => `${condition.variable} ${condition.comparison} ${condition.threshold}`).join(", ")}; sustained {event.doctrineTrigger!.sustainedTurns} turns.</p>
+                  <p className="text-xs text-yellow-100/70">Consequence: {event.summary}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <AcceptedRiskDocket
           candidates={candidates}
           choices={acceptedRiskChoices}
