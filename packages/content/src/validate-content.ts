@@ -5,6 +5,8 @@ import {
   defaultDoctrineMechanicsState,
   doctrineRiskKeys,
   directorateSchema,
+  type DoctrineGene,
+  type EventDefinition,
 } from "@brass-ledger/shared";
 import { resolveDoctrineGenes, doctrineGenes } from "./doctrine-genes";
 import { doctrineEventCostMass } from "./index";
@@ -151,13 +153,31 @@ if (soloScenario.initialState.doctrineMaturity === undefined || Object.keys(solo
 if (doctrineEvents.length !== soloScenario.doctrineProfile.geneIds.length) throw new Error("Doctrine 4 requires exactly one event per shipped profile gene.");
 const sourceGeneIds = new Set<string>();
 for (const event of doctrineEvents) {
-  const trigger = event.doctrineTrigger!;
-  const context = event.causalContext!;
-  const gene = profileGenes.get(trigger.sourceGeneId);
-  if (!doctrineGenes.some((candidate) => candidate.id === trigger.sourceGeneId)) throw new Error(`Doctrine event ${event.id} references an unknown gene: ${trigger.sourceGeneId}.`);
+  validateDoctrineEvent(event, { profileGenes, legalSelectionTagSets, allDoctrineGenes: doctrineGenes, sourceGeneIds });
+}
+
+if (sourceGeneIds.size !== soloScenario.doctrineProfile.geneIds.length) throw new Error("Every shipped profile gene must have exactly one Doctrine 4 event.");
+const sharedTraceCount = Math.max(0, ...legalSelectionTagSets.map((tags) => doctrineEvents.filter((event) => event.triggerTags.every((tag) => tags.has(tag))).length));
+if (sharedTraceCount > 2) console.warn(`Doctrine 4 shared repeated trace warning: ${sharedTraceCount} doctrine predicates can share one legal repeated selection trace.`);
+
+export type DoctrineValidationContext = {
+  profileGenes: Map<string, DoctrineGene>;
+  legalSelectionTagSets: Set<string>[];
+  allDoctrineGenes: readonly DoctrineGene[];
+  sourceGeneIds: Set<string>;
+};
+
+/** Static Doctrine 4 event guardrails. Throws on the first violated check. */
+export function validateDoctrineEvent(event: EventDefinition, context: DoctrineValidationContext): void {
+  const trigger = event.doctrineTrigger;
+  const causal = event.causalContext;
+  if (!trigger || !causal) throw new Error(`Doctrine event ${event.id} must carry both doctrineTrigger and causalContext.`);
+  const gene = context.profileGenes.get(trigger.sourceGeneId);
+  if (!context.allDoctrineGenes.some((candidate) => candidate.id === trigger.sourceGeneId)) throw new Error(`Doctrine event ${event.id} references an unknown gene: ${trigger.sourceGeneId}.`);
   if (!gene) throw new Error(`Doctrine event ${event.id} references a gene not shipped in the profile: ${trigger.sourceGeneId}.`);
-  if (sourceGeneIds.has(trigger.sourceGeneId)) throw new Error(`Doctrine gene ${trigger.sourceGeneId} has more than one Doctrine 4 event.`);
-  sourceGeneIds.add(trigger.sourceGeneId);
+  if (context.sourceGeneIds.has(trigger.sourceGeneId)) throw new Error(`Doctrine gene ${trigger.sourceGeneId} has more than one Doctrine 4 event.`);
+  context.sourceGeneIds.add(trigger.sourceGeneId);
+  if (gene.label !== trigger.sourceGeneLabel) throw new Error(`Doctrine event ${event.id} sourceGeneLabel does not exactly match gene ${gene.id} label.`);
   if (!gene.vulnerabilities.includes(trigger.vulnerability)) throw new Error(`Doctrine event ${event.id} vulnerability does not exactly match gene ${gene.id}.`);
   if (!trigger.evidenceRefs.every((ref) => gene.evidenceRefs.includes(ref))) throw new Error(`Doctrine event ${event.id} contains evidence outside gene ${gene.id}.`);
   const canonical = patternMechanics[trigger.patternId as keyof typeof patternMechanics];
@@ -166,14 +186,10 @@ for (const event of doctrineEvents) {
   if (trigger.conditions.some((condition) => !Number.isInteger(condition.threshold))) throw new Error(`Doctrine event ${event.id} must use integer thresholds.`);
   if (trigger.conditions.every((condition) => conditionMetStatic(condition, defaultDoctrineMechanicsState))) throw new Error(`Doctrine event ${event.id} is active at the neutral doctrine baseline.`);
   if (event.minTurn > trigger.sustainedTurns + 1 || event.minTurn > event.maxTurn) throw new Error(`Doctrine event ${event.id} has an invalid maturation window.`);
-  if (context.staffFunctionRefs.length === 0 || doctrineEventCostMass(event) <= 0) throw new Error(`Doctrine event ${event.id} needs causal staff refs and adverse authored mass.`);
-  if (!trigger.evidenceRefs.length || !context.staffFunctionRefs.length) throw new Error(`Doctrine event ${event.id} needs evidence and causal staff references.`);
-  if (!legalSelectionTagSets.some((tags) => event.triggerTags.every((tag) => tags.has(tag)))) throw new Error(`Doctrine event ${event.id} has trigger tags that cannot coexist in a legal memo selection.`);
+  if (causal.staffFunctionRefs.length === 0 || doctrineEventCostMass(event) <= 0) throw new Error(`Doctrine event ${event.id} needs causal staff refs and adverse authored mass.`);
+  if (!trigger.evidenceRefs.length || !causal.staffFunctionRefs.length) throw new Error(`Doctrine event ${event.id} needs evidence and causal staff references.`);
+  if (!context.legalSelectionTagSets.some((tags) => event.triggerTags.every((tag) => tags.has(tag)))) throw new Error(`Doctrine event ${event.id} has trigger tags that cannot coexist in a legal memo selection.`);
 }
-
-if (sourceGeneIds.size !== soloScenario.doctrineProfile.geneIds.length) throw new Error("Every shipped profile gene must have exactly one Doctrine 4 event.");
-const sharedTraceCount = Math.max(0, ...legalSelectionTagSets.map((tags) => doctrineEvents.filter((event) => event.triggerTags.every((tag) => tags.has(tag))).length));
-if (sharedTraceCount > 2) console.warn(`Doctrine 4 shared repeated trace warning: ${sharedTraceCount} doctrine predicates can share one legal repeated selection trace.`);
 
 function conditionMetStatic(condition: { variable: keyof typeof defaultDoctrineMechanicsState; comparison: "gte" | "lte"; threshold: number }, state: typeof defaultDoctrineMechanicsState) {
   return condition.comparison === "gte" ? state[condition.variable] >= condition.threshold : state[condition.variable] <= condition.threshold;

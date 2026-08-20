@@ -207,7 +207,7 @@ export const soloScenario = scenarioDefinitionSchema.parse({
       minTurn: 2, maxTurn: 11, triggerTags: ["public-commitment"], requiredFlags: [], excludedFlags: [],
       setsFlags: ["doctrine_coalition_caveat_exposed"], clearsFlags: [],
       stateDelta: { alliance: { politicalAlignment: -4, partnerPublicSupport: -3 }, domestic: { cabinetCover: -3, mediaHeat: 4 } }, constraintShifts: [],
-      doctrineTrigger: { sourceGeneId: "coalition-native-staff", patternId: "deception", vulnerability: "More policy, legal, media, and partner caveat constraints on every commitment", evidenceRefs: ["CELERY/doctrine-proof-register#NATO AJP-3 Staff Directorate Baseline", "CELERY/doctrine-proof-register#UK PJHQ Staff Responsibilities"], conditions: [{ variable: "signatureControl", comparison: "lte", threshold: 35 }], sustainedTurns: 2 },
+      doctrineTrigger: { sourceGeneId: "coalition-native-staff", sourceGeneLabel: "Coalition-Native Staff", patternId: "deception", vulnerability: "More policy, legal, media, and partner caveat constraints on every commitment", evidenceRefs: ["CELERY/doctrine-proof-register#NATO AJP-3 Staff Directorate Baseline", "CELERY/doctrine-proof-register#UK PJHQ Staff Responsibilities"], conditions: [{ variable: "signatureControl", comparison: "lte", threshold: 35 }], sustainedTurns: 2 },
       causalContext: { betLabel: "Repeated visible coalition commitments before caveats were reconciled", maturedRiskLabel: "Signature control stayed at or below 35 for two commitment turns", staffFunctionRefs: ["S2", "S5"] },
     },
     {
@@ -216,7 +216,7 @@ export const soloScenario = scenarioDefinitionSchema.parse({
       minTurn: 2, maxTurn: 11, triggerTags: ["program", "modernization"], requiredFlags: [], excludedFlags: [],
       setsFlags: ["doctrine_adaptive_cells_sprawled"], clearsFlags: [],
       stateDelta: { forceGeneration: { trainingThroughput: -4 }, resources: { readiness: -3 } }, constraintShifts: [],
-      doctrineTrigger: { sourceGeneId: "adaptive-cell-staff", patternId: "main-effort", vulnerability: "Coordination cost rises when too many temporary cells compete for attention", evidenceRefs: ["CELERY/doctrine-proof-register#Netherlands No Pure Staff Structure", "CELERY/doctrine-proof-register#Netherlands Chief Of Staff Role"], conditions: [{ variable: "mainEffortFocus", comparison: "lte", threshold: 30 }], sustainedTurns: 2 },
+      doctrineTrigger: { sourceGeneId: "adaptive-cell-staff", sourceGeneLabel: "Adaptive Cell Staff", patternId: "main-effort", vulnerability: "Coordination cost rises when too many temporary cells compete for attention", evidenceRefs: ["CELERY/doctrine-proof-register#Netherlands No Pure Staff Structure", "CELERY/doctrine-proof-register#Netherlands Chief Of Staff Role"], conditions: [{ variable: "mainEffortFocus", comparison: "lte", threshold: 30 }], sustainedTurns: 2 },
       causalContext: { betLabel: "Repeated multi-lane modernization through temporary cross-functional cells", maturedRiskLabel: "Main-effort focus stayed at or below 30 for two cell-building turns", staffFunctionRefs: ["S1", "S3", "S5"] },
     },
     {
@@ -224,8 +224,8 @@ export const soloScenario = scenarioDefinitionSchema.parse({
       summary: "The headquarters keeps waiting for a fully supportable posture while the public and cabinet demand visible action; political room contracts around an otherwise sound sustainment plan.",
       minTurn: 3, maxTurn: 11, triggerTags: ["slow-burn"], requiredFlags: [], excludedFlags: [],
       setsFlags: ["doctrine_sustainment_patience_blowback"], clearsFlags: [],
-      stateDelta: { domestic: { cabinetCover: -4, publicPatience: -5, mediaHeat: 4 }, resources: { politicalCapital: -2 } }, constraintShifts: [],
-      doctrineTrigger: { sourceGeneId: "sustainment-first-operational-reach", patternId: "tempo", vulnerability: "Slower visible posture; political frustration when the public wants immediate action", evidenceRefs: ["CELERY/doctrine-proof-register#US Army ADP 4-0 Sustainment", "CELERY/doctrine-proof-register#Sustainment Warfighting Function Elements"], conditions: [{ variable: "relativeTempo", comparison: "lte", threshold: 30 }], sustainedTurns: 3 },
+      stateDelta: { domestic: { cabinetCover: -10, publicPatience: -10, mediaHeat: 6 }, resources: { politicalCapital: -6 } }, constraintShifts: [],
+      doctrineTrigger: { sourceGeneId: "sustainment-first-operational-reach", sourceGeneLabel: "Sustainment-First Operational Reach", patternId: "tempo", vulnerability: "Slower visible posture; political frustration when the public wants immediate action", evidenceRefs: ["CELERY/doctrine-proof-register#US Army ADP 4-0 Sustainment", "CELERY/doctrine-proof-register#Sustainment Warfighting Function Elements"], conditions: [{ variable: "relativeTempo", comparison: "lte", threshold: 30 }], sustainedTurns: 3 },
       causalContext: { betLabel: "Repeated slow-burn sequencing until supportability was earned", maturedRiskLabel: "Relative tempo stayed at or below 30 for three slow-burn turns", staffFunctionRefs: ["S4", "S5"] },
     },
   ],

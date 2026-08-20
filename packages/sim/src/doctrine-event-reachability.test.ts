@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { soloScenario } from "@brass-ledger/content";
-import type { CampaignState, MemoSelection, TurnInput } from "@brass-ledger/shared";
+import type { CampaignState, MemoSelection, ScenarioDefinition, TurnInput } from "@brass-ledger/shared";
 import { deriveDecisionMemos, resolveTurn } from "./index.ts";
 
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }
@@ -21,12 +21,12 @@ function legalSelections(): MemoSelection[][] {
   return choices.filter((choice): choice is MemoSelection[] => choice !== null);
 }
 
-function runTrace(selection: MemoSelection[], turns: number) {
-  let state: CampaignState = clone(soloScenario.initialState);
+function runTrace(selection: MemoSelection[], turns: number, scenario: ScenarioDefinition = soloScenario) {
+  let state: CampaignState = clone(scenario.initialState);
   const results = [];
   for (let index = 0; index < turns && state.campaignStatus === "active"; index += 1) {
     const input: TurnInput = { turn: state.turn, selectedActionIds: [], selections: clone(selection), acceptedRiskOverrides: [], staffNegotiations: [] };
-    const result = resolveTurn(soloScenario, state, input);
+    const result = resolveTurn(scenario, state, input);
     results.push(result);
     state = result.nextState;
   }
@@ -73,4 +73,20 @@ test("fired doctrine events discard maturity only after preserving the causal no
   assert.ok(fired.triggeredEvents.some((candidate) => candidate.id === event.id));
   assert.equal(fired.nextState.doctrineMaturity[event.id], undefined);
   assert.ok(fired.afterAction.some((note) => note.heading === `Doctrine risk matured: ${event.title}` && note.detail.includes(event.doctrineTrigger!.vulnerability)));
+});
+
+test("an unreachable doctrine threshold has no legal witness within the campaign horizon", () => {
+  // relativeTempo never reaches 100 under any legal repeated selection: slow-burn drags
+  // it down and surge-exercises cannot push it to the ceiling within maxTurns.
+  const event = soloScenario.events.find((candidate) => candidate.id === "doctrine-sustainment-patience-gap")!;
+  const unreachable: ScenarioDefinition = {
+    ...soloScenario,
+    events: [
+      ...soloScenario.events.filter((candidate) => candidate.id !== event.id),
+      { ...event, id: "doctrine-unreachable-threshold", doctrineTrigger: { ...event.doctrineTrigger!, conditions: [{ variable: "relativeTempo", comparison: "gte", threshold: 100 }] } },
+    ],
+  };
+  const selections = legalSelections();
+  const witness = selections.find((selection) => runTrace(selection, 12, unreachable).some((result) => result.triggeredEvents.some((triggered) => triggered.id === "doctrine-unreachable-threshold")));
+  assert.equal(witness, undefined, "an impossible threshold must have no witness trace");
 });

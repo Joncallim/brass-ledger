@@ -16,7 +16,7 @@ import {
 } from "./index.js";
 import { createInitialGameSession, gameSessionSchema, type GameSession } from "@brass-ledger/shared";
 import { soloScenario } from "@brass-ledger/content";
-import { resolveTurn } from "@brass-ledger/sim";
+import { previewTurn, resolveTurn } from "@brass-ledger/sim";
 
 function makeSession(overrides?: Partial<GameSession>): GameSession {
   const session = createInitialGameSession(soloScenario, "test-session-0000-0000-000000000000");
@@ -154,6 +154,65 @@ describe("FileSystemSaveStore replay validation", () => {
     assert.equal(resumed.history.length, 2);
     assert.equal(resumed.history[0].replayHash, current.history[0].replayHash);
     assert.equal(resumed.history[1].replayHash, current.history[1].replayHash);
+  });
+});
+
+describe("Doctrine 4 mid-streak save/load", () => {
+  let saveDir: string;
+  let store: SaveStore;
+
+  before(async () => {
+    saveDir = await mkdtemp(path.join(os.tmpdir(), "brass-ledger-test-doctrine4-"));
+    store = createFileSystemSaveStore(saveDir);
+  });
+
+  after(async () => {
+    await rm(saveDir, { recursive: true, force: true });
+  });
+
+  it("retains streak count, startedTurn, and refs across save/load; resumed resolution fires identically", async () => {
+    const id = "00000000-0000-1000-8000-000000000040";
+    const session = makeSession({ id });
+    let current = session;
+    const selections = [
+      { memoId: "posture", optionId: "quiet-recovery" },
+      { memoId: "intelligence-focus", optionId: "warning-net" },
+      { memoId: "sustainment-focus", optionId: "repair-first" },
+      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+    ];
+
+    for (let turn = 1; turn <= 2; turn++) {
+      const preview = previewTurn(soloScenario, current.state, { turn, selectedActionIds: [], selections, acceptedRiskOverrides: [], staffNegotiations: [] });
+      const input = { turn, selectedActionIds: [], selections, acceptedRiskOverrides: preview.acceptedRiskCandidates, staffNegotiations: [] };
+      const result = resolveTurn(soloScenario, current.state, input);
+      current = gameSessionSchema.parse({
+        ...current,
+        state: result.nextState,
+        turnInputs: [...current.turnInputs, input],
+        history: [...current.history, result],
+        revision: current.revision + 1,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    const streak = current.state.doctrineMaturity["doctrine-sustainment-patience-gap"];
+    assert.ok(streak, "mid-streak state carries a sustainment streak");
+    assert.equal(streak!.consecutiveTurns, 2);
+    assert.equal(streak!.startedTurn, 1);
+
+    await store.create(current);
+    const loaded = await store.read(id);
+    const loadedStreak = loaded.state.doctrineMaturity["doctrine-sustainment-patience-gap"];
+    assert.equal(loadedStreak?.consecutiveTurns, 2, "streak count retained across save/load");
+    assert.equal(loadedStreak?.startedTurn, 1, "startedTurn retained across save/load");
+    assert.ok((loadedStreak?.acceptedRiskRefs ?? []).length > 0, "accepted-risk refs retained across save/load");
+
+    const turnThreeInput = { turn: 3, selectedActionIds: [], selections, acceptedRiskOverrides: [], staffNegotiations: [] };
+    const fromLoaded = resolveTurn(soloScenario, loaded.state, turnThreeInput);
+    const fromMemory = resolveTurn(soloScenario, current.state, turnThreeInput);
+    assert.deepEqual(fromLoaded.nextState, fromMemory.nextState, "resumed resolution from the loaded session matches the never-saved session");
+    assert.equal(fromLoaded.replayHash, fromMemory.replayHash);
+    assert.ok(fromLoaded.triggeredEvents.some((event) => event.id === "doctrine-sustainment-patience-gap"), "resumed resolution fires the matured event on turn 3");
   });
 });
 

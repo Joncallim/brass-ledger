@@ -22,8 +22,10 @@ import {
   type DoctrineLens,
   type MemoOption,
   type TurnInput,
+  type CampaignState,
+  type ScenarioDefinition,
 } from "@brass-ledger/shared";
-import { previewTurn, resolveTurn, validateReplaySession } from "./index";
+import { previewTurn, resolveTurn, validateReplaySession, chooseEvents, type Rng } from "./index";
 
 const balancedInput: TurnInput = {
   turn: 1,
@@ -2194,4 +2196,188 @@ test("doctrine 3: buildChiefPositions without a lens is identical to the neutral
 test("doctrine 3: scenario without doctrineLens defaults to the neutral lens", () => {
   const parsed = scenarioDefinitionSchema.parse({ ...soloScenario, doctrineLens: undefined });
   assert.deepEqual(parsed.doctrineLens, neutralDoctrineLens);
+});
+
+// ── Doctrine 4: faction events maturing from overused doctrine (issue #58) ─────
+
+function slowBurnSelections() {
+  return [
+    { memoId: "posture", optionId: "quiet-recovery" },
+    { memoId: "intelligence-focus", optionId: "warning-net" },
+    { memoId: "sustainment-focus", optionId: "repair-first" },
+    { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+  ];
+}
+
+function withAcceptedRisks(input: TurnInput, preview = previewTurn(soloScenario, soloScenario.initialState, { ...input, acceptedRiskOverrides: [] })) {
+  return { ...input, acceptedRiskOverrides: preview.acceptedRiskCandidates };
+}
+
+function countOrdinaryEligible(state: CampaignState, tags: Set<string>, scenario: ScenarioDefinition = soloScenario) {
+  return scenario.events.filter((event) => {
+    if (event.doctrineTrigger) return false;
+    if (state.turn < event.minTurn || state.turn > event.maxTurn) return false;
+    if (state.eventHistory.includes(event.id)) return false;
+    if (!event.triggerTags.every((tag) => tags.has(tag))) return false;
+    if (!event.requiredFlags.every((flag) => state.eventFlags[flag])) return false;
+    if (event.excludedFlags.some((flag) => state.eventFlags[flag])) return false;
+    return true;
+  }).length;
+}
+
+test("doctrine 4: a scenario without doctrine events is bit-identical on ordinary inputs", () => {
+  const noDoctrine: ScenarioDefinition = { ...soloScenario, events: soloScenario.events.filter((event) => !event.doctrineTrigger) };
+  const withDoctrine = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);
+  const withoutDoctrine = resolveTurn(noDoctrine, soloScenario.initialState, balancedInput);
+  assert.deepEqual(withoutDoctrine.triggeredEvents.map((event) => event.id), withDoctrine.triggeredEvents.map((event) => event.id));
+  assert.deepEqual(withoutDoctrine.nextState, withDoctrine.nextState);
+  assert.deepEqual(withoutDoctrine.afterAction, withDoctrine.afterAction);
+  assert.equal(withoutDoctrine.replayHash, withDoctrine.replayHash);
+});
+
+test("doctrine 4: chooseEvents draws exactly once per eligible ordinary event including index 0, even when doctrine events consume capacity", () => {
+  const event = soloScenario.events.find((candidate) => candidate.id === "doctrine-coalition-caveat-exposure")!;
+  const state = structuredClone(soloScenario.initialState) as CampaignState;
+  state.turn = 2;
+  state.doctrineMechanics = { ...state.doctrineMechanics, signatureControl: 30 };
+  state.doctrineMaturity = { [event.id]: { consecutiveTurns: 1, startedTurn: 1, acceptedRiskRefs: [] } };
+  // Union of every memo option's tags: every turn-eligible ordinary event qualifies.
+  const allTags = new Set(soloScenario.memoTemplates.flatMap((memo) => memo.options.flatMap((option) => option.tags)));
+  const eligibleCount = countOrdinaryEligible(state, allTags);
+  assert.ok(eligibleCount > 2, "fixture must have several eligible ordinary events");
+
+  let draws = 0;
+  const passRng: Rng = () => { draws += 1; return 0.99; };
+  const chosen = chooseEvents(soloScenario, state, allTags, passRng);
+  assert.equal(draws, eligibleCount, "one draw per eligible ordinary event, including index 0, even when a doctrine event consumes capacity");
+  assert.ok(chosen.some((entry) => entry.id === event.id), "the mature doctrine event still fires");
+  assert.ok(chosen.filter((entry) => !entry.doctrineTrigger).length <= 1, "doctrine consumption reduced ordinary capacity");
+
+  // A failing rng still draws for every eligible ordinary event, and index 0 still passes.
+  draws = 0;
+  const failRng: Rng = () => { draws += 1; return 0.0; };
+  const ordinaryEligible = soloScenario.events.filter((entry) => !entry.doctrineTrigger && state.turn >= entry.minTurn && state.turn <= entry.maxTurn && entry.triggerTags.every((tag) => allTags.has(tag)) && entry.requiredFlags.every((flag) => state.eventFlags[flag]) && !entry.excludedFlags.some((flag) => state.eventFlags[flag]));
+  const firstOrdinary = ordinaryEligible[0]!;
+  const chosenFail = chooseEvents(soloScenario, state, allTags, failRng);
+  assert.equal(draws, eligibleCount);
+  assert.ok(chosenFail.some((entry) => entry.id === firstOrdinary.id), "index-0 ordinary event passes even under a failing rng");
+
+  // The no-doctrine scenario draws identically (bit-identical draw pattern).
+  const noDoctrine: ScenarioDefinition = { ...soloScenario, events: soloScenario.events.filter((entry) => !entry.doctrineTrigger) };
+  draws = 0;
+  const chosenPlain = chooseEvents(noDoctrine, state, allTags, passRng);
+  assert.equal(draws, eligibleCount);
+  assert.equal(chosenPlain.filter((entry) => !entry.doctrineTrigger).length, 2);
+});
+
+test("doctrine 4: a mature doctrine event fires regardless of RNG and scenario index", () => {
+  const event = soloScenario.events.find((candidate) => candidate.id === "doctrine-coalition-caveat-exposure")!;
+  const state = structuredClone(soloScenario.initialState) as CampaignState;
+  state.turn = 2;
+  state.doctrineMechanics = { ...state.doctrineMechanics, signatureControl: 30 };
+  state.doctrineMaturity = { [event.id]: { consecutiveTurns: 1, startedTurn: 1, acceptedRiskRefs: [] } };
+  // Move the doctrine event to the END of the scenario array.
+  const reordered: ScenarioDefinition = { ...soloScenario, events: [...soloScenario.events.filter((entry) => entry.id !== event.id), event] };
+  let draws = 0;
+  const rng: Rng = () => { draws += 1; return 0.0; };
+  const chosen = chooseEvents(reordered, state, new Set(["public-commitment"]), rng);
+  assert.ok(chosen.some((entry) => entry.id === event.id), "mature doctrine event fires even with an all-fail rng and a late scenario index");
+});
+
+test("doctrine 4: three simultaneous mature doctrine events all fire, ordinary none, in scenario order", () => {
+  const state = structuredClone(soloScenario.initialState) as CampaignState;
+  state.turn = 3;
+  state.doctrineMechanics = { ...state.doctrineMechanics, signatureControl: 30, mainEffortFocus: 28, relativeTempo: 28 };
+  state.doctrineMaturity = {
+    "doctrine-coalition-caveat-exposure": { consecutiveTurns: 1, startedTurn: 1, acceptedRiskRefs: [] },
+    "doctrine-adaptive-cell-sprawl": { consecutiveTurns: 1, startedTurn: 1, acceptedRiskRefs: [] },
+    "doctrine-sustainment-patience-gap": { consecutiveTurns: 2, startedTurn: 1, acceptedRiskRefs: [] },
+  };
+  const input: TurnInput = {
+    turn: 3,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    staffNegotiations: [],
+    selections: [
+      { memoId: "posture", optionId: "quiet-recovery" },
+      { memoId: "intelligence-focus", optionId: "industrial-watch" },
+      { memoId: "sustainment-focus", optionId: "lift-assurance" },
+      { memoId: "alliance-frame", optionId: "modernization-case" },
+      { memoId: "force-development", optionId: "fires-prototype" },
+    ],
+  };
+  const result = resolveTurn(soloScenario, state, input);
+  const firedIds = result.triggeredEvents.map((event) => event.id);
+  assert.ok(firedIds.includes("doctrine-coalition-caveat-exposure"));
+  assert.ok(firedIds.includes("doctrine-adaptive-cell-sprawl"));
+  assert.ok(firedIds.includes("doctrine-sustainment-patience-gap"));
+  assert.ok(result.triggeredEvents.every((event) => event.doctrineTrigger), "no ordinary event fires when three doctrine events consume all capacity");
+  const scenarioOrder = soloScenario.events.map((event) => event.id);
+  const sorted = [...firedIds].sort((a, b) => scenarioOrder.indexOf(a) - scenarioOrder.indexOf(b));
+  assert.deepEqual(firedIds, sorted, "returned event order equals global scenario order");
+});
+
+test("doctrine 4: a tag or condition break resets the streak and accepted-risk refs", () => {
+  const turnOne = withAcceptedRisks({ ...balancedInput, turn: 1, selections: slowBurnSelections() });
+  const first = resolveTurn(soloScenario, soloScenario.initialState, turnOne);
+  const entry = first.nextState.doctrineMaturity["doctrine-sustainment-patience-gap"];
+  assert.ok(entry, "sustainment streak started on turn 1");
+  assert.equal(entry!.consecutiveTurns, 1);
+  assert.equal(entry!.startedTurn, 1);
+
+  // Break the slow-burn tag on turn 2: the streak record is dropped entirely.
+  const brokenSelections = slowBurnSelections().map((selection) => (selection.memoId === "posture" ? { memoId: "posture", optionId: "measured-deterrence" } : selection));
+  const second = resolveTurn(soloScenario, first.nextState, { ...turnOne, turn: 2, selections: brokenSelections, acceptedRiskOverrides: [] });
+  assert.equal(second.nextState.doctrineMaturity["doctrine-sustainment-patience-gap"], undefined, "tag break resets the streak");
+
+  // Re-selecting slow-burn starts a fresh chain at the new turn.
+  const third = resolveTurn(soloScenario, second.nextState, { ...turnOne, turn: 3 });
+  const restarted = third.nextState.doctrineMaturity["doctrine-sustainment-patience-gap"];
+  assert.equal(restarted?.consecutiveTurns, 1);
+  assert.equal(restarted?.startedTurn, 3);
+});
+
+function buildSustainmentMidStreak() {
+  const turnOne = withAcceptedRisks({ ...balancedInput, turn: 1, selections: slowBurnSelections() });
+  const first = resolveTurn(soloScenario, soloScenario.initialState, turnOne);
+  const turnTwo = withAcceptedRisks({ ...balancedInput, turn: 2, selections: slowBurnSelections() }, previewTurn(soloScenario, first.nextState, { ...turnOne, turn: 2, acceptedRiskOverrides: [] }));
+  const second = resolveTurn(soloScenario, first.nextState, turnTwo);
+  const entry = second.nextState.doctrineMaturity["doctrine-sustainment-patience-gap"];
+  assert.ok(entry && entry.consecutiveTurns === 2, "mid-streak state has a two-turn sustainment streak");
+  return { turnInputs: [turnOne, turnTwo], history: [first, second], state: second.nextState, second };
+}
+
+test("doctrine 4: fired event discards its next-state record while the note retains repeated tags, gene label, and accepted-risk refs", () => {
+  const { turnInputs, state } = buildSustainmentMidStreak();
+  const fired = resolveTurn(soloScenario, state, { ...turnInputs[1], turn: 3, selections: slowBurnSelections(), acceptedRiskOverrides: [] });
+  assert.ok(fired.triggeredEvents.some((event) => event.id === "doctrine-sustainment-patience-gap"));
+  assert.equal(fired.nextState.doctrineMaturity["doctrine-sustainment-patience-gap"], undefined, "fired record is removed from next state");
+  const note = fired.afterAction.find((entry) => entry.heading === "Doctrine risk matured: The patience gap becomes policy blowback");
+  assert.ok(note, "after-action note emitted for the matured doctrine event");
+  assert.match(note!.detail, /slow-burn/, "note repeats the trigger tags");
+  assert.match(note!.detail, /Sustainment-First Operational Reach/, "note names the source gene label");
+  assert.match(note!.detail, /Matching accepted risks: S4 —/, "note retains accepted-risk refs from the streak");
+});
+
+test("doctrine 4: replay validation rejects tampering with doctrineMaturity", () => {
+  const session = buildSustainmentMidStreak();
+  const valid = validateReplaySession(soloScenario, { initialState: soloScenario.initialState, turnInputs: session.turnInputs, history: session.history, state: session.state });
+  assert.equal(valid.ok, true);
+
+  const streakCount = structuredClone(session);
+  streakCount.state.doctrineMaturity["doctrine-sustainment-patience-gap"].consecutiveTurns = 3;
+  assert.equal(validateReplaySession(soloScenario, { initialState: soloScenario.initialState, turnInputs: streakCount.turnInputs, history: streakCount.history, state: streakCount.state }).ok, false, "tampered streak count fails validation");
+
+  const forgedRef = structuredClone(session);
+  forgedRef.state.doctrineMaturity["doctrine-sustainment-patience-gap"].acceptedRiskRefs.push({ turn: 9, staffFunctionId: "S5", warningText: "forged" });
+  assert.equal(validateReplaySession(soloScenario, { initialState: soloScenario.initialState, turnInputs: forgedRef.turnInputs, history: forgedRef.history, state: forgedRef.state }).ok, false, "tampered accepted-risk ref fails validation");
+
+  const eventId = structuredClone(session);
+  eventId.state.doctrineMaturity["doctrine-sustainment-patience-gap-forged"] = eventId.state.doctrineMaturity["doctrine-sustainment-patience-gap"];
+  delete eventId.state.doctrineMaturity["doctrine-sustainment-patience-gap"];
+  assert.equal(validateReplaySession(soloScenario, { initialState: soloScenario.initialState, turnInputs: eventId.turnInputs, history: eventId.history, state: eventId.state }).ok, false, "tampered maturity key fails validation");
+
+  const nextDelta = structuredClone(session);
+  nextDelta.state.domestic.cabinetCover += 5;
+  assert.equal(validateReplaySession(soloScenario, { initialState: soloScenario.initialState, turnInputs: nextDelta.turnInputs, history: nextDelta.history, state: nextDelta.state }).ok, false, "tampered next-state delta fails validation");
 });

@@ -144,3 +144,24 @@ test("auto-accept flag fills supplied input risks and writes a replayable export
     })),
   );
 });
+
+test("batch output includes doctrine telemetry, strategy outcomes, and balance warnings", async () => {
+  const text = await runCli(["--batch", "8"]);
+  assert.equal(text.code, 0, text.stderr);
+  assert.match(text.stdout, /Doctrine event telemetry:/);
+  assert.match(text.stdout, /doctrine-sustainment-patience-gap/);
+  assert.match(text.stdout, /Doctrine strategies:/);
+  assert.match(text.stdout, /balanced-cycle/);
+  assert.match(text.stdout, /WARNING: Doctrine balance gates are calibrated for --batch 240 or larger\./);
+
+  const json = await runCli(["--batch", "8", "--json"]);
+  assert.equal(json.code, 0, json.stderr);
+  const body = JSON.parse(json.stdout);
+  assert.equal(body.campaignCount, 8);
+  assert.equal(body.doctrineEvents.length, 3);
+  assert.equal(body.doctrineStrategies.length, 4);
+  assert.ok(body.doctrineStrategies.every((strategy: { campaigns: number }) => strategy.campaigns === 2));
+  assert.ok(body.doctrineStrategies.every((strategy: { doctrineCampaignHitRate: number }) => typeof strategy.doctrineCampaignHitRate === "number"));
+  assert.ok(Array.isArray(body.dominantDoctrineStrategies));
+  assert.ok(Array.isArray(body.balanceWarnings));
+});

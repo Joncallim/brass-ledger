@@ -5,5 +5,7 @@ import type { EventDefinition } from "@brass-ledger/shared";
 /** Doctrine 4 authored adverse mass, shared by static balance lint and batch telemetry. */
 export function doctrineEventCostMass(event: EventDefinition) {
   const delta = event.stateDelta;
-  return Math.abs(delta.resources?.readiness ?? 0) + Math.abs(delta.resources?.politicalCapital ?? 0) + Math.abs(delta.alliance?.politicalAlignment ?? 0) + Math.abs(delta.alliance?.partnerPublicSupport ?? 0) + Math.abs(delta.domestic?.cabinetCover ?? 0) + Math.abs(delta.domestic?.publicPatience ?? 0) + Math.abs(delta.forceGeneration?.trainingThroughput ?? 0) + Math.max(0, delta.domestic?.mediaHeat ?? 0);
+  // Good-variable lanes count only adverse (negative) deltas; a positive delta on these
+  // lanes is a benefit, not a cost. mediaHeat is adverse when positive.
+  return Math.max(0, -(delta.resources?.readiness ?? 0)) + Math.max(0, -(delta.resources?.politicalCapital ?? 0)) + Math.max(0, -(delta.alliance?.politicalAlignment ?? 0)) + Math.max(0, -(delta.alliance?.partnerPublicSupport ?? 0)) + Math.max(0, -(delta.domestic?.cabinetCover ?? 0)) + Math.max(0, -(delta.domestic?.publicPatience ?? 0)) + Math.max(0, -(delta.forceGeneration?.trainingThroughput ?? 0)) + Math.max(0, delta.domestic?.mediaHeat ?? 0);
 }

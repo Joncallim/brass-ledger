@@ -886,16 +886,16 @@ export const externalConstraintStateSchema = z.object({
 });
 export type ExternalConstraintState = z.infer<typeof externalConstraintStateSchema>;
 
-export const doctrineConditionVariableSchema = z.enum([
+export const doctrineVariableSchema = z.enum([
   "campaignAimClarity", "relativeTempo", "mainEffortFocus", "secondaryRiskAccepted",
   "optionDislocation", "signatureControl", "exposureControl", "orderClarity",
   "culminationRisk", "uncommittedCapacity", "operationalReach", "staffSynchronization",
   "commanderIntentClarity", "systemPressure",
 ]);
-export type DoctrineConditionVariable = z.infer<typeof doctrineConditionVariableSchema>;
+export type DoctrineVariable = z.infer<typeof doctrineVariableSchema>;
 
 export const doctrineConditionSchema = z.object({
-  variable: doctrineConditionVariableSchema,
+  variable: doctrineVariableSchema,
   comparison: z.enum(["gte", "lte"]),
   threshold: z.number().int().min(0).max(100),
 }).strict();
@@ -903,6 +903,7 @@ export type DoctrineCondition = z.infer<typeof doctrineConditionSchema>;
 
 export const doctrineEventTriggerSchema = z.object({
   sourceGeneId: z.string().min(1),
+  sourceGeneLabel: z.string().min(1),
   patternId: z.string().min(1),
   vulnerability: z.string().min(1),
   evidenceRefs: z.array(z.string().min(1)).min(1),

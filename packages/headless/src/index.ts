@@ -55,6 +55,8 @@ export type DoctrineStrategyTelemetry = {
   winRate: number;
   meanDoctrineEvents: number;
   meanDoctrineEventCostMass: number;
+  /** Fraction of this strategy's campaigns in which at least one doctrine event fired. */
+  doctrineCampaignHitRate: number;
 };
 
 export type HeadlessRunOptions = {
@@ -114,14 +116,37 @@ function inputWithAcceptedRiskPolicy(session: GameSession, input: TurnInput, aut
 
 type StrategyId = DoctrineStrategyTelemetry["strategyId"];
 
-function batchInput(session: GameSession, campaignIndex: number, strategyId: StrategyId): TurnInput {
+export const orderedStrategies: StrategyId[] = ["balanced-cycle", "coalition-commitment", "adaptive-cell-sprawl", "sustainment-delay"];
+
+/**
+ * Deterministic per-replicate simulation seed. All four strategies in one replicate
+ * share this seed so the cohorts are paired; different replicates differ.
+ */
+export function replicateSeedFor(replicate: number): number {
+  return soloScenario.initialState.seed + replicate * 1009;
+}
+
+/** Builds a batch campaign session with the paired replicate seed applied to state and initialState. */
+export function createBatchSession(campaignIndex: number): GameSession {
+  const replicate = Math.floor(campaignIndex / orderedStrategies.length);
+  const session: GameSession = { ...createInitialGameSession(soloScenario, `batch-${campaignIndex}`), id: `batch-${campaignIndex}` };
+  session.state.seed = replicateSeedFor(replicate);
+  session.initialState.seed = replicateSeedFor(replicate);
+  return session;
+}
+
+function batchInput(session: GameSession, campaignIndex: number, replicate: number, strategyId: StrategyId): TurnInput {
   const memos = deriveDecisionMemos(soloScenario, session.state);
+  // The balanced policy preserves the pre-Doctrine-4 cycling driven by the campaign
+  // index (ci); replicate only drives seeds. Targeted policies rotate non-target memos
+  // by replicate so every targeted cohort sees the same optional-memo rotation.
+  const cycle = strategyId === "balanced-cycle" ? campaignIndex : replicate;
   // Track how many campaigns have actually included the optional memo so far.
   // Every 3rd campaign (ci % 3 === 0) skips it; the rest include it.
   // Formula: campaigns included = ci - floor((ci + 2) / 3)
   // This lets us cycle through the optional memo's options independently of the skip pattern,
   // so all options (including deception-grid at index 1) get equal selection frequency.
-  const optionalIncludeCount = campaignIndex - Math.floor((campaignIndex + 2) / 3);
+  const optionalIncludeCount = cycle - Math.floor((cycle + 2) / 3);
   const targeted: Record<StrategyId, Record<string, string>> = {
     "balanced-cycle": {},
     "coalition-commitment": { posture: "measured-deterrence", "intelligence-focus": "warning-net", "sustainment-focus": "repair-first", "alliance-frame": "public-assurance-tour" },
@@ -136,11 +161,11 @@ function batchInput(session: GameSession, campaignIndex: number, strategyId: Str
     selections: memos.map((memo, memoIndex) => {
       if (targeted[strategyId][memo.id]) return { memoId: memo.id, optionId: targeted[strategyId][memo.id] };
       if (memo.optional) {
-        if (campaignIndex % 3 === 0) return null;
+        if (cycle % 3 === 0) return null;
         const optionId = memo.options[optionalIncludeCount % memo.options.length]?.id ?? "";
         return { memoId: memo.id, optionId };
       }
-      const optionIndex = (campaignIndex + memoIndex) % memo.options.length;
+      const optionIndex = (cycle + memoIndex) % memo.options.length;
       return { memoId: memo.id, optionId: memo.options[optionIndex]?.id ?? memo.options[0]?.id ?? "" };
     }).filter((sel): sel is { memoId: string; optionId: string } => sel !== null),
   };
@@ -155,7 +180,7 @@ function percentile(sorted: number[], p: number): number {
 }
 
 export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTelemetry> {
-  const strategies: StrategyId[] = ["balanced-cycle", "coalition-commitment", "adaptive-cell-sprawl", "sustainment-delay"];
+  const strategies: StrategyId[] = orderedStrategies;
   const outcomes = { won: 0, lost: 0, active: 0 };
   const scores: number[] = [];
   const overloadTurns: Record<string, number> = {};
@@ -167,38 +192,44 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
   const optionCounts: Record<string, number> = {};
   const memoCampaignCounts: Record<string, number> = {};
   const eventStats = new Map<string, { attempted: number; qualifying: number; fired: number }>();
-  const strategyStats = new Map<StrategyId, { campaigns: number; score: number; wins: number; events: number; cost: number }>();
+  // Doctrine fires are attributed to the CURRENT campaign's strategy regardless of the
+  // event's authored target mapping, so the balanced cohort's fires are visible too.
+  const strategyStats = new Map<StrategyId, { campaigns: number; score: number; wins: number; events: number; cost: number; doctrineCampaigns: number }>();
+  // Fires of each doctrine event inside balanced-cycle campaigns, for the <0.85 gate.
+  const balancedEventFires = new Map<string, number>();
   for (const event of soloScenario.events.filter((candidate) => candidate.doctrineTrigger)) eventStats.set(event.id, { attempted: 0, qualifying: 0, fired: 0 });
 
   for (let ci = 0; ci < campaignCount; ci += 1) {
     const strategyId = strategies[ci % strategies.length];
     const replicate = Math.floor(ci / strategies.length);
-    const replicateSeed = soloScenario.initialState.seed + replicate * 1009;
-    let session: GameSession = { ...createInitialGameSession(soloScenario, `batch-${ci}`), id: `batch-${ci}` };
-    session.state.seed = replicateSeed;
-    session.initialState.seed = replicateSeed;
-    const strategy = strategyStats.get(strategyId) ?? { campaigns: 0, score: 0, wins: 0, events: 0, cost: 0 };
+    let session: GameSession = createBatchSession(ci);
+    const strategy = strategyStats.get(strategyId) ?? { campaigns: 0, score: 0, wins: 0, events: 0, cost: 0, doctrineCampaigns: 0 };
     strategy.campaigns += 1;
     strategyStats.set(strategyId, strategy);
     const campaignEventIds = new Set<string>();
     const campaignAttemptIds = new Set<string>();
     const campaignQualifyingIds = new Set<string>();
+    let campaignFiredAnyDoctrine = false;
 
     while (session.state.campaignStatus === "active" && session.state.turn <= soloScenario.maxTurns) {
-      const base = batchInput(session, replicate, strategyId);
+      const base = batchInput(session, ci, replicate, strategyId);
       const input = inputWithAcceptedRiskPolicy(session, base, true);
       const selectedTags = new Set(input.selections.flatMap((selection) => memosForSelection(soloScenario, session.state, selection)));
       const result = resolveTurn(soloScenario, session.state, input);
       totalTurns += 1;
       for (const event of soloScenario.events.filter((candidate) => candidate.doctrineTrigger)) {
         const fired = result.triggeredEvents.some((triggered) => triggered.id === event.id);
-        if (targetStrategyForEvent(event.id) === strategyId) {
-          if (event.triggerTags.every((tag) => selectedTags.has(tag))) campaignAttemptIds.add(event.id);
-          // Qualifying means the event was actually eligible to fire this turn,
-          // including the pre-turn predicate and mature streak—not merely that a
-          // new one-turn streak happened to be written.
-          if (doctrineEventEligible(event, session.state, selectedTags)) campaignQualifyingIds.add(event.id);
-          if (fired) { campaignEventIds.add(event.id); strategy.events += 1; strategy.cost += doctrineEventCostMass(event); }
+        if (event.triggerTags.every((tag) => selectedTags.has(tag))) campaignAttemptIds.add(event.id);
+        // Qualifying means the event was actually eligible to fire this turn,
+        // including the pre-turn predicate and mature streak—not merely that a
+        // new one-turn streak happened to be written.
+        if (doctrineEventEligible(event, session.state, selectedTags)) campaignQualifyingIds.add(event.id);
+        if (fired) {
+          campaignEventIds.add(event.id);
+          strategy.events += 1;
+          strategy.cost += doctrineEventCostMass(event);
+          campaignFiredAnyDoctrine = true;
+          if (strategyId === "balanced-cycle") balancedEventFires.set(event.id, (balancedEventFires.get(event.id) ?? 0) + 1);
         }
       }
 
@@ -235,6 +266,7 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
     scores.push(session.state.campaignScore);
     strategy.score += session.state.campaignScore;
     if (status === "won") strategy.wins += 1;
+    if (campaignFiredAnyDoctrine) strategy.doctrineCampaigns += 1;
     for (const id of campaignAttemptIds) eventStats.get(id)!.attempted += 1;
     for (const id of campaignQualifyingIds) eventStats.get(id)!.qualifying += 1;
     for (const id of campaignEventIds) eventStats.get(id)!.fired += 1;
@@ -270,12 +302,16 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
 
   const dominantOptions = optionSelectionRates.filter((entry) => entry.selectionRate > 0.75);
 
+  const doctrineStrategies = strategies.map((strategyId) => { const stat = strategyStats.get(strategyId)!; return { profileId: soloScenario.doctrineProfile.id, strategyId, campaigns: stat.campaigns, meanScore: stat.campaigns ? stat.score / stat.campaigns : 0, winRate: stat.campaigns ? stat.wins / stat.campaigns : 0, meanDoctrineEvents: stat.campaigns ? stat.events / stat.campaigns : 0, meanDoctrineEventCostMass: stat.campaigns ? stat.cost / stat.campaigns : 0, doctrineCampaignHitRate: stat.campaigns ? stat.doctrineCampaigns / stat.campaigns : 0 }; }).sort((a, b) => a.strategyId.localeCompare(b.strategyId));
+  // campaignHitRate is fired / all campaigns in the event's relevant (target) cohort,
+  // per the v2 telemetry definition — not fired / total campaigns.
   const doctrineEvents = soloScenario.events.filter((event) => event.doctrineTrigger).map((event) => {
     const stat = eventStats.get(event.id)!;
     const qualifying = stat.qualifying;
-    return { eventId: event.id, sourceGeneId: event.doctrineTrigger!.sourceGeneId, attemptedCampaigns: stat.attempted, qualifyingCampaigns: qualifying, firedCampaigns: stat.fired, campaignHitRate: campaignCount ? stat.fired / campaignCount : 0, maturationRate: stat.attempted ? qualifying / stat.attempted : 0, firingReliability: qualifying ? stat.fired / qualifying : 0 };
+    const targetStrategy = doctrineStrategies.find((strategy) => strategy.strategyId === targetStrategyForEvent(event.id));
+    const cohortCampaigns = targetStrategy?.campaigns ?? campaignCount;
+    return { eventId: event.id, sourceGeneId: event.doctrineTrigger!.sourceGeneId, attemptedCampaigns: stat.attempted, qualifyingCampaigns: qualifying, firedCampaigns: stat.fired, campaignHitRate: cohortCampaigns > 0 ? stat.fired / cohortCampaigns : 0, maturationRate: stat.attempted ? qualifying / stat.attempted : 0, firingReliability: qualifying ? stat.fired / qualifying : 0 };
   }).sort((a, b) => a.eventId.localeCompare(b.eventId));
-  const doctrineStrategies = strategies.map((strategyId) => { const stat = strategyStats.get(strategyId)!; return { profileId: soloScenario.doctrineProfile.id, strategyId, campaigns: stat.campaigns, meanScore: stat.campaigns ? stat.score / stat.campaigns : 0, winRate: stat.campaigns ? stat.wins / stat.campaigns : 0, meanDoctrineEvents: stat.campaigns ? stat.events / stat.campaigns : 0, meanDoctrineEventCostMass: stat.campaigns ? stat.cost / stat.campaigns : 0 }; }).sort((a, b) => a.strategyId.localeCompare(b.strategyId));
   const balanced = doctrineStrategies.find((entry) => entry.strategyId === "balanced-cycle");
   const adequateN = campaignCount >= 240 && doctrineStrategies.every((entry) => entry.campaigns >= 60);
   const dominantDoctrineStrategies = adequateN && balanced
@@ -288,6 +324,24 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
       if (entry.firingReliability !== 1 && entry.qualifyingCampaigns > 0) balanceWarnings.push(`${entry.eventId} has non-deterministic firing after qualification.`);
       const targetStrategy = doctrineStrategies.find((strategy) => strategy.strategyId === targetStrategyForEvent(entry.eventId));
       if (!targetStrategy || targetStrategy.meanDoctrineEventCostMass <= 0) balanceWarnings.push(`${entry.eventId} has no authored adverse event cost in its target strategy.`);
+    }
+    // Balanced event campaign hit rates must stay below 0.85 so the paired cohorts
+    // remain distinguishable from the deliberate overuse policies.
+    if (balanced && balanced.campaigns > 0) {
+      if (balanced.doctrineCampaignHitRate >= 0.85) balanceWarnings.push(`Balanced-cycle doctrine campaign hit rate is ${(balanced.doctrineCampaignHitRate * 100).toFixed(0)}%, not below the 0.85 gate.`);
+      for (const entry of doctrineEvents) {
+        const balancedHitRate = (balancedEventFires.get(entry.eventId) ?? 0) / balanced.campaigns;
+        if (balancedHitRate >= 0.85) balanceWarnings.push(`${entry.eventId} fired in ${(balancedHitRate * 100).toFixed(0)}% of balanced campaigns; the balanced cohort hit-rate gate (<0.85) is breached.`);
+      }
+    }
+    // A >50pp win-rate advantage that persists despite positive authored event cost means
+    // the event's adverse deltas are not enough — surface it so the signal cannot go unseen.
+    if (balanced) {
+      for (const entry of doctrineStrategies) {
+        if (entry.strategyId !== "balanced-cycle" && entry.meanDoctrineEventCostMass > 0 && entry.winRate > balanced.winRate + 0.50) {
+          balanceWarnings.push(`${entry.strategyId} holds a ${Math.round((entry.winRate - balanced.winRate) * 100)}pp win-rate advantage over balanced despite positive doctrine event cost; authored adverse deltas are not enough.`);
+        }
+      }
     }
   }
   if (dominantDoctrineStrategies.length > 0) balanceWarnings.push(`Dominant doctrine strategies: ${dominantDoctrineStrategies.join(", ")}.`);

@@ -12,7 +12,8 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json"
+    "build": "tsc -p tsconfig.build.json",
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "zod": "^4.1.8"

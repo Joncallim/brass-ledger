@@ -122,7 +122,7 @@ import {
   underpricedLaneWarningSuffix,
 } from "@brass-ledger/shared";
 
-type Rng = () => number;
+export type Rng = () => number;
 
 function mulberry32(seed: number): Rng {
   let t = seed + 0x6d2b79f5;
@@ -462,7 +462,7 @@ export function doctrineEventEligible(event: EventDefinition, state: CampaignSta
   return (state.doctrineMaturity[event.id]?.consecutiveTurns ?? 0) >= event.doctrineTrigger.sustainedTurns - 1;
 }
 
-function chooseEvents(
+export function chooseEvents(
   scenario: ScenarioDefinition,
   previousState: CampaignState,
   selectedTags: Set<string>,
@@ -2298,7 +2298,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
       const refs = [...(prior?.acceptedRiskRefs ?? []).map((risk) => `${risk.staffFunctionId} — ${risk.warningText}`), ...currentRefs];
       return {
         heading: `Doctrine risk matured: ${event.title}`,
-        detail: `${context.betLabel}. ${context.maturedRiskLabel}; observed ${trigger.conditions.map((condition) => `${condition.variable} ${condition.comparison} ${condition.threshold}`).join(" and ")} for ${trigger.sustainedTurns} consecutive turns. Vulnerability: ${trigger.vulnerability} (gene ${trigger.sourceGeneId}). Consequence: ${event.summary} ${refs.length > 0 ? `Matching accepted risks: ${refs.join("; ")}.` : "No matching warning was accepted."}`,
+        detail: `${context.betLabel} Repeated tags: ${event.triggerTags.join(", ")}. ${context.maturedRiskLabel}; observed ${trigger.conditions.map((condition) => `${condition.variable} ${condition.comparison} ${condition.threshold}`).join(" and ")} for ${trigger.sustainedTurns} consecutive turns. Vulnerability: ${trigger.vulnerability} (${trigger.sourceGeneLabel}; gene ${trigger.sourceGeneId}). Consequence: ${event.summary} ${refs.length > 0 ? `Matching accepted risks: ${refs.join("; ")}.` : "No matching warning was accepted."}`,
       };
     }),
     ...resolveBurdenDissent(directorateBurden, lens.burdenBias, input.acceptedRiskOverrides ?? [], scenario.staffFunctions),
