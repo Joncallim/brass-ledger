@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
 import {
   buildAdvisorPortraitDataUri,
@@ -25,7 +25,7 @@ const states: { label: string; state: ChiefSpriteVariantState }[] = [
   { label: "s4-bottleneck", state: { trustBand: "steady", burdenLevel: "light", campaignStatus: "active", s2ExternalEstimateConfidence: 46, s4SupportableTempo: 10 } },
 ];
 
-test("sprite variant matrix renders at 48×56 and 2× for human review", async ({ page }) => {
+async function renderSpriteMatrix(page: Page) {
   const session = createInitialGameSession(soloScenario, "sprite-matrix-session");
   // One chief per S-role so every role-gated effect (S2 tight framing, S4 utility detail)
   // is genuinely exercised in the human-review baseline, not just labeled.
@@ -69,8 +69,18 @@ test("sprite variant matrix renders at 48×56 and 2× for human review", async (
     <div class="matrix matrix-2x">${cells.join("")}</div>
   </body></html>`);
 
-  const imgs = page.locator("img.cell-img");
-  const total = chiefs.length * states.length;
+  return { imgs: page.locator("img.cell-img"), total: chiefs.length * states.length };
+}
+
+test("obsolete two-chief visual baseline is rejected at zero tolerance", async ({ page }) => {
+  await renderSpriteMatrix(page);
+  // This fixture is the pre-3d1837e two-chief artifact. It must never silently bless the
+  // five-chief matrix again: Playwright's negative assertion passes only when exact pixels differ.
+  await expect(page).not.toHaveScreenshot("sprite-matrix-two-chiefs.png", { maxDiffPixelRatio: 0 });
+});
+
+test("sprite variant matrix renders at 48×56 and 2× for human review", async ({ page }) => {
+  const { imgs, total } = await renderSpriteMatrix(page);
   await expect(imgs).toHaveCount(total * 2, { timeout: 15_000 });
   // Every 48px image must decode, report nonzero intrinsic size, and sit in an exact 48×56 box.
   for (let index = 0; index < total; index += 1) {
@@ -94,5 +104,5 @@ test("sprite variant matrix renders at 48×56 and 2× for human review", async (
   // Human-review composite at 2× (gitignored; path recorded in the PR body).
   await page.screenshot({ path: "test-results/sprite-matrix-review.png", fullPage: true });
   // Committed baseline = the accepted 48×56 matrix artifact for the human reviewer.
-  await expect(page).toHaveScreenshot("sprite-matrix.png", { maxDiffPixelRatio: 0.05 });
+  await expect(page).toHaveScreenshot("sprite-matrix.png", { maxDiffPixelRatio: 0 });
 });

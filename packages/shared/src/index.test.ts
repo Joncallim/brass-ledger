@@ -571,6 +571,42 @@ test("variant schemas are strict: unknown or out-of-range state fails, effects s
   assert.throws(() => spriteRenderVariantSchema.parse({ ...renderVariant, unknown: true }));
 });
 
+test("SpriteSpec rejects hand-authored variants that break canonical effects, role gates, or controls", () => {
+  const neutral = buildChiefSpriteSpec(neutralSpriteInput());
+  const won = buildChiefSpriteSpec({ ...neutralSpriteInput(), variantState: variantState({ campaignStatus: "won" }) });
+  const s4Bottleneck = buildChiefSpriteSpec({
+    ...neutralSpriteInput(),
+    chief: { ...spriteChief, directorate: "sustainment" },
+    variantState: variantState({ s4SupportableTempo: 10 }),
+  });
+
+  assert.doesNotThrow(() => spriteSpecSchema.parse(won), "canonical builder output remains valid");
+  assert.doesNotThrow(() => spriteSpecSchema.parse(s4Bottleneck), "canonical role-gated builder output remains valid");
+  assert.throws(() => spriteSpecSchema.parse({
+    ...neutral,
+    expression: "severe",
+    variant: { ...neutral.variant, effects: ["campaign-won"], posture: "closed", saturation: 0.45 },
+  }), /canonical/i, "won effect cannot be paired with a severe loss render");
+  assert.throws(() => spriteSpecSchema.parse({
+    ...neutral,
+    variant: { ...neutral.variant, effects: ["s4-bottleneck"], supportDetail: "utility-harness" },
+  }), /S4/i, "S4 harness cannot be attached to a non-S4 sprite");
+  assert.throws(() => spriteSpecSchema.parse({
+    ...won,
+    variant: { ...won.variant, effects: ["campaign-won", "trust-low"] },
+  }), /canonical order/i, "effect order is part of the canonical contract");
+  assert.throws(() => spriteSpecSchema.parse({
+    ...won,
+    variant: { ...won.variant, effects: ["campaign-won", "campaign-won"] },
+  }), /unique/i, "effects cannot be duplicated");
+  assert.throws(() => spriteSpecSchema.parse({
+    ...neutral,
+    trustBand: "strained",
+    expression: "skeptical",
+    variant: { ...neutral.variant, effects: ["trust-low", "trust-high"], posture: "closed" },
+  }), /cannot both/i, "mutually exclusive state effects cannot be hand-combined");
+});
+
 test("exact roadmap effects map every predicate and boundary to expression and render controls", () => {
   // Trust: only strained/solid activate trust effects; watchful/steady stay neutral.
   assert.deepEqual(buildChiefSpriteVariant("calm", "S1", variantState({ trustBand: "strained" })).variant.effects, ["trust-low"]);

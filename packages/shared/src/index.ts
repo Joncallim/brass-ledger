@@ -560,6 +560,18 @@ export const spriteVariantEffectSchema = z.enum([
 ]);
 export type SpriteVariantEffect = z.infer<typeof spriteVariantEffectSchema>;
 
+const spriteVariantEffectOrder = Object.fromEntries(
+  spriteVariantEffectSchema.options.map((effect, index) => [effect, index]),
+) as Record<SpriteVariantEffect, number>;
+
+function canonicalVariantIssue(
+  ctx: z.RefinementCtx,
+  path: (string | number)[],
+  message: string,
+): void {
+  ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
+}
+
 /** Strict renderer controls derived from the variant policy; never persisted, never in the prompt. */
 export const spriteRenderVariantSchema = z.object({
   effects: z.array(spriteVariantEffectSchema),
@@ -568,7 +580,40 @@ export const spriteRenderVariantSchema = z.object({
   saturation: z.number().min(0).max(1),
   framing: z.enum(["default", "tight"]),
   supportDetail: z.enum(["none", "utility-harness"]),
-}).strict();
+}).strict().superRefine((variant, ctx) => {
+  const effects = new Set(variant.effects);
+  if (effects.size !== variant.effects.length) {
+    canonicalVariantIssue(ctx, ["effects"], "effects must be unique");
+  }
+  if (variant.effects.some((effect, index) => index > 0 && spriteVariantEffectOrder[effect] < spriteVariantEffectOrder[variant.effects[index - 1]!])) {
+    canonicalVariantIssue(ctx, ["effects"], "effects must use canonical order");
+  }
+  for (const [first, second] of [["trust-low", "trust-high"], ["directorate-strained", "directorate-overloaded"], ["campaign-won", "campaign-lost"]] as const) {
+    if (effects.has(first) && effects.has(second)) {
+      canonicalVariantIssue(ctx, ["effects"], `${first} and ${second} cannot both appear in a canonical effect list`);
+    }
+  }
+  const expectedPosture = effects.has("trust-low") ? "closed" : effects.has("trust-high") ? "open" : "neutral";
+  if (variant.posture !== expectedPosture) {
+    canonicalVariantIssue(ctx, ["posture"], "posture must match canonical trust effects");
+  }
+  const expectedDarken = effects.has("directorate-overloaded") ? 0.22 : 0;
+  if (variant.backgroundDarkenOpacity !== expectedDarken) {
+    canonicalVariantIssue(ctx, ["backgroundDarkenOpacity"], "background darkening must match canonical overload effect");
+  }
+  const expectedSaturation = effects.has("campaign-lost") ? 0.45 : 1;
+  if (variant.saturation !== expectedSaturation) {
+    canonicalVariantIssue(ctx, ["saturation"], "saturation must match canonical campaign-loss effect");
+  }
+  const expectedFraming = effects.has("s2-low-confidence") ? "tight" : "default";
+  if (variant.framing !== expectedFraming) {
+    canonicalVariantIssue(ctx, ["framing"], "framing must match canonical S2 confidence effect");
+  }
+  const expectedSupportDetail = effects.has("s4-bottleneck") ? "utility-harness" : "none";
+  if (variant.supportDetail !== expectedSupportDetail) {
+    canonicalVariantIssue(ctx, ["supportDetail"], "support detail must match canonical S4 bottleneck effect");
+  }
+});
 export type SpriteRenderVariant = z.infer<typeof spriteRenderVariantSchema>;
 
 export const spriteVisualLanguageEntrySchema = z.object({
@@ -590,7 +635,30 @@ export const spriteSpecSchema = advisorPortraitSpecSchema.extend({
   uniform: z.string().min(1), expression: spriteExpressionSchema, trustBand: spriteTrustBandSchema.optional(),
   prompt: z.string().min(1), negativePrompt: z.string().min(1), deterministicSeed: z.string().min(1),
   variant: spriteRenderVariantSchema,
-}).strict();
+}).strict().superRefine((sprite, ctx) => {
+  const effects = new Set(sprite.variant.effects);
+  if (sprite.trustBand === "strained" && !effects.has("trust-low") || sprite.trustBand !== "strained" && effects.has("trust-low")) {
+    canonicalVariantIssue(ctx, ["variant", "effects"], "effects must match the canonical trust band");
+  }
+  if (sprite.trustBand === "solid" && !effects.has("trust-high") || sprite.trustBand !== "solid" && effects.has("trust-high")) {
+    canonicalVariantIssue(ctx, ["variant", "effects"], "effects must match the canonical trust band");
+  }
+  if (effects.has("s2-low-confidence") && sprite.role !== "S2") {
+    canonicalVariantIssue(ctx, ["variant", "effects"], "S2 confidence effect is only valid for the S2 role");
+  }
+  if (effects.has("s4-bottleneck") && sprite.role !== "S4") {
+    canonicalVariantIssue(ctx, ["variant", "effects"], "S4 bottleneck effect is only valid for the S4 role");
+  }
+  const expectedExpression = effects.has("campaign-won") ? "resolved"
+    : effects.has("campaign-lost") ? "severe"
+      : effects.has("directorate-overloaded") ? "strained"
+        : effects.has("trust-low") ? "skeptical"
+          : effects.has("directorate-strained") ? "strained"
+            : effects.has("trust-high") ? "calm" : undefined;
+  if (expectedExpression !== undefined && sprite.expression !== expectedExpression) {
+    canonicalVariantIssue(ctx, ["expression"], "expression must match canonical variant effects");
+  }
+});
 export type SpriteSpec = z.infer<typeof spriteSpecSchema>;
 
 export type ChiefSpriteSpecInput = {
