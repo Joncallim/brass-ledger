@@ -1,5 +1,5 @@
 import { doctrineEventCostMass, soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import {
   buildAdvisorPortraitSvg,
   buildChiefSpriteSpec,
@@ -8,8 +8,10 @@ import {
   buildStaffFunctionReadouts,
   createInitialGameSession,
   type AcceptedRiskOverride,
+  type DirectorateId,
   type GameSession,
   type ReplayValidation,
+  type SpriteSpec,
   type TurnInput,
 } from "@brass-ledger/shared";
 import { deriveDecisionMemos, doctrineEventEligible, previewTurn, resolveTurn, validateReplaySession } from "@brass-ledger/sim";
@@ -70,6 +72,27 @@ export type HeadlessRunOptions = {
   validate?: boolean;
   includeSprites?: boolean;
   autoAcceptRisks?: boolean;
+};
+
+/**
+ * SHA-256 over the exact UTF-8 bytes of a prompt string, as full lowercase hex.
+ * No trim, normalization, prefix, or truncation. Computed at the Node output
+ * boundary only — never inside shared (browser-safe) or persisted sessions.
+ */
+export function hashPromptText(value: string): string {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+/** Additive sprite artifact: deterministic SVG + spec, with prompt hashes as siblings. */
+export type HeadlessSpriteOutput = {
+  chiefId: string;
+  displayName: string;
+  title: string;
+  directorate: DirectorateId;
+  svg: string;
+  spec: SpriteSpec;
+  promptHash: string;
+  negativePromptHash: string;
 };
 
 export class HeadlessAcceptedRiskError extends Error {
@@ -576,7 +599,7 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
     turnSummaries,
     validation,
     sprites: options.includeSprites
-      ? session.advisorRoster.map((advisor) => {
+      ? session.advisorRoster.map((advisor): HeadlessSpriteOutput => {
         const chief = soloScenario.chiefs.find((candidate) => candidate.id === advisor.chiefId);
         if (!chief) throw new Error(`Missing chief for advisor ${advisor.chiefId}`);
         const position = session.history.at(-1)?.chiefPositions.find((candidate) => candidate.chiefId === advisor.chiefId);
@@ -592,6 +615,8 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
           title: advisor.title,
           directorate: advisor.directorate,
           svg: buildAdvisorPortraitSvg(spec), spec,
+          promptHash: hashPromptText(spec.prompt),
+          negativePromptHash: hashPromptText(spec.negativePrompt),
         };
       })
       : undefined,

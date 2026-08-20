@@ -556,9 +556,9 @@ export type SpriteVisualLanguage = z.infer<typeof spriteVisualLanguageSchema>;
 
 export const spriteSpecSchema = advisorPortraitSpecSchema.extend({
   id: z.string().min(1), subjectType: spriteSubjectTypeSchema, role: spriteRoleSchema,
-  displayName: z.string().min(1), silhouette: z.string().min(1), palette: z.array(z.string().min(1)).min(1),
+  displayName: z.string().min(1), temperament: z.string().min(1), silhouette: z.string().min(1), palette: z.array(z.string().min(1)).min(1),
   uniform: z.string().min(1), expression: spriteExpressionSchema, trustBand: spriteTrustBandSchema.optional(),
-  prompt: z.string(), negativePrompt: z.string(), deterministicSeed: z.string().min(1),
+  prompt: z.string().min(1), negativePrompt: z.string().min(1), deterministicSeed: z.string().min(1),
 }).strict();
 export type SpriteSpec = z.infer<typeof spriteSpecSchema>;
 
@@ -566,6 +566,45 @@ export type ChiefSpriteSpecInput = {
   chief: ChiefArchetype; portrait: AdvisorPortraitSpec; sessionSeed: string; trustBand: SpriteTrustBand;
   burdenLevel: BurdenLevel; campaignStatus: CampaignState["campaignStatus"]; visualLanguage: SpriteVisualLanguage;
 };
+
+/** The exact negative prompt from the sprite roadmap; identical for every sprite. */
+export const SPRITE_NEGATIVE_PROMPT =
+  "photorealistic, cinematic glow, fantasy armor, tactical weapon pose, exaggerated emotion, glossy sci-fi suit, decorative background, cluttered medals, text, logo, watermark, distorted face, extra limbs";
+
+/** Frozen fixed role vocabulary for prompt rendering (roadmap `[S-function role]` placeholder). */
+export const SPRITE_PROMPT_ROLE_LABELS = Object.freeze({
+  S1: "S1 Personnel",
+  S2: "S2 Intelligence",
+  S3: "S3 Operations",
+  S4: "S4 Logistics",
+  S5: "S5 Plans",
+  training: "Training",
+} satisfies Record<SpriteRole, string>);
+
+export type SpritePromptSource = Pick<
+  SpriteSpec,
+  "role" | "displayName" | "temperament" | "expression"
+>;
+
+export type SpritePromptText = Pick<SpriteSpec, "prompt" | "negativePrompt">;
+
+/**
+ * Pure deterministic prompt fill: the positive prompt is the roadmap template with exactly
+ * four verbatim substitutions (role label, display name, temperament, expression); the
+ * negative prompt is the roadmap constant. No trimming, casing, normalization, or escaping.
+ */
+export function buildSpritePromptText(source: SpritePromptSource): SpritePromptText {
+  return {
+    prompt:
+      "Military staff advisor portrait for a strategic command simulation, " +
+      `${SPRITE_PROMPT_ROLE_LABELS[source.role]}, ${source.displayName}, ` +
+      `${source.temperament}, ${source.expression}, ` +
+      "restrained editorial game art, clean bust portrait, readable at small size, " +
+      "consistent uniform silhouette, muted palette, no photorealism, no fantasy armor, " +
+      "no weapons, neutral command-room background.",
+    negativePrompt: SPRITE_NEGATIVE_PROMPT,
+  };
+}
 
 export const sessionAdvisorSchema = z.object({
   chiefId: z.string(),
@@ -3187,14 +3226,21 @@ function expressionFor(input: Pick<ChiefSpriteSpecInput, "trustBand" | "burdenLe
 export function buildChiefSpriteSpec(input: ChiefSpriteSpecInput): SpriteSpec {
   const role = roleForChiefDirectorate(input.chief.directorate);
   const visual = input.visualLanguage[role];
+  const expression = expressionFor({ baseExpression: visual.baseExpression, trustBand: input.trustBand, burdenLevel: input.burdenLevel, campaignStatus: input.campaignStatus });
+  const source: SpritePromptSource = {
+    role,
+    displayName: input.chief.name,
+    temperament: input.chief.temperament,
+    expression,
+  };
+  const { prompt, negativePrompt } = buildSpritePromptText(source);
   return spriteSpecSchema.parse({
     ...input.portrait,
-    id: `chief:${input.chief.id}`, subjectType: "chief", role, displayName: input.chief.name,
+    id: `chief:${input.chief.id}`, subjectType: "chief", ...source,
     silhouette: visual.shapeLanguage,
     palette: [input.portrait.skinTone, input.portrait.hairColor, input.portrait.eyeColor, input.portrait.uniformColor, input.portrait.trimColor, input.portrait.backgroundColor, input.portrait.panelColor],
     uniform: visual.uniformLanguage,
-    expression: expressionFor({ baseExpression: visual.baseExpression, trustBand: input.trustBand, burdenLevel: input.burdenLevel, campaignStatus: input.campaignStatus }),
-    trustBand: input.trustBand, prompt: "", negativePrompt: "",
+    trustBand: input.trustBand, prompt, negativePrompt,
     deterministicSeed: chiefSpriteDeterministicSeed(input.sessionSeed, input.chief.id),
   });
 }

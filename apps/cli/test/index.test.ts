@@ -5,7 +5,8 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { soloScenario } from "@brass-ledger/content";
-import { createInitialGameSession } from "@brass-ledger/shared";
+import { createInitialGameSession, SPRITE_NEGATIVE_PROMPT } from "@brass-ledger/shared";
+import { hashPromptText } from "@brass-ledger/headless";
 import { deriveDecisionMemos } from "@brass-ledger/sim";
 
 const tempDir = await mkdtemp(path.join(tmpdir(), "brass-ledger-cli-"));
@@ -82,13 +83,22 @@ test("--sprites adds schema payloads to JSON and preserves plain-text count outp
   assert.equal(json.code, 0, json.stderr);
   const body = JSON.parse(json.stdout);
   assert.equal(body.sprites.length, 6);
-  assert.equal(body.sprites[0].spec.prompt, "");
-  assert.match(body.sprites[0].svg, /^<svg/);
+  const sprite = body.sprites[0];
+  assert.ok(sprite.spec.prompt.length > 0, "positive prompt is filled");
+  assert.match(sprite.spec.prompt, /^Military staff advisor portrait for a strategic command simulation, /);
+  assert.equal(sprite.spec.negativePrompt, SPRITE_NEGATIVE_PROMPT);
+  assert.equal(sprite.promptHash, hashPromptText(sprite.spec.prompt), "promptHash is SHA-256 of the emitted prompt");
+  assert.equal(sprite.negativePromptHash, hashPromptText(sprite.spec.negativePrompt), "negativePromptHash is SHA-256 of the emitted negative prompt");
+  assert.match(sprite.promptHash, /^[0-9a-f]{64}$/);
+  assert.match(sprite.negativePromptHash, /^[0-9a-f]{64}$/);
+  assert.match(sprite.svg, /^<svg/);
   assert.equal(body.sessionExport, undefined);
 
   const text = await runCli(["--turns", "1", "--sprites"]);
   assert.equal(text.code, 0, text.stderr);
   assert.match(text.stdout, /Generated 6 advisor sprite SVG payloads\./);
+  assert.equal(text.stdout.includes("Military staff advisor portrait for a strategic command simulation"), false, "plain mode must not print the positive prompt");
+  assert.equal(text.stdout.includes(SPRITE_NEGATIVE_PROMPT), false, "plain mode must not print the negative prompt");
 });
 
 test("supplied input without accepted-risk overrides is rejected", async () => {
