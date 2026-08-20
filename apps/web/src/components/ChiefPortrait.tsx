@@ -7,7 +7,7 @@ type Props = {
 };
 
 const sizeClasses = {
-  sm: "w-10 h-11",
+  sm: "w-12 h-14",
   md: "w-16 h-[74px]",
   lg: "w-24 h-28",
 };

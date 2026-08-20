@@ -7,7 +7,8 @@
     "build": "vite build",
     "dev": "vite",
     "test": "node --import tsx --test test/**/*.test.ts test/**/*.test.tsx",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:visual": "playwright test --config=playwright.visual.config.ts"
   },
   "dependencies": {
     "@brass-ledger/shared": "*",

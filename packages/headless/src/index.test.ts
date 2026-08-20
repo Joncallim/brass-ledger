@@ -35,6 +35,8 @@ test("sprite output is additive, schema-valid, and renderer-equivalent", async (
   assert.equal(withSprites.sprites?.length, 6);
   for (const sprite of withSprites.sprites ?? []) {
     assert.deepEqual(spriteSpecSchema.parse(sprite.spec), sprite.spec);
+    assert.ok(sprite.spec.variant, "variant render controls are present on every spec");
+    assert.ok(Array.isArray(sprite.spec.variant.effects), "effects array is present");
     assert.equal(sprite.svg, buildAdvisorPortraitSvg(sprite.spec));
     assert.match(sprite.svg, /^<svg/);
     assert.ok(sprite.spec.temperament.length > 0, "temperament is copied from the chief");
@@ -45,6 +47,9 @@ test("sprite output is additive, schema-valid, and renderer-equivalent", async (
     assert.match(sprite.promptHash, /^[0-9a-f]{64}$/);
     assert.match(sprite.negativePromptHash, /^[0-9a-f]{64}$/);
   }
+  // NOTE: this run resolves one real turn, so the sim has already derived real S2/S4 staff
+  // mechanics into the state — the S4 chief may legitimately show the harness. The neutral
+  // zero-history case is asserted in the determinism test below (v2 Changes #5).
 });
 
 test("sprite output is deterministic for the same supplied session", async () => {
@@ -60,6 +65,56 @@ test("sprite output is deterministic for the same supplied session", async () =>
     // precedence override fires — expression must be the authored base expression.
     assert.equal(sprite.spec.expression, spriteVisualLanguage[sprite.spec.role].baseExpression, `${sprite.spec.role} must fall through to its authored base expression`);
   }
+  // Zero history + fresh content fixture: staffMechanics come straight from the schema-parsed
+  // soloScenario initial state (S4 tempo 50 >= 15, S2 confidence 46 > 42), so the S2/S4 role
+  // signals are genuinely neutral — no crop, no harness (v2 Changes #5).
+  const s4 = first.sprites!.find((sprite) => sprite.spec.role === "S4");
+  const s2 = first.sprites!.find((sprite) => sprite.spec.role === "S2");
+  assert.equal(s4?.spec.variant.supportDetail, "none", "zero-history S4 tempo 50 is not bottlenecked");
+  assert.equal(s4?.spec.variant.framing, "default");
+  assert.equal(s2?.spec.variant.framing, "default", "zero-history S2 confidence 46 is not low");
+});
+
+test("sprite variants respond to final session state and latest history burden", async () => {
+  const base = createInitialGameSession(soloScenario, "sprite-variant-session");
+  // Run one real turn so history carries schema-valid chief positions to mutate.
+  const warmed = await runHeadlessCampaign({ session: structuredClone(base), turns: 1, includeSprites: false });
+  const session = warmed.sessionExport;
+  // Controlled final state: lost campaign, strained trust for every chief, S2/S4 staff
+  // signals in the bottleneck ranges, and an overloaded burden on the latest history entry.
+  for (const advisor of session.advisorRoster) {
+    session.state.chiefTrust[advisor.chiefId] = 30;
+  }
+  session.state.campaignStatus = "lost";
+  session.state.staffMechanics.s2.externalEstimateConfidence = 30;
+  session.state.staffMechanics.s4.supportableTempo = 10;
+  const last = session.history.at(-1)!;
+  last.chiefPositions = last.chiefPositions.map((entry) => ({
+    ...entry,
+    staffReadoutEvidence: { ...entry.staffReadoutEvidence, burdenLevel: "overloaded" },
+  }));
+
+  const output = await runHeadlessCampaign({ session: structuredClone(session), turns: 0, includeSprites: true });
+  const byRole = new Map(output.sprites!.map((sprite) => [sprite.spec.role, sprite]));
+  const s1 = byRole.get("S1")!;
+  const s2 = byRole.get("S2")!;
+  const s4 = byRole.get("S4")!;
+  assert.equal(s1.spec.expression, "severe", "lost campaign drives severe");
+  assert.equal(s1.spec.variant.posture, "closed", "strained trust closes the posture");
+  assert.equal(s1.spec.variant.backgroundDarkenOpacity, 0.22, "overload darkens the background");
+  assert.equal(s1.spec.variant.saturation, 0.45, "loss desaturates");
+  assert.deepEqual(s1.spec.variant.effects, ["trust-low", "directorate-overloaded", "campaign-lost"], "canonical effects order");
+  assert.equal(s2.spec.variant.framing, "tight", "S2 low confidence crops the frame");
+  assert.equal(s4.spec.variant.supportDetail, "utility-harness", "S4 bottleneck shows the utility harness");
+  assert.equal(s4.spec.variant.posture, "closed");
+  for (const sprite of output.sprites ?? []) {
+    assert.ok(sprite.spec.prompt.includes("severe"), "every chief prompt carries the severe token when lost");
+    assert.equal(sprite.promptHash, hashPromptText(sprite.spec.prompt), "re-derived hash matches the emitted sibling");
+    assert.equal(sprite.negativePromptHash, hashPromptText(sprite.spec.negativePrompt));
+  }
+  // Same supplied session twice → deep-equal sprite outputs, SVG, and hashes.
+  const again = await runHeadlessCampaign({ session: structuredClone(session), turns: 0, includeSprites: true });
+  assert.deepEqual(output.sprites, again.sprites);
 });
 
 test("sprite prompts and hashes stay outside the saved session", async () => {
@@ -67,7 +122,7 @@ test("sprite prompts and hashes stay outside the saved session", async () => {
   assert.ok(output.sprites, "sprites are emitted when opted in");
   assert.ok(output.sessionExport, "raw GameSession sibling is present");
   gameSessionSchema.parse(output.sessionExport);
-  const forbidden = ["prompt", "negativePrompt", "promptHash", "negativePromptHash", "deterministicSeed", "temperament"];
+  const forbidden = ["prompt", "negativePrompt", "promptHash", "negativePromptHash", "deterministicSeed", "temperament", "variant", "effects", "posture", "framing", "supportDetail", "saturation", "backgroundDarkenOpacity"];
   const keys: string[] = [];
   const collect = (value: unknown) => {
     if (Array.isArray(value)) return value.forEach(collect);
