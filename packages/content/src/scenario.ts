@@ -1,11 +1,37 @@
-import { scenarioDefinitionSchema } from "@brass-ledger/shared";
+import {
+  applyDoctrineGenes,
+  defaultDoctrineMechanicsState,
+  doctrineProfileSchema,
+  scenarioDefinitionSchema,
+} from "@brass-ledger/shared";
+import { resolveDoctrineGenes } from "./doctrine-genes";
+
+// The scenario's doctrine identity: a fictional coalition-composite staff culture
+// assembled from CELERY gene-bank genes (Doctrine 2, issue #56). The genes are content
+// data in ./doctrine-genes.ts; the applied baseline below is what the engine sees.
+// Guardrail: this is a fictional composite, not a clone of any real country's staff.
+const doctrineProfile = doctrineProfileSchema.parse({
+  id: "jhq-coalition-composite",
+  label: "Allied joint headquarters — coalition-composite staff culture",
+  evidenceRefs: [
+    "CELERY/faction-doctrine-gene-bank#Gene: Coalition-Native Staff",
+    "CELERY/faction-doctrine-gene-bank#Gene: Adaptive Cell Staff",
+    "CELERY/faction-doctrine-gene-bank#Gene: Sustainment-First Operational Reach",
+  ],
+  geneIds: [
+    "coalition-native-staff",
+    "adaptive-cell-staff",
+    "sustainment-first-operational-reach",
+  ],
+  optionalStaffModules: [],
+});
 
 export const soloScenario = scenarioDefinitionSchema.parse({
   id: "brass-ledger-jhq",
   title: "Brass Ledger",
   description:
     "You run a joint headquarters trying to rebuild a credible defense during a slow-burning crisis. Warning about the adversary's intentions is never quite clean, the reserve force is already strained, and sustainment cannot support everything you would like to do at once. Every month you weigh deterrence, force generation, alliance politics, and how much political cover you can afford to spend, and you live with what each choice costs the next month.",
-  contentVersion: "0.7.0",
+  contentVersion: "0.8.0",
   maxTurns: 12,
   chiefs: [
     { id: "warden", name: "Maj. Gen. Ruth Warden", genderPresentation: "female", directorate: "people", title: "Chief of People", doctrineBias: "preserve deployable experience before chasing visible tempo", temperament: "plainspoken and protective", competence: 0.78, riskTolerance: 0.34, preferredTags: ["retention", "reserve", "recovery", "training"], concernTags: ["escalatory", "tempo-spike"] },
@@ -182,6 +208,13 @@ export const soloScenario = scenarioDefinitionSchema.parse({
     campaignStatus: "active",
     campaignScore: 0,
     campaignOutcome: null,
+    // Doctrine baseline biased away from neutral by the scenario's doctrine profile.
+    // Computed once at definition time via applyDoctrineGenes; the serialized state
+    // carries this opening position, so replay never re-applies genes (issue #56).
+    doctrineMechanics: applyDoctrineGenes(
+      defaultDoctrineMechanicsState,
+      resolveDoctrineGenes(doctrineProfile),
+    ),
     strategic: {
       forceGeneration: { deployableUnits: 5.2, reserveStrain: 46, trainingThroughput: 51, personnelShortfalls: 41 },
       intelligence: { collectionCoverage: 54, confidence: 52, warningReliability: 49, deceptionPressure: 43 },
@@ -288,4 +321,5 @@ export const soloScenario = scenarioDefinitionSchema.parse({
       geopoliticalSummary: "Pressure is rising, but the picture still favors a controlled recovery if the headquarters keeps its line of effort tight.",
     },
   },
+  doctrineProfile,
 });

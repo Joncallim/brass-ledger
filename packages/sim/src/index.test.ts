@@ -1,13 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { soloScenario } from "@brass-ledger/content";
+import { doctrineGenes, resolveDoctrineGenes, soloScenario } from "@brass-ledger/content";
 import {
+  applyDoctrineGenes,
   buildChiefPositions,
   buildStaffFunctionReadouts,
   campaignStateSchema,
   continueChiefConversation,
+  defaultDoctrineMechanicsState,
+  doctrineRiskKeys,
   startChiefConversation,
   updateCommitmentsFromChiefConversation,
+  type DoctrineGene,
   type TurnInput,
 } from "@brass-ledger/shared";
 import { previewTurn, resolveTurn, validateReplaySession } from "./index";
@@ -1057,29 +1061,34 @@ test("Events with constraint shifts emit industry causalRefs in explainability",
 
 // ── Doctrine 1: DoctrineMechanicsState (issue #55) ─────────────────────────────────────────
 
-test("doctrineMechanics is neutral-initialized on a fresh scenario", () => {
-  assert.deepEqual(soloScenario.initialState.doctrineMechanics, {
-    campaignAimClarity: 55,
-    relativeTempo: 50,
-    mainEffortFocus: 50,
-    secondaryRiskAccepted: 50,
-    optionDislocation: 40,
-    signatureControl: 45,
-    exposureControl: 50,
-    orderClarity: 60,
-    culminationRisk: 18,
-    uncommittedCapacity: 45,
-    operationalReach: 48,
-    staffSynchronization: 55,
-    commanderIntentClarity: 55,
-    systemPressure: 45,
-  });
+test("doctrineMechanics opening position equals the profile-applied baseline (issue #56)", () => {
+  // Doctrine 2 biases the neutral baseline at scenario-definition time; the opening
+  // position is exactly what applyDoctrineGenes produces from the declared profile.
+  const expected = applyDoctrineGenes(
+    defaultDoctrineMechanicsState,
+    resolveDoctrineGenes(soloScenario.doctrineProfile!),
+  );
+  assert.deepEqual(soloScenario.initialState.doctrineMechanics, expected);
+  assert.notDeepEqual(
+    soloScenario.initialState.doctrineMechanics,
+    defaultDoctrineMechanicsState,
+    "the scenario's doctrine profile must measurably shift the neutral baseline",
+  );
+  // Spot-check the coalition-composite mix: sustainment-first lowers tempo culture,
+  // coalition-native raises synchronization, adaptive cells consume spare capacity.
+  assert.equal(soloScenario.initialState.doctrineMechanics.relativeTempo, 47);
+  assert.equal(soloScenario.initialState.doctrineMechanics.staffSynchronization, 67);
+  assert.equal(soloScenario.initialState.doctrineMechanics.uncommittedCapacity, 40);
 });
 
-test("doctrineMechanics defaults to the same neutral state when omitted from a persisted save", () => {
+test("doctrineMechanics omitted from a persisted save defaults to neutral, not the scenario baseline", () => {
+  // The schema default is the *neutral* state; a save that omits doctrineMechanics
+  // (e.g. written before Doctrine 1) parses as neutral. The canonical-import check
+  // rejects such a save against the biased opening position at the server boundary.
   const { doctrineMechanics, ...withoutDoctrine } = soloScenario.initialState;
+  assert.notDeepEqual(doctrineMechanics, defaultDoctrineMechanicsState);
   const parsed = campaignStateSchema.parse(withoutDoctrine);
-  assert.deepEqual(parsed.doctrineMechanics, doctrineMechanics);
+  assert.deepEqual(parsed.doctrineMechanics, defaultDoctrineMechanicsState);
 });
 
 test("doctrineMechanics is deterministic and replay-safe across identical resolveTurn calls", () => {
@@ -1087,6 +1096,116 @@ test("doctrineMechanics is deterministic and replay-safe across identical resolv
   const right = resolveTurn(soloScenario, soloScenario.initialState, highTempoInput);
   assert.deepEqual(left.nextState.doctrineMechanics, right.nextState.doctrineMechanics);
   assert.equal(left.replayHash, right.replayHash);
+});
+
+// ── Doctrine 2: scenario-level doctrine genes / DoctrineProfile (issue #56) ────────────────
+
+test("applyDoctrineGenes sums modifiers across genes in order and is deterministic", () => {
+  const genes: DoctrineGene[] = [
+    {
+      id: "g1",
+      label: "G1",
+      evidenceRefs: ["e1"],
+      strengths: ["s"],
+      vulnerabilities: ["v"],
+      variableModifiers: { relativeTempo: 10, systemPressure: 5 },
+      staffAdviceStyle: {},
+    },
+    {
+      id: "g2",
+      label: "G2",
+      evidenceRefs: ["e2"],
+      strengths: ["s"],
+      vulnerabilities: ["v"],
+      variableModifiers: { relativeTempo: 7, campaignAimClarity: -4 },
+      staffAdviceStyle: {},
+    },
+  ];
+  const first = applyDoctrineGenes(defaultDoctrineMechanicsState, genes);
+  const second = applyDoctrineGenes(defaultDoctrineMechanicsState, genes);
+  assert.deepEqual(first, second, "gene application must be deterministic");
+  assert.equal(first.relativeTempo, 67, "modifiers should sum (50 + 10 + 7)");
+  assert.equal(first.systemPressure, 50, "single-gene modifier applies (45 + 5)");
+  assert.equal(first.campaignAimClarity, 51, "negative modifiers apply (55 - 4)");
+});
+
+test("applyDoctrineGenes clamps the summed result to the 0-100 index range", () => {
+  const high: DoctrineGene = {
+    id: "high",
+    label: "High",
+    evidenceRefs: ["e"],
+    strengths: ["s"],
+    vulnerabilities: ["v"],
+    variableModifiers: { relativeTempo: 50, staffSynchronization: 50 },
+    staffAdviceStyle: {},
+  };
+  const low: DoctrineGene = {
+    id: "low",
+    label: "Low",
+    evidenceRefs: ["e"],
+    strengths: ["s"],
+    vulnerabilities: ["v"],
+    variableModifiers: { relativeTempo: -50, culminationRisk: -50 },
+    staffAdviceStyle: {},
+  };
+  // 50 + 50 = 100 (clamped at the top); 55 + 50 = 105 → 100.
+  assert.equal(applyDoctrineGenes(defaultDoctrineMechanicsState, [high]).relativeTempo, 100);
+  assert.equal(
+    applyDoctrineGenes(defaultDoctrineMechanicsState, [high]).staffSynchronization,
+    100,
+  );
+  // 50 - 50 = 0 (clamped at the bottom); 18 - 50 = -32 → 0.
+  assert.equal(applyDoctrineGenes(defaultDoctrineMechanicsState, [low]).relativeTempo, 0);
+  assert.equal(applyDoctrineGenes(defaultDoctrineMechanicsState, [low]).culminationRisk, 0);
+});
+
+test("applyDoctrineGenes with no genes returns the neutral baseline unchanged", () => {
+  assert.deepEqual(applyDoctrineGenes(defaultDoctrineMechanicsState, []), defaultDoctrineMechanicsState);
+});
+
+test("doctrine genes resolve from the content registry and carry evidence, benefits, and counterweights", () => {
+  // The profile's geneIds must all resolve, and every resolved gene must satisfy the
+  // CELERY guardrails: >=1 evidenceRef, at least one strength and vulnerability, a
+  // measurable shift, and a counterweight for every quality-key benefit.
+  const resolved = resolveDoctrineGenes(soloScenario.doctrineProfile!);
+  assert.equal(resolved.length, soloScenario.doctrineProfile!.geneIds.length);
+
+  for (const gene of resolved) {
+    assert.ok(gene.evidenceRefs.length >= 1, `gene ${gene.id} needs evidenceRefs`);
+    assert.ok(gene.strengths.length >= 1, `gene ${gene.id} needs at least one strength`);
+    assert.ok(gene.vulnerabilities.length >= 1, `gene ${gene.id} needs at least one vulnerability`);
+
+    const entries = Object.entries(gene.variableModifiers) as Array<[string, number | undefined]>;
+    const qualityBenefits = entries.filter(
+      ([key, delta]) =>
+        (delta ?? 0) > 0 && !(doctrineRiskKeys as readonly string[]).includes(key),
+    );
+    const hasCounterweight = entries.some(
+      ([key, delta]) =>
+        (delta ?? 0) < 0 ||
+        ((delta ?? 0) > 0 && (doctrineRiskKeys as readonly string[]).includes(key)),
+    );
+    assert.ok(
+      entries.some(([, delta]) => delta !== undefined && delta !== 0),
+      `gene ${gene.id} must measurably shift at least one doctrine variable`,
+    );
+    assert.ok(
+      qualityBenefits.length === 0 || hasCounterweight,
+      `gene ${gene.id} must pair every quality benefit with a counterweight`,
+    );
+  }
+
+  // The whole registry stays lint-clean, not just the genes the scenario uses.
+  for (const gene of doctrineGenes) {
+    assert.ok(gene.evidenceRefs.length >= 1, `registry gene ${gene.id} needs evidenceRefs`);
+  }
+});
+
+test("the biased doctrine baseline survives serialization (replay-safe opening position)", () => {
+  // The opening position is part of the serialized state: parse/serialize round-trip
+  // must preserve the profile-applied values, and the profile must not re-apply.
+  const parsed = campaignStateSchema.parse(JSON.parse(JSON.stringify(soloScenario.initialState)));
+  assert.deepEqual(parsed.doctrineMechanics, soloScenario.initialState.doctrineMechanics);
 });
 
 test("doctrine bet: tempo pays off when S1 debt, S2 confidence, and S4 supportable tempo all hold", () => {

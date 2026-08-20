@@ -1,3 +1,10 @@
+import { deepStrictEqual } from "node:assert";
+import {
+  applyDoctrineGenes,
+  defaultDoctrineMechanicsState,
+  doctrineRiskKeys,
+} from "@brass-ledger/shared";
+import { resolveDoctrineGenes } from "./doctrine-genes";
 const { soloScenario } = (await import(new URL("./scenario.ts", import.meta.url).href)) as typeof import("./scenario");
 
 const chiefIds = new Set<string>();
@@ -149,6 +156,63 @@ for (const chief of soloScenario.chiefs) {
         `concernTags: [${chief.concernTags.join(", ")}]. Add memo options with at least one of these tags.`,
     );
   }
+}
+
+// ── Doctrine profile checks (Doctrine 2, issue #56) ──────────────────────────────
+// Guardrails from POTATO/s1-s5-mechanics-translation.md: every doctrine-derived trait
+// carries at least one evidenceRefs entry; doctrine traits create tradeoffs (a benefit
+// always has a counterweight); factions are fictional composites (enforced in review).
+
+if (soloScenario.doctrineProfile) {
+  const profile = soloScenario.doctrineProfile;
+  const resolved = resolveDoctrineGenes(profile);
+
+  for (const gene of resolved) {
+    if (gene.evidenceRefs.length < 1) {
+      throw new Error(`Doctrine gene ${gene.id} must carry at least one evidenceRefs entry.`);
+    }
+
+    const entries = Object.entries(gene.variableModifiers) as Array<
+      [string, number | undefined]
+    >;
+    const qualityBenefits = entries.filter(
+      ([key, delta]) =>
+        (delta ?? 0) > 0 && !(doctrineRiskKeys as readonly string[]).includes(key),
+    );
+    const hasCounterweight = entries.some(
+      ([key, delta]) =>
+        (delta ?? 0) < 0 ||
+        ((delta ?? 0) > 0 && (doctrineRiskKeys as readonly string[]).includes(key)),
+    );
+    if (qualityBenefits.length > 0 && !hasCounterweight) {
+      throw new Error(
+        `Doctrine gene ${gene.id} has a benefit (${qualityBenefits.map(([k]) => k).join(", ")}) ` +
+          `without a counterweight. Every benefit needs a negative modifier or a positive ` +
+          `modifier on a doctrine risk key (${doctrineRiskKeys.join(", ")}).`,
+      );
+    }
+
+    const measurable = entries.some(([, delta]) => delta !== undefined && delta !== 0);
+    if (!measurable) {
+      throw new Error(
+        `Doctrine gene ${gene.id} must measurably shift at least one doctrine variable.`,
+      );
+    }
+  }
+
+  // Invariant: the scenario's declared opening position must equal the profile-applied
+  // baseline. Guards against drift between the declared profile and initialState.
+  const expectedBaseline = applyDoctrineGenes(defaultDoctrineMechanicsState, resolved);
+  deepStrictEqual(
+    soloScenario.initialState.doctrineMechanics,
+    expectedBaseline,
+    `initialState.doctrineMechanics must equal applyDoctrineGenes(defaultDoctrineMechanicsState, resolved genes) for profile ${profile.id}.`,
+  );
+  console.log(
+    `Doctrine profile ${profile.id}: ${resolved.length} gene(s) [${resolved.map((g) => g.id).join(", ")}] applied, baseline verified against initialState.`,
+  );
+} else {
+  throw new Error("Scenario must declare a doctrineProfile (Doctrine 2, issue #56).");
 }
 
 console.log(
