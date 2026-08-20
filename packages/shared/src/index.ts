@@ -649,6 +649,9 @@ export const spriteSpecSchema = advisorPortraitSpecSchema.extend({
   if (effects.has("s4-bottleneck") && sprite.role !== "S4") {
     canonicalVariantIssue(ctx, ["variant", "effects"], "S4 bottleneck effect is only valid for the S4 role");
   }
+  // Canonicality is effect→expression only, by design: expression is a legitimately
+  // authored base value (baseExpression is not stored on SpriteSpec), so an authored
+  // "severe"/"strained" expression with no effects must keep parsing — do NOT reverse-check.
   const expectedExpression = effects.has("campaign-won") ? "resolved"
     : effects.has("campaign-lost") ? "severe"
       : effects.has("directorate-overloaded") ? "strained"

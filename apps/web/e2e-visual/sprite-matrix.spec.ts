@@ -19,6 +19,7 @@ const states: { label: string; state: ChiefSpriteVariantState }[] = [
   { label: "trust-low", state: { trustBand: "strained", burdenLevel: "light", campaignStatus: "active", s2ExternalEstimateConfidence: 46, s4SupportableTempo: 50 } },
   { label: "trust-high", state: { trustBand: "solid", burdenLevel: "light", campaignStatus: "active", s2ExternalEstimateConfidence: 46, s4SupportableTempo: 50 } },
   { label: "overloaded", state: { trustBand: "steady", burdenLevel: "overloaded", campaignStatus: "active", s2ExternalEstimateConfidence: 46, s4SupportableTempo: 50 } },
+  { label: "strained-burden", state: { trustBand: "steady", burdenLevel: "strained", campaignStatus: "active", s2ExternalEstimateConfidence: 46, s4SupportableTempo: 50 } },
   { label: "won", state: { trustBand: "steady", burdenLevel: "light", campaignStatus: "won", s2ExternalEstimateConfidence: 46, s4SupportableTempo: 50 } },
   { label: "lost", state: { trustBand: "steady", burdenLevel: "light", campaignStatus: "lost", s2ExternalEstimateConfidence: 46, s4SupportableTempo: 50 } },
   { label: "s2-low", state: { trustBand: "steady", burdenLevel: "light", campaignStatus: "active", s2ExternalEstimateConfidence: 30, s4SupportableTempo: 50 } },
@@ -103,6 +104,8 @@ test("sprite variant matrix renders at 48×56 and 2× for human review", async (
   }
   // Human-review composite at 2× (gitignored; path recorded in the PR body).
   await page.screenshot({ path: "test-results/sprite-matrix-review.png", fullPage: true });
-  // Committed baseline = the accepted 48×56 matrix artifact for the human reviewer.
-  await expect(page).toHaveScreenshot("sprite-matrix.png", { maxDiffPixelRatio: 0 });
+  // Committed baseline = the accepted 48×56 matrix artifact, scoped to the first .matrix
+  // grid so the font-dependent <h2>/<figcaption> page chrome can't flake the zero-tolerance
+  // diff across machines (the SVGs are deterministic; the surrounding text is not).
+  await expect(page.locator(".matrix").first()).toHaveScreenshot("sprite-matrix.png", { maxDiffPixelRatio: 0 });
 });
