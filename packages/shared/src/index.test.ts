@@ -7,6 +7,7 @@ import {
   buildAdvisorPortraitSvg,
   buildChiefSpriteSpec,
   buildSpritePromptText,
+  chiefArchetypeSchema,
   chiefSpriteDeterministicSeed,
   defaultStaffFunctionDefinitions,
   doctrineAcceptedRiskRefSchema,
@@ -321,6 +322,11 @@ test("doctrine metadata parses inside scenario summary and arrays (superRefine p
 
 const canonicalSpritePrompt =
   "Military staff advisor portrait for a strategic command simulation, S1 Personnel, Sprite Chief, calm, calm, restrained editorial game art, clean bust portrait, readable at small size, consistent uniform silhouette, muted palette, no photorealism, no fantasy armor, no weapons, neutral command-room background.";
+
+test("chief archetypes reject empty temperaments at scenario parse time", () => {
+  assert.throws(() => chiefArchetypeSchema.parse({ ...spriteChief, temperament: "" }), /too_small/);
+  assert.throws(() => scenarioSummarySchema.parse({ ...baseScenarioSummary([ordinaryEvent]), chiefs: [{ ...spriteChief, temperament: "" }] }), /too_small/);
+});
 
 test("chief sprite derivation is deterministic and preserves legacy SVG bytes", () => {
   const input = { chief: spriteChief, portrait: spritePortrait, sessionSeed: "session-a", trustBand: "steady" as const, burdenLevel: "light" as const, campaignStatus: "active" as const, visualLanguage: spriteVisualLanguage };

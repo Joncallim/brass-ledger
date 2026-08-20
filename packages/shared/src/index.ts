@@ -506,7 +506,7 @@ export const chiefArchetypeSchema = z.object({
   directorate: directorateSchema,
   title: z.string(),
   doctrineBias: z.string(),
-  temperament: z.string(),
+  temperament: z.string().min(1),
   competence: z.number().min(0).max(1),
   riskTolerance: z.number().min(0).max(1),
   preferredTags: z.array(z.string()),
