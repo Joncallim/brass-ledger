@@ -1192,14 +1192,16 @@ test("applyDoctrineGenes accumulates before clamping, so results are order-indep
 });
 
 test("doctrine genes resolve from the content registry and carry evidence, benefits, and counterweights", () => {
-  // The profile's geneIds must all resolve, and every resolved gene must satisfy the
-  // CELERY guardrails: >=1 evidenceRef, at least one strength and vulnerability, a
-  // measurable shift, and counterweight mass at least equal to benefit mass.
+  // The profile's geneIds must all resolve, and EVERY registry gene (not just the
+  // profile's referenced ones) must satisfy the CELERY guardrails: >=1 evidenceRef,
+  // at least one strength and vulnerability, a measurable shift, and counterweight
+  // mass at least equal to benefit mass — so a Doctrine 3/4 gene added to the
+  // registry before it is wired into a scenario still fails loudly.
   const profile = soloScenario.doctrineProfile;
   const resolved = resolveDoctrineGenes(profile);
   assert.equal(resolved.length, profile.geneIds.length);
 
-  for (const gene of resolved) {
+  for (const gene of doctrineGenes) {
     assert.ok(gene.evidenceRefs.length >= 1, `gene ${gene.id} needs evidenceRefs`);
     assert.ok(gene.strengths.length >= 1, `gene ${gene.id} needs at least one strength`);
     assert.ok(gene.vulnerabilities.length >= 1, `gene ${gene.id} needs at least one vulnerability`);
@@ -1229,12 +1231,6 @@ test("doctrine genes resolve from the content registry and carry evidence, benef
       counterweightMass >= benefitMass,
       `gene ${gene.id} must carry counterweight mass (${counterweightMass}) >= benefit mass (${benefitMass})`,
     );
-  }
-
-  // The registry currently holds exactly the genes the scenario uses; this loop is a
-  // guard so future additions (Doctrine 3/4 genes) stay evidence-linked too.
-  for (const gene of doctrineGenes) {
-    assert.ok(gene.evidenceRefs.length >= 1, `registry gene ${gene.id} needs evidenceRefs`);
   }
 });
 

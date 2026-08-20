@@ -4,7 +4,7 @@ import {
   defaultDoctrineMechanicsState,
   doctrineRiskKeys,
 } from "@brass-ledger/shared";
-import { resolveDoctrineGenes } from "./doctrine-genes";
+import { resolveDoctrineGenes, doctrineGenes } from "./doctrine-genes";
 const { soloScenario } = (await import(new URL("./scenario.ts", import.meta.url).href)) as typeof import("./scenario");
 
 const chiefIds = new Set<string>();
@@ -167,7 +167,11 @@ if (soloScenario.doctrineProfile) {
   const profile = soloScenario.doctrineProfile;
   const resolved = resolveDoctrineGenes(profile);
 
-  for (const gene of resolved) {
+  // Per-gene guardrails run over the FULL registry, not just the genes the profile
+  // references: a gene added for Doctrine 3/4 but not yet wired into a scenario must
+  // still satisfy evidence, mass-balance, and measurable-shift rules. `resolved` is
+  // used only for the profile baseline invariant below.
+  for (const gene of doctrineGenes) {
     if (gene.evidenceRefs.length < 1) {
       throw new Error(`Doctrine gene ${gene.id} must carry at least one evidenceRefs entry.`);
     }
