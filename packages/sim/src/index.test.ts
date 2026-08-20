@@ -2051,6 +2051,20 @@ test("doctrine 3: resolving without accepting the underpriced warning records st
   assert.ok(!unacknowledged.detail.includes("underprice"), "the aggregate note must stay lane-agnostic");
 });
 
+test("doctrine 3: accepting an UNRELATED warning in the same staff function does not count as accepting the underpriced warning", () => {
+  // Operations and Training share S3 (Codex P2, PR #77): an override whose
+  // warningText is NOT the underpriced warning must not flip the note to accepted
+  // risk — acceptance is keyed to the exact generated warning, not the function ID.
+  const result = resolveTurn(soloScenario, soloScenario.initialState, {
+    ...strainedTrainingInput,
+    acceptedRiskOverrides: [{ staffFunctionId: "S3", warningText: "Unrelated S3 risk-band warning." }],
+  });
+  const dissent = result.afterAction.find((entry) => entry.heading === "Doctrine: underpriced-lane dissent");
+  const accepted = result.afterAction.find((entry) => entry.heading === "Doctrine: accepted risk in an underpriced lane");
+  assert.ok(dissent, "an unrelated override must still record dissent");
+  assert.ok(!accepted, "an unrelated override must not record accepted risk in the underpriced lane");
+});
+
 test("doctrine 3: a neglected priority lane is called out in the after action", () => {
   const neglectedInput: TurnInput = {
     turn: 1,

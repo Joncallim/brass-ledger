@@ -53,8 +53,12 @@ export function App() {
     if (!cycle.session) return [];
     const definitions = scenario?.staffFunctions ?? [];
     const capacities = scenario?.staffCapacities ?? [];
-    const burdens = buildDirectorateBurden(cycle.memos, cycle.selections, capacities, cycle.staffNegotiations);
-    return buildStaffFunctionReadouts(definitions, burdens, cycle.session.state);
+    // Thread the doctrine burdenBias so standing-session readouts carry the same
+    // routingAttention labels and underpriced warnings the server returns (Codex P2,
+    // PR #77) — without it the browser would silently show neutral routing until a
+    // server preview arrives.
+    const burdens = buildDirectorateBurden(cycle.memos, cycle.selections, capacities, cycle.staffNegotiations, scenario?.doctrineLens?.burdenBias);
+    return buildStaffFunctionReadouts(definitions, burdens, cycle.session.state, scenario?.doctrineLens?.burdenBias);
   })();
 
   const labels = scenarioLabels(scenario);
@@ -413,8 +417,11 @@ export function App() {
                   cycle.latestResult.memos,
                   cycle.latestResult.input.selections,
                   scenario?.staffCapacities ?? [],
+                  undefined,
+                  scenario?.doctrineLens?.burdenBias,
                 ),
                 cycle.latestResult.previousState,
+                scenario?.doctrineLens?.burdenBias,
               )
             : []}
           labels={labels}

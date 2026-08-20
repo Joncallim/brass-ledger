@@ -118,6 +118,7 @@ import {
   staffFunctionForDirectorate,
   summarizeState,
   updateChiefAgendaMemoryFromPositions,
+  underpricedLaneWarningSuffix,
 } from "@brass-ledger/shared";
 
 type Rng = () => number;
@@ -1357,7 +1358,15 @@ function resolveBurdenDissent(
     if (!burdenBias.underpricedLanes.includes(entry.directorate)) continue;
     if (entry.burdenLevel === "light") continue;
     const staffFunction = staffFunctionForDirectorate(staffFunctionDefinitions, entry.directorate);
-    const hasOverride = acceptedRiskOverrides.some((override) => override.staffFunctionId === staffFunction.id);
+    // Acceptance must be tied to the underpriced warning ITSELF, not just the staff
+    // function: Operations and Training share S3, so an override for an unrelated S3
+    // warning (e.g. a risk-band warning) must NOT count as accepting this lane's
+    // underpriced warning (Codex P2, PR #77).
+    const hasOverride = acceptedRiskOverrides.some(
+      (override) =>
+        override.staffFunctionId === staffFunction.id &&
+        override.warningText.endsWith(underpricedLaneWarningSuffix),
+    );
     if (hasOverride) {
       notes.push({
         heading: "Doctrine: accepted risk in an underpriced lane",

@@ -306,6 +306,13 @@ export const burdenBiasSchema = z
   });
 export type BurdenBias = z.infer<typeof burdenBiasSchema>;
 
+// The canonical suffix of the underpriced-lane warning text (Codex P2, PR #77):
+// acceptance of the underpriced warning is matched by this exact suffix, so the
+// template MUST stay in this single exported constant — buildStaffFunctionReadouts
+// appends it and resolveBurdenDissent matches on it.
+export const underpricedLaneWarningSuffix =
+  "This lane is one the staff underprices — expect it to surface as staff dissent unless you accept the risk explicitly.";
+
 export const doctrineGeneSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -1605,7 +1612,7 @@ export function buildStaffFunctionReadouts(
         .filter((entry) => entry.burdenLevel !== "light")
         .map((entry) =>
           burdenBias.underpricedLanes.includes(entry.directorate)
-            ? `${entry.summary} This lane is one the staff underprices — expect it to surface as staff dissent unless you accept the risk explicitly.`
+            ? `${entry.summary} ${underpricedLaneWarningSuffix}`
             : entry.summary,
         ),
       ...metrics.filter((metric) => metric.status === "risk").map((metric) => `${metric.label} is in the risk band.`),
