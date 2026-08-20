@@ -1971,8 +1971,19 @@ export function buildChiefPositions(
     const feedsOwnLane = option.burden.some((contribution) => contribution.directorate === chief.directorate);
     const priorityLaneLean =
       lens.burdenBias.priorityLanes.includes(chief.directorate) && feedsOwnLane ? 1 : 0;
+    // Underpriced-lane dissent: a chief whose lane the faction's doctrine underprices
+    // objects when her lane is squeezed. The pile-on penalty (-3) fires only when the
+    // option actually loads her lane while it is strained/overloaded; the background
+    // term (-1) reflects general wariness while the lane stays squeezed. Lane-ALIGNED
+    // options (matching her preferredTags) still earn enough score to keep her support
+    // — dissent is reserved for burden without alignment, which is the underpricing
+    // failure mode.
     const underpricedDissent =
-      lens.burdenBias.underpricedLanes.includes(chief.directorate) && laneSignal ? -1 : 0;
+      lens.burdenBias.underpricedLanes.includes(chief.directorate) && laneSignal
+        ? feedsOwnLane
+          ? -3
+          : -1
+        : 0;
 
     const relationshipBias = trust >= 72 ? 2 : trust >= 60 ? 1 : trust <= 32 ? -2 : trust <= 44 ? -1 : 0;
     const preferredMatches = option.tags.filter((tag) => chief.preferredTags.includes(tag)).length;

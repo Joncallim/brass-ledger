@@ -17,8 +17,10 @@ import {
   scenarioDefinitionSchema,
   startChiefConversation,
   updateCommitmentsFromChiefConversation,
+  type DirectorateBurden,
   type DoctrineGene,
   type DoctrineLens,
+  type MemoOption,
   type TurnInput,
 } from "@brass-ledger/shared";
 import { previewTurn, resolveTurn, validateReplaySession } from "./index";
@@ -1892,6 +1894,13 @@ test("doctrine 3: two doctrine profiles produce visibly different chief advice o
     "the two lenses must flip at least one chief's position on the same memo set",
   );
   assert.notDeepEqual(resultA.nextState, resultB.nextState, "position flips flow into agenda memory and trust");
+
+  // Burden-routing divergence (acceptance criterion: advice AND routing differ): the
+  // composite underprices training, the sustainment-only lens underprices operations,
+  // so the routingAttention labels must differ on the same input.
+  const routingA = resultA.directorateBurden.map((entry) => `${entry.directorate}:${entry.routingAttention}`);
+  const routingB = resultB.directorateBurden.map((entry) => `${entry.directorate}:${entry.routingAttention}`);
+  assert.notDeepEqual(routingA, routingB, "the two lenses must route attention differently on the same memo set");
 });
 
 test("doctrine 3: positionLean fires only when the chief's own readout signals risk or strain", () => {
@@ -1927,6 +1936,65 @@ test("doctrine 3: positionLean fires only when the chief's own readout signals r
   assert.equal(briggsWith.position, "request_conditions", "a +1 lean at the -2/-1 boundary must flip oppose -> request_conditions");
 });
 
+test("doctrine 3: underpricedDissent flips the underpriced-lane chief's position when an option burdens her squeezed lane without serving it", () => {
+  // Direct mechanism test (review finding): the dissent term must change the
+  // underpriced-lane chief's POSITION, not just her note. A lane-ALIGNED option keeps
+  // her support (preferredTags outweigh the pile-on penalty); an option that loads her
+  // squeezed lane without matching her preferences must flip her to dissent.
+  const memo = soloScenario.memoTemplates.find((entry) => entry.id === "posture");
+  assert.ok(memo);
+  const trainingPileOn: MemoOption = {
+    ...memo.options[0],
+    id: "training-pile-on",
+    label: "Training pile-on",
+    // modernization matches the composite S3 biasTags but NOT Navarro's preferredTags,
+    // so the pile-on penalty is the deciding term.
+    tags: ["modernization"],
+    burden: [
+      { directorate: "training", points: 2 },
+      { directorate: "operations", points: 1 },
+    ],
+  };
+  const strainedTrainingBurdens: DirectorateBurden[] = [
+    { directorate: "people", burdenPoints: 1, capacity: 3, burdenLevel: "light" },
+    { directorate: "intelligence", burdenPoints: 2, capacity: 3, burdenLevel: "light" },
+    { directorate: "operations", burdenPoints: 3, capacity: 4, burdenLevel: "light" },
+    { directorate: "sustainment", burdenPoints: 2, capacity: 4, burdenLevel: "light" },
+    { directorate: "plans", burdenPoints: 2, capacity: 3, burdenLevel: "light" },
+    { directorate: "training", burdenPoints: 4, capacity: 3, burdenLevel: "strained" },
+  ];
+
+  const neutralPos = buildChiefPositions(
+    soloScenario.chiefs,
+    soloScenario.initialState,
+    memo,
+    trainingPileOn,
+    strainedTrainingBurdens,
+    soloScenario.staffFunctions,
+    neutralDoctrineLens,
+  ).find((entry) => entry.chiefId === "navarro");
+  const compositePos = buildChiefPositions(
+    soloScenario.chiefs,
+    soloScenario.initialState,
+    memo,
+    trainingPileOn,
+    strainedTrainingBurdens,
+    soloScenario.staffFunctions,
+    compositeLens,
+  ).find((entry) => entry.chiefId === "navarro");
+  assert.ok(neutralPos);
+  assert.ok(compositePos);
+  assert.ok(
+    ["support", "accept_risk"].includes(neutralPos.position),
+    `without the lens the pile-on option should be tolerable, got ${neutralPos.position}`,
+  );
+  assert.ok(
+    ["request_conditions", "oppose"].includes(compositePos.position),
+    `the underpriced-dissent pile-on must flip Navarro to dissent, got ${compositePos.position}`,
+  );
+  assert.notEqual(neutralPos.position, compositePos.position, "the dissent term must change her position");
+});
+
 test("doctrine 3: underpriced lane warning surfaces as an accepted-risk candidate in preview", () => {
   const preview = previewTurn(soloScenario, soloScenario.initialState, strainedTrainingInput);
   const result = preview.projectedResult;
@@ -1948,6 +2016,10 @@ test("doctrine 3: underpriced lane warning surfaces as an accepted-risk candidat
   assert.deepEqual(resolved.directorateBurden, result.directorateBurden);
 
   // Navarro's gene-flavored position is visible pre-commit in the Chiefs Paper preview.
+  // She SUPPORTS measured-deterrence here even though training is strained: the option
+  // carries her preferred tags (training/recovery) — lane-aligned work keeps her
+  // support. The dissent surface (an option burdening her squeezed lane WITHOUT
+  // serving it) is exercised by the dedicated underpricedDissent test above.
   const postureDisagreement = preview.disagreements.find((entry) => entry.memoId === "posture");
   assert.ok(postureDisagreement);
   assert.ok(postureDisagreement.supportedBy.includes("navarro"));
@@ -2075,6 +2147,34 @@ test("doctrine 3: the neutral lens reproduces pre-doctrine-3 behavior", () => {
     (key) => JSON.stringify((withLens.nextState as Record<string, unknown>)[key]) !== JSON.stringify((withoutLens.nextState as Record<string, unknown>)[key]),
   );
   assert.deepEqual(changedStateKeys.sort(), ["chiefAgendaMemory", "chiefTrust"]);
+});
+
+test("doctrine 3: buildChiefPositions without a lens is identical to the neutral lens", () => {
+  // Architecture test-plan guardrail: the default lens parameter IS neutralDoctrineLens,
+  // so a lens-free call must deepEqual the explicit neutral-lens call (score/position/
+  // note identity for every chief on a representative memo).
+  const memo = soloScenario.memoTemplates.find((entry) => entry.id === "posture");
+  assert.ok(memo);
+  const option = memo.options.find((entry) => entry.id === "measured-deterrence");
+  assert.ok(option);
+  const noLens = buildChiefPositions(
+    soloScenario.chiefs,
+    soloScenario.initialState,
+    memo,
+    option,
+    [],
+    soloScenario.staffFunctions,
+  );
+  const neutral = buildChiefPositions(
+    soloScenario.chiefs,
+    soloScenario.initialState,
+    memo,
+    option,
+    [],
+    soloScenario.staffFunctions,
+    neutralDoctrineLens,
+  );
+  assert.deepEqual(noLens, neutral, "the omitted-lens default must reproduce the neutral lens exactly");
 });
 
 test("doctrine 3: scenario without doctrineLens defaults to the neutral lens", () => {
