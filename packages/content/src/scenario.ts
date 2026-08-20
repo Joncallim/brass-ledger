@@ -32,7 +32,7 @@ export const soloScenario = scenarioDefinitionSchema.parse({
   title: "Brass Ledger",
   description:
     "You run a joint headquarters trying to rebuild a credible defense during a slow-burning crisis. Warning about the adversary's intentions is never quite clean, the reserve force is already strained, and sustainment cannot support everything you would like to do at once. Every month you weigh deterrence, force generation, alliance politics, and how much political cover you can afford to spend, and you live with what each choice costs the next month.",
-  contentVersion: "0.9.0",
+  contentVersion: "0.10.0",
   maxTurns: 12,
   chiefs: [
     { id: "warden", name: "Maj. Gen. Ruth Warden", genderPresentation: "female", directorate: "people", title: "Chief of People", doctrineBias: "preserve deployable experience before chasing visible tempo", temperament: "plainspoken and protective", competence: 0.78, riskTolerance: 0.34, preferredTags: ["retention", "reserve", "recovery", "training"], concernTags: ["escalatory", "tempo-spike"] },
@@ -201,6 +201,33 @@ export const soloScenario = scenarioDefinitionSchema.parse({
     { id: "reserve-recall-success", title: "Reserve recall success", summary: "An unplanned partial mobilisation completes well ahead of schedule, the direct payoff of disciplined recovery investment in earlier months.", minTurn: 4, maxTurn: 10, triggerTags: ["recovery", "retention"], requiredFlags: [], excludedFlags: ["reserve_backlash", "retention_crisis"], setsFlags: ["reserve_reconstituted"], clearsFlags: [], stateDelta: { forceGeneration: { deployableUnits: 0.7, reserveStrain: -4, personnelShortfalls: -3 } }, constraintShifts: [] },
     // ── Domestic arc (continued) ──────────────────────────────────────────────
     { id: "media-scrutiny-gap", title: "Media scrutiny gap", summary: "Press coverage exposes the gap between public deterrence rhetoric and the readiness actually available, forcing a quiet correction behind the scenes.", minTurn: 4, maxTurn: 10, triggerTags: ["deterrence", "public-commitment"], requiredFlags: ["scrutiny_cycle"], excludedFlags: ["cabinet_crisis"], setsFlags: ["media_scrutiny"], clearsFlags: [], stateDelta: { domestic: { cabinetCover: -4, mediaHeat: 6, publicPatience: -2 }, alliance: { politicalAlignment: -2 } }, constraintShifts: [] },
+    {
+      id: "doctrine-coalition-caveat-exposure", title: "Partner caveats become an exposure",
+      summary: "A visible commitment reaches the staff faster than policy, legal, media, and partner caveats can be reconciled; partners hedge and the cabinet absorbs the contradiction.",
+      minTurn: 2, maxTurn: 11, triggerTags: ["public-commitment"], requiredFlags: [], excludedFlags: [],
+      setsFlags: ["doctrine_coalition_caveat_exposed"], clearsFlags: [],
+      stateDelta: { alliance: { politicalAlignment: -4, partnerPublicSupport: -3 }, domestic: { cabinetCover: -3, mediaHeat: 4 } }, constraintShifts: [],
+      doctrineTrigger: { sourceGeneId: "coalition-native-staff", patternId: "deception", vulnerability: "More policy, legal, media, and partner caveat constraints on every commitment", evidenceRefs: ["CELERY/doctrine-proof-register#NATO AJP-3 Staff Directorate Baseline", "CELERY/doctrine-proof-register#UK PJHQ Staff Responsibilities"], conditions: [{ variable: "signatureControl", comparison: "lte", threshold: 35 }], sustainedTurns: 2 },
+      causalContext: { betLabel: "Repeated visible coalition commitments before caveats were reconciled", maturedRiskLabel: "Signature control stayed at or below 35 for two commitment turns", staffFunctionRefs: ["S2", "S5"] },
+    },
+    {
+      id: "doctrine-adaptive-cell-sprawl", title: "Competing cells neglect the line",
+      summary: "Temporary cells proliferate across the headquarters until no lane owns the handoff; training and readiness pay for a main effort that never became clear.",
+      minTurn: 2, maxTurn: 11, triggerTags: ["program", "modernization"], requiredFlags: [], excludedFlags: [],
+      setsFlags: ["doctrine_adaptive_cells_sprawled"], clearsFlags: [],
+      stateDelta: { forceGeneration: { trainingThroughput: -4 }, resources: { readiness: -3 } }, constraintShifts: [],
+      doctrineTrigger: { sourceGeneId: "adaptive-cell-staff", patternId: "main-effort", vulnerability: "Coordination cost rises when too many temporary cells compete for attention", evidenceRefs: ["CELERY/doctrine-proof-register#Netherlands No Pure Staff Structure", "CELERY/doctrine-proof-register#Netherlands Chief Of Staff Role"], conditions: [{ variable: "mainEffortFocus", comparison: "lte", threshold: 30 }], sustainedTurns: 2 },
+      causalContext: { betLabel: "Repeated multi-lane modernization through temporary cross-functional cells", maturedRiskLabel: "Main-effort focus stayed at or below 30 for two cell-building turns", staffFunctionRefs: ["S1", "S3", "S5"] },
+    },
+    {
+      id: "doctrine-sustainment-patience-gap", title: "The patience gap becomes policy blowback",
+      summary: "The headquarters keeps waiting for a fully supportable posture while the public and cabinet demand visible action; political room contracts around an otherwise sound sustainment plan.",
+      minTurn: 3, maxTurn: 11, triggerTags: ["slow-burn"], requiredFlags: [], excludedFlags: [],
+      setsFlags: ["doctrine_sustainment_patience_blowback"], clearsFlags: [],
+      stateDelta: { domestic: { cabinetCover: -4, publicPatience: -5, mediaHeat: 4 }, resources: { politicalCapital: -2 } }, constraintShifts: [],
+      doctrineTrigger: { sourceGeneId: "sustainment-first-operational-reach", patternId: "tempo", vulnerability: "Slower visible posture; political frustration when the public wants immediate action", evidenceRefs: ["CELERY/doctrine-proof-register#US Army ADP 4-0 Sustainment", "CELERY/doctrine-proof-register#Sustainment Warfighting Function Elements"], conditions: [{ variable: "relativeTempo", comparison: "lte", threshold: 30 }], sustainedTurns: 3 },
+      causalContext: { betLabel: "Repeated slow-burn sequencing until supportability was earned", maturedRiskLabel: "Relative tempo stayed at or below 30 for three slow-burn turns", staffFunctionRefs: ["S4", "S5"] },
+    },
   ],
   initialState: {
     turn: 1,
@@ -216,6 +243,7 @@ export const soloScenario = scenarioDefinitionSchema.parse({
       defaultDoctrineMechanicsState,
       resolveDoctrineGenes(doctrineProfile),
     ),
+    doctrineMaturity: {},
     strategic: {
       forceGeneration: { deployableUnits: 5.2, reserveStrain: 46, trainingThroughput: 51, personnelShortfalls: 41 },
       intelligence: { collectionCoverage: 54, confidence: 52, warningReliability: 49, deceptionPressure: 43 },

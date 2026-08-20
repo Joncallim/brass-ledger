@@ -13,7 +13,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "test": "node --import tsx --test src/**/*.test.ts"
+    "test": "node --import tsx --test src/**/*.test.ts",
+    "test:doctrine-reachability": "node --import tsx --test src/doctrine-event-reachability.test.ts"
   },
   "dependencies": {
     "@brass-ledger/shared": "*"

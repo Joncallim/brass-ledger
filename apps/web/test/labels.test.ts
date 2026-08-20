@@ -18,6 +18,7 @@ function toScenarioSummary(): ScenarioSummary {
     capabilityPrograms: soloScenario.capabilityPrograms,
     externalConstraints: soloScenario.externalConstraints,
     events: soloScenario.events,
+    doctrineLens: soloScenario.doctrineLens,
   };
 }
 

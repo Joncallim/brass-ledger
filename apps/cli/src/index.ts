@@ -183,6 +183,20 @@ if (options.batch !== null) {
     } else {
       console.log("No dominant options detected.");
     }
+    console.log("Doctrine event telemetry:");
+    for (const event of telemetry.doctrineEvents) {
+      console.log(`  ${event.eventId}: attempts ${event.attemptedCampaigns}, maturation ${(event.maturationRate * 100).toFixed(0)}%, firing ${(event.firingReliability * 100).toFixed(0)}%, hit ${(event.campaignHitRate * 100).toFixed(0)}%`);
+    }
+    console.log("Doctrine strategies:");
+    for (const strategy of telemetry.doctrineStrategies) {
+      console.log(`  ${strategy.strategyId}: score ${strategy.meanScore.toFixed(1)}, win ${(strategy.winRate * 100).toFixed(0)}%, events ${strategy.meanDoctrineEvents.toFixed(2)}, cost ${strategy.meanDoctrineEventCostMass.toFixed(2)}`);
+    }
+    if (telemetry.dominantDoctrineStrategies.length > 0) {
+      console.log(`DOMINANT DOCTRINE STRATEGIES: ${telemetry.dominantDoctrineStrategies.join(", ")}`);
+    } else {
+      console.log("No dominant doctrine strategies detected.");
+    }
+    for (const warning of telemetry.balanceWarnings) console.log(`WARNING: ${warning}`);
   }
   process.exit(0);
 }

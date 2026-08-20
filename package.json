@@ -15,7 +15,7 @@
     "dev:split": "npm run dev --workspace @brass-ledger/server & npm run dev --workspace @brass-ledger/web",
     "test": "npm run test --workspaces --if-present && npm run test:release",
     "test:release": "node --test scripts/*.test.mjs",
-    "lint:content": "npm run lint:content --workspace @brass-ledger/content",
+    "lint:content": "npm run lint:content --workspace @brass-ledger/content && npm run test:doctrine-reachability --workspace @brass-ledger/sim",
     "lint:grocer": "node scripts/validate-potato.mjs",
     "lint:potato": "node scripts/validate-potato.mjs",
     "replay:demo": "npm run replay:demo --workspace @brass-ledger/server",

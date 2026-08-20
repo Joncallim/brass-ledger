@@ -7,6 +7,7 @@ import {
   directorateSchema,
 } from "@brass-ledger/shared";
 import { resolveDoctrineGenes, doctrineGenes } from "./doctrine-genes";
+import { doctrineEventCostMass } from "./index";
 const { soloScenario } = (await import(new URL("./scenario.ts", import.meta.url).href)) as typeof import("./scenario");
 
 const chiefIds = new Set<string>();
@@ -18,6 +19,27 @@ const optionIds = new Set<string>();
 const programIds = new Set(soloScenario.capabilityPrograms.map((program) => program.id));
 const constraintIds = new Set(soloScenario.externalConstraints.map((constraint) => constraint.id));
 const eventIds = new Set<string>();
+
+const patternMechanics = {
+  objective: "campaignAimClarity", tempo: "relativeTempo", "main-effort": "mainEffortFocus",
+  "economy-of-force": "secondaryRiskAccepted", maneuver: "optionDislocation", deception: "signatureControl",
+  security: "exposureControl", simplicity: "orderClarity", culmination: "culminationRisk",
+  reserve: "uncommittedCapacity", "sustainment-reach": "operationalReach", "mission-command": "commanderIntentClarity",
+  "system-competition": "systemPressure",
+} as const;
+
+function legalTagSets() {
+  let sets = [new Set<string>()];
+  for (const memo of soloScenario.memoTemplates) {
+    const choices = memo.options.map((option) => option.tags);
+    if (memo.optional) choices.push([]);
+    sets = sets.flatMap((current) => choices.map((tags) => new Set([...current, ...tags])));
+  }
+  return sets;
+}
+
+const legalSelectionTagSets = legalTagSets();
+
 
 if (soloScenario.maxTurns < 6) {
   throw new Error("Scenario must support at least a six-turn opening arc.");
@@ -121,6 +143,40 @@ for (const event of soloScenario.events) {
       throw new Error(`Event ${event.id} references unknown constraint ${shift.constraintId}`);
     }
   }
+}
+
+const profileGenes = new Map(doctrineGenes.filter((gene) => soloScenario.doctrineProfile.geneIds.includes(gene.id)).map((gene) => [gene.id, gene]));
+const doctrineEvents = soloScenario.events.filter((event) => event.doctrineTrigger && event.causalContext);
+if (soloScenario.initialState.doctrineMaturity === undefined || Object.keys(soloScenario.initialState.doctrineMaturity).length !== 0) throw new Error("Shipped initialState.doctrineMaturity must be exactly {}.");
+if (doctrineEvents.length !== soloScenario.doctrineProfile.geneIds.length) throw new Error("Doctrine 4 requires exactly one event per shipped profile gene.");
+const sourceGeneIds = new Set<string>();
+for (const event of doctrineEvents) {
+  const trigger = event.doctrineTrigger!;
+  const context = event.causalContext!;
+  const gene = profileGenes.get(trigger.sourceGeneId);
+  if (!doctrineGenes.some((candidate) => candidate.id === trigger.sourceGeneId)) throw new Error(`Doctrine event ${event.id} references an unknown gene: ${trigger.sourceGeneId}.`);
+  if (!gene) throw new Error(`Doctrine event ${event.id} references a gene not shipped in the profile: ${trigger.sourceGeneId}.`);
+  if (sourceGeneIds.has(trigger.sourceGeneId)) throw new Error(`Doctrine gene ${trigger.sourceGeneId} has more than one Doctrine 4 event.`);
+  sourceGeneIds.add(trigger.sourceGeneId);
+  if (!gene.vulnerabilities.includes(trigger.vulnerability)) throw new Error(`Doctrine event ${event.id} vulnerability does not exactly match gene ${gene.id}.`);
+  if (!trigger.evidenceRefs.every((ref) => gene.evidenceRefs.includes(ref))) throw new Error(`Doctrine event ${event.id} contains evidence outside gene ${gene.id}.`);
+  const canonical = patternMechanics[trigger.patternId as keyof typeof patternMechanics];
+  if (!canonical || !trigger.conditions.some((condition) => condition.variable === canonical)) throw new Error(`Doctrine event ${event.id} has an invalid pattern/condition mapping.`);
+  if (new Set(trigger.conditions.map((condition) => condition.variable)).size !== trigger.conditions.length) throw new Error(`Doctrine event ${event.id} repeats a condition variable.`);
+  if (trigger.conditions.some((condition) => !Number.isInteger(condition.threshold))) throw new Error(`Doctrine event ${event.id} must use integer thresholds.`);
+  if (trigger.conditions.every((condition) => conditionMetStatic(condition, defaultDoctrineMechanicsState))) throw new Error(`Doctrine event ${event.id} is active at the neutral doctrine baseline.`);
+  if (event.minTurn > trigger.sustainedTurns + 1 || event.minTurn > event.maxTurn) throw new Error(`Doctrine event ${event.id} has an invalid maturation window.`);
+  if (context.staffFunctionRefs.length === 0 || doctrineEventCostMass(event) <= 0) throw new Error(`Doctrine event ${event.id} needs causal staff refs and adverse authored mass.`);
+  if (!trigger.evidenceRefs.length || !context.staffFunctionRefs.length) throw new Error(`Doctrine event ${event.id} needs evidence and causal staff references.`);
+  if (!legalSelectionTagSets.some((tags) => event.triggerTags.every((tag) => tags.has(tag)))) throw new Error(`Doctrine event ${event.id} has trigger tags that cannot coexist in a legal memo selection.`);
+}
+
+if (sourceGeneIds.size !== soloScenario.doctrineProfile.geneIds.length) throw new Error("Every shipped profile gene must have exactly one Doctrine 4 event.");
+const sharedTraceCount = Math.max(0, ...legalSelectionTagSets.map((tags) => doctrineEvents.filter((event) => event.triggerTags.every((tag) => tags.has(tag))).length));
+if (sharedTraceCount > 2) console.warn(`Doctrine 4 shared repeated trace warning: ${sharedTraceCount} doctrine predicates can share one legal repeated selection trace.`);
+
+function conditionMetStatic(condition: { variable: keyof typeof defaultDoctrineMechanicsState; comparison: "gte" | "lte"; threshold: number }, state: typeof defaultDoctrineMechanicsState) {
+  return condition.comparison === "gte" ? state[condition.variable] >= condition.threshold : state[condition.variable] <= condition.threshold;
 }
 
 const allOptionTags = new Set<string>();
