@@ -407,6 +407,7 @@ test("only the four source fields change the prompt; visual fields never do", ()
   assert.equal(differentExpression.expression, "resolved");
   assert.notEqual(differentExpression.prompt, baseline.prompt);
   assert.ok(differentExpression.prompt.endsWith("resolved, restrained editorial game art, clean bust portrait, readable at small size, consistent uniform silhouette, muted palette, no photorealism, no fantasy armor, no weapons, neutral command-room background."));
+  assert.equal(differentExpression.prompt.replace("resolved", "calm"), baseline.prompt, "only the expression segment changed");
 
   // Silhouette/palette/uniform/trust changes must not leak into prompt text.
   const visuallyDifferent = buildChiefSpriteSpec({
