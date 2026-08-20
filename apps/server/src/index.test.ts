@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { scenarioSummarySchema, chiefSpriteDeterministicSeed } from "@brass-ledger/shared";
+import { scenarioSummarySchema, chiefSpriteDeterministicSeed, gameSessionSchema } from "@brass-ledger/shared";
+import { hashPromptText } from "@brass-ledger/headless";
 
 const saveDir = await mkdtemp(path.join(tmpdir(), "brass-ledger-routes-"));
 process.env.NODE_ENV = "test";
@@ -165,6 +166,56 @@ test("headless API runs default turns with explicit accepted-risk records", asyn
   assert.ok(body.turnSummaries[0].chiefCoalitions.length > 0);
   assert.ok(body.turnSummaries[0].chiefCoalitions.every((entry: { negotiationLevers: string[] }) => entry.negotiationLevers.length > 0));
   assert.equal(body.validation.ok, true);
+});
+
+test("headless API sprite output carries filled prompts and sibling hashes", async () => {
+  const response = await app.inject({
+    method: "POST",
+    url: "/api/headless/run",
+    payload: { turns: 0, includeSprites: true },
+  });
+
+  assert.equal(response.statusCode, 200);
+  const body = response.json();
+  assert.equal(body.sprites.length, 6);
+  for (const sprite of body.sprites) {
+    assert.ok(sprite.spec.temperament.length > 0, "temperament flows through the chief");
+    assert.ok(sprite.spec.prompt.length > 0, "positive prompt is filled");
+    assert.ok(sprite.spec.negativePrompt.length > 0, "negative prompt is filled");
+    assert.equal(sprite.promptHash, hashPromptText(sprite.spec.prompt), "promptHash is SHA-256 of the emitted prompt");
+    assert.equal(sprite.negativePromptHash, hashPromptText(sprite.spec.negativePrompt), "negativePromptHash is SHA-256 of the emitted negative prompt");
+    assert.match(sprite.promptHash, /^[0-9a-f]{64}$/);
+    assert.match(sprite.negativePromptHash, /^[0-9a-f]{64}$/);
+  }
+
+  // The full result still carries a schema-valid raw session sibling that excludes sprite artifacts.
+  assert.ok(body.sessionExport, "raw GameSession sibling remains");
+  gameSessionSchema.parse(body.sessionExport);
+  const forbidden = ["prompt", "negativePrompt", "promptHash", "negativePromptHash", "deterministicSeed", "temperament"];
+  const keys: string[] = [];
+  const collect = (value: unknown) => {
+    if (Array.isArray(value)) return value.forEach(collect);
+    if (value && typeof value === "object") {
+      for (const [key, child] of Object.entries(value)) {
+        keys.push(key);
+        collect(child);
+      }
+    }
+  };
+  collect(body.sessionExport);
+  for (const key of forbidden) {
+    assert.equal(keys.includes(key), false, `session JSON must not contain ${key}`);
+  }
+
+  // The sprites: true alias behaves identically.
+  const alias = await app.inject({
+    method: "POST",
+    url: "/api/headless/run",
+    payload: { turns: 0, sprites: true },
+  });
+  assert.equal(alias.statusCode, 200);
+  assert.equal(alias.json().sprites.length, 6);
+  assert.match(alias.json().sprites[0].promptHash, /^[0-9a-f]{64}$/);
 });
 
 test("headless API rejects supplied turns that omit accepted-risk overrides", async () => {

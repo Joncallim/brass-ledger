@@ -1,8 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
-import { buildAdvisorPortraitSvg, spriteSpecSchema, createInitialGameSession, type TurnInput } from "@brass-ledger/shared";
-import { acceptedRiskCandidatesForInput, createBatchSession, replicateSeedFor, runHeadlessBatch, runHeadlessCampaign } from "./index";
+import { buildAdvisorPortraitSvg, spriteSpecSchema, gameSessionSchema, SPRITE_NEGATIVE_PROMPT, createInitialGameSession, type TurnInput } from "@brass-ledger/shared";
+import { acceptedRiskCandidatesForInput, createBatchSession, hashPromptText, replicateSeedFor, runHeadlessBatch, runHeadlessCampaign } from "./index";
+
+const canonicalPrompt =
+  "Military staff advisor portrait for a strategic command simulation, S1 Personnel, Sprite Chief, calm, calm, restrained editorial game art, clean bust portrait, readable at small size, consistent uniform silhouette, muted palette, no photorealism, no fantasy armor, no weapons, neutral command-room background.";
+
+test("hashPromptText matches the verified SHA-256 vectors", () => {
+  assert.equal(hashPromptText(""), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+  assert.equal(Buffer.byteLength(canonicalPrompt, "utf8"), 309, "canonical prompt is 309 UTF-8 bytes");
+  assert.equal(hashPromptText(canonicalPrompt), "d35ef1dbc9f589fa92203dcf51b38a8c8007d65956f290172190b67ba2a3ad02");
+  assert.equal(Buffer.byteLength(SPRITE_NEGATIVE_PROMPT, "utf8"), 201, "negative prompt is 201 UTF-8 bytes");
+  assert.equal(hashPromptText(SPRITE_NEGATIVE_PROMPT), "f5a675f7b6db06a46dba4ed29f5ef0133754805f6840f3432f6917be1387a140");
+  assert.match(hashPromptText("any value"), /^[0-9a-f]{64}$/, "full lowercase 64-hex output");
+});
 
 test("batch campaigns use paired replicate seeds across strategies", () => {
   const balanced = createBatchSession(0); // balanced-cycle, replicate 0
@@ -25,6 +37,13 @@ test("sprite output is additive, schema-valid, and renderer-equivalent", async (
     assert.deepEqual(spriteSpecSchema.parse(sprite.spec), sprite.spec);
     assert.equal(sprite.svg, buildAdvisorPortraitSvg(sprite.spec));
     assert.match(sprite.svg, /^<svg/);
+    assert.ok(sprite.spec.temperament.length > 0, "temperament is copied from the chief");
+    assert.ok(sprite.spec.prompt.length > 0, "positive prompt is filled");
+    assert.equal(sprite.spec.negativePrompt, SPRITE_NEGATIVE_PROMPT);
+    assert.equal(sprite.promptHash, hashPromptText(sprite.spec.prompt), "promptHash is SHA-256 of the exact spec prompt");
+    assert.equal(sprite.negativePromptHash, hashPromptText(sprite.spec.negativePrompt), "negativePromptHash is SHA-256 of the exact spec negative prompt");
+    assert.match(sprite.promptHash, /^[0-9a-f]{64}$/);
+    assert.match(sprite.negativePromptHash, /^[0-9a-f]{64}$/);
   }
 });
 
@@ -33,11 +52,37 @@ test("sprite output is deterministic for the same supplied session", async () =>
   const first = await runHeadlessCampaign({ session: structuredClone(session), turns: 0, includeSprites: true });
   const second = await runHeadlessCampaign({ session: structuredClone(session), turns: 0, includeSprites: true });
   assert.deepEqual(first.sprites, second.sprites);
-  // Zero history means the burden falls back to "light" and trust is not strained, so no
-  // precedence override fires — expression must be the authored base expression.
+  // Hashes are stable across runs and re-derive from the exact emitted spec strings.
+  assert.deepEqual(first.sprites!.map((sprite) => sprite.promptHash), second.sprites!.map((sprite) => sprite.promptHash));
   for (const sprite of first.sprites ?? []) {
+    assert.equal(sprite.promptHash, hashPromptText(sprite.spec.prompt), "re-derived hash matches the emitted sibling");
+    // Zero history means the burden falls back to "light" and trust is not strained, so no
+    // precedence override fires — expression must be the authored base expression.
     assert.equal(sprite.spec.expression, spriteVisualLanguage[sprite.spec.role].baseExpression, `${sprite.spec.role} must fall through to its authored base expression`);
   }
+});
+
+test("sprite prompts and hashes stay outside the saved session", async () => {
+  const output = await runHeadlessCampaign({ turns: 0, includeSprites: true });
+  assert.ok(output.sprites, "sprites are emitted when opted in");
+  assert.ok(output.sessionExport, "raw GameSession sibling is present");
+  gameSessionSchema.parse(output.sessionExport);
+  const forbidden = ["prompt", "negativePrompt", "promptHash", "negativePromptHash", "deterministicSeed", "temperament"];
+  const keys: string[] = [];
+  const collect = (value: unknown) => {
+    if (Array.isArray(value)) return value.forEach(collect);
+    if (value && typeof value === "object") {
+      for (const [key, child] of Object.entries(value)) {
+        keys.push(key);
+        collect(child);
+      }
+    }
+  };
+  collect(output.sessionExport);
+  for (const key of forbidden) {
+    assert.equal(keys.includes(key), false, `session JSON must not contain ${key}`);
+  }
+  assert.equal("sprites" in output.sessionExport, false, "sprites is a sibling of sessionExport, not nested in it");
 });
 
 test("a small batch is deterministic across independent runs", async () => {

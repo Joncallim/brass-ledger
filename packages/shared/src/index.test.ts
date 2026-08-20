@@ -6,17 +6,25 @@ import {
   buildAdvisorPortraitDataUri,
   buildAdvisorPortraitSvg,
   buildChiefSpriteSpec,
+  buildSpritePromptText,
+  chiefArchetypeSchema,
   chiefSpriteDeterministicSeed,
+  defaultStaffFunctionDefinitions,
   doctrineAcceptedRiskRefSchema,
   doctrineMaturityEntrySchema,
   eventDefinitionSchema,
   gameSessionSchema,
   scenarioSummarySchema,
+  spriteExpressionSchema,
+  spriteRoleSchema,
   spriteSpecSchema,
+  SPRITE_NEGATIVE_PROMPT,
+  SPRITE_PROMPT_ROLE_LABELS,
   generateAdvisorRoster,
   relationshipLabel,
   turnResultSchema,
   type EventDefinition,
+  type SpriteRole,
 } from "./index";
 
 const spriteVisualLanguage = Object.fromEntries(["S1", "S2", "S3", "S4", "S5", "training"].map((role) => [role, {
@@ -312,6 +320,14 @@ test("doctrine metadata parses inside scenario summary and arrays (superRefine p
   assert.throws(() => z.array(eventDefinitionSchema).parse([{ ...coalitionEvent, causalContext: undefined }]), /must appear together/);
 });
 
+const canonicalSpritePrompt =
+  "Military staff advisor portrait for a strategic command simulation, S1 Personnel, Sprite Chief, calm, calm, restrained editorial game art, clean bust portrait, readable at small size, consistent uniform silhouette, muted palette, no photorealism, no fantasy armor, no weapons, neutral command-room background.";
+
+test("chief archetypes reject empty temperaments at scenario parse time", () => {
+  assert.throws(() => chiefArchetypeSchema.parse({ ...spriteChief, temperament: "" }), /too_small/);
+  assert.throws(() => scenarioSummarySchema.parse({ ...baseScenarioSummary([ordinaryEvent]), chiefs: [{ ...spriteChief, temperament: "" }] }), /too_small/);
+});
+
 test("chief sprite derivation is deterministic and preserves legacy SVG bytes", () => {
   const input = { chief: spriteChief, portrait: spritePortrait, sessionSeed: "session-a", trustBand: "steady" as const, burdenLevel: "light" as const, campaignStatus: "active" as const, visualLanguage: spriteVisualLanguage };
   const sprite = buildChiefSpriteSpec(input);
@@ -319,6 +335,9 @@ test("chief sprite derivation is deterministic and preserves legacy SVG bytes", 
   assert.equal(buildAdvisorPortraitSvg(sprite), legacySvg);
   assert.equal(buildAdvisorPortraitDataUri(sprite), `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(legacySvg)}`);
   assert.equal(sprite.expression, "calm");
+  assert.equal(sprite.temperament, "calm", "temperament is copied verbatim from the chief");
+  assert.equal(sprite.prompt, canonicalSpritePrompt, "positive prompt must match the roadmap template byte-for-byte");
+  assert.equal(sprite.negativePrompt, SPRITE_NEGATIVE_PROMPT, "negative prompt is the exact roadmap constant");
   assert.equal(sprite.deterministicSeed, chiefSpriteDeterministicSeed("session-a", "sprite-chief"));
   assert.deepEqual(sprite.palette, [spritePortrait.skinTone, spritePortrait.hairColor, spritePortrait.eyeColor, spritePortrait.uniformColor, spritePortrait.trimColor, spritePortrait.backgroundColor, spritePortrait.panelColor], "palette must preserve the 7 legacy colors in canonical order");
   assert.throws(() => chiefSpriteDeterministicSeed("", "sprite-chief"), /sessionSeed/);
@@ -327,11 +346,92 @@ test("chief sprite derivation is deterministic and preserves legacy SVG bytes", 
 
 test("SpriteSpec strict validation retains legacy fields and rejects incomplete or unknown payloads", () => {
   const sprite = buildChiefSpriteSpec({ chief: spriteChief, portrait: spritePortrait, sessionSeed: "session-a", trustBand: "steady", burdenLevel: "light", campaignStatus: "active", visualLanguage: spriteVisualLanguage });
-  assert.deepEqual(Object.keys(sprite).sort(), ["accessory", "backgroundColor", "browTilt", "deterministicSeed", "displayName", "eyeColor", "expression", "faceShape", "genderPresentation", "hairColor", "hairStyle", "id", "mouthCurve", "negativePrompt", "palette", "panelColor", "prompt", "role", "skinTone", "subjectType", "trimColor", "trustBand", "uniform", "uniformColor", "silhouette"].sort());
+  assert.deepEqual(Object.keys(sprite).sort(), ["accessory", "backgroundColor", "browTilt", "deterministicSeed", "displayName", "eyeColor", "expression", "faceShape", "genderPresentation", "hairColor", "hairStyle", "id", "mouthCurve", "negativePrompt", "palette", "panelColor", "prompt", "role", "skinTone", "subjectType", "temperament", "trimColor", "trustBand", "uniform", "uniformColor", "silhouette"].sort());
   assert.throws(() => spriteSpecSchema.parse({ ...sprite, unknown: true }));
   assert.throws(() => spriteSpecSchema.parse({ ...sprite, prompt: undefined }));
+  assert.throws(() => spriteSpecSchema.parse({ ...sprite, prompt: "" }), /too_small/);
+  assert.throws(() => spriteSpecSchema.parse({ ...sprite, negativePrompt: "" }), /too_small/);
+  assert.throws(() => spriteSpecSchema.parse({ ...sprite, temperament: undefined }));
+  assert.throws(() => spriteSpecSchema.parse({ ...sprite, temperament: "" }), /too_small/);
   assert.throws(() => spriteSpecSchema.parse({ ...sprite, palette: [] }));
   assert.throws(() => spriteSpecSchema.parse({ ...sprite, expression: "severe" }));
+});
+
+test("role labels are exhaustive, frozen, and match the staff-function vocabulary", () => {
+  assert.deepEqual(Object.keys(SPRITE_PROMPT_ROLE_LABELS).sort(), spriteRoleSchema.options.slice().sort(), "exhaustive over every SpriteRole");
+  for (const role of spriteRoleSchema.options) {
+    if (role === "training") {
+      assert.equal(SPRITE_PROMPT_ROLE_LABELS[role], "Training", "training is an authored extension, not an S-function");
+    } else {
+      const definition = defaultStaffFunctionDefinitions.find((entry) => entry.id === role);
+      assert.ok(definition, `staff function definition exists for ${role}`);
+      assert.equal(SPRITE_PROMPT_ROLE_LABELS[role], `${definition!.shortLabel} ${definition!.label}`, `${role} label must track the shared staff-function vocabulary`);
+    }
+  }
+  assert.equal(Object.isFrozen(SPRITE_PROMPT_ROLE_LABELS), true, "role labels are frozen at runtime");
+  assert.throws(() => {
+    (SPRITE_PROMPT_ROLE_LABELS as Record<SpriteRole, string>).S1 = "Mutated";
+  }, TypeError, "frozen table rejects runtime mutation");
+});
+
+test("prompt fill is exhaustive, exact, and distinct across all roles and expressions", () => {
+  const displayName = "Fixed Chief";
+  const temperament = "fixed temperament";
+  const expectedPrompt = (role: SpriteRole, expression: string) =>
+    "Military staff advisor portrait for a strategic command simulation, " +
+    `${SPRITE_PROMPT_ROLE_LABELS[role]}, ${displayName}, ` +
+    `${temperament}, ${expression}, ` +
+    "restrained editorial game art, clean bust portrait, readable at small size, " +
+    "consistent uniform silhouette, muted palette, no photorealism, no fantasy armor, " +
+    "no weapons, neutral command-room background.";
+  const prompts: string[] = [];
+  for (const role of spriteRoleSchema.options) {
+    for (const expression of spriteExpressionSchema.options) {
+      const result = buildSpritePromptText({ role, displayName, temperament, expression });
+      assert.equal(result.prompt, expectedPrompt(role, expression), `${role}/${expression} prompt must match the template exactly`);
+      assert.equal(result.negativePrompt, SPRITE_NEGATIVE_PROMPT, "negative prompt is constant");
+      prompts.push(result.prompt);
+    }
+  }
+  assert.equal(prompts.length, 30);
+  assert.equal(new Set(prompts).size, 30, "all 30 role/expression prompts are distinct");
+});
+
+test("only the four source fields change the prompt; visual fields never do", () => {
+  const base = { chief: spriteChief, portrait: spritePortrait, sessionSeed: "session-a", trustBand: "steady" as const, burdenLevel: "light" as const, campaignStatus: "active" as const, visualLanguage: spriteVisualLanguage };
+  const baseline = buildChiefSpriteSpec(base);
+  const differentName = buildChiefSpriteSpec({ ...base, chief: { ...spriteChief, name: "Renamed Chief" } });
+  assert.notEqual(differentName.prompt, baseline.prompt);
+  assert.equal(differentName.prompt.replace("Renamed Chief", "Sprite Chief"), baseline.prompt, "only the display-name segment changed");
+  assert.equal(differentName.negativePrompt, baseline.negativePrompt);
+
+  const differentTemperament = buildChiefSpriteSpec({ ...base, chief: { ...spriteChief, temperament: "unflappable" } });
+  assert.notEqual(differentTemperament.prompt, baseline.prompt);
+  assert.equal(differentTemperament.prompt.replace("unflappable", "calm"), baseline.prompt, "only the temperament segment changed");
+
+  const differentExpression = buildChiefSpriteSpec({ ...base, campaignStatus: "won" });
+  assert.equal(differentExpression.expression, "resolved");
+  assert.notEqual(differentExpression.prompt, baseline.prompt);
+  assert.ok(differentExpression.prompt.endsWith("resolved, restrained editorial game art, clean bust portrait, readable at small size, consistent uniform silhouette, muted palette, no photorealism, no fantasy armor, no weapons, neutral command-room background."));
+  assert.equal(differentExpression.prompt.replace("resolved", "calm"), baseline.prompt, "only the expression segment changed");
+
+  // Silhouette/palette/uniform/trust changes must not leak into prompt text.
+  const visuallyDifferent = buildChiefSpriteSpec({
+    ...base,
+    trustBand: "watchful",
+    portrait: { ...spritePortrait, uniformColor: "#000000", trimColor: "#ffffff" },
+    visualLanguage: { ...spriteVisualLanguage, S1: { ...spriteVisualLanguage.S1, shapeLanguage: "changed shape", uniformLanguage: "changed uniform" } },
+  });
+  assert.equal(visuallyDifferent.expression, "calm", "watchful trust must not trigger precedence");
+  assert.equal(visuallyDifferent.prompt, baseline.prompt, "prompt ignores silhouette, palette, uniform, and trust");
+});
+
+test("sprite derivation is deterministic across equivalent deep-cloned inputs", () => {
+  const input = { chief: spriteChief, portrait: spritePortrait, sessionSeed: "session-a", trustBand: "steady" as const, burdenLevel: "light" as const, campaignStatus: "active" as const, visualLanguage: spriteVisualLanguage };
+  const first = buildChiefSpriteSpec(structuredClone(input));
+  const second = buildChiefSpriteSpec(structuredClone(input));
+  assert.deepEqual(first, second);
+  assert.deepEqual(input, { chief: spriteChief, portrait: spritePortrait, sessionSeed: "session-a", trustBand: "steady" as const, burdenLevel: "light" as const, campaignStatus: "active" as const, visualLanguage: spriteVisualLanguage }, "inputs are not mutated");
 });
 
 test("trust thresholds and expression precedence are total", () => {
@@ -366,9 +466,21 @@ test("roster identity is order-independent and sprite derivation does not mutate
   const snapshot = JSON.stringify(session);
   buildChiefSpriteSpec({ chief: spriteChief, portrait: session.advisorRoster[0].portrait, sessionSeed: session.id, trustBand: "steady", burdenLevel: "light", campaignStatus: session.state.campaignStatus, visualLanguage: spriteVisualLanguage });
   assert.equal(JSON.stringify(session), snapshot);
-  assert.equal("prompt" in session, false);
-  assert.equal("negativePrompt" in session, false);
-  assert.equal("deterministicSeed" in session, false);
+  const forbidden = ["prompt", "negativePrompt", "promptHash", "negativePromptHash", "deterministicSeed", "temperament"];
+  const keys: string[] = [];
+  const collect = (value: unknown) => {
+    if (Array.isArray(value)) return value.forEach(collect);
+    if (value && typeof value === "object") {
+      for (const [key, child] of Object.entries(value)) {
+        keys.push(key);
+        collect(child);
+      }
+    }
+  };
+  collect(session);
+  for (const key of forbidden) {
+    assert.equal(keys.includes(key), false, `session must not gain sprite-only key ${key}`);
+  }
 });
 
 test("turnResultSchema accepts a doctrine event in triggeredEvents", () => {
