@@ -216,6 +216,11 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
   // Doctrine fires are attributed to the CURRENT campaign's strategy regardless of the
   // event's authored target mapping, so the balanced cohort's fires are visible too.
   const strategyStats = new Map<StrategyId, { campaigns: number; score: number; wins: number; events: number; cost: number; doctrineCampaigns: number }>();
+  // Always serialize every cohort. Positive batches smaller than four leave some
+  // round-robin cohorts unassigned, but their telemetry is still meaningful zeros.
+  for (const strategyId of strategies) {
+    strategyStats.set(strategyId, { campaigns: 0, score: 0, wins: 0, events: 0, cost: 0, doctrineCampaigns: 0 });
+  }
   // Fires of each doctrine event inside balanced-cycle campaigns, for the <0.85 gate.
   const balancedEventFires = new Map<string, number>();
   for (const event of soloScenario.events.filter((candidate) => candidate.doctrineTrigger)) eventStats.set(event.id, { attempted: 0, qualifying: 0, fired: 0 });
@@ -512,7 +517,14 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
         conditions: event.doctrineTrigger!.conditions,
         sustainedTurns: event.doctrineTrigger!.sustainedTurns,
         staffFunctionRefs: event.causalContext!.staffFunctionRefs,
-        acceptedRiskRefs: result.previousState.doctrineMaturity[event.id]?.acceptedRiskRefs ?? [],
+        acceptedRiskRefs: [
+          ...(result.previousState.doctrineMaturity[event.id]?.acceptedRiskRefs ?? []),
+          ...(result.input.acceptedRiskOverrides ?? [])
+            .filter((risk) => event.causalContext!.staffFunctionRefs.includes(risk.staffFunctionId))
+            .map((risk) => ({ turn: result.input.turn, staffFunctionId: risk.staffFunctionId, warningText: risk.warningText })),
+        ].filter((risk, index, all) =>
+          all.findIndex((candidate) => candidate.turn === risk.turn && candidate.staffFunctionId === risk.staffFunctionId && candidate.warningText === risk.warningText) === index,
+        ),
         consequence: event.summary,
       })),
       internalTech: result.internalTech.map((node) => ({ id: node.id, level: node.level, progress: node.progress })),

@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { soloScenario } from "@brass-ledger/content";
-import { createBatchSession, replicateSeedFor, runHeadlessBatch } from "./index";
+import { createInitialGameSession, type TurnInput } from "@brass-ledger/shared";
+import { acceptedRiskCandidatesForInput, createBatchSession, replicateSeedFor, runHeadlessBatch, runHeadlessCampaign } from "./index";
 
 test("batch campaigns use paired replicate seeds across strategies", () => {
   const balanced = createBatchSession(0); // balanced-cycle, replicate 0
@@ -19,6 +20,61 @@ test("a small batch is deterministic across independent runs", async () => {
   const first = await runHeadlessBatch(16);
   const second = await runHeadlessBatch(16);
   assert.deepEqual(first, second);
+});
+
+test("partial strategy cohorts retain zero-valued telemetry", async () => {
+  for (const campaignCount of [1, 2, 3]) {
+    const telemetry = await runHeadlessBatch(campaignCount);
+    assert.equal(telemetry.doctrineStrategies.length, 4, `N=${campaignCount} includes every cohort`);
+    for (const strategy of telemetry.doctrineStrategies) {
+      if (strategy.campaigns === 0) {
+        assert.deepEqual(
+          {
+            meanScore: strategy.meanScore,
+            winRate: strategy.winRate,
+            meanDoctrineEvents: strategy.meanDoctrineEvents,
+            meanDoctrineEventCostMass: strategy.meanDoctrineEventCostMass,
+            doctrineCampaignHitRate: strategy.doctrineCampaignHitRate,
+          },
+          { meanScore: 0, winRate: 0, meanDoctrineEvents: 0, meanDoctrineEventCostMass: 0, doctrineCampaignHitRate: 0 },
+          `N=${campaignCount} zeroes unassigned ${strategy.strategyId}`,
+        );
+      }
+    }
+  }
+});
+
+test("structured doctrine summaries retain matching accepted risks from the firing turn", async () => {
+  const eventId = "doctrine-sustainment-patience-gap";
+  const session = createInitialGameSession(soloScenario, "firing-turn-risk");
+  session.state = {
+    ...structuredClone(soloScenario.initialState),
+    turn: 3,
+    doctrineMechanics: { ...soloScenario.initialState.doctrineMechanics, relativeTempo: 28 },
+    doctrineMaturity: { [eventId]: { consecutiveTurns: 2, startedTurn: 1, acceptedRiskRefs: [] } },
+  };
+  const input: TurnInput = {
+    turn: 3,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    staffNegotiations: [],
+    selections: [
+      { memoId: "posture", optionId: "quiet-recovery" },
+      { memoId: "intelligence-focus", optionId: "warning-net" },
+      { memoId: "sustainment-focus", optionId: "repair-first" },
+      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+    ],
+  };
+  const matchingRisk = acceptedRiskCandidatesForInput(session, input).find((risk) => risk.staffFunctionId === "S4" || risk.staffFunctionId === "S5");
+  if (!matchingRisk) throw new Error("fixture must project an S4 or S5 accepted-risk warning");
+
+  const output = await runHeadlessCampaign({ session, inputs: [{ ...input, acceptedRiskOverrides: [matchingRisk] }], autoAcceptRisks: true });
+  const doctrineEvent = output.turnSummaries[0]?.doctrineEvents.find((event) => event.eventId === eventId);
+  assert.ok(doctrineEvent, "mature doctrine event fires");
+  assert.ok(
+    doctrineEvent!.acceptedRiskRefs.some((risk) => risk.turn === 3 && risk.staffFunctionId === matchingRisk.staffFunctionId && risk.warningText === matchingRisk.warningText),
+    "current-turn matching warning is retained even with no prior maturity refs",
+  );
 });
 
 test("N=240 satisfies the doctrine balance gates with real balanced hit rates", async () => {
