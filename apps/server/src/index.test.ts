@@ -101,7 +101,7 @@ test("scenario and session payloads expose S1-S5 staff contracts", async () => {
 test("scenario response carries the schema-valid sprite visual language registry", async () => {
   const response = await app.inject({ method: "GET", url: "/api/scenario" });
   const payload = response.json().scenario;
-  const summary = scenarioSummarySchema.parse({ ...payload, memoTemplates: payload.decisionMemos });
+  const summary = scenarioSummarySchema.parse(payload);
   assert.deepEqual(summary.spriteVisualLanguage, payload.spriteVisualLanguage);
 });
 

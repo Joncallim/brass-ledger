@@ -9,7 +9,7 @@ type Props = {
   chiefCoalitions: ChiefCoalitionEntry[];
   advisorRoster: SessionAdvisor[];
   session: GameSession;
-  scenario: ScenarioSummary | null;
+  scenario: ScenarioSummary;
   memos: DecisionMemo[];
   conversationBusy: boolean;
   conversationError: string | null;
@@ -81,8 +81,8 @@ export function ChiefsPaperScreen({
         <div className="space-y-3 mb-8">
           {uniquePositions.map((position) => {
             const advisor = advisorRoster.find((a) => a.chiefId === position.chiefId);
-            const chief = scenario?.chiefs.find((candidate) => candidate.id === position.chiefId);
-            const sprite = advisor && chief && scenario
+            const chief = scenario.chiefs.find((candidate) => candidate.id === position.chiefId);
+            const sprite = advisor && chief
               ? buildChiefSpriteSpec({
                 chief, portrait: advisor.portrait, sessionSeed: session.id,
                 trustBand: relationshipLabel(session.state.chiefTrust[chief.id] ?? 50),

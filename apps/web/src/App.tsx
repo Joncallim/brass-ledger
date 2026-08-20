@@ -373,7 +373,7 @@ export function App() {
         />
       )}
 
-      {route.screen === "session" && cycle.session && route.step === "chiefs" && (
+      {route.screen === "session" && cycle.session && scenario && route.step === "chiefs" && (
         <ChiefsPaperScreen
           chiefPositions={chiefPositions}
           scenario={scenario}

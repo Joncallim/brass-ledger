@@ -33,7 +33,7 @@ test("sprite output is deterministic for the same supplied session", async () =>
   const first = await runHeadlessCampaign({ session: structuredClone(session), turns: 0, includeSprites: true });
   const second = await runHeadlessCampaign({ session: structuredClone(session), turns: 0, includeSprites: true });
   assert.deepEqual(first.sprites, second.sprites);
-  // Zero history means the burden falls back to "light" and trust is steady, so no
+  // Zero history means the burden falls back to "light" and trust is not strained, so no
   // precedence override fires — expression must be the authored base expression.
   for (const sprite of first.sprites ?? []) {
     assert.equal(sprite.spec.expression, spriteVisualLanguage[sprite.spec.role].baseExpression, `${sprite.spec.role} must fall through to its authored base expression`);
