@@ -8,10 +8,10 @@ import {
 } from "@brass-ledger/shared";
 
 /**
- * Sprite 3 visual matrix (issue #52, Q5): renders every roadmap state for a couple of real
- * chiefs from generated data URIs via page.setContent only — no webServer, no API, no build
- * of the app itself (only the workspace dist it imports). The committed toHaveScreenshot
- * baseline is the human-review artifact; a 2× composite is also saved to
+ * Sprite 3 visual matrix (issue #52, Q5): renders every roadmap state for one chief per
+ * S-role (S1-S5) from generated data URIs via page.setContent only — no webServer, no API,
+ * no build of the app itself (only the workspace dist it imports). The committed
+ * toHaveScreenshot baseline is the human-review artifact; a 2× composite is also saved to
  * test-results/sprite-matrix-review.png (gitignored) for convenience.
  */
 const states: { label: string; state: ChiefSpriteVariantState }[] = [
@@ -27,9 +27,14 @@ const states: { label: string; state: ChiefSpriteVariantState }[] = [
 
 test("sprite variant matrix renders at 48×56 and 2× for human review", async ({ page }) => {
   const session = createInitialGameSession(soloScenario, "sprite-matrix-session");
+  // One chief per S-role so every role-gated effect (S2 tight framing, S4 utility detail)
+  // is genuinely exercised in the human-review baseline, not just labeled.
   const chiefs = [
     soloScenario.chiefs.find((chief) => chief.directorate === "people")!,
+    soloScenario.chiefs.find((chief) => chief.directorate === "intelligence")!,
+    soloScenario.chiefs.find((chief) => chief.directorate === "operations")!,
     soloScenario.chiefs.find((chief) => chief.directorate === "sustainment")!,
+    soloScenario.chiefs.find((chief) => chief.directorate === "plans")!,
   ];
   const cells: string[] = [];
   for (const chief of chiefs) {
