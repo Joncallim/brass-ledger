@@ -97,6 +97,49 @@ test("scenario and session payloads expose S1-S5 staff contracts", async () => {
   assert.deepEqual(created.staffFunctions.map((entry: { id: string }) => entry.id), ["S1", "S2", "S3", "S4", "S5"]);
 });
 
+test("session payload readouts carry doctrine 3 routing attention consistent with turn results", async () => {
+  const created = await createSession();
+  const id = created.session.id;
+
+  // The standing-session readouts (no selections) still carry the composed routing
+  // labels — S3 has ops=priority + training=underpriced, so the label is "priority" by
+  // precedence, exactly as a resolve-turn result on the same scenario reports it.
+  const s3Payload = created.staffFunctions.find((entry: { id: string }) => entry.id === "S3");
+  assert.ok(s3Payload);
+  assert.equal(s3Payload.routingAttention, "priority");
+
+  const input = {
+    turn: 1,
+    selectedActionIds: [],
+    selections: [
+      { memoId: "posture", optionId: "measured-deterrence" },
+      { memoId: "intelligence-focus", optionId: "deception-hunt" },
+      { memoId: "sustainment-focus", optionId: "repair-first" },
+      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+      { memoId: "force-development", optionId: "training-reset" },
+    ],
+  };
+  const acceptedInput = await withAcceptedRiskCandidates(id, input);
+  const resolved = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/resolve-turn`,
+    payload: { input: acceptedInput, expectedRevision: 0 },
+  });
+  assert.equal(resolved.statusCode, 200);
+  const body = resolved.json();
+  const training = body.result.directorateBurden.find((entry: { directorate: string }) => entry.directorate === "training");
+  assert.ok(training);
+  assert.equal(training.burdenLevel, "strained");
+  assert.equal(training.routingAttention, "underpriced");
+  const s3Resolved = body.result.staffFunctions.find((entry: { id: string }) => entry.id === "S3");
+  assert.ok(s3Resolved);
+  assert.equal(s3Resolved.routingAttention, "priority");
+  assert.ok(
+    s3Resolved.warnings.some((warning: string) => warning.includes("This lane is one the staff underprices")),
+    "the underpriced training warning must surface in the resolve-turn readouts",
+  );
+});
+
 test("headless API runs default turns with explicit accepted-risk records", async () => {
   const response = await app.inject({
     method: "POST",

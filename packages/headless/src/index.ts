@@ -309,8 +309,9 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
       outcome: session.state.campaignOutcome,
       staffFunctions: buildStaffFunctionReadouts(
         soloScenario.staffFunctions,
-        buildDirectorateBurden(deriveDecisionMemos(soloScenario, session.state), [], soloScenario.staffCapacities),
+        buildDirectorateBurden(deriveDecisionMemos(soloScenario, session.state), [], soloScenario.staffCapacities, [], soloScenario.doctrineLens.burdenBias),
         session.state,
+        soloScenario.doctrineLens.burdenBias,
       ),
       techTree: {
         internalTech: session.state.internalTech.map((node) => ({ id: node.id, level: node.level, progress: node.progress })),

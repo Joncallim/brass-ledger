@@ -1,8 +1,10 @@
 import { deepStrictEqual } from "node:assert";
 import {
   applyDoctrineGenes,
+  composeDoctrineLens,
   defaultDoctrineMechanicsState,
   doctrineRiskKeys,
+  directorateSchema,
 } from "@brass-ledger/shared";
 import { resolveDoctrineGenes, doctrineGenes } from "./doctrine-genes";
 const { soloScenario } = (await import(new URL("./scenario.ts", import.meta.url).href)) as typeof import("./scenario");
@@ -213,6 +215,72 @@ if (soloScenario.doctrineProfile) {
         `Doctrine gene ${gene.id} must measurably shift at least one doctrine variable.`,
       );
     }
+
+    // ── Doctrine 3 guardrails (issue #57) ──────────────────────────────────────────
+    // These run over the FULL registry too, so a gene added for Doctrine 4/5 that is
+    // not yet wired into a scenario must still satisfy advice-anchoring and
+    // burden-counterweight rules.
+
+    // 1. Directive tag coverage (ERROR): every biasTag/cautionTag of every directive
+    // must exist in some memo option — the "advice stays evidence-anchored" guardrail.
+    // If a memo drops a tag in a later PR, lint fails immediately.
+    const staffFunctionKeys = ["S1", "S2", "S3", "S4", "S5"] as const;
+    for (const staffFunction of staffFunctionKeys) {
+      const directive = gene.staffAdviceStyle[staffFunction];
+      if (!directive) continue;
+      for (const tag of directive.biasTags) {
+        if (!allOptionTags.has(tag)) {
+          throw new Error(
+            `Doctrine gene ${gene.id} directive ${staffFunction} has biasTag "${tag}" that does not appear in any memo option. ` +
+              `Add the tag to a memo option or remove it from the directive.`,
+          );
+        }
+      }
+      for (const tag of directive.cautionTags) {
+        if (!allOptionTags.has(tag)) {
+          throw new Error(
+            `Doctrine gene ${gene.id} directive ${staffFunction} has cautionTag "${tag}" that does not appear in any memo option. ` +
+              `Add the tag to a memo option or remove it from the directive.`,
+          );
+        }
+      }
+    }
+
+    // 2. Directive anchor invariant (ERROR): positionLean !== 0 requires >=1 tag anchor
+    // (schema superRefine enforces this too; re-asserted for clear lint output).
+    for (const staffFunction of staffFunctionKeys) {
+      const directive = gene.staffAdviceStyle[staffFunction];
+      if (directive && directive.positionLean !== 0 && directive.biasTags.length === 0 && directive.cautionTags.length === 0) {
+        throw new Error(
+          `Doctrine gene ${gene.id} directive ${staffFunction} has a non-zero positionLean (${directive.positionLean}) with no biasTag or cautionTag anchor — no free-floating leans.`,
+        );
+      }
+    }
+
+    // 3. Burden-bias lane validity (ERROR): lanes must be real directorates and disjoint
+    // (schema-enforced; re-asserted for output clarity).
+    const validLanes = directorateSchema.options;
+    for (const lane of [...gene.burdenBias.priorityLanes, ...gene.burdenBias.underpricedLanes]) {
+      if (!validLanes.includes(lane)) {
+        throw new Error(`Doctrine gene ${gene.id} burdenBias references unknown lane "${lane}".`);
+      }
+    }
+    const laneOverlap = gene.burdenBias.priorityLanes.filter((lane) => gene.burdenBias.underpricedLanes.includes(lane));
+    if (laneOverlap.length > 0) {
+      throw new Error(`Doctrine gene ${gene.id} declares lane(s) ${laneOverlap.join(", ")} as both priority and underpriced.`);
+    }
+
+    // 4. Burden-bias counterweight rule (ERROR): a gene with exactly one non-empty side
+    // is an unopposed bias (free lunch) — every routing benefit needs a counterweight
+    // lane (gene-bank Strength/Vulnerability pairing). Both empty is legal (advice-only
+    // gene).
+    if ((gene.burdenBias.priorityLanes.length > 0) !== (gene.burdenBias.underpricedLanes.length > 0)) {
+      const side = gene.burdenBias.priorityLanes.length > 0 ? "priorityLanes" : "underpricedLanes";
+      const other = gene.burdenBias.priorityLanes.length > 0 ? "underpricedLanes" : "priorityLanes";
+      throw new Error(
+        `Doctrine gene ${gene.id} declares ${side} but not ${other} — every routing bias needs a counterweight lane (gene-bank Strength/Vulnerability pairing).`,
+      );
+    }
   }
 
   // Invariant: the scenario's declared opening position must equal the profile-applied
@@ -223,6 +291,29 @@ if (soloScenario.doctrineProfile) {
     expectedBaseline,
     `initialState.doctrineMechanics must equal applyDoctrineGenes(defaultDoctrineMechanicsState, resolved genes) for profile ${profile.id}.`,
   );
+
+  // 5. Composite-lens invariant (ERROR, Doctrine 3): the scenario's declared lens must
+  // equal the composed lens over the resolved genes — guards against drift between the
+  // profile and the serialized doctrineLens the engine consumes.
+  deepStrictEqual(
+    soloScenario.doctrineLens,
+    composeDoctrineLens(resolved),
+    `doctrineLens must equal composeDoctrineLens(resolved genes) for profile ${profile.id}.`,
+  );
+
+  // 6. Cross-gene cancellation (WARNING, Doctrine 3): when a lane is underpriced by one
+  // gene but over-prioritized by another, the composite subtracts it from
+  // underpricedLanes ("priority wins"). That is the stable mechanical outcome in
+  // Doctrine 3; the gene-bank Gene Mixing Rules coordination-cost note applies, so flag
+  // it — non-fatal.
+  const rawUnderpriced = Array.from(new Set(doctrineGenes.flatMap((gene) => gene.burdenBias.underpricedLanes)));
+  const cancelled = rawUnderpriced.filter((lane) => soloScenario.doctrineLens.burdenBias.priorityLanes.includes(lane));
+  if (cancelled.length > 0) {
+    console.warn(
+      `Doctrine lens cross-gene cancellation (Gene Mixing Rules coordination cost): lane(s) [${cancelled.join(", ")}] are underpriced by one gene but over-prioritized by another. "Priority wins": the lane is subtracted from the composite underpricedLanes. This is the stable mechanical outcome in Doctrine 3; a hard coordination-cost rule is deferred to a later PR.`,
+    );
+  }
+
   console.log(
     `Doctrine profile ${profile.id}: ${resolved.length} gene(s) [${resolved.map((g) => g.id).join(", ")}] applied, baseline verified against initialState.`,
   );

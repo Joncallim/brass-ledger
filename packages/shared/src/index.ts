@@ -240,6 +240,79 @@ export type DoctrineVariableModifiers = z.infer<typeof doctrineVariableModifierS
 // A single doctrine gene: a fictionalized, evidence-linked ingredient sourced from the
 // CELERY gene bank (CELERY/faction-doctrine-gene-bank.md). Genes are content data, never
 // hard-coded into the engine — the sim only ever sees the applied baseline.
+//
+// Doctrine 3 (issue #57): staffAdviceStyle is promoted from inert prose to a mechanical
+// input. Each directive carries the authored summary plus the anchors that make it
+// mechanical: option-tag biases, tag cautions, and a readout-gated position lean. The
+// sim consumes only the composed DoctrineLens (see composeDoctrineLens below), never
+// genes directly — the sim→content layering boundary is preserved.
+export const adviceDirectiveSchema = z
+  .object({
+    // The authored directive text (verbatim from the gene bank), rendered as the chief's
+    // adviceStyleNote. Human-facing only; the mechanical effect comes from the anchors.
+    summary: z.string().min(1),
+    // Option tags the gene's staff weighs MORE (biasTags) or treats as RISK (cautionTags).
+    // Both are lint-verified against the scenario's option tag vocabulary so advice can
+    // never reference flavor that no memo option carries.
+    biasTags: z.array(z.string()).default([]),
+    cautionTags: z.array(z.string()).default([]),
+    // Readout-anchored nudge: fires only when the chief's own S1-S5 readout signals
+    // metricStatus === "risk" or a non-light burden level. Negative = dig in / veto,
+    // positive = champion the fix. No free-floating leans: a non-zero lean requires at
+    // least one tag anchor (enforced here and re-asserted by lint:content).
+    positionLean: z.number().int().min(-2).max(2).default(0),
+  })
+  .superRefine((directive, ctx) => {
+    if (directive.positionLean !== 0 && directive.biasTags.length === 0 && directive.cautionTags.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionLean"],
+        message: "positionLean requires >=1 biasTag or cautionTag anchor (no free-floating lean).",
+      });
+    }
+  });
+export type AdviceDirective = z.infer<typeof adviceDirectiveSchema>;
+
+export const staffAdviceStyleSchema = z
+  .object({
+    S1: adviceDirectiveSchema.optional(),
+    S2: adviceDirectiveSchema.optional(),
+    S3: adviceDirectiveSchema.optional(),
+    S4: adviceDirectiveSchema.optional(),
+    S5: adviceDirectiveSchema.optional(),
+  })
+  .default({});
+export type StaffAdviceStyle = z.infer<typeof staffAdviceStyleSchema>;
+
+// Doctrine 3 burden-routing bias: which directorates a gene's staff over-prioritizes and
+// which it underprices. These change ATTENTION only (routingAttention labels, chief
+// position leans, underpriced warnings, after-action notes) — never burden points,
+// capacities, or penalties ("change routing, not math"). A lane cannot be both
+// over-prioritized and underpriced for the same gene.
+export const burdenBiasSchema = z
+  .object({
+    priorityLanes: z.array(directorateSchema).default([]),
+    underpricedLanes: z.array(directorateSchema).default([]),
+  })
+  .superRefine((bias, ctx) => {
+    const overlap = bias.priorityLanes.filter((directorate) => bias.underpricedLanes.includes(directorate));
+    if (overlap.length > 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["underpricedLanes"],
+        message: `A lane cannot be both over-prioritized and underpriced: ${overlap.join(", ")}.`,
+      });
+    }
+  });
+export type BurdenBias = z.infer<typeof burdenBiasSchema>;
+
+// The canonical suffix of the underpriced-lane warning text (Codex P2, PR #77):
+// acceptance of the underpriced warning is matched by this exact suffix, so the
+// template MUST stay in this single exported constant — buildStaffFunctionReadouts
+// appends it and resolveBurdenDissent matches on it.
+export const underpricedLaneWarningSuffix =
+  "This lane is one the staff underprices — expect it to surface as staff dissent unless you accept the risk explicitly.";
+
 export const doctrineGeneSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -248,15 +321,10 @@ export const doctrineGeneSchema = z.object({
   strengths: z.array(z.string()).min(1),
   vulnerabilities: z.array(z.string()).min(1),
   variableModifiers: doctrineVariableModifierSchema,
-  staffAdviceStyle: z
-    .object({
-      S1: z.string().optional(),
-      S2: z.string().optional(),
-      S3: z.string().optional(),
-      S4: z.string().optional(),
-      S5: z.string().optional(),
-    })
-    .default({}),
+  staffAdviceStyle: staffAdviceStyleSchema,
+  // Routing attention bias (Doctrine 3). Counterweight rule is enforced by lint:content
+  // at the gene level (one-sided bias = free lunch = ERROR; both empty is legal).
+  burdenBias: burdenBiasSchema.default({ priorityLanes: [], underpricedLanes: [] }),
 });
 export type DoctrineGene = z.infer<typeof doctrineGeneSchema>;
 
@@ -301,6 +369,75 @@ export function applyDoctrineGenes(
     }
   }
   return result;
+}
+
+// ── Doctrine 3: composed advice/burden lens (issue #57) ──────────────────────────────
+// The profile's genes compose to a single serialized DoctrineLens computed ONCE at
+// scenario-definition time and stored on scenarioDefinition.doctrineLens. The sim
+// consumes only the lens; replay re-runs resolveTurn against the scenario, so the lens
+// is always in scope. Composition is pure and gene-order deterministic: arrays dedupe
+// preserving first-appearance order (Set insertion order == geneIds order), positionLean
+// sums then clamps to [-2, 2] (same accumulate-then-clamp philosophy as
+// applyDoctrineGenes), and underpricedLanes = union MINUS any lane in priorityLanes
+// (priority wins — deterministic, documented, lint-warned). No RNG anywhere.
+
+export const composedAdviceDirectiveSchema = z.object({
+  summaries: z.array(z.string()), // one per contributing gene, in gene order
+  biasTags: z.array(z.string()),
+  cautionTags: z.array(z.string()),
+  positionLean: z.number().int().min(-2).max(2), // summed & clamped
+});
+export type ComposedAdviceDirective = z.infer<typeof composedAdviceDirectiveSchema>;
+
+export const doctrineLensSchema = z.object({
+  adviceStyle: z.object({
+    S1: composedAdviceDirectiveSchema.optional(),
+    S2: composedAdviceDirectiveSchema.optional(),
+    S3: composedAdviceDirectiveSchema.optional(),
+    S4: composedAdviceDirectiveSchema.optional(),
+    S5: composedAdviceDirectiveSchema.optional(),
+  }),
+  burdenBias: burdenBiasSchema,
+});
+export type DoctrineLens = z.infer<typeof doctrineLensSchema>;
+
+export const neutralDoctrineLens: DoctrineLens = {
+  adviceStyle: {},
+  burdenBias: { priorityLanes: [], underpricedLanes: [] },
+};
+
+const staffFunctionKeys = ["S1", "S2", "S3", "S4", "S5"] as const;
+
+export function composeAdviceStyle(genes: readonly DoctrineGene[]): DoctrineLens["adviceStyle"] {
+  const result: DoctrineLens["adviceStyle"] = {};
+  for (const staffFunction of staffFunctionKeys) {
+    const directives = genes
+      .map((gene) => gene.staffAdviceStyle[staffFunction])
+      .filter((directive): directive is AdviceDirective => Boolean(directive));
+    if (directives.length === 0) continue;
+    result[staffFunction] = {
+      summaries: directives.map((directive) => directive.summary),
+      biasTags: Array.from(new Set(directives.flatMap((directive) => directive.biasTags))),
+      cautionTags: Array.from(new Set(directives.flatMap((directive) => directive.cautionTags))),
+      positionLean: Math.min(
+        2,
+        Math.max(-2, directives.reduce((sum, directive) => sum + directive.positionLean, 0)),
+      ),
+    };
+  }
+  return result;
+}
+
+export function composeBurdenLens(genes: readonly DoctrineGene[]): BurdenBias {
+  const priorityLanes = Array.from(new Set(genes.flatMap((gene) => gene.burdenBias.priorityLanes)));
+  const underpricedLanes = Array.from(
+    new Set(genes.flatMap((gene) => gene.burdenBias.underpricedLanes)),
+  ).filter((directorate) => !priorityLanes.includes(directorate));
+  return { priorityLanes, underpricedLanes };
+}
+
+export function composeDoctrineLens(genes: readonly DoctrineGene[]): DoctrineLens {
+  return { adviceStyle: composeAdviceStyle(genes), burdenBias: composeBurdenLens(genes) };
 }
 
 export const resourcesSchema = z.object({
@@ -605,6 +742,10 @@ export const chiefPositionEntrySchema = z.object({
   confidenceNote: z.string(),
   consequenceIfIgnored: z.string(),
   agendaMemoryNote: z.string().optional(),
+  // Doctrine 3: the composed gene-voice note (directive summaries joined in gene order).
+  // Omitted when the chief's staff function has no directive — same convention as
+  // agendaMemoryNote (.optional() + omitted when absent).
+  adviceStyleNote: z.string().optional(),
   staffReadoutEvidence: chiefStaffReadoutEvidenceSchema,
 });
 export type ChiefPositionEntry = z.infer<typeof chiefPositionEntrySchema>;
@@ -669,6 +810,9 @@ export const directorateBurdenSchema = z.object({
   confidencePenalty: nonNegativeNumberSchema,
   executionPenalty: nonNegativeNumberSchema,
   summary: z.string(),
+  // Doctrine 3 routing attention: labels the lane's place in the composed burden bias.
+  // Attention only — burden points/capacity/penalties are untouched by the lens.
+  routingAttention: z.enum(["priority", "underpriced", "neutral"]).default("neutral"),
 });
 export type DirectorateBurden = z.infer<typeof directorateBurdenSchema>;
 
@@ -693,6 +837,10 @@ export const staffFunctionReadoutSchema = z.object({
   activeWarning: z.string().nullable(),
   standingRemit: z.string(),
   metrics: z.array(staffFunctionMetricSchema),
+  // Doctrine 3: union of the function's directorates' routing labels with priority
+  // precedence (priority > underpriced > neutral). The underpriced WARNING logic keys
+  // off the individual directorate entries and is independent of this label.
+  routingAttention: z.enum(["priority", "underpriced", "neutral"]).default("neutral"),
 });
 export type StaffFunctionReadout = z.infer<typeof staffFunctionReadoutSchema>;
 
@@ -951,6 +1099,10 @@ export const scenarioDefinitionSchema = z.object({
   events: z.array(eventDefinitionSchema),
   initialState: campaignStateSchema,
   doctrineProfile: doctrineProfileSchema,
+  // Doctrine 3: the composed advice/burden lens, computed once at scenario-definition
+  // time from the profile's genes. The .default() exists so a hypothetical pre-D3
+  // scenario JSON parses as neutral; the shipped scenario always sets it explicitly.
+  doctrineLens: doctrineLensSchema.default(neutralDoctrineLens),
 });
 export type ScenarioDefinition = z.infer<typeof scenarioDefinitionSchema>;
 
@@ -1303,6 +1455,7 @@ export function buildDirectorateBurden(
   selections: MemoSelection[],
   staffCapacities: StaffCapacityDefinition[] = defaultStaffCapacities,
   staffNegotiations: StaffNegotiation[] = [],
+  burdenBias: BurdenBias = { priorityLanes: [], underpricedLanes: [] },
 ): DirectorateBurden[] {
   const selectedByMemo = new Map(selections.map((selection) => [selection.memoId, selection.optionId]));
   const capacities = new Map(staffCapacities.map((entry) => [entry.directorate, entry]));
@@ -1355,6 +1508,15 @@ export function buildDirectorateBurden(
     const confidencePenalty = burdenLevel === "overloaded" ? 8 + excess * 4 : burdenLevel === "strained" ? 4 : 0;
     const executionPenalty = burdenLevel === "overloaded" ? 10 + excess * 6 : burdenLevel === "strained" ? 5 : 0;
 
+    // Doctrine 3: routing attention labels the lane's place in the composed burden bias.
+    // Negotiations subtract BEFORE classification, so the label reflects the
+    // post-negotiation reality. Attention only — the math above is untouched.
+    const routingAttention: DirectorateBurden["routingAttention"] = burdenBias.priorityLanes.includes(directorate)
+      ? "priority"
+      : burdenBias.underpricedLanes.includes(directorate)
+        ? "underpriced"
+        : "neutral";
+
     return {
       directorate,
       burdenPoints,
@@ -1363,6 +1525,7 @@ export function buildDirectorateBurden(
       failureMode,
       confidencePenalty,
       executionPenalty,
+      routingAttention,
       summary:
         burdenLevel === "overloaded"
           ? `${directorateLabel(directorate)} is carrying more than it can absorb this month. Expect ${failureMode}.`
@@ -1428,6 +1591,7 @@ export function buildStaffFunctionReadouts(
   definitions: StaffFunctionDefinition[] = defaultStaffFunctionDefinitions,
   burdens: DirectorateBurden[],
   state: CampaignState,
+  burdenBias: BurdenBias = { priorityLanes: [], underpricedLanes: [] },
 ): StaffFunctionReadout[] {
   const burdenByDirectorate = new Map(burdens.map((entry) => [entry.directorate, entry]));
   return definitions.map((definition) => {
@@ -1440,10 +1604,31 @@ export function buildStaffFunctionReadouts(
     const metrics = staffFunctionMetrics(definition.id, state);
     const hasMetricRisk = metrics.some((metric) => metric.status === "risk");
     const status: StaffFunctionReadout["status"] = hasOverloaded && hasMetricRisk ? "compromised" : hasOverloaded ? "overloaded" : hasStrained ? "strained" : "ready";
+    // Doctrine 3: an underpriced lane that is strained/overloaded REPLACES its plain
+    // summary with the underpriced-framed warning — exactly ONE warning per lane, so the
+    // accepted-risk docket shows exactly one tick per lane (no double-listing).
     const warnings = [
-      ...entries.filter((entry) => entry.burdenLevel !== "light").map((entry) => entry.summary),
+      ...entries
+        .filter((entry) => entry.burdenLevel !== "light")
+        .map((entry) =>
+          burdenBias.underpricedLanes.includes(entry.directorate)
+            ? `${entry.summary} ${underpricedLaneWarningSuffix}`
+            : entry.summary,
+        ),
       ...metrics.filter((metric) => metric.status === "risk").map((metric) => `${metric.label} is in the risk band.`),
     ];
+
+    // Doctrine 3: union of the function's directorates' routing labels with priority
+    // precedence (priority > underpriced > neutral). Warning logic is independent of
+    // this label — S3 (ops=priority, training=underpriced) still surfaces the training
+    // warning even though the readout label is "priority".
+    const routingAttention: StaffFunctionReadout["routingAttention"] = definition.directorates.some((directorate) =>
+      burdenBias.priorityLanes.includes(directorate),
+    )
+      ? "priority"
+      : definition.directorates.some((directorate) => burdenBias.underpricedLanes.includes(directorate))
+        ? "underpriced"
+        : "neutral";
 
     const primaryBurden = entries.find((entry) => entry.burdenLevel === "overloaded")
       ?? entries.find((entry) => entry.burdenLevel === "strained")
@@ -1463,11 +1648,15 @@ export function buildStaffFunctionReadouts(
       activeWarning: warnings[0] ?? null,
       standingRemit: definition.doctrineNote,
       metrics,
+      routingAttention,
     };
   });
 }
 
-function staffFunctionForDirectorate(definitions: StaffFunctionDefinition[], directorate: DirectorateId) {
+// Maps a directorate to the staff function that carries it (falls back to S3, matching
+// the engine's aggregation behavior for multi-directorate functions). Exported so the
+// sim can re-use the same mapping for Doctrine 3 override matching (resolveBurdenDissent).
+export function staffFunctionForDirectorate(definitions: StaffFunctionDefinition[], directorate: DirectorateId) {
   return (
     definitions.find((definition) => definition.directorates.includes(directorate)) ??
     definitions.find((definition) => definition.id === "S3") ??
@@ -1758,10 +1947,51 @@ export function buildChiefPositions(
   option: MemoOption,
   burdens: DirectorateBurden[] = [],
   staffFunctionDefinitions: StaffFunctionDefinition[] = defaultStaffFunctionDefinitions,
+  lens: DoctrineLens = neutralDoctrineLens,
 ): ChiefPositionEntry[] {
   return chiefs.map((chief) => {
     const trust = state.chiefTrust[chief.id] ?? 50;
     const staffReadoutEvidence = buildChiefStaffReadoutEvidence(chief, state, burdens, staffFunctionDefinitions);
+    // ── Doctrine 3: advice style + routing leans (issue #57) ──────────────────────────
+    // Advice style keys off the chief's STAFF FUNCTION (the composed directive for the
+    // function covering the chief's directorate); routing keys off the chief's OWN
+    // DIRECTORATE burden entry (underpricing is a directorate-level property — training,
+    // not S3-as-a-whole). Every lean is anchor-gated: tag biases require the option to
+    // carry the tag, positionLean fires only when the chief's own readout signals risk
+    // or strain, routing leans fire only on the chief's own lane's burden. No
+    // free-floating flavor.
+    const staffFunction = staffFunctionForDirectorate(staffFunctionDefinitions, chief.directorate);
+    const directive = lens.adviceStyle[staffFunction.id];
+    const biasMatches = directive ? option.tags.filter((tag) => directive.biasTags.includes(tag)).length : 0;
+    const cautionMatches = directive ? option.tags.filter((tag) => directive.cautionTags.includes(tag)).length : 0;
+    // Advice-style anchor: FUNCTION-level readout (S3 evidence includes ops+training —
+    // correct for advice style, which is a function voice).
+    const readoutSignal =
+      staffReadoutEvidence.metricStatus === "risk" || staffReadoutEvidence.burdenLevel !== "light";
+    const adviceLean = directive !== undefined && readoutSignal ? directive.positionLean : 0;
+    const adviceTagScore = Math.min(biasMatches, 2) - Math.min(cautionMatches, 2);
+
+    // Routing leans anchor on the chief's OWN DIRECTORATE burden (not the aggregated
+    // function readout): underpricing is a directorate-level property.
+    const ownLaneBurden = burdens.find((entry) => entry.directorate === chief.directorate);
+    const laneSignal = ownLaneBurden ? ownLaneBurden.burdenLevel !== "light" : false;
+    const feedsOwnLane = option.burden.some((contribution) => contribution.directorate === chief.directorate);
+    const priorityLaneLean =
+      lens.burdenBias.priorityLanes.includes(chief.directorate) && feedsOwnLane ? 1 : 0;
+    // Underpriced-lane dissent: a chief whose lane the faction's doctrine underprices
+    // objects when her lane is squeezed. The pile-on penalty (-3) fires only when the
+    // option actually loads her lane while it is strained/overloaded; the background
+    // term (-1) reflects general wariness while the lane stays squeezed. Lane-ALIGNED
+    // options (matching her preferredTags) still earn enough score to keep her support
+    // — dissent is reserved for burden without alignment, which is the underpricing
+    // failure mode.
+    const underpricedDissent =
+      lens.burdenBias.underpricedLanes.includes(chief.directorate) && laneSignal
+        ? feedsOwnLane
+          ? -3
+          : -1
+        : 0;
+
     const relationshipBias = trust >= 72 ? 2 : trust >= 60 ? 1 : trust <= 32 ? -2 : trust <= 44 ? -1 : 0;
     const preferredMatches = option.tags.filter((tag) => chief.preferredTags.includes(tag)).length;
     const concernMatches = option.tags.filter((tag) => chief.concernTags.includes(tag)).length;
@@ -1789,7 +2019,11 @@ export function buildChiefPositions(
       concernMatches * 2 -
       objectorPenalty -
       riskPenalty -
-      staffEvidencePenalty;
+      staffEvidencePenalty +
+      adviceTagScore +
+      adviceLean +
+      priorityLaneLean +
+      underpricedDissent;
 
     const position: ChiefPositionType =
       score >= 2
@@ -1842,6 +2076,12 @@ export function buildChiefPositions(
                 ? "The room will become strategically coherent but operationally detached."
                 : "Certification may improve faster than usable field performance.";
 
+    // Doctrine 3: the gene voice carried on the card. Evidence stays on
+    // staffReadoutEvidence (rendered adjacent), so the note is the joined summaries
+    // only — it cannot drift from the evidence anchor. Omitted when the chief's staff
+    // function has no composed directive.
+    const adviceStyleNote = directive ? directive.summaries.join(" · ") : undefined;
+
     return {
       chiefId: chief.id,
       chiefName: chief.name,
@@ -1854,6 +2094,7 @@ export function buildChiefPositions(
       confidenceNote,
       consequenceIfIgnored,
       agendaMemoryNote: agendaMemoryNote(memory) ?? undefined,
+      adviceStyleNote,
       staffReadoutEvidence,
     };
   });

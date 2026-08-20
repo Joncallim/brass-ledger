@@ -4,15 +4,23 @@ import { doctrineGenes, resolveDoctrineGenes, soloScenario } from "@brass-ledger
 import {
   applyDoctrineGenes,
   buildChiefPositions,
+  buildDirectorateBurden,
   buildStaffFunctionReadouts,
   campaignStateSchema,
+  composeBurdenLens,
+  composeDoctrineLens,
   continueChiefConversation,
   defaultDoctrineMechanicsState,
   doctrineGeneSchema,
   doctrineRiskKeys,
+  neutralDoctrineLens,
+  scenarioDefinitionSchema,
   startChiefConversation,
   updateCommitmentsFromChiefConversation,
+  type DirectorateBurden,
   type DoctrineGene,
+  type DoctrineLens,
+  type MemoOption,
   type TurnInput,
 } from "@brass-ledger/shared";
 import { previewTurn, resolveTurn, validateReplaySession } from "./index";
@@ -1805,4 +1813,385 @@ test("doctrine: signatureControl and exposureControl settle at bounded equilibri
   // here), just not to a saturated, uninformative ceiling.
   assert.ok(finalSignature > 60, `expected signatureControl to still rise meaningfully, got ${finalSignature}`);
   assert.ok(finalExposure > 60, `expected exposureControl to still rise meaningfully, got ${finalExposure}`);
+});
+
+// ── Doctrine 3 (issue #57): genes alter chief advice style and burden routing ─────────
+// Lens A = the shipped composite; lens B = sustainment-first only, built in-test from the
+// content registry (no second scenario file needed).
+const compositeLens = composeDoctrineLens(resolveDoctrineGenes(soloScenario.doctrineProfile));
+const sustainmentOnlyLens = composeDoctrineLens(
+  resolveDoctrineGenes({ ...soloScenario.doctrineProfile, geneIds: ["sustainment-first-operational-reach"] }),
+);
+
+// Training-load recipes (capacity 3, strainedAt 3, overloadedAt 5):
+//   strained   = measured-deterrence (training 1) + training-reset (training 3) = 4
+//   overloaded = quiet-recovery (training 2)     + training-reset (training 3) = 5
+const strainedTrainingInput: TurnInput = {
+  turn: 1,
+  selectedActionIds: [],
+  selections: [
+    { memoId: "posture", optionId: "measured-deterrence" },
+    { memoId: "intelligence-focus", optionId: "deception-hunt" },
+    { memoId: "sustainment-focus", optionId: "repair-first" },
+    { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+    { memoId: "force-development", optionId: "training-reset" },
+  ],
+};
+
+test("doctrine 3: composeDoctrineLens composes the three real genes deterministically", () => {
+  assert.deepEqual(compositeLens, composeDoctrineLens(resolveDoctrineGenes(soloScenario.doctrineProfile)));
+  // S3 directive: three summaries in geneIds order, positionLean summed (0 + 1 + 0 = 1),
+  // tags deduped preserving first-appearance order.
+  assert.deepEqual(compositeLens.adviceStyle.S3?.summaries, [
+    "Treats multinational coordination as the default and reads partner caveats as constraints, not noise.",
+    "Prefers temporary cross-functional cells over pure stovepipe routing for multi-lane problems.",
+    "Accepts sustainment-driven sequencing and argues for it publicly instead of hiding the constraint.",
+  ]);
+  assert.equal(compositeLens.adviceStyle.S3?.positionLean, 1);
+  assert.deepEqual(compositeLens.adviceStyle.S3?.biasTags, ["alliance", "program", "modernization", "repair", "recovery"]);
+  assert.deepEqual(compositeLens.adviceStyle.S3?.cautionTags, ["ad-hoc", "hollow", "escalatory"]);
+  // S2 has exactly one contributing gene and carries its positionLean -1.
+  assert.deepEqual(compositeLens.adviceStyle.S2?.summaries, [
+    "Trusts partner-derived collection only when the partner's own confidence is high enough to cite it.",
+  ]);
+  assert.equal(compositeLens.adviceStyle.S2?.positionLean, -1);
+  // S1 sums and clamps (0 + 0 = 0) and dedupes cautionTags.
+  assert.deepEqual(compositeLens.adviceStyle.S1?.cautionTags, ["modernization", "exercise", "tempo-spike"]);
+});
+
+test("doctrine 3: composeBurdenLens resolves cross-gene cancellations by priority-wins", () => {
+  assert.deepEqual(composeBurdenLens(resolveDoctrineGenes(soloScenario.doctrineProfile)), {
+    priorityLanes: ["plans", "operations", "sustainment"],
+    underpricedLanes: ["training"],
+  });
+});
+
+test("doctrine 3: two doctrine profiles produce visibly different chief advice on the same memo set", () => {
+  const memo = soloScenario.memoTemplates.find((entry) => entry.id === "posture");
+  assert.ok(memo);
+  const option = memo.options.find((entry) => entry.id === "measured-deterrence");
+  assert.ok(option);
+
+  // Low-signal option: positions match, but the gene voice differs — Navarro's composite
+  // S3 note is three summaries joined in gene order, the sustainment-only S3 note is one.
+  const positionsA = buildChiefPositions(soloScenario.chiefs, soloScenario.initialState, memo, option, [], soloScenario.staffFunctions, compositeLens);
+  const positionsB = buildChiefPositions(soloScenario.chiefs, soloScenario.initialState, memo, option, [], soloScenario.staffFunctions, sustainmentOnlyLens);
+  const navarroA = positionsA.find((entry) => entry.chiefId === "navarro");
+  const navarroB = positionsB.find((entry) => entry.chiefId === "navarro");
+  assert.ok(navarroA);
+  assert.ok(navarroB);
+  assert.equal(navarroA.position, navarroB.position);
+  assert.notEqual(navarroA.adviceStyleNote, navarroB.adviceStyleNote);
+  assert.match(navarroA.adviceStyleNote ?? "", /·/);
+
+  // Full resolveTurn on the same memo set yields visibly different chiefPositions (and,
+  // where the score crosses a threshold, a different nextState via memory/trust).
+  const resultA = resolveTurn({ ...soloScenario, doctrineLens: compositeLens }, soloScenario.initialState, balancedInput);
+  const resultB = resolveTurn({ ...soloScenario, doctrineLens: sustainmentOnlyLens }, soloScenario.initialState, balancedInput);
+  assert.notDeepEqual(resultA.chiefPositions, resultB.chiefPositions);
+  assert.ok(
+    resultA.chiefPositions.some((entry, index) => entry.position !== resultB.chiefPositions[index].position),
+    "the two lenses must flip at least one chief's position on the same memo set",
+  );
+  assert.notDeepEqual(resultA.nextState, resultB.nextState, "position flips flow into agenda memory and trust");
+
+  // Burden-routing divergence (acceptance criterion: advice AND routing differ): the
+  // composite underprices training, the sustainment-only lens underprices operations,
+  // so the routingAttention labels must differ on the same input.
+  const routingA = resultA.directorateBurden.map((entry) => `${entry.directorate}:${entry.routingAttention}`);
+  const routingB = resultB.directorateBurden.map((entry) => `${entry.directorate}:${entry.routingAttention}`);
+  assert.notDeepEqual(routingA, routingB, "the two lenses must route attention differently on the same memo set");
+});
+
+test("doctrine 3: positionLean fires only when the chief's own readout signals risk or strain", () => {
+  const leanLens: DoctrineLens = {
+    adviceStyle: { S3: { summaries: ["test lean"], biasTags: [], cautionTags: [], positionLean: 1 } },
+    burdenBias: { priorityLanes: [], underpricedLanes: [] },
+  };
+  const memo = soloScenario.memoTemplates.find((entry) => entry.id === "intelligence-focus");
+  assert.ok(memo);
+  const option = memo.options.find((entry) => entry.id === "warning-net");
+  assert.ok(option);
+
+  // No signal: initialState has every staff function healthy/watch and no burdens, so
+  // adviceLean must be exactly 0 — positions identical with and without the lens.
+  const noSignalWith = buildChiefPositions(soloScenario.chiefs, soloScenario.initialState, memo, option, [], soloScenario.staffFunctions, leanLens).map((entry) => entry.position);
+  const noSignalWithout = buildChiefPositions(soloScenario.chiefs, soloScenario.initialState, memo, option, [], soloScenario.staffFunctions, neutralDoctrineLens).map((entry) => entry.position);
+  assert.deepEqual(noSignalWith, noSignalWithout, "without a readout signal the lean must contribute exactly 0");
+
+  // Signal: S3 metrics in the risk band — the same directive contributes its lean (+1).
+  const riskState = campaignStateSchema.parse({
+    ...soloScenario.initialState,
+    staffMechanics: {
+      ...soloScenario.initialState.staffMechanics,
+      s3: { visiblePosture: 35, executablePosture: 30 },
+    },
+  });
+  const briggsWithout = buildChiefPositions(soloScenario.chiefs, riskState, memo, option, [], soloScenario.staffFunctions, neutralDoctrineLens).find((entry) => entry.chiefId === "briggs");
+  const briggsWith = buildChiefPositions(soloScenario.chiefs, riskState, memo, option, [], soloScenario.staffFunctions, leanLens).find((entry) => entry.chiefId === "briggs");
+  assert.ok(briggsWithout);
+  assert.ok(briggsWith);
+  assert.equal(briggsWithout.staffReadoutEvidence.metricStatus, "risk");
+  assert.equal(briggsWithout.position, "oppose");
+  assert.equal(briggsWith.position, "request_conditions", "a +1 lean at the -2/-1 boundary must flip oppose -> request_conditions");
+});
+
+test("doctrine 3: underpricedDissent flips the underpriced-lane chief's position when an option burdens her squeezed lane without serving it", () => {
+  // Direct mechanism test (review finding): the dissent term must change the
+  // underpriced-lane chief's POSITION, not just her note. A lane-ALIGNED option keeps
+  // her support (preferredTags outweigh the pile-on penalty); an option that loads her
+  // squeezed lane without matching her preferences must flip her to dissent.
+  const memo = soloScenario.memoTemplates.find((entry) => entry.id === "posture");
+  assert.ok(memo);
+  const trainingPileOn: MemoOption = {
+    ...memo.options[0],
+    id: "training-pile-on",
+    label: "Training pile-on",
+    // modernization matches the composite S3 biasTags but NOT Navarro's preferredTags,
+    // so the pile-on penalty is the deciding term.
+    tags: ["modernization"],
+    burden: [
+      { directorate: "training", points: 2 },
+      { directorate: "operations", points: 1 },
+    ],
+  };
+  const strainedTrainingBurdens: DirectorateBurden[] = [
+    { directorate: "people", burdenPoints: 1, capacity: 3, burdenLevel: "light" },
+    { directorate: "intelligence", burdenPoints: 2, capacity: 3, burdenLevel: "light" },
+    { directorate: "operations", burdenPoints: 3, capacity: 4, burdenLevel: "light" },
+    { directorate: "sustainment", burdenPoints: 2, capacity: 4, burdenLevel: "light" },
+    { directorate: "plans", burdenPoints: 2, capacity: 3, burdenLevel: "light" },
+    { directorate: "training", burdenPoints: 4, capacity: 3, burdenLevel: "strained" },
+  ];
+
+  const neutralPos = buildChiefPositions(
+    soloScenario.chiefs,
+    soloScenario.initialState,
+    memo,
+    trainingPileOn,
+    strainedTrainingBurdens,
+    soloScenario.staffFunctions,
+    neutralDoctrineLens,
+  ).find((entry) => entry.chiefId === "navarro");
+  const compositePos = buildChiefPositions(
+    soloScenario.chiefs,
+    soloScenario.initialState,
+    memo,
+    trainingPileOn,
+    strainedTrainingBurdens,
+    soloScenario.staffFunctions,
+    compositeLens,
+  ).find((entry) => entry.chiefId === "navarro");
+  assert.ok(neutralPos);
+  assert.ok(compositePos);
+  assert.ok(
+    ["support", "accept_risk"].includes(neutralPos.position),
+    `without the lens the pile-on option should be tolerable, got ${neutralPos.position}`,
+  );
+  assert.ok(
+    ["request_conditions", "oppose"].includes(compositePos.position),
+    `the underpriced-dissent pile-on must flip Navarro to dissent, got ${compositePos.position}`,
+  );
+  assert.notEqual(neutralPos.position, compositePos.position, "the dissent term must change her position");
+});
+
+test("doctrine 3: underpriced lane warning surfaces as an accepted-risk candidate in preview", () => {
+  const preview = previewTurn(soloScenario, soloScenario.initialState, strainedTrainingInput);
+  const result = preview.projectedResult;
+  const training = result.directorateBurden.find((entry) => entry.directorate === "training");
+  assert.ok(training);
+  assert.equal(training.burdenLevel, "strained");
+  assert.equal(training.routingAttention, "underpriced");
+
+  const s3 = result.staffFunctions.find((entry) => entry.id === "S3");
+  assert.ok(s3);
+  const underpricedWarnings = s3.warnings.filter((warning) => warning.includes("This lane is one the staff underprices"));
+  assert.equal(underpricedWarnings.length, 1, "exactly one underpriced warning per lane — no double-listing");
+  const candidate = preview.acceptedRiskCandidates.find((entry) => entry.staffFunctionId === "S3" && entry.warningText === underpricedWarnings[0]);
+  assert.ok(candidate, "the underpriced warning must become a preview accepted-risk candidate");
+
+  // Preview and resolution are the same code path: identical readouts.
+  const resolved = resolveTurn(soloScenario, soloScenario.initialState, strainedTrainingInput);
+  assert.deepEqual(resolved.staffFunctions, result.staffFunctions);
+  assert.deepEqual(resolved.directorateBurden, result.directorateBurden);
+
+  // Navarro's gene-flavored position is visible pre-commit in the Chiefs Paper preview.
+  // She SUPPORTS measured-deterrence here even though training is strained: the option
+  // carries her preferred tags (training/recovery) — lane-aligned work keeps her
+  // support. The dissent surface (an option burdening her squeezed lane WITHOUT
+  // serving it) is exercised by the dedicated underpricedDissent test above.
+  const postureDisagreement = preview.disagreements.find((entry) => entry.memoId === "posture");
+  assert.ok(postureDisagreement);
+  assert.ok(postureDisagreement.supportedBy.includes("navarro"));
+  const navarroPosition = result.chiefPositions.find((entry) => entry.chiefId === "navarro" && entry.memoId === "posture");
+  assert.ok(navarroPosition);
+  assert.ok(navarroPosition.adviceStyleNote && navarroPosition.adviceStyleNote.includes("·"), "Navarro's composite S3 gene voice must show pre-commit");
+});
+
+test("doctrine 3: committing with the underpriced warning accepted records accepted risk in an underpriced lane", () => {
+  const preview = previewTurn(soloScenario, soloScenario.initialState, strainedTrainingInput);
+  const acceptedInput: TurnInput = { ...strainedTrainingInput, acceptedRiskOverrides: preview.acceptedRiskCandidates };
+  const result = resolveTurn(soloScenario, soloScenario.initialState, acceptedInput);
+  const note = result.afterAction.find((entry) => entry.heading === "Doctrine: accepted risk in an underpriced lane");
+  assert.ok(note, "expected an accepted-risk-in-underpriced-lane note");
+  assert.match(note.detail, /Training/);
+  assert.ok(!result.afterAction.some((entry) => entry.heading === "Doctrine: underpriced-lane dissent"));
+  assert.ok(result.acceptedRisks.some((entry) => entry.staffFunctionId === "S3" && entry.accepted));
+});
+
+test("doctrine 3: resolving without accepting the underpriced warning records staff dissent", () => {
+  const result = resolveTurn(soloScenario, soloScenario.initialState, strainedTrainingInput);
+  const dissent = result.afterAction.find((entry) => entry.heading === "Doctrine: underpriced-lane dissent");
+  const unacknowledged = result.afterAction.find((entry) => entry.heading === "Doctrine: unacknowledged risk");
+  assert.ok(dissent, "expected an underpriced-lane dissent note");
+  assert.ok(unacknowledged, "expected the aggregate unacknowledged-risk note");
+  assert.match(dissent.detail, /Training/);
+  // Complementary, not duplicates: the dissent is lane-specific, the aggregate is not.
+  assert.ok(!dissent.detail.includes(unacknowledged.detail), "lane-specific dissent must not duplicate the aggregate note");
+  assert.ok(!unacknowledged.detail.includes("underprice"), "the aggregate note must stay lane-agnostic");
+});
+
+test("doctrine 3: accepting an UNRELATED warning in the same staff function does not count as accepting the underpriced warning", () => {
+  // Operations and Training share S3 (Codex P2, PR #77): an override whose
+  // warningText is NOT the underpriced warning must not flip the note to accepted
+  // risk — acceptance is keyed to the exact generated warning, not the function ID.
+  const result = resolveTurn(soloScenario, soloScenario.initialState, {
+    ...strainedTrainingInput,
+    acceptedRiskOverrides: [{ staffFunctionId: "S3", warningText: "Unrelated S3 risk-band warning." }],
+  });
+  const dissent = result.afterAction.find((entry) => entry.heading === "Doctrine: underpriced-lane dissent");
+  const accepted = result.afterAction.find((entry) => entry.heading === "Doctrine: accepted risk in an underpriced lane");
+  assert.ok(dissent, "an unrelated override must still record dissent");
+  assert.ok(!accepted, "an unrelated override must not record accepted risk in the underpriced lane");
+});
+
+test("doctrine 3: a neglected priority lane is called out in the after action", () => {
+  const neglectedInput: TurnInput = {
+    turn: 1,
+    selectedActionIds: [],
+    selections: [
+      { memoId: "posture", optionId: "quiet-recovery" },
+      { memoId: "intelligence-focus", optionId: "warning-net" },
+      { memoId: "sustainment-focus", optionId: "repair-first" },
+      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+      { memoId: "force-development", optionId: "training-reset" },
+    ],
+    // Quiet-reassurance burdens plans 2; the negotiation relieves it so plans sits light.
+    staffNegotiations: [{ directorate: "plans", reliefPoints: 2, cost: "political_cover" }],
+  };
+  const result = resolveTurn(soloScenario, soloScenario.initialState, neglectedInput);
+  const plans = result.directorateBurden.find((entry) => entry.directorate === "plans");
+  const training = result.directorateBurden.find((entry) => entry.directorate === "training");
+  assert.ok(plans);
+  assert.ok(training);
+  assert.equal(plans.burdenLevel, "light");
+  assert.equal(training.burdenLevel, "overloaded");
+  const note = result.afterAction.find((entry) => entry.heading === "Doctrine: neglected priority lane");
+  assert.ok(note, "expected a neglected-priority-lane note");
+  assert.match(note.detail, /Plans/);
+  assert.match(note.detail, /Training/);
+
+  // Does NOT fire when the overloaded lane is itself a priority lane and no non-priority
+  // lane overloads (a priority-vs-priority story is different and would over-fire).
+  const priorityOverloadedInput: TurnInput = {
+    ...neglectedInput,
+    selections: [
+      { memoId: "posture", optionId: "surge-exercises" },
+      { memoId: "intelligence-focus", optionId: "warning-net" },
+      { memoId: "sustainment-focus", optionId: "repair-first" },
+      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+      { memoId: "force-development", optionId: "fires-prototype" },
+    ],
+  };
+  const second = resolveTurn(soloScenario, soloScenario.initialState, priorityOverloadedInput);
+  const operations = second.directorateBurden.find((entry) => entry.directorate === "operations");
+  assert.ok(operations);
+  assert.equal(operations.burdenLevel, "overloaded");
+  assert.ok(!second.afterAction.some((entry) => entry.heading === "Doctrine: neglected priority lane"));
+});
+
+test("doctrine 3: keeps replay deterministic and replay-valid", () => {
+  const left = resolveTurn(soloScenario, soloScenario.initialState, strainedTrainingInput);
+  const right = resolveTurn(soloScenario, soloScenario.initialState, strainedTrainingInput);
+  assert.equal(left.replayHash, right.replayHash);
+  assert.deepEqual(left.nextState, right.nextState);
+  // The full TurnResult includes non-hashed advice/note text — determinism must hold by
+  // construction (pure functions over (state, input, lens)), locked here.
+  assert.deepEqual(left, right, "the full TurnResult (incl. non-hashed advice/note text) must be deterministic");
+
+  // Multi-turn session replays cleanly against the scenario-carried lens.
+  const previewOne = previewTurn(soloScenario, soloScenario.initialState, strainedTrainingInput);
+  const turnOneInput: TurnInput = { ...strainedTrainingInput, acceptedRiskOverrides: previewOne.acceptedRiskCandidates };
+  const turnOne = resolveTurn(soloScenario, soloScenario.initialState, turnOneInput);
+  const turnTwoBase: TurnInput = { ...balancedInput, turn: 2 };
+  const previewTwo = previewTurn(soloScenario, turnOne.nextState, turnTwoBase);
+  const turnTwoInput: TurnInput = { ...turnTwoBase, acceptedRiskOverrides: previewTwo.acceptedRiskCandidates };
+  const turnTwo = resolveTurn(soloScenario, turnOne.nextState, turnTwoInput);
+  const replay = validateReplaySession(soloScenario, {
+    initialState: soloScenario.initialState,
+    turnInputs: [turnOneInput, turnTwoInput],
+    history: [turnOne, turnTwo],
+    state: turnTwo.nextState,
+  });
+  assert.equal(replay.ok, true);
+});
+
+test("doctrine 3: the neutral lens reproduces pre-doctrine-3 behavior", () => {
+  const preview = previewTurn(soloScenario, soloScenario.initialState, strainedTrainingInput);
+  const acceptedInput: TurnInput = { ...strainedTrainingInput, acceptedRiskOverrides: preview.acceptedRiskCandidates };
+  const withLens = resolveTurn(soloScenario, soloScenario.initialState, acceptedInput);
+  const withoutLens = resolveTurn({ ...soloScenario, doctrineLens: neutralDoctrineLens }, soloScenario.initialState, acceptedInput);
+
+  // Routing is attention, not math: burden points/capacity/level/penalties and doctrine
+  // mechanics are identical regardless of the lens.
+  const burdenKeys = ["directorate", "burdenPoints", "capacity", "burdenLevel", "confidencePenalty", "executionPenalty"] as const;
+  assert.deepEqual(
+    withLens.directorateBurden.map((entry) => burdenKeys.map((key) => [key, entry[key]])),
+    withoutLens.directorateBurden.map((entry) => burdenKeys.map((key) => [key, entry[key]])),
+  );
+  assert.deepEqual(withLens.nextState.doctrineMechanics, withoutLens.nextState.doctrineMechanics);
+  // The neutral run carries no routing labels at all.
+  assert.ok(withoutLens.directorateBurden.every((entry) => entry.routingAttention === "neutral"));
+
+  // Any position difference is exactly a D3-score flip, which then legitimately flows
+  // into agenda memory and trust — and nowhere else.
+  const flips = withLens.chiefPositions.filter((entry, index) => entry.position !== withoutLens.chiefPositions[index].position);
+  assert.ok(flips.length > 0, "the composite lens must flip at least one borderline position");
+  const changedStateKeys = Object.keys(withLens.nextState).filter(
+    (key) => JSON.stringify((withLens.nextState as Record<string, unknown>)[key]) !== JSON.stringify((withoutLens.nextState as Record<string, unknown>)[key]),
+  );
+  assert.deepEqual(changedStateKeys.sort(), ["chiefAgendaMemory", "chiefTrust"]);
+});
+
+test("doctrine 3: buildChiefPositions without a lens is identical to the neutral lens", () => {
+  // Architecture test-plan guardrail: the default lens parameter IS neutralDoctrineLens,
+  // so a lens-free call must deepEqual the explicit neutral-lens call (score/position/
+  // note identity for every chief on a representative memo).
+  const memo = soloScenario.memoTemplates.find((entry) => entry.id === "posture");
+  assert.ok(memo);
+  const option = memo.options.find((entry) => entry.id === "measured-deterrence");
+  assert.ok(option);
+  const noLens = buildChiefPositions(
+    soloScenario.chiefs,
+    soloScenario.initialState,
+    memo,
+    option,
+    [],
+    soloScenario.staffFunctions,
+  );
+  const neutral = buildChiefPositions(
+    soloScenario.chiefs,
+    soloScenario.initialState,
+    memo,
+    option,
+    [],
+    soloScenario.staffFunctions,
+    neutralDoctrineLens,
+  );
+  assert.deepEqual(noLens, neutral, "the omitted-lens default must reproduce the neutral lens exactly");
+});
+
+test("doctrine 3: scenario without doctrineLens defaults to the neutral lens", () => {
+  const parsed = scenarioDefinitionSchema.parse({ ...soloScenario, doctrineLens: undefined });
+  assert.deepEqual(parsed.doctrineLens, neutralDoctrineLens);
 });

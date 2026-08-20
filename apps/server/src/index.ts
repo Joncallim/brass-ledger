@@ -317,12 +317,14 @@ function summarizeSession(session: GameSession) {
 
 function sessionPayload(session: GameSession) {
   const memos = deriveDecisionMemos(soloScenario, session.state);
-  const directorateBurden = buildDirectorateBurden(memos, [], soloScenario.staffCapacities);
+  // Doctrine 3 (issue #57): the standing-session readouts must use the same lens as
+  // resolveTurn, or the session screen would silently diverge from turn results.
+  const directorateBurden = buildDirectorateBurden(memos, [], soloScenario.staffCapacities, [], soloScenario.doctrineLens.burdenBias);
   return {
     session,
     summary: summarizeSession(session),
     memos,
-    staffFunctions: buildStaffFunctionReadouts(soloScenario.staffFunctions, directorateBurden, session.state),
+    staffFunctions: buildStaffFunctionReadouts(soloScenario.staffFunctions, directorateBurden, session.state, soloScenario.doctrineLens.burdenBias),
   };
 }
 
@@ -529,6 +531,8 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
         memos,
         [{ memoId: memo.id, optionId: option.id }],
         soloScenario.staffCapacities,
+        [],
+        soloScenario.doctrineLens.burdenBias,
       );
       const position = buildChiefPositions(
         soloScenario.chiefs,
@@ -537,6 +541,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
         option,
         selectedBurden,
         soloScenario.staffFunctions,
+        soloScenario.doctrineLens,
       ).find((entry) => entry.chiefId === chiefId);
       if (!position) {
         reply.code(400);
