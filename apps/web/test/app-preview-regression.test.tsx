@@ -55,6 +55,7 @@ function deferredPreviewCall() {
 
 function appFetchMock() {
   const previewCalls: ReturnType<typeof deferredPreviewCall>[] = [];
+  const resolveTurnCalls: string[] = [];
   const fetchMock = (url: string, init?: RequestInit) => {
     if (url === "/api/scenario") {
       return Promise.resolve({ ok: true, json: async () => ({ scenario: soloScenario }) });
@@ -70,20 +71,39 @@ function appFetchMock() {
       previewCalls.push(call);
       return call.fetchPromise;
     }
+    if (url.endsWith("/resolve-turn") && init?.method === "POST") {
+      // Recorded so tests can assert the handler NEVER fired against a
+      // stale/pending preview; left pending so a stray call cannot silently
+      // advance the app into after-action and mask the assertion.
+      resolveTurnCalls.push(url);
+      return new Promise<never>(() => {});
+    }
     throw new Error(`unexpected fetch: ${init?.method ?? "GET"} ${url}`);
   };
-  return { fetchMock, previewCalls };
+  return { fetchMock, previewCalls, resolveTurnCalls };
 }
 
 /** A preview whose projected staff readout carries the marker in the rendered
  * forecast panel, so a test can see WHICH preview is published in the DOM. */
-function previewPayload(marker: string): PreviewPayload {
+function previewPayload(
+  marker: string,
+  chiefCoalitions: Array<{
+    memoId: string;
+    optionId: string;
+    posture: string;
+    optionLabel: string;
+    supportChiefNames: string[];
+    conditionalChiefNames: string[];
+    objectionChiefNames: string[];
+    staffConstraintDirectorates: string[];
+  }> = [],
+): PreviewPayload {
   return {
     marker,
     decisionPreviews: [],
     acceptedRiskCandidates: [],
     predictedEvents: [],
-    chiefCoalitions: [],
+    chiefCoalitions: chiefCoalitions as unknown as PreviewPayload["chiefCoalitions"],
     projectedResult: {
       staffModules: [],
       staffFunctions: [
@@ -212,6 +232,118 @@ test("App blocks proceeding on a stale preview after selections change and clear
   assert.equal(proceedButton().disabled, false, "canProceed once preview B is published");
   assert.ok(document.body.textContent!.includes("MARKER-B"), "preview B is published");
   assert.ok(!document.body.textContent!.includes("MARKER-A"), "preview A is fully gone");
+
+  act(() => {
+    root.unmount();
+  });
+});
+
+test("PreCommitScreen cannot commit while a negotiation change's replacement preview is pending (closing pass 3 P1 regression)", async () => {
+  const { fetchMock, previewCalls, resolveTurnCalls } = appFetchMock();
+  globals.fetch = fetchMock;
+  const { root } = mountApp();
+
+  // Bootstrap to the memos screen.
+  await actTick(0);
+  assert.ok(buttonWithText("Continue last campaign"), "hub lists the fixture session");
+  act(() => {
+    buttonWithText("Continue last campaign").click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Open decision memos").click();
+  });
+  await actTick(0);
+  assert.ok(proceedButton(), "memos screen rendered");
+
+  // Select the optional memo; its preview must carry a staff-constraint
+  // coalition so the commit screen offers a negotiation toggle.
+  const optionalCheckbox = document.querySelector('input[type="checkbox"]') as HTMLInputElement;
+  assert.ok(optionalCheckbox, "the optional memo checkbox is rendered");
+  act(() => {
+    optionalCheckbox.click();
+  });
+  await actTick(450);
+  assert.equal(previewCalls.length, 1, "the optional selection requested a preview");
+  previewCalls[0]!.resolveFetch();
+  previewCalls[0]!.resolveBody(
+    previewPayload("MARKER-NEG", [
+      {
+        memoId: "posture",
+        optionId: "tempo-hold",
+        posture: "supporting",
+        optionLabel: "Tempo hold",
+        supportChiefNames: [],
+        conditionalChiefNames: [],
+        objectionChiefNames: [],
+        staffConstraintDirectorates: ["operations"],
+      },
+    ]),
+  );
+  await actTick(0);
+  assert.equal(proceedButton().disabled, false, "canProceed once the optional preview is published");
+
+  // Walk to the commit screen.
+  act(() => {
+    proceedButton().click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Continue to final review").click();
+  });
+  await actTick(0);
+  assert.ok(document.body.textContent!.includes("Final review"), "commit screen rendered");
+  assert.ok(
+    document.body.textContent!.includes("Take work off a stretched directorate"),
+    "the negotiation panel is rendered",
+  );
+  const commitButton = buttonWithText("Commit the month");
+  assert.equal(commitButton.disabled, false, "commit is enabled for the published, key-matched preview");
+
+  // Toggle a negotiation: requestPreview synchronously clears the preview, so
+  // commit must lock until the replacement preview resolves. (With the old
+  // code, candidates = [] from the null preview read as allAccepted and the
+  // button rendered WITHOUT a disabled attribute.)
+  const negotiationCheckbox = document.querySelector('input[type="checkbox"]') as HTMLInputElement;
+  assert.ok(negotiationCheckbox, "the negotiation toggle is rendered");
+  act(() => {
+    negotiationCheckbox.click();
+  });
+  assert.equal(commitButton.disabled, true, "commit locks immediately while the replacement preview is pending");
+
+  // React does not deliver clicks to a button rendered disabled (even via
+  // dispatchEvent or clearing the DOM property), so the handler-level guard is
+  // verified separately: the predicate truth-table unit tests cover its
+  // condition, and the positive control below proves a valid commit DOES fire
+  // resolve-turn — the negative assertions above are not vacuous.
+  assert.equal(resolveTurnCalls.length, 0, "no resolve-turn while the replacement preview is pending");
+
+  // Positive control: once the replacement preview resolves, commit re-enables
+  // and a real click DOES fire resolve-turn exactly once — proving the negative
+  // assertion above is not vacuous.
+  await actTick(450);
+  assert.equal(previewCalls.length, 2, "the negotiation change requested a replacement preview");
+  previewCalls[1]!.resolveFetch();
+  previewCalls[1]!.resolveBody(
+    previewPayload("MARKER-NEG2", [
+      {
+        memoId: "posture",
+        optionId: "tempo-hold",
+        posture: "supporting",
+        optionLabel: "Tempo hold",
+        supportChiefNames: [],
+        conditionalChiefNames: [],
+        objectionChiefNames: [],
+        staffConstraintDirectorates: ["operations"],
+      },
+    ]),
+  );
+  await actTick(0);
+  assert.equal(buttonWithText("Commit the month").disabled, false, "commit re-enables once the replacement preview publishes");
+  act(() => {
+    buttonWithText("Commit the month").click();
+  });
+  assert.equal(resolveTurnCalls.length, 1, "a valid commit fires resolve-turn exactly once");
 
   act(() => {
     root.unmount();

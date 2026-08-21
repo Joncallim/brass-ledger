@@ -9,6 +9,7 @@ import {
   openChiefConversation, respondToChief,
 } from "./lib/api";
 import { usePreview, previewFingerprint } from "./hooks/usePreview";
+import { isPreviewValid } from "./lib/previewValidity";
 import { scenarioLabels } from "./lib/labels";
 import { AppShell } from "./components/AppShell";
 import { SessionHub } from "./screens/SessionHub";
@@ -149,6 +150,15 @@ export function App() {
 
   async function handleCommit() {
     if (!sessionId || !cycle.session) return;
+    // Defense in depth (closing pass 3 P1): even if the commit button ever
+    // slips past its disabled state, never fire resolve-turn while the preview
+    // for the CURRENT selections/negotiations has not resolved — a negotiation
+    // change clears the preview synchronously, so a stale projection (or none)
+    // must not reach the resolver.
+    const currentPreviewKey = previewFingerprint(cycle.selections, cycle.staffNegotiations);
+    if (!isPreviewValid(preview, previewKey, currentPreviewKey, previewLoading) || cycle.selections.length === 0) {
+      return;
+    }
     const candidates = preview?.acceptedRiskCandidates ?? [];
     const overrides: AcceptedRiskOverride[] = candidates.filter((r) => cycle.acceptedRiskChoices[riskKey(r)] === true);
     setBusy(true);
@@ -373,7 +383,9 @@ export function App() {
           preview={preview}
           previewLoading={previewLoading}
           previewError={previewError}
-          canProceed={Boolean(preview && previewKey === currentPreviewKey && cycle.selections.length > 0)}
+          canProceed={
+            isPreviewValid(preview, previewKey, currentPreviewKey, previewLoading) && cycle.selections.length > 0
+          }
           onSelect={handleSelectMemo}
           onProceed={() => navigateStep("chiefs")}
           onBack={() => navigateStep("briefing")}
@@ -401,6 +413,9 @@ export function App() {
       {route.screen === "session" && cycle.session && route.step === "commit" && (
         <PreCommitScreen
           preview={preview}
+          previewKey={previewKey}
+          currentPreviewKey={currentPreviewKey}
+          previewLoading={previewLoading}
           selections={cycle.selections}
           acceptedRiskChoices={cycle.acceptedRiskChoices}
           staffNegotiations={cycle.staffNegotiations}

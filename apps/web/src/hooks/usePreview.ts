@@ -6,16 +6,27 @@ import { previewTurn } from "../lib/api";
 /** Deterministic key for the exact selection/negotiation set a preview was
  * requested with. Proceeding must only trust a preview whose key matches the
  * CURRENT selections — otherwise an already-published preview for earlier choices
- * can reach the chiefs/precommit flow during the next debounce. */
+ * can reach the chiefs/precommit flow during the next debounce.
+ *
+ * The key is a JSON serialization of SORTED structured tuples that include
+ * EVERY field of every selection and negotiation (including the optional
+ * negotiation note). Delimiter concatenation is not collision-free:
+ * `{memoId:"a", optionId:"b:c"}` and `{memoId:"a:b", optionId:"c"}` both encode
+ * to `a:b:c` under `:`/`|` joining, while `JSON.stringify` of tuples is
+ * injective over schema-valid values (closing pass 3 P2). Sorting by the
+ * serialized tuple keeps the key order-independent. */
 export function previewFingerprint(selections: MemoSelection[], staffNegotiations: StaffNegotiation[]): string {
-  const selectionKey = [...selections]
-    .sort((a, b) => (a.memoId < b.memoId ? -1 : a.memoId > b.memoId ? 1 : a.optionId < b.optionId ? -1 : a.optionId > b.optionId ? 1 : 0))
-    .map((selection) => `${selection.memoId}:${selection.optionId}`)
-    .join("|");
-  const negotiationKey = [...staffNegotiations]
-    .sort((a, b) => (a.directorate < b.directorate ? -1 : a.directorate > b.directorate ? 1 : 0))
-    .map((negotiation) => `${negotiation.directorate}:${negotiation.reliefPoints}:${negotiation.cost}`)
-    .join("|");
+  const tupleKey = (tuple: (string | number | null)[]) => JSON.stringify(tuple);
+  const selectionKey = JSON.stringify(
+    [...selections]
+      .map((s) => [s.memoId, s.optionId])
+      .sort((a, b) => (tupleKey(a) < tupleKey(b) ? -1 : tupleKey(a) > tupleKey(b) ? 1 : 0)),
+  );
+  const negotiationKey = JSON.stringify(
+    [...staffNegotiations]
+      .map((n) => [n.directorate, n.reliefPoints, n.cost, n.note ?? null])
+      .sort((a, b) => (tupleKey(a) < tupleKey(b) ? -1 : tupleKey(a) > tupleKey(b) ? 1 : 0)),
+  );
   return `${selectionKey}\u00a7${negotiationKey}`;
 }
 
