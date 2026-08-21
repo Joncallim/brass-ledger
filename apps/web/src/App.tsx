@@ -44,7 +44,6 @@ export function App() {
   const [activeConversation, setActiveConversation] = useState<ChiefConversationRecord | null>(null);
   const [conversationBusy, setConversationBusy] = useState(false);
   const [conversationError, setConversationError] = useState<string | null>(null);
-  const [negotiationCandidates, setNegotiationCandidates] = useState<StaffNegotiation["directorate"][]>([]);
   const [validationResults, setValidationResults] = useState<Record<string, { ok: boolean; checkedTurns: number; failedAtTurn: number | null }>>({});
 
   const sessionId = route.screen === "session" ? route.sessionId : null;
@@ -74,6 +73,16 @@ export function App() {
   // additionally clear and re-request synchronously (closing pass 4 P1).
   const validPreview = isPreviewValid(preview, previewKey, currentPreviewKey, previewLoading) ? preview : null;
 
+  // Relief-negotiation offers are DERIVED from the single gated projection, not
+  // persisted separately (closing pass 5 P1): the moment validPreview becomes
+  // null (a selection/negotiation change, a chief conversation advancing the
+  // session revision, or a still-pending replacement request), the candidates
+  // disappear SYNCHRONOUSLY — a stale offer can never stay checkable (or reach
+  // the commit input) while the projection that produced it is invalid.
+  const negotiationCandidates: StaffNegotiation["directorate"][] = validPreview
+    ? Array.from(new Set(validPreview.chiefCoalitions.flatMap((c) => c.staffConstraintDirectorates)))
+    : [];
+
   const staffReadouts: StaffFunctionReadout[] =
     (validPreview?.projectedResult.staffFunctions.length ?? 0) > 0
       ? validPreview!.projectedResult.staffFunctions
@@ -94,7 +103,6 @@ export function App() {
       setCycle(newCycle);
       clearPreview();
       setActiveConversation(null);
-      setNegotiationCandidates([]);
       const step: TurnStep = latestResult && data.session.state.campaignStatus === "active" ? "briefing" : latestResult ? "after-action" : "briefing";
       setRoute({ screen: "session", sessionId: id, step: latestResult ? "after-action" : "briefing" });
     } catch (err) {
@@ -113,7 +121,6 @@ export function App() {
       setCycle(newCycle);
       clearPreview();
       setActiveConversation(null);
-      setNegotiationCandidates([]);
       await refreshSessions();
       setRoute({ screen: "session", sessionId: data.session.id, step: "briefing" });
     } catch (err) {
@@ -193,7 +200,6 @@ export function App() {
       clearPreview();
       setPreview(null);
       setActiveConversation(null);
-      setNegotiationCandidates([]);
       await refreshSessions();
       setRoute({ screen: "session", sessionId, step: "after-action" });
     } catch (err) {
@@ -211,15 +217,26 @@ export function App() {
       const data = await openChiefConversation(sessionId, chiefId, memoId, optionId, cycle.session?.revision);
       setActiveConversation(data.conversation);
       setCycle((prev) => {
-        const nextCycle = { ...prev, session: data.session, memos: data.memos };
+        const revisionAdvanced = data.session.revision !== prev.session?.revision;
+        const nextCycle = {
+          ...prev,
+          session: data.session,
+          memos: data.memos,
+          // The relief offers were projected against the PREVIOUS session
+          // state, so a revision advance invalidates the checked negotiations
+          // too (closing pass 5 P1): clear them SYNCHRONOUSLY and re-request
+          // the preview WITHOUT them, so the old offer can never ride into the
+          // commit input (or stay checkable) under a new projection. No-op
+          // opens (the same conversation already on record) keep the revision
+          // and the preview untouched.
+          ...(revisionAdvanced ? { staffNegotiations: [], acceptedRiskChoices: {} } : {}),
+        };
         // The server advanced the session revision (an authoritative mutation
         // — the conversation is on the record): the published preview was
         // projected against the OLD session state, so it must be invalidated
         // synchronously AND re-requested against the new revision, mirroring
-        // a selection/negotiation change (closing pass 4 P1). No-op opens
-        // (the same conversation already on record) keep the revision and the
-        // preview untouched.
-        if (nextCycle.session.revision !== prev.session?.revision) {
+        // a selection/negotiation change (closing pass 4 P1).
+        if (revisionAdvanced) {
           requestPreview(nextCycle, nextCycle.selections, nextCycle.staffNegotiations);
         }
         return nextCycle;
@@ -239,12 +256,22 @@ export function App() {
       const data = await respondToChief(sessionId, chiefId, responseId, cycle.session?.revision);
       setActiveConversation(data.conversation);
       setCycle((prev) => {
-        const nextCycle = { ...prev, session: data.session, memos: data.memos };
-        // Same as handleOpenConversation: a reply mutates the session (trust,
-        // commitments) and advances the revision, so the preview for the old
-        // session must be invalidated synchronously and re-requested against
-        // the new revision (closing pass 4 P1).
-        if (nextCycle.session.revision !== prev.session?.revision) {
+        const revisionAdvanced = data.session.revision !== prev.session?.revision;
+        const nextCycle = {
+          ...prev,
+          session: data.session,
+          memos: data.memos,
+          // Same as handleOpenConversation (closing pass 5 P1): a reply mutates
+          // the session (trust, commitments) and advances the revision, so the
+          // old projection's relief offers — and any checked negotiations —
+          // must not survive into the commit input. Clear synchronously and
+          // re-request WITHOUT them.
+          ...(revisionAdvanced ? { staffNegotiations: [], acceptedRiskChoices: {} } : {}),
+        };
+        // Same as handleOpenConversation: the preview for the old session must
+        // be invalidated synchronously and re-requested against the new
+        // revision (closing pass 4 P1).
+        if (revisionAdvanced) {
           requestPreview(nextCycle, nextCycle.selections, nextCycle.staffNegotiations);
         }
         return nextCycle;
@@ -334,7 +361,6 @@ export function App() {
     }));
     clearPreview();
     setActiveConversation(null);
-    setNegotiationCandidates([]);
     if (route.screen === "session") {
       setRoute({ ...route, step: "briefing" });
     }
@@ -349,9 +375,6 @@ export function App() {
           (validPreview.acceptedRiskCandidates ?? []).map((r) => [riskKey(r), false]),
         ),
       }));
-      setNegotiationCandidates(
-        Array.from(new Set(validPreview.chiefCoalitions.flatMap((c) => c.staffConstraintDirectorates))),
-      );
     }
   }, [validPreview]);
 

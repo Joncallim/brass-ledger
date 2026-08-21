@@ -599,3 +599,156 @@ test("chief conversations advance the session revision, lock the stale preview, 
     root.unmount();
   });
 });
+
+// ── Closing pass 5 P1: relief-negotiation offers must die with the preview
+// that produced them. ──
+const operationsReliefCoalition = {
+  memoId: "posture",
+  optionId: "tempo-hold",
+  posture: "supporting",
+  optionLabel: "Tempo hold",
+  supportChiefNames: [],
+  conditionalChiefNames: [],
+  objectionChiefNames: [],
+  staffConstraintDirectorates: ["operations"],
+};
+
+test("a revision advance clears the stale relief negotiation so neither the panel nor the resolve-turn input keeps it (closing pass 5 P1 regression)", async () => {
+  let revision = session.revision;
+  let activeConversation: ReturnType<typeof conversationRecord> | null = null;
+  const { fetchMock, previewCalls, resolveTurnCalls } = appFetchMock({
+    open: async (chiefId, memoId, optionId, expectedRevision) => {
+      if (activeConversation) {
+        return { session: { ...session, revision }, memos, summary, conversation: activeConversation };
+      }
+      revision += 1;
+      activeConversation = conversationRecord("active", revision);
+      return { session: { ...session, revision }, memos, summary, conversation: activeConversation };
+    },
+    respond: async () => {
+      throw new Error("no respond expected in this test");
+    },
+  });
+  globals.fetch = fetchMock;
+  const { root } = mountApp();
+
+  // Bootstrap to the memos screen and publish preview A (revision 0) whose
+  // coalition OFFERS an Operations relief negotiation.
+  await actTick(0);
+  assert.ok(buttonWithText("Continue last campaign"), "hub lists the fixture session");
+  act(() => {
+    buttonWithText("Continue last campaign").click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Open decision memos").click();
+  });
+  await actTick(0);
+  const postureRadio = (optionId: string) =>
+    document.querySelector(`input[name="memo-posture"][value="${optionId}"]`) as HTMLInputElement;
+  act(() => {
+    postureRadio("tempo-hold").click();
+  });
+  await actTick(450);
+  assert.equal(previewCalls.length, 1, "the selection requested a preview");
+  previewCalls[0]!.resolveFetch();
+  previewCalls[0]!.resolveBody(previewPayload("MARKER-REL-A", [operationsReliefCoalition], [briggsPosition]));
+  await actTick(0);
+  assert.equal(proceedButton().disabled, false, "canProceed once preview A publishes");
+
+  // Walk to the commit screen and check the Operations relief toggle; the
+  // replacement preview (computed WITH the negotiation) still offers it, so
+  // the checked negotiation stays active and commit re-enables.
+  act(() => {
+    proceedButton().click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Continue to final review").click();
+  });
+  await actTick(0);
+  assert.ok(
+    document.body.textContent!.includes("Take work off a stretched directorate"),
+    "the negotiation panel is rendered for the offered relief",
+  );
+  const negotiationCheckbox = document.querySelector('input[type="checkbox"]') as HTMLInputElement;
+  assert.ok(negotiationCheckbox, "the Operations relief toggle is rendered");
+  act(() => {
+    negotiationCheckbox.click();
+  });
+  await actTick(450);
+  assert.equal(previewCalls.length, 2, "the negotiation change requested a replacement preview");
+  previewCalls[1]!.resolveFetch();
+  previewCalls[1]!.resolveBody(previewPayload("MARKER-REL-B", [operationsReliefCoalition], [briggsPosition]));
+  await actTick(0);
+  assert.equal(buttonWithText("Commit the month").disabled, false, "commit re-enables on the negotiation-inclusive preview");
+  assert.ok(document.body.textContent!.includes("1 relief request"), "the checked negotiation is active");
+
+  // Back to the chiefs screen and open a conversation: the server advances the
+  // revision (0 → 1), so BOTH the published preview AND the checked relief
+  // negotiation must die synchronously — the panel disappears, the
+  // relief-request footer disappears, and commit stays locked until the
+  // replacement preview (requested WITHOUT the stale negotiation) publishes.
+  act(() => {
+    buttonWithText("Back to chiefs").click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Talk to Briggs").click();
+  });
+  await actTick(0);
+  assert.ok(!document.body.textContent!.includes("MARKER-REL-B"), "the stale revision-0 preview is cleared synchronously");
+  assert.equal(previewCalls.length, 2, "the replacement preview is still debouncing");
+  act(() => {
+    buttonWithText("Continue to final review").click();
+  });
+  await actTick(0);
+  assert.ok(
+    !document.body.textContent!.includes("Take work off a stretched directorate"),
+    "the stale negotiation panel disappears during preview invalidation",
+  );
+  assert.ok(
+    !document.body.textContent!.includes("relief request"),
+    "the stale checked negotiation is cleared from the commit input during invalidation",
+  );
+  assert.equal(buttonWithText("Commit the month").disabled, true, "commit stays locked during invalidation");
+  assert.equal(resolveTurnCalls.length, 0, "no resolve-turn while the preview is stale/invalid");
+  act(() => {
+    buttonWithText("Back to chiefs").click();
+  });
+  await actTick(0);
+
+  // The fresh preview (requested WITHOUT negotiations) publishes and offers NO
+  // relief: the panel must stay gone, commit must re-enable, and the final
+  // resolve-turn input must NOT carry the stale Operations negotiation.
+  await actTick(450);
+  assert.equal(previewCalls.length, 3, "the revision advance requested a fresh preview");
+  previewCalls[2]!.resolveFetch();
+  previewCalls[2]!.resolveBody(previewPayload("MARKER-REL-C", [], [briggsPosition]));
+  await actTick(0);
+  act(() => {
+    buttonWithText("Continue to final review").click();
+  });
+  await actTick(0);
+  assert.ok(document.body.textContent!.includes("MARKER-REL-C"), "the fresh post-revision preview publishes");
+  assert.ok(
+    !document.body.textContent!.includes("Take work off a stretched directorate"),
+    "no negotiation panel when the fresh preview offers no relief",
+  );
+  assert.ok(!document.body.textContent!.includes("relief request"), "no relief request in the commit footer");
+  assert.equal(buttonWithText("Commit the month").disabled, false, "commit re-enables on the fresh preview");
+  act(() => {
+    buttonWithText("Commit the month").click();
+  });
+  assert.equal(resolveTurnCalls.length, 1, "a valid commit fires resolve-turn exactly once");
+  const commitBody = resolveTurnCalls[0] as unknown as {
+    input: { staffNegotiations: unknown[] };
+    expectedRevision: number;
+  };
+  assert.deepEqual(commitBody.input.staffNegotiations, [], "resolve-turn carries no stale relief negotiation");
+  assert.equal(commitBody.expectedRevision, 1, "resolve-turn carries the post-open revision");
+
+  act(() => {
+    root.unmount();
+  });
+});
