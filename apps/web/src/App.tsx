@@ -79,8 +79,20 @@ export function App() {
   // session revision, or a still-pending replacement request), the candidates
   // disappear SYNCHRONOUSLY — a stale offer can never stay checkable (or reach
   // the commit input) while the projection that produced it is invalid.
+  // Closing pass 6 (c): ACTIVE negotiations stay visible even when the
+  // negotiation-inclusive preview no longer lists their directorate — relief
+  // that drops a directorate below the strain threshold must stay checkable so
+  // it can still be unchecked. Such negotiations remain eligible per the
+  // unnegotiated packet (the with-negotiations candidate set is a subset of
+  // it), and the server re-validates eligibility at resolve-turn as the
+  // authoritative gate.
   const negotiationCandidates: StaffNegotiation["directorate"][] = validPreview
-    ? Array.from(new Set(validPreview.chiefCoalitions.flatMap((c) => c.staffConstraintDirectorates)))
+    ? Array.from(
+        new Set([
+          ...validPreview.chiefCoalitions.flatMap((c) => c.staffConstraintDirectorates),
+          ...cycle.staffNegotiations.map((n) => n.directorate),
+        ]),
+      )
     : [];
 
   const staffReadouts: StaffFunctionReadout[] =
@@ -134,9 +146,16 @@ export function App() {
     setCycle((prev) => {
       const filtered = prev.selections.filter((s) => s.memoId !== memoId);
       const nextSelections = optionId ? [...filtered, { memoId, optionId }] : filtered;
-      const nextCycle = { ...prev, selections: nextSelections, preview: null, acceptedRiskChoices: {} };
+      // Closing pass 6 P1: a selection edit changes WHICH relief offers are
+      // legitimate (the packet's strained directorates shift), so the checked
+      // negotiations must die SYNCHRONOUSLY — like a revision advance does —
+      // and the replacement preview must be requested WITHOUT them. Keeping
+      // them would let a no-longer-offered negotiation ride into the commit
+      // input (the fingerprint matches because it includes them, so the
+      // preview looks valid while the relief is stale).
+      const nextCycle = { ...prev, selections: nextSelections, preview: null, acceptedRiskChoices: {}, staffNegotiations: [] };
       if (nextSelections.length > 0) {
-        requestPreview(nextCycle, nextSelections, prev.staffNegotiations);
+        requestPreview(nextCycle, nextSelections, []);
       } else {
         // Deselecting the last memo leaves no selections to preview: the old
         // request and published preview must not stay valid (closing pass 2 P1).

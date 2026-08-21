@@ -50,6 +50,11 @@ function deferredPreviewCall() {
     fetchPromise,
     resolveFetch: () => resolveFetch({ ok: true, json: () => body }),
     resolveBody,
+    // The request body, captured so tests can assert WHICH selections and
+    // staffNegotiations each preview was requested with (closing pass 6 P1:
+    // the replacement preview after a selection edit must be requested
+    // WITHOUT the stale negotiation).
+    requestBody: null as { input: { selections: unknown[]; staffNegotiations: unknown[] } } | null,
   };
 }
 
@@ -73,6 +78,7 @@ function appFetchMock(conversations?: {
     }
     if (url.endsWith("/preview-turn") && init?.method === "POST") {
       const call = deferredPreviewCall();
+      call.requestBody = JSON.parse(String(init.body)) as { input: { selections: unknown[]; staffNegotiations: unknown[] } };
       previewCalls.push(call);
       return call.fetchPromise;
     }
@@ -747,6 +753,215 @@ test("a revision advance clears the stale relief negotiation so neither the pane
   };
   assert.deepEqual(commitBody.input.staffNegotiations, [], "resolve-turn carries no stale relief negotiation");
   assert.equal(commitBody.expectedRevision, 1, "resolve-turn carries the post-open revision");
+
+  act(() => {
+    root.unmount();
+  });
+});
+
+// ── Closing pass 6 P1: a memo selection edit must clear checked relief
+// negotiations SYNCHRONOUSLY (like a revision advance does) and request the
+// replacement preview WITHOUT them — otherwise a no-longer-offered negotiation
+// rides into the authoritative turn (the fingerprint includes it, so the
+// stale-inclusive preview still looks valid). ──
+test("a memo selection change clears the stale relief negotiation so neither the panel nor the resolve-turn input keeps it (closing pass 6 P1 regression)", async () => {
+  const { fetchMock, previewCalls, resolveTurnCalls } = appFetchMock();
+  globals.fetch = fetchMock;
+  const { root } = mountApp();
+
+  // Bootstrap to the memos screen and publish preview A (posture=tempo-hold)
+  // whose coalition OFFERS an Operations relief negotiation.
+  await actTick(0);
+  assert.ok(buttonWithText("Continue last campaign"), "hub lists the fixture session");
+  act(() => {
+    buttonWithText("Continue last campaign").click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Open decision memos").click();
+  });
+  await actTick(0);
+  const postureRadio = (optionId: string) =>
+    document.querySelector(`input[name="memo-posture"][value="${optionId}"]`) as HTMLInputElement;
+  act(() => {
+    postureRadio("tempo-hold").click();
+  });
+  await actTick(450);
+  assert.equal(previewCalls.length, 1, "the selection requested a preview");
+  previewCalls[0]!.resolveFetch();
+  previewCalls[0]!.resolveBody(previewPayload("MARKER-P6-A", [operationsReliefCoalition], [briggsPosition]));
+  await actTick(0);
+  assert.equal(proceedButton().disabled, false, "canProceed once preview A publishes");
+
+  // Walk to the commit screen and check the Operations relief toggle; the
+  // replacement preview still offers it, so the checked negotiation stays
+  // active and the footer reports it.
+  act(() => {
+    proceedButton().click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Continue to final review").click();
+  });
+  await actTick(0);
+  assert.ok(
+    document.body.textContent!.includes("Take work off a stretched directorate"),
+    "the negotiation panel is rendered for the offered relief",
+  );
+  const negotiationCheckbox = document.querySelector('input[type="checkbox"]') as HTMLInputElement;
+  assert.ok(negotiationCheckbox, "the Operations relief toggle is rendered");
+  act(() => {
+    negotiationCheckbox.click();
+  });
+  await actTick(450);
+  assert.equal(previewCalls.length, 2, "the negotiation change requested a replacement preview");
+  previewCalls[1]!.resolveFetch();
+  previewCalls[1]!.resolveBody(previewPayload("MARKER-P6-B", [operationsReliefCoalition], [briggsPosition]));
+  await actTick(0);
+  assert.equal(buttonWithText("Commit the month").disabled, false, "commit re-enables on the negotiation-inclusive preview");
+  assert.ok(document.body.textContent!.includes("1 relief request"), "the checked negotiation is active");
+
+  // Change the memo selection (posture → measured-deterrence): BOTH the
+  // published preview and the checked relief negotiation must die
+  // synchronously, and the replacement preview must be requested WITHOUT the
+  // stale negotiation (with the old code the negotiation survived and the
+  // stale-inclusive preview still fingerprint-matched, so the footer kept
+  // "1 relief request" and the commit input kept the Operations negotiation).
+  act(() => {
+    buttonWithText("Back to chiefs").click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Back to memos").click();
+  });
+  await actTick(0);
+  act(() => {
+    postureRadio("measured-deterrence").click();
+  });
+  assert.ok(
+    !document.body.textContent!.includes("MARKER-P6-B"),
+    "changing the selection synchronously clears the published preview",
+  );
+  assert.equal(previewCalls.length, 2, "the replacement preview is still debouncing");
+  await actTick(450);
+  assert.equal(previewCalls.length, 3, "the selection edit requested a fresh preview");
+  assert.deepEqual(
+    previewCalls[2]!.requestBody!.input.staffNegotiations,
+    [],
+    "the replacement preview is requested WITHOUT the stale negotiation",
+  );
+  previewCalls[2]!.resolveFetch();
+  // The fresh packet offers NO relief: the coalition carries no staff
+  // constraint, so the stale Operations offer must be gone everywhere.
+  previewCalls[2]!.resolveBody(previewPayload("MARKER-P6-C", [], [briggsPosition]));
+  await actTick(0);
+  assert.equal(proceedButton().disabled, false, "canProceed once the fresh preview publishes");
+  act(() => {
+    proceedButton().click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Continue to final review").click();
+  });
+  await actTick(0);
+  assert.ok(document.body.textContent!.includes("MARKER-P6-C"), "the fresh post-selection preview publishes");
+  assert.ok(
+    !document.body.textContent!.includes("Take work off a stretched directorate"),
+    "no negotiation panel when the fresh preview offers no relief",
+  );
+  assert.ok(!document.body.textContent!.includes("relief request"), "no relief request in the commit footer");
+  assert.equal(buttonWithText("Commit the month").disabled, false, "commit re-enables on the fresh preview");
+  act(() => {
+    buttonWithText("Commit the month").click();
+  });
+  assert.equal(resolveTurnCalls.length, 1, "a valid commit fires resolve-turn exactly once");
+  const commitBody = resolveTurnCalls[0] as unknown as {
+    input: { staffNegotiations: unknown[] };
+    expectedRevision: number;
+  };
+  assert.deepEqual(commitBody.input.staffNegotiations, [], "resolve-turn carries no stale relief negotiation");
+  assert.equal(commitBody.expectedRevision, 0, "resolve-turn carries the unchanged revision");
+
+  act(() => {
+    root.unmount();
+  });
+});
+
+// ── Closing pass 6 (c): relief that DROPS a directorate below the strain
+// threshold must stay visible (checked) so the player can still uncheck it —
+// the negotiation-inclusive preview no longer lists the directorate, but the
+// negotiation is still eligible per the unnegotiated packet. ──
+test("active relief stays visible when it drops the directorate below the strain threshold, so it can be unchecked (closing pass 6 c regression)", async () => {
+  const { fetchMock, previewCalls, resolveTurnCalls } = appFetchMock();
+  globals.fetch = fetchMock;
+  const { root } = mountApp();
+
+  await actTick(0);
+  assert.ok(buttonWithText("Continue last campaign"), "hub lists the fixture session");
+  act(() => {
+    buttonWithText("Continue last campaign").click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Open decision memos").click();
+  });
+  await actTick(0);
+  const postureRadio = (optionId: string) =>
+    document.querySelector(`input[name="memo-posture"][value="${optionId}"]`) as HTMLInputElement;
+  act(() => {
+    postureRadio("tempo-hold").click();
+  });
+  await actTick(450);
+  assert.equal(previewCalls.length, 1, "the selection requested a preview");
+  previewCalls[0]!.resolveFetch();
+  previewCalls[0]!.resolveBody(previewPayload("MARKER-REL-OK-A", [operationsReliefCoalition], [briggsPosition]));
+  await actTick(0);
+
+  act(() => {
+    proceedButton().click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Continue to final review").click();
+  });
+  await actTick(0);
+  const negotiationCheckbox = () => document.querySelector('input[type="checkbox"]') as HTMLInputElement;
+  act(() => {
+    negotiationCheckbox().click();
+  });
+  await actTick(450);
+  assert.equal(previewCalls.length, 2, "the negotiation change requested a replacement preview");
+  // The negotiation-inclusive preview no longer lists Operations as a staff
+  // constraint (the relief dropped it below the strain threshold) — but the
+  // checked negotiation must STAY visible so it can be unchecked.
+  previewCalls[1]!.resolveFetch();
+  previewCalls[1]!.resolveBody(previewPayload("MARKER-REL-OK-B", [], [briggsPosition]));
+  await actTick(0);
+  assert.ok(
+    document.body.textContent!.includes("Take work off a stretched directorate"),
+    "the panel stays visible while the checked relief is active, even though the preview no longer lists it",
+  );
+  assert.equal(negotiationCheckbox().checked, true, "the active Operations relief stays checked");
+  assert.ok(document.body.textContent!.includes("1 relief request"), "the footer still reports the active relief");
+
+  // Uncheck it: the relief is dropped from the commit input, the replacement
+  // preview re-offers Operations, and the final resolve-turn carries nothing.
+  act(() => {
+    negotiationCheckbox().click();
+  });
+  await actTick(450);
+  assert.equal(previewCalls.length, 3, "the uncheck requested a replacement preview");
+  previewCalls[2]!.resolveFetch();
+  previewCalls[2]!.resolveBody(previewPayload("MARKER-REL-OK-C", [operationsReliefCoalition], [briggsPosition]));
+  await actTick(0);
+  assert.ok(!document.body.textContent!.includes("relief request"), "no relief request in the commit footer after unchecking");
+  assert.equal(buttonWithText("Commit the month").disabled, false, "commit re-enables on the fresh preview");
+  act(() => {
+    buttonWithText("Commit the month").click();
+  });
+  assert.equal(resolveTurnCalls.length, 1, "a valid commit fires resolve-turn exactly once");
+  const commitBody = resolveTurnCalls[0] as unknown as { input: { staffNegotiations: unknown[] } };
+  assert.deepEqual(commitBody.input.staffNegotiations, [], "resolve-turn carries no relief after unchecking");
 
   act(() => {
     root.unmount();

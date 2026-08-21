@@ -270,7 +270,10 @@ test("resolve-turn persists a revision and rejects stale expected revisions", as
     turn: created.session.state.turn,
     selectedActionIds: [],
     acceptedRiskOverrides: [],
-    staffNegotiations: [{ directorate: "sustainment", reliefPoints: 1, cost: "political_cover" }],
+    // Operations is strained (4/4) for these selections and appears in the
+    // unnegotiated packet's relief candidates, so the negotiation is eligible
+    // under the closing pass 6 P1 gate.
+    staffNegotiations: [{ directorate: "operations", reliefPoints: 1, cost: "political_cover" }],
     selections: firstOptionSelections(created.memos),
   };
 
@@ -315,6 +318,64 @@ test("resolve-turn persists a revision and rejects stale expected revisions", as
   });
   assert.equal(stale.statusCode, 409);
   assert.match(stale.json().error, /revision mismatch/i);
+});
+
+test("resolve-turn rejects relief negotiations for directorates the current selections do not stretch (closing pass 6 P1)", async () => {
+  const created = await createSession();
+  const id = created.session.id;
+
+  // The live repro: Training is LIGHT for this packet (deception-grid keeps it
+  // below the strain threshold) and absent from the unnegotiated candidates,
+  // yet the old server accepted a Training negotiation with HTTP 200 and
+  // applied its costs (−2 political capital, −2 cabinet cover, +1 media heat).
+  const trainingLightSelections = [
+    ...firstOptionSelections(created.memos),
+    { memoId: "force-development", optionId: "deception-grid" },
+  ];
+  const input = {
+    turn: created.session.state.turn,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    staffNegotiations: [{ directorate: "training", reliefPoints: 1, cost: "political_cover" }],
+    selections: trainingLightSelections,
+  };
+
+  // Sanity: the unnegotiated packet indeed offers NO Training relief, so the
+  // negotiation is out of eligibility and must never reach the resolver.
+  const probe = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/preview-turn`,
+    payload: { input: { ...input, staffNegotiations: [] } },
+  });
+  assert.equal(probe.statusCode, 200);
+  const probeBody = probe.json();
+  assert.ok(
+    !probeBody.chiefCoalitions.some(
+      (entry: { staffConstraintDirectorates: string[] }) => entry.staffConstraintDirectorates.includes("training"),
+    ),
+    "training is absent from the unnegotiated relief candidates",
+  );
+
+  const rejected = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/resolve-turn`,
+    payload: { input, expectedRevision: 0 },
+  });
+  assert.equal(rejected.statusCode, 400);
+  assert.match(rejected.json().error, /no longer stretch/i);
+  assert.deepEqual(rejected.json().ineligibleNegotiations, input.staffNegotiations);
+  assert.equal(rejected.json().session, undefined, "no session payload is returned for a rejected turn");
+
+  // Positive control: the same packet WITHOUT the out-of-eligibility
+  // negotiation resolves normally once the accepted-risk preconditions are
+  // met — the gate rejects only the ineligible negotiation, not the turn.
+  const accepted = await withAcceptedRiskCandidates(id, { ...input, staffNegotiations: [] });
+  const resolved = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/resolve-turn`,
+    payload: { input: accepted, expectedRevision: 0 },
+  });
+  assert.equal(resolved.statusCode, 200);
 });
 
 test("chief conversation routes persist revisions and reject stale responses", async () => {

@@ -199,51 +199,6 @@ export function createBatchSession(campaignIndex: number, scenario: ScenarioDefi
   return session;
 }
 
-function batchInput(session: GameSession, campaignIndex: number, replicate: number, strategyId: StrategyId, scenario: ScenarioDefinition = soloScenario): TurnInput {
-  const memos = deriveDecisionMemos(scenario, session.state);
-  // All cohorts rotate their memo/option cycle on the DENSE per-cohort index
-  // (replicate = floor(ci / 4), dense 0..59). Pre-Doctrine-4 the cycle was the
-  // dense campaign index; under round-robin partitioning the balanced cohort's
-  // campaignIndex is sparse (ci ∈ {0,4,8,…}), which would pin a 4-option memo
-  // to option 0 forever (round-2 F2). replicate stays dense inside every cohort,
-  // so each posture option rotates uniformly; `ci` is used only for round-robin
-  // strategy assignment.
-  const cycle = replicate;
-  // Track how many campaigns have actually included the optional memo so far.
-  // Every 3rd campaign (cycle % 3 === 0) skips it; the rest include it.
-  // Formula: campaigns included = cycle - floor((cycle + 2) / 3)
-  // This lets us cycle through the optional memo's options independently of the skip pattern,
-  // so all options (including deception-grid at index 1) get equal selection frequency.
-  const optionalIncludeCount = cycle - Math.floor((cycle + 2) / 3);
-  const targeted: Record<StrategyId, Record<string, string>> = {
-    "balanced-cycle": {},
-    "coalition-commitment": { posture: "measured-deterrence", "intelligence-focus": "warning-net", "sustainment-focus": "repair-first", "alliance-frame": "public-assurance-tour" },
-    // modernization is sourced from force-development fires-prototype (tags
-    // [fires, modernization, simulation]) WITHOUT public-commitment, and program
-    // from industrial-watch/lift-assurance, so the adaptive cohort fires only the
-    // adaptive event — modernization-case would also carry public-commitment and
-    // co-trigger the coalition event (round-2 F4).
-    "adaptive-cell-sprawl": { posture: "measured-deterrence", "intelligence-focus": "industrial-watch", "sustainment-focus": "lift-assurance", "alliance-frame": "quiet-reassurance", "force-development": "fires-prototype" },
-    "sustainment-delay": { posture: "quiet-recovery", "intelligence-focus": "warning-net", "sustainment-focus": "repair-first", "alliance-frame": "quiet-reassurance" },
-  };
-  return {
-    turn: session.state.turn,
-    selectedActionIds: [],
-    acceptedRiskOverrides: [],
-    staffNegotiations: [],
-    selections: memos.map((memo, memoIndex) => {
-      if (targeted[strategyId][memo.id]) return { memoId: memo.id, optionId: targeted[strategyId][memo.id] };
-      if (memo.optional) {
-        if (cycle % 3 === 0) return null;
-        const optionId = memo.options[optionalIncludeCount % memo.options.length]?.id ?? "";
-        return { memoId: memo.id, optionId };
-      }
-      const optionIndex = (cycle + memoIndex) % memo.options.length;
-      return { memoId: memo.id, optionId: memo.options[optionIndex]?.id ?? memo.options[0]?.id ?? "" };
-    }).filter((sel): sel is { memoId: string; optionId: string } => sel !== null),
-  };
-}
-
 function percentile(sorted: number[], p: number): number {
   if (sorted.length === 0) return 0;
   const index = (p / 100) * (sorted.length - 1);
@@ -434,6 +389,18 @@ function disabledScenario(): ScenarioDefinition {
   });
 }
 
+// The ONE batch input policy (closing pass 6 P3): scenario-parameterized so the
+// paired module-set cohorts share the exact same selection traces. All cohorts
+// rotate their memo/option cycle on the DENSE per-cohort index
+// (replicate = floor(ci / 4), dense 0..59). Pre-Doctrine-4 the cycle was the
+// dense campaign index; under round-robin partitioning the balanced cohort's
+// campaignIndex is sparse (ci ∈ {0,4,8,…}), which would pin a 4-option memo
+// to option 0 forever (round-2 F2). replicate stays dense inside every cohort,
+// so each posture option rotates uniformly; `ci` is used only for round-robin
+// strategy assignment. Every 3rd replicate (replicate % 3 === 0) skips the
+// optional memo; the rest include it, cycling its options independently of the
+// skip pattern (optionalIncludeCount) so all options (including deception-grid
+// at index 1) get equal selection frequency.
 function batchInputForScenario(scenario: ScenarioDefinition, session: GameSession, replicate: number, strategyId: StrategyId): TurnInput {
   const memos = deriveDecisionMemos(scenario, session.state);
   const targeted: Record<StrategyId, Record<string, string>> = {
@@ -527,7 +494,7 @@ function moduleRow(scenario: ScenarioDefinition, moduleSet: "enabled" | "disable
 
 /** Paired Doctrine 5 telemetry: every campaign index runs enabled and disabled with identical strategy/seed/traces. */
 export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTelemetry> {
-  const disabled = disabledScenario(); const rows: ModuleSetTelemetry[] = []; const deltas: PairedModuleDelta[] = [];
+  const disabled = disabledScenario(); const deltas: PairedModuleDelta[] = [];
   const allRows: ModuleSetTelemetry[] = [];
   const enabledSamplesAll: BatchSample[] = []; const disabledSamplesAll: BatchSample[] = [];
   for (const strategyId of orderedStrategies) {
@@ -544,8 +511,7 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
     deltas.push({ strategyId, meanScoreDelta: enabledRow.meanScore - disabledRow.meanScore, winRateDelta: enabledRow.winRate - disabledRow.winRate, meanIncidentLadderDelta: enabledRow.meanIncidentLadder - disabledRow.meanIncidentLadder, meanStaffSynchronizationDelta: enabledRow.meanStaffSynchronization - disabledRow.meanStaffSynchronization });
   }
   const enabled = allRows.filter((r) => r.moduleSet === "enabled"); const allSamples = enabled.reduce((a, r) => a + r.campaigns, 0);
-  const first = enabled[0]; const disabledRows = allRows.filter((r) => r.moduleSet === "disabled");
-  const avg = (rowsIn: ModuleSetTelemetry[], key: keyof ModuleSetTelemetry) => rowsIn.length ? rowsIn.reduce((a, r) => a + Number(r[key] ?? 0), 0) / rowsIn.length : 0;
+  const first = enabled[0];
   const two = scenarioDefinitionSchema.parse({ ...soloScenario, doctrineProfile: { ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J8"] }, staffModules: staffModuleDefinitions.filter((d) => d.id === "J6" || d.id === "J8") });
   const seven = scenarioDefinitionSchema.parse({ ...soloScenario, doctrineProfile: { ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J7", "J8", "J9", "STRATCOM", "MED", "ENGINEER"] }, staffModules: [...staffModuleDefinitions] });
   const twoSamples: BatchSample[] = []; const sevenSamples: BatchSample[] = [];

@@ -27,6 +27,7 @@ import {
   continueChiefConversation,
   countMetCampaignObjectives,
   createInitialGameSession,
+  directorateLabel,
   gameSessionSchema,
   getConversationRecordForTurn,
   replayValidationSchema,
@@ -349,6 +350,24 @@ function missingAcceptedRiskCandidates(session: GameSession, input: TurnInput) {
   const preview = previewTurn(soloScenario, session.state, { ...input, acceptedRiskOverrides: [] });
   const accepted = new Set((input.acceptedRiskOverrides ?? []).map(riskKey));
   return preview.acceptedRiskCandidates.filter((candidate) => !accepted.has(riskKey(candidate)));
+}
+
+// Closing pass 6 P1: the authoritative eligibility gate for relief
+// negotiations. A negotiation is legitimate ONLY for a directorate the CURRENT
+// unnegotiated packet reports as strained/overloaded (the same
+// staffConstraintDirectorates the preview endpoint transports). A negotiation
+// carried over from an earlier memo selection — or invented client-side — for
+// a directorate that is not stretched must never reach the resolver: the sim
+// would happily apply its costs (−2 political capital, −2 cabinet cover, +1
+// media heat) even though no relief was on offer. Derived from the
+// unnegotiated packet so relief that DROPS a directorate below the strain
+// threshold stays eligible (it was strained before the relief was applied).
+function ineligibleStaffNegotiations(session: GameSession, input: TurnInput) {
+  const negotiations = input.staffNegotiations ?? [];
+  if (negotiations.length === 0) return [];
+  const preview = previewTurn(soloScenario, session.state, { ...input, staffNegotiations: [] });
+  const eligible = new Set(preview.chiefCoalitions.flatMap((coalition) => coalition.staffConstraintDirectorates));
+  return negotiations.filter((negotiation) => !eligible.has(negotiation.directorate));
 }
 
 function parseHeadlessRunBody(body: unknown) {
@@ -692,6 +711,17 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
     return await withSessionLock(id, async () => {
       const session = await readSession(id);
       assertExpectedRevision(session, body.expectedRevision);
+      const ineligibleNegotiations = ineligibleStaffNegotiations(session, input);
+      if (ineligibleNegotiations.length > 0) {
+        reply.code(400);
+        return {
+          error:
+            "This month cannot be committed: relief was requested for directorates your current selections no longer stretch "
+            + `(${ineligibleNegotiations.map((entry) => directorateLabel(entry.directorate)).join(", ")}). `
+            + "Remove those relief requests and try again.",
+          ineligibleNegotiations,
+        };
+      }
       const missingAcceptedRisks = missingAcceptedRiskCandidates(session, input);
       if (missingAcceptedRisks.length > 0) {
         reply.code(428);
