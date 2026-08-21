@@ -19,6 +19,7 @@ function toScenarioSummary(): ScenarioSummary {
     externalConstraints: soloScenario.externalConstraints,
     events: soloScenario.events,
     doctrineLens: soloScenario.doctrineLens,
+    staffModules: soloScenario.staffModules,
     spriteVisualLanguage,
   };
 }

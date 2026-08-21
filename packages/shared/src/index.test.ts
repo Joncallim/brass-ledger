@@ -8,20 +8,27 @@ import {
   buildChiefSpriteVariant,
   buildSpritePixels,
   buildSpritePromptText,
+  buildStaffFunctionReadouts,
   campaignStateSchema,
   chiefArchetypeSchema,
   chiefSpriteDeterministicSeed,
   chiefSpriteVariantStateSchema,
   createInitialGameSession,
+  decisionPreviewEntrySchema,
   defaultStaffFunctionDefinitions,
   defaultStaffMechanicsState,
   doctrineAcceptedRiskRefSchema,
+  doctrineProfileSchema,
   doctrineMaturityEntrySchema,
   eventDefinitionSchema,
   gameSessionSchema,
   generateAdvisorRoster,
+  moduleEffectDirection,
+  moduleEffectLaneSchema,
+  optionalStaffModuleSchema,
   relationshipLabel,
   resolveSpriteBasePalette,
+  scenarioDefinitionSchema,
   scenarioSummarySchema,
   spriteDarkenVignette,
   spriteDesaturate45,
@@ -36,6 +43,10 @@ import {
   spriteShadowTone,
   spriteSpecSchema,
   spriteVariantEffectSchema,
+  staffFunctionIdSchema,
+  staffModuleDefinitionSchema,
+  staffModuleEffectSchema,
+  staffModuleReadoutSchema,
   SPRITE_NEGATIVE_PROMPT,
   SPRITE_PIXEL_ACCESSORY,
   SPRITE_PIXEL_CALM_BROWS,
@@ -51,10 +62,12 @@ import {
   SPRITE_PIXEL_TIGHT_X_MAP,
   SPRITE_PIXEL_WIDTH,
   SPRITE_PROMPT_ROLE_LABELS,
+  turnPreviewSchema,
   turnResultSchema,
   writeSpriteCells,
   type ChiefSpriteVariantState,
   type EventDefinition,
+  type OptionalStaffModule,
   type SpriteHexColor,
   type SpritePixelGrid,
   type SpritePixelPaletteIndex,
@@ -62,7 +75,7 @@ import {
   type SpriteSemanticPixel,
   type SpriteSpec,
 } from "./index";
-import { soloScenario } from "@brass-ledger/content";
+import { soloScenario, staffModuleDefinitions } from "@brass-ledger/content";
 
 const spriteVisualLanguage = Object.fromEntries(["S1", "S2", "S3", "S4", "S5", "training"].map((role) => [role, {
   shapeLanguage: `${role} shape`, paletteCue: "cue", accentColor: "#8fcf88", expressionBias: "bias", baseExpression: "calm", uniformLanguage: "uniform", sourceRef: "source",
@@ -1588,4 +1601,162 @@ test("gameSessionSchema parses a legacy-only v6 session roster (no sprite fields
   assert.equal(parsed.advisorRoster.length, 1);
   assert.equal(parsed.advisorRoster[0].portrait.skinTone, spritePortrait.skinTone);
   assert.equal("deterministicSeed" in parsed.advisorRoster[0].portrait, false, "sprite-only fields must never be stored on a session portrait");
+});
+
+test("Doctrine 5 schemas enforce closed lanes, effect defaults, and StaffFunctionId", () => {
+  const base = {
+    id: "J6", label: "J6", remit: "communications", primaryStaffFunctionRefs: ["S2"],
+    evidenceRefs: ["CELERY/doctrine-proof-register#NATO AJP-3 Staff Directorate Baseline"],
+    benefitEffects: [{ lane: "doctrine.systemPressure", delta: -1, summary: "benefit" }],
+    pressureEffects: [{ lane: "resources.budgetAuthority", delta: -1, summary: "pressure" }],
+  };
+  const parsed = staffModuleDefinitionSchema.parse(base);
+  assert.deepEqual(parsed.benefitEffects[0].whenAnyTags, []);
+  assert.deepEqual(parsed.pressureEffects[0].whenAnyTags, []);
+  assert.throws(() => staffModuleDefinitionSchema.parse({ ...base, primaryStaffFunctionRefs: ["J6"] }), /S1|S5|StaffFunctionId|Invalid/);
+  assert.throws(() => staffModuleDefinitionSchema.parse({ ...base, benefitEffects: [{ lane: "staff.s3.visiblePosture", delta: 1, summary: "bad" }] }), /Invalid|lane/);
+  assert.throws(() => staffModuleDefinitionSchema.parse({ ...base, benefitEffects: [{ lane: "doctrine.systemPressure", delta: 0, summary: "bad" }] }), /non-zero/);
+  assert.throws(() => staffModuleDefinitionSchema.parse({ ...base, benefitEffects: [{ lane: "doctrine.systemPressure", delta: 1.234, summary: "bad" }] }), /two decimals/);
+});
+
+test("Doctrine 5 lane taxonomy: closed lanes accept every shipped lane; direction map is exhaustive", () => {
+  // Spec test-plan shared #3: the closed lane enum accepts every lane the shipped
+  // definitions use, and rejects context-sensitive lanes that are deliberately absent.
+  const shippedLanes = new Set<string>();
+  for (const definition of staffModuleDefinitions) {
+    for (const effect of [...definition.benefitEffects, ...definition.pressureEffects]) {
+      shippedLanes.add(effect.lane);
+    }
+  }
+  assert.ok(shippedLanes.size >= 10, "fixture must exercise a meaningful lane set");
+  for (const lane of shippedLanes) {
+    assert.ok(moduleEffectLaneSchema.safeParse(lane).success, `shipped lane ${lane} must be a closed enum member`);
+  }
+  assert.equal(moduleEffectLaneSchema.safeParse("staff.s3.visiblePosture").success, false, "context-sensitive lanes are deliberately absent");
+  assert.equal(moduleEffectLaneSchema.safeParse("doctrine.relativeTempo").success, false, "context-sensitive lanes are deliberately absent");
+
+  // Spec test-plan shared #5: the direction map is exhaustive (same keys, same order).
+  assert.deepEqual(Object.keys(moduleEffectDirection), moduleEffectLaneSchema.options);
+});
+
+test("Doctrine 5 module enum, StaffFunctionId separation, and effect/readout contracts", () => {
+  // Spec test-plan shared #1: exactly seven optional module values in shipped order.
+  const moduleIds: readonly OptionalStaffModule[] = optionalStaffModuleSchema.options;
+  assert.deepEqual(moduleIds, ["J6", "J7", "J8", "J9", "STRATCOM", "MED", "ENGINEER"]);
+
+  // Spec test-plan shared #8: StaffFunctionId rejects every optional module ID.
+  for (const moduleId of moduleIds) {
+    assert.equal(staffFunctionIdSchema.safeParse(moduleId).success, false, `${moduleId} must not be a staff function id`);
+  }
+
+  // Spec test-plan shared #4: effect deltas reject NaN, out-of-range magnitudes, empty
+  // conditional tags, and unknown keys; omitted tags default to [].
+  const validEffect = { lane: "doctrine.systemPressure", delta: -1, summary: "benefit" };
+  assert.deepEqual(staffModuleEffectSchema.parse(validEffect).whenAnyTags, []);
+  assert.equal(staffModuleEffectSchema.safeParse({ ...validEffect, delta: Number.NaN }).success, false, "NaN delta rejected");
+  assert.equal(staffModuleEffectSchema.safeParse({ ...validEffect, delta: 10.01 }).success, false, "delta above +10 rejected");
+  assert.equal(staffModuleEffectSchema.safeParse({ ...validEffect, delta: -10.01 }).success, false, "delta below -10 rejected");
+  assert.equal(staffModuleEffectSchema.safeParse({ ...validEffect, whenAnyTags: [""] }).success, false, "empty conditional tag rejected");
+  assert.equal(staffModuleEffectSchema.safeParse({ ...validEffect, stray: 1 }).success, false, "unknown effect key rejected");
+
+  // Spec test-plan shared #7: readouts carry explicit additive fields and bound
+  // coordinationLoad to 0..1; the schema stays strict.
+  const readout = {
+    id: "J6", label: "J6", remit: "communications", primaryStaffFunctionRefs: ["S2"],
+    evidenceRefs: ["CELERY/doctrine-proof-register#NATO AJP-3 Staff Directorate Baseline"],
+    status: "active", benefits: [], pressures: [], coordinationLoad: 0,
+  };
+  assert.deepEqual(staffModuleReadoutSchema.parse(readout).benefits, []);
+  assert.equal(staffModuleReadoutSchema.safeParse({ ...readout, coordinationLoad: 1 }).success, true, "coordinationLoad 1 accepted");
+  assert.equal(staffModuleReadoutSchema.safeParse({ ...readout, coordinationLoad: 1.01 }).success, false, "coordinationLoad above 1 rejected");
+  assert.equal(staffModuleReadoutSchema.safeParse({ ...readout, coordinationLoad: -0.01 }).success, false, "coordinationLoad below 0 rejected");
+  assert.equal(staffModuleReadoutSchema.safeParse({ ...readout, stray: true }).success, false, "unknown readout key rejected");
+});
+
+test("module output has no top-level module state and no module state in the save schema", () => {
+  const parsed = staffModuleDefinitionSchema.parse({
+    id: "J6", label: "J6", remit: "communications", primaryStaffFunctionRefs: ["S2"],
+    evidenceRefs: ["CELERY/doctrine-proof-register#NATO AJP-3 Staff Directorate Baseline"],
+    benefitEffects: [{ lane: "doctrine.systemPressure", delta: -1, summary: "benefit" }],
+    pressureEffects: [{ lane: "resources.budgetAuthority", delta: -1, summary: "pressure" }],
+  });
+  assert.equal("state" in parsed, false);
+  assert.equal("moduleState" in parsed, false);
+});
+
+test("doctrineProfileSchema rejects duplicate optionalStaffModules at the schema level", () => {
+  // The shipped profile parses; a duplicate module id must fail the uniqueness
+  // refinement regardless of where the profile is declared.
+  assert.ok(doctrineProfileSchema.safeParse(soloScenario.doctrineProfile).success);
+  assert.throws(
+    () => doctrineProfileSchema.parse({ ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J6"] }),
+    /optional staff modules must be unique/,
+  );
+  assert.throws(
+    () => doctrineProfileSchema.parse({ ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J8", "J6"] }),
+    /optional staff modules must be unique/,
+  );
+});
+
+test("scenarioDefinitionSchema ties staffModules to the profile: misordered or missing ids throw", () => {
+  const twoDefs = staffModuleDefinitions.filter((definition) => definition.id === "J6" || definition.id === "J8");
+  assert.equal(twoDefs.length, 2, "fixture must resolve the J6 and J8 definitions");
+
+  // In-order profile + definitions parse.
+  const valid = scenarioDefinitionSchema.parse({
+    ...soloScenario,
+    doctrineProfile: { ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J8"] },
+    staffModules: twoDefs,
+  });
+  assert.deepEqual(valid.staffModules.map((definition) => definition.id), ["J6", "J8"]);
+
+  // Profile order J6,J8 but definitions resolved J8,J6 → order mismatch.
+  assert.throws(
+    () =>
+      scenarioDefinitionSchema.parse({
+        ...soloScenario,
+        doctrineProfile: { ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J8"] },
+        staffModules: [...twoDefs].reverse(),
+      }),
+    /exactly match/,
+  );
+
+  // Profile lists J6,J8 but only J6 is resolved → missing definition.
+  assert.throws(
+    () =>
+      scenarioDefinitionSchema.parse({
+        ...soloScenario,
+        doctrineProfile: { ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J8"] },
+        staffModules: [twoDefs[0]!],
+      }),
+    /exactly match/,
+  );
+});
+
+test("pre-Doctrine-5 previews and summaries parse with additive module-field defaults", () => {
+  // A 0.10.0 preview entry carried no projectedModuleReadouts; it defaults to [].
+  const readout = buildStaffFunctionReadouts(soloScenario.staffFunctions, [], soloScenario.initialState, soloScenario.doctrineLens.burdenBias)[0]!;
+  const entry = {
+    memoId: "posture",
+    memoTitle: "Posture",
+    optionId: "quiet-recovery",
+    optionLabel: "Quiet recovery",
+    staffCosts: [{ directorate: "operations", points: 1 }],
+    staffWarnings: [],
+    projectedReadouts: [readout],
+    projectedBlockers: [],
+    acceptedRiskCandidateCount: 0,
+  };
+  const parsedEntry = decisionPreviewEntrySchema.parse(entry);
+  assert.deepEqual(parsedEntry.projectedModuleReadouts, [], "old preview entries default projectedModuleReadouts to []");
+
+  // A 0.10.0 turn preview carried no staffModules/coordinationLoad/chiefCoalitions.
+  const parsedPreview = turnPreviewSchema.parse({ decisionPreviews: [entry], acceptedRiskCandidates: [], predictedEvents: [] });
+  assert.deepEqual(parsedPreview.staffModules, [], "old turn previews default staffModules to []");
+  assert.equal(parsedPreview.coordinationLoad, 0, "old turn previews default coordinationLoad to 0");
+  assert.deepEqual(parsedPreview.chiefCoalitions, [], "old turn previews default chiefCoalitions to []");
+
+  // A 0.10.0 scenario summary carried no staffModules; it defaults to [].
+  const parsedSummary = scenarioSummarySchema.parse(baseScenarioSummary([ordinaryEvent]));
+  assert.deepEqual(parsedSummary.staffModules, [], "old scenario summaries default staffModules to []");
 });

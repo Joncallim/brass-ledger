@@ -2078,8 +2078,10 @@ test("doctrine 3: a neglected priority lane is called out in the after action", 
       { memoId: "alliance-frame", optionId: "quiet-reassurance" },
       { memoId: "force-development", optionId: "training-reset" },
     ],
-    // Quiet-reassurance burdens plans 2; the negotiation relieves it so plans sits light.
-    staffNegotiations: [{ directorate: "plans", reliefPoints: 2, cost: "political_cover" }],
+    // No relief negotiation: quiet-reassurance burdens plans 2 within its
+    // capacity, so plans already sits light without relief (closing pass 7 P3 —
+    // a negotiation the unnegotiated preview never offers must not appear in
+    // fixtures).
   };
   const result = resolveTurn(soloScenario, soloScenario.initialState, neglectedInput);
   const plans = result.directorateBurden.find((entry) => entry.directorate === "plans");

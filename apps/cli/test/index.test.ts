@@ -184,10 +184,27 @@ test("batch output includes doctrine telemetry, strategy outcomes, and balance w
   assert.equal(json.code, 0, json.stderr);
   const body = JSON.parse(json.stdout);
   assert.equal(body.campaignCount, 8);
-  assert.equal(body.doctrineEvents.length, 3);
+  assert.equal(body.doctrineEvents.length, 6, "event telemetry is paired by enabled/disabled module set");
+  assert.ok(body.doctrineEvents.every((event: { moduleSet: string; strategyId: string }) => ["enabled", "disabled"].includes(event.moduleSet) && event.strategyId));
   assert.equal(body.doctrineStrategies.length, 4);
   assert.ok(body.doctrineStrategies.every((strategy: { campaigns: number }) => strategy.campaigns === 2));
   assert.ok(body.doctrineStrategies.every((strategy: { doctrineCampaignHitRate: number }) => typeof strategy.doctrineCampaignHitRate === "number"));
   assert.ok(Array.isArray(body.dominantDoctrineStrategies));
   assert.ok(Array.isArray(body.balanceWarnings));
+});
+
+test("batch JSON projects resolver-backed enabled/disabled module rows and human output orders S1-S5 first", async () => {
+  const json = await runCli(["--batch", "8", "--json"]);
+  assert.equal(json.code, 0, json.stderr);
+  const body = JSON.parse(json.stdout);
+  assert.equal(body.moduleSetRows.length, body.doctrineStrategies.length * 2);
+  assert.deepEqual(new Set(body.moduleSetRows.map((row: { moduleSet: string }) => row.moduleSet)), new Set(["enabled", "disabled"]));
+  assert.ok(body.moduleSetRows.every((row: { strategyId: string; moduleSet: string }) => row.strategyId && row.moduleSet));
+
+  const text = await runCli(["--turns", "1"]);
+  assert.equal(text.code, 0, text.stderr);
+  const optional = text.stdout.indexOf("Optional staff cells:");
+  assert.ok(optional >= 0, "human mode shows optional cells");
+  const core = ["  S1:", "  S2:", "  S3:", "  S4:", "  S5:"];
+  for (const marker of core) assert.ok(text.stdout.indexOf(marker) >= 0 && text.stdout.indexOf(marker) < optional, `${marker} precedes optional cells`);
 });

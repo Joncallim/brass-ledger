@@ -213,6 +213,19 @@ test("N=240 satisfies the doctrine balance gates with real balanced hit rates", 
 
   // 60 campaigns per strategy, stable sorting.
   assert.equal(telemetry.campaignCount, 240);
+  assert.equal(telemetry.pairCount, 240);
+  assert.equal(telemetry.simulationCount, 480);
+  assert.equal(telemetry.moduleSetRows.length, 8, "four strategies × enabled/disabled");
+  assert.ok(telemetry.moduleSetRows.every((row) => row.campaigns === 60 && row.pairCount === 60 && row.simulationCount === 60));
+  assert.ok(telemetry.moduleSetRows.filter((row) => row.moduleSet === "enabled").every((row) => row.meanCoordinationLoad === 0.4));
+  assert.ok(telemetry.moduleSetRows.filter((row) => row.moduleSet === "disabled").every((row) => row.meanCoordinationLoad === 0));
+  assert.ok(telemetry.pairedDeltas.some((delta) => Math.abs(delta.meanScoreDelta) >= 0.5 || Math.abs(delta.winRateDelta) >= 0.02));
+  assert.ok(telemetry.pairedDeltas.some((delta) => delta.meanIncidentLadderDelta !== 0 || delta.meanStaffSynchronizationDelta !== 0));
+  assert.ok(telemetry.twoVsSevenCalibration.meanIncidentLadderDelta >= 2);
+  assert.ok(telemetry.twoVsSevenCalibration.meanStaffSynchronizationDelta <= -6);
+  assert.ok(telemetry.twoVsSevenCalibration.meanScoreDelta <= 2);
+  assert.ok(telemetry.twoVsSevenCalibration.winRateDelta <= 0.05);
+  assert.ok(telemetry.scoreStats.p75 > 0 && telemetry.scoreStats.p75 >= telemetry.scoreStats.p25);
   for (const strategy of telemetry.doctrineStrategies) {
     assert.equal(strategy.campaigns, 60);
     assert.ok(strategy.meanScore > 0);
@@ -224,6 +237,7 @@ test("N=240 satisfies the doctrine balance gates with real balanced hit rates", 
   for (const event of telemetry.doctrineEvents) {
     assert.ok(event.maturationRate >= 0.70 && event.maturationRate <= 1.00, `${event.eventId} maturation ${event.maturationRate} outside 0.70-1.00`);
     assert.equal(event.firingReliability, 1, `${event.eventId} firing reliability must be 1`);
+    assert.ok(event.moduleSet && event.strategyId, "event counters retain both pairing dimensions");
   }
 
   // Balanced cohort hit rates are real (balanced fires are attributed) and < 0.85.
@@ -238,10 +252,15 @@ test("N=240 satisfies the doctrine balance gates with real balanced hit rates", 
     }
   }
 
-  // No dominant no-tradeoff strategy (spec rule: >5 score, >10pp win rate, and no higher
-  // doctrine-event cost than balanced). The >50pp win-rate signal warning is allowed to
-  // exist (it is the calibration signal), but no strict gate warning may fire.
+  // No dominant no-tradeoff doctrine strategy in EITHER module set. The D4 gate runs
+  // independently per module set: within each set, no overuse strategy may beat its own
+  // balanced-cycle cohort by >5 score AND >10pp win rate with no higher doctrine-event
+  // cost mass, and none may sit at the 100/100 ceiling (winRate 1.0 AND meanScore 100).
+  // The >50pp win-rate signal warning is allowed to exist (it is the calibration signal),
+  // but no strict gate warning may fire. The module-pair detector (enabled strategy vs its
+  // disabled twin) is a SEPARATE Doctrine 5 field and must likewise report no dominance.
   assert.deepEqual(telemetry.dominantDoctrineStrategies, []);
+  assert.deepEqual(telemetry.modulePairDominance, [], "no enabled strategy may dominate its disabled twin");
   const strictGateWarnings = telemetry.balanceWarnings.filter((warning) => !warning.includes("win-rate advantage"));
   assert.deepEqual(strictGateWarnings, [], `unexpected balance gate warnings: ${strictGateWarnings.join("; ")}`);
 

@@ -1,13 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { renderToStaticMarkup } from "react-dom/server";
-import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
-import { buildAdvisorPortraitDataUri, buildChiefSpriteSpec, createInitialGameSession, relationshipLabel, type EventDefinition, type ScenarioSummary } from "@brass-ledger/shared";
+import { soloScenario, spriteVisualLanguage, staffModuleDefinitions } from "@brass-ledger/content";
+import { resolveActiveStaffModules } from "@brass-ledger/sim";
+import { buildAdvisorPortraitDataUri, buildChiefSpriteSpec, createInitialGameSession, relationshipLabel, type EventDefinition, type ScenarioSummary, type StaffModuleReadout } from "@brass-ledger/shared";
 import type { PreviewPayload } from "../src/lib/types";
 import { PreCommitScreen } from "../src/screens/PreCommitScreen/index.tsx";
 import { EventList } from "../src/screens/AfterActionScreen/EventList.tsx";
 import { ChiefsPaperScreen } from "../src/screens/ChiefsPaperScreen/index.tsx";
 import { ChiefPortrait } from "../src/components/ChiefPortrait";
+import { StaffModuleConsequences } from "../src/components/StaffModuleConsequences";
+import { MemosScreen } from "../src/screens/MemosScreen/index.tsx";
 
 const doctrineEvent = soloScenario.events.find((event) => event.doctrineTrigger)!;
 const ordinaryEvent = soloScenario.events.find((event) => !event.doctrineTrigger)!;
@@ -68,6 +71,76 @@ test("EventList labels doctrine events as Doctrine consequence and stays neutral
 test("the scenario summary fixture carries doctrineLens", () => {
   assert.ok(soloScenario.doctrineLens);
   assert.ok(soloScenario.doctrineLens.burdenBias);
+});
+
+/** A REAL resolver-produced readout: J6 resolved against the shipped definitions
+ * with no selected tags. This is what the server actually projects, so the render
+ * contract is tested against production data, not a synthetic label. */
+function realJ6Readout(): StaffModuleReadout {
+  const definition = staffModuleDefinitions.find((entry) => entry.id === "J6")!;
+  return resolveActiveStaffModules({
+    definitions: [definition],
+    selectedTags: new Set<string>(),
+    staffMechanics: structuredClone(soloScenario.initialState.staffMechanics),
+    strategic: structuredClone(soloScenario.initialState.strategic),
+    resources: structuredClone(soloScenario.initialState.resources),
+  }).readouts[0]!;
+}
+
+function renderMemos(preview: PreviewPayload | null, staffModules: ScenarioSummary["staffModules"] = soloScenario.staffModules) {
+  return renderToStaticMarkup(
+    <MemosScreen
+      memos={[]}
+      selections={[]}
+      staffNegotiations={[]}
+      staffModules={staffModules}
+      preview={preview}
+      previewLoading={false}
+      previewError={null}
+      canProceed={false}
+      onSelect={() => {}}
+      onProceed={() => {}}
+      onBack={() => {}}
+    />,
+  );
+}
+
+test("optional module component is empty-safe and renders REAL resolver readouts without duplicating the id", () => {
+  const empty = renderToStaticMarkup(<StaffModuleConsequences modules={[]} />);
+  assert.equal(empty, "", "empty module arrays do not create a heading");
+
+  const readout = realJ6Readout();
+  const html = renderToStaticMarkup(<StaffModuleConsequences modules={[readout]} />);
+  // Canonical labels already begin with the id ("J6 — Communications and
+  // information systems"): rendering id + label produced "J6 — J6 — …". The
+  // canonical label must appear EXACTLY once — includes() would still pass if it
+  // were duplicated across separate elements (closing pass 2 P3).
+  assert.equal(html.split(readout.label).length - 1, 1, "the canonical label appears exactly once");
+  assert.ok(!html.includes("J6 — J6"), "the id prefix must not be duplicated");
+  assert.ok(html.indexOf("Integrated communications reduce contested-system pressure.") < html.indexOf("Connected systems increase false-precision and deception exposure."), "benefits render before pressures");
+  assert.ok(html.indexOf("Connected systems increase false-precision and deception exposure.") < html.indexOf("The information-system cell consumes budget authority."), "pressure rows keep declaration order");
+  assert.match(html, /Optional staff cells/);
+});
+
+test("memos screen renders static staff module definitions before any preview, labeled as awaiting a selection", () => {
+  const html = renderMemos(null);
+  assert.ok(html.includes("J6 — Communications and information systems"), "static definition label is shown");
+  assert.ok(html.includes("STRATCOM — Strategic communications"), "every configured module is listed");
+  assert.match(html, /Awaiting a selection — effects and coordination load appear once you choose\./);
+});
+
+test("memos screen prefers projected readouts once a preview exists, and drops the awaiting label", () => {
+  const readout = realJ6Readout();
+  const preview = {
+    decisionPreviews: [],
+    acceptedRiskCandidates: [],
+    predictedEvents: [],
+    chiefCoalitions: [],
+    projectedResult: { staffModules: [readout], staffFunctions: [] },
+  } as unknown as PreviewPayload;
+  const html = renderMemos(preview);
+  assert.ok(html.includes("Integrated communications reduce contested-system pressure."), "projected readout summary is shown");
+  assert.ok(!html.includes("Awaiting a selection"), "static awaiting label is gone once projections exist");
 });
 
 test("chiefs paper derives portrait props from chief id, session, and position evidence", () => {

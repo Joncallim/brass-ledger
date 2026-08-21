@@ -1,5 +1,6 @@
 import type { TurnResult, StaffFunctionReadout } from "@brass-ledger/shared";
 import { StaffConsequences } from "./StaffConsequences";
+import { StaffModuleConsequences } from "../../components/StaffModuleConsequences";
 import { EventList } from "./EventList";
 import { ProgramProgress } from "./ProgramProgress";
 import { ExplainabilityDrawer } from "../../components/ExplainabilityDrawer";
@@ -58,12 +59,14 @@ export function AfterActionScreen({ result, previousStaffFunctions, labels, onNe
           current={result.staffFunctions}
         />
 
+        <StaffModuleConsequences modules={result.staffModules} />
+
         {result.afterAction.length > 0 && (
           <section>
             <p className="text-xs uppercase tracking-widest text-ink/40 mb-3">After-action notes</p>
             <div className="space-y-2">
-              {result.afterAction.map((note) => (
-                <div key={note.heading} className="border border-border px-4 py-3">
+              {result.afterAction.map((note, index) => (
+                <div key={`${note.heading}:${index}`} className="border border-border px-4 py-3">
                   <p className="text-xs font-semibold text-ink/70 mb-1">{note.heading}</p>
                   <p className="text-sm text-ink/60 leading-relaxed">{note.detail}</p>
                 </div>

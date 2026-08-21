@@ -1,0 +1,711 @@
+{
+  "scenarioId": "brass-ledger-jhq",
+  "contentVersion": "0.10.0",
+  "input": {
+    "turn": 1,
+    "selectedActionIds": [],
+    "selections": [
+      {
+        "memoId": "posture",
+        "optionId": "measured-deterrence"
+      },
+      {
+        "memoId": "intelligence-focus",
+        "optionId": "deception-hunt"
+      },
+      {
+        "memoId": "sustainment-focus",
+        "optionId": "repair-first"
+      },
+      {
+        "memoId": "alliance-frame",
+        "optionId": "quiet-reassurance"
+      },
+      {
+        "memoId": "force-development",
+        "optionId": "training-reset"
+      }
+    ]
+  },
+  "nextState": {
+    "turn": 2,
+    "maxTurns": 12,
+    "seed": 20260330,
+    "campaignStatus": "active",
+    "campaignScore": 70,
+    "campaignOutcome": null,
+    "strategic": {
+      "forceGeneration": {
+        "deployableUnits": 6.55,
+        "reserveStrain": 47,
+        "trainingThroughput": 58.5,
+        "personnelShortfalls": 41
+      },
+      "intelligence": {
+        "collectionCoverage": 54,
+        "confidence": 46.2,
+        "warningReliability": 43.4,
+        "deceptionPressure": 45.4
+      },
+      "sustainment": {
+        "depotBacklog": 48,
+        "munitionsSufficiency": 49,
+        "fuelSufficiency": 55,
+        "liftAvailability": 47
+      },
+      "alliance": {
+        "reassurance": 53.6,
+        "politicalAlignment": 52.4,
+        "partnerParticipation": 44,
+        "partnerPublicSupport": 46
+      },
+      "domestic": {
+        "cabinetCover": 51.4,
+        "committeeTolerance": 54,
+        "mediaHeat": 41.05,
+        "publicPatience": 58.25
+      },
+      "escalation": {
+        "probeTempo": 44,
+        "warningTime": 29.2,
+        "incidentLadder": 36.9,
+        "crisisSensitivity": 49.1
+      }
+    },
+    "staffMechanics": {
+      "s1": {
+        "recoveryDebt": 34,
+        "reservePredictability": 56.6
+      },
+      "s2": {
+        "externalEstimateConfidence": 46.53,
+        "visibility": "ESTIMATED",
+        "deceptionRisk": 35.69
+      },
+      "s3": {
+        "visiblePosture": 51,
+        "executablePosture": 53.47,
+        "credibleDeterrence": 46.53
+      },
+      "s4": {
+        "stockpileDepth": 49.43,
+        "liftBurn": 39.12,
+        "supportableTempo": 2.88
+      },
+      "s5": {
+        "strategicCoherence": 57.6,
+        "doctrineAlignment": 55.8
+      }
+    },
+    "doctrineMechanics": {
+      "campaignAimClarity": 64,
+      "relativeTempo": 28,
+      "mainEffortFocus": 21.81,
+      "secondaryRiskAccepted": 0,
+      "optionDislocation": 37,
+      "signatureControl": 50,
+      "exposureControl": 59,
+      "orderClarity": 60,
+      "culminationRisk": 23,
+      "uncommittedCapacity": 0,
+      "operationalReach": 60.33,
+      "staffSynchronization": 81.25,
+      "commanderIntentClarity": 72.37,
+      "systemPressure": 69.18
+    },
+    "doctrineMaturity": {},
+    "resources": {
+      "budgetAuthority": 61,
+      "readiness": 53,
+      "politicalCapital": 56,
+      "allianceCohesion": 50,
+      "publicLegitimacy": 52,
+      "escalationPressure": 43
+    },
+    "forceGeneration": {
+      "deployableUnits": 6.55,
+      "reserveStrain": 47,
+      "trainingThroughput": 58.5,
+      "personnelShortfalls": 41
+    },
+    "intel": {
+      "collectionCoverage": 54,
+      "confidence": 46.2,
+      "warningReliability": 43.4,
+      "deceptionPressure": 45.4
+    },
+    "sustainment": {
+      "depotBacklog": 48,
+      "munitionsSufficiency": 49,
+      "fuelSufficiency": 55,
+      "liftAvailability": 47
+    },
+    "alliance": {
+      "reassurance": 53.6,
+      "politicalAlignment": 52.4,
+      "partnerParticipation": 44,
+      "partnerPublicSupport": 46
+    },
+    "domestic": {
+      "cabinetCover": 51.4,
+      "committeeTolerance": 54,
+      "mediaHeat": 41.05,
+      "publicPatience": 58.25
+    },
+    "escalation": {
+      "probeTempo": 44,
+      "warningTime": 29.2,
+      "incidentLadder": 36.9,
+      "crisisSensitivity": 49.1
+    },
+    "capabilityPrograms": [
+      {
+        "id": "fires-network",
+        "phase": "concept",
+        "progress": 25.14,
+        "blockers": [
+          "munitions depth"
+        ]
+      },
+      {
+        "id": "counter-deception-grid",
+        "phase": "funded",
+        "progress": 16.94,
+        "blockers": [
+          "lower confidence and contradictory briefing"
+        ]
+      },
+      {
+        "id": "sustainment-ledger",
+        "phase": "concept",
+        "progress": 42.14,
+        "blockers": []
+      },
+      {
+        "id": "reserve-rebuild",
+        "phase": "funded",
+        "progress": 41.14,
+        "blockers": []
+      }
+    ],
+    "externalConstraints": [
+      {
+        "id": "shipping-market",
+        "severity": 56,
+        "trend": "steady"
+      },
+      {
+        "id": "electronics-chain",
+        "severity": 52,
+        "trend": "steady"
+      },
+      {
+        "id": "propellant-market",
+        "severity": 49,
+        "trend": "steady"
+      }
+    ],
+    "internalTech": [
+      {
+        "id": "fires-network",
+        "level": 0,
+        "progress": 25.14
+      },
+      {
+        "id": "counter-deception-grid",
+        "level": 0,
+        "progress": 16.94
+      },
+      {
+        "id": "sustainment-ledger",
+        "level": 0,
+        "progress": 42.14
+      },
+      {
+        "id": "reserve-rebuild",
+        "level": 0,
+        "progress": 41.14
+      }
+    ],
+    "externalTech": [
+      {
+        "id": "shipping-market",
+        "level": 1,
+        "progress": 44,
+        "estimate": {
+          "estimatedLevel": 1,
+          "confidence": 45.86,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      },
+      {
+        "id": "electronics-chain",
+        "level": 1,
+        "progress": 48,
+        "estimate": {
+          "estimatedLevel": 1,
+          "confidence": 49.86,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      },
+      {
+        "id": "propellant-market",
+        "level": 1,
+        "progress": 51,
+        "estimate": {
+          "estimatedLevel": 1,
+          "confidence": 42.86,
+          "visibility": "ESTIMATED",
+          "lastVerifiedTurn": null
+        }
+      }
+    ],
+    "chiefTrust": {
+      "warden": 61,
+      "halden": 52,
+      "briggs": 61,
+      "okafor": 61,
+      "sato": 56,
+      "navarro": 61
+    },
+    "chiefAgendaMemory": {
+      "warden": {
+        "chiefId": "warden",
+        "focusTags": [
+          "training",
+          "recovery",
+          "alliance",
+          "quiet"
+        ],
+        "concernTags": [],
+        "lastMemoId": "force-development",
+        "lastOptionId": "training-reset",
+        "lastPosition": "support",
+        "pressure": 0,
+        "lastTurn": 1,
+        "notes": [
+          "Which capability line gets the month’s extra attention: support on Training discipline reset.",
+          "How to frame the month to partners and cabinet: accept risk on Quiet reassurance.",
+          "What sustainment must protect first: support on Repair and depot recovery.",
+          "Collection and warning emphasis: accept risk on Counter-deception hunt."
+        ]
+      },
+      "halden": {
+        "chiefId": "halden",
+        "focusTags": [
+          "training",
+          "standardization",
+          "recovery",
+          "alliance"
+        ],
+        "concernTags": [],
+        "lastMemoId": "force-development",
+        "lastOptionId": "training-reset",
+        "lastPosition": "oppose",
+        "pressure": 7,
+        "lastTurn": 1,
+        "notes": [
+          "Which capability line gets the month’s extra attention: oppose on Training discipline reset.",
+          "How to frame the month to partners and cabinet: oppose on Quiet reassurance.",
+          "What sustainment must protect first: oppose on Repair and depot recovery.",
+          "Collection and warning emphasis: support on Counter-deception hunt."
+        ]
+      },
+      "briggs": {
+        "chiefId": "briggs",
+        "focusTags": [
+          "training",
+          "standardization",
+          "recovery",
+          "alliance"
+        ],
+        "concernTags": [],
+        "lastMemoId": "force-development",
+        "lastOptionId": "training-reset",
+        "lastPosition": "support",
+        "pressure": 0,
+        "lastTurn": 1,
+        "notes": [
+          "Which capability line gets the month’s extra attention: support on Training discipline reset.",
+          "How to frame the month to partners and cabinet: support on Quiet reassurance.",
+          "What sustainment must protect first: support on Repair and depot recovery.",
+          "Collection and warning emphasis: accept risk on Counter-deception hunt."
+        ]
+      },
+      "okafor": {
+        "chiefId": "okafor",
+        "focusTags": [
+          "training",
+          "standardization",
+          "recovery",
+          "alliance"
+        ],
+        "concernTags": [],
+        "lastMemoId": "force-development",
+        "lastOptionId": "training-reset",
+        "lastPosition": "accept_risk",
+        "pressure": 0,
+        "lastTurn": 1,
+        "notes": [
+          "Which capability line gets the month’s extra attention: accept risk on Training discipline reset.",
+          "How to frame the month to partners and cabinet: accept risk on Quiet reassurance.",
+          "What sustainment must protect first: support on Repair and depot recovery.",
+          "Collection and warning emphasis: accept risk on Counter-deception hunt."
+        ]
+      },
+      "sato": {
+        "chiefId": "sato",
+        "focusTags": [
+          "training",
+          "standardization",
+          "recovery",
+          "alliance"
+        ],
+        "concernTags": [],
+        "lastMemoId": "force-development",
+        "lastOptionId": "training-reset",
+        "lastPosition": "accept_risk",
+        "pressure": 0,
+        "lastTurn": 1,
+        "notes": [
+          "Which capability line gets the month’s extra attention: accept risk on Training discipline reset.",
+          "How to frame the month to partners and cabinet: support on Quiet reassurance.",
+          "What sustainment must protect first: accept risk on Repair and depot recovery.",
+          "Collection and warning emphasis: accept risk on Counter-deception hunt."
+        ]
+      },
+      "navarro": {
+        "chiefId": "navarro",
+        "focusTags": [
+          "training",
+          "standardization",
+          "recovery",
+          "alliance"
+        ],
+        "concernTags": [],
+        "lastMemoId": "force-development",
+        "lastOptionId": "training-reset",
+        "lastPosition": "support",
+        "pressure": 0,
+        "lastTurn": 1,
+        "notes": [
+          "Which capability line gets the month’s extra attention: support on Training discipline reset.",
+          "How to frame the month to partners and cabinet: accept risk on Quiet reassurance.",
+          "What sustainment must protect first: support on Repair and depot recovery.",
+          "Collection and warning emphasis: accept risk on Counter-deception hunt."
+        ]
+      }
+    },
+    "advisorTrust": {},
+    "activeEventIds": [],
+    "eventHistory": [],
+    "eventFlags": {},
+    "conversationHistory": [],
+    "activeCommitments": [
+      {
+        "id": "alliance-t1",
+        "type": "alliance",
+        "label": "Alliance reassurance commitment",
+        "turnMade": 2,
+        "fulfilled": null
+      }
+    ],
+    "briefing": {
+      "theater": "Northern Frontier",
+      "monthLabel": "Month 2",
+      "situationSummary": "No single shock dominated the month, but the staff burden did shape what became credible.",
+      "riskPosture": "The headquarters is now carrying more decision weight than at least one directorate can cleanly execute.",
+      "commandersIntent": "Preserve the gain in credible readiness without letting the staff outrun itself.",
+      "operationalPicture": "The force held the line and kept credible readiness from slipping backward.",
+      "decisionFocus": "Reduce staff overload before asking for another visible move.",
+      "openQuestions": [
+        "Which assumption in this month’s brief is most likely to fail next?",
+        "What did the room ask of sustainment that it has not yet actually earned?",
+        "Where is the next political cost likely to surface first?"
+      ],
+      "campaignObjectives": [
+        {
+          "id": "readiness",
+          "label": "Reach 7 or more deployable brigades",
+          "metric": "deployableUnits",
+          "target": 7,
+          "direction": "gte",
+          "note": "A posture only deters if the force behind it can actually deploy — looking active is not the same as being usable."
+        },
+        {
+          "id": "alliance",
+          "label": "Keep alliance political alignment at 56 or more",
+          "metric": "politicalAlignment",
+          "target": 56,
+          "direction": "gte",
+          "note": "Partners are watching for consistency. If reassurance drifts while you are still rebuilding, the coalition starts hedging on its own."
+        },
+        {
+          "id": "politics",
+          "label": "Keep cabinet cover at 32 or more",
+          "metric": "cabinetCover",
+          "target": 32,
+          "direction": "gte",
+          "note": "Cabinet cover is what lets you spend political capital on hard choices. Once it collapses, the theater plan stops being implementable, whatever the force can still do."
+        },
+        {
+          "id": "escalation",
+          "label": "Keep the incident ladder at 58 or lower",
+          "metric": "incidentLadder",
+          "target": 58,
+          "direction": "lte",
+          "note": "Every visible move carries some escalation risk. The force has to rebuild a credible posture without stumbling into a crisis spiral it did not choose."
+        }
+      ],
+      "budgetHeadline": "1.6B USD",
+      "readinessHeadline": "5 brigades deployable",
+      "geopoliticalSummary": "Pressure is rising, but the picture still favors a controlled recovery if the headquarters keeps its line of effort tight."
+    }
+  },
+  "staffFunctions": [
+    {
+      "id": "S1",
+      "label": "Personnel",
+      "shortLabel": "S1",
+      "directorates": [
+        "people"
+      ],
+      "status": "ready",
+      "burdenPoints": 2,
+      "capacity": 3,
+      "headroom": 1,
+      "warnings": [],
+      "failureMode": "follow-through attrition and reserve friction",
+      "activeWarning": null,
+      "standingRemit": "Protects how many brigades you can field, whether retention holds, and how much recovery debt the force is quietly building up.",
+      "metrics": [
+        {
+          "label": "Recovery debt",
+          "value": 34,
+          "status": "healthy"
+        },
+        {
+          "label": "Reserve predictability",
+          "value": 56.6,
+          "status": "healthy"
+        },
+        {
+          "label": "Deployable units",
+          "value": 6.55,
+          "status": "watch"
+        },
+        {
+          "label": "Reserve strain",
+          "value": 47,
+          "status": "healthy"
+        }
+      ],
+      "routingAttention": "neutral"
+    },
+    {
+      "id": "S2",
+      "label": "Intelligence",
+      "shortLabel": "S2",
+      "directorates": [
+        "intelligence"
+      ],
+      "status": "overloaded",
+      "burdenPoints": 5,
+      "capacity": 3,
+      "headroom": -2,
+      "warnings": [
+        "Intelligence is carrying more than it can absorb this month. Expect lower confidence and contradictory briefing."
+      ],
+      "failureMode": "lower confidence and contradictory briefing",
+      "activeWarning": "Intelligence is carrying more than it can absorb this month. Expect lower confidence and contradictory briefing.",
+      "standingRemit": "Keeps your warning picture honest even when collection has gaps and the adversary is trying to deceive you.",
+      "metrics": [
+        {
+          "label": "External estimate confidence",
+          "value": 46.53,
+          "status": "watch"
+        },
+        {
+          "label": "Deception risk",
+          "value": 35.69,
+          "status": "healthy"
+        },
+        {
+          "label": "Confidence",
+          "value": 46.2,
+          "status": "watch"
+        },
+        {
+          "label": "Picture class: estimated",
+          "value": 50,
+          "status": "watch"
+        }
+      ],
+      "routingAttention": "neutral"
+    },
+    {
+      "id": "S3",
+      "label": "Operations",
+      "shortLabel": "S3",
+      "directorates": [
+        "operations",
+        "training"
+      ],
+      "status": "strained",
+      "burdenPoints": 8,
+      "capacity": 7,
+      "headroom": -1,
+      "warnings": [
+        "Operations is right at the limit of what it can absorb this month.",
+        "Training is right at the limit of what it can absorb this month. This lane is one the staff underprices — expect it to surface as staff dissent unless you accept the risk explicitly."
+      ],
+      "failureMode": "shallow rehearsal and hollow readiness claims",
+      "activeWarning": "Operations is right at the limit of what it can absorb this month.",
+      "standingRemit": "Turns the posture and training guidance you choose into readiness the force can actually execute, not just claim.",
+      "metrics": [
+        {
+          "label": "Visible posture",
+          "value": 51,
+          "status": "watch"
+        },
+        {
+          "label": "Executable posture",
+          "value": 53.47,
+          "status": "watch"
+        },
+        {
+          "label": "Credible deterrence",
+          "value": 46.53,
+          "status": "watch"
+        },
+        {
+          "label": "Deployable units",
+          "value": 6.55,
+          "status": "watch"
+        }
+      ],
+      "routingAttention": "priority"
+    },
+    {
+      "id": "S4",
+      "label": "Logistics",
+      "shortLabel": "S4",
+      "directorates": [
+        "sustainment"
+      ],
+      "status": "ready",
+      "burdenPoints": 3,
+      "capacity": 4,
+      "headroom": 1,
+      "warnings": [
+        "Supportable tempo is in the risk band."
+      ],
+      "failureMode": "repair backlog and transport slippage",
+      "activeWarning": "Supportable tempo is in the risk band.",
+      "standingRemit": "Keeps depot backlog, munitions, fuel, and lift from falling behind what you have promised the rest of the headquarters.",
+      "metrics": [
+        {
+          "label": "Stockpile depth",
+          "value": 49.43,
+          "status": "watch"
+        },
+        {
+          "label": "Lift burn",
+          "value": 39.12,
+          "status": "healthy"
+        },
+        {
+          "label": "Supportable tempo",
+          "value": 2.88,
+          "status": "risk"
+        },
+        {
+          "label": "Depot backlog",
+          "value": 48,
+          "status": "watch"
+        }
+      ],
+      "routingAttention": "priority"
+    },
+    {
+      "id": "S5",
+      "label": "Plans",
+      "shortLabel": "S5",
+      "directorates": [
+        "plans"
+      ],
+      "status": "strained",
+      "burdenPoints": 3,
+      "capacity": 3,
+      "headroom": 0,
+      "warnings": [
+        "Plans is right at the limit of what it can absorb this month."
+      ],
+      "failureMode": "elegant but unabsorbable plans",
+      "activeWarning": "Plans is right at the limit of what it can absorb this month.",
+      "standingRemit": "Keeps alliance commitments, domestic politics, and modernization choices sequenced into one coherent campaign instead of pulling against each other.",
+      "metrics": [
+        {
+          "label": "Strategic coherence",
+          "value": 57.6,
+          "status": "healthy"
+        },
+        {
+          "label": "Doctrine alignment",
+          "value": 55.8,
+          "status": "healthy"
+        },
+        {
+          "label": "Cabinet cover",
+          "value": 51.4,
+          "status": "watch"
+        },
+        {
+          "label": "Alliance alignment",
+          "value": 52.4,
+          "status": "watch"
+        }
+      ],
+      "routingAttention": "priority"
+    }
+  ],
+  "triggeredEventIds": [],
+  "afterAction": [
+    {
+      "heading": "What changed this month",
+      "detail": "Deployable force shifted +1.35 brigades; cabinet cover shifted +0.4; incident ladder shifted +2.9."
+    },
+    {
+      "heading": "What the headquarters underestimated",
+      "detail": "You asked more of Intelligence than it could absorb cleanly, so this followed: lower confidence and contradictory briefing."
+    },
+    {
+      "heading": "Where your staff stand now",
+      "detail": "S1 recovery debt is 34, S2 visibility is estimated, S3 credible deterrence is 46.53 (visible 51 / executable 53.47), S4 supportable tempo is 2.88, and S5 strategic coherence is 57.6."
+    },
+    {
+      "heading": "S4 support warning",
+      "detail": "Supportable tempo is 2.88. What logistics can actually support is now the hard limit on any further activity this month, whatever else the plan says."
+    },
+    {
+      "heading": "Doctrine: unacknowledged risk",
+      "detail": "4 staff lanes were strained or overloaded this month and none of it was explicitly accepted going in. An under-resourced lane can still surprise you even when the headline numbers look fine."
+    },
+    {
+      "heading": "Doctrine: system pressure",
+      "detail": "The contested information picture (system pressure 69.18) is thin enough that mis-targeting or dependency blowback is a live risk this month."
+    },
+    {
+      "heading": "Doctrine: underpriced-lane dissent",
+      "detail": "The staff underprices Training; it went under-resourced this month and surfaced as staff dissent rather than a clean warning."
+    },
+    {
+      "heading": "Doctrine: neglected priority lane",
+      "detail": "The staff's natural priority (Sustainment) was left light while Intelligence ran overloaded."
+    }
+  ],
+  "replayHash": "3678a3ae86f5c11a",
+  "summary": "Standing at month 2: 6.5 brigades deployable, alliance alignment 52, cabinet cover 51, incident ladder 37."
+}

@@ -6,6 +6,7 @@ import {
   scenarioDefinitionSchema,
 } from "@brass-ledger/shared";
 import { resolveDoctrineGenes } from "./doctrine-genes";
+import { resolveStaffModules } from "./staff-module-definitions";
 
 // The scenario's doctrine identity: a fictional coalition-composite staff culture
 // assembled from CELERY gene-bank genes (Doctrine 2, issue #56). The genes are content
@@ -24,7 +25,10 @@ const doctrineProfile = doctrineProfileSchema.parse({
     "adaptive-cell-staff",
     "sustainment-first-operational-reach",
   ],
-  optionalStaffModules: [],
+  // Doctrine 5 (issue #59): the coalition-composite fields four optional staff cells.
+  // The order is the presentation/readout order and is binding (lint + shared
+  // refinement tie scenario.staffModules to this exactly).
+  optionalStaffModules: ["J6", "J8", "J9", "STRATCOM"],
 });
 
 export const soloScenario = scenarioDefinitionSchema.parse({
@@ -32,7 +36,7 @@ export const soloScenario = scenarioDefinitionSchema.parse({
   title: "Brass Ledger",
   description:
     "You run a joint headquarters trying to rebuild a credible defense during a slow-burning crisis. Warning about the adversary's intentions is never quite clean, the reserve force is already strained, and sustainment cannot support everything you would like to do at once. Every month you weigh deterrence, force generation, alliance politics, and how much political cover you can afford to spend, and you live with what each choice costs the next month.",
-  contentVersion: "0.10.0",
+  contentVersion: "0.11.0",
   maxTurns: 12,
   chiefs: [
     { id: "warden", name: "Maj. Gen. Ruth Warden", genderPresentation: "female", directorate: "people", title: "Chief of People", doctrineBias: "preserve deployable experience before chasing visible tempo", temperament: "plainspoken and protective", competence: 0.78, riskTolerance: 0.34, preferredTags: ["retention", "reserve", "recovery", "training"], concernTags: ["escalatory", "tempo-spike"] },
@@ -370,4 +374,8 @@ export const soloScenario = scenarioDefinitionSchema.parse({
   // composeDoctrineLens(resolveDoctrineGenes(doctrineProfile)).
   doctrineLens: composeDoctrineLens(resolveDoctrineGenes(doctrineProfile)),
   doctrineProfile,
+  // Doctrine 5 (issue #59): resolved optional staff module definitions in profile
+  // order, computed once at scenario-definition time like the doctrine lens. The
+  // engine consumes only these serialized definitions (never the content registry).
+  staffModules: resolveStaffModules(doctrineProfile),
 });

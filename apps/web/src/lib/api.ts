@@ -64,6 +64,7 @@ export function previewTurn(
   cycle: TurnCycleState,
   extraSelections?: MemoSelection[],
   staffNegotiations?: StaffNegotiation[],
+  signal?: AbortSignal,
 ) {
   const selections = extraSelections ?? cycle.selections;
   const negotiations = staffNegotiations ?? cycle.staffNegotiations;
@@ -73,6 +74,7 @@ export function previewTurn(
     body: JSON.stringify({
       input: { turn, selections, acceptedRiskOverrides: [], staffNegotiations: negotiations },
     }),
+    signal,
   });
 }
 

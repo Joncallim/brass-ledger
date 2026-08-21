@@ -3,8 +3,10 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { scenarioSummarySchema, chiefSpriteDeterministicSeed, gameSessionSchema } from "@brass-ledger/shared";
+import { scenarioSummarySchema, chiefSpriteDeterministicSeed, gameSessionSchema, turnInputSchema } from "@brass-ledger/shared";
 import { hashPromptText } from "@brass-ledger/headless";
+import { soloScenario } from "@brass-ledger/content";
+import { ineligibleStaffNegotiations, resolveTurn } from "@brass-ledger/sim";
 
 const saveDir = await mkdtemp(path.join(tmpdir(), "brass-ledger-routes-"));
 process.env.NODE_ENV = "test";
@@ -104,6 +106,25 @@ test("scenario response carries the schema-valid sprite visual language registry
   const payload = response.json().scenario;
   const summary = scenarioSummarySchema.parse(payload);
   assert.deepEqual(summary.spriteVisualLanguage, payload.spriteVisualLanguage);
+});
+
+test("scenario, preview, and resolve expose resolver-ordered module arrays", async () => {
+  const scenario = (await app.inject({ method: "GET", url: "/api/scenario" })).json().scenario;
+  const expected = scenario.staffModules.map((module: { id: string }) => module.id);
+  assert.equal(expected.length, scenario.staffModules.length);
+  const created = await createSession();
+  const input = {
+    turn: created.session.state.turn,
+    selectedActionIds: [],
+    selections: firstOptionSelections(created.memos),
+  };
+  const accepted = await withAcceptedRiskCandidates(created.session.id, input);
+  const preview = await app.inject({ method: "POST", url: `/api/sessions/${created.session.id}/preview-turn`, payload: { input: accepted } });
+  assert.equal(preview.statusCode, 200);
+  assert.deepEqual(preview.json().projectedResult.staffModules.map((module: { id: string }) => module.id), expected);
+  const resolved = await app.inject({ method: "POST", url: `/api/sessions/${created.session.id}/resolve-turn`, payload: { input: accepted, expectedRevision: 0 } });
+  assert.equal(resolved.statusCode, 200);
+  assert.deepEqual(resolved.json().result.staffModules.map((module: { id: string }) => module.id), expected);
 });
 
 test("session payload readouts carry doctrine 3 routing attention consistent with turn results", async () => {
@@ -226,7 +247,6 @@ test("headless API rejects supplied turns that omit accepted-risk overrides", as
     turn: created.session.state.turn,
     selectedActionIds: [],
     acceptedRiskOverrides: [],
-    staffNegotiations: [{ directorate: "sustainment", reliefPoints: 1, cost: "political_cover" }],
     selections: firstOptionSelections(created.memos),
   };
 
@@ -251,7 +271,10 @@ test("resolve-turn persists a revision and rejects stale expected revisions", as
     turn: created.session.state.turn,
     selectedActionIds: [],
     acceptedRiskOverrides: [],
-    staffNegotiations: [{ directorate: "sustainment", reliefPoints: 1, cost: "political_cover" }],
+    // Operations is strained (4/4) for these selections and appears in the
+    // unnegotiated packet's relief candidates, so the negotiation is eligible
+    // under the closing pass 6 P1 gate.
+    staffNegotiations: [{ directorate: "operations", reliefPoints: 1, cost: "political_cover" }],
     selections: firstOptionSelections(created.memos),
   };
 
@@ -296,6 +319,64 @@ test("resolve-turn persists a revision and rejects stale expected revisions", as
   });
   assert.equal(stale.statusCode, 409);
   assert.match(stale.json().error, /revision mismatch/i);
+});
+
+test("resolve-turn rejects relief negotiations for directorates the current selections do not stretch (closing pass 6 P1)", async () => {
+  const created = await createSession();
+  const id = created.session.id;
+
+  // The live repro: Training is LIGHT for this packet (deception-grid keeps it
+  // below the strain threshold) and absent from the unnegotiated candidates,
+  // yet the old server accepted a Training negotiation with HTTP 200 and
+  // applied its costs (−2 political capital, −2 cabinet cover, +1 media heat).
+  const trainingLightSelections = [
+    ...firstOptionSelections(created.memos),
+    { memoId: "force-development", optionId: "deception-grid" },
+  ];
+  const input = {
+    turn: created.session.state.turn,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    staffNegotiations: [{ directorate: "training", reliefPoints: 1, cost: "political_cover" }],
+    selections: trainingLightSelections,
+  };
+
+  // Sanity: the unnegotiated packet indeed offers NO Training relief, so the
+  // negotiation is out of eligibility and must never reach the resolver.
+  const probe = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/preview-turn`,
+    payload: { input: { ...input, staffNegotiations: [] } },
+  });
+  assert.equal(probe.statusCode, 200);
+  const probeBody = probe.json();
+  assert.ok(
+    !probeBody.chiefCoalitions.some(
+      (entry: { staffConstraintDirectorates: string[] }) => entry.staffConstraintDirectorates.includes("training"),
+    ),
+    "training is absent from the unnegotiated relief candidates",
+  );
+
+  const rejected = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/resolve-turn`,
+    payload: { input, expectedRevision: 0 },
+  });
+  assert.equal(rejected.statusCode, 400);
+  assert.match(rejected.json().error, /no longer stretch/i);
+  assert.deepEqual(rejected.json().ineligibleNegotiations, input.staffNegotiations);
+  assert.equal(rejected.json().session, undefined, "no session payload is returned for a rejected turn");
+
+  // Positive control: the same packet WITHOUT the out-of-eligibility
+  // negotiation resolves normally once the accepted-risk preconditions are
+  // met — the gate rejects only the ineligible negotiation, not the turn.
+  const accepted = await withAcceptedRiskCandidates(id, { ...input, staffNegotiations: [] });
+  const resolved = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/resolve-turn`,
+    payload: { input: accepted, expectedRevision: 0 },
+  });
+  assert.equal(resolved.statusCode, 200);
 });
 
 test("chief conversation routes persist revisions and reject stale responses", async () => {
@@ -471,6 +552,84 @@ test("import rejects replay-corrupted session exports", async () => {
 
   assert.equal(rejected.statusCode, 409);
   assert.match(rejected.json().error, /replay validation failed/i);
+});
+
+test("import rejects replay-consistent exports whose recorded turn requested ineligible relief (closing pass 7 P1)", async () => {
+  const created = await createSession();
+  const session = created.session;
+
+  // The live repro: Training is absent from the unnegotiated packet's relief
+  // candidates for this packet, yet the sim resolver accepts the negotiation —
+  // so a replay-consistent session containing it is constructible (the old
+  // headless route did exactly that) and must now be rejected at import.
+  const ineligibleInput = {
+    turn: session.state.turn,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    staffNegotiations: [{ directorate: "training", reliefPoints: 1, cost: "political_cover" }],
+    selections: [
+      ...firstOptionSelections(created.memos),
+      { memoId: "force-development", optionId: "deception-grid" },
+    ],
+  };
+  assert.deepEqual(
+    ineligibleStaffNegotiations(soloScenario, session.initialState, ineligibleInput),
+    ineligibleInput.staffNegotiations,
+    "fixture must be ineligible under the shared validator",
+  );
+
+  // Replay consistency is NOT the gate: the sim boundary accepts the input, so
+  // the hand-built session replays cleanly from its own history. The input is
+  // parsed through the schema (as /resolve-turn does) so its serialized key
+  // order — which the replay hash is computed over — matches what the server
+  // stores.
+  const parsedIneligibleInput = turnInputSchema.parse(ineligibleInput);
+  const result = resolveTurn(soloScenario, session.initialState, parsedIneligibleInput);
+  const replayConsistent = {
+    ...session,
+    turnInputs: [parsedIneligibleInput],
+    history: [result],
+    state: result.nextState,
+  };
+  gameSessionSchema.parse(replayConsistent);
+
+  const rejected = await app.inject({
+    method: "POST",
+    url: "/api/sessions/import",
+    payload: { exportData: { exportedAt: new Date().toISOString(), session: replayConsistent } },
+  });
+  assert.equal(rejected.statusCode, 409);
+  assert.match(rejected.json().error, /did not offer/i);
+
+  // Positive control: a replay-consistent export whose recorded turn requested
+  // ELIGIBLE relief (Operations is strained for the default selections and
+  // appears in the unnegotiated packet's relief candidates) still imports.
+  const eligibleInput = {
+    turn: session.state.turn,
+    selectedActionIds: [],
+    acceptedRiskOverrides: [],
+    staffNegotiations: [{ directorate: "operations", reliefPoints: 1, cost: "political_cover" }],
+    selections: firstOptionSelections(created.memos),
+  };
+  assert.deepEqual(
+    ineligibleStaffNegotiations(soloScenario, session.initialState, eligibleInput),
+    [],
+    "fixture must be eligible under the shared validator",
+  );
+  const eligibleResult = resolveTurn(soloScenario, session.initialState, turnInputSchema.parse(eligibleInput));
+  const eligibleSession = {
+    ...session,
+    turnInputs: [turnInputSchema.parse(eligibleInput)],
+    history: [eligibleResult],
+    state: eligibleResult.nextState,
+  };
+  const accepted = await app.inject({
+    method: "POST",
+    url: "/api/sessions/import",
+    payload: { exportData: { exportedAt: new Date().toISOString(), session: eligibleSession } },
+  });
+  assert.equal(accepted.statusCode, 200);
+  assert.equal(accepted.json().session.history.length, 1);
 });
 
 test("/api/scenario returns doctrineLens and doctrine event metadata", async () => {

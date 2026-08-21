@@ -1,17 +1,24 @@
 import { deepStrictEqual } from "node:assert";
+import { readFileSync } from "node:fs";
 import {
   applyDoctrineGenes,
   composeDoctrineLens,
   defaultDoctrineMechanicsState,
   doctrineRiskKeys,
   directorateSchema,
+  moduleEffectDirection,
+  moduleEffectLaneSchema,
+  optionalStaffModuleSchema,
   type DoctrineGene,
   type EventDefinition,
   type ChiefArchetype,
+  type OptionalStaffModule,
+  type StaffModuleDefinition,
 } from "@brass-ledger/shared";
 import { portraitTrimColor, spriteVisualLanguageSchema } from "@brass-ledger/shared";
 import { spriteVisualLanguage } from "./sprite-visual-language";
 import { resolveDoctrineGenes, doctrineGenes } from "./doctrine-genes";
+import { staffModuleDefinitions, resolveStaffModules } from "./staff-module-definitions";
 import { doctrineEventCostMass } from "./index";
 const { soloScenario } = (await import(new URL("./scenario.ts", import.meta.url).href)) as typeof import("./scenario");
 
@@ -422,6 +429,153 @@ if (soloScenario.doctrineProfile) {
   // doctrineProfile is required on the scenario definition schema; this branch is
   // defensive only.
   throw new Error("Scenario must declare a doctrineProfile (Doctrine 2, issue #56).");
+}
+
+// ── Doctrine 5 guardrails (issue #59): optional staff modules ─────────────────
+// The seven module definitions are content data with mechanical effects on a closed
+// lane enum; every guardrail below is static (no simulation).
+
+// 1. Registry completeness: exactly one definition per enum member, no duplicates.
+const registryIds = staffModuleDefinitions.map((definition) => definition.id);
+if (new Set(registryIds).size !== registryIds.length) {
+  throw new Error("staff module registry must not repeat an id");
+}
+if (registryIds.length !== optionalStaffModuleSchema.options.length) {
+  throw new Error(
+    `staff module registry must contain exactly one definition per enum member ` +
+      `(registry ${registryIds.length}, enum ${optionalStaffModuleSchema.options.length})`,
+  );
+}
+for (const id of optionalStaffModuleSchema.options) {
+  if (!registryIds.includes(id)) {
+    throw new Error(`staff module registry is incomplete: missing ${id}`);
+  }
+}
+
+// 2. Approved exact proof-register H2 headings per module, and heading existence.
+// The approved sets are the v2 architecture's anchor map; citing an approved heading
+// for the WRONG module (e.g. Netherlands Chief Of Staff Role as engineering evidence
+// or UK PJHQ as a STRATCOM listing) is an error even if the heading exists.
+const approvedModuleHeadings: Record<OptionalStaffModule, string[]> = {
+  J6: ["NATO AJP-3 Staff Directorate Baseline", "UK PJHQ Staff Responsibilities", "France CPOIA J-Branches", "Japan Joint Staff Organization"],
+  J7: ["NATO AJP-3 Staff Directorate Baseline", "Netherlands Staff Functions"],
+  J8: ["NATO AJP-3 Staff Directorate Baseline", "UK PJHQ Staff Responsibilities", "Netherlands Staff Functions", "France CPOIA J-Branches"],
+  J9: ["NATO AJP-3 Staff Directorate Baseline", "UK PJHQ Staff Responsibilities", "Netherlands Staff Functions"],
+  STRATCOM: ["NATO AJP-3 Staff Directorate Baseline"],
+  MED: ["NATO AJP-3 Staff Directorate Baseline", "UK PJHQ Staff Responsibilities", "Japan Joint Staff Organization"],
+  ENGINEER: ["NATO AJP-3 Staff Directorate Baseline"],
+};
+const proofRegisterSource = readFileSync(
+  new URL("../../../Brass Ledge Documentation/GROCER/CELERY/doctrine-proof-register.md", import.meta.url),
+  "utf8",
+);
+const proofRegisterHeadings = new Set([...proofRegisterSource.matchAll(/^## (.+)$/gm)].map((match) => match[1]!));
+
+// 3. Per-definition guardrails: benefits/pressures present, evidence approved and
+//    existing, sign matches the per-lane favorable/adverse map, conditional tags are
+//    real option tags, deltas bounded/two-decimal, and no effect can write a
+//    score/outcome/event/maturity/seed/turn/chiefTrust/campaign-identity target.
+const forbiddenTargetPrefixes = ["score", "outcome", "event", "maturity", "seed", "turn", "chiefTrust", "campaign"];
+export function validateStaffModuleDefinition(definition: StaffModuleDefinition): void {
+  if (definition.benefitEffects.length < 1 || definition.pressureEffects.length < 1) {
+    throw new Error(`Staff module ${definition.id} needs at least one benefit and one pressure effect.`);
+  }
+  const approved = approvedModuleHeadings[definition.id];
+  for (const ref of definition.evidenceRefs) {
+    const heading = ref.slice("CELERY/doctrine-proof-register#".length);
+    if (!approved.includes(heading)) {
+      throw new Error(`Staff module ${definition.id} cites heading "${heading}" which is not approved for it.`);
+    }
+    if (!proofRegisterHeadings.has(heading)) {
+      throw new Error(`Staff module ${definition.id} cites heading "${heading}" which does not exist in the doctrine proof register.`);
+    }
+  }
+  for (const effect of [...definition.benefitEffects, ...definition.pressureEffects]) {
+    if (!moduleEffectLaneSchema.options.includes(effect.lane)) {
+      throw new Error(`Staff module ${definition.id} uses unknown effect lane "${effect.lane}".`);
+    }
+    if (forbiddenTargetPrefixes.some((prefix) => effect.lane.startsWith(prefix))) {
+      throw new Error(`Staff module ${definition.id} effect lane "${effect.lane}" could alter a forbidden target.`);
+    }
+    if (!Number.isFinite(effect.delta) || effect.delta === 0 || Math.abs(effect.delta) > 10 || Number(effect.delta.toFixed(2)) !== effect.delta) {
+      throw new Error(`Staff module ${definition.id} effect on ${effect.lane} must be a non-zero delta bounded to [-10, 10] with at most two decimals.`);
+    }
+    for (const tag of effect.whenAnyTags) {
+      if (!allOptionTags.has(tag)) {
+        throw new Error(
+          `Staff module ${definition.id} conditional tag "${tag}" does not appear in any memo option. ` +
+            `This effect can never activate. Add the tag to a memo option or remove it from the module.`,
+        );
+      }
+    }
+    const direction = moduleEffectDirection[effect.lane];
+    const inBenefits = definition.benefitEffects.includes(effect);
+    const favorableSign = direction === "higher-favorable" ? 1 : -1;
+    const expectedSign = inBenefits ? favorableSign : -favorableSign;
+    if (Math.sign(effect.delta) !== expectedSign) {
+      throw new Error(
+        `Staff module ${definition.id} ${inBenefits ? "benefit" : "pressure"} on ${effect.lane} (${direction}) ` +
+          `has delta ${effect.delta} with the wrong sign; benefits must push toward favorable and pressures toward adverse.`,
+      );
+    }
+  }
+}
+for (const definition of staffModuleDefinitions) validateStaffModuleDefinition(definition);
+
+// 4. Conditional-predicate witness guardrail (closing review P2): every non-empty
+//    whenAnyTags predicate must have a legal one-turn selection trace that
+//    ACTIVATES it AND a legal trace that AVOIDS it, exhaustively over the 432 legal
+//    tag sets. A predicate with no avoid witness is a standing effect wearing a
+//    conditional costume; one with no hit witness can never fire. Either way the row
+//    must be declared standing (`whenAnyTags: []`) or its tags revised. Standing rows
+//    (empty predicate) are exempt by declaration.
+export function validateStaffModulePredicateWitnesses(
+  definitions: readonly StaffModuleDefinition[],
+  legalSelectionTagSets: readonly (ReadonlySet<string>)[],
+): void {
+  for (const definition of definitions) {
+    for (const effect of [...definition.benefitEffects, ...definition.pressureEffects]) {
+      if (effect.whenAnyTags.length === 0) continue;
+      const hit = legalSelectionTagSets.some((tags) => effect.whenAnyTags.some((tag) => tags.has(tag)));
+      const avoid = legalSelectionTagSets.some((tags) => effect.whenAnyTags.every((tag) => !tags.has(tag)));
+      if (!hit || !avoid) {
+        throw new Error(
+          `Staff module ${definition.id} predicate ${JSON.stringify(effect.whenAnyTags)} on ${effect.lane} must have BOTH a legal activating trace and a legal avoiding trace over the scenario's memo options ` +
+            `(found activating: ${hit}, avoiding: ${avoid}); declare the row standing with whenAnyTags: [] if it is unconditional, or revise its tags.`,
+        );
+      }
+    }
+  }
+}
+validateStaffModulePredicateWitnesses(staffModuleDefinitions, legalSelectionTagSets);
+
+// 5. Resolver correctness: unknown/repeated profile ids throw; the shipped profile
+//    enables exactly J6/J8/J9/STRATCOM in that order; the serialized scenario
+//    definitions deep-equal a fresh resolution (the shared schema refinement already
+//    ties scenario.staffModules ids to the profile; this asserts full definitions).
+if (soloScenario.doctrineProfile.optionalStaffModules.length !== 0) {
+  assertStaffModuleResolution(soloScenario.doctrineProfile);
+}
+deepStrictEqual(
+  soloScenario.doctrineProfile.optionalStaffModules,
+  ["J6", "J8", "J9", "STRATCOM"],
+  "Shipped coalition-composite profile must enable exactly J6/J8/J9/STRATCOM in order.",
+);
+deepStrictEqual(
+  soloScenario.staffModules,
+  resolveStaffModules(soloScenario.doctrineProfile),
+  "soloScenario.staffModules must deep-equal resolveStaffModules(doctrineProfile).",
+);
+
+function assertStaffModuleResolution(profile: { id: string; optionalStaffModules: string[] }): void {
+  if (new Set(profile.optionalStaffModules).size !== profile.optionalStaffModules.length) {
+    throw new Error(`doctrine profile ${profile.id} repeats an optional staff module`);
+  }
+  for (const id of profile.optionalStaffModules) {
+    if (!optionalStaffModuleSchema.options.includes(id as OptionalStaffModule)) {
+      throw new Error(`doctrine profile ${profile.id} references unknown staff module ${id}`);
+    }
+  }
 }
 
 console.log(

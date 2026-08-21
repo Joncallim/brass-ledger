@@ -1,10 +1,15 @@
 import type { AcceptedRiskOverride, MemoSelection, StaffNegotiation } from "@brass-ledger/shared";
 import type { PreviewPayload } from "../../lib/types";
+import { isPreviewValid } from "../../lib/previewValidity";
 import { AcceptedRiskDocket } from "./AcceptedRiskDocket";
 import { StaffNegotiationPanel } from "./StaffNegotiationPanel";
+import { StaffModuleConsequences } from "../../components/StaffModuleConsequences";
 
 type Props = {
   preview: PreviewPayload | null;
+  previewKey: string | null;
+  currentPreviewKey: string;
+  previewLoading: boolean;
   selections: MemoSelection[];
   acceptedRiskChoices: Record<string, boolean>;
   staffNegotiations: StaffNegotiation[];
@@ -24,6 +29,9 @@ function riskKey(risk: AcceptedRiskOverride) {
 
 export function PreCommitScreen({
   preview,
+  previewKey,
+  currentPreviewKey,
+  previewLoading,
   selections,
   acceptedRiskChoices,
   staffNegotiations,
@@ -39,6 +47,13 @@ export function PreCommitScreen({
   const candidates = preview?.acceptedRiskCandidates ?? [];
   const acceptedCount = candidates.filter((r) => acceptedRiskChoices[riskKey(r)] === true).length;
   const allAccepted = candidates.length === 0 || acceptedCount === candidates.length;
+  // Commit requires the preview for the CURRENT selections/negotiations to be
+  // published (a negotiation change clears it synchronously while the
+  // replacement request debounces) AND resolved (closing pass 3 P1) — an empty
+  // candidate list from a null/stale preview must never look like "all
+  // accepted".
+  const canCommit =
+    isPreviewValid(preview, previewKey, currentPreviewKey, previewLoading) && selections.length > 0;
 
   return (
     <div className="p-6 max-w-2xl">
@@ -87,6 +102,8 @@ export function PreCommitScreen({
           onChange={onAcceptRisk}
         />
 
+        <StaffModuleConsequences modules={preview?.projectedResult.staffModules ?? []} />
+
         <StaffNegotiationPanel
           candidates={negotiationCandidates}
           active={staffNegotiations}
@@ -104,19 +121,23 @@ export function PreCommitScreen({
           <button
             type="button"
             onClick={onCommit}
-            disabled={!allAccepted || busy}
+            disabled={!allAccepted || !canCommit || busy}
             className="px-6 py-2.5 bg-brass text-white border border-brass hover:bg-brass/90 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
           >
             {busy ? "Committing…" : "Commit the month"}
           </button>
         </div>
-        {!allAccepted && (
+        {!allAccepted ? (
           <p className="text-xs text-red-400 mt-2">
             You cannot commit yet: {candidates.length - acceptedCount} of {candidates.length} staff warnings are
             still unaccepted. Tick each one in "Staff risk warnings" above to confirm you are going ahead knowing the
             risk.
           </p>
-        )}
+        ) : !canCommit ? (
+          <p className="text-xs text-ink/50 mt-2">
+            The forecast is updating for your latest choices — commit unlocks once the new projection is shown.
+          </p>
+        ) : null}
       </div>
     </div>
   );
