@@ -1,18 +1,25 @@
 import { test, expect, type Page } from "@playwright/test";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
 import {
   buildAdvisorPortraitDataUri,
   buildChiefSpriteSpec,
+  buildSpritePixels,
   createInitialGameSession,
+  spritePixelRuns,
   type ChiefSpriteVariantState,
+  type SpriteSpec,
 } from "@brass-ledger/shared";
 
 /**
- * Sprite 3 visual matrix (issue #52, Q5): renders every roadmap state for one chief per
- * S-role (S1-S5) from generated data URIs via page.setContent only — no webServer, no API,
- * no build of the app itself (only the workspace dist it imports). The committed
- * toHaveScreenshot baseline is the human-review artifact; a 2× composite is also saved to
- * test-results/sprite-matrix-review.png (gitignored) for convenience.
+ * Sprite 4 visual matrix (issue #82): renders every roadmap state for one chief per
+ * S-role (S1-S5) from generated data URIs via page.setContent only — no webServer, no
+ * API, no build of the app itself. The committed toHaveScreenshot baseline is the
+ * human-review artifact at zero tolerance; a 2× diagnostic composite is also saved to
+ * test-results/sprite-matrix-review.png (gitignored). In-browser canvas probes verify
+ * that crispEdges renders every logical 24×28 cell as an exact uniform 2×2 physical
+ * block matching buildSpritePixels(sprite).output.
  */
 const states: { label: string; state: ChiefSpriteVariantState }[] = [
   { label: "neutral", state: { trustBand: "steady", burdenLevel: "light", campaignStatus: "active", s2ExternalEstimateConfidence: 46, s4SupportableTempo: 50 } },
@@ -26,7 +33,15 @@ const states: { label: string; state: ChiefSpriteVariantState }[] = [
   { label: "s4-bottleneck", state: { trustBand: "steady", burdenLevel: "light", campaignStatus: "active", s2ExternalEstimateConfidence: 46, s4SupportableTempo: 10 } },
 ];
 
-async function renderSpriteMatrix(page: Page) {
+type MatrixCell = {
+  chief: (typeof soloScenario.chiefs)[number];
+  label: string;
+  state: ChiefSpriteVariantState;
+  sprite: SpriteSpec;
+  output: string[];
+};
+
+async function buildMatrix(page: Page) {
   const session = createInitialGameSession(soloScenario, "sprite-matrix-session");
   // One chief per S-role so every role-gated effect (S2 tight framing, S4 utility detail)
   // is genuinely exercised in the human-review baseline, not just labeled.
@@ -37,7 +52,7 @@ async function renderSpriteMatrix(page: Page) {
     soloScenario.chiefs.find((chief) => chief.directorate === "sustainment")!,
     soloScenario.chiefs.find((chief) => chief.directorate === "plans")!,
   ];
-  const cells: string[] = [];
+  const cells: MatrixCell[] = [];
   for (const chief of chiefs) {
     const advisor = session.advisorRoster.find((entry) => entry.chiefId === chief.id)!;
     for (const { label, state } of states) {
@@ -48,11 +63,12 @@ async function renderSpriteMatrix(page: Page) {
         variantState: state,
         visualLanguage: spriteVisualLanguage,
       });
-      cells.push(
-        `<figure class="cell"><img class="cell-img" data-role="${sprite.role}" data-state="${label}" data-expression="${sprite.expression}" width="48" height="56" alt="${sprite.role} ${label}" src="${buildAdvisorPortraitDataUri(sprite)}" /><figcaption>${sprite.role} · ${label}</figcaption></figure>`,
-      );
+      cells.push({ chief, label, state, sprite, output: [...buildSpritePixels(sprite).output.cells] });
     }
   }
+  const cellHtml = cells.map((cell) =>
+    `<figure class="cell"><img class="cell-img" data-role="${cell.sprite.role}" data-state="${cell.label}" data-expression="${cell.sprite.expression}" width="48" height="56" alt="${cell.sprite.role} ${cell.label}" src="${buildAdvisorPortraitDataUri(cell.sprite)}" /><figcaption>${cell.sprite.role} · ${cell.label}</figcaption></figure>`,
+  ).join("");
   const columnCount = states.length;
   await page.setContent(`<!doctype html><html><head><style>
     body { background: #16181c; color: #d7dadd; font: 12px system-ui, sans-serif; margin: 24px; }
@@ -65,29 +81,105 @@ async function renderSpriteMatrix(page: Page) {
     figcaption { margin-top: 8px; opacity: 0.75; font-size: 11px; }
   </style></head><body>
     <h2>48×56 (chiefs paper small size)</h2>
-    <div class="matrix">${cells.join("")}</div>
+    <div class="matrix">${cellHtml}</div>
     <h2>2× (96×112, human review)</h2>
-    <div class="matrix matrix-2x">${cells.join("")}</div>
+    <div class="matrix matrix-2x">${cellHtml}</div>
   </body></html>`);
 
-  return { imgs: page.locator("img.cell-img"), total: chiefs.length * states.length };
+  return { imgs: page.locator("img.cell-img"), cells, total: cells.length };
+}
+
+/** Every logical cell must expand to a uniform 2×2 physical block equal to the canonical matrix RGB. */
+async function expectExactPixelBlocks(img: ReturnType<Page["locator"]>, expected: string[]) {
+  const probe = await img.evaluate(async (el, matrix) => {
+    const image = el as HTMLImageElement;
+    if (image.naturalWidth !== 24 || image.naturalHeight !== 28) {
+      return { msg: `intrinsic size ${image.naturalWidth}×${image.naturalHeight}, expected 24×28` };
+    }
+    await image.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = 48;
+    canvas.height = 56;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(image, 0, 0, 48, 56);
+    const data = ctx.getImageData(0, 0, 48, 56).data;
+    const hex = (r: number, g: number, b: number) => `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+    for (let y = 0; y < 28; y += 1) {
+      for (let x = 0; x < 24; x += 1) {
+        const r = data[(y * 2 * 48 + x * 2) * 4];
+        const g = data[(y * 2 * 48 + x * 2) * 4 + 1];
+        const b = data[(y * 2 * 48 + x * 2) * 4 + 2];
+        const color = hex(r, g, b);
+        if (color !== matrix[y * 24 + x]) return { msg: `cell (${x},${y}) is ${color}, expected ${matrix[y * 24 + x]}` };
+        for (const [dx, dy] of [[1, 0], [0, 1], [1, 1]] as const) {
+          if (data[((y * 2 + dy) * 48 + x * 2 + dx) * 4] !== r) return { msg: `cell (${x},${y}) block is not uniform` };
+        }
+      }
+    }
+    return null;
+  }, expected);
+  expect(probe).toBeNull();
 }
 
 test("obsolete two-chief visual baseline is rejected at zero tolerance", async ({ page }) => {
-  await renderSpriteMatrix(page);
+  const { cells } = await buildMatrix(page);
+  // The negative fixture is byte-locked: it must never be regenerated with the
+  // positive baseline (v2 §8.4). Its verified MD5 is 1749ac6669411a2f0eddf482a441b115.
+  const negative = readFileSync("e2e-visual/sprite-matrix.spec.ts-snapshots/sprite-matrix-two-chiefs-sprite-matrix-linux.png");
+  expect(createHash("md5").update(negative).digest("hex")).toBe("1749ac6669411a2f0eddf482a441b115");
   // This fixture is the pre-3d1837e two-chief artifact. It must never silently bless the
   // five-chief matrix again: Playwright's negative assertion passes only when exact pixels differ.
   await expect(page).not.toHaveScreenshot("sprite-matrix-two-chiefs.png", { maxDiffPixelRatio: 0 });
+  expect(cells.length).toBe(45);
 });
 
 test("sprite variant matrix renders at 48×56 and 2× for human review", async ({ page }) => {
-  const { imgs, total } = await renderSpriteMatrix(page);
+  const started = Date.now();
+  const { imgs, cells, total } = await buildMatrix(page);
   await expect(imgs).toHaveCount(total * 2, { timeout: 15_000 });
-  // Every 48px image must decode, report nonzero intrinsic size, and sit in an exact 48×56 box.
+
+  // Canonical matrix checks (shared, no browser): every global-effect state differs from
+  // its role-appropriate neutral, while S2-low differs only for the S2 row and S4-bottleneck
+  // only for the S4 row — a labeled-but-unexercised cell cannot pass review (v2 §8.4).
+  const neutralByChief = new Map(cells.filter((cell) => cell.label === "neutral").map((cell) => [cell.sprite.role, cell.output]));
+  const stateKey = (cell: MatrixCell) => `${cell.sprite.role}/${cell.label}`;
+  for (const cell of cells) {
+    const neutral = neutralByChief.get(cell.sprite.role)!;
+    if (cell.label === "neutral") continue;
+    if (cell.label === "s2-low") {
+      if (cell.sprite.role === "S2") {
+        expect(cell.output).not.toEqual(neutral);
+        expect(cell.sprite.variant.framing).toBe("tight");
+      } else {
+        expect(cell.output).toEqual(neutral, `${stateKey(cell)}: S2 signal is role-gated`);
+      }
+    } else if (cell.label === "s4-bottleneck") {
+      if (cell.sprite.role === "S4") {
+        expect(cell.output).not.toEqual(neutral);
+        expect(cell.sprite.variant.supportDetail).toBe("utility-harness");
+      } else {
+        expect(cell.output).toEqual(neutral, `${stateKey(cell)}: S4 signal is role-gated`);
+      }
+    } else {
+      expect(cell.output).not.toEqual(neutral, `${stateKey(cell)} must visibly change the pixels`);
+    }
+  }
+  // Role-gated rows genuinely exercise their projection/harness controls.
+  const s2 = cells.find((cell) => cell.sprite.role === "S2" && cell.label === "s2-low")!;
+  const s2Render = buildSpritePixels(s2.sprite);
+  expect(s2Render.output.cells).not.toEqual(s2Render.sourceColors.cells);
+  const s4 = cells.find((cell) => cell.sprite.role === "S4" && cell.label === "s4-bottleneck")!;
+  const s4Render = buildSpritePixels(s4.sprite);
+  expect(s4Render.source.cells.some((cell) => cell.basePaletteIndex === 16)).toBe(true, "harness trim pixels present");
+
+  // In-browser: intrinsic 24×28, exact 48×56 CSS box, and every 2×2 physical block
+  // equals the canonical matrix RGB cell (crispEdges, no anti-alias shades).
   for (let index = 0; index < total; index += 1) {
     const img = imgs.nth(index);
     const naturalWidth = await img.evaluate((el) => (el as HTMLImageElement).naturalWidth);
-    expect(naturalWidth).toBeGreaterThan(0);
+    expect(naturalWidth).toBe(24);
+    const naturalHeight = await img.evaluate((el) => (el as HTMLImageElement).naturalHeight);
+    expect(naturalHeight).toBe(28);
     const decoded = await img.evaluate(async (el) => {
       try {
         await (el as HTMLImageElement).decode();
@@ -101,11 +193,18 @@ test("sprite variant matrix renders at 48×56 and 2× for human review", async (
     expect(box).not.toBeNull();
     expect(box!.width).toBeCloseTo(48, 1);
     expect(box!.height).toBeCloseTo(56, 1);
+    await expectExactPixelBlocks(img, cells[index].output);
   }
+
   // Human-review composite at 2× (gitignored; path recorded in the PR body).
   await page.screenshot({ path: "test-results/sprite-matrix-review.png", fullPage: true });
   // Committed baseline = the accepted 48×56 matrix artifact, scoped to the first .matrix
   // grid so the font-dependent <h2>/<figcaption> page chrome can't flake the zero-tolerance
   // diff across machines (the SVGs are deterministic; the surrounding text is not).
   await expect(page.locator(".matrix").first()).toHaveScreenshot("sprite-matrix.png", { maxDiffPixelRatio: 0 });
+
+  // Record the strict DOM bound and wall time (v2 §4A): one rect per horizontal run.
+  const totalRects = cells.reduce((sum, cell) => sum + spritePixelRuns(cell.output).length, 0);
+  const elapsed = Date.now() - started;
+  console.log(`sprite-matrix: ${total} unique images × 2 matrices = ${total * 2} imgs, ${totalRects} rects per full matrix pair run total ${totalRects * 2}, wall ${elapsed}ms`);
 });

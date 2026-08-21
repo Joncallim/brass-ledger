@@ -193,7 +193,7 @@ test("headless API sprite output carries filled prompts and sibling hashes", asy
   // The full result still carries a schema-valid raw session sibling that excludes sprite artifacts.
   assert.ok(body.sessionExport, "raw GameSession sibling remains");
   gameSessionSchema.parse(body.sessionExport);
-  const forbidden = ["prompt", "negativePrompt", "promptHash", "negativePromptHash", "deterministicSeed", "temperament", "variant", "effects", "posture", "framing", "supportDetail", "saturation", "backgroundDarkenOpacity"];
+  const forbidden = ["prompt", "negativePrompt", "promptHash", "negativePromptHash", "deterministicSeed", "temperament", "variant", "effects", "posture", "framing", "supportDetail", "saturation", "backgroundDarkenOpacity", "pixelGrid", "pixelMatrix", "pixels", "svg", "png"];
   const keys: string[] = [];
   const collect = (value: unknown) => {
     if (Array.isArray(value)) return value.forEach(collect);
