@@ -337,8 +337,114 @@ export const doctrineProfileSchema = z.object({
   evidenceRefs: z.array(z.string()).min(1),
   geneIds: z.array(z.string()).min(1),
   optionalStaffModules: z.array(optionalStaffModuleSchema).default([]),
+}).superRefine((profile, ctx) => {
+  if (new Set(profile.optionalStaffModules).size !== profile.optionalStaffModules.length) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["optionalStaffModules"],
+      message: "optional staff modules must be unique",
+    });
+  }
 });
 export type DoctrineProfile = z.infer<typeof doctrineProfileSchema>;
+
+// ── Doctrine 5 (issue #59): optional staff module mechanics ────────────────────
+// Closed monotone lane enum: the ONLY state lanes a staff module (or the
+// coordination-load counterweight) may touch. Sim switches only over this enum and
+// never over module ids; content owns identity/evidence/tags/deltas. Context-sensitive
+// lanes (staff.s3.visiblePosture, doctrine.relativeTempo, ...) are deliberately absent.
+export const moduleEffectLaneSchema = z.enum([
+  "staff.s1.recoveryDebt",
+  "staff.s2.deceptionRisk",
+  "staff.s5.strategicCoherence",
+  "doctrine.orderClarity",
+  "doctrine.systemPressure",
+  "doctrine.staffSynchronization",
+  "strategic.forceGeneration.reserveStrain",
+  "strategic.forceGeneration.trainingThroughput",
+  "strategic.sustainment.depotBacklog",
+  "strategic.sustainment.liftAvailability",
+  "strategic.alliance.reassurance",
+  "strategic.alliance.politicalAlignment",
+  "strategic.domestic.cabinetCover",
+  "strategic.domestic.committeeTolerance",
+  "strategic.domestic.mediaHeat",
+  "strategic.escalation.incidentLadder",
+  "resources.budgetAuthority",
+  "resources.readiness",
+]);
+export type ModuleEffectLane = z.infer<typeof moduleEffectLaneSchema>;
+
+export const moduleEffectDirection = {
+  "staff.s1.recoveryDebt": "higher-adverse",
+  "staff.s2.deceptionRisk": "higher-adverse",
+  "staff.s5.strategicCoherence": "higher-favorable",
+  "doctrine.orderClarity": "higher-favorable",
+  "doctrine.systemPressure": "higher-adverse",
+  "doctrine.staffSynchronization": "higher-favorable",
+  "strategic.forceGeneration.reserveStrain": "higher-adverse",
+  "strategic.forceGeneration.trainingThroughput": "higher-favorable",
+  "strategic.sustainment.depotBacklog": "higher-adverse",
+  "strategic.sustainment.liftAvailability": "higher-favorable",
+  "strategic.alliance.reassurance": "higher-favorable",
+  "strategic.alliance.politicalAlignment": "higher-favorable",
+  "strategic.domestic.cabinetCover": "higher-favorable",
+  "strategic.domestic.committeeTolerance": "higher-favorable",
+  "strategic.domestic.mediaHeat": "higher-adverse",
+  "strategic.escalation.incidentLadder": "higher-adverse",
+  "resources.budgetAuthority": "higher-favorable",
+  "resources.readiness": "higher-favorable",
+} as const satisfies Record<ModuleEffectLane, "higher-favorable" | "higher-adverse">;
+
+const doctrineProofRefSchema = z.string().regex(
+  /^CELERY\/doctrine-proof-register#[^#]+$/,
+  "module evidence must reference an exact doctrine-proof-register heading",
+);
+
+export const staffModuleEffectSchema = z.object({
+  lane: moduleEffectLaneSchema,
+  delta: z.number()
+    .min(-10)
+    .max(10)
+    .refine((value) => value !== 0, "delta must be non-zero")
+    .refine((value) => Number(value.toFixed(2)) === value, "delta supports at most two decimals"),
+  // Empty means standing. Otherwise any selected option tag activates the row.
+  whenAnyTags: z.array(z.string().min(1)).default([]),
+  summary: z.string().min(1),
+}).strict();
+export type StaffModuleEffect = z.infer<typeof staffModuleEffectSchema>;
+
+export const staffModuleDefinitionSchema = z.object({
+  id: optionalStaffModuleSchema,
+  label: z.string().min(1),
+  remit: z.string().min(1),
+  primaryStaffFunctionRefs: z.array(staffFunctionIdSchema).min(1),
+  evidenceRefs: z.array(doctrineProofRefSchema).min(1),
+  benefitEffects: z.array(staffModuleEffectSchema).min(1),
+  pressureEffects: z.array(staffModuleEffectSchema).min(1),
+}).strict();
+export type StaffModuleDefinition = z.infer<typeof staffModuleDefinitionSchema>;
+
+export const staffModuleEffectReadoutSchema = z.object({
+  lane: moduleEffectLaneSchema,
+  requestedDelta: z.number(),
+  summary: z.string(),
+  activatedByTags: z.array(z.string()),
+}).strict();
+export type StaffModuleEffectReadout = z.infer<typeof staffModuleEffectReadoutSchema>;
+
+export const staffModuleReadoutSchema = z.object({
+  id: optionalStaffModuleSchema,
+  label: z.string(),
+  remit: z.string(),
+  primaryStaffFunctionRefs: z.array(staffFunctionIdSchema),
+  evidenceRefs: z.array(doctrineProofRefSchema).min(1),
+  status: z.enum(["active", "pressured", "coordination-strained"]),
+  benefits: z.array(staffModuleEffectReadoutSchema),
+  pressures: z.array(staffModuleEffectReadoutSchema),
+  coordinationLoad: z.number().min(0).max(1),
+}).strict();
+export type StaffModuleReadout = z.infer<typeof staffModuleReadoutSchema>;
 
 // Apply a scenario's doctrine genes to the neutral doctrine baseline. Pure and
 // deterministic: every delta accumulates per variable first (order-independent), then
@@ -1275,6 +1381,7 @@ export const decisionPreviewEntrySchema = z.object({
   staffCosts: z.array(burdenContributionSchema),
   staffWarnings: z.array(acceptedRiskOverrideSchema),
   projectedReadouts: z.array(staffFunctionReadoutSchema),
+  projectedModuleReadouts: z.array(staffModuleReadoutSchema).default([]),
   projectedBlockers: z.array(z.string()),
   acceptedRiskCandidateCount: z.number().int().min(0),
 });
@@ -1285,6 +1392,8 @@ export const turnPreviewSchema = z.object({
   acceptedRiskCandidates: z.array(acceptedRiskOverrideSchema),
   predictedEvents: z.array(eventDefinitionSchema),
   chiefCoalitions: z.array(chiefCoalitionEntrySchema).default([]),
+  staffModules: z.array(staffModuleReadoutSchema).default([]),
+  coordinationLoad: z.number().min(0).max(1).default(0),
 });
 export type TurnPreview = z.infer<typeof turnPreviewSchema>;
 
@@ -1302,6 +1411,8 @@ export const turnResultSchema = z.object({
   monthlyEstimate: monthlyEstimateSchema,
   directorateBurden: z.array(directorateBurdenSchema),
   staffFunctions: z.array(staffFunctionReadoutSchema).default([]),
+  staffModules: z.array(staffModuleReadoutSchema).default([]),
+  coordinationLoad: z.number().min(0).max(1).default(0),
   explainability: z.array(explainabilityEntrySchema).default([]),
   portfolioLoad: z.array(z.object({
     directorate: directorateSchema,
@@ -1346,6 +1457,20 @@ export const scenarioDefinitionSchema = z.object({
   // time from the profile's genes. The .default() exists so a hypothetical pre-D3
   // scenario JSON parses as neutral; the shipped scenario always sets it explicitly.
   doctrineLens: doctrineLensSchema.default(neutralDoctrineLens),
+  // Doctrine 5: resolved optional staff module definitions in profile order. The
+  // .default() keeps pre-D5 scenario JSON parseable; the shipped scenario always sets
+  // it explicitly and the shared refinement below ties it to the profile exactly.
+  staffModules: z.array(staffModuleDefinitionSchema).default([]),
+}).superRefine((scenario, ctx) => {
+  const profileIds = scenario.doctrineProfile.optionalStaffModules;
+  const resolvedIds = scenario.staffModules.map((definition) => definition.id);
+  if (JSON.stringify(profileIds) !== JSON.stringify(resolvedIds)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["staffModules"],
+      message: "staffModules ids must exactly match doctrineProfile.optionalStaffModules in order",
+    });
+  }
 });
 export type ScenarioDefinition = z.infer<typeof scenarioDefinitionSchema>;
 
@@ -1402,6 +1527,7 @@ export const scenarioSummarySchema = z.object({
   externalConstraints: z.array(externalConstraintDefinitionSchema),
   events: z.array(eventDefinitionSchema).default([]),
   doctrineLens: doctrineLensSchema.default(neutralDoctrineLens),
+  staffModules: z.array(staffModuleDefinitionSchema).default([]),
   spriteVisualLanguage: spriteVisualLanguageSchema,
 });
 export type ScenarioSummary = z.infer<typeof scenarioSummarySchema>;

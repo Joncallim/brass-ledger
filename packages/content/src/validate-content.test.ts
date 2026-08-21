@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { doctrineGenes } from "./doctrine-genes";
-import { validateDoctrineEvent, validateSpriteVisualLanguage } from "./validate-content";
+import { validateDoctrineEvent, validateSpriteVisualLanguage, validateStaffModuleDefinition } from "./validate-content";
 import { soloScenario } from "./scenario";
 import { spriteVisualLanguage } from "./sprite-visual-language";
 import type { EventDefinition } from "@brass-ledger/shared";
+import { resolveStaffModules, staffModuleDefinitions } from "./staff-module-definitions";
 
 function context() {
   return {
@@ -87,6 +88,32 @@ test("sourceGeneLabel must exactly match the registry label", () => {
   event.doctrineTrigger = { ...event.doctrineTrigger!, sourceGeneLabel: "Coalition Native Staff (wrong label)" };
   assert.throws(() => validateDoctrineEvent(event, context()), /sourceGeneLabel does not exactly match/);
 });
+
+test("the shipped module registry validates from the same resolver definitions", () => {
+  assert.deepEqual(soloScenario.staffModules, staffModuleDefinitions.filter((definition) => soloScenario.doctrineProfile.optionalStaffModules.includes(definition.id)));
+  for (const definition of soloScenario.staffModules) assert.doesNotThrow(() => validateStaffModuleDefinition(definition));
+});
+
+test("module resolver rejects duplicate, unknown, and incomplete profile selections", () => {
+  assert.throws(() => resolveStaffModules({ ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J6"] }), /repeats/);
+  assert.throws(() => resolveStaffModules({ ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "NOPE"] as any }), /unknown/);
+  assert.deepEqual(resolveStaffModules({ ...soloScenario.doctrineProfile, optionalStaffModules: [] }), []);
+});
+
+for (const [label, mutate, message] of [
+  ["bad evidence path", (value: any) => { value.evidenceRefs[0] = "CELERY/not-the-register#NATO AJP-3 Staff Directorate Baseline"; }, /heading/],
+  ["missing evidence heading", (value: any) => { value.evidenceRefs[0] = "CELERY/doctrine-proof-register#No Such Heading"; }, /not approved/],
+  ["unapproved module heading", (value: any) => { value.evidenceRefs[0] = "CELERY/doctrine-proof-register#France CPOIA J-Branches"; }, /not approved/],
+  ["forward posture lane", (value: any) => { value.benefitEffects[0].lane = "staff.s3.visiblePosture"; }, /unknown effect lane/],
+  ["sign inversion", (value: any) => { value.benefitEffects[0].delta = Math.abs(value.benefitEffects[0].delta); }, /wrong sign/],
+  ["incomplete effects", (value: any) => { value.pressureEffects = []; }, /needs at least one/],
+] as const) {
+  test(`module lint rejects ${label}`, () => {
+    const fixture = structuredClone(staffModuleDefinitions[0]);
+    mutate(fixture);
+    assert.throws(() => validateStaffModuleDefinition(fixture), message);
+  });
+}
 
 test("sprite visual language has the exact authored rows and chief coverage", () => {
   assert.doesNotThrow(() => validateSpriteVisualLanguage(spriteVisualLanguage, soloScenario.chiefs));

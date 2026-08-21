@@ -13,15 +13,21 @@ import {
   chiefSpriteDeterministicSeed,
   chiefSpriteVariantStateSchema,
   createInitialGameSession,
+  decisionPreviewEntrySchema,
   defaultStaffFunctionDefinitions,
   defaultStaffMechanicsState,
   doctrineAcceptedRiskRefSchema,
+  doctrineProfileSchema,
   doctrineMaturityEntrySchema,
   eventDefinitionSchema,
   gameSessionSchema,
   generateAdvisorRoster,
+  moduleEffectDirection,
+  moduleEffectLaneSchema,
+  optionalStaffModuleSchema,
   relationshipLabel,
   resolveSpriteBasePalette,
+  scenarioDefinitionSchema,
   scenarioSummarySchema,
   spriteDarkenVignette,
   spriteDesaturate45,
@@ -36,6 +42,10 @@ import {
   spriteShadowTone,
   spriteSpecSchema,
   spriteVariantEffectSchema,
+  staffFunctionIdSchema,
+  staffModuleDefinitionSchema,
+  staffModuleEffectSchema,
+  staffModuleReadoutSchema,
   SPRITE_NEGATIVE_PROMPT,
   SPRITE_PIXEL_ACCESSORY,
   SPRITE_PIXEL_CALM_BROWS,
@@ -51,10 +61,12 @@ import {
   SPRITE_PIXEL_TIGHT_X_MAP,
   SPRITE_PIXEL_WIDTH,
   SPRITE_PROMPT_ROLE_LABELS,
+  turnPreviewSchema,
   turnResultSchema,
   writeSpriteCells,
   type ChiefSpriteVariantState,
   type EventDefinition,
+  type OptionalStaffModule,
   type SpriteHexColor,
   type SpritePixelGrid,
   type SpritePixelPaletteIndex,
@@ -1588,4 +1600,31 @@ test("gameSessionSchema parses a legacy-only v6 session roster (no sprite fields
   assert.equal(parsed.advisorRoster.length, 1);
   assert.equal(parsed.advisorRoster[0].portrait.skinTone, spritePortrait.skinTone);
   assert.equal("deterministicSeed" in parsed.advisorRoster[0].portrait, false, "sprite-only fields must never be stored on a session portrait");
+});
+
+test("Doctrine 5 schemas enforce closed lanes, effect defaults, and StaffFunctionId", () => {
+  const base = {
+    id: "J6", label: "J6", remit: "communications", primaryStaffFunctionRefs: ["S2"],
+    evidenceRefs: ["CELERY/doctrine-proof-register#NATO AJP-3 Staff Directorate Baseline"],
+    benefitEffects: [{ lane: "doctrine.systemPressure", delta: -1, summary: "benefit" }],
+    pressureEffects: [{ lane: "resources.budgetAuthority", delta: -1, summary: "pressure" }],
+  };
+  const parsed = staffModuleDefinitionSchema.parse(base);
+  assert.deepEqual(parsed.benefitEffects[0].whenAnyTags, []);
+  assert.deepEqual(parsed.pressureEffects[0].whenAnyTags, []);
+  assert.throws(() => staffModuleDefinitionSchema.parse({ ...base, primaryStaffFunctionRefs: ["J6"] }), /S1|S5|StaffFunctionId|Invalid/);
+  assert.throws(() => staffModuleDefinitionSchema.parse({ ...base, benefitEffects: [{ lane: "staff.s3.visiblePosture", delta: 1, summary: "bad" }] }), /Invalid|lane/);
+  assert.throws(() => staffModuleDefinitionSchema.parse({ ...base, benefitEffects: [{ lane: "doctrine.systemPressure", delta: 0, summary: "bad" }] }), /non-zero/);
+  assert.throws(() => staffModuleDefinitionSchema.parse({ ...base, benefitEffects: [{ lane: "doctrine.systemPressure", delta: 1.234, summary: "bad" }] }), /two decimals/);
+});
+
+test("module output has no top-level module state and no module state in the save schema", () => {
+  const parsed = staffModuleDefinitionSchema.parse({
+    id: "J6", label: "J6", remit: "communications", primaryStaffFunctionRefs: ["S2"],
+    evidenceRefs: ["CELERY/doctrine-proof-register#NATO AJP-3 Staff Directorate Baseline"],
+    benefitEffects: [{ lane: "doctrine.systemPressure", delta: -1, summary: "benefit" }],
+    pressureEffects: [{ lane: "resources.budgetAuthority", delta: -1, summary: "pressure" }],
+  });
+  assert.equal("state" in parsed, false);
+  assert.equal("moduleState" in parsed, false);
 });

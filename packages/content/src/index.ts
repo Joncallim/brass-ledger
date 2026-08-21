@@ -1,5 +1,6 @@
 export { soloScenario } from "./scenario";
 export { doctrineGenes, resolveDoctrineGenes } from "./doctrine-genes";
+export { staffModuleDefinitions, resolveStaffModules } from "./staff-module-definitions";
 export { spriteVisualLanguage } from "./sprite-visual-language";
 import type { EventDefinition } from "@brass-ledger/shared";
 

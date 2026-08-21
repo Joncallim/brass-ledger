@@ -100,10 +100,14 @@ import {
   type ExternalTechNode,
   type MemoOption,
   type MemoSelection,
+  type ModuleEffectLane,
   type ReplayValidation,
   type ScenarioDefinition,
   type StaffFunctionDefinition,
   type StaffMechanicsState,
+  type StaffModuleDefinition,
+  type StaffModuleEffect,
+  type StaffModuleReadout,
   type StateDelta,
   type StrategicState,
   type TechProgressNode,
@@ -116,6 +120,7 @@ import {
   defaultDoctrineMechanicsState,
   directorateLabel,
   evaluateCampaignObjectives,
+  moduleEffectLaneSchema,
   staffFunctionForDirectorate,
   summarizeState,
   updateChiefAgendaMemoryFromPositions,
@@ -1476,6 +1481,8 @@ type DoctrineResolutionInput = {
   chiefs: ScenarioDefinition["chiefs"];
   previousChiefTrust: Record<string, number>;
   acceptedRiskOverrides: AcceptedRiskOverride[];
+  /** Doctrine 5: staff-module/coordination totals for orderClarity, staffSynchronization, and systemPressure, added inside their base formulas before clamp/round and consequence checks. */
+  moduleDoctrineOffsets?: Partial<Record<ModuleEffectLane, number>>;
 };
 
 function resolveDoctrineMechanics({
@@ -1490,6 +1497,7 @@ function resolveDoctrineMechanics({
   chiefs,
   previousChiefTrust,
   acceptedRiskOverrides,
+  moduleDoctrineOffsets = {},
 }: DoctrineResolutionInput): DoctrineResolution {
   const tags = new Set(selectedOptions.flatMap((option) => option.tags));
   const prev = previousState.doctrineMechanics;
@@ -1725,7 +1733,7 @@ function resolveDoctrineMechanics({
   // moves the equilibrium durably (the variable still settles at complexity + offset
   // instead of ratcheting to an extreme).
   const orderClarity = clamp(
-    round(prev.orderClarity * 0.5 + (complexityScore + (factionOffset.orderClarity ?? 0)) * 0.5),
+    round(prev.orderClarity * 0.5 + (complexityScore + (factionOffset.orderClarity ?? 0)) * 0.5 + (moduleDoctrineOffsets["doctrine.orderClarity"] ?? 0)),
     0,
     100,
   );
@@ -1803,7 +1811,7 @@ function resolveDoctrineMechanics({
   const meanRatio = burdenRatios.length > 0 ? burdenRatios.reduce((sum, value) => sum + value, 0) / burdenRatios.length : 0;
   const ratioVariance = burdenRatios.length > 0 ? burdenRatios.reduce((sum, value) => sum + (value - meanRatio) ** 2, 0) / burdenRatios.length : 0;
   const staffSynchronization = clamp(
-    round(100 - Math.sqrt(ratioVariance) * 90) + (factionOffset.staffSynchronization ?? 0),
+    round(100 - Math.sqrt(ratioVariance) * 90) + (factionOffset.staffSynchronization ?? 0) + (moduleDoctrineOffsets["doctrine.staffSynchronization"] ?? 0),
     0,
     100,
   );
@@ -1834,7 +1842,8 @@ function resolveDoctrineMechanics({
   // mis-targeting or dependency blowback.
   const systemPressure = clamp(
     round(100 - nextStaffMechanics.s2.externalEstimateConfidence + nextStaffMechanics.s2.deceptionRisk * 0.3) +
-      (factionOffset.systemPressure ?? 0),
+      (factionOffset.systemPressure ?? 0) +
+      (moduleDoctrineOffsets["doctrine.systemPressure"] ?? 0),
     0,
     100,
   );
@@ -1901,7 +1910,16 @@ function resolveDoctrineMechanics({
  * - The 30-point floor ensures a minimum score even in failed campaigns, reflecting the
  *   real-world norm that strategic failure rarely means zero residual capacity.
  */
-function assessOutcome(state: CampaignState) {
+export function rawCampaignScore(state: CampaignState): number {
+  return 30 +
+    state.strategic.forceGeneration.deployableUnits * 5 +
+    state.strategic.alliance.politicalAlignment * 0.28 +
+    state.strategic.domestic.cabinetCover * 0.18 -
+    state.strategic.escalation.incidentLadder * 0.3 -
+    state.strategic.forceGeneration.reserveStrain * 0.12;
+}
+
+export function assessOutcome(state: CampaignState) {
   const checks = evaluateCampaignObjectives(state);
   const metCount = checks.filter((entry) => entry.met).length;
   const collapse =
@@ -1912,18 +1930,7 @@ function assessOutcome(state: CampaignState) {
   // longer (e.g. multi-year) campaign is just a scenario with a larger
   // maxTurns. Nothing about ending the campaign should hardcode a turn count.
   const finished = collapse || state.turn > state.maxTurns;
-  const score = clamp(
-    Math.round(
-      30 +
-        state.strategic.forceGeneration.deployableUnits * 5 +
-        state.strategic.alliance.politicalAlignment * 0.28 +
-        state.strategic.domestic.cabinetCover * 0.18 -
-        state.strategic.escalation.incidentLadder * 0.3 -
-        state.strategic.forceGeneration.reserveStrain * 0.12,
-    ),
-    0,
-    100,
-  );
+  const score = clamp(Math.round(rawCampaignScore(state)), 0, 100);
 
   if (!finished) return { status: "active" as const, score, outcome: null };
 
@@ -2066,6 +2073,218 @@ function updateCommitments(
   return next;
 }
 
+// ── Doctrine 5 (issue #59): optional staff modules ─────────────────────────────
+// The sim consumes scenario.staffModules generically: it never imports content and
+// never switches on module ids — only on the closed lane enum (moduleEffectLaneSchema).
+// Requested deltas accumulate as integer hundredths by lane (order-independent),
+// convert once, apply once per lane in enum order, clamp once, round to two decimals.
+// Module resolution draws ZERO RNG and runs after event selection, so same-turn event
+// choice and RNG order/count are untouched. A scenario with zero resolved modules is
+// byte-identical to the pre-D5 engine: no totals, no offsets, empty readouts, load 0.
+
+export function coordinationLoad(moduleCount: number): number {
+  return Number(Math.min(1, Math.max(0, (moduleCount - 2) / 5)).toFixed(2));
+}
+
+export function coordinationRequestedEffects(load: number) {
+  return {
+    "doctrine.systemPressure": Number((10 * load).toFixed(2)),
+    "doctrine.staffSynchronization": Number((-12 * load).toFixed(2)),
+    "staff.s5.strategicCoherence": Number((-2 * load).toFixed(2)),
+    "strategic.escalation.incidentLadder": Number((1.25 * load).toFixed(2)),
+    "resources.readiness": Number((-0.75 * load).toFixed(2)),
+  } as const;
+}
+
+type ActiveModuleEffect = {
+  effect: StaffModuleEffect;
+  activatedByTags: string[];
+};
+
+type ActiveModuleRow = {
+  definition: StaffModuleDefinition;
+  activeBenefits: ActiveModuleEffect[];
+  activePressures: ActiveModuleEffect[];
+};
+
+/** Select the active authored rows: standing rows always act; conditional rows act when ANY tag is selected. */
+function resolveActiveModuleRows(definitions: readonly StaffModuleDefinition[], selectedTags: Set<string>): ActiveModuleRow[] {
+  return definitions.map((definition) => {
+    const active = (effects: readonly StaffModuleEffect[]): ActiveModuleEffect[] =>
+      effects.flatMap((effect) => {
+        const activatedByTags = effect.whenAnyTags.filter((tag) => selectedTags.has(tag));
+        if (effect.whenAnyTags.length > 0 && activatedByTags.length === 0) return [];
+        return [{ effect, activatedByTags }];
+      });
+    return { definition, activeBenefits: active(definition.benefitEffects), activePressures: active(definition.pressureEffects) };
+  });
+}
+
+export type ModuleResolution = {
+  staffMechanics: StaffMechanicsState;
+  strategic: StrategicState;
+  resources: CampaignState["resources"];
+  /** Doctrine-lane totals (orderClarity/systemPressure/staffSynchronization), fed into resolveDoctrineMechanics before its threshold checks. */
+  moduleDoctrineOffsets: Partial<Record<ModuleEffectLane, number>>;
+  readouts: StaffModuleReadout[];
+  coordinationLoad: number;
+  /** One aggregate after-action note; null when no module is enabled. */
+  note: { heading: string; detail: string } | null;
+};
+
+export function resolveActiveStaffModules(args: {
+  definitions: readonly StaffModuleDefinition[];
+  selectedTags: Set<string>;
+  staffMechanics: StaffMechanicsState;
+  strategic: StrategicState;
+  resources: CampaignState["resources"];
+}): ModuleResolution {
+  const load = coordinationLoad(args.definitions.length);
+  const rows = resolveActiveModuleRows(args.definitions, args.selectedTags);
+
+  // Accumulate requested deltas as integer hundredths in closed lane-enum order.
+  // Summing floats in profile order is not order-independent; integer hundredths are.
+  const totals = Object.fromEntries(moduleEffectLaneSchema.options.map((lane) => [lane, 0])) as Record<ModuleEffectLane, number>;
+  for (const row of rows) {
+    for (const { effect } of [...row.activeBenefits, ...row.activePressures]) {
+      totals[effect.lane] += Math.round(effect.delta * 100);
+    }
+  }
+  if (load > 0) {
+    const coordination = coordinationRequestedEffects(load);
+    for (const [lane, value] of Object.entries(coordination) as Array<[ModuleEffectLane, number]>) {
+      totals[lane] += Math.round(value * 100);
+    }
+  }
+
+  // Convert once, then apply each lane once in enum order with a single clamp and
+  // two-decimal rounding. Doctrine lanes are NOT clamped here: they enter the
+  // resolveDoctrineMechanics base formulas before those formulas' own clamp/round and
+  // consequence checks.
+  let staffMechanics = cloneState(args.staffMechanics);
+  let strategic = cloneState(args.strategic);
+  let resources = cloneState(args.resources);
+  const moduleDoctrineOffsets: Partial<Record<ModuleEffectLane, number>> = {};
+  for (const lane of moduleEffectLaneSchema.options) {
+    const hundredths = totals[lane];
+    if (hundredths === 0) continue;
+    const delta = hundredths / 100;
+    switch (lane) {
+      case "staff.s1.recoveryDebt":
+        staffMechanics = { ...staffMechanics, s1: { ...staffMechanics.s1, recoveryDebt: round(clamp(staffMechanics.s1.recoveryDebt + delta, 0, 100)) } };
+        break;
+      case "staff.s2.deceptionRisk":
+        staffMechanics = { ...staffMechanics, s2: { ...staffMechanics.s2, deceptionRisk: round(clamp(staffMechanics.s2.deceptionRisk + delta, 0, 100)) } };
+        break;
+      case "staff.s5.strategicCoherence":
+        staffMechanics = { ...staffMechanics, s5: { ...staffMechanics.s5, strategicCoherence: round(clamp(staffMechanics.s5.strategicCoherence + delta, 0, 100)) } };
+        break;
+      case "doctrine.orderClarity":
+      case "doctrine.systemPressure":
+      case "doctrine.staffSynchronization":
+        moduleDoctrineOffsets[lane] = delta;
+        break;
+      case "strategic.forceGeneration.reserveStrain":
+        strategic = { ...strategic, forceGeneration: { ...strategic.forceGeneration, reserveStrain: round(clamp(strategic.forceGeneration.reserveStrain + delta, 0, 100)) } };
+        break;
+      case "strategic.forceGeneration.trainingThroughput":
+        strategic = { ...strategic, forceGeneration: { ...strategic.forceGeneration, trainingThroughput: round(clamp(strategic.forceGeneration.trainingThroughput + delta, 0, 100)) } };
+        break;
+      case "strategic.sustainment.depotBacklog":
+        strategic = { ...strategic, sustainment: { ...strategic.sustainment, depotBacklog: round(clamp(strategic.sustainment.depotBacklog + delta, 0, 100)) } };
+        break;
+      case "strategic.sustainment.liftAvailability":
+        strategic = { ...strategic, sustainment: { ...strategic.sustainment, liftAvailability: round(clamp(strategic.sustainment.liftAvailability + delta, 0, 100)) } };
+        break;
+      case "strategic.alliance.reassurance":
+        strategic = { ...strategic, alliance: { ...strategic.alliance, reassurance: round(clamp(strategic.alliance.reassurance + delta, 0, 100)) } };
+        break;
+      case "strategic.alliance.politicalAlignment":
+        strategic = { ...strategic, alliance: { ...strategic.alliance, politicalAlignment: round(clamp(strategic.alliance.politicalAlignment + delta, 0, 100)) } };
+        break;
+      case "strategic.domestic.cabinetCover":
+        strategic = { ...strategic, domestic: { ...strategic.domestic, cabinetCover: round(clamp(strategic.domestic.cabinetCover + delta, 0, 100)) } };
+        break;
+      case "strategic.domestic.committeeTolerance":
+        strategic = { ...strategic, domestic: { ...strategic.domestic, committeeTolerance: round(clamp(strategic.domestic.committeeTolerance + delta, 0, 100)) } };
+        break;
+      case "strategic.domestic.mediaHeat":
+        strategic = { ...strategic, domestic: { ...strategic.domestic, mediaHeat: round(clamp(strategic.domestic.mediaHeat + delta, 0, 100)) } };
+        break;
+      case "strategic.escalation.incidentLadder":
+        strategic = { ...strategic, escalation: { ...strategic.escalation, incidentLadder: round(clamp(strategic.escalation.incidentLadder + delta, 0, 100)) } };
+        break;
+      case "resources.budgetAuthority":
+        resources = { ...resources, budgetAuthority: round(clamp(resources.budgetAuthority + delta, 0, 100)) };
+        break;
+      case "resources.readiness":
+        resources = { ...resources, readiness: round(clamp(resources.readiness + delta, 0, 100)) };
+        break;
+    }
+  }
+
+  // Readouts report the exact active authored/requested rows in profile order; the
+  // resolved post-clamp state stays available through nextState. Status precedence:
+  // coordination-strained when load > 0, pressured when any pressure is active,
+  // otherwise active.
+  const readouts: StaffModuleReadout[] = rows.map((row) => {
+    const status = load > 0 ? "coordination-strained" : row.activePressures.length > 0 ? "pressured" : "active";
+    return {
+      id: row.definition.id,
+      label: row.definition.label,
+      remit: row.definition.remit,
+      primaryStaffFunctionRefs: row.definition.primaryStaffFunctionRefs,
+      evidenceRefs: row.definition.evidenceRefs,
+      status,
+      benefits: row.activeBenefits.map(({ effect, activatedByTags }) => ({
+        lane: effect.lane,
+        requestedDelta: effect.delta,
+        summary: effect.summary,
+        activatedByTags,
+      })),
+      pressures: row.activePressures.map(({ effect, activatedByTags }) => ({
+        lane: effect.lane,
+        requestedDelta: effect.delta,
+        summary: effect.summary,
+        activatedByTags,
+      })),
+      coordinationLoad: load,
+    };
+  });
+
+  // One aggregate note, appended last in the engine note order. The coordination
+  // sentence appears only when load > 0 (counts 0-2 apply no coordination rows).
+  let note: ModuleResolution["note"] = null;
+  if (rows.length > 0) {
+    const moduleLines = rows.map((row) => {
+      const summaries = [...row.activeBenefits.map(({ effect }) => effect.summary), ...row.activePressures.map(({ effect }) => effect.summary)];
+      return `${row.definition.label}: ${summaries.join(" ")}`;
+    });
+    let detail = moduleLines.join(" ");
+    if (load > 0) {
+      const coordination = coordinationRequestedEffects(load);
+      const signed = (value: number) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}`;
+      detail +=
+        ` Coordination load ${load.toFixed(2)} requested ${signed(coordination["doctrine.systemPressure"])} system pressure, ` +
+        `${signed(coordination["doctrine.staffSynchronization"])} staff synchronization, ` +
+        `${signed(coordination["staff.s5.strategicCoherence"])} S5 coherence, ` +
+        `${signed(coordination["strategic.escalation.incidentLadder"])} incident ladder, and ` +
+        `${signed(coordination["resources.readiness"])} readiness.`;
+    }
+    note = { heading: `Staff modules: ${rows.length} cells active`, detail };
+  }
+
+  return {
+    staffMechanics,
+    strategic,
+    resources,
+    moduleDoctrineOffsets,
+    readouts,
+    coordinationLoad: load,
+    note,
+  };
+}
+
 export function previewTurn(scenario: ScenarioDefinition, state: CampaignState, input: TurnInput) {
   const projectedResult = resolveTurn(scenario, state, input);
   const memos = deriveDecisionMemos(scenario, state);
@@ -2091,6 +2310,7 @@ export function previewTurn(scenario: ScenarioDefinition, state: CampaignState, 
       staffCosts: option.burden,
       staffWarnings: acceptedRiskCandidates,
       projectedReadouts: projectedResult.staffFunctions,
+      projectedModuleReadouts: projectedResult.staffModules,
       projectedBlockers,
       acceptedRiskCandidateCount: acceptedRiskCandidates.length,
     }];
@@ -2114,6 +2334,10 @@ export function previewTurn(scenario: ScenarioDefinition, state: CampaignState, 
     acceptedRiskCandidates,
     predictedEvents: projectedResult.triggeredEvents,
     chiefCoalitions: projectedResult.chiefCoalitions,
+    // Doctrine 5: the top-level preview carries the projected module readouts and
+    // coordination load so every client (web, server, headless) reads one engine result.
+    staffModules: projectedResult.staffModules,
+    coordinationLoad: projectedResult.coordinationLoad,
   };
 }
 
@@ -2172,7 +2396,23 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   const nextPrograms = updatePrograms(scenario, previousState, input.selections, directorateBurden);
   const nextConstraints = updateConstraints(previousState, selectedOptions, triggeredEvents);
   const nextTrust = updateChiefTrust(previousState, chiefPositions);
-  const nextStaffMechanics = updateStaffMechanics(previousState, selectedOptions, directorateBurden, triggeredEvents, nextConstraints);
+  let nextStaffMechanics = updateStaffMechanics(previousState, selectedOptions, directorateBurden, triggeredEvents, nextConstraints);
+  // Doctrine 5 (issue #59): resolve active optional staff modules AFTER the S1-S5 core
+  // so their staff/strategic/resource deltas are visible to the same-turn doctrine
+  // gates, and pass only the doctrine-lane totals into resolveDoctrineMechanics (added
+  // inside the orderClarity/staffSynchronization/systemPressure base formulas before
+  // clamp/round and before each consequence check). Zero RNG, zero events: the module
+  // resolution never touches selection, the event stream, or the RNG budget.
+  const moduleResolution = resolveActiveStaffModules({
+    definitions: scenario.staffModules,
+    selectedTags,
+    staffMechanics: nextStaffMechanics,
+    strategic: nextStrategic,
+    resources: nextResources,
+  });
+  nextStaffMechanics = moduleResolution.staffMechanics;
+  nextStrategic = moduleResolution.strategic;
+  nextResources = moduleResolution.resources;
   const doctrineResolution = resolveDoctrineMechanics({
     previousState,
     doctrineAnchor: scenario.initialState.doctrineMechanics,
@@ -2185,6 +2425,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     chiefs: scenario.chiefs,
     previousChiefTrust: previousState.chiefTrust,
     acceptedRiskOverrides: input.acceptedRiskOverrides ?? [],
+    moduleDoctrineOffsets: moduleResolution.moduleDoctrineOffsets,
   });
   nextStrategic = doctrineResolution.strategic;
   nextStrategic.forceGeneration.deployableUnits = round(nextStrategic.forceGeneration.deployableUnits);
@@ -2302,6 +2543,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
       };
     }),
     ...resolveBurdenDissent(directorateBurden, lens.burdenBias, input.acceptedRiskOverrides ?? [], scenario.staffFunctions),
+    ...(moduleResolution.note ? [moduleResolution.note] : []),
   ];
   const staffFunctions = buildStaffFunctionReadouts(scenario.staffFunctions, directorateBurden, nextState, lens.burdenBias);
   const explainability = createExplainability(selectedPairs, directorateBurden, triggeredEvents, previousState, nextState, nodeName);
@@ -2342,6 +2584,8 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     monthlyEstimate,
     directorateBurden,
     staffFunctions,
+    staffModules: moduleResolution.readouts,
+    coordinationLoad: moduleResolution.coordinationLoad,
     explainability,
     portfolioLoad: [],
     triggeredEvents,
