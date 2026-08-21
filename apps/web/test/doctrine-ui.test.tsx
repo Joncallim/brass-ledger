@@ -7,6 +7,7 @@ import type { PreviewPayload } from "../src/lib/types";
 import { PreCommitScreen } from "../src/screens/PreCommitScreen/index.tsx";
 import { EventList } from "../src/screens/AfterActionScreen/EventList.tsx";
 import { ChiefsPaperScreen } from "../src/screens/ChiefsPaperScreen/index.tsx";
+import { ChiefPortrait } from "../src/components/ChiefPortrait";
 
 const doctrineEvent = soloScenario.events.find((event) => event.doctrineTrigger)!;
 const ordinaryEvent = soloScenario.events.find((event) => !event.doctrineTrigger)!;
@@ -138,6 +139,47 @@ test("chiefs paper passes real session state into the sprite variant, not a neut
     onBack={() => {}}
   />);
   assert.ok(html.includes(expected), "web derives the sprite from the same state the shared builder sees");
-  // The overloaded state must be visible in the rendered SVG: the percent-encoded dark overlay.
-  assert.ok(html.includes("fill%3D%22%23000000%22%20opacity%3D%220.22%22"), "overloaded chief renders the darkened background");
+  // Sprite 4 (#82): the pixel renderer's crispEdges root replaces the old vector dark
+  // overlay. The overloaded state must still differ byte-for-byte from the same chief's
+  // neutral rendering (v2 §7.5 — equality plus overloaded-vs-neutral byte inequality).
+  assert.ok(html.includes("shape-rendering%3D%22crispEdges%22"), "pixel renderer root is served in the data URI");
+  assert.ok(!html.includes("fill%3D%22%23000000%22%20opacity%3D%220.22%22"), "the vector black overlay is gone");
+  const neutral = buildAdvisorPortraitDataUri(buildChiefSpriteSpec({
+    chief, portrait: advisor.portrait, sessionSeed: session.id,
+    variantState: {
+      trustBand: relationshipLabel(50),
+      burdenLevel: "light",
+      campaignStatus: session.state.campaignStatus,
+      s2ExternalEstimateConfidence: session.state.staffMechanics.s2.externalEstimateConfidence,
+      s4SupportableTempo: session.state.staffMechanics.s4.supportableTempo,
+    },
+    visualLanguage: scenario.spriteVisualLanguage,
+  }));
+  assert.notEqual(expected, neutral, "the overloaded state changes the pixel bytes");
+});
+
+test("ChiefPortrait renders exact integer pixel scaling with pixelated rendering", () => {
+  const session = createInitialGameSession(soloScenario, "web-portrait-size-session");
+  const scenario = { ...soloScenario, spriteVisualLanguage } as unknown as ScenarioSummary;
+  const chief = soloScenario.chiefs[0];
+  const advisor = session.advisorRoster.find((entry) => entry.chiefId === chief.id)!;
+  const sprite = buildChiefSpriteSpec({
+    chief, portrait: advisor.portrait, sessionSeed: session.id,
+    variantState: {
+      trustBand: "steady", burdenLevel: "light", campaignStatus: "active",
+      s2ExternalEstimateConfidence: 46, s4SupportableTempo: 50,
+    },
+    visualLanguage: scenario.spriteVisualLanguage,
+  });
+  const sm = renderToStaticMarkup(<ChiefPortrait sprite={sprite} title="T" size="sm" />);
+  const md = renderToStaticMarkup(<ChiefPortrait sprite={sprite} title="T" size="md" />);
+  const lg = renderToStaticMarkup(<ChiefPortrait sprite={sprite} title="T" size="lg" />);
+  assert.match(sm, /w-12 h-14/, "sm stays 48×56 (2×)");
+  assert.match(md, /w-\[72px\] h-\[84px\]/, "md is exactly 72×84 (3×)");
+  assert.match(lg, /w-24 h-28/, "lg stays 96×112 (4×)");
+  for (const html of [sm, md, lg]) {
+    assert.match(html, /image-rendering:pixelated/, "every size renders pixelated");
+    assert.match(html, /data:image\/svg\+xml/, "the data URI is the delivery path");
+    assert.match(html, /alt="[^"]+ — T"/, "alt contract is preserved");
+  }
 });

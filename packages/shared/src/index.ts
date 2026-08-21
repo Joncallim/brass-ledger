@@ -3405,131 +3405,1037 @@ export function buildChiefSpriteSpec(input: ChiefSpriteSpecInput): SpriteSpec {
 }
 
 /**
- * Frozen exhaustive expression→face-geometry deltas (Sprite 3, issue #52). Authored
- * `browTilt`/`mouthCurve` stay the identity base; the rendered value is base + delta,
- * clamped. Deltas intentionally dominate the authored range so state reads at 48 px.
+ * Sprite 4 (issue #82): coherent 24×28 pixel-art portraits at 48×56.
+ *
+ * This is the pixel-art grammar from the reviewed v2 architecture
+ * (/tmp/pixel-renderer-architecture-v2.md): a deterministic 24×28 semantic grid,
+ * hand-authored template library, region-owned effects, and run-grouped crispEdges
+ * SVG. It replaces the Sprite 1-3 vector geometry while KEEPING the public names
+ * `buildAdvisorPortraitSvg` / `buildAdvisorPortraitDataUri` and their exact
+ * signatures, so every consumer (headless, web ChiefPortrait, CLI, server) compiles
+ * unchanged (v2 Changes #7 — no dual API, no buildPixelPortrait* exports). The
+ * pixel matrix is output-only derived data and never enters saves.
+ *
+ * COLOR AUTHORITY (v2 Changes #3/#4): the SEVEN NAMED portrait fields on SpriteSpec
+ * (skinTone, hairColor, eyeColor, uniformColor, trimColor, backgroundColor,
+ * panelColor) are the only color sources. `sprite.palette` is intentionally IGNORED
+ * for rendering because spriteSpecSchema only checks it as a non-empty string array
+ * — it cannot enforce length or correspondence with the named fields — so a
+ * schema-valid hand-built SpriteSpec could disagree with its own named colors.
+ * Rendering from the named fields keeps every tone traceable and the identity
+ * contract exact. The canonical builder mirrors the seven fields into `palette` in
+ * order, but the renderer never trusts that array.
  */
-export const SPRITE_EXPRESSION_VISUALS = Object.freeze({
-  calm: { browTiltDelta: 0, mouthCurveDelta: 0.6 },
-  skeptical: { browTiltDelta: -3.0, mouthCurveDelta: -0.6 },
-  strained: { browTiltDelta: -3.5, mouthCurveDelta: -1.5 },
-  urgent: { browTiltDelta: -1.5, mouthCurveDelta: -2.0 },
-  resolved: { browTiltDelta: 0.8, mouthCurveDelta: 1.4 },
-  severe: { browTiltDelta: -4.5, mouthCurveDelta: -2.8 },
-} satisfies Record<SpriteExpression, { browTiltDelta: number; mouthCurveDelta: number }>);
+export const SPRITE_PIXEL_WIDTH = 24 as const;
+export const SPRITE_PIXEL_HEIGHT = 28 as const;
 
-/** Frozen posture shoulder paths, keyed by the strict render-variant posture enum. */
-const SPRITE_POSTURE_PATHS = Object.freeze({
-  neutral: "M24 218 C64 182 84 176 120 176 C156 176 176 182 216 218 L216 260 L24 260 Z",
-  closed: "M34 220 C72 188 91 181 120 181 C149 181 168 188 206 220 L206 260 L34 260 Z",
-  open: "M16 216 C58 178 80 172 120 172 C160 172 182 178 224 216 L224 260 L16 260 Z",
-} satisfies Record<SpriteRenderVariant["posture"], string>);
+/** The 20 deterministic base semantic tone slots (v2 §3.3). Region-gated effect
+ * transforms (loadTint/desat45) can produce RGB values beyond these slots; those
+ * values still derive solely from the seven named portrait colors. */
+export const SPRITE_PIXEL_PALETTE = {
+  BG_BASE: 0, BG_SHADOW: 1, BG_HIGHLIGHT: 2,
+  PANEL_BASE: 3, PANEL_SHADOW: 4, PANEL_HIGHLIGHT: 5,
+  SKIN_BASE: 6, SKIN_SHADOW: 7, SKIN_HIGHLIGHT: 8,
+  HAIR_BASE: 9, HAIR_SHADOW: 10, HAIR_HIGHLIGHT: 11,
+  EYE_BASE: 12,
+  UNIFORM_BASE: 13, UNIFORM_SHADOW: 14, UNIFORM_HIGHLIGHT: 15,
+  TRIM_BASE: 16, TRIM_SHADOW: 17, TRIM_HIGHLIGHT: 18,
+  OUTLINE: 19,
+} as const;
 
-function clampNumber(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
+export type SpritePixelPaletteIndex =
+  (typeof SPRITE_PIXEL_PALETTE)[keyof typeof SPRITE_PIXEL_PALETTE];
+
+export type SpritePixelRegion =
+  | "backdrop" | "head" | "skin" | "hair" | "face-feature"
+  | "neckline" | "shoulder" | "torso" | "accessory" | "support";
+
+export type SpritePixelSlot =
+  | "identity" | "expression" | "posture" | "support";
+
+export type SpriteSemanticPixel = Readonly<{
+  basePaletteIndex: SpritePixelPaletteIndex;
+  region: SpritePixelRegion;
+  slot: SpritePixelSlot;
+  protected: boolean;
+}>;
+
+export type SpriteHexColor = `#${string}`;
+
+export type SpritePortraitColorSources = readonly [
+  skinTone: SpriteHexColor,
+  hairColor: SpriteHexColor,
+  eyeColor: SpriteHexColor,
+  uniformColor: SpriteHexColor,
+  trimColor: SpriteHexColor,
+  backgroundColor: SpriteHexColor,
+  panelColor: SpriteHexColor,
+];
+
+export type SpriteResolvedPalette = readonly [
+  bgBase: SpriteHexColor, bgShadow: SpriteHexColor, bgHighlight: SpriteHexColor,
+  panelBase: SpriteHexColor, panelShadow: SpriteHexColor, panelHighlight: SpriteHexColor,
+  skinBase: SpriteHexColor, skinShadow: SpriteHexColor, skinHighlight: SpriteHexColor,
+  hairBase: SpriteHexColor, hairShadow: SpriteHexColor, hairHighlight: SpriteHexColor,
+  eyeBase: SpriteHexColor,
+  uniformBase: SpriteHexColor, uniformShadow: SpriteHexColor, uniformHighlight: SpriteHexColor,
+  trimBase: SpriteHexColor, trimShadow: SpriteHexColor, trimHighlight: SpriteHexColor,
+  outline: SpriteHexColor,
+];
+
+export type SpritePixelGrid<T> = Readonly<{
+  width: typeof SPRITE_PIXEL_WIDTH;
+  height: typeof SPRITE_PIXEL_HEIGHT;
+  /** Row-major; asserted at runtime to have exactly 672 entries. */
+  cells: readonly T[];
+}>;
+
+export type SpritePixelIdentity = Readonly<{
+  /** From the seven named portrait fields; never from sprite.palette. */
+  portraitColors: SpritePortraitColorSources;
+  /** The 20 deterministic base tones before region-gated effect transforms. */
+  palette: SpriteResolvedPalette;
+  grid: SpritePixelGrid<SpriteSemanticPixel>;
+}>;
+
+export type SpritePixelRender = Readonly<{
+  /** Complete state-invariant identity contract. */
+  identity: SpritePixelIdentity;
+  /** Composed pre-camera semantic source grid. */
+  source: SpritePixelGrid<SpriteSemanticPixel>;
+  /** Composed, color-transformed, pre-camera RGB diff surface. */
+  sourceColors: SpritePixelGrid<SpriteHexColor>;
+  /** Final post-transform/post-camera opaque RGB grid; future #53 input. */
+  output: SpritePixelGrid<SpriteHexColor>;
+}>;
+
+export type SpritePixelRun = Readonly<{
+  x: number;
+  y: number;
+  width: number;
+  color: SpriteHexColor;
+}>;
+
+const SPRITE_PIXEL_CELL_COUNT = SPRITE_PIXEL_WIDTH * SPRITE_PIXEL_HEIGHT;
+
+/** Parse only #RRGGBB (case-insensitive); serialize lowercase. The render boundary
+ * fails clearly on unsupported color strings; the saved-session Zod schema is
+ * intentionally not tightened in this slice. */
+function parseSpriteHexColor(value: string): SpriteHexColor {
+  const match = /^#([0-9a-fA-F]{6})$/.exec(value);
+  if (!match) throw new Error(`Unsupported sprite color "${value}": expected #RRGGBB`);
+  return `#${match[1]!.toLowerCase()}` as SpriteHexColor;
 }
 
+function rgbChannels(color: SpriteHexColor): readonly [number, number, number] {
+  return [
+    parseInt(color.slice(1, 3), 16),
+    parseInt(color.slice(3, 5), 16),
+    parseInt(color.slice(5, 7), 16),
+  ];
+}
+
+function toSpriteHex(r: number, g: number, b: number): SpriteHexColor {
+  const channel = (value: number) => Math.floor(value).toString(16).padStart(2, "0");
+  return `#${channel(r)}${channel(g)}${channel(b)}` as SpriteHexColor;
+}
+
+/** shadow(c) = floor(3*c/4): 75% of base. */
+export function spriteShadowTone(color: SpriteHexColor): SpriteHexColor {
+  const [r, g, b] = rgbChannels(color);
+  return toSpriteHex(Math.floor((3 * r) / 4), Math.floor((3 * g) / 4), Math.floor((3 * b) / 4));
+}
+
+/** highlight(c) = c + floor((255-c)/5): 20% toward white. */
+export function spriteHighlightTone(color: SpriteHexColor): SpriteHexColor {
+  const [r, g, b] = rgbChannels(color);
+  return toSpriteHex(r + Math.floor((255 - r) / 5), g + Math.floor((255 - g) / 5), b + Math.floor((255 - b) / 5));
+}
+
+/** outline(c) = floor(9*c/20): 45% of panel color. */
+export function spriteOutlineTone(color: SpriteHexColor): SpriteHexColor {
+  const [r, g, b] = rgbChannels(color);
+  return toSpriteHex(Math.floor((9 * r) / 20), Math.floor((9 * g) / 20), Math.floor((9 * b) / 20));
+}
+
+/** loadTint(c) = floor(78*c/100): exact 1 - 0.22 overload tint. */
+export function spriteLoadTint(color: SpriteHexColor): SpriteHexColor {
+  const [r, g, b] = rgbChannels(color);
+  return toSpriteHex(Math.floor((78 * r) / 100), Math.floor((78 * g) / 100), Math.floor((78 * b) / 100));
+}
+
+/** luma(r,g,b) = floor((54r + 183g + 19b)/256): integer Rec.709 approximation. */
+export function spriteLuma(color: SpriteHexColor): number {
+  const [r, g, b] = rgbChannels(color);
+  return Math.floor((54 * r + 183 * g + 19 * b) / 256);
+}
+
+/** desat45(c,Y) = floor((45c + 55Y)/100): exact saturation control 0.45. */
+export function spriteDesaturate45(color: SpriteHexColor): SpriteHexColor {
+  const [r, g, b] = rgbChannels(color);
+  const y = spriteLuma(color);
+  return toSpriteHex(Math.floor((45 * r + 55 * y) / 100), Math.floor((45 * g + 55 * y) / 100), Math.floor((45 * b + 55 * y) / 100));
+}
+
+/** The 20 deterministic base tones in SPRITE_PIXEL_PALETTE index order, derived
+ * ONLY from the seven named portrait colors (v2 §3.3). */
+export function resolveSpriteBasePalette(sources: SpritePortraitColorSources): SpriteResolvedPalette {
+  const [skin, hair, eye, uniform, trim, background, panel] = sources;
+  return [
+    background,
+    spriteShadowTone(background),
+    spriteHighlightTone(background),
+    panel,
+    spriteShadowTone(panel),
+    spriteHighlightTone(panel),
+    skin,
+    spriteShadowTone(skin),
+    spriteHighlightTone(skin),
+    hair,
+    spriteShadowTone(hair),
+    spriteHighlightTone(hair),
+    eye,
+    uniform,
+    spriteShadowTone(uniform),
+    spriteHighlightTone(uniform),
+    trim,
+    spriteShadowTone(trim),
+    spriteHighlightTone(trim),
+    spriteOutlineTone(panel),
+  ];
+}
+
+/** Inclusive horizontal run [xStart, xEnd]. */
+export type SpritePixelRowRun = readonly [xStart: number, xEnd: number];
+export type SpritePixelPoint = readonly [x: number, y: number];
+
+/** Frozen tuple builders keep the grammar tables immutable and exactly typed. */
+function run(xStart: number, xEnd: number): SpritePixelRowRun {
+  return Object.freeze([xStart, xEnd] as const);
+}
+function pt(x: number, y: number): SpritePixelPoint {
+  return Object.freeze([x, y] as const);
+}
+
+/** Literal head maps: exactly 14 rows × 14 chars, y=4..17, x=5..18. `.` = leave
+ * the underlying panel, `O` = universal outline, `s` = skin base before the fixed
+ * shading pass (v2 §3.5). */
+export const SPRITE_PIXEL_FACE = Object.freeze({
+  oval: Object.freeze([
+    "....OOOOOO....",
+    "..OOssssssOO..",
+    ".OssssssssssO.",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    ".OssssssssssO.",
+    "..OssssssssO..",
+    "...OssssssO...",
+    "....OOssOO....",
+  ]),
+  square: Object.freeze([
+    ".OOOOOOOOOOOO.",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "..OOssssssOO..",
+  ]),
+  round: Object.freeze([
+    "....OOOOOO....",
+    "..OOssssssOO..",
+    ".OssssssssssO.",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    "OssssssssssssO",
+    ".OssssssssssO.",
+    "..OssssssssO..",
+    "...OOssssOO...",
+    ".....OOOO.....",
+  ]),
+} satisfies Record<AdvisorPortraitSpec["faceShape"], readonly string[]>);
+
+export type SpritePixelHairTemplate = Readonly<{
+  /** y → inclusive row runs; paint no hair outside the listed mask (v2 §3.6). */
+  rows: Readonly<Record<number, readonly SpritePixelRowRun[]>>;
+  /** Fixed upper-left highlight cells; applied only to remaining HAIR_BASE. */
+  highlights: readonly SpritePixelPoint[];
+  /** Identity part marks; applied as OUTLINE last. */
+  parts: readonly SpritePixelPoint[];
+}>;
+
+/** All six hair styles as exact unions of inclusive row runs (v2 §3.6). */
+export const SPRITE_PIXEL_HAIR: Record<AdvisorPortraitSpec["hairStyle"], SpritePixelHairTemplate> = {
+  "side-part": {
+    rows: {
+      4: [run(9, 14)],
+      5: [run(8, 16)],
+      6: [run(7, 17)],
+      7: [run(6, 17)],
+      8: [run(6, 12), run(15, 17)],
+      9: [run(6, 7), run(17, 17)],
+      10: [run(6, 7), run(17, 17)],
+    },
+    highlights: [pt(9, 5), pt(10, 5), pt(8, 6), pt(9, 6)],
+    parts: [pt(13, 5), pt(13, 6), pt(12, 7), pt(12, 8)],
+  },
+  crew: {
+    rows: {
+      5: [run(9, 14)],
+      6: [run(7, 16)],
+      7: [run(6, 17)],
+      8: [run(6, 8), run(10, 12), run(14, 17)],
+      9: [run(6, 7), run(16, 17)],
+    },
+    highlights: [pt(9, 6), pt(10, 6), pt(8, 7)],
+    parts: [],
+  },
+  crop: {
+    rows: {
+      5: [run(10, 13)],
+      6: [run(8, 15)],
+      7: [run(7, 16)],
+      8: [run(6, 9), run(11, 13), run(15, 17)],
+      9: [run(6, 7), run(16, 17)],
+    },
+    highlights: [pt(10, 6), pt(9, 7)],
+    parts: [],
+  },
+  bun: {
+    rows: {
+      2: [run(11, 12)],
+      3: [run(10, 13)],
+      4: [run(9, 14)],
+      5: [run(8, 15)],
+      6: [run(7, 16)],
+      7: [run(6, 17)],
+      8: [run(6, 10), run(13, 17)],
+      9: [run(6, 7), run(16, 17)],
+      10: [run(6, 7), run(16, 17)],
+    },
+    highlights: [pt(11, 3), pt(10, 4), pt(9, 5), pt(10, 5)],
+    parts: [],
+  },
+  bob: {
+    rows: {
+      4: [run(9, 14)],
+      5: [run(7, 16)],
+      6: [run(6, 17)],
+      7: [run(5, 18)],
+      8: [run(5, 18)],
+      9: [run(5, 7), run(16, 18)],
+      10: [run(5, 7), run(16, 18)],
+      11: [run(5, 7), run(16, 18)],
+      12: [run(5, 7), run(16, 18)],
+      13: [run(5, 7), run(16, 18)],
+      14: [run(5, 7), run(16, 18)],
+      15: [run(6, 8), run(15, 17)],
+      16: [run(7, 8), run(15, 16)],
+    },
+    highlights: [pt(9, 5), pt(10, 5), pt(8, 6), pt(8, 7)],
+    parts: [],
+  },
+  "tied-back": {
+    rows: {
+      4: [run(9, 14)],
+      5: [run(7, 16)],
+      6: [run(6, 17)],
+      7: [run(6, 17)],
+      8: [run(6, 10), run(13, 17)],
+      9: [run(6, 7), run(16, 19)],
+      10: [run(6, 7), run(16, 20)],
+      11: [run(18, 20)],
+      12: [run(19, 20)],
+      13: [run(19, 21)],
+      14: [run(19, 21)],
+      15: [run(18, 20)],
+      16: [run(18, 19)],
+    },
+    highlights: [pt(9, 5), pt(10, 5), pt(8, 6)],
+    parts: [],
+  },
+};
+
+export type SpritePixelAccessoryTemplate = Readonly<{
+  /** Protected identity pixels, 1 logical pixel thick; disjoint from expression slots. */
+  cells: readonly SpritePixelPoint[];
+}>;
+
+export const SPRITE_PIXEL_ACCESSORY: Record<AdvisorPortraitSpec["accessory"], SpritePixelAccessoryTemplate> = {
+  none: { cells: [] },
+  glasses: {
+    cells: [
+      pt(8, 12), pt(8, 13), pt(9, 13), pt(10, 13), pt(10, 12),
+      pt(13, 12), pt(13, 13), pt(14, 13), pt(15, 13), pt(15, 12),
+      pt(11, 12), pt(12, 12),
+    ],
+  },
+  earpiece: {
+    cells: [pt(18, 10), pt(19, 11), pt(19, 12), pt(18, 13)],
+  },
+};
+
+/** Presentation necklines (v2 §3.7). Both share the protected skin neck
+ * x=10..13,y=18..20 with (13,18..20) skin shadow. NECK_SQUARE uses the corrected
+ * symmetric coordinates (v2 Changes #2): every collar cell is supported by all
+ * three posture masks. Drawn after posture in identity, so collars never shift. */
+export const SPRITE_PIXEL_PRESENTATION: Record<AdvisorPortraitSpec["genderPresentation"], readonly SpritePixelPoint[]> = {
+  female: [pt(8, 20), pt(9, 21), pt(10, 22), pt(15, 20), pt(14, 21), pt(13, 22)],
+  male: [pt(8, 20), pt(9, 20), pt(9, 21), pt(10, 21), pt(13, 21), pt(14, 21), pt(14, 20), pt(15, 20)],
+};
+
+export type SpritePixelExpressionGlyph = Readonly<{
+  /** Brow cells, x=8..15,y=9..11; all OUTLINE. */
+  brow: readonly SpritePixelPoint[];
+  /** Mouth cells, x=9..14,y=15 plus x=10..13,y=16; all OUTLINE. */
+  mouth: readonly SpritePixelPoint[];
+}>;
+
+/** Calm-only authored micro-bias bins (identity metadata; used ONLY by EXPR_CALM
+ * so a chief's authored value can never cancel a state-selected expression). */
+export const SPRITE_PIXEL_CALM_BROWS: Record<"flat" | "down" | "up", readonly SpritePixelPoint[]> = {
+  flat: [pt(8, 10), pt(9, 10), pt(10, 10), pt(13, 10), pt(14, 10), pt(15, 10)],
+  down: [pt(8, 10), pt(9, 10), pt(10, 11), pt(13, 11), pt(14, 10), pt(15, 10)],
+  up: [pt(8, 10), pt(9, 9), pt(10, 9), pt(13, 9), pt(14, 9), pt(15, 10)],
+};
+export const SPRITE_PIXEL_CALM_MOUTHS: Record<"flat" | "up" | "down", readonly SpritePixelPoint[]> = {
+  flat: [pt(10, 15), pt(11, 15), pt(12, 15), pt(13, 15)],
+  up: [pt(10, 15), pt(13, 15), pt(11, 16), pt(12, 16)],
+  down: [pt(11, 15), pt(12, 15), pt(10, 16), pt(13, 16)],
+};
+
+/** The six expression glyphs (v2 §3.9): authored pixel glyphs, obvious at 48px,
+ * inside every face mask and outside every hair mask (computationally verified).
+ * `calm` here is the authored flat/flat base; the renderer replaces it with the
+ * micro-bias bins above. All glyph cells are OUTLINE over skin. */
+export const SPRITE_PIXEL_EXPRESSION: Record<SpriteExpression, SpritePixelExpressionGlyph> = {
+  calm: {
+    brow: [pt(8, 10), pt(9, 10), pt(10, 10), pt(13, 10), pt(14, 10), pt(15, 10)],
+    mouth: [pt(10, 15), pt(11, 15), pt(12, 15), pt(13, 15)],
+  },
+  skeptical: {
+    brow: [pt(8, 10), pt(9, 10), pt(10, 11), pt(13, 11), pt(14, 10), pt(15, 10)],
+    mouth: [pt(10, 15), pt(11, 15), pt(12, 15), pt(13, 16)],
+  },
+  strained: {
+    brow: [pt(8, 10), pt(9, 10), pt(9, 11), pt(10, 11), pt(13, 11), pt(14, 10), pt(14, 11), pt(15, 10)],
+    mouth: [pt(10, 15), pt(11, 16), pt(12, 15), pt(13, 16)],
+  },
+  urgent: {
+    brow: [pt(8, 9), pt(9, 9), pt(10, 9), pt(13, 9), pt(14, 9), pt(15, 9)],
+    mouth: [pt(11, 15), pt(12, 15), pt(11, 16), pt(12, 16)],
+  },
+  resolved: {
+    brow: [pt(8, 10), pt(9, 9), pt(10, 9), pt(13, 9), pt(14, 9), pt(15, 10)],
+    mouth: [pt(9, 15), pt(14, 15), pt(10, 16), pt(11, 16), pt(12, 16), pt(13, 16)],
+  },
+  severe: {
+    brow: [pt(8, 9), pt(8, 10), pt(9, 10), pt(10, 11), pt(13, 11), pt(14, 10), pt(15, 9), pt(15, 10)],
+    mouth: [pt(11, 15), pt(12, 15), pt(10, 16), pt(13, 16)],
+  },
+};
+
+/** Posture shoulder masks (v2 §3.10): state-owned runs over y=19..22; run
+ * endpoints and cells with no shoulder above become OUTLINE, remaining cells are
+ * uniform tones (upper-left highlight cluster x<=7, right shadow cluster x>=16). */
+export type SpritePixelPostureTemplate = Readonly<Record<number, readonly SpritePixelRowRun[]>>;
+
+export const SPRITE_PIXEL_POSTURE: Record<SpriteRenderVariant["posture"], SpritePixelPostureTemplate> = {
+  neutral: {
+    19: [run(9, 14)],
+    20: [run(6, 17)],
+    21: [run(4, 19)],
+    22: [run(3, 20)],
+  },
+  closed: {
+    20: [run(8, 15)],
+    21: [run(6, 17)],
+    22: [run(4, 19)],
+  },
+  open: {
+    19: [run(7, 16)],
+    20: [run(4, 19)],
+    21: [run(2, 21)],
+    22: [run(1, 22)],
+  },
+};
+
+/** S4 utility harness (v2 §3.11): all TRIM_BASE except the TRIM_SHADOW pocket
+ * interior. Avoids neckline cells and the protected trim bars (x=4..7, x=16..19);
+ * both diagonal straps converge into the 4×3 ledger pocket. */
+export const SPRITE_PIXEL_HARNESS: readonly (readonly [x: number, y: number, index: SpritePixelPaletteIndex])[] = Object.freeze([
+  [8, 22, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [9, 22, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [9, 23, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [10, 23, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [10, 24, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [15, 22, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [14, 22, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [14, 23, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [13, 23, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [13, 24, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [10, 24, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [11, 24, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [12, 24, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [13, 24, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [10, 25, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [13, 25, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [10, 26, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [11, 26, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [12, 26, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [13, 26, SPRITE_PIXEL_PALETTE.TRIM_BASE],
+  [11, 25, SPRITE_PIXEL_PALETTE.TRIM_SHADOW],
+  [12, 25, SPRITE_PIXEL_PALETTE.TRIM_SHADOW],
+]);
+
+/** Tight framing's fixed nearest-neighbor destination→source x-vector (v2 §3.11):
+ * shows 20 centered source columns, duplicates four columns, emits a full 24-wide
+ * matrix, preserves 2× physical pixels. y maps unchanged. */
+export const SPRITE_PIXEL_TIGHT_X_MAP: readonly number[] = Object.freeze([2, 2, 3, 4, 5, 6, 7, 7, 8, 9, 10, 11, 12, 12, 13, 14, 15, 16, 17, 17, 18, 19, 20, 21]);
+
+/** Overload stress vignette D (v2 §3.11): ((x=1..8 or 15..22) and y=2..3) OR
+ * ((x=1..4 or 19..22) and y=4..18). Tint applies only where region is backdrop
+ * and the cell is unprotected. */
+export function spriteDarkenVignette(x: number, y: number): boolean {
+  const topBand = y >= 2 && y <= 3 && ((x >= 1 && x <= 8) || (x >= 15 && x <= 22));
+  const sideBand = y >= 4 && y <= 18 && ((x >= 1 && x <= 4) || (x >= 19 && x <= 22));
+  return topBand || sideBand;
+}
+
+type MutableSemanticPixel = {
+  basePaletteIndex: SpritePixelPaletteIndex;
+  region: SpritePixelRegion;
+  slot: SpritePixelSlot;
+  protected: boolean;
+};
+
+function createMutableGrid(): MutableSemanticPixel[] {
+  const cells: MutableSemanticPixel[] = [];
+  for (let index = 0; index < SPRITE_PIXEL_CELL_COUNT; index += 1) {
+    cells.push({ basePaletteIndex: SPRITE_PIXEL_PALETTE.BG_BASE, region: "backdrop", slot: "identity", protected: false });
+  }
+  return cells;
+}
+
+/** Identity-phase paint: overwrites freely (state protection is not yet active). */
+function setCell(
+  cells: MutableSemanticPixel[],
+  x: number,
+  y: number,
+  index: SpritePixelPaletteIndex,
+  region: SpritePixelRegion,
+  options: { slot?: SpritePixelSlot; protected?: boolean } = {},
+): void {
+  if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || x >= SPRITE_PIXEL_WIDTH || y < 0 || y >= SPRITE_PIXEL_HEIGHT) {
+    throw new Error(`setCell: out-of-bounds identity cell (${x},${y})`);
+  }
+  const cell = cells[y * SPRITE_PIXEL_WIDTH + x];
+  cell.basePaletteIndex = index;
+  cell.region = region;
+  if (options.slot !== undefined) cell.slot = options.slot;
+  if (options.protected !== undefined) cell.protected = options.protected;
+}
+
+function freezeSemanticGrid(cells: readonly MutableSemanticPixel[]): SpritePixelGrid<SpriteSemanticPixel> {
+  return Object.freeze({
+    width: SPRITE_PIXEL_WIDTH,
+    height: SPRITE_PIXEL_HEIGHT,
+    cells: Object.freeze(cells.map((cell) => Object.freeze({ ...cell }))),
+  });
+}
+
+function freezeColorGrid(cells: readonly SpriteHexColor[]): SpritePixelGrid<SpriteHexColor> {
+  return Object.freeze({
+    width: SPRITE_PIXEL_WIDTH,
+    height: SPRITE_PIXEL_HEIGHT,
+    cells: Object.freeze([...cells]),
+  });
+}
+
+type SpritePixelWriteGuard = {
+  allowedSlot?: SpritePixelSlot;
+  allowedSlots?: readonly SpritePixelSlot[];
+  allowedRegion?: SpritePixelRegion;
+};
+
+function hasExplicitSpritePixelWriteGuard(options: SpritePixelWriteGuard | undefined): options is SpritePixelWriteGuard {
+  return options?.allowedSlot !== undefined
+    || options?.allowedRegion !== undefined
+    || (options?.allowedSlots?.length ?? 0) > 0;
+}
+
+function slotAllowed(slot: SpritePixelSlot, options: SpritePixelWriteGuard): boolean {
+  if (options.allowedSlot !== undefined && options.allowedSlot !== slot) return false;
+  if (options.allowedSlots !== undefined && !options.allowedSlots.includes(slot)) return false;
+  return true;
+}
+
+/** Strict guarded write (v2 §6): throws on out-of-bounds, protected, or
+ * undeclared slot/region targets. Internal painters use the tolerant guard so
+ * protected identity survives; this export exists so tests can prove the guard
+ * rejects malformed operations. */
+export function writeSpriteCells(
+  grid: SpritePixelGrid<SpriteSemanticPixel>,
+  writes: readonly (readonly [x: number, y: number, index: SpritePixelPaletteIndex])[],
+  options?: SpritePixelWriteGuard,
+): SpritePixelGrid<SpriteSemanticPixel> {
+  if (!hasExplicitSpritePixelWriteGuard(options)) {
+    throw new Error("writeSpriteCells: an explicit allowedSlot, non-empty allowedSlots, or allowedRegion guard is required");
+  }
+  const cells = grid.cells.map((cell) => ({ ...cell }));
+  for (const [x, y, index] of writes) {
+    if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || x >= SPRITE_PIXEL_WIDTH || y < 0 || y >= SPRITE_PIXEL_HEIGHT) {
+      throw new Error(`writeSpriteCells: out-of-bounds write at (${x},${y})`);
+    }
+    if (!Number.isInteger(index) || index < 0 || index >= 20) {
+      throw new Error(`writeSpriteCells: palette index ${index} is outside 0..19`);
+    }
+    const cell = cells[y * SPRITE_PIXEL_WIDTH + x];
+    if (cell.protected) throw new Error(`writeSpriteCells: protected cell at (${x},${y})`);
+    if (!slotAllowed(cell.slot, options)) {
+      throw new Error(`writeSpriteCells: cell (${x},${y}) has slot ${cell.slot}, not in the declared write guard`);
+    }
+    if (options.allowedRegion !== undefined && cell.region !== options.allowedRegion) {
+      throw new Error(`writeSpriteCells: cell (${x},${y}) has region ${cell.region}, expected ${options.allowedRegion}`);
+    }
+    cells[y * SPRITE_PIXEL_WIDTH + x] = { ...cell, basePaletteIndex: index };
+  }
+  return Object.freeze({ width: SPRITE_PIXEL_WIDTH, height: SPRITE_PIXEL_HEIGHT, cells: Object.freeze(cells) });
+}
+
+/** Tolerant guarded paint for state writers: skips protected / undeclared-slot /
+ * undeclared-region cells so identity survives every effect (v2 §3.11). */
+function guardedPaint(
+  cells: MutableSemanticPixel[],
+  writes: readonly (readonly [x: number, y: number, index: SpritePixelPaletteIndex])[],
+  options: SpritePixelWriteGuard = {},
+): void {
+  for (const [x, y, index] of writes) {
+    if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || x >= SPRITE_PIXEL_WIDTH || y < 0 || y >= SPRITE_PIXEL_HEIGHT) {
+      throw new Error(`guardedPaint: out-of-bounds write at (${x},${y})`);
+    }
+    const cell = cells[y * SPRITE_PIXEL_WIDTH + x];
+    if (cell.protected) continue;
+    if (!slotAllowed(cell.slot, options)) continue;
+    if (options.allowedRegion !== undefined && cell.region !== options.allowedRegion) continue;
+    cell.basePaletteIndex = index;
+  }
+}
+
+/** Immutable semantic identity layer: portrait colors, 20 base tones, and the
+ * full 672-cell semantic grid with slots, regions, and protection bits. */
+function buildSpritePixelIdentity(sprite: SpriteSpec): SpritePixelIdentity {
+  const portraitColors: SpritePortraitColorSources = [
+    parseSpriteHexColor(sprite.skinTone),
+    parseSpriteHexColor(sprite.hairColor),
+    parseSpriteHexColor(sprite.eyeColor),
+    parseSpriteHexColor(sprite.uniformColor),
+    parseSpriteHexColor(sprite.trimColor),
+    parseSpriteHexColor(sprite.backgroundColor),
+    parseSpriteHexColor(sprite.panelColor),
+  ];
+  const palette = resolveSpriteBasePalette(portraitColors);
+  const cells = createMutableGrid();
+
+  // Outer source margin: always background, always protected. Tight framing is a
+  // read-only projection and may replace OUTPUT edge columns (v2 Changes #6).
+  for (let x = 0; x < SPRITE_PIXEL_WIDTH; x += 1) {
+    for (let y = 0; y < SPRITE_PIXEL_HEIGHT; y += 1) {
+      if (x === 0 || x === SPRITE_PIXEL_WIDTH - 1 || y === 0 || y === SPRITE_PIXEL_HEIGHT - 1) {
+        cells[y * SPRITE_PIXEL_WIDTH + x].protected = true;
+      }
+    }
+  }
+
+  // Inset panel (x=1..22,y=1..26), border, and fixed top/left highlight.
+  for (let x = 1; x <= 22; x += 1) {
+    for (let y = 1; y <= 26; y += 1) {
+      setCell(cells, x, y, SPRITE_PIXEL_PALETTE.PANEL_BASE, "backdrop");
+    }
+  }
+  for (let y = 1; y <= 26; y += 1) {
+    setCell(cells, 1, y, SPRITE_PIXEL_PALETTE.PANEL_SHADOW, "backdrop");
+    setCell(cells, 22, y, SPRITE_PIXEL_PALETTE.PANEL_SHADOW, "backdrop");
+  }
+  for (let x = 1; x <= 22; x += 1) {
+    setCell(cells, x, 1, SPRITE_PIXEL_PALETTE.PANEL_SHADOW, "backdrop");
+    setCell(cells, x, 26, SPRITE_PIXEL_PALETTE.PANEL_SHADOW, "backdrop");
+  }
+  for (let y = 2; y <= 25; y += 1) setCell(cells, 2, y, SPRITE_PIXEL_PALETTE.PANEL_HIGHLIGHT, "backdrop");
+  for (let x = 2; x <= 21; x += 1) setCell(cells, x, 2, SPRITE_PIXEL_PALETTE.PANEL_HIGHLIGHT, "backdrop");
+
+  // Fixed lower torso (x=2..21,y=23..26): run endpoints outline, upper-left
+  // highlight and right/lower shadow clusters, protected role bars (x=4..7 and
+  // x=16..19 at y=25) that guarantee the role color survives every state.
+  for (let y = 23; y <= 26; y += 1) {
+    for (let x = 2; x <= 21; x += 1) {
+      const index = x === 2 || x === 21
+        ? SPRITE_PIXEL_PALETTE.OUTLINE
+        : x <= 5 && y <= 24 ? SPRITE_PIXEL_PALETTE.UNIFORM_HIGHLIGHT
+          : x >= 18 ? SPRITE_PIXEL_PALETTE.UNIFORM_SHADOW
+            : SPRITE_PIXEL_PALETTE.UNIFORM_BASE;
+      setCell(cells, x, y, index, "torso");
+    }
+  }
+  for (const x of [4, 5, 6, 7, 16, 17, 18, 19]) {
+    setCell(cells, x, 25, SPRITE_PIXEL_PALETTE.TRIM_BASE, "torso", { protected: true });
+  }
+
+  // Posture slot (x=1..22,y=19..22); protected neck/neckline cells keep identity.
+  for (let x = 1; x <= 22; x += 1) {
+    for (let y = 19; y <= 22; y += 1) {
+      const cell = cells[y * SPRITE_PIXEL_WIDTH + x];
+      if (!cell.protected) {
+        cell.slot = "posture";
+        cell.region = "shoulder";
+      }
+    }
+  }
+
+  // Neck behind head: x=10..13,y=17..20, right column shadow. Protected so
+  // posture can never erase it (v2 §3.2/§3.7).
+  for (let x = 10; x <= 13; x += 1) {
+    for (let y = 17; y <= 20; y += 1) {
+      setCell(cells, x, y, SPRITE_PIXEL_PALETTE.SKIN_BASE, "skin", { protected: true, slot: "identity" });
+    }
+  }
+  for (let y = 18; y <= 20; y += 1) {
+    setCell(cells, 13, y, SPRITE_PIXEL_PALETTE.SKIN_SHADOW, "skin", { protected: true, slot: "identity" });
+  }
+
+  // Literal head map (v2 §3.5): 'O' = universal outline, 's' = skin base.
+  const faceRows = SPRITE_PIXEL_FACE[sprite.faceShape];
+  for (let row = 0; row < faceRows.length; row += 1) {
+    const line = faceRows[row];
+    if (line.length !== 14) throw new Error(`SPRITE_PIXEL_FACE.${sprite.faceShape} row ${row} must be exactly 14 chars`);
+    for (let col = 0; col < line.length; col += 1) {
+      const char = line[col];
+      const x = 5 + col;
+      const y = 4 + row;
+      if (char === "O") setCell(cells, x, y, SPRITE_PIXEL_PALETTE.OUTLINE, "head", { protected: true, slot: "identity" });
+      else if (char === "s") setCell(cells, x, y, SPRITE_PIXEL_PALETTE.SKIN_BASE, "skin", { slot: "identity" });
+    }
+  }
+
+  // Fixed skin shading clusters (v2 §3.3): upper-left highlight, right-jaw/chin
+  // shadow. Only unprotected skin cells; the nose is painted separately below and
+  // is protected, so the loss-desaturation predicate (region skin && !protected)
+  // can never touch it (v2 Changes #5).
+  for (const [x, y] of [[8, 8], [9, 8], [8, 9]] as const) {
+    const cell = cells[y * SPRITE_PIXEL_WIDTH + x];
+    if (cell.region === "skin" && !cell.protected) setCell(cells, x, y, SPRITE_PIXEL_PALETTE.SKIN_HIGHLIGHT, "skin");
+  }
+  for (let y = 9; y <= 13; y += 1) {
+    const cell = cells[y * SPRITE_PIXEL_WIDTH + 16];
+    if (cell.region === "skin" && !cell.protected) setCell(cells, 16, y, SPRITE_PIXEL_PALETTE.SKIN_SHADOW, "skin");
+  }
+  for (let y = 14; y <= 16; y += 1) {
+    const cell = cells[y * SPRITE_PIXEL_WIDTH + 15];
+    if (cell.region === "skin" && !cell.protected) setCell(cells, 15, y, SPRITE_PIXEL_PALETTE.SKIN_SHADOW, "skin");
+  }
+  {
+    const cell = cells[17 * SPRITE_PIXEL_WIDTH + 13];
+    if (cell.region === "skin" && !cell.protected) setCell(cells, 13, 17, SPRITE_PIXEL_PALETTE.SKIN_SHADOW, "skin");
+  }
+
+  // Literal hair mask (v2 §3.6), then the §3.4 boundary convention: exposed
+  // top/left/right hair cells become OUTLINE, exposed bottom/hairline cells become
+  // HAIR_SHADOW (unless already outline), listed highlights replace only remaining
+  // HAIR_BASE, and listed part cells become OUTLINE last.
+  const hair = SPRITE_PIXEL_HAIR[sprite.hairStyle];
+  const hairCells = new Set<number>();
+  for (const [yKey, runs] of Object.entries(hair.rows)) {
+    const y = Number(yKey);
+    for (const [start, end] of runs) {
+      for (let x = start; x <= end; x += 1) {
+        setCell(cells, x, y, SPRITE_PIXEL_PALETTE.HAIR_BASE, "hair", { protected: true, slot: "identity" });
+        hairCells.add(y * SPRITE_PIXEL_WIDTH + x);
+      }
+    }
+  }
+  const isHair = (x: number, y: number): boolean => hairCells.has(y * SPRITE_PIXEL_WIDTH + x);
+  for (const index of hairCells) {
+    const x = index % SPRITE_PIXEL_WIDTH;
+    const y = Math.floor(index / SPRITE_PIXEL_WIDTH);
+    if (!isHair(x, y - 1) || !isHair(x - 1, y) || !isHair(x + 1, y)) {
+      setCell(cells, x, y, SPRITE_PIXEL_PALETTE.OUTLINE, "hair", { protected: true });
+    } else if (!isHair(x, y + 1)) {
+      setCell(cells, x, y, SPRITE_PIXEL_PALETTE.HAIR_SHADOW, "hair", { protected: true });
+    }
+  }
+  for (const [x, y] of hair.highlights) {
+    const cell = cells[y * SPRITE_PIXEL_WIDTH + x];
+    if (cell.basePaletteIndex === SPRITE_PIXEL_PALETTE.HAIR_BASE) {
+      setCell(cells, x, y, SPRITE_PIXEL_PALETTE.HAIR_HIGHLIGHT, "hair", { protected: true });
+    }
+  }
+  for (const [x, y] of hair.parts) {
+    setCell(cells, x, y, SPRITE_PIXEL_PALETTE.OUTLINE, "hair", { protected: true });
+  }
+
+  // Fixed facial identity (v2 §3.8): one hard pixel per eye; the nose is a
+  // protected SKIN_SHADOW pair so loss desaturation never touches it (v2 Changes #5).
+  setCell(cells, 9, 12, SPRITE_PIXEL_PALETTE.EYE_BASE, "face-feature", { protected: true, slot: "identity" });
+  setCell(cells, 14, 12, SPRITE_PIXEL_PALETTE.EYE_BASE, "face-feature", { protected: true, slot: "identity" });
+  setCell(cells, 11, 13, SPRITE_PIXEL_PALETTE.SKIN_SHADOW, "face-feature", { protected: true, slot: "identity" });
+  setCell(cells, 12, 14, SPRITE_PIXEL_PALETTE.SKIN_SHADOW, "face-feature", { protected: true, slot: "identity" });
+
+  // Expression slots: brows x=8..15,y=9..11; mouth x=9..14,y=15 plus x=10..13,y=16.
+  // Underlying identity cells stay skin; only the final expression may write here.
+  for (let y = 9; y <= 11; y += 1) {
+    for (let x = 8; x <= 15; x += 1) {
+      const cell = cells[y * SPRITE_PIXEL_WIDTH + x];
+      if (!cell.protected) cell.slot = "expression";
+    }
+  }
+  for (let x = 9; x <= 14; x += 1) {
+    const cell = cells[15 * SPRITE_PIXEL_WIDTH + x];
+    if (!cell.protected) cell.slot = "expression";
+  }
+  for (let x = 10; x <= 13; x += 1) {
+    const cell = cells[16 * SPRITE_PIXEL_WIDTH + x];
+    if (!cell.protected) cell.slot = "expression";
+  }
+
+  // Presentation neckline (v2 §3.7): protected identity so it never shifts with
+  // shoulders; NECK_SQUARE uses the corrected symmetric coordinates (v2 Changes #2).
+  for (const [x, y] of SPRITE_PIXEL_PRESENTATION[sprite.genderPresentation]) {
+    setCell(cells, x, y, SPRITE_PIXEL_PALETTE.TRIM_BASE, "neckline", { protected: true, slot: "identity" });
+  }
+
+  // Accessories (v2 §3.8): protected identity pixels disjoint from every
+  // expression slot; mutable writers must skip protected cells (v2 Changes #17).
+  // Painted after hair so the earpiece sits over tied-back hair.
+  for (const [x, y] of SPRITE_PIXEL_ACCESSORY[sprite.accessory].cells) {
+    setCell(cells, x, y, SPRITE_PIXEL_PALETTE.TRIM_HIGHLIGHT, "accessory", { protected: true, slot: "identity" });
+  }
+
+  // Support slot (v2 §3.1/§3.11): central TORSO cells x=8..15,y=23..26 eligible
+  // for the S4 harness. The y=22 harness strap anchors stay in the posture slot so
+  // the shoulder mask paints them as uniform ("only unprotected uniform/support
+  // cells" in the §3.11 harness region); the harness guard accepts both slots.
+  // Marked last so neckline and protected cells are excluded.
+  for (let y = 23; y <= 26; y += 1) {
+    for (let x = 8; x <= 15; x += 1) {
+      const cell = cells[y * SPRITE_PIXEL_WIDTH + x];
+      if (!cell.protected) {
+        cell.slot = "support";
+        cell.region = "support";
+      }
+    }
+  }
+
+  return { portraitColors, palette, grid: freezeSemanticGrid(cells) };
+}
+
+/** Copy identity cells back over a state-owned slot (protected cells untouched). */
+function restoreUnprotectedSlot(source: MutableSemanticPixel[], identity: SpritePixelGrid<SpriteSemanticPixel>, slot: SpritePixelSlot): void {
+  for (let index = 0; index < SPRITE_PIXEL_CELL_COUNT; index += 1) {
+    const identityCell = identity.cells[index];
+    if (identityCell.slot === slot && !identityCell.protected) {
+      source[index] = { ...identityCell };
+    }
+  }
+}
+
+/** Calm uses the authored micro-bias bins; every state-selected expression uses
+ * its exact authored glyph and ignores the bins so state can never be canceled. */
+function glyphFor(sprite: SpriteSpec): SpritePixelExpressionGlyph {
+  if (sprite.expression === "calm") {
+    const brow = sprite.browTilt < -0.24 ? "down" : sprite.browTilt > 0.24 ? "up" : "flat";
+    const mouth = sprite.mouthCurve < 0 ? "down" : sprite.mouthCurve >= 0.40 ? "up" : "flat";
+    return { brow: SPRITE_PIXEL_CALM_BROWS[brow], mouth: SPRITE_PIXEL_CALM_MOUTHS[mouth] };
+  }
+  return SPRITE_PIXEL_EXPRESSION[sprite.expression];
+}
+
+/** Exactly one posture mask with protected-cell guards (v2 §3.10/§3.11). */
+function paintPosture(cells: MutableSemanticPixel[], template: SpritePixelPostureTemplate): void {
+  const inMask = (x: number, y: number): boolean => {
+    const runs = template[y];
+    return runs !== undefined && runs.some(([start, end]) => x >= start && x <= end);
+  };
+  for (let y = 19; y <= 22; y += 1) {
+    const runs = template[y];
+    if (runs === undefined) continue;
+    for (const [start, end] of runs) {
+      for (let x = start; x <= end; x += 1) {
+        const cell = cells[y * SPRITE_PIXEL_WIDTH + x];
+        if (cell.protected || cell.slot !== "posture") continue;
+        // §3.4 shoulder rule: cells with no shoulder above and run endpoints are
+        // OUTLINE; the rest are uniform tones from the fixed upper-left light.
+        const index = !inMask(x, y - 1) || x === start || x === end
+          ? SPRITE_PIXEL_PALETTE.OUTLINE
+          : x <= 7 ? SPRITE_PIXEL_PALETTE.UNIFORM_HIGHLIGHT
+            : x >= 16 ? SPRITE_PIXEL_PALETTE.UNIFORM_SHADOW
+              : SPRITE_PIXEL_PALETTE.UNIFORM_BASE;
+        cell.basePaletteIndex = index;
+      }
+    }
+  }
+}
+
+/** Exactly one final-expression glyph with protected-cell guards (v2 §3.9/§3.11). */
+function paintExpression(cells: MutableSemanticPixel[], glyph: SpritePixelExpressionGlyph): void {
+  const writes: (readonly [number, number, SpritePixelPaletteIndex])[] = [];
+  for (const point of glyph.brow) writes.push([point[0], point[1], SPRITE_PIXEL_PALETTE.OUTLINE]);
+  for (const point of glyph.mouth) writes.push([point[0], point[1], SPRITE_PIXEL_PALETTE.OUTLINE]);
+  guardedPaint(cells, writes, { allowedSlot: "expression" });
+}
+
+/** Resolve base palette RGB, then apply region-gated transforms: overload tint
+ * (backdrop only, in the fixed vignette) and loss desaturation (unprotected skin
+ * in y=4..17 with a skin base role). Topology and palette indices are unchanged. */
+function resolveSourceColors(source: readonly MutableSemanticPixel[], palette: SpriteResolvedPalette, variant: SpriteRenderVariant): SpriteHexColor[] {
+  const colors: SpriteHexColor[] = [];
+  for (let index = 0; index < SPRITE_PIXEL_CELL_COUNT; index += 1) {
+    const cell = source[index];
+    let color = palette[cell.basePaletteIndex];
+    const x = index % SPRITE_PIXEL_WIDTH;
+    const y = Math.floor(index / SPRITE_PIXEL_WIDTH);
+    if (variant.backgroundDarkenOpacity === 0.22 && !cell.protected && cell.region === "backdrop" && spriteDarkenVignette(x, y)) {
+      color = spriteLoadTint(color);
+    }
+    if (variant.saturation === 0.45 && !cell.protected && cell.region === "skin" && y >= 4 && y <= 17
+      && (cell.basePaletteIndex === SPRITE_PIXEL_PALETTE.SKIN_BASE
+        || cell.basePaletteIndex === SPRITE_PIXEL_PALETTE.SKIN_SHADOW
+        || cell.basePaletteIndex === SPRITE_PIXEL_PALETTE.SKIN_HIGHLIGHT)) {
+      color = spriteDesaturate45(color);
+    }
+    colors.push(color);
+  }
+  return colors;
+}
+
+/** Default framing is identity mapping; tight framing is the fixed read-only
+ * camera projection (v2 §3.11). */
+function projectColors(sourceColors: readonly SpriteHexColor[], framing: SpriteRenderVariant["framing"]): SpriteHexColor[] {
+  if (framing !== "tight") return [...sourceColors];
+  const output: SpriteHexColor[] = [];
+  for (let y = 0; y < SPRITE_PIXEL_HEIGHT; y += 1) {
+    for (let x = 0; x < SPRITE_PIXEL_WIDTH; x += 1) {
+      output.push(sourceColors[y * SPRITE_PIXEL_WIDTH + SPRITE_PIXEL_TIGHT_X_MAP[x]]);
+    }
+  }
+  return output;
+}
+
+function assertCellCount(cells: readonly unknown[], label: string): void {
+  if (cells.length !== SPRITE_PIXEL_CELL_COUNT) {
+    throw new Error(`${label} must have exactly ${SPRITE_PIXEL_CELL_COUNT} cells, got ${cells.length}`);
+  }
+}
+
+function assertGridCells<T>(grid: SpritePixelGrid<T>, label: string): void {
+  if (grid.width !== SPRITE_PIXEL_WIDTH || grid.height !== SPRITE_PIXEL_HEIGHT || grid.cells.length !== SPRITE_PIXEL_CELL_COUNT) {
+    throw new Error(`${label} must be exactly ${SPRITE_PIXEL_WIDTH}×${SPRITE_PIXEL_HEIGHT} (${SPRITE_PIXEL_CELL_COUNT} cells)`);
+  }
+}
+
+/** Canonical pixel render: immutable identity → state overlays → region-gated
+ * color transforms → optional camera projection → 672 opaque RGB cells. Pure and
+ * deterministic: (portrait, state) through buildChiefSpriteSpec yields identical
+ * bytes; identity topology is state-invariant; no RNG/clock/locale/DOM. */
+export function buildSpritePixels(sprite: SpriteSpec): SpritePixelRender {
+  const identity = buildSpritePixelIdentity(sprite);
+  assertGridCells(identity.grid, "identity.grid");
+
+  const source = identity.grid.cells.map((cell) => ({ ...cell }));
+  restoreUnprotectedSlot(source, identity.grid, "posture");
+  paintPosture(source, SPRITE_PIXEL_POSTURE[sprite.variant.posture]);
+  restoreUnprotectedSlot(source, identity.grid, "expression");
+  paintExpression(source, glyphFor(sprite));
+  if (sprite.variant.supportDetail === "utility-harness") {
+    // y=22 strap anchors are posture-painted uniform cells; the pocket lives in the
+    // support slot (v2 §3.11 "only unprotected uniform/support cells").
+    guardedPaint(source, SPRITE_PIXEL_HARNESS, { allowedSlots: ["posture", "support"] });
+  }
+
+  const sourceColors = resolveSourceColors(source, identity.palette, sprite.variant);
+  const output = projectColors(sourceColors, sprite.variant.framing);
+
+  // Structural invariants (v2 §3.13): grid sizes, untouched source outer margin,
+  // and lowercase opaque hex output.
+  assertCellCount(source, "source");
+  assertCellCount(sourceColors, "sourceColors");
+  assertCellCount(output, "output");
+  for (let index = 0; index < SPRITE_PIXEL_CELL_COUNT; index += 1) {
+    const x = index % SPRITE_PIXEL_WIDTH;
+    const y = Math.floor(index / SPRITE_PIXEL_WIDTH);
+    if (x === 0 || x === SPRITE_PIXEL_WIDTH - 1 || y === 0 || y === SPRITE_PIXEL_HEIGHT - 1) {
+      const identityCell = identity.grid.cells[index];
+      const sourceCell = source[index];
+      if (sourceCell.basePaletteIndex !== identityCell.basePaletteIndex || sourceCell.region !== identityCell.region
+        || sourceCell.slot !== identityCell.slot || sourceCell.protected !== identityCell.protected) {
+        throw new Error(`source outer margin changed at (${x},${y})`);
+      }
+      if (sourceColors[index] !== identity.palette[identityCell.basePaletteIndex]) {
+        throw new Error(`source outer margin color changed at (${x},${y})`);
+      }
+    }
+    if (!/^#[0-9a-f]{6}$/.test(output[index])) {
+      throw new Error(`output cell ${index} is not lowercase opaque #rrggbb: ${output[index]}`);
+    }
+  }
+
+  return Object.freeze({
+    identity,
+    source: freezeSemanticGrid(source),
+    sourceColors: freezeColorGrid(sourceColors),
+    output: freezeColorGrid(output),
+  });
+}
+
+/** Row-major horizontal runs of equal final colors: each run becomes exactly one
+ * <rect>. Bounded: a checkerboard reaches the strict 672-run maximum, a uniform
+ * 24×28 matrix collapses to 28 runs. */
+export function spritePixelRuns(cells: readonly SpriteHexColor[]): SpritePixelRun[] {
+  if (cells.length !== SPRITE_PIXEL_CELL_COUNT) {
+    throw new Error(`spritePixelRuns expects exactly ${SPRITE_PIXEL_CELL_COUNT} cells, got ${cells.length}`);
+  }
+  const runs: SpritePixelRun[] = [];
+  for (let y = 0; y < SPRITE_PIXEL_HEIGHT; y += 1) {
+    let x = 0;
+    while (x < SPRITE_PIXEL_WIDTH) {
+      const color = cells[y * SPRITE_PIXEL_WIDTH + x];
+      let end = x + 1;
+      while (end < SPRITE_PIXEL_WIDTH && cells[y * SPRITE_PIXEL_WIDTH + end] === color) end += 1;
+      runs.push({ x, y, width: end - x, color });
+      x = end;
+    }
+  }
+  return runs;
+}
+
+/** Run-grouped crispEdges SVG: fixed root, one integer <rect height="1"> per
+ * horizontal run, row-major, fixed attribute order, no paths/filters/opacity. */
 export function buildAdvisorPortraitSvg(sprite: SpriteSpec): string {
-  const jawRadius = sprite.faceShape === "square" ? 22 : sprite.faceShape === "round" ? 28 : 25;
-  const cheekWidth = sprite.faceShape === "square" ? 76 : sprite.faceShape === "round" ? 72 : 68;
-  const faceHeight = sprite.faceShape === "round" ? 88 : 94;
-  const mouthY = sprite.genderPresentation === "female" ? 165 : 168;
-
-  // Expression drives face geometry for the first time (#52): authored values stay the
-  // identity base, the rendered value is base + expression delta, clamped as a safety net.
-  const expressionVisual = SPRITE_EXPRESSION_VISUALS[sprite.expression];
-  const renderedBrowTilt = clampNumber(sprite.browTilt + expressionVisual.browTiltDelta, -5, 5);
-  const renderedMouthCurve = clampNumber(sprite.mouthCurve + expressionVisual.mouthCurveDelta, -4, 4);
-
-  // Framing is a fixed table, never computed from browser dimensions.
-  const viewBox = sprite.variant.framing === "tight" ? "12 8 216 252" : "0 0 240 280";
-  const posturePath = SPRITE_POSTURE_PATHS[sprite.variant.posture];
-
-  const darken = sprite.variant.backgroundDarkenOpacity > 0
-    ? `\n      <rect width="240" height="280" rx="16" fill="#000000" opacity="${sprite.variant.backgroundDarkenOpacity}" />`
-    : "";
-  const saturationGroup = sprite.variant.saturation < 1
-    ? `<defs>\n      <filter id="sprite-saturation" color-interpolation-filters="sRGB">\n        <feColorMatrix type="saturate" values="${sprite.variant.saturation}" />\n      </filter>\n    </defs>\n    <g filter="url(#sprite-saturation)">`
-    : "";
-  const saturationGroupClose = sprite.variant.saturation < 1 ? "</g>" : "";
-
-  // S4 utility harness (Sprite 3, issue #52): a text-free harness/pocket-ledger motif,
-  // strokes 4-6 units so it survives 48 px. Nudged toward the center so it never crosses
-  // the trim bars at (48,234) and (150,234).
-  const supportDetail = sprite.variant.supportDetail === "utility-harness"
-    ? `
-        <path d="M96 208 L114 258" stroke="${sprite.trimColor}" stroke-width="6" opacity="0.9" />
-        <path d="M144 208 L126 258" stroke="${sprite.trimColor}" stroke-width="6" opacity="0.9" />
-        <rect x="103" y="224" width="34" height="26" rx="4" fill="none" stroke="${sprite.trimColor}" stroke-width="4" />
-        <path d="M109 232 H131" stroke="${sprite.trimColor}" stroke-width="4" />`
-    : "";
-
-  const hair =
-    sprite.hairStyle === "bun"
-      ? `
-        <circle cx="120" cy="42" r="18" fill="${sprite.hairColor}" />
-        <path d="M58 108 C58 58 83 36 120 36 C157 36 182 58 182 108 L182 118 C164 95 147 84 120 84 C93 84 76 95 58 118 Z" fill="${sprite.hairColor}" />
-      `
-      : sprite.hairStyle === "bob"
-        ? `<path d="M56 114 C56 58 84 40 120 40 C156 40 184 58 184 114 C177 146 162 164 146 170 L146 132 C137 119 130 114 120 114 C110 114 103 119 94 132 L94 170 C77 164 63 146 56 114 Z" fill="${sprite.hairColor}" />`
-        : sprite.hairStyle === "tied-back"
-          ? `
-            <path d="M60 112 C60 60 88 38 120 38 C152 38 180 60 180 112 L180 120 C164 96 147 84 120 84 C93 84 76 96 60 120 Z" fill="${sprite.hairColor}" />
-            <path d="M166 142 C183 148 190 164 186 184 C172 180 161 167 156 150 Z" fill="${sprite.hairColor}" />
-          `
-          : sprite.hairStyle === "crew"
-            ? `<path d="M66 102 C70 66 93 48 120 48 C147 48 170 66 174 102 C154 85 138 80 120 80 C102 80 86 85 66 102 Z" fill="${sprite.hairColor}" />`
-            : sprite.hairStyle === "crop"
-              ? `<path d="M70 100 C78 64 97 50 120 50 C143 50 162 64 170 100 C152 88 137 84 120 84 C103 84 88 88 70 100 Z" fill="${sprite.hairColor}" />`
-              : `<path d="M64 104 C70 60 95 40 124 40 C149 40 168 52 176 88 C162 72 145 66 132 66 C109 66 91 76 64 104 Z" fill="${sprite.hairColor}" />`;
-
-  const accessory =
-    sprite.accessory === "glasses"
-      ? `
-        <rect x="82" y="126" width="28" height="18" rx="6" fill="none" stroke="#d6dde0" stroke-width="3" />
-        <rect x="130" y="126" width="28" height="18" rx="6" fill="none" stroke="#d6dde0" stroke-width="3" />
-        <path d="M110 135 L130 135" stroke="#d6dde0" stroke-width="3" />
-      `
-      : sprite.accessory === "earpiece"
-        ? `<path d="M174 140 C184 144 188 152 186 162" stroke="#d6dde0" stroke-width="3" fill="none" />`
-        : "";
-
-  return `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Generated advisor portrait">
-      ${saturationGroup}
-      <rect width="240" height="280" rx="16" fill="${sprite.backgroundColor}" />
-      <rect x="14" y="14" width="212" height="252" rx="12" fill="${sprite.panelColor}" opacity="0.55" />
-      ${darken}
-      <path d="${posturePath}" fill="${sprite.uniformColor}" />
-      <path d="M34 226 C70 196 93 190 120 190 C147 190 170 196 206 226" stroke="${sprite.trimColor}" stroke-width="6" fill="none" opacity="0.95" />
-      <rect x="108" y="187" width="24" height="30" rx="10" fill="${sprite.skinTone}" />
-      <rect x="48" y="234" width="42" height="8" rx="4" fill="${sprite.trimColor}" opacity="0.9" />
-      <rect x="150" y="234" width="42" height="8" rx="4" fill="${sprite.trimColor}" opacity="0.9" />
-      <path d="M120 68 C${120 - cheekWidth / 2} 68 76 ${104 + faceHeight / 3} 76 ${142 + faceHeight / 4} C76 ${176 + faceHeight / 6} 94 208 120 208 C146 208 164 ${176 + faceHeight / 6} 164 ${142 + faceHeight / 4} C164 ${104 + faceHeight / 3} ${120 + cheekWidth / 2} 68 120 68 Z" fill="${sprite.skinTone}" />
-      <circle cx="73" cy="146" r="11" fill="${sprite.skinTone}" />
-      <circle cx="167" cy="146" r="11" fill="${sprite.skinTone}" />
-      ${hair}
-      <path d="M92 122 C100 ${118 + renderedBrowTilt} 108 ${118 - renderedBrowTilt} 114 122" stroke="#231d1a" stroke-width="3.5" fill="none" stroke-linecap="round" />
-      <path d="M126 122 C132 ${118 - renderedBrowTilt} 140 ${118 + renderedBrowTilt} 148 122" stroke="#231d1a" stroke-width="3.5" fill="none" stroke-linecap="round" />
-      <ellipse cx="102" cy="138" rx="9" ry="7" fill="#f4f7f6" />
-      <ellipse cx="138" cy="138" rx="9" ry="7" fill="#f4f7f6" />
-      <circle cx="102" cy="138" r="4.5" fill="${sprite.eyeColor}" />
-      <circle cx="138" cy="138" r="4.5" fill="${sprite.eyeColor}" />
-      <circle cx="104" cy="136" r="1.2" fill="#f5fbff" />
-      <circle cx="140" cy="136" r="1.2" fill="#f5fbff" />
-      <path d="M120 142 L116 158 L123 160" stroke="#8f6f5b" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.7" />
-      <path d="M101 ${mouthY} C110 ${mouthY + renderedMouthCurve} 130 ${mouthY + renderedMouthCurve} 139 ${mouthY}" stroke="#6e3f40" stroke-width="3" fill="none" stroke-linecap="round" />
-      <path d="M78 94 C92 74 103 66 120 66 C137 66 148 74 162 94" stroke="${sprite.hairColor}" stroke-width="${jawRadius / 7}" fill="none" stroke-linecap="round" opacity="0.85" />
-      ${accessory}
-      ${supportDetail}
-      ${saturationGroupClose}
-    </svg>
-  `.trim();
+  const output = buildSpritePixels(sprite).output.cells;
+  const rects = spritePixelRuns(output).map((run) => `<rect x="${run.x}" y="${run.y}" width="${run.width}" height="1" fill="${run.color}"/>`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="28" viewBox="0 0 24 28" shape-rendering="crispEdges" role="img" aria-label="Generated advisor portrait">${rects.join("")}</svg>`;
 }
 
 export function buildAdvisorPortraitDataUri(sprite: SpriteSpec) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(buildAdvisorPortraitSvg(sprite))}`;
 }
+
+
 
 export function createInitialGameSession(scenario: ScenarioDefinition, sessionSeed = scenario.id): GameSession {
   const timestamp = new Date().toISOString();

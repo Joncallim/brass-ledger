@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
-import { buildAdvisorPortraitSvg, spriteSpecSchema, gameSessionSchema, SPRITE_NEGATIVE_PROMPT, createInitialGameSession, type TurnInput } from "@brass-ledger/shared";
+import { buildAdvisorPortraitSvg, buildSpritePixels, spritePixelRuns, spriteSpecSchema, gameSessionSchema, SPRITE_NEGATIVE_PROMPT, createInitialGameSession, type TurnInput } from "@brass-ledger/shared";
 import { acceptedRiskCandidatesForInput, createBatchSession, hashPromptText, replicateSeedFor, runHeadlessBatch, runHeadlessCampaign } from "./index";
 
 const canonicalPrompt =
@@ -39,6 +39,13 @@ test("sprite output is additive, schema-valid, and renderer-equivalent", async (
     assert.ok(Array.isArray(sprite.spec.variant.effects), "effects array is present");
     assert.equal(sprite.svg, buildAdvisorPortraitSvg(sprite.spec));
     assert.match(sprite.svg, /^<svg/);
+    // Sprite 4 (#82): the emitted SVG is exactly the run-grouped serialization of
+    // the canonical pixel matrix, and the matrix is a full 24×28 opaque grid.
+    assert.ok(sprite.svg.includes('shape-rendering="crispEdges"'), "pixel renderer root carries crispEdges");
+    const pixelRender = buildSpritePixels(sprite.spec);
+    assert.equal(pixelRender.output.cells.length, 24 * 28);
+    const rects = (sprite.svg.match(/<rect /g) ?? []).length;
+    assert.equal(rects, spritePixelRuns(pixelRender.output.cells).length, "one rect per horizontal run");
     assert.ok(sprite.spec.temperament.length > 0, "temperament is copied from the chief");
     assert.ok(sprite.spec.prompt.length > 0, "positive prompt is filled");
     assert.equal(sprite.spec.negativePrompt, SPRITE_NEGATIVE_PROMPT);
@@ -122,7 +129,7 @@ test("sprite prompts and hashes stay outside the saved session", async () => {
   assert.ok(output.sprites, "sprites are emitted when opted in");
   assert.ok(output.sessionExport, "raw GameSession sibling is present");
   gameSessionSchema.parse(output.sessionExport);
-  const forbidden = ["prompt", "negativePrompt", "promptHash", "negativePromptHash", "deterministicSeed", "temperament", "variant", "effects", "posture", "framing", "supportDetail", "saturation", "backgroundDarkenOpacity"];
+  const forbidden = ["prompt", "negativePrompt", "promptHash", "negativePromptHash", "deterministicSeed", "temperament", "variant", "effects", "posture", "framing", "supportDetail", "saturation", "backgroundDarkenOpacity", "pixelGrid", "pixelMatrix", "pixels", "svg", "png"];
   const keys: string[] = [];
   const collect = (value: unknown) => {
     if (Array.isArray(value)) return value.forEach(collect);
