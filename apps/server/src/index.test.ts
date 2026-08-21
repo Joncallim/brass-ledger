@@ -182,6 +182,8 @@ test("headless API sprite output carries filled prompts and sibling hashes", asy
     assert.ok(sprite.spec.temperament.length > 0, "temperament flows through the chief");
     assert.ok(sprite.spec.prompt.length > 0, "positive prompt is filled");
     assert.ok(sprite.spec.negativePrompt.length > 0, "negative prompt is filled");
+    assert.ok(sprite.spec.variant, "variant render controls are present");
+    assert.ok(Array.isArray(sprite.spec.variant.effects), "variant effects are an ordered array");
     assert.equal(sprite.promptHash, hashPromptText(sprite.spec.prompt), "promptHash is SHA-256 of the emitted prompt");
     assert.equal(sprite.negativePromptHash, hashPromptText(sprite.spec.negativePrompt), "negativePromptHash is SHA-256 of the emitted negative prompt");
     assert.match(sprite.promptHash, /^[0-9a-f]{64}$/);
@@ -191,7 +193,7 @@ test("headless API sprite output carries filled prompts and sibling hashes", asy
   // The full result still carries a schema-valid raw session sibling that excludes sprite artifacts.
   assert.ok(body.sessionExport, "raw GameSession sibling remains");
   gameSessionSchema.parse(body.sessionExport);
-  const forbidden = ["prompt", "negativePrompt", "promptHash", "negativePromptHash", "deterministicSeed", "temperament"];
+  const forbidden = ["prompt", "negativePrompt", "promptHash", "negativePromptHash", "deterministicSeed", "temperament", "variant", "effects", "posture", "framing", "supportDetail", "saturation", "backgroundDarkenOpacity"];
   const keys: string[] = [];
   const collect = (value: unknown) => {
     if (Array.isArray(value)) return value.forEach(collect);

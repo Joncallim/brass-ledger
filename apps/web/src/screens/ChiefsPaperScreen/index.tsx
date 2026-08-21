@@ -85,9 +85,13 @@ export function ChiefsPaperScreen({
             const sprite = advisor && chief
               ? buildChiefSpriteSpec({
                 chief, portrait: advisor.portrait, sessionSeed: session.id,
-                trustBand: relationshipLabel(session.state.chiefTrust[chief.id] ?? 50),
-                burdenLevel: position.staffReadoutEvidence.burdenLevel,
-                campaignStatus: session.state.campaignStatus,
+                variantState: {
+                  trustBand: relationshipLabel(session.state.chiefTrust[chief.id] ?? 50),
+                  burdenLevel: position.staffReadoutEvidence.burdenLevel,
+                  campaignStatus: session.state.campaignStatus,
+                  s2ExternalEstimateConfidence: session.state.staffMechanics.s2.externalEstimateConfidence,
+                  s4SupportableTempo: session.state.staffMechanics.s4.supportableTempo,
+                },
                 visualLanguage: scenario.spriteVisualLanguage,
               })
               : undefined;

@@ -87,6 +87,8 @@ test("--sprites adds schema payloads to JSON and preserves plain-text count outp
   assert.ok(sprite.spec.prompt.length > 0, "positive prompt is filled");
   assert.match(sprite.spec.prompt, /^Military staff advisor portrait for a strategic command simulation, /);
   assert.equal(sprite.spec.negativePrompt, SPRITE_NEGATIVE_PROMPT);
+  assert.ok(sprite.spec.variant, "variant render controls are present");
+  assert.ok(Array.isArray(sprite.spec.variant.effects), "variant effects are an ordered array");
   assert.equal(sprite.promptHash, hashPromptText(sprite.spec.prompt), "promptHash is SHA-256 of the emitted prompt");
   assert.equal(sprite.negativePromptHash, hashPromptText(sprite.spec.negativePrompt), "negativePromptHash is SHA-256 of the emitted negative prompt");
   assert.match(sprite.promptHash, /^[0-9a-f]{64}$/);

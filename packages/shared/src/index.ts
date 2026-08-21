@@ -139,7 +139,7 @@ export const staffMechanicsStateSchema = z.object({
 });
 export type StaffMechanicsState = z.infer<typeof staffMechanicsStateSchema>;
 
-const defaultStaffMechanicsState: StaffMechanicsState = {
+export const defaultStaffMechanicsState: StaffMechanicsState = {
   s1: { recoveryDebt: 42, reservePredictability: 51 },
   s2: { externalEstimateConfidence: 46, visibility: "ESTIMATED", deceptionRisk: 44 },
   s3: { visiblePosture: 48, executablePosture: 50, credibleDeterrence: 46 },
@@ -536,10 +536,85 @@ export const spriteSubjectTypeSchema = z.enum(["chief", "staff", "event", "progr
 export type SpriteSubjectType = z.infer<typeof spriteSubjectTypeSchema>;
 export const spriteRoleSchema = z.enum(["S1", "S2", "S3", "S4", "S5", "training"]);
 export type SpriteRole = z.infer<typeof spriteRoleSchema>;
-export const spriteExpressionSchema = z.enum(["calm", "skeptical", "strained", "urgent", "resolved"]);
+export const spriteExpressionSchema = z.enum(["calm", "skeptical", "strained", "urgent", "resolved", "severe"]);
 export type SpriteExpression = z.infer<typeof spriteExpressionSchema>;
 export const spriteTrustBandSchema = z.enum(["strained", "watchful", "steady", "solid"]);
 export type SpriteTrustBand = z.infer<typeof spriteTrustBandSchema>;
+
+/** Raw serialized state consumed by the pure sprite variant policy (Sprite 3, issue #52). */
+export const chiefSpriteVariantStateSchema = z.object({
+  trustBand: spriteTrustBandSchema,
+  burdenLevel: burdenLevelSchema,
+  campaignStatus: z.enum(["active", "won", "lost"]),
+  s2ExternalEstimateConfidence: z.number().min(0).max(100),
+  s4SupportableTempo: z.number().min(0).max(100),
+}).strict();
+export type ChiefSpriteVariantState = z.infer<typeof chiefSpriteVariantStateSchema>;
+
+/** Ordered diagnostic effect markers; a result field, never an input. Order is part of byte determinism. */
+export const spriteVariantEffectSchema = z.enum([
+  "trust-low", "trust-high",
+  "directorate-strained", "directorate-overloaded",
+  "campaign-won", "campaign-lost",
+  "s2-low-confidence", "s4-bottleneck",
+]);
+export type SpriteVariantEffect = z.infer<typeof spriteVariantEffectSchema>;
+
+const spriteVariantEffectOrder = Object.fromEntries(
+  spriteVariantEffectSchema.options.map((effect, index) => [effect, index]),
+) as Record<SpriteVariantEffect, number>;
+
+function canonicalVariantIssue(
+  ctx: z.RefinementCtx,
+  path: (string | number)[],
+  message: string,
+): void {
+  ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
+}
+
+/** Strict renderer controls derived from the variant policy; never persisted, never in the prompt. */
+export const spriteRenderVariantSchema = z.object({
+  effects: z.array(spriteVariantEffectSchema),
+  posture: z.enum(["neutral", "closed", "open"]),
+  backgroundDarkenOpacity: z.number().min(0).max(1),
+  saturation: z.number().min(0).max(1),
+  framing: z.enum(["default", "tight"]),
+  supportDetail: z.enum(["none", "utility-harness"]),
+}).strict().superRefine((variant, ctx) => {
+  const effects = new Set(variant.effects);
+  if (effects.size !== variant.effects.length) {
+    canonicalVariantIssue(ctx, ["effects"], "effects must be unique");
+  }
+  if (variant.effects.some((effect, index) => index > 0 && spriteVariantEffectOrder[effect] < spriteVariantEffectOrder[variant.effects[index - 1]!])) {
+    canonicalVariantIssue(ctx, ["effects"], "effects must use canonical order");
+  }
+  for (const [first, second] of [["trust-low", "trust-high"], ["directorate-strained", "directorate-overloaded"], ["campaign-won", "campaign-lost"]] as const) {
+    if (effects.has(first) && effects.has(second)) {
+      canonicalVariantIssue(ctx, ["effects"], `${first} and ${second} cannot both appear in a canonical effect list`);
+    }
+  }
+  const expectedPosture = effects.has("trust-low") ? "closed" : effects.has("trust-high") ? "open" : "neutral";
+  if (variant.posture !== expectedPosture) {
+    canonicalVariantIssue(ctx, ["posture"], "posture must match canonical trust effects");
+  }
+  const expectedDarken = effects.has("directorate-overloaded") ? 0.22 : 0;
+  if (variant.backgroundDarkenOpacity !== expectedDarken) {
+    canonicalVariantIssue(ctx, ["backgroundDarkenOpacity"], "background darkening must match canonical overload effect");
+  }
+  const expectedSaturation = effects.has("campaign-lost") ? 0.45 : 1;
+  if (variant.saturation !== expectedSaturation) {
+    canonicalVariantIssue(ctx, ["saturation"], "saturation must match canonical campaign-loss effect");
+  }
+  const expectedFraming = effects.has("s2-low-confidence") ? "tight" : "default";
+  if (variant.framing !== expectedFraming) {
+    canonicalVariantIssue(ctx, ["framing"], "framing must match canonical S2 confidence effect");
+  }
+  const expectedSupportDetail = effects.has("s4-bottleneck") ? "utility-harness" : "none";
+  if (variant.supportDetail !== expectedSupportDetail) {
+    canonicalVariantIssue(ctx, ["supportDetail"], "support detail must match canonical S4 bottleneck effect");
+  }
+});
+export type SpriteRenderVariant = z.infer<typeof spriteRenderVariantSchema>;
 
 export const spriteVisualLanguageEntrySchema = z.object({
   shapeLanguage: z.string().min(1), paletteCue: z.string().min(1),
@@ -559,13 +634,48 @@ export const spriteSpecSchema = advisorPortraitSpecSchema.extend({
   displayName: z.string().min(1), temperament: z.string().min(1), silhouette: z.string().min(1), palette: z.array(z.string().min(1)).min(1),
   uniform: z.string().min(1), expression: spriteExpressionSchema, trustBand: spriteTrustBandSchema.optional(),
   prompt: z.string().min(1), negativePrompt: z.string().min(1), deterministicSeed: z.string().min(1),
-}).strict();
+  variant: spriteRenderVariantSchema,
+}).strict().superRefine((sprite, ctx) => {
+  const effects = new Set(sprite.variant.effects);
+  if (sprite.trustBand === "strained" && !effects.has("trust-low") || sprite.trustBand !== "strained" && effects.has("trust-low")) {
+    canonicalVariantIssue(ctx, ["variant", "effects"], "effects must match the canonical trust band");
+  }
+  if (sprite.trustBand === "solid" && !effects.has("trust-high") || sprite.trustBand !== "solid" && effects.has("trust-high")) {
+    canonicalVariantIssue(ctx, ["variant", "effects"], "effects must match the canonical trust band");
+  }
+  if (effects.has("s2-low-confidence") && sprite.role !== "S2") {
+    canonicalVariantIssue(ctx, ["variant", "effects"], "S2 confidence effect is only valid for the S2 role");
+  }
+  if (effects.has("s4-bottleneck") && sprite.role !== "S4") {
+    canonicalVariantIssue(ctx, ["variant", "effects"], "S4 bottleneck effect is only valid for the S4 role");
+  }
+  // Canonicality is effect→expression only, by design: expression is a legitimately
+  // authored base value (baseExpression is not stored on SpriteSpec), so an authored
+  // "severe"/"strained" expression with no effects must keep parsing — do NOT reverse-check.
+  const expectedExpression = effects.has("campaign-won") ? "resolved"
+    : effects.has("campaign-lost") ? "severe"
+      : effects.has("directorate-overloaded") ? "strained"
+        : effects.has("trust-low") ? "skeptical"
+          : effects.has("directorate-strained") ? "strained"
+            : effects.has("trust-high") ? "calm" : undefined;
+  if (expectedExpression !== undefined && sprite.expression !== expectedExpression) {
+    canonicalVariantIssue(ctx, ["expression"], "expression must match canonical variant effects");
+  }
+});
 export type SpriteSpec = z.infer<typeof spriteSpecSchema>;
 
 export type ChiefSpriteSpecInput = {
-  chief: ChiefArchetype; portrait: AdvisorPortraitSpec; sessionSeed: string; trustBand: SpriteTrustBand;
-  burdenLevel: BurdenLevel; campaignStatus: CampaignState["campaignStatus"]; visualLanguage: SpriteVisualLanguage;
+  chief: ChiefArchetype;
+  portrait: AdvisorPortraitSpec;
+  sessionSeed: string;
+  visualLanguage: SpriteVisualLanguage;
+  variantState: ChiefSpriteVariantState;
 };
+
+export type DerivedChiefSpriteVariant = Readonly<{
+  expression: SpriteExpression;
+  variant: SpriteRenderVariant;
+}>;
 
 /** The exact negative prompt from the sprite roadmap; identical for every sprite. */
 export const SPRITE_NEGATIVE_PROMPT =
@@ -3214,24 +3324,72 @@ export function chiefSpriteDeterministicSeed(sessionSeed: string, chiefId: strin
   return "brass-ledger:sprite:v1" + `|session=${JSON.stringify(sessionSeed)}` + "|subjectType=chief" + `|subjectId=${JSON.stringify(chiefId)}`;
 }
 
-function expressionFor(input: Pick<ChiefSpriteSpecInput, "trustBand" | "burdenLevel" | "campaignStatus"> & { baseExpression: SpriteExpression }): SpriteExpression {
-  if (input.campaignStatus === "won") return "resolved";
-  if (input.campaignStatus === "lost") return "strained";
-  if (input.burdenLevel === "overloaded") return "strained";
-  if (input.trustBand === "strained") return "skeptical";
-  if (input.burdenLevel === "strained") return "strained";
-  return input.baseExpression;
+function canonicalEffects(role: SpriteRole, state: ChiefSpriteVariantState): SpriteVariantEffect[] {
+  const effects: SpriteVariantEffect[] = [];
+  effects.push(state.trustBand === "strained" ? "trust-low"
+    : state.trustBand === "solid" ? "trust-high" : undefined!);
+  effects.push(state.burdenLevel === "overloaded" ? "directorate-overloaded"
+    : state.burdenLevel === "strained" ? "directorate-strained" : undefined!);
+  effects.push(state.campaignStatus === "won" ? "campaign-won"
+    : state.campaignStatus === "lost" ? "campaign-lost" : undefined!);
+  if (role === "S2" && state.s2ExternalEstimateConfidence <= 42) effects.push("s2-low-confidence");
+  if (role === "S4" && state.s4SupportableTempo < 15) effects.push("s4-bottleneck");
+  return effects.filter((effect): effect is SpriteVariantEffect => effect !== undefined);
+}
+
+/**
+ * The ONLY state→effect policy for chief sprites (Sprite 3, issue #52). Pure and
+ * deterministic: consumes raw shared-domain state, never CSS/browser state, never content.
+ * Returns the final expression plus the strict renderer controls. Expression precedence,
+ * highest first: won→resolved, lost→severe, overloaded→strained, trust strained→skeptical,
+ * burden strained→strained, trust solid→calm (NEW in #52), else authored baseExpression.
+ * Non-expression effects compose independently: trust posture, overload darkening,
+ * loss desaturation, S2 tight framing, S4 utility detail.
+ */
+export function buildChiefSpriteVariant(
+  baseExpression: SpriteExpression,
+  role: SpriteRole,
+  state: ChiefSpriteVariantState,
+): DerivedChiefSpriteVariant {
+  const expression: SpriteExpression =
+    state.campaignStatus === "won" ? "resolved" :
+    state.campaignStatus === "lost" ? "severe" :
+    state.burdenLevel === "overloaded" ? "strained" :
+    state.trustBand === "strained" ? "skeptical" :
+    state.burdenLevel === "strained" ? "strained" :
+    state.trustBand === "solid" ? "calm" :
+    baseExpression;
+
+  const trustLow = state.trustBand === "strained";
+  const trustHigh = state.trustBand === "solid";
+  const overloaded = state.burdenLevel === "overloaded";
+  const lost = state.campaignStatus === "lost";
+  const s2Low = role === "S2" && state.s2ExternalEstimateConfidence <= 42;
+  const s4Blocked = role === "S4" && state.s4SupportableTempo < 15;
+
+  return {
+    expression,
+    variant: spriteRenderVariantSchema.parse({
+      effects: canonicalEffects(role, state),
+      posture: trustLow ? "closed" : trustHigh ? "open" : "neutral",
+      backgroundDarkenOpacity: overloaded ? 0.22 : 0,
+      saturation: lost ? 0.45 : 1,
+      framing: s2Low ? "tight" : "default",
+      supportDetail: s4Blocked ? "utility-harness" : "none",
+    }),
+  };
 }
 
 export function buildChiefSpriteSpec(input: ChiefSpriteSpecInput): SpriteSpec {
+  const variantState = chiefSpriteVariantStateSchema.parse(input.variantState);
   const role = roleForChiefDirectorate(input.chief.directorate);
   const visual = input.visualLanguage[role];
-  const expression = expressionFor({ baseExpression: visual.baseExpression, trustBand: input.trustBand, burdenLevel: input.burdenLevel, campaignStatus: input.campaignStatus });
+  const derived = buildChiefSpriteVariant(visual.baseExpression, role, variantState);
   const source: SpritePromptSource = {
     role,
     displayName: input.chief.name,
     temperament: input.chief.temperament,
-    expression,
+    expression: derived.expression,
   };
   const { prompt, negativePrompt } = buildSpritePromptText(source);
   return spriteSpecSchema.parse({
@@ -3240,78 +3398,137 @@ export function buildChiefSpriteSpec(input: ChiefSpriteSpecInput): SpriteSpec {
     silhouette: visual.shapeLanguage,
     palette: [input.portrait.skinTone, input.portrait.hairColor, input.portrait.eyeColor, input.portrait.uniformColor, input.portrait.trimColor, input.portrait.backgroundColor, input.portrait.panelColor],
     uniform: visual.uniformLanguage,
-    trustBand: input.trustBand, prompt, negativePrompt,
+    trustBand: variantState.trustBand, prompt, negativePrompt,
     deterministicSeed: chiefSpriteDeterministicSeed(input.sessionSeed, input.chief.id),
+    variant: derived.variant,
   });
 }
 
-export function buildAdvisorPortraitSvg(portrait: AdvisorPortraitSpec) {
-  const jawRadius = portrait.faceShape === "square" ? 22 : portrait.faceShape === "round" ? 28 : 25;
-  const cheekWidth = portrait.faceShape === "square" ? 76 : portrait.faceShape === "round" ? 72 : 68;
-  const faceHeight = portrait.faceShape === "round" ? 88 : 94;
-  const mouthY = portrait.genderPresentation === "female" ? 165 : 168;
+/**
+ * Frozen exhaustive expression→face-geometry deltas (Sprite 3, issue #52). Authored
+ * `browTilt`/`mouthCurve` stay the identity base; the rendered value is base + delta,
+ * clamped. Deltas intentionally dominate the authored range so state reads at 48 px.
+ */
+export const SPRITE_EXPRESSION_VISUALS = Object.freeze({
+  calm: { browTiltDelta: 0, mouthCurveDelta: 0.6 },
+  skeptical: { browTiltDelta: -3.0, mouthCurveDelta: -0.6 },
+  strained: { browTiltDelta: -3.5, mouthCurveDelta: -1.5 },
+  urgent: { browTiltDelta: -1.5, mouthCurveDelta: -2.0 },
+  resolved: { browTiltDelta: 0.8, mouthCurveDelta: 1.4 },
+  severe: { browTiltDelta: -4.5, mouthCurveDelta: -2.8 },
+} satisfies Record<SpriteExpression, { browTiltDelta: number; mouthCurveDelta: number }>);
+
+/** Frozen posture shoulder paths, keyed by the strict render-variant posture enum. */
+const SPRITE_POSTURE_PATHS = Object.freeze({
+  neutral: "M24 218 C64 182 84 176 120 176 C156 176 176 182 216 218 L216 260 L24 260 Z",
+  closed: "M34 220 C72 188 91 181 120 181 C149 181 168 188 206 220 L206 260 L34 260 Z",
+  open: "M16 216 C58 178 80 172 120 172 C160 172 182 178 224 216 L224 260 L16 260 Z",
+} satisfies Record<SpriteRenderVariant["posture"], string>);
+
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+export function buildAdvisorPortraitSvg(sprite: SpriteSpec): string {
+  const jawRadius = sprite.faceShape === "square" ? 22 : sprite.faceShape === "round" ? 28 : 25;
+  const cheekWidth = sprite.faceShape === "square" ? 76 : sprite.faceShape === "round" ? 72 : 68;
+  const faceHeight = sprite.faceShape === "round" ? 88 : 94;
+  const mouthY = sprite.genderPresentation === "female" ? 165 : 168;
+
+  // Expression drives face geometry for the first time (#52): authored values stay the
+  // identity base, the rendered value is base + expression delta, clamped as a safety net.
+  const expressionVisual = SPRITE_EXPRESSION_VISUALS[sprite.expression];
+  const renderedBrowTilt = clampNumber(sprite.browTilt + expressionVisual.browTiltDelta, -5, 5);
+  const renderedMouthCurve = clampNumber(sprite.mouthCurve + expressionVisual.mouthCurveDelta, -4, 4);
+
+  // Framing is a fixed table, never computed from browser dimensions.
+  const viewBox = sprite.variant.framing === "tight" ? "12 8 216 252" : "0 0 240 280";
+  const posturePath = SPRITE_POSTURE_PATHS[sprite.variant.posture];
+
+  const darken = sprite.variant.backgroundDarkenOpacity > 0
+    ? `\n      <rect width="240" height="280" rx="16" fill="#000000" opacity="${sprite.variant.backgroundDarkenOpacity}" />`
+    : "";
+  const saturationGroup = sprite.variant.saturation < 1
+    ? `<defs>\n      <filter id="sprite-saturation" color-interpolation-filters="sRGB">\n        <feColorMatrix type="saturate" values="${sprite.variant.saturation}" />\n      </filter>\n    </defs>\n    <g filter="url(#sprite-saturation)">`
+    : "";
+  const saturationGroupClose = sprite.variant.saturation < 1 ? "</g>" : "";
+
+  // S4 utility harness (Sprite 3, issue #52): a text-free harness/pocket-ledger motif,
+  // strokes 4-6 units so it survives 48 px. Nudged toward the center so it never crosses
+  // the trim bars at (48,234) and (150,234).
+  const supportDetail = sprite.variant.supportDetail === "utility-harness"
+    ? `
+        <path d="M96 208 L114 258" stroke="${sprite.trimColor}" stroke-width="6" opacity="0.9" />
+        <path d="M144 208 L126 258" stroke="${sprite.trimColor}" stroke-width="6" opacity="0.9" />
+        <rect x="103" y="224" width="34" height="26" rx="4" fill="none" stroke="${sprite.trimColor}" stroke-width="4" />
+        <path d="M109 232 H131" stroke="${sprite.trimColor}" stroke-width="4" />`
+    : "";
 
   const hair =
-    portrait.hairStyle === "bun"
+    sprite.hairStyle === "bun"
       ? `
-        <circle cx="120" cy="42" r="18" fill="${portrait.hairColor}" />
-        <path d="M58 108 C58 58 83 36 120 36 C157 36 182 58 182 108 L182 118 C164 95 147 84 120 84 C93 84 76 95 58 118 Z" fill="${portrait.hairColor}" />
+        <circle cx="120" cy="42" r="18" fill="${sprite.hairColor}" />
+        <path d="M58 108 C58 58 83 36 120 36 C157 36 182 58 182 108 L182 118 C164 95 147 84 120 84 C93 84 76 95 58 118 Z" fill="${sprite.hairColor}" />
       `
-      : portrait.hairStyle === "bob"
-        ? `<path d="M56 114 C56 58 84 40 120 40 C156 40 184 58 184 114 C177 146 162 164 146 170 L146 132 C137 119 130 114 120 114 C110 114 103 119 94 132 L94 170 C77 164 63 146 56 114 Z" fill="${portrait.hairColor}" />`
-        : portrait.hairStyle === "tied-back"
+      : sprite.hairStyle === "bob"
+        ? `<path d="M56 114 C56 58 84 40 120 40 C156 40 184 58 184 114 C177 146 162 164 146 170 L146 132 C137 119 130 114 120 114 C110 114 103 119 94 132 L94 170 C77 164 63 146 56 114 Z" fill="${sprite.hairColor}" />`
+        : sprite.hairStyle === "tied-back"
           ? `
-            <path d="M60 112 C60 60 88 38 120 38 C152 38 180 60 180 112 L180 120 C164 96 147 84 120 84 C93 84 76 96 60 120 Z" fill="${portrait.hairColor}" />
-            <path d="M166 142 C183 148 190 164 186 184 C172 180 161 167 156 150 Z" fill="${portrait.hairColor}" />
+            <path d="M60 112 C60 60 88 38 120 38 C152 38 180 60 180 112 L180 120 C164 96 147 84 120 84 C93 84 76 96 60 120 Z" fill="${sprite.hairColor}" />
+            <path d="M166 142 C183 148 190 164 186 184 C172 180 161 167 156 150 Z" fill="${sprite.hairColor}" />
           `
-          : portrait.hairStyle === "crew"
-            ? `<path d="M66 102 C70 66 93 48 120 48 C147 48 170 66 174 102 C154 85 138 80 120 80 C102 80 86 85 66 102 Z" fill="${portrait.hairColor}" />`
-            : portrait.hairStyle === "crop"
-              ? `<path d="M70 100 C78 64 97 50 120 50 C143 50 162 64 170 100 C152 88 137 84 120 84 C103 84 88 88 70 100 Z" fill="${portrait.hairColor}" />`
-              : `<path d="M64 104 C70 60 95 40 124 40 C149 40 168 52 176 88 C162 72 145 66 132 66 C109 66 91 76 64 104 Z" fill="${portrait.hairColor}" />`;
+          : sprite.hairStyle === "crew"
+            ? `<path d="M66 102 C70 66 93 48 120 48 C147 48 170 66 174 102 C154 85 138 80 120 80 C102 80 86 85 66 102 Z" fill="${sprite.hairColor}" />`
+            : sprite.hairStyle === "crop"
+              ? `<path d="M70 100 C78 64 97 50 120 50 C143 50 162 64 170 100 C152 88 137 84 120 84 C103 84 88 88 70 100 Z" fill="${sprite.hairColor}" />`
+              : `<path d="M64 104 C70 60 95 40 124 40 C149 40 168 52 176 88 C162 72 145 66 132 66 C109 66 91 76 64 104 Z" fill="${sprite.hairColor}" />`;
 
   const accessory =
-    portrait.accessory === "glasses"
+    sprite.accessory === "glasses"
       ? `
         <rect x="82" y="126" width="28" height="18" rx="6" fill="none" stroke="#d6dde0" stroke-width="3" />
         <rect x="130" y="126" width="28" height="18" rx="6" fill="none" stroke="#d6dde0" stroke-width="3" />
         <path d="M110 135 L130 135" stroke="#d6dde0" stroke-width="3" />
       `
-      : portrait.accessory === "earpiece"
+      : sprite.accessory === "earpiece"
         ? `<path d="M174 140 C184 144 188 152 186 162" stroke="#d6dde0" stroke-width="3" fill="none" />`
         : "";
 
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" role="img" aria-label="Generated advisor portrait">
-      <rect width="240" height="280" rx="16" fill="${portrait.backgroundColor}" />
-      <rect x="14" y="14" width="212" height="252" rx="12" fill="${portrait.panelColor}" opacity="0.55" />
-      <path d="M24 218 C64 182 84 176 120 176 C156 176 176 182 216 218 L216 260 L24 260 Z" fill="${portrait.uniformColor}" />
-      <path d="M34 226 C70 196 93 190 120 190 C147 190 170 196 206 226" stroke="${portrait.trimColor}" stroke-width="6" fill="none" opacity="0.95" />
-      <rect x="108" y="187" width="24" height="30" rx="10" fill="${portrait.skinTone}" />
-      <rect x="48" y="234" width="42" height="8" rx="4" fill="${portrait.trimColor}" opacity="0.9" />
-      <rect x="150" y="234" width="42" height="8" rx="4" fill="${portrait.trimColor}" opacity="0.9" />
-      <path d="M120 68 C${120 - cheekWidth / 2} 68 76 ${104 + faceHeight / 3} 76 ${142 + faceHeight / 4} C76 ${176 + faceHeight / 6} 94 208 120 208 C146 208 164 ${176 + faceHeight / 6} 164 ${142 + faceHeight / 4} C164 ${104 + faceHeight / 3} ${120 + cheekWidth / 2} 68 120 68 Z" fill="${portrait.skinTone}" />
-      <circle cx="73" cy="146" r="11" fill="${portrait.skinTone}" />
-      <circle cx="167" cy="146" r="11" fill="${portrait.skinTone}" />
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Generated advisor portrait">
+      ${saturationGroup}
+      <rect width="240" height="280" rx="16" fill="${sprite.backgroundColor}" />
+      <rect x="14" y="14" width="212" height="252" rx="12" fill="${sprite.panelColor}" opacity="0.55" />
+      ${darken}
+      <path d="${posturePath}" fill="${sprite.uniformColor}" />
+      <path d="M34 226 C70 196 93 190 120 190 C147 190 170 196 206 226" stroke="${sprite.trimColor}" stroke-width="6" fill="none" opacity="0.95" />
+      <rect x="108" y="187" width="24" height="30" rx="10" fill="${sprite.skinTone}" />
+      <rect x="48" y="234" width="42" height="8" rx="4" fill="${sprite.trimColor}" opacity="0.9" />
+      <rect x="150" y="234" width="42" height="8" rx="4" fill="${sprite.trimColor}" opacity="0.9" />
+      <path d="M120 68 C${120 - cheekWidth / 2} 68 76 ${104 + faceHeight / 3} 76 ${142 + faceHeight / 4} C76 ${176 + faceHeight / 6} 94 208 120 208 C146 208 164 ${176 + faceHeight / 6} 164 ${142 + faceHeight / 4} C164 ${104 + faceHeight / 3} ${120 + cheekWidth / 2} 68 120 68 Z" fill="${sprite.skinTone}" />
+      <circle cx="73" cy="146" r="11" fill="${sprite.skinTone}" />
+      <circle cx="167" cy="146" r="11" fill="${sprite.skinTone}" />
       ${hair}
-      <path d="M92 122 C100 ${118 + portrait.browTilt} 108 ${118 - portrait.browTilt} 114 122" stroke="#231d1a" stroke-width="3.5" fill="none" stroke-linecap="round" />
-      <path d="M126 122 C132 ${118 - portrait.browTilt} 140 ${118 + portrait.browTilt} 148 122" stroke="#231d1a" stroke-width="3.5" fill="none" stroke-linecap="round" />
+      <path d="M92 122 C100 ${118 + renderedBrowTilt} 108 ${118 - renderedBrowTilt} 114 122" stroke="#231d1a" stroke-width="3.5" fill="none" stroke-linecap="round" />
+      <path d="M126 122 C132 ${118 - renderedBrowTilt} 140 ${118 + renderedBrowTilt} 148 122" stroke="#231d1a" stroke-width="3.5" fill="none" stroke-linecap="round" />
       <ellipse cx="102" cy="138" rx="9" ry="7" fill="#f4f7f6" />
       <ellipse cx="138" cy="138" rx="9" ry="7" fill="#f4f7f6" />
-      <circle cx="102" cy="138" r="4.5" fill="${portrait.eyeColor}" />
-      <circle cx="138" cy="138" r="4.5" fill="${portrait.eyeColor}" />
+      <circle cx="102" cy="138" r="4.5" fill="${sprite.eyeColor}" />
+      <circle cx="138" cy="138" r="4.5" fill="${sprite.eyeColor}" />
       <circle cx="104" cy="136" r="1.2" fill="#f5fbff" />
       <circle cx="140" cy="136" r="1.2" fill="#f5fbff" />
       <path d="M120 142 L116 158 L123 160" stroke="#8f6f5b" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.7" />
-      <path d="M101 ${mouthY} C110 ${mouthY + portrait.mouthCurve} 130 ${mouthY + portrait.mouthCurve} 139 ${mouthY}" stroke="#6e3f40" stroke-width="3" fill="none" stroke-linecap="round" />
-      <path d="M78 94 C92 74 103 66 120 66 C137 66 148 74 162 94" stroke="${portrait.hairColor}" stroke-width="${jawRadius / 7}" fill="none" stroke-linecap="round" opacity="0.85" />
+      <path d="M101 ${mouthY} C110 ${mouthY + renderedMouthCurve} 130 ${mouthY + renderedMouthCurve} 139 ${mouthY}" stroke="#6e3f40" stroke-width="3" fill="none" stroke-linecap="round" />
+      <path d="M78 94 C92 74 103 66 120 66 C137 66 148 74 162 94" stroke="${sprite.hairColor}" stroke-width="${jawRadius / 7}" fill="none" stroke-linecap="round" opacity="0.85" />
       ${accessory}
+      ${supportDetail}
+      ${saturationGroupClose}
     </svg>
   `.trim();
 }
 
-export function buildAdvisorPortraitDataUri(portrait: AdvisorPortraitSpec) {
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(buildAdvisorPortraitSvg(portrait))}`;
+export function buildAdvisorPortraitDataUri(sprite: SpriteSpec) {
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(buildAdvisorPortraitSvg(sprite))}`;
 }
 
 export function createInitialGameSession(scenario: ScenarioDefinition, sessionSeed = scenario.id): GameSession {
