@@ -13,11 +13,12 @@ import {
   type GameSession,
   type ReplayValidation,
   type SpriteSpec,
+  type StaffNegotiation,
   type TurnInput,
   type ScenarioDefinition,
   scenarioDefinitionSchema,
 } from "@brass-ledger/shared";
-import { deriveDecisionMemos, doctrineEventEligible, previewTurn, rawCampaignScore, resolveTurn, validateReplaySession } from "@brass-ledger/sim";
+import { deriveDecisionMemos, doctrineEventEligible, ineligibleStaffNegotiations, previewTurn, rawCampaignScore, resolveTurn, validateReplaySession } from "@brass-ledger/sim";
 
 export type OptionRate = {
   memoId: string;
@@ -142,6 +143,16 @@ export class HeadlessAcceptedRiskError extends Error {
   }
 }
 
+export class HeadlessIneligibleNegotiationError extends Error {
+  readonly ineligibleNegotiations: StaffNegotiation[];
+
+  constructor(ineligibleNegotiations: StaffNegotiation[]) {
+    super("Headless turn requested relief for directorates the current selections do not offer.");
+    this.name = "HeadlessIneligibleNegotiationError";
+    this.ineligibleNegotiations = ineligibleNegotiations;
+  }
+}
+
 function defaultInput(session: GameSession, scenario: ScenarioDefinition = soloScenario): TurnInput {
   const memos = deriveDecisionMemos(scenario, session.state);
   return {
@@ -236,6 +247,14 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
   for (let index = 0; index < turns && session.state.campaignStatus === "active"; index += 1) {
     const providedInput = providedInputs[index];
     const baseInput = providedInput ?? defaultInput(session, soloScenario);
+    // Closing pass 7 P1: supplied inputs share the /resolve-turn input-validity
+    // contract — an ineligible relief negotiation must never reach the resolver
+    // (checked BEFORE the accepted-risk precondition, exactly like /resolve-turn).
+    // Auto-generated default inputs carry no negotiations, so this is a no-op there.
+    const ineligible = ineligibleStaffNegotiations(soloScenario, session.state, baseInput);
+    if (ineligible.length > 0) {
+      throw new HeadlessIneligibleNegotiationError(ineligible);
+    }
     const autoAcceptRisks = options.autoAcceptRisks === true || providedInput === undefined;
     const input = inputWithAcceptedRiskPolicy(session, baseInput, autoAcceptRisks, soloScenario);
     const result = resolveTurn(soloScenario, session.state, input);

@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import Fastify, { type FastifyReply } from "fastify";
 import cors from "@fastify/cors";
 import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
-import { HeadlessAcceptedRiskError, runHeadlessCampaign } from "@brass-ledger/headless";
+import { HeadlessAcceptedRiskError, HeadlessIneligibleNegotiationError, runHeadlessCampaign } from "@brass-ledger/headless";
 import {
   createFileSystemSaveStore,
   migrateSessionPayload,
@@ -44,7 +44,7 @@ import {
   type ReplayValidation,
   type TurnInput,
 } from "@brass-ledger/shared";
-import { deriveDecisionMemos, previewTurn, resolveTurn, validateReplaySession } from "@brass-ledger/sim";
+import { deriveDecisionMemos, ineligibleStaffNegotiations, previewTurn, resolveTurn, validateReplaySession } from "@brass-ledger/sim";
 
 export const app = Fastify({ logger: process.env.NODE_ENV !== "test" });
 
@@ -210,6 +210,22 @@ function assertReplayableSession(session: GameSession) {
       + `(replay validation failed at: ${validation.failureKind}).`,
     );
   }
+  // Closing pass 7 P1: replay consistency is not the only gate — every recorded
+  // turn must also be input-valid under the staff-negotiation eligibility rule.
+  // Re-running resolveTurn alone cannot catch this (its simulation boundary
+  // accepts any schema-valid negotiation), so the headless and import paths
+  // previously persisted replay-consistent sessions containing ineligible
+  // negotiations. Each historical turn is checked against the state recorded
+  // before it (already proven equal to the replayed state above).
+  for (let index = 0; index < session.turnInputs.length; index += 1) {
+    const ineligible = ineligibleStaffNegotiations(soloScenario, session.history[index].previousState, session.turnInputs[index]);
+    if (ineligible.length > 0) {
+      throw new Error(
+        "This campaign file requests relief for directorates the recorded selections did not offer "
+        + `(${ineligible.map((entry) => directorateLabel(entry.directorate)).join(", ")}), so it cannot be accepted.`,
+      );
+    }
+  }
   return validation;
 }
 
@@ -352,23 +368,16 @@ function missingAcceptedRiskCandidates(session: GameSession, input: TurnInput) {
   return preview.acceptedRiskCandidates.filter((candidate) => !accepted.has(riskKey(candidate)));
 }
 
-// Closing pass 6 P1: the authoritative eligibility gate for relief
-// negotiations. A negotiation is legitimate ONLY for a directorate the CURRENT
-// unnegotiated packet reports as strained/overloaded (the same
-// staffConstraintDirectorates the preview endpoint transports). A negotiation
-// carried over from an earlier memo selection — or invented client-side — for
-// a directorate that is not stretched must never reach the resolver: the sim
+// Closing pass 6 P1 / closing pass 7 P1: the authoritative eligibility gate for
+// relief negotiations now lives in the sim as the pure
+// `ineligibleStaffNegotiations(scenario, state, input)` validator (extracted so
+// /resolve-turn, import/replay validation, and the headless route share ONE
+// derivation). A negotiation is legitimate ONLY for a directorate the CURRENT
+// unnegotiated packet reports as strained/overloaded — a negotiation carried
+// over from an earlier memo selection, or invented client-side, for a
+// directorate that is not stretched must never reach the resolver: the sim
 // would happily apply its costs (−2 political capital, −2 cabinet cover, +1
-// media heat) even though no relief was on offer. Derived from the
-// unnegotiated packet so relief that DROPS a directorate below the strain
-// threshold stays eligible (it was strained before the relief was applied).
-function ineligibleStaffNegotiations(session: GameSession, input: TurnInput) {
-  const negotiations = input.staffNegotiations ?? [];
-  if (negotiations.length === 0) return [];
-  const preview = previewTurn(soloScenario, session.state, { ...input, staffNegotiations: [] });
-  const eligible = new Set(preview.chiefCoalitions.flatMap((coalition) => coalition.staffConstraintDirectorates));
-  return negotiations.filter((negotiation) => !eligible.has(negotiation.directorate));
-}
+// media heat) even though no relief was on offer.
 
 function parseHeadlessRunBody(body: unknown) {
   const value = (body ?? {}) as Record<string, unknown>;
@@ -432,6 +441,19 @@ app.post("/api/headless/run", async (request, reply) => {
       return {
         error: error.message,
         acceptedRiskCandidates: error.acceptedRiskCandidates,
+      };
+    }
+    if (error instanceof HeadlessIneligibleNegotiationError) {
+      // Closing pass 7 P1: the headless route shares the /resolve-turn
+      // input-validity contract — an ineligible relief negotiation is a 400
+      // (with the same payload shape), not a 200 that persists the request.
+      reply.code(400);
+      return {
+        error:
+          "This month cannot be committed: relief was requested for directorates your current selections no longer stretch "
+          + `(${error.ineligibleNegotiations.map((entry) => directorateLabel(entry.directorate)).join(", ")}). `
+          + "Remove those relief requests and try again.",
+        ineligibleNegotiations: error.ineligibleNegotiations,
       };
     }
     reply.code(400);
@@ -711,7 +733,7 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
     return await withSessionLock(id, async () => {
       const session = await readSession(id);
       assertExpectedRevision(session, body.expectedRevision);
-      const ineligibleNegotiations = ineligibleStaffNegotiations(session, input);
+      const ineligibleNegotiations = ineligibleStaffNegotiations(soloScenario, session.state, input);
       if (ineligibleNegotiations.length > 0) {
         reply.code(400);
         return {

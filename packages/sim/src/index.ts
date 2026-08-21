@@ -108,6 +108,7 @@ import {
   type StaffModuleDefinition,
   type StaffModuleEffect,
   type StaffModuleReadout,
+  type StaffNegotiation,
   type StateDelta,
   type StrategicState,
   type TechProgressNode,
@@ -2353,6 +2354,36 @@ export function previewTurn(scenario: ScenarioDefinition, state: CampaignState, 
     staffModules: projectedResult.staffModules,
     coordinationLoad: projectedResult.coordinationLoad,
   };
+}
+
+/**
+ * Doctrine 5 (issue #59): the authoritative eligibility gate for relief
+ * negotiations — the ONLY place the current-unnegotiated-packet derivation
+ * lives. A negotiation is legitimate ONLY for a directorate the CURRENT
+ * unnegotiated packet reports as strained/overloaded (the same
+ * `staffConstraintDirectorates` the preview endpoint transports). A
+ * negotiation carried over from an earlier memo selection — or invented
+ * client-side — for a directorate that is not stretched must never reach the
+ * resolver: the sim would happily apply its costs (−2 political capital, −2
+ * cabinet cover, +1 media heat) even though no relief was on offer. Derived
+ * from the unnegotiated packet so relief that DROPS a directorate below the
+ * strain threshold stays eligible (it was strained before the relief was
+ * applied). Pure: operates on `(scenario, state, input)` so every boundary —
+ * `/resolve-turn`, import/replay validation, and headless supplied inputs —
+ * shares ONE gate (closing pass 7 P1: the headless and import paths previously
+ * accepted replay-consistent sessions whose recorded turns contained
+ * ineligible negotiations).
+ */
+export function ineligibleStaffNegotiations(
+  scenario: ScenarioDefinition,
+  state: CampaignState,
+  input: TurnInput,
+): StaffNegotiation[] {
+  const negotiations = input.staffNegotiations ?? [];
+  if (negotiations.length === 0) return [];
+  const preview = previewTurn(scenario, state, { ...input, staffNegotiations: [] });
+  const eligible = new Set(preview.chiefCoalitions.flatMap((coalition) => coalition.staffConstraintDirectorates));
+  return negotiations.filter((negotiation) => !eligible.has(negotiation.directorate));
 }
 
 export function resolveTurn(scenario: ScenarioDefinition, previousState: CampaignState, input: TurnInput): TurnResult {
