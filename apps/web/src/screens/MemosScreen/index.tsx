@@ -1,4 +1,4 @@
-import type { DecisionMemo, MemoSelection, StaffNegotiation } from "@brass-ledger/shared";
+import type { DecisionMemo, MemoSelection, StaffModuleDefinition, StaffNegotiation } from "@brass-ledger/shared";
 import type { PreviewPayload } from "../../lib/types";
 import { MemoPanel } from "./MemoPanel";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -17,6 +17,7 @@ type Props = {
   memos: DecisionMemo[];
   selections: MemoSelection[];
   staffNegotiations: StaffNegotiation[];
+  staffModules: StaffModuleDefinition[];
   preview: PreviewPayload | null;
   previewLoading: boolean;
   previewError: string | null;
@@ -30,6 +31,7 @@ export function MemosScreen({
   memos,
   selections,
   staffNegotiations,
+  staffModules,
   preview,
   previewLoading,
   previewError,
@@ -39,6 +41,7 @@ export function MemosScreen({
   onBack,
 }: Props) {
   const projectedFunctions = preview?.projectedResult.staffFunctions ?? [];
+  const projectedModules = preview?.projectedResult.staffModules ?? [];
   const warningCount = preview?.acceptedRiskCandidates.length ?? 0;
 
   function getSelection(memoId: string) {
@@ -134,7 +137,26 @@ export function MemosScreen({
             );
           })}
         </div>
-        <div className="mt-4"><StaffModuleConsequences modules={preview?.projectedResult.staffModules ?? []} /></div>
+        <div className="mt-4">
+          {projectedModules.length > 0 ? (
+            <StaffModuleConsequences modules={projectedModules} />
+          ) : staffModules.length > 0 ? (
+            <section>
+              <p className="text-xs uppercase tracking-widest text-ink/40 mb-3">Optional staff cells</p>
+              <div className="space-y-2">
+                {staffModules.map((definition) => (
+                  <div key={definition.id} className="border border-border px-4 py-3">
+                    <p className="text-sm font-semibold text-ink/70">{definition.label}</p>
+                    <p className="text-xs text-ink/60 mt-1">{definition.remit}</p>
+                    <p className="text-xs text-ink/40 mt-1 italic">
+                      Awaiting a selection — effects and coordination load appear once you choose.
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </div>
 
         {warningCount > 0 && (
           <div className="mt-4 border border-yellow-700/60 bg-yellow-950/40 px-3 py-2">

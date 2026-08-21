@@ -85,7 +85,11 @@ export const staffModuleDefinitions: readonly StaffModuleDefinition[] = [
     primaryStaffFunctionRefs: ["S5"],
     evidenceRefs: [nato, uk, netherlands],
     benefitEffects: [
-      { lane: "strategic.alliance.politicalAlignment", delta: 0.75, whenAnyTags: ["alliance", "public-commitment", "quiet"], summary: "Policy and partner reconciliation improve political alignment." },
+      // Declared STANDING (closing review P2): the alliance-frame memo is required
+      // and every legal option carries at least one of alliance/public-commitment/
+      // quiet, so this predicate had no legal avoid witness over the 432 legal
+      // one-turn tag sets — it behaved as a standing effect and is now declared one.
+      { lane: "strategic.alliance.politicalAlignment", delta: 0.75, whenAnyTags: [], summary: "Policy and partner reconciliation improve political alignment." },
     ],
     pressureEffects: [
       { lane: "strategic.domestic.mediaHeat", delta: 1.5, whenAnyTags: ["public-commitment", "committee-heavy"], summary: "Public and committee-facing choices raise media pressure." },
@@ -100,7 +104,11 @@ export const staffModuleDefinitions: readonly StaffModuleDefinition[] = [
     primaryStaffFunctionRefs: ["S3", "S5"],
     evidenceRefs: [nato],
     benefitEffects: [
-      { lane: "strategic.alliance.reassurance", delta: 1.0, whenAnyTags: ["deterrence", "alliance", "public-commitment"], summary: "Coordinated signaling improves allied reassurance." },
+      // Declared STANDING (closing review P2): every legal alliance-frame option
+      // carries at least one of deterrence/alliance/public-commitment, so this
+      // predicate had no legal avoid witness over the 432 legal one-turn tag sets —
+      // it behaved as a standing effect and is now declared one.
+      { lane: "strategic.alliance.reassurance", delta: 1.0, whenAnyTags: [], summary: "Coordinated signaling improves allied reassurance." },
     ],
     pressureEffects: [
       { lane: "strategic.escalation.incidentLadder", delta: 0.75, whenAnyTags: ["deterrence", "public-commitment"], summary: "Visible signaling raises the incident ladder." },

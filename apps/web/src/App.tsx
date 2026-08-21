@@ -363,6 +363,7 @@ export function App() {
           memos={cycle.memos}
           selections={cycle.selections}
           staffNegotiations={cycle.staffNegotiations}
+          staffModules={scenario?.staffModules ?? []}
           preview={preview}
           previewLoading={previewLoading}
           previewError={previewError}

@@ -126,6 +126,44 @@ test("doctrine 5: event selection and RNG draw count are identical between enabl
   assert.deepEqual(disabledChosen.map((event) => event.id), enabledChosen.map((event) => event.id));
 });
 
+test("doctrine 5: duplicate definition ids throw at the simulation boundary before load or effects", () => {
+  const j6 = staffModuleDefinitions.find((definition) => definition.id === "J6")!;
+  const duplicateScenario: ScenarioDefinition = {
+    ...soloScenario,
+    doctrineProfile: { ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J6"] },
+    staffModules: [j6, j6],
+  };
+  // Direct resolveTurn with duplicate definitions must throw (the exported entry
+  // point is the boundary; [J6,J6,J8] previously counted 3 for the load formula and
+  // applied J6 twice).
+  assert.throws(
+    () => resolveTurn(duplicateScenario, duplicateScenario.initialState, inputFor(1)),
+    /repeat id "J6"/,
+    "resolveTurn rejects duplicate definitions",
+  );
+  assert.throws(
+    () =>
+      resolveActiveStaffModules({
+        definitions: [j6, j6],
+        selectedTags: new Set<string>(),
+        staffMechanics: clone(soloScenario.initialState.staffMechanics),
+        strategic: clone(soloScenario.initialState.strategic),
+        resources: clone(soloScenario.initialState.resources),
+      }),
+    /repeat id "J6"/,
+    "resolveActiveStaffModules rejects duplicate definitions",
+  );
+  // The count used by the coordination formula derives from validated unique ids:
+  // [J6,J8] (two unique ids) loads 0, while [J6,J8,J9,STRATCOM] loads 0.4.
+  assert.equal(resolveActiveStaffModules({
+    definitions: [j6, staffModuleDefinitions.find((definition) => definition.id === "J8")!],
+    selectedTags: new Set<string>(),
+    staffMechanics: clone(soloScenario.initialState.staffMechanics),
+    strategic: clone(soloScenario.initialState.strategic),
+    resources: clone(soloScenario.initialState.resources),
+  }).coordinationLoad, 0);
+});
+
 // ── Coordination curve and counterweight ──────────────────────────────────────
 
 test("doctrine 5: coordination load follows the exact two-decimal curve for counts 0-7", () => {
@@ -290,7 +328,12 @@ test("doctrine 5: every module activates all its conditional rows and moves the 
     {
       ids: ["J9"],
       input: tourInput,
-      expectedBenefits: [{ lane: "strategic.alliance.politicalAlignment", delta: 0.75, activatedByTags: ["alliance", "public-commitment"] }],
+      // J9's political-alignment benefit is declared STANDING (whenAnyTags: []): the
+      // alliance-frame memo is required and every legal option carries at least one
+      // of alliance/public-commitment/quiet, so the predicate had no legal avoid
+      // witness — it was a standing effect wearing a conditional costume (closing
+      // review P2). It always acts; activatedByTags stays [].
+      expectedBenefits: [{ lane: "strategic.alliance.politicalAlignment", delta: 0.75, activatedByTags: [] }],
       expectedPressures: [
         { lane: "strategic.domestic.mediaHeat", delta: 1.5, activatedByTags: ["public-commitment"] },
         { lane: "strategic.domestic.cabinetCover", delta: -0.5, activatedByTags: ["public-commitment"] },
@@ -305,7 +348,11 @@ test("doctrine 5: every module activates all its conditional rows and moves the 
     {
       ids: ["STRATCOM"],
       input: tourInput,
-      expectedBenefits: [{ lane: "strategic.alliance.reassurance", delta: 1, activatedByTags: ["deterrence", "alliance", "public-commitment"] }],
+      // STRATCOM's reassurance benefit is declared STANDING (whenAnyTags: []): every
+      // legal alliance-frame option carries at least one of deterrence/alliance/
+      // public-commitment, so the predicate had no legal avoid witness (closing
+      // review P2). It always acts; activatedByTags stays [].
+      expectedBenefits: [{ lane: "strategic.alliance.reassurance", delta: 1, activatedByTags: [] }],
       expectedPressures: [
         { lane: "strategic.escalation.incidentLadder", delta: 0.75, activatedByTags: ["deterrence", "public-commitment"] },
         { lane: "strategic.domestic.mediaHeat", delta: 1, activatedByTags: ["deterrence", "public-commitment"] },

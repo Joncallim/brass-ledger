@@ -2139,8 +2139,22 @@ export function resolveActiveStaffModules(args: {
   strategic: StrategicState;
   resources: CampaignState["resources"];
 }): ModuleResolution {
-  const load = coordinationLoad(args.definitions.length);
-  const rows = resolveActiveModuleRows(args.definitions, args.selectedTags);
+  // Uniqueness is enforced at the simulation boundary: a duplicate definition id
+  // would double-count the row in the coordination-load formula AND apply its
+  // effects twice. Throw BEFORE computing load or applying any effect; the load is
+  // then derived from the validated unique ids (Map preserves profile order, so
+  // readout order is untouched for legal inputs).
+  const uniqueDefinitions = new Map<string, StaffModuleDefinition>();
+  for (const definition of args.definitions) {
+    if (uniqueDefinitions.has(definition.id)) {
+      throw new Error(
+        `staff module definitions repeat id "${definition.id}"; every definition must appear exactly once`,
+      );
+    }
+    uniqueDefinitions.set(definition.id, definition);
+  }
+  const load = coordinationLoad(uniqueDefinitions.size);
+  const rows = resolveActiveModuleRows([...uniqueDefinitions.values()], args.selectedTags);
 
   // Accumulate requested deltas as integer hundredths in closed lane-enum order.
   // Summing floats in profile order is not order-independent; integer hundredths are.

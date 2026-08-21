@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { doctrineGenes } from "./doctrine-genes";
-import { validateDoctrineEvent, validateSpriteVisualLanguage, validateStaffModuleDefinition } from "./validate-content";
+import { validateDoctrineEvent, validateSpriteVisualLanguage, validateStaffModuleDefinition, validateStaffModulePredicateWitnesses } from "./validate-content";
 import { soloScenario } from "./scenario";
 import { spriteVisualLanguage } from "./sprite-visual-language";
 import type { EventDefinition } from "@brass-ledger/shared";
@@ -92,6 +92,42 @@ test("sourceGeneLabel must exactly match the registry label", () => {
 test("the shipped module registry validates from the same resolver definitions", () => {
   assert.deepEqual(soloScenario.staffModules, staffModuleDefinitions.filter((definition) => soloScenario.doctrineProfile.optionalStaffModules.includes(definition.id)));
   for (const definition of soloScenario.staffModules) assert.doesNotThrow(() => validateStaffModuleDefinition(definition));
+});
+
+test("every shipped conditional predicate has both a legal hit and a legal avoid witness", () => {
+  // Exhaustive enumeration over the 432 legal one-turn tag sets (closing review P2):
+  // no non-empty predicate may be unavoidable (disguised standing row) or dead.
+  assert.doesNotThrow(() => validateStaffModulePredicateWitnesses(staffModuleDefinitions, legalTagSets()));
+});
+
+test("module lint rejects a predicate with no legal avoid witness (disguised standing row)", () => {
+  const fixture = structuredClone(staffModuleDefinitions.find((definition) => definition.id === "J7")!);
+  // alliance + public-commitment: every required alliance-frame option carries at
+  // least one of them (quiet-reassurance: alliance; public-assurance-tour: both;
+  // modernization-case: public-commitment), so no legal trace avoids the predicate.
+  fixture.benefitEffects[0]!.whenAnyTags = ["alliance", "public-commitment"];
+  assert.throws(
+    () => validateStaffModulePredicateWitnesses([fixture], legalTagSets()),
+    /BOTH a legal activating trace and a legal avoiding trace/,
+  );
+});
+
+test("module lint rejects a predicate with no legal hit witness (dead predicate)", () => {
+  const fixture = structuredClone(staffModuleDefinitions.find((definition) => definition.id === "J7")!);
+  fixture.benefitEffects[0]!.whenAnyTags = ["simulation"];
+  // The empty tag set is the only "legal" trace here: it avoids but never activates.
+  assert.throws(
+    () => validateStaffModulePredicateWitnesses([fixture], [new Set<string>()]),
+    /BOTH a legal activating trace and a legal avoiding trace/,
+  );
+});
+
+test("standing rows (whenAnyTags: []) are exempt from the witness guardrail", () => {
+  // A previously conditional row (J7's coherence benefit) declared standing passes
+  // even when no legal trace exists at all — standing rows are exempt by declaration.
+  const fixture = structuredClone(staffModuleDefinitions.find((definition) => definition.id === "J7")!);
+  for (const effect of [...fixture.benefitEffects, ...fixture.pressureEffects]) effect.whenAnyTags = [];
+  assert.doesNotThrow(() => validateStaffModulePredicateWitnesses([fixture], [new Set<string>()]));
 });
 
 test("module resolver rejects duplicate, unknown, and incomplete profile selections", () => {

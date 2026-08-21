@@ -522,7 +522,34 @@ export function validateStaffModuleDefinition(definition: StaffModuleDefinition)
 }
 for (const definition of staffModuleDefinitions) validateStaffModuleDefinition(definition);
 
-// 4. Resolver correctness: unknown/repeated profile ids throw; the shipped profile
+// 4. Conditional-predicate witness guardrail (closing review P2): every non-empty
+//    whenAnyTags predicate must have a legal one-turn selection trace that
+//    ACTIVATES it AND a legal trace that AVOIDS it, exhaustively over the 432 legal
+//    tag sets. A predicate with no avoid witness is a standing effect wearing a
+//    conditional costume; one with no hit witness can never fire. Either way the row
+//    must be declared standing (`whenAnyTags: []`) or its tags revised. Standing rows
+//    (empty predicate) are exempt by declaration.
+export function validateStaffModulePredicateWitnesses(
+  definitions: readonly StaffModuleDefinition[],
+  legalSelectionTagSets: readonly (ReadonlySet<string>)[],
+): void {
+  for (const definition of definitions) {
+    for (const effect of [...definition.benefitEffects, ...definition.pressureEffects]) {
+      if (effect.whenAnyTags.length === 0) continue;
+      const hit = legalSelectionTagSets.some((tags) => effect.whenAnyTags.some((tag) => tags.has(tag)));
+      const avoid = legalSelectionTagSets.some((tags) => effect.whenAnyTags.every((tag) => !tags.has(tag)));
+      if (!hit || !avoid) {
+        throw new Error(
+          `Staff module ${definition.id} predicate ${JSON.stringify(effect.whenAnyTags)} on ${effect.lane} must have BOTH a legal activating trace and a legal avoiding trace over the scenario's memo options ` +
+            `(found activating: ${hit}, avoiding: ${avoid}); declare the row standing with whenAnyTags: [] if it is unconditional, or revise its tags.`,
+        );
+      }
+    }
+  }
+}
+validateStaffModulePredicateWitnesses(staffModuleDefinitions, legalSelectionTagSets);
+
+// 5. Resolver correctness: unknown/repeated profile ids throw; the shipped profile
 //    enables exactly J6/J8/J9/STRATCOM in that order; the serialized scenario
 //    definitions deep-equal a fresh resolution (the shared schema refinement already
 //    ties scenario.staffModules ids to the profile; this asserts full definitions).
