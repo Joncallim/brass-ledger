@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
 import {
   buildAdvisorPortraitDataUri,
@@ -12,6 +12,7 @@ import {
   type ChiefSpriteVariantState,
   type SpriteSpec,
 } from "@brass-ledger/shared";
+import { ChiefPortrait } from "../src/components/ChiefPortrait";
 
 /**
  * Sprite 4 visual matrix (issue #82): renders every roadmap state for one chief per
@@ -122,6 +123,43 @@ async function expectExactPixelBlocks(img: ReturnType<Page["locator"]>, expected
   expect(probe).toBeNull();
 }
 
+/** Screenshot the element itself, then inspect every rendered physical pixel block. */
+async function expectRenderedPixelBlocks(page: Page, img: ReturnType<Page["locator"]>, expected: string[], scale: 2 | 3 | 4) {
+  const screenshot = (await img.screenshot()).toString("base64");
+  const probe = await page.evaluate(async ({ encoded, matrix, blockScale }) => {
+    const rendered = new Image();
+    rendered.src = `data:image/png;base64,${encoded}`;
+    await rendered.decode();
+    const expectedWidth = 24 * blockScale;
+    const expectedHeight = 28 * blockScale;
+    if (rendered.width !== expectedWidth || rendered.height !== expectedHeight) {
+      return { msg: `screenshot ${rendered.width}×${rendered.height}, expected ${expectedWidth}×${expectedHeight}` };
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = rendered.width;
+    canvas.height = rendered.height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(rendered, 0, 0);
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const hex = (r: number, g: number, b: number) => `#${[r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("")}`;
+    for (let y = 0; y < 28; y += 1) {
+      for (let x = 0; x < 24; x += 1) {
+        const start = ((y * blockScale) * canvas.width + x * blockScale) * 4;
+        const expectedColor = matrix[y * 24 + x];
+        for (let dy = 0; dy < blockScale; dy += 1) {
+          for (let dx = 0; dx < blockScale; dx += 1) {
+            const offset = (((y * blockScale + dy) * canvas.width) + x * blockScale + dx) * 4;
+            const actual = hex(data[offset], data[offset + 1], data[offset + 2]);
+            if (actual !== expectedColor) return { msg: `cell (${x},${y}) physical pixel (${dx},${dy}) is ${actual}, expected ${expectedColor}; first pixel offset ${start}` };
+          }
+        }
+      }
+    }
+    return null;
+  }, { encoded: screenshot, matrix: expected, blockScale: scale });
+  expect(probe).toBeNull();
+}
+
 test("obsolete two-chief visual baseline is rejected at zero tolerance", async ({ page }) => {
   const { cells } = await buildMatrix(page);
   // The negative fixture is byte-locked: it must never be regenerated with the
@@ -216,4 +254,44 @@ test("sprite variant matrix renders at 48×56 and 2× for human review", async (
   const totalRects = cells.reduce((sum, cell) => sum + spritePixelRuns(cell.output).length, 0);
   const elapsed = Date.now() - started;
   console.log(`sprite-matrix: ${total} unique images × 2 matrices = ${total * 2} imgs, ${totalRects} rects per full matrix pair run total ${totalRects * 2}, wall ${elapsed}ms`);
+
+  // Product-path regression: render the actual ChiefPortrait markup, apply the built
+  // Tailwind stylesheet, and inspect screenshots of the element itself. This catches a
+  // consuming border even if the visual-matrix fixture uses a non-consuming outline.
+  const cssAssets = readdirSync("dist/assets").filter((file) => file.endsWith(".css"));
+  expect(cssAssets).toHaveLength(1);
+  const productCss = readFileSync(`dist/assets/${cssAssets[0]}`, "utf8");
+  const productCell = cells[0];
+  const sizes: { size: "sm" | "md" | "lg"; width: number; height: number; scale: 2 | 3 | 4 }[] = [
+    { size: "sm", width: 48, height: 56, scale: 2 },
+    { size: "md", width: 72, height: 84, scale: 3 },
+    { size: "lg", width: 96, height: 112, scale: 4 },
+  ];
+  const productHtml = sizes.map(({ size }) => {
+    // Call the product component itself, then render the exact props it returns into this
+    // browser-only fixture. React's server renderer and the Playwright TS loader carry
+    // different React symbols, so serializing the returned DOM props keeps the fixture
+    // focused on the production class/data-URI contract without crossing React runtimes.
+    const portrait = ChiefPortrait({ sprite: productCell.sprite, title: "Product probe", size }) as unknown as {
+      props: { src: string; alt: string; className: string; style: { imageRendering: string } };
+    };
+    const { src, alt, className, style } = portrait.props;
+    expect(className).toContain("object-cover");
+    expect(style.imageRendering).toBe("pixelated");
+    return `<div data-product-size="${size}"><img src="${src}" alt="${alt}" class="${className}" style="image-rendering:${style.imageRendering}" /></div>`;
+  }).join("");
+  await page.setContent(`<!doctype html><html><head><style>${productCss}</style></head><body>${productHtml}</body></html>`);
+  const measuredContentBoxes: string[] = [];
+  for (const { size, width, height, scale } of sizes) {
+    const img = page.locator(`[data-product-size="${size}"] img`);
+    await expect(img).toHaveCount(1);
+    const metrics = await img.evaluate((el) => {
+      const image = el as HTMLImageElement;
+      return { clientWidth: image.clientWidth, clientHeight: image.clientHeight, naturalWidth: image.naturalWidth, naturalHeight: image.naturalHeight };
+    });
+    expect(metrics).toEqual({ clientWidth: width, clientHeight: height, naturalWidth: 24, naturalHeight: 28 });
+    measuredContentBoxes.push(`${size} ${metrics.clientWidth}×${metrics.clientHeight}`);
+    await expectRenderedPixelBlocks(page, img, productCell.output, scale);
+  }
+  console.log(`ChiefPortrait product client boxes: ${measuredContentBoxes.join(", ")}`);
 });

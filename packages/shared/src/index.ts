@@ -3974,6 +3974,12 @@ type SpritePixelWriteGuard = {
   allowedRegion?: SpritePixelRegion;
 };
 
+function hasExplicitSpritePixelWriteGuard(options: SpritePixelWriteGuard | undefined): options is SpritePixelWriteGuard {
+  return options?.allowedSlot !== undefined
+    || options?.allowedRegion !== undefined
+    || (options?.allowedSlots?.length ?? 0) > 0;
+}
+
 function slotAllowed(slot: SpritePixelSlot, options: SpritePixelWriteGuard): boolean {
   if (options.allowedSlot !== undefined && options.allowedSlot !== slot) return false;
   if (options.allowedSlots !== undefined && !options.allowedSlots.includes(slot)) return false;
@@ -3987,12 +3993,18 @@ function slotAllowed(slot: SpritePixelSlot, options: SpritePixelWriteGuard): boo
 export function writeSpriteCells(
   grid: SpritePixelGrid<SpriteSemanticPixel>,
   writes: readonly (readonly [x: number, y: number, index: SpritePixelPaletteIndex])[],
-  options: SpritePixelWriteGuard = {},
+  options?: SpritePixelWriteGuard,
 ): SpritePixelGrid<SpriteSemanticPixel> {
+  if (!hasExplicitSpritePixelWriteGuard(options)) {
+    throw new Error("writeSpriteCells: an explicit allowedSlot, non-empty allowedSlots, or allowedRegion guard is required");
+  }
   const cells = grid.cells.map((cell) => ({ ...cell }));
   for (const [x, y, index] of writes) {
     if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || x >= SPRITE_PIXEL_WIDTH || y < 0 || y >= SPRITE_PIXEL_HEIGHT) {
       throw new Error(`writeSpriteCells: out-of-bounds write at (${x},${y})`);
+    }
+    if (!Number.isInteger(index) || index < 0 || index >= 20) {
+      throw new Error(`writeSpriteCells: palette index ${index} is outside 0..19`);
     }
     const cell = cells[y * SPRITE_PIXEL_WIDTH + x];
     if (cell.protected) throw new Error(`writeSpriteCells: protected cell at (${x},${y})`);

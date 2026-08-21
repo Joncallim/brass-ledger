@@ -18,7 +18,7 @@ export function ChiefPortrait({ sprite, title, size = "md" }: Props) {
     <img
       src={uri}
       alt={`${sprite.displayName} — ${title}`}
-      className={`${sizeClasses[size]} object-cover border border-border shrink-0`}
+      className={`${sizeClasses[size]} object-cover ring-1 ring-border shrink-0`}
       style={{ imageRendering: "pixelated" }}
     />
   );

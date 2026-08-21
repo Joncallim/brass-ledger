@@ -871,18 +871,17 @@ test("pixel grammar tables are exhaustive over the schema enums and every coordi
   const mirroredFemale = female.map(([x, y]) => [23 - x, y] as const);
   assert.deepEqual(mirroredFemale.slice().sort(), female.slice().sort(), "NECK_V is mirror-symmetric");
   for (const [x, y] of [...male, ...female]) {
-    let supported = false;
-    for (const posture of Object.values(SPRITE_PIXEL_POSTURE)) {
+    for (const [postureName, posture] of Object.entries(SPRITE_PIXEL_POSTURE)) {
       const runs = posture[y];
-      if (runs !== undefined && runs.some(([start, end]) => x >= start && x <= end)) supported = true;
+      assert.ok(runs !== undefined && runs.some(([start, end]) => x >= start && x <= end),
+        `neckline cell (${x},${y}) is supported by the ${postureName} posture mask`);
     }
-    assert.ok(supported, `neckline cell (${x},${y}) is supported by at least one posture mask`);
   }
   // The harness intersects neither neckline template nor either fixed trim bar.
   const harnessSet = new Set(SPRITE_PIXEL_HARNESS.map(([x, y]) => `${x},${y}`));
   for (const neckline of [...male, ...female]) assert.equal(harnessSet.has(`${neckline[0]},${neckline[1]}`), false, "harness avoids necklines");
-  for (const [x, y] of harnessSet) {
-    const [hx, hy] = x.split(",").map(Number);
+  for (const coordinate of harnessSet) {
+    const [hx, hy] = coordinate.split(",").map(Number);
     assert.ok(!((hy === 25) && ((hx >= 4 && hx <= 7) || (hx >= 16 && hx <= 19))), "harness avoids protected role bars");
   }
 });
@@ -971,18 +970,22 @@ test("calm micro-bias bins are exact at their boundaries and state glyphs ignore
   assert.deepEqual(sortPoints(SPRITE_PIXEL_EXPRESSION.resolved.mouth), ["10,16", "11,16", "12,16", "13,16", "14,15", "9,15"]);
 });
 
-test("guarded writes reject out-of-bounds, protected, wrong-slot, and wrong-region targets", () => {
+test("guarded writes require an explicit region discipline and reject invalid targets", () => {
   const grid = pixelRender().identity.grid;
-  assert.throws(() => writeSpriteCells(grid, [[-1, 5, PIX.OUTLINE]]), /out-of-bounds/);
-  assert.throws(() => writeSpriteCells(grid, [[24, 5, PIX.OUTLINE]]), /out-of-bounds/);
-  assert.throws(() => writeSpriteCells(grid, [[5, 28, PIX.OUTLINE]]), /out-of-bounds/);
-  assert.throws(() => writeSpriteCells(grid, [[0, 5, PIX.OUTLINE]]), /protected/, "outer margin is protected");
-  assert.throws(() => writeSpriteCells(grid, [[9, 12, PIX.OUTLINE]]), /protected/, "eyes are protected");
-  assert.throws(() => writeSpriteCells(grid, [[11, 13, PIX.OUTLINE]]), /protected/, "nose is protected");
-  assert.throws(() => writeSpriteCells(grid, [[5, 25, PIX.OUTLINE]]), /protected/, "trim bars are protected");
-  assert.throws(() => writeSpriteCells(grid, [[8, 20, PIX.OUTLINE]]), /protected/, "neckline is protected");
+  const backdropGuard = { allowedRegion: "backdrop" as const };
+  assert.throws(() => writeSpriteCells(grid, [[3, 3, PIX.OUTLINE]]), /explicit.*guard/i, "an absent guard cannot write backdrop cells");
+  assert.throws(() => writeSpriteCells(grid, [[3, 3, PIX.OUTLINE]], {}), /explicit.*guard/i, "an empty guard cannot write backdrop cells");
+  assert.throws(() => writeSpriteCells(grid, [[-1, 5, PIX.OUTLINE]], backdropGuard), /out-of-bounds/);
+  assert.throws(() => writeSpriteCells(grid, [[24, 5, PIX.OUTLINE]], backdropGuard), /out-of-bounds/);
+  assert.throws(() => writeSpriteCells(grid, [[5, 28, PIX.OUTLINE]], backdropGuard), /out-of-bounds/);
+  assert.throws(() => writeSpriteCells(grid, [[0, 5, PIX.OUTLINE]], backdropGuard), /protected/, "outer margin is protected");
+  assert.throws(() => writeSpriteCells(grid, [[9, 12, PIX.OUTLINE]], backdropGuard), /protected/, "eyes are protected");
+  assert.throws(() => writeSpriteCells(grid, [[11, 13, PIX.OUTLINE]], backdropGuard), /protected/, "nose is protected");
+  assert.throws(() => writeSpriteCells(grid, [[5, 25, PIX.OUTLINE]], backdropGuard), /protected/, "trim bars are protected");
+  assert.throws(() => writeSpriteCells(grid, [[8, 20, PIX.OUTLINE]], backdropGuard), /protected/, "neckline is protected");
   assert.throws(() => writeSpriteCells(grid, [[9, 23, PIX.OUTLINE]], { allowedSlot: "posture" }), /slot/, "torso cell is not a posture target");
   assert.throws(() => writeSpriteCells(grid, [[9, 23, PIX.OUTLINE]], { allowedRegion: "hair" }), /region/, "region guard rejects wrong region");
+  assert.throws(() => writeSpriteCells(grid, [[9, 23, 20 as SpritePixelPaletteIndex]], { allowedSlots: ["support"] }), /palette index/, "palette index 20 is rejected");
   const written = writeSpriteCells(grid, [[9, 23, PIX.TRIM_BASE]], { allowedSlots: ["support"] });
   assert.equal(written.cells[23 * SPRITE_PIXEL_WIDTH + 9].basePaletteIndex, PIX.TRIM_BASE, "a declared support write succeeds");
   assert.equal(grid.cells[23 * SPRITE_PIXEL_WIDTH + 9].basePaletteIndex, PIX.UNIFORM_BASE, "the input grid is never mutated");
