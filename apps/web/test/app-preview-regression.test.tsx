@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
 import { act } from "react";
-import { soloScenario } from "@brass-ledger/content";
+import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
 import { createInitialGameSession, countMetCampaignObjectives, type GameSession } from "@brass-ledger/shared";
 import { deriveDecisionMemos } from "@brass-ledger/sim";
 import type { PreviewPayload, SessionEnvelope, SessionSummary } from "../src/lib/types";
@@ -53,12 +53,17 @@ function deferredPreviewCall() {
   };
 }
 
-function appFetchMock() {
+function appFetchMock(conversations?: {
+  open: (chiefId: string, memoId: string, optionId: string, expectedRevision?: number) => Promise<unknown>;
+  respond: (chiefId: string, responseId: string, expectedRevision?: number) => Promise<unknown>;
+}) {
   const previewCalls: ReturnType<typeof deferredPreviewCall>[] = [];
-  const resolveTurnCalls: string[] = [];
+  const resolveTurnCalls: Array<{ expectedRevision?: number }> = [];
   const fetchMock = (url: string, init?: RequestInit) => {
     if (url === "/api/scenario") {
-      return Promise.resolve({ ok: true, json: async () => ({ scenario: soloScenario }) });
+      // The server transports the sprite visual-language table on the scenario
+      // summary (it is NOT part of the raw content scenario).
+      return Promise.resolve({ ok: true, json: async () => ({ scenario: { ...soloScenario, spriteVisualLanguage } }) });
     }
     if (url === "/api/sessions" && !init?.method) {
       return Promise.resolve({ ok: true, json: async () => ({ sessions: [summary] }) });
@@ -71,11 +76,30 @@ function appFetchMock() {
       previewCalls.push(call);
       return call.fetchPromise;
     }
+    if (url.endsWith("/conversation/open") && init?.method === "POST") {
+      if (!conversations) throw new Error(`unexpected fetch: ${init?.method ?? "GET"} ${url}`);
+      const body = JSON.parse(String(init.body)) as { memoId: string; optionId: string; expectedRevision?: number };
+      const chiefId = url.match(/chiefs\/([^/]+)\/conversation\/open$/)?.[1] ?? "";
+      return Promise.resolve({
+        ok: true,
+        json: async () => conversations.open(chiefId, body.memoId, body.optionId, body.expectedRevision),
+      });
+    }
+    if (url.endsWith("/respond") && init?.method === "POST") {
+      if (!conversations) throw new Error(`unexpected fetch: ${init?.method ?? "GET"} ${url}`);
+      const body = JSON.parse(String(init.body)) as { responseId: string; expectedRevision?: number };
+      const chiefId = url.match(/chiefs\/([^/]+)\/respond$/)?.[1] ?? "";
+      return Promise.resolve({
+        ok: true,
+        json: async () => conversations.respond(chiefId, body.responseId, body.expectedRevision),
+      });
+    }
     if (url.endsWith("/resolve-turn") && init?.method === "POST") {
-      // Recorded so tests can assert the handler NEVER fired against a
-      // stale/pending preview; left pending so a stray call cannot silently
-      // advance the app into after-action and mask the assertion.
-      resolveTurnCalls.push(url);
+      // Recorded (with the expected revision) so tests can assert the handler
+      // NEVER fired against a stale/pending preview, and that a valid commit
+      // carries the CURRENT revision; left pending so a stray call cannot
+      // silently advance the app into after-action and mask the assertion.
+      resolveTurnCalls.push(JSON.parse(String(init.body)) as { expectedRevision?: number });
       return new Promise<never>(() => {});
     }
     throw new Error(`unexpected fetch: ${init?.method ?? "GET"} ${url}`);
@@ -97,6 +121,7 @@ function previewPayload(
     objectionChiefNames: string[];
     staffConstraintDirectorates: string[];
   }> = [],
+  chiefPositions: unknown[] = [],
 ): PreviewPayload {
   return {
     marker,
@@ -119,8 +144,73 @@ function previewPayload(
           warnings: [],
         },
       ],
+      chiefPositions,
     } as unknown as PreviewPayload["projectedResult"],
   } as unknown as PreviewPayload;
+}
+
+// ── Chief-conversation fixtures (closing pass 4 P1): a real scenario chief
+// ("briggs", Chief of Operations) so the position card renders with the real
+// advisor/sprite machinery, and a minimal conversation record for the sheet. ──
+const CHIEF_ID = "briggs";
+
+const briggsPosition = {
+  chiefId: CHIEF_ID,
+  chiefName: "Lt. Gen. Mara Briggs",
+  directorate: "operations",
+  memoId: "posture",
+  optionId: "tempo-hold",
+  position: "support",
+  institutionalReason: "Readiness that is visible enough to deter keeps the frontage quiet.",
+  requiredCondition: "",
+  confidenceNote: "",
+  consequenceIfIgnored: "",
+  staffReadoutEvidence: {
+    staffFunctionLabel: "Operations",
+    metricLabel: "Supportable tempo",
+    metricValue: 62,
+    metricStatus: "healthy",
+    burdenLevel: "light",
+    burdenPoints: 1,
+  },
+} as unknown as import("@brass-ledger/shared").ChiefPositionEntry;
+
+function conversationRecord(status: "active" | "completed", revision: number) {
+  return {
+    id: `conv-${CHIEF_ID}-${revision}`,
+    turn: session.state.turn,
+    chiefId: CHIEF_ID,
+    chiefName: "Lt. Gen. Mara Briggs",
+    memoId: "posture",
+    memoTitle: "Posture for the northern frontage",
+    optionId: "tempo-hold",
+    optionLabel: "Tempo hold",
+    stage: status === "active" ? "bargaining" : "completed",
+    status,
+    title: "The tempo hold",
+    synopsis: "Briggs backs a posture the force can sustain.",
+    position: "support",
+    institutionalReason: "Readiness that is visible enough to deter keeps the frontage quiet.",
+    requiredCondition: "",
+    confidenceNote: "",
+    consequenceIfIgnored: "",
+    staffReadoutEvidence: briggsPosition.staffReadoutEvidence,
+    transcript: [
+      {
+        role: "chief",
+        speaker: "Lt. Gen. Mara Briggs",
+        text: "A steady posture keeps the force ready without burning it out.",
+      },
+    ],
+    choices:
+      status === "active"
+        ? [{ id: "reassure", label: "Reassure her", summary: "Confirm the hold is deliberate and reviewed.", trustDelta: 2, nextStage: "completed" }]
+        : [],
+    choiceTrail: [],
+    trustBefore: 58,
+    trustAfter: 60,
+    totalTrustDelta: 2,
+  } as unknown as import("@brass-ledger/shared").ChiefConversationRecord;
 }
 
 function mountApp() {
@@ -344,6 +434,166 @@ test("PreCommitScreen cannot commit while a negotiation change's replacement pre
     buttonWithText("Commit the month").click();
   });
   assert.equal(resolveTurnCalls.length, 1, "a valid commit fires resolve-turn exactly once");
+
+  act(() => {
+    root.unmount();
+  });
+});
+
+test("chief conversations advance the session revision, lock the stale preview, and re-request so commit uses the fresh projection (closing pass 4 P1 regression)", async () => {
+  // The mock mirrors the server: opening a NEW conversation and every reply
+  // advance the revision; re-opening the SAME conversation is a no-op that
+  // leaves the revision (and thus the preview) untouched.
+  let revision = session.revision;
+  let activeConversation: ReturnType<typeof conversationRecord> | null = null;
+  const openCalls: Array<{ chiefId: string; memoId: string; optionId: string; expectedRevision?: number }> = [];
+  const respondCalls: Array<{ chiefId: string; responseId: string; expectedRevision?: number }> = [];
+  const { fetchMock, previewCalls, resolveTurnCalls } = appFetchMock({
+    open: async (chiefId, memoId, optionId, expectedRevision) => {
+      openCalls.push({ chiefId, memoId, optionId, expectedRevision });
+      if (activeConversation) {
+        return { session: { ...session, revision }, memos, summary, conversation: activeConversation };
+      }
+      revision += 1;
+      activeConversation = conversationRecord("active", revision);
+      return { session: { ...session, revision }, memos, summary, conversation: activeConversation };
+    },
+    respond: async (chiefId, responseId, expectedRevision) => {
+      respondCalls.push({ chiefId, responseId, expectedRevision });
+      revision += 1;
+      activeConversation = conversationRecord("completed", revision);
+      return { session: { ...session, revision }, memos, summary, conversation: activeConversation };
+    },
+  });
+  globals.fetch = fetchMock;
+  const { root } = mountApp();
+
+  // Bootstrap to the memos screen and publish preview A (revision 0).
+  await actTick(0);
+  assert.ok(buttonWithText("Continue last campaign"), "hub lists the fixture session");
+  act(() => {
+    buttonWithText("Continue last campaign").click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Open decision memos").click();
+  });
+  await actTick(0);
+  const postureRadio = (optionId: string) =>
+    document.querySelector(`input[name="memo-posture"][value="${optionId}"]`) as HTMLInputElement;
+  act(() => {
+    postureRadio("tempo-hold").click();
+  });
+  await actTick(450);
+  assert.equal(previewCalls.length, 1, "the selection requested a preview");
+  previewCalls[0]!.resolveFetch();
+  previewCalls[0]!.resolveBody(previewPayload("MARKER-CONV-A", [], [briggsPosition]));
+  await actTick(0);
+  assert.equal(proceedButton().disabled, false, "canProceed once preview A publishes");
+  assert.ok(document.body.textContent!.includes("MARKER-CONV-A"), "preview A is published");
+
+  // Walk to the chiefs screen and open a conversation with Briggs. The server
+  // advances the revision to 1 — the preview projected against revision 0 must
+  // be invalidated SYNCHRONOUSLY and re-requested against the new revision.
+  act(() => {
+    proceedButton().click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Talk to Briggs").click();
+  });
+  await actTick(0);
+  assert.equal(openCalls.length, 1, "open-conversation reached the server");
+  assert.equal(openCalls[0]!.expectedRevision, 0, "open carries the pre-mutation revision");
+  assert.ok(
+    !document.body.textContent!.includes("MARKER-CONV-A"),
+    "opening a conversation synchronously clears the stale revision-0 preview",
+  );
+  assert.equal(previewCalls.length, 1, "the replacement preview is still debouncing");
+
+  // The stale preview must be LOCKED out of every consumer: the commit screen
+  // must refuse to commit (and say the forecast is updating) while the
+  // replacement preview is pending.
+  act(() => {
+    buttonWithText("Continue to final review").click();
+  });
+  await actTick(0);
+  const commitButton = buttonWithText("Commit the month");
+  assert.equal(commitButton.disabled, true, "commit locks while the conversation's replacement preview is pending");
+  assert.ok(
+    document.body.textContent!.includes("commit unlocks once the new projection is shown"),
+    "the commit screen explains the lock",
+  );
+  assert.equal(resolveTurnCalls.length, 0, "no resolve-turn while the preview is stale/invalid");
+  act(() => {
+    buttonWithText("Back to chiefs").click();
+  });
+  await actTick(0);
+
+  // The conversation mutation re-requested the preview against the new
+  // revision; once it publishes, proceeding re-enables and commit consumes
+  // the FRESH projection.
+  await actTick(450);
+  assert.equal(previewCalls.length, 2, "the conversation mutation requested a fresh preview");
+  previewCalls[1]!.resolveFetch();
+  previewCalls[1]!.resolveBody(previewPayload("MARKER-CONV-B", [], [briggsPosition]));
+  await actTick(0);
+  assert.ok(document.body.textContent!.includes("MARKER-CONV-B"), "the fresh revision-1 preview publishes");
+  act(() => {
+    buttonWithText("Continue to final review").click();
+  });
+  await actTick(0);
+  assert.ok(document.body.textContent!.includes("MARKER-CONV-B"), "the commit screen shows the fresh projection");
+  assert.ok(!document.body.textContent!.includes("MARKER-CONV-A"), "the stale projection never reaches the commit screen");
+  assert.equal(buttonWithText("Commit the month").disabled, false, "commit re-enables on the fresh preview");
+
+  // Back to the chiefs screen for the respond step. Re-opening the SAME
+  // conversation is a server no-op (revision unchanged) — the preview must
+  // stay valid and published.
+  act(() => {
+    buttonWithText("Back to chiefs").click();
+  });
+  await actTick(0);
+  act(() => {
+    buttonWithText("Talk to Briggs").click();
+  });
+  await actTick(0);
+  assert.equal(openCalls.length, 2, "re-opening the same conversation reached the server");
+  assert.equal(previewCalls.length, 2, "a no-op re-open does not re-request the preview");
+  assert.ok(document.body.textContent!.includes("MARKER-CONV-B"), "the preview survives the no-op re-open");
+
+  // Respond: the reply advances the revision to 2 — the revision-1 preview
+  // must lock synchronously and a third preview must be requested.
+  act(() => {
+    buttonWithText("Reassure her").click();
+  });
+  await actTick(0);
+  assert.equal(respondCalls.length, 1, "respond reached the server");
+  assert.equal(respondCalls[0]!.expectedRevision, 1, "respond carries the post-open revision");
+  assert.ok(
+    !document.body.textContent!.includes("MARKER-CONV-B"),
+    "responding synchronously clears the stale revision-1 preview",
+  );
+  await actTick(450);
+  assert.equal(previewCalls.length, 3, "the respond mutation requested a fresh preview");
+  previewCalls[2]!.resolveFetch();
+  previewCalls[2]!.resolveBody(previewPayload("MARKER-CONV-C", [], [briggsPosition]));
+  await actTick(0);
+
+  // Commit must consume the FRESH (revision-2) projection and carry the
+  // current revision as expectedRevision.
+  act(() => {
+    buttonWithText("Continue to final review").click();
+  });
+  await actTick(0);
+  assert.ok(document.body.textContent!.includes("MARKER-CONV-C"), "the commit screen shows the post-respond projection");
+  assert.ok(!document.body.textContent!.includes("MARKER-CONV-B"), "the respond-stale projection never reaches the commit screen");
+  assert.equal(buttonWithText("Commit the month").disabled, false, "commit re-enables on the post-respond preview");
+  act(() => {
+    buttonWithText("Commit the month").click();
+  });
+  assert.equal(resolveTurnCalls.length, 1, "a valid commit fires resolve-turn exactly once");
+  assert.equal(resolveTurnCalls[0]!.expectedRevision, 2, "resolve-turn carries the post-respond revision");
 
   act(() => {
     root.unmount();

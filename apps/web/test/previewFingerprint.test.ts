@@ -38,3 +38,14 @@ test("previewFingerprint is order-independent: reversed selections/negotiations 
     previewFingerprint([...selections].reverse(), [...negotiations].reverse()),
   );
 });
+
+test("previewFingerprint includes the session revision: an identical selection set projected against a newer revision must not validate (closing pass 4 P1)", () => {
+  const selections: MemoSelection[] = [{ memoId: "posture", optionId: "tempo-hold" }];
+  // The server advances the revision on every authoritative mutation (chief
+  // conversation open/respond), so the published preview's key must not match
+  // the current key once the revision moves — even with unchanged selections.
+  assert.notEqual(previewFingerprint(selections, [], 0), previewFingerprint(selections, [], 1));
+  assert.notEqual(previewFingerprint(selections, [], 1), previewFingerprint(selections, [], 2));
+  // Stability: the same revision keeps the same key.
+  assert.equal(previewFingerprint(selections, [], 1), previewFingerprint(selections, [], 1));
+});

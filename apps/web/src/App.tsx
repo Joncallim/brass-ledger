@@ -64,9 +64,19 @@ export function App() {
 
   const labels = scenarioLabels(scenario);
 
+  const currentPreviewKey = previewFingerprint(cycle.selections, cycle.staffNegotiations, cycle.session?.revision ?? null);
+  // ONE gated projection for EVERY preview consumer (staff readouts, chief
+  // positions/coalitions, MemosScreen, PreCommitScreen, commit handling): a
+  // preview may be consumed only when it is published, key-matched to the
+  // CURRENT selections/negotiations/SESSION REVISION, and not still loading.
+  // The fingerprint covers the revision, so any authoritative session
+  // mutation (a chief conversation) invalidates it; the conversation handlers
+  // additionally clear and re-request synchronously (closing pass 4 P1).
+  const validPreview = isPreviewValid(preview, previewKey, currentPreviewKey, previewLoading) ? preview : null;
+
   const staffReadouts: StaffFunctionReadout[] =
-    (preview?.projectedResult.staffFunctions.length ?? 0) > 0
-      ? preview!.projectedResult.staffFunctions
+    (validPreview?.projectedResult.staffFunctions.length ?? 0) > 0
+      ? validPreview!.projectedResult.staffFunctions
       : currentStaffFunctions;
 
   async function refreshSessions() {
@@ -152,14 +162,15 @@ export function App() {
     if (!sessionId || !cycle.session) return;
     // Defense in depth (closing pass 3 P1): even if the commit button ever
     // slips past its disabled state, never fire resolve-turn while the preview
-    // for the CURRENT selections/negotiations has not resolved — a negotiation
-    // change clears the preview synchronously, so a stale projection (or none)
-    // must not reach the resolver.
-    const currentPreviewKey = previewFingerprint(cycle.selections, cycle.staffNegotiations);
-    if (!isPreviewValid(preview, previewKey, currentPreviewKey, previewLoading) || cycle.selections.length === 0) {
+    // for the CURRENT selections/negotiations/session revision has not
+    // resolved — a selection/negotiation change clears the preview
+    // synchronously, and so does a chief conversation (which advances the
+    // revision), so a stale projection (or none) must not reach the resolver.
+    // validPreview is the single gated projection every consumer reads.
+    if (validPreview === null || cycle.selections.length === 0) {
       return;
     }
-    const candidates = preview?.acceptedRiskCandidates ?? [];
+    const candidates = validPreview.acceptedRiskCandidates ?? [];
     const overrides: AcceptedRiskOverride[] = candidates.filter((r) => cycle.acceptedRiskChoices[riskKey(r)] === true);
     setBusy(true);
     setError(null);
@@ -199,7 +210,20 @@ export function App() {
     try {
       const data = await openChiefConversation(sessionId, chiefId, memoId, optionId, cycle.session?.revision);
       setActiveConversation(data.conversation);
-      setCycle((prev) => ({ ...prev, session: data.session, memos: data.memos }));
+      setCycle((prev) => {
+        const nextCycle = { ...prev, session: data.session, memos: data.memos };
+        // The server advanced the session revision (an authoritative mutation
+        // — the conversation is on the record): the published preview was
+        // projected against the OLD session state, so it must be invalidated
+        // synchronously AND re-requested against the new revision, mirroring
+        // a selection/negotiation change (closing pass 4 P1). No-op opens
+        // (the same conversation already on record) keep the revision and the
+        // preview untouched.
+        if (nextCycle.session.revision !== prev.session?.revision) {
+          requestPreview(nextCycle, nextCycle.selections, nextCycle.staffNegotiations);
+        }
+        return nextCycle;
+      });
     } catch (err) {
       setConversationError(describeError(err, "Could not open a conversation with this chief. Close this panel and try again, or commit the month without talking to them."));
     } finally {
@@ -214,7 +238,17 @@ export function App() {
     try {
       const data = await respondToChief(sessionId, chiefId, responseId, cycle.session?.revision);
       setActiveConversation(data.conversation);
-      setCycle((prev) => ({ ...prev, session: data.session, memos: data.memos }));
+      setCycle((prev) => {
+        const nextCycle = { ...prev, session: data.session, memos: data.memos };
+        // Same as handleOpenConversation: a reply mutates the session (trust,
+        // commitments) and advances the revision, so the preview for the old
+        // session must be invalidated synchronously and re-requested against
+        // the new revision (closing pass 4 P1).
+        if (nextCycle.session.revision !== prev.session?.revision) {
+          requestPreview(nextCycle, nextCycle.selections, nextCycle.staffNegotiations);
+        }
+        return nextCycle;
+      });
     } catch (err) {
       setConversationError(describeError(err, "Your reply did not reach the chief. Choose it again."));
     } finally {
@@ -307,19 +341,19 @@ export function App() {
   }
 
   useEffect(() => {
-    if (preview) {
+    if (validPreview) {
       setCycle((prev) => ({
         ...prev,
-        preview,
+        preview: validPreview,
         acceptedRiskChoices: Object.fromEntries(
-          (preview.acceptedRiskCandidates ?? []).map((r) => [riskKey(r), false]),
+          (validPreview.acceptedRiskCandidates ?? []).map((r) => [riskKey(r), false]),
         ),
       }));
       setNegotiationCandidates(
-        Array.from(new Set(preview.chiefCoalitions.flatMap((c) => c.staffConstraintDirectorates))),
+        Array.from(new Set(validPreview.chiefCoalitions.flatMap((c) => c.staffConstraintDirectorates))),
       );
     }
-  }, [preview]);
+  }, [validPreview]);
 
   useEffect(() => {
     async function bootstrap() {
@@ -337,10 +371,8 @@ export function App() {
     void bootstrap();
   }, []);
 
-  const currentPreviewKey = previewFingerprint(cycle.selections, cycle.staffNegotiations);
-
-  const chiefPositions = preview?.projectedResult.chiefPositions ?? cycle.latestResult?.chiefPositions ?? [];
-  const chiefCoalitions = preview?.chiefCoalitions ?? cycle.latestResult?.chiefCoalitions ?? [];
+  const chiefPositions = validPreview?.projectedResult.chiefPositions ?? cycle.latestResult?.chiefPositions ?? [];
+  const chiefCoalitions = validPreview?.chiefCoalitions ?? cycle.latestResult?.chiefCoalitions ?? [];
   const showRail = route.screen === "session";
 
   return (
@@ -380,12 +412,10 @@ export function App() {
           selections={cycle.selections}
           staffNegotiations={cycle.staffNegotiations}
           staffModules={scenario?.staffModules ?? []}
-          preview={preview}
+          preview={validPreview}
           previewLoading={previewLoading}
           previewError={previewError}
-          canProceed={
-            isPreviewValid(preview, previewKey, currentPreviewKey, previewLoading) && cycle.selections.length > 0
-          }
+          canProceed={validPreview !== null && cycle.selections.length > 0}
           onSelect={handleSelectMemo}
           onProceed={() => navigateStep("chiefs")}
           onBack={() => navigateStep("briefing")}
@@ -412,7 +442,7 @@ export function App() {
 
       {route.screen === "session" && cycle.session && route.step === "commit" && (
         <PreCommitScreen
-          preview={preview}
+          preview={validPreview}
           previewKey={previewKey}
           currentPreviewKey={currentPreviewKey}
           previewLoading={previewLoading}

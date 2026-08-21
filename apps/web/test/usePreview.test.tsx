@@ -6,7 +6,7 @@ import { soloScenario } from "@brass-ledger/content";
 import { createInitialGameSession, type MemoSelection } from "@brass-ledger/shared";
 import type { PreviewPayload, TurnCycleState } from "../src/lib/types";
 import { previewTurn } from "../src/lib/api";
-import { usePreview } from "../src/hooks/usePreview";
+import { usePreview, previewFingerprint } from "../src/hooks/usePreview";
 
 // ── DOM shim: the hook tests mount a real React root, which needs a document. ──
 const dom = new JSDOM("<!doctype html><html><body></body></html>");
@@ -71,10 +71,18 @@ function cycleFor(selections: MemoSelection[]): TurnCycleState {
   };
 }
 
+/** The same cycle, but with the session revision advanced — what the app holds
+ * after an authoritative server mutation (a chief conversation). */
+function cycleAtRevision(selections: MemoSelection[], revision: number): TurnCycleState {
+  const cycle = cycleFor(selections);
+  return { ...cycle, session: { ...cycle.session, revision } };
+}
+
 type HookApi = {
   requestPreview: (cycle: TurnCycleState, selections?: MemoSelection[], staffNegotiations?: never[]) => void;
   clearPreview: () => void;
   preview: PreviewPayload | null;
+  previewKey: string | null;
   loading: boolean;
   error: string | null;
 };
@@ -216,4 +224,42 @@ test("clearPreview invalidates an in-flight request so its late response cannot 
   await actTick(0);
   assert.equal(api().preview, null, "a response landing after clearPreview is dropped");
   assert.equal(api().loading, false);
+});
+
+test("an advanced session revision invalidates the published preview and yields a new key (closing pass 4 P1 repro)", async () => {
+  const { fetchMock, calls } = deferredFetch();
+  globals.fetch = fetchMock;
+  const { api } = mountHarness();
+
+  // Preview A publishes for revision 0.
+  act(() => {
+    api().requestPreview(cycleAtRevision(measuredDeterrence, 0));
+  });
+  await actTick(450);
+  assert.equal(calls.length, 1, "request A reached the network");
+  calls[0]!.resolve(response(payload("A")));
+  await actTick(0);
+  assert.equal((api().preview as { marker: string } | null)?.marker, "A");
+  assert.equal(api().previewKey, previewFingerprint(measuredDeterrence, [], 0), "the key carries the projection revision");
+
+  // An authoritative mutation (chief conversation) advances the revision while
+  // the selections stay IDENTICAL. The published preview for revision 0 must
+  // be invalidated synchronously and a fresh preview requested — exactly like
+  // a selection change.
+  act(() => {
+    api().requestPreview(cycleAtRevision(measuredDeterrence, 1));
+  });
+  assert.equal(api().preview, null, "the revision-0 preview is dropped synchronously");
+  assert.equal(api().previewKey, null, "the revision-0 key is dropped synchronously");
+  await actTick(450);
+  assert.equal(calls.length, 2, "the revision advance requested a fresh preview");
+  calls[1]!.resolve(response(payload("B")));
+  await actTick(0);
+  assert.equal((api().preview as { marker: string } | null)?.marker, "B", "the fresh preview publishes");
+  assert.equal(api().previewKey, previewFingerprint(measuredDeterrence, [], 1), "the fresh key carries the NEW revision");
+  assert.notEqual(
+    api().previewKey,
+    previewFingerprint(measuredDeterrence, [], 0),
+    "a revision-1 preview must never carry the revision-0 key — with the revision left out of the fingerprint, this assertion fails",
+  );
 });

@@ -4,9 +4,13 @@ import type { PreviewPayload, TurnCycleState } from "../lib/types";
 import { previewTurn } from "../lib/api";
 
 /** Deterministic key for the exact selection/negotiation set a preview was
- * requested with. Proceeding must only trust a preview whose key matches the
- * CURRENT selections — otherwise an already-published preview for earlier choices
- * can reach the chiefs/precommit flow during the next debounce.
+ * requested with, PLUS the session revision the preview was projected against.
+ * Proceeding must only trust a preview whose key matches the CURRENT
+ * selections — otherwise an already-published preview for earlier choices
+ * can reach the chiefs/precommit flow during the next debounce. The revision
+ * makes ANY authoritative session mutation (a chief conversation advancing
+ * the revision) invalidate the published preview even before the app
+ * re-requests one (closing pass 4 P1).
  *
  * The key is a JSON serialization of SORTED structured tuples that include
  * EVERY field of every selection and negotiation (including the optional
@@ -15,7 +19,11 @@ import { previewTurn } from "../lib/api";
  * to `a:b:c` under `:`/`|` joining, while `JSON.stringify` of tuples is
  * injective over schema-valid values (closing pass 3 P2). Sorting by the
  * serialized tuple keeps the key order-independent. */
-export function previewFingerprint(selections: MemoSelection[], staffNegotiations: StaffNegotiation[]): string {
+export function previewFingerprint(
+  selections: MemoSelection[],
+  staffNegotiations: StaffNegotiation[],
+  revision: number | null = null,
+): string {
   const tupleKey = (tuple: (string | number | null)[]) => JSON.stringify(tuple);
   const selectionKey = JSON.stringify(
     [...selections]
@@ -27,7 +35,7 @@ export function previewFingerprint(selections: MemoSelection[], staffNegotiation
       .map((n) => [n.directorate, n.reliefPoints, n.cost, n.note ?? null])
       .sort((a, b) => (tupleKey(a) < tupleKey(b) ? -1 : tupleKey(a) > tupleKey(b) ? 1 : 0)),
   );
-  return `${selectionKey}\u00a7${negotiationKey}`;
+  return `${revision ?? "none"}\u00a7${selectionKey}\u00a7${negotiationKey}`;
 }
 
 export function usePreview(sessionId: string | null) {
@@ -64,7 +72,15 @@ export function usePreview(sessionId: string | null) {
       setPreview(null);
       setPreviewKey(null);
 
-      const fingerprint = previewFingerprint(selections ?? cycle.selections, staffNegotiations ?? cycle.staffNegotiations);
+      const fingerprint = previewFingerprint(
+        selections ?? cycle.selections,
+        staffNegotiations ?? cycle.staffNegotiations,
+        // The preview is projected against this exact session state, so the
+        // revision must be part of its key: an authoritative mutation that
+        // advanced the revision invalidates the published preview even before
+        // the app re-requests one (closing pass 4 P1).
+        cycle.session?.revision ?? null,
+      );
 
       timerRef.current = setTimeout(async () => {
         // The request may have been superseded while the debounce was counting
