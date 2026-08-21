@@ -8,6 +8,7 @@ import {
   buildChiefSpriteVariant,
   buildSpritePixels,
   buildSpritePromptText,
+  buildStaffFunctionReadouts,
   campaignStateSchema,
   chiefArchetypeSchema,
   chiefSpriteDeterministicSeed,
@@ -74,7 +75,7 @@ import {
   type SpriteSemanticPixel,
   type SpriteSpec,
 } from "./index";
-import { soloScenario } from "@brass-ledger/content";
+import { soloScenario, staffModuleDefinitions } from "@brass-ledger/content";
 
 const spriteVisualLanguage = Object.fromEntries(["S1", "S2", "S3", "S4", "S5", "training"].map((role) => [role, {
   shapeLanguage: `${role} shape`, paletteCue: "cue", accentColor: "#8fcf88", expressionBias: "bias", baseExpression: "calm", uniformLanguage: "uniform", sourceRef: "source",
@@ -1627,4 +1628,81 @@ test("module output has no top-level module state and no module state in the sav
   });
   assert.equal("state" in parsed, false);
   assert.equal("moduleState" in parsed, false);
+});
+
+test("doctrineProfileSchema rejects duplicate optionalStaffModules at the schema level", () => {
+  // The shipped profile parses; a duplicate module id must fail the uniqueness
+  // refinement regardless of where the profile is declared.
+  assert.ok(doctrineProfileSchema.safeParse(soloScenario.doctrineProfile).success);
+  assert.throws(
+    () => doctrineProfileSchema.parse({ ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J6"] }),
+    /optional staff modules must be unique/,
+  );
+  assert.throws(
+    () => doctrineProfileSchema.parse({ ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J8", "J6"] }),
+    /optional staff modules must be unique/,
+  );
+});
+
+test("scenarioDefinitionSchema ties staffModules to the profile: misordered or missing ids throw", () => {
+  const twoDefs = staffModuleDefinitions.filter((definition) => definition.id === "J6" || definition.id === "J8");
+  assert.equal(twoDefs.length, 2, "fixture must resolve the J6 and J8 definitions");
+
+  // In-order profile + definitions parse.
+  const valid = scenarioDefinitionSchema.parse({
+    ...soloScenario,
+    doctrineProfile: { ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J8"] },
+    staffModules: twoDefs,
+  });
+  assert.deepEqual(valid.staffModules.map((definition) => definition.id), ["J6", "J8"]);
+
+  // Profile order J6,J8 but definitions resolved J8,J6 → order mismatch.
+  assert.throws(
+    () =>
+      scenarioDefinitionSchema.parse({
+        ...soloScenario,
+        doctrineProfile: { ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J8"] },
+        staffModules: [...twoDefs].reverse(),
+      }),
+    /exactly match/,
+  );
+
+  // Profile lists J6,J8 but only J6 is resolved → missing definition.
+  assert.throws(
+    () =>
+      scenarioDefinitionSchema.parse({
+        ...soloScenario,
+        doctrineProfile: { ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J8"] },
+        staffModules: [twoDefs[0]!],
+      }),
+    /exactly match/,
+  );
+});
+
+test("pre-Doctrine-5 previews and summaries parse with additive module-field defaults", () => {
+  // A 0.10.0 preview entry carried no projectedModuleReadouts; it defaults to [].
+  const readout = buildStaffFunctionReadouts(soloScenario.staffFunctions, [], soloScenario.initialState, soloScenario.doctrineLens.burdenBias)[0]!;
+  const entry = {
+    memoId: "posture",
+    memoTitle: "Posture",
+    optionId: "quiet-recovery",
+    optionLabel: "Quiet recovery",
+    staffCosts: [{ directorate: "operations", points: 1 }],
+    staffWarnings: [],
+    projectedReadouts: [readout],
+    projectedBlockers: [],
+    acceptedRiskCandidateCount: 0,
+  };
+  const parsedEntry = decisionPreviewEntrySchema.parse(entry);
+  assert.deepEqual(parsedEntry.projectedModuleReadouts, [], "old preview entries default projectedModuleReadouts to []");
+
+  // A 0.10.0 turn preview carried no staffModules/coordinationLoad/chiefCoalitions.
+  const parsedPreview = turnPreviewSchema.parse({ decisionPreviews: [entry], acceptedRiskCandidates: [], predictedEvents: [] });
+  assert.deepEqual(parsedPreview.staffModules, [], "old turn previews default staffModules to []");
+  assert.equal(parsedPreview.coordinationLoad, 0, "old turn previews default coordinationLoad to 0");
+  assert.deepEqual(parsedPreview.chiefCoalitions, [], "old turn previews default chiefCoalitions to []");
+
+  // A 0.10.0 scenario summary carried no staffModules; it defaults to [].
+  const parsedSummary = scenarioSummarySchema.parse(baseScenarioSummary([ordinaryEvent]));
+  assert.deepEqual(parsedSummary.staffModules, [], "old scenario summaries default staffModules to []");
 });

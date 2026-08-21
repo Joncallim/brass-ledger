@@ -41,7 +41,10 @@ export type BalanceTelemetry = {
   strategyOptionSelectionRates: Record<string, OptionRate[]>;
   doctrineEvents: DoctrineEventTelemetry[];
   doctrineStrategies: DoctrineStrategyTelemetry[];
+  /** D4 gate: no-tradeoff doctrine strategies, evaluated per module set against each set's balanced-cycle cohort. */
   dominantDoctrineStrategies: string[];
+  /** Doctrine 5 addition: enabled strategies dominating their own disabled twins. Distinct from the D4 gate above. */
+  modulePairDominance: string[];
   balanceWarnings: string[];
   pairCount: number;
   simulationCount: number;
@@ -605,6 +608,27 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
     if (!enabledRowsForGate.some((row) => Math.abs(row.meanScore - (disabledRowsForGate.find((candidate) => candidate.strategyId === row.strategyId)?.meanScore ?? row.meanScore)) >= 0.5 || Math.abs(row.winRate - (disabledRowsForGate.find((candidate) => candidate.strategyId === row.strategyId)?.winRate ?? row.winRate)) >= 0.02)) balanceWarnings.push("enabled modules produced no observed direct-outcome movement");
     if (!(enabledRowsForGate.some((row) => Math.abs(row.meanSystemPressure - (disabledRowsForGate.find((candidate) => candidate.strategyId === row.strategyId)?.meanSystemPressure ?? row.meanSystemPressure)) > 0) || enabledRowsForGate.some((row) => Math.abs(row.meanStaffSynchronization - (disabledRowsForGate.find((candidate) => candidate.strategyId === row.strategyId)?.meanStaffSynchronization ?? row.meanStaffSynchronization)) > 0))) balanceWarnings.push("enabled modules produced no observed indirect-lane movement");
     if (enabledRowsForGate.some((row) => row.requestedCoordinationIncidentOffset <= 0 || row.requestedCoordinationReadinessOffset >= 0)) balanceWarnings.push("coordination signs are not incident-positive/readiness-negative");
+    // D4 dominance warnings (restored, spec F correction #21 / telemetry acceptance #2):
+    // evaluated per module set against each set's OWN balanced-cycle cohort. Neither this
+    // detector nor the module-pair detector below replaces the other.
+    for (const rowsIn of [enabledRowsForGate, disabledRowsForGate]) {
+      const balancedIn = rowsIn.find((entry) => entry.strategyId === "balanced-cycle");
+      if (!balancedIn) continue;
+      // A >50pp win-rate advantage at the 100 score ceiling that persists despite
+      // positive authored event cost means the event's adverse deltas are not
+      // observed in score/win terms — surface it so the signal cannot go unseen.
+      for (const entry of rowsIn) {
+        if (entry.strategyId !== "balanced-cycle" && entry.meanDoctrineEventCostMass > 0 && entry.meanScore >= 100 && entry.winRate > balancedIn.winRate + 0.50) {
+          balanceWarnings.push(`${entry.moduleSet} ${entry.strategyId} holds a ${Math.round((entry.winRate - balancedIn.winRate) * 100)}pp win-rate advantage over balanced at the 100 score ceiling despite positive doctrine event cost; authored adverse deltas are not observed.`);
+        }
+        // Hardened-ceiling warning: winRate 1.0 AND meanScore at the 100 ceiling is a
+        // literally unbeatable overuse strategy — no-tradeoff by definition, regardless
+        // of authored cost mass.
+        if (entry.strategyId !== "balanced-cycle" && entry.winRate >= 1.0 && entry.meanScore >= 100) {
+          balanceWarnings.push(`${entry.moduleSet} ${entry.strategyId} wins every campaign at the 100 score ceiling despite doctrine event cost; a no-tradeoff overuse strategy under the hardened dominance rule.`);
+        }
+      }
+    }
   }
   const legacyRows = strategyRows;
   const totalTurns = enabledSamplesAll.reduce((sum, sample) => sum + sample.turns, 0);
@@ -616,7 +640,32 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
   const acceptedRiskFrequency = Object.fromEntries(Object.entries(allRisks).map(([key, value]) => [key, totalTurns ? value / totalTurns : 0]));
   const commitmentTotal = fulfilled + broken;
   const scoreStats = { min: allScores[0] ?? 0, max: allScores.at(-1) ?? 0, mean: allScores.length ? allScores.reduce((a, b) => a + b, 0) / allScores.length : 0, p25: percentile(allScores, 25), p75: percentile(allScores, 75) };
-  const dominantDoctrineStrategies = enabledRowsForGate
+  // D4 doctrine-strategy dominance detector (restored — spec F correction #21 / telemetry
+  // acceptance #2): scoped WITHIN each module set, so the enabled and disabled sets are
+  // each evaluated independently against their own balanced-cycle cohort. An overuse
+  // strategy is dominant when it beats balanced by >5 mean score AND >10pp win rate with
+  // no higher doctrine-event cost mass, or when it sits at the 100/100 ceiling (winRate
+  // 1.0 AND meanScore 100) — literally unbeatable, regardless of authored cost. The
+  // module-pair detector below is a SEPARATE Doctrine 5 addition; neither replaces the
+  // other.
+  const adequateN = campaignCount >= 240 && allRows.every((entry) => entry.campaigns >= 60);
+  const doctrineDominantWithin = (rowsIn: ModuleSetTelemetry[]): string[] => {
+    const balanced = rowsIn.find((entry) => entry.strategyId === "balanced-cycle");
+    if (!adequateN || !balanced) return [];
+    return rowsIn
+      .filter((entry) =>
+        entry.strategyId !== "balanced-cycle" &&
+        ((entry.winRate >= 1.0 && entry.meanScore >= 100) ||
+          (entry.meanScore > balanced.meanScore + 5 && entry.winRate > balanced.winRate + 0.10 && entry.meanDoctrineEventCostMass <= balanced.meanDoctrineEventCostMass)),
+      )
+      .map((entry) => `${entry.moduleSet} ${entry.strategyId}`)
+      .sort();
+  };
+  const dominantDoctrineStrategies = [...doctrineDominantWithin(enabledRowsForGate), ...doctrineDominantWithin(disabledRowsForGate)];
+  // Doctrine 5 module-pair detector: an enabled strategy dominating its own disabled twin
+  // (identical strategy, seeds, and trace). DISTINCT field — not a replacement for the D4
+  // doctrine-strategy gate above.
+  const modulePairDominance = enabledRowsForGate
     .filter((row) => {
       const other = disabledRowsForGate.find((candidate) => candidate.strategyId === row.strategyId);
       return !!other && ((row.meanScore - other.meanScore > 5 && row.winRate - other.winRate > 0.10) || (row.meanScore >= 100 && row.winRate >= 1 && (other.meanScore < 100 || other.winRate < 1)));
@@ -626,6 +675,6 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
   return {
     campaignCount, pairCount: allSamples, simulationCount: allSamples * 2, moduleSetRows: allRows, pairedDeltas: deltas,
     twoVsSevenCalibration,
-    totalTurns, outcomeDistribution: { won: enabled.reduce((a, r) => a + r.wonCampaigns, 0), lost: enabled.reduce((a, r) => a + r.lostCampaigns, 0), active: enabled.reduce((a, r) => a + r.activeCampaigns, 0) }, scoreStats, overloadFrequency, acceptedRiskFrequency, negotiationFrequency: campaignCount ? negotiations / campaignCount : 0, commitmentFulfillmentRate: commitmentTotal ? fulfilled / commitmentTotal : null, commitmentBreachRate: commitmentTotal ? broken / commitmentTotal : null, optionSelectionRates, dominantOptions: optionSelectionRates.filter((entry) => entry.selectionRate > 0.75), strategyOptionSelectionRates, doctrineEvents, doctrineStrategies: legacyRows, dominantDoctrineStrategies, balanceWarnings,
+    totalTurns, outcomeDistribution: { won: enabled.reduce((a, r) => a + r.wonCampaigns, 0), lost: enabled.reduce((a, r) => a + r.lostCampaigns, 0), active: enabled.reduce((a, r) => a + r.activeCampaigns, 0) }, scoreStats, overloadFrequency, acceptedRiskFrequency, negotiationFrequency: campaignCount ? negotiations / campaignCount : 0, commitmentFulfillmentRate: commitmentTotal ? fulfilled / commitmentTotal : null, commitmentBreachRate: commitmentTotal ? broken / commitmentTotal : null, optionSelectionRates, dominantOptions: optionSelectionRates.filter((entry) => entry.selectionRate > 0.75), strategyOptionSelectionRates, doctrineEvents, doctrineStrategies: legacyRows, dominantDoctrineStrategies, modulePairDominance, balanceWarnings,
   };
 }

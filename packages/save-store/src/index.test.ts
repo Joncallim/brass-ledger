@@ -216,6 +216,51 @@ describe("Doctrine 4 mid-streak save/load", () => {
   });
 });
 
+describe("Doctrine 5 pre-module save boundary (issue #59 criterion 4)", () => {
+  it("a 0.10.0 session whose history omits module fields parses, then fails the contentVersion check cleanly", async () => {
+    const id = "00000000-0000-1000-8000-000000000050";
+    const session = makeSession({ id, contentVersion: "0.10.0" });
+    const selections = [
+      { memoId: "posture", optionId: "quiet-recovery" },
+      { memoId: "intelligence-focus", optionId: "warning-net" },
+      { memoId: "sustainment-focus", optionId: "repair-first" },
+      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+    ];
+    const preview = previewTurn(soloScenario, session.state, { turn: 1, selectedActionIds: [], selections, acceptedRiskOverrides: [], staffNegotiations: [] });
+    const input = { turn: 1, selectedActionIds: [], selections, acceptedRiskOverrides: preview.acceptedRiskCandidates, staffNegotiations: [] };
+    const result = resolveTurn(soloScenario, session.state, input);
+    // Serialize exactly as 0.10.0 (Doctrine 4) would have: turn results carry no
+    // staffModules readout and no coordinationLoad.
+    const { staffModules: _moduleReadouts, coordinationLoad: _coordinationLoad, ...legacyResult } = result;
+    const legacySession = gameSessionSchema.parse({
+      ...session,
+      contentVersion: "0.10.0",
+      state: result.nextState,
+      turnInputs: [input],
+      history: [legacyResult],
+      revision: 1,
+    });
+
+    // Schema-level replay/save-stability evidence: the old save PARSES with additive
+    // defaults — it must not crash on the missing module fields.
+    assert.equal(legacySession.history[0]?.coordinationLoad, 0, "omitted coordinationLoad defaults to 0");
+    assert.deepEqual(legacySession.history[0]?.staffModules ?? [], [], "omitted staffModules readouts default to []");
+    assert.notEqual(legacySession.contentVersion, soloScenario.contentVersion, "0.10.0 save is outside the current contentVersion boundary");
+
+    // The canonical check (the server assertCanonicalImport/assertCanonicalSession
+    // contentVersion arm) then rejects the parsed save cleanly — the boundary is the
+    // contentVersion check, not the schema.
+    assert.throws(
+      () => {
+        if (legacySession.scenarioId !== soloScenario.id || legacySession.contentVersion !== soloScenario.contentVersion) {
+          throw new Error("This campaign file was played on a different scenario or a different content version, so it cannot be opened here.");
+        }
+      },
+      /different content version/,
+    );
+  });
+});
+
 describe("resolveDefaultSaveDir", () => {
   it("returns the BRASS_LEDGER_SAVE_DIR env var when set", async () => {
     process.env.BRASS_LEDGER_SAVE_DIR = "/custom/save/path";

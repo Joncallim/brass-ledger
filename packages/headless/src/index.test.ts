@@ -252,10 +252,15 @@ test("N=240 satisfies the doctrine balance gates with real balanced hit rates", 
     }
   }
 
-  // No dominant no-tradeoff strategy (spec rule: >5 score, >10pp win rate, and no higher
-  // doctrine-event cost than balanced). The >50pp win-rate signal warning is allowed to
-  // exist (it is the calibration signal), but no strict gate warning may fire.
+  // No dominant no-tradeoff doctrine strategy in EITHER module set. The D4 gate runs
+  // independently per module set: within each set, no overuse strategy may beat its own
+  // balanced-cycle cohort by >5 score AND >10pp win rate with no higher doctrine-event
+  // cost mass, and none may sit at the 100/100 ceiling (winRate 1.0 AND meanScore 100).
+  // The >50pp win-rate signal warning is allowed to exist (it is the calibration signal),
+  // but no strict gate warning may fire. The module-pair detector (enabled strategy vs its
+  // disabled twin) is a SEPARATE Doctrine 5 field and must likewise report no dominance.
   assert.deepEqual(telemetry.dominantDoctrineStrategies, []);
+  assert.deepEqual(telemetry.modulePairDominance, [], "no enabled strategy may dominate its disabled twin");
   const strictGateWarnings = telemetry.balanceWarnings.filter((warning) => !warning.includes("win-rate advantage"));
   assert.deepEqual(strictGateWarnings, [], `unexpected balance gate warnings: ${strictGateWarnings.join("; ")}`);
 
