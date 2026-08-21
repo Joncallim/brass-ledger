@@ -16,9 +16,9 @@ import {
 // Evidence anchors: exact H2 headings from
 // CELERY/doctrine-proof-register.md; each module cites a non-empty subset of its
 // approved headings (approved sets are enforced by lint:content).
-//   - J6: NATO AJP-3; UK PJHQ
+//   - J6: NATO AJP-3; UK PJHQ; France CPOIA; Japan Joint Staff
 //   - J7: NATO AJP-3; Netherlands Staff Functions
-//   - J8: NATO AJP-3; UK PJHQ; France CPOIA
+//   - J8: NATO AJP-3; UK PJHQ; Netherlands Staff Functions; France CPOIA
 //   - J9: NATO AJP-3; UK PJHQ; Netherlands Staff Functions
 //   - STRATCOM: NATO AJP-3
 //   - MED: NATO AJP-3; UK PJHQ; Japan Joint Staff

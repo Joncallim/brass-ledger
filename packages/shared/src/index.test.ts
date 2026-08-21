@@ -1619,6 +1619,60 @@ test("Doctrine 5 schemas enforce closed lanes, effect defaults, and StaffFunctio
   assert.throws(() => staffModuleDefinitionSchema.parse({ ...base, benefitEffects: [{ lane: "doctrine.systemPressure", delta: 1.234, summary: "bad" }] }), /two decimals/);
 });
 
+test("Doctrine 5 lane taxonomy: closed lanes accept every shipped lane; direction map is exhaustive", () => {
+  // Spec test-plan shared #3: the closed lane enum accepts every lane the shipped
+  // definitions use, and rejects context-sensitive lanes that are deliberately absent.
+  const shippedLanes = new Set<string>();
+  for (const definition of staffModuleDefinitions) {
+    for (const effect of [...definition.benefitEffects, ...definition.pressureEffects]) {
+      shippedLanes.add(effect.lane);
+    }
+  }
+  assert.ok(shippedLanes.size >= 10, "fixture must exercise a meaningful lane set");
+  for (const lane of shippedLanes) {
+    assert.ok(moduleEffectLaneSchema.safeParse(lane).success, `shipped lane ${lane} must be a closed enum member`);
+  }
+  assert.equal(moduleEffectLaneSchema.safeParse("staff.s3.visiblePosture").success, false, "context-sensitive lanes are deliberately absent");
+  assert.equal(moduleEffectLaneSchema.safeParse("doctrine.relativeTempo").success, false, "context-sensitive lanes are deliberately absent");
+
+  // Spec test-plan shared #5: the direction map is exhaustive (same keys, same order).
+  assert.deepEqual(Object.keys(moduleEffectDirection), moduleEffectLaneSchema.options);
+});
+
+test("Doctrine 5 module enum, StaffFunctionId separation, and effect/readout contracts", () => {
+  // Spec test-plan shared #1: exactly seven optional module values in shipped order.
+  const moduleIds: readonly OptionalStaffModule[] = optionalStaffModuleSchema.options;
+  assert.deepEqual(moduleIds, ["J6", "J7", "J8", "J9", "STRATCOM", "MED", "ENGINEER"]);
+
+  // Spec test-plan shared #8: StaffFunctionId rejects every optional module ID.
+  for (const moduleId of moduleIds) {
+    assert.equal(staffFunctionIdSchema.safeParse(moduleId).success, false, `${moduleId} must not be a staff function id`);
+  }
+
+  // Spec test-plan shared #4: effect deltas reject NaN, out-of-range magnitudes, empty
+  // conditional tags, and unknown keys; omitted tags default to [].
+  const validEffect = { lane: "doctrine.systemPressure", delta: -1, summary: "benefit" };
+  assert.deepEqual(staffModuleEffectSchema.parse(validEffect).whenAnyTags, []);
+  assert.equal(staffModuleEffectSchema.safeParse({ ...validEffect, delta: Number.NaN }).success, false, "NaN delta rejected");
+  assert.equal(staffModuleEffectSchema.safeParse({ ...validEffect, delta: 10.01 }).success, false, "delta above +10 rejected");
+  assert.equal(staffModuleEffectSchema.safeParse({ ...validEffect, delta: -10.01 }).success, false, "delta below -10 rejected");
+  assert.equal(staffModuleEffectSchema.safeParse({ ...validEffect, whenAnyTags: [""] }).success, false, "empty conditional tag rejected");
+  assert.equal(staffModuleEffectSchema.safeParse({ ...validEffect, stray: 1 }).success, false, "unknown effect key rejected");
+
+  // Spec test-plan shared #7: readouts carry explicit additive fields and bound
+  // coordinationLoad to 0..1; the schema stays strict.
+  const readout = {
+    id: "J6", label: "J6", remit: "communications", primaryStaffFunctionRefs: ["S2"],
+    evidenceRefs: ["CELERY/doctrine-proof-register#NATO AJP-3 Staff Directorate Baseline"],
+    status: "active", benefits: [], pressures: [], coordinationLoad: 0,
+  };
+  assert.deepEqual(staffModuleReadoutSchema.parse(readout).benefits, []);
+  assert.equal(staffModuleReadoutSchema.safeParse({ ...readout, coordinationLoad: 1 }).success, true, "coordinationLoad 1 accepted");
+  assert.equal(staffModuleReadoutSchema.safeParse({ ...readout, coordinationLoad: 1.01 }).success, false, "coordinationLoad above 1 rejected");
+  assert.equal(staffModuleReadoutSchema.safeParse({ ...readout, coordinationLoad: -0.01 }).success, false, "coordinationLoad below 0 rejected");
+  assert.equal(staffModuleReadoutSchema.safeParse({ ...readout, stray: true }).success, false, "unknown readout key rejected");
+});
+
 test("module output has no top-level module state and no module state in the save schema", () => {
   const parsed = staffModuleDefinitionSchema.parse({
     id: "J6", label: "J6", remit: "communications", primaryStaffFunctionRefs: ["S2"],

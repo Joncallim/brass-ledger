@@ -103,7 +103,7 @@ test("module resolver rejects duplicate, unknown, and incomplete profile selecti
 for (const [label, mutate, message] of [
   ["bad evidence path", (value: any) => { value.evidenceRefs[0] = "CELERY/not-the-register#NATO AJP-3 Staff Directorate Baseline"; }, /heading/],
   ["missing evidence heading", (value: any) => { value.evidenceRefs[0] = "CELERY/doctrine-proof-register#No Such Heading"; }, /not approved/],
-  ["unapproved module heading", (value: any) => { value.evidenceRefs[0] = "CELERY/doctrine-proof-register#France CPOIA J-Branches"; }, /not approved/],
+  ["unapproved module heading", (value: any) => { value.evidenceRefs[0] = "CELERY/doctrine-proof-register#Netherlands Staff Functions"; }, /not approved/],
   ["forward posture lane", (value: any) => { value.benefitEffects[0].lane = "staff.s3.visiblePosture"; }, /unknown effect lane/],
   ["sign inversion", (value: any) => { value.benefitEffects[0].delta = Math.abs(value.benefitEffects[0].delta); }, /wrong sign/],
   ["incomplete effects", (value: any) => { value.pressureEffects = []; }, /needs at least one/],

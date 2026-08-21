@@ -457,7 +457,7 @@ for (const id of optionalStaffModuleSchema.options) {
 // for the WRONG module (e.g. Netherlands Chief Of Staff Role as engineering evidence
 // or UK PJHQ as a STRATCOM listing) is an error even if the heading exists.
 const approvedModuleHeadings: Record<OptionalStaffModule, string[]> = {
-  J6: ["NATO AJP-3 Staff Directorate Baseline", "UK PJHQ Staff Responsibilities"],
+  J6: ["NATO AJP-3 Staff Directorate Baseline", "UK PJHQ Staff Responsibilities", "France CPOIA J-Branches", "Japan Joint Staff Organization"],
   J7: ["NATO AJP-3 Staff Directorate Baseline", "Netherlands Staff Functions"],
   J8: ["NATO AJP-3 Staff Directorate Baseline", "UK PJHQ Staff Responsibilities", "Netherlands Staff Functions", "France CPOIA J-Branches"],
   J9: ["NATO AJP-3 Staff Directorate Baseline", "UK PJHQ Staff Responsibilities", "Netherlands Staff Functions"],

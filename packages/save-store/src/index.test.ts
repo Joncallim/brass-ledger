@@ -261,6 +261,55 @@ describe("Doctrine 5 pre-module save boundary (issue #59 criterion 4)", () => {
   });
 });
 
+describe("Doctrine 5 module save/store round-trip (issue #59 test-plan Save/store/server #2)", () => {
+  it("a 0.11.0 resolved session with historical module readouts survives create→read byte-exact", async () => {
+    const saveDir = await mkdtemp(path.join(os.tmpdir(), "brass-ledger-test-d5modules-"));
+    const store = createFileSystemSaveStore(saveDir);
+    try {
+      const id = "00000000-0000-1000-8000-000000000060";
+      const session = makeSession({ id });
+      assert.equal(session.contentVersion, "0.11.0", "fixture must be a current-version session");
+
+      const selections = [
+        { memoId: "posture", optionId: "quiet-recovery" },
+        { memoId: "intelligence-focus", optionId: "warning-net" },
+        { memoId: "sustainment-focus", optionId: "repair-first" },
+        { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+      ];
+      const preview = previewTurn(soloScenario, session.state, { turn: 1, selectedActionIds: [], selections, acceptedRiskOverrides: [], staffNegotiations: [] });
+      const input = { turn: 1, selectedActionIds: [], selections, acceptedRiskOverrides: preview.acceptedRiskCandidates, staffNegotiations: [] };
+      const result = resolveTurn(soloScenario, session.state, input);
+      const resolved = gameSessionSchema.parse({
+        ...session,
+        state: result.nextState,
+        turnInputs: [input],
+        history: [result],
+        revision: 1,
+      });
+
+      const writtenReadouts = resolved.history[0]!.staffModules;
+      const writtenLoad = resolved.history[0]!.coordinationLoad;
+      assert.equal(writtenReadouts.length, 4, "shipped J6/J8/J9/STRATCOM profile resolves four readouts");
+      assert.equal(writtenLoad, 0.4, "four enabled modules coordinate at 0.40");
+
+      await store.create(resolved);
+      const loaded = await store.read(id);
+      assert.equal(loaded.history.length, 1);
+      assert.equal(JSON.stringify(loaded.history[0]!.staffModules), JSON.stringify(writtenReadouts), "historical staffModules readouts survive byte-exact");
+      assert.equal(JSON.stringify(loaded.history[0]!.coordinationLoad), JSON.stringify(writtenLoad), "historical coordinationLoad survives byte-exact");
+      assert.deepEqual(loaded.history[0]!.staffModules, writtenReadouts);
+
+      // Replay from the loaded session matches the never-saved session.
+      const turnTwo = { turn: 2, selectedActionIds: [], selections, acceptedRiskOverrides: [], staffNegotiations: [] };
+      const fromLoaded = resolveTurn(soloScenario, loaded.state, turnTwo);
+      const fromMemory = resolveTurn(soloScenario, resolved.state, turnTwo);
+      assert.equal(fromLoaded.replayHash, fromMemory.replayHash, "resumed resolution replays identically");
+    } finally {
+      await rm(saveDir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("resolveDefaultSaveDir", () => {
   it("returns the BRASS_LEDGER_SAVE_DIR env var when set", async () => {
     process.env.BRASS_LEDGER_SAVE_DIR = "/custom/save/path";
