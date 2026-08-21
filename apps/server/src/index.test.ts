@@ -106,6 +106,25 @@ test("scenario response carries the schema-valid sprite visual language registry
   assert.deepEqual(summary.spriteVisualLanguage, payload.spriteVisualLanguage);
 });
 
+test("scenario, preview, and resolve expose resolver-ordered module arrays", async () => {
+  const scenario = (await app.inject({ method: "GET", url: "/api/scenario" })).json().scenario;
+  const expected = scenario.staffModules.map((module: { id: string }) => module.id);
+  assert.equal(expected.length, scenario.staffModules.length);
+  const created = await createSession();
+  const input = {
+    turn: created.session.state.turn,
+    selectedActionIds: [],
+    selections: firstOptionSelections(created.memos),
+  };
+  const accepted = await withAcceptedRiskCandidates(created.session.id, input);
+  const preview = await app.inject({ method: "POST", url: `/api/sessions/${created.session.id}/preview-turn`, payload: { input: accepted } });
+  assert.equal(preview.statusCode, 200);
+  assert.deepEqual(preview.json().projectedResult.staffModules.map((module: { id: string }) => module.id), expected);
+  const resolved = await app.inject({ method: "POST", url: `/api/sessions/${created.session.id}/resolve-turn`, payload: { input: accepted, expectedRevision: 0 } });
+  assert.equal(resolved.statusCode, 200);
+  assert.deepEqual(resolved.json().result.staffModules.map((module: { id: string }) => module.id), expected);
+});
+
 test("session payload readouts carry doctrine 3 routing attention consistent with turn results", async () => {
   const created = await createSession();
   const id = created.session.id;

@@ -4,6 +4,7 @@ import { MemoPanel } from "./MemoPanel";
 import { StatusBadge } from "../../components/StatusBadge";
 import { BurdenBar } from "../../components/BurdenBar";
 import { coalitionPostureLabel, pluralize } from "../../lib/labels";
+import { StaffModuleConsequences } from "../../components/StaffModuleConsequences";
 
 const posturePalette: Record<string, string> = {
   supporting: "text-green-400",
@@ -133,6 +134,7 @@ export function MemosScreen({
             );
           })}
         </div>
+        <div className="mt-4"><StaffModuleConsequences modules={preview?.projectedResult.staffModules ?? []} /></div>
 
         {warningCount > 0 && (
           <div className="mt-4 border border-yellow-700/60 bg-yellow-950/40 px-3 py-2">

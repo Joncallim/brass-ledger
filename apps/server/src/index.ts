@@ -398,6 +398,7 @@ app.get("/api/scenario", async () => ({
     externalConstraints: soloScenario.externalConstraints,
     events: soloScenario.events,
     doctrineLens: soloScenario.doctrineLens,
+    staffModules: soloScenario.staffModules,
     spriteVisualLanguage,
   },
 }));

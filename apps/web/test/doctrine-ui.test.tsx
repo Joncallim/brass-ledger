@@ -8,6 +8,7 @@ import { PreCommitScreen } from "../src/screens/PreCommitScreen/index.tsx";
 import { EventList } from "../src/screens/AfterActionScreen/EventList.tsx";
 import { ChiefsPaperScreen } from "../src/screens/ChiefsPaperScreen/index.tsx";
 import { ChiefPortrait } from "../src/components/ChiefPortrait";
+import { StaffModuleConsequences } from "../src/components/StaffModuleConsequences";
 
 const doctrineEvent = soloScenario.events.find((event) => event.doctrineTrigger)!;
 const ordinaryEvent = soloScenario.events.find((event) => !event.doctrineTrigger)!;
@@ -68,6 +69,18 @@ test("EventList labels doctrine events as Doctrine consequence and stays neutral
 test("the scenario summary fixture carries doctrineLens", () => {
   assert.ok(soloScenario.doctrineLens);
   assert.ok(soloScenario.doctrineLens.burdenBias);
+});
+
+test("optional module component is empty-safe and preserves resolver/readout effect order", () => {
+  const empty = renderToStaticMarkup(<StaffModuleConsequences modules={[]} />);
+  assert.equal(empty, "", "empty module arrays do not create a heading");
+  const html = renderToStaticMarkup(<StaffModuleConsequences modules={[{
+    id: "J6", label: "Communications", remit: "remit", primaryStaffFunctionRefs: ["S2"], evidenceRefs: ["CELERY/doctrine-proof-register#NATO AJP-3 Staff Directorate Baseline"], status: "active", coordinationLoad: 0,
+    benefits: [{ lane: "doctrine.systemPressure", requestedDelta: -1, summary: "benefit source", activatedByTags: [] }],
+    pressures: [{ lane: "resources.budgetAuthority", requestedDelta: -1, summary: "pressure source", activatedByTags: [] }],
+  }]} />);
+  assert.ok(html.indexOf("benefit source") < html.indexOf("pressure source"), "benefits render before pressures");
+  assert.match(html, /Optional staff cells/);
 });
 
 test("chiefs paper derives portrait props from chief id, session, and position evidence", () => {

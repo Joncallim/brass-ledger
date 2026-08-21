@@ -287,7 +287,15 @@ if (options.json) {
   console.log(JSON.stringify({ ...jsonOutput, exportedTo: options.exportPath ?? undefined }, null, 2));
 } else {
   console.log(`${output.scenario.title} headless engine`);
-  console.log(`Session ${output.session.id}: turn ${output.session.turn}, status ${output.session.status}, score ${output.session.score}`);
+    console.log(`Session ${output.session.id}: turn ${output.session.turn}, status ${output.session.status}, score ${output.session.score}`);
+  for (const fn of output.session.staffFunctions) console.log(`  ${fn.id}: ${fn.status}`);
+  if (output.session.staffModules.length > 0) {
+    console.log(`Optional staff cells: ${output.session.staffModules.map((module) => module.id).join("/")}; coordination ${output.session.coordinationLoad.toFixed(2)}`);
+    for (const module of output.session.staffModules) {
+      for (const effect of module.benefits) console.log(`  ${module.id} benefit: ${effect.summary}`);
+      for (const effect of module.pressures) console.log(`  ${module.id} pressure: ${effect.summary}`);
+    }
+  }
   for (const summary of output.turnSummaries) {
     console.log(`Turn ${summary.turn}: ${summary.summary} replay=${summary.replayHash} acceptedRisks=${summary.acceptedRisks.length}`);
   }

@@ -2,6 +2,7 @@ import type { AcceptedRiskOverride, MemoSelection, StaffNegotiation } from "@bra
 import type { PreviewPayload } from "../../lib/types";
 import { AcceptedRiskDocket } from "./AcceptedRiskDocket";
 import { StaffNegotiationPanel } from "./StaffNegotiationPanel";
+import { StaffModuleConsequences } from "../../components/StaffModuleConsequences";
 
 type Props = {
   preview: PreviewPayload | null;
@@ -86,6 +87,8 @@ export function PreCommitScreen({
           choices={acceptedRiskChoices}
           onChange={onAcceptRisk}
         />
+
+        <StaffModuleConsequences modules={preview?.projectedResult.staffModules ?? []} />
 
         <StaffNegotiationPanel
           candidates={negotiationCandidates}
