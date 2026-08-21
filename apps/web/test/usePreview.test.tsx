@@ -132,10 +132,15 @@ test("stale preview responses cannot overwrite the preview for newer selections 
   assert.equal(calls.length, 1, "request A reached the network");
   assert.notEqual(calls[0]!.signal, null, "request A carries an AbortSignal");
 
-  // Request A's response ALREADY resolved on the server before the next selection
-  // change — abort cannot retract a fulfilled response, so this is the exact case
-  // where only the generation guard can stop the stale publish.
-  calls[0]!.resolve(response(payload("A")));
+  // Request A's FETCH already resolved on the server before the next selection
+  // change — abort cannot retract a fulfilled response — but A's BODY is still
+  // in flight. This is the exact case where only the generation guard can stop
+  // the stale publish.
+  let resolveBodyA!: (payload: PreviewPayload) => void;
+  const bodyA = new Promise<PreviewPayload>((resolve) => {
+    resolveBodyA = resolve;
+  });
+  calls[0]!.resolve({ ok: true, json: () => bodyA });
 
   // Selection change #2 (tempo-hold): the active request must be aborted and
   // invalidated IMMEDIATELY — synchronously, before the new debounce elapses.
@@ -149,18 +154,21 @@ test("stale preview responses cannot overwrite the preview for newer selections 
   assert.equal(calls.length, 2, "request B reached the network");
   assert.equal(calls[1]!.signal?.aborted, false, "request B carries its own live signal");
 
-  // Newer resolves FIRST… then the older response lands LAST (the review's repro
-  // order: newer resolved first, older last → final preview must be the newer one).
+  // B fully resolves and publishes FIRST (the newer request wins).
   calls[1]!.resolve(response(payload("B")));
   await actTick(0);
   assert.equal((api().preview as { marker: string } | null)?.marker, "B", "the current request publishes");
   assert.equal(api().error, null, "no spurious error from the superseded request");
   assert.equal(api().loading, false, "loading clears for the current generation");
 
-  // The older, already-fulfilled response finally lands: it must be dropped.
+  // Only NOW does the older request's BODY land: the stale continuation must be
+  // dropped. The committed regression fails without the generation guard — the
+  // final preview would flip to A.
+  resolveBodyA(payload("A"));
   await actTick(0);
   assert.equal((api().preview as { marker: string } | null)?.marker, "B", "the stale response A cannot overwrite B");
   assert.equal(api().error, null, "the dropped stale response leaves no error");
+  assert.equal(api().loading, false, "the dropped stale response leaves no stuck loading");
 });
 
 test("aborting an in-flight preview (unresolved) rejects cleanly and leaves no error or stuck loading", async () => {

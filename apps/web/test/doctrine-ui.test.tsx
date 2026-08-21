@@ -112,8 +112,10 @@ test("optional module component is empty-safe and renders REAL resolver readouts
   const readout = realJ6Readout();
   const html = renderToStaticMarkup(<StaffModuleConsequences modules={[readout]} />);
   // Canonical labels already begin with the id ("J6 — Communications and
-  // information systems"): rendering id + label produced "J6 — J6 — …".
-  assert.ok(html.includes("J6 — Communications and information systems"), "the canonical label is shown");
+  // information systems"): rendering id + label produced "J6 — J6 — …". The
+  // canonical label must appear EXACTLY once — includes() would still pass if it
+  // were duplicated across separate elements (closing pass 2 P3).
+  assert.equal(html.split(readout.label).length - 1, 1, "the canonical label appears exactly once");
   assert.ok(!html.includes("J6 — J6"), "the id prefix must not be duplicated");
   assert.ok(html.indexOf("Integrated communications reduce contested-system pressure.") < html.indexOf("Connected systems increase false-precision and deception exposure."), "benefits render before pressures");
   assert.ok(html.indexOf("Connected systems increase false-precision and deception exposure.") < html.indexOf("The information-system cell consumes budget authority."), "pressure rows keep declaration order");

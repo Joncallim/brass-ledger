@@ -107,14 +107,24 @@ test("doctrine 5: zero-module scenario is byte-identical to the pinned pre-D5 go
   assert.ok(!result.afterAction.some((note) => note.heading.startsWith("Staff modules:")), "no module note on the zero-module path");
 });
 
-test("doctrine 5: event selection and RNG draw count are identical between enabled and disabled on the same first-turn state/input", () => {
-  const state = clone(soloScenario.initialState);
-  const enabled = resolveTurn(soloScenario, state, inputFor(1));
-  const disabled = resolveTurn(zeroModuleScenario, state, inputFor(1));
+test("doctrine 5: event selection and RNG draw count are identical between enabled and disabled on the same turn-4 state/input", () => {
+  // Turn 1 has ZERO eligible ordinary events, which made the original regression
+  // vacuous (0 === 0). Evolve the zero-module scenario to turn 4 so ordinary
+  // events have positive eligibility, then compare both variants on the SAME
+  // state/input (closing pass 2 P3).
+  let state = clone(zeroModuleScenario.initialState);
+  while (state.turn < 4 && state.campaignStatus === "active") {
+    state = resolveTurn(zeroModuleScenario, state, inputFor(state.turn)).nextState;
+  }
+  assert.equal(state.turn, 4, "fixture state reached turn 4 with an active campaign");
+
+  const enabled = resolveTurn(soloScenario, state, inputFor(state.turn));
+  const disabled = resolveTurn(zeroModuleScenario, state, inputFor(state.turn));
   assert.deepEqual(disabled.triggeredEvents.map((event) => event.id), enabled.triggeredEvents.map((event) => event.id), "event IDs/order unchanged");
 
   const allTags = new Set(soloScenario.memoTemplates.flatMap((memo) => memo.options.flatMap((option) => option.tags)));
-  const eligible = soloScenario.events.filter((event) => !event.doctrineTrigger && state.turn >= event.minTurn && state.turn <= event.maxTurn && event.triggerTags.every((tag) => allTags.has(tag)) && event.requiredFlags.every((flag) => state.eventFlags[flag]) && !event.excludedFlags.some((flag) => state.eventFlags[flag]));
+  const eligible = soloScenario.events.filter((event) => !event.doctrineTrigger && state.turn >= event.minTurn && state.turn <= event.maxTurn && !state.eventHistory.includes(event.id) && event.triggerTags.every((tag) => allTags.has(tag)) && event.requiredFlags.every((flag) => state.eventFlags[flag]) && !event.excludedFlags.some((flag) => state.eventFlags[flag]));
+  assert.ok(eligible.length > 0, `turn-4 fixture must have eligible ordinary events (got ${eligible.length})`);
   let enabledDraws = 0;
   let disabledDraws = 0;
   const enabledRng: Rng = () => { enabledDraws += 1; return 0.5; };

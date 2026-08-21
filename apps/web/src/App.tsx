@@ -8,7 +8,7 @@ import {
   resolveTurn, exportSession, importSession, validateReplay,
   openChiefConversation, respondToChief,
 } from "./lib/api";
-import { usePreview } from "./hooks/usePreview";
+import { usePreview, previewFingerprint } from "./hooks/usePreview";
 import { scenarioLabels } from "./lib/labels";
 import { AppShell } from "./components/AppShell";
 import { SessionHub } from "./screens/SessionHub";
@@ -47,7 +47,7 @@ export function App() {
   const [validationResults, setValidationResults] = useState<Record<string, { ok: boolean; checkedTurns: number; failedAtTurn: number | null }>>({});
 
   const sessionId = route.screen === "session" ? route.sessionId : null;
-  const { preview, loading: previewLoading, error: previewError, requestPreview, clearPreview, setPreview } = usePreview(sessionId);
+  const { preview, previewKey, loading: previewLoading, error: previewError, requestPreview, clearPreview, setPreview } = usePreview(sessionId);
 
   const currentStaffFunctions: StaffFunctionReadout[] = (() => {
     if (!cycle.session) return [];
@@ -119,6 +119,10 @@ export function App() {
       const nextCycle = { ...prev, selections: nextSelections, preview: null, acceptedRiskChoices: {} };
       if (nextSelections.length > 0) {
         requestPreview(nextCycle, nextSelections, prev.staffNegotiations);
+      } else {
+        // Deselecting the last memo leaves no selections to preview: the old
+        // request and published preview must not stay valid (closing pass 2 P1).
+        clearPreview();
       }
       return nextCycle;
     });
@@ -323,6 +327,8 @@ export function App() {
     void bootstrap();
   }, []);
 
+  const currentPreviewKey = previewFingerprint(cycle.selections, cycle.staffNegotiations);
+
   const chiefPositions = preview?.projectedResult.chiefPositions ?? cycle.latestResult?.chiefPositions ?? [];
   const chiefCoalitions = preview?.chiefCoalitions ?? cycle.latestResult?.chiefCoalitions ?? [];
   const showRail = route.screen === "session";
@@ -367,7 +373,7 @@ export function App() {
           preview={preview}
           previewLoading={previewLoading}
           previewError={previewError}
-          canProceed={Boolean(preview && cycle.selections.length > 0)}
+          canProceed={Boolean(preview && previewKey === currentPreviewKey && cycle.selections.length > 0)}
           onSelect={handleSelectMemo}
           onProceed={() => navigateStep("chiefs")}
           onBack={() => navigateStep("briefing")}
