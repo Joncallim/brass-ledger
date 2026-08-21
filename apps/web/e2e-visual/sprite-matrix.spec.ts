@@ -7,6 +7,7 @@ import {
   buildChiefSpriteSpec,
   buildSpritePixels,
   createInitialGameSession,
+  SPRITE_PIXEL_HARNESS,
   spritePixelRuns,
   type ChiefSpriteVariantState,
   type SpriteSpec,
@@ -170,7 +171,15 @@ test("sprite variant matrix renders at 48×56 and 2× for human review", async (
   expect(s2Render.output.cells).not.toEqual(s2Render.sourceColors.cells);
   const s4 = cells.find((cell) => cell.sprite.role === "S4" && cell.label === "s4-bottleneck")!;
   const s4Render = buildSpritePixels(s4.sprite);
-  expect(s4Render.source.cells.some((cell) => cell.basePaletteIndex === 16)).toBe(true, "harness trim pixels present");
+  const s4Neutral = cells.find((cell) => cell.sprite.role === "S4" && cell.label === "neutral")!;
+  const s4NeutralRender = buildSpritePixels(s4Neutral.sprite);
+  // §3.11 has 22 authored writes; its strap/rim overlap has 20 unique physical cells.
+  const declaredHarnessWrites = SPRITE_PIXEL_HARNESS.map(([x, y]) => `${x},${y}`);
+  const declaredHarnessCells = [...new Set(declaredHarnessWrites)].sort();
+  expect(declaredHarnessWrites).toHaveLength(22);
+  expect(s4Render.source.cells.flatMap((cell, index) =>
+    cell.basePaletteIndex === s4NeutralRender.source.cells[index].basePaletteIndex ? [] : [`${index % 24},${Math.floor(index / 24)}`],
+  ).sort()).toEqual(declaredHarnessCells);
 
   // In-browser: intrinsic 24×28, exact 48×56 CSS box, and every 2×2 physical block
   // equals the canonical matrix RGB cell (crispEdges, no anti-alias shades).

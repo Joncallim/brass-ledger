@@ -784,6 +784,17 @@ function semanticDiff(a: readonly SpriteSemanticPixel[], b: readonly SpriteSeman
   return changed.sort();
 }
 
+/** "x,y" cells whose resolved source RGB differs between two color grids. */
+function sourceColorDiff(a: readonly SpriteHexColor[], b: readonly SpriteHexColor[]): string[] {
+  const changed: string[] = [];
+  for (let index = 0; index < SPRITE_PIXEL_WIDTH * SPRITE_PIXEL_HEIGHT; index += 1) {
+    if (a[index] !== b[index]) {
+      changed.push(`${index % SPRITE_PIXEL_WIDTH},${Math.floor(index / SPRITE_PIXEL_WIDTH)}`);
+    }
+  }
+  return changed.sort();
+}
+
 /** The declared writable/readable regions of v2 §3.11 for each effect. */
 function inDeclaredRegion(x: number, y: number, region: "posture" | "expression" | "tint" | "desat" | "harness"): boolean {
   switch (region) {
@@ -1237,10 +1248,80 @@ test("pixel identity is deep-equal across all nine states and protected cells ne
       if (identityCell.protected) {
         assert.deepEqual(render.source.cells[index], identityCell, `protected cell ${index} semantics are state-invariant`);
         assert.equal(render.sourceColors.cells[index], render.identity.palette[identityCell.basePaletteIndex], `protected cell ${index} RGB is state-invariant`);
+        // §3.13.2's RGB invariant is pre-projection: tight output may remap edge columns.
+        // pixelNineStates is S1 (S2-tight is role-gated); the Halden test locks tight output.
         assert.equal(render.output.cells[index], render.identity.palette[identityCell.basePaletteIndex], `protected cell ${index} output RGB is state-invariant`);
       }
     }
   }
+});
+
+test("effect-region exactness and totality lock every declared source control", () => {
+  const point = (coordinate: string) => coordinate.split(",").map(Number) as [number, number];
+  const union = (...sets: readonly string[][]) => [...new Set(sets.flat())].sort();
+  const closedPostureDiff = [
+    "14,19", "14,20", "16,20", "16,21", "17,20", "17,21", "18,21", "18,22", "19,21", "19,22", "20,22",
+    "3,22", "4,21", "4,22", "5,21", "5,22", "6,20", "6,21", "7,20", "7,21", "9,19", "9,20",
+  ].sort();
+  const openPostureDiff = [
+    "1,22", "15,19", "16,19", "16,20", "18,20", "18,21", "19,20", "19,21", "2,21", "2,22", "20,21",
+    "20,22", "21,21", "21,22", "22,22", "3,21", "3,22", "4,20", "4,21", "5,20", "5,21", "7,19", "7,20", "8,19",
+  ].sort();
+  const glyphDiff = {
+    skeptical: ["10,10", "10,11", "13,10", "13,11", "13,15", "13,16"],
+    strained: ["10,10", "10,11", "11,15", "11,16", "13,10", "13,11", "13,15", "13,16", "14,11", "9,11"],
+    resolved: ["10,10", "10,15", "10,16", "10,9", "11,15", "11,16", "12,15", "12,16", "13,10", "13,15", "13,16", "13,9", "14,10", "14,15", "14,9", "9,10", "9,15", "9,9"],
+    severe: ["10,10", "10,11", "10,15", "10,16", "13,10", "13,11", "13,15", "13,16", "15,9", "8,9"],
+  } as const;
+  const declaredTransformCells = (render: ReturnType<typeof buildSpritePixels>, region: "tint" | "desat") => {
+    const skinSlots = new Set([PIX.SKIN_BASE, PIX.SKIN_SHADOW, PIX.SKIN_HIGHLIGHT]);
+    return render.source.cells.flatMap((cell, index) => {
+      const x = index % SPRITE_PIXEL_WIDTH;
+      const y = Math.floor(index / SPRITE_PIXEL_WIDTH);
+      const eligible = !cell.protected
+        && (region === "tint"
+          ? cell.region === "backdrop" && inDeclaredRegion(x, y, "tint")
+          : cell.region === "skin" && skinSlots.has(cell.basePaletteIndex) && inDeclaredRegion(x, y, "desat"));
+      return eligible ? [`${x},${y}`] : [];
+    }).sort();
+  };
+
+  const neutral = pixelRender();
+  const s2Neutral = pixelRender(variantState(), s2ChiefFixture);
+  const s4Neutral = pixelRender(variantState(), s4ChiefFixture);
+  const cases = [
+    { effect: "trust-low", render: pixelRender(variantState({ trustBand: "strained" })), neutral, semantic: union(closedPostureDiff, glyphDiff.skeptical) },
+    { effect: "trust-high", render: pixelRender(variantState({ trustBand: "solid" })), neutral, semantic: openPostureDiff },
+    { effect: "directorate-strained", render: pixelRender(variantState({ burdenLevel: "strained" })), neutral, semantic: glyphDiff.strained },
+    { effect: "directorate-overloaded", render: pixelRender(variantState({ burdenLevel: "overloaded" })), neutral, semantic: glyphDiff.strained, transform: "tint" as const },
+    { effect: "campaign-won", render: pixelRender(variantState({ campaignStatus: "won" })), neutral, semantic: glyphDiff.resolved },
+    { effect: "campaign-lost", render: pixelRender(variantState({ campaignStatus: "lost" })), neutral, semantic: glyphDiff.severe, transform: "desat" as const },
+  ] as const;
+
+  for (const { effect, render, neutral: baseline, semantic, transform } of cases) {
+    assert.deepEqual(render.identity, baseline.identity, `${effect}: identity is unchanged`);
+    assert.deepEqual(semanticDiff(baseline.source.cells, render.source.cells), semantic, `${effect}: source semantic diff is exact`);
+    const expectedColorDiff = transform === undefined ? semantic : union(semantic, declaredTransformCells(render, transform));
+    assert.deepEqual(sourceColorDiff(baseline.sourceColors.cells, render.sourceColors.cells), expectedColorDiff, `${effect}: source RGB diff is exact`);
+    assert.notDeepEqual(render.output.cells, baseline.output.cells, `${effect}: declared representation visibly changes output`);
+  }
+
+  // S2 framing is only a read-only camera projection: source semantics and RGB are byte-identical.
+  const s2Tight = pixelRender(variantState({ s2ExternalEstimateConfidence: 20 }), s2ChiefFixture);
+  assert.deepEqual(s2Tight.source, s2Neutral.source, "s2-low-confidence makes zero source semantic writes");
+  assert.deepEqual(s2Tight.sourceColors, s2Neutral.sourceColors, "s2-low-confidence makes zero source RGB writes");
+  assert.notDeepEqual(s2Tight.output, s2Neutral.output, "s2-low-confidence has the declared tight projection representation");
+
+  // The §3.11 table has 22 authoring writes, with two strap/rim entries sharing cells.
+  const harnessWrites = SPRITE_PIXEL_HARNESS.map(([x, y]) => `${x},${y}`);
+  const harnessCells = [...new Set(harnessWrites)].sort();
+  assert.equal(harnessWrites.length, 22, "§3.11 declares all 22 harness writes");
+  assert.equal(harnessCells.length, 20, "the two shared strap/rim cells are counted once in a source diff");
+  assert.ok(harnessCells.every((coordinate) => inDeclaredRegion(...point(coordinate), "harness")), "every harness cell stays inside its declared region");
+  const s4Harness = pixelRender(variantState({ s4SupportableTempo: 5 }), s4ChiefFixture);
+  assert.deepEqual(semanticDiff(s4Neutral.source.cells, s4Harness.source.cells), harnessCells, "s4-bottleneck writes exactly the declared harness cells");
+  assert.deepEqual(sourceColorDiff(s4Neutral.sourceColors.cells, s4Harness.sourceColors.cells), harnessCells, "s4-bottleneck changes RGB at exactly the declared harness cells");
+  assert.notDeepEqual(s4Harness.output.cells, s4Neutral.output.cells, "s4-bottleneck has the declared harness representation");
 });
 
 test("pixel bytes are deterministic per (portrait, state) and independent of prompt and seed", () => {
