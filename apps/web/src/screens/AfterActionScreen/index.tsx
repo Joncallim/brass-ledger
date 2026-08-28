@@ -28,7 +28,7 @@ export function AfterActionScreen({ result, previousStaffFunctions, labels, onNe
         <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">After action</p>
 
         {isCampaignOver ? (
-          <div className={`border p-4 mb-4 ${won ? "border-green-700/60 bg-green-950/40" : "border-red-600/70 bg-red-950/40"}`}>
+          <div className={`border p-4 mb-4 ${won ? "border-green-700 bg-green-950/40" : "border-red-600 bg-red-950/40"}`}>
             <h2 className={`text-xl font-semibold tracking-tight mb-1 ${won ? "text-green-300" : "text-red-300"}`}>
               Campaign {won ? "won" : "lost"}
             </h2>

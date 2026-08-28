@@ -10,7 +10,7 @@ const postureColor: Record<ChiefCoalitionEntry["posture"], string> = {
   supporting: "text-green-400 border-green-700/60",
   conditional: "text-yellow-400 border-yellow-700/60",
   contested: "text-orange-400 border-orange-700/60",
-  blocked: "text-red-400 border-red-600/70",
+  blocked: "text-red-400 border-red-600",
 };
 
 export function CoalitionSummary({ coalitions }: Props) {

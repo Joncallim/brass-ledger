@@ -251,7 +251,7 @@ export function BriefingScreen({ session, memos, staffReadouts, scenario, labels
                       {Math.round(c.severity)}
                     </span>
                     <span className="text-ink/60 flex-1 truncate" title={labels.constraint(c.id)}>{labels.constraint(c.id)}</span>
-                    <span className={`text-ink/40 border border-border px-1 ${c.trend === "worsening" ? "border-red-600/70 text-red-400" : c.trend === "improving" ? "border-green-600/60 text-green-400" : ""}`}>
+                    <span className={`text-ink/40 border border-border px-1 ${c.trend === "worsening" ? "border-red-600 text-red-400" : c.trend === "improving" ? "border-green-600 text-green-400" : ""}`}>
                       {constraintTrendLabel[c.trend] ?? c.trend}
                     </span>
                   </div>

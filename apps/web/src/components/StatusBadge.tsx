@@ -3,8 +3,8 @@ type Status = "ready" | "strained" | "overloaded" | "compromised";
 const statusClasses: Record<Status, string> = {
   ready: "text-ink border-border",
   strained: "text-yellow-400 border-yellow-600/60 bg-yellow-950/40",
-  overloaded: "text-red-400 border-red-600/60 bg-red-950/40",
-  compromised: "text-red-200 border-red-600/70 bg-red-950/60",
+  overloaded: "text-red-400 border-red-600 bg-red-950/40",
+  compromised: "text-red-200 border-red-600 bg-red-950/60",
 };
 
 const statusLabel: Record<Status, string> = {

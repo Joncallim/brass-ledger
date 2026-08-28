@@ -73,7 +73,7 @@ export function SessionHub({ sessions, scenarioTitle, scenarioDescription, scena
       )}
 
       {error && (
-        <div className="border border-red-600/70 bg-red-950/40 text-red-300 px-4 py-3 text-sm mb-6">{error}</div>
+        <div className="border border-red-600 bg-red-950/40 text-red-300 px-4 py-3 text-sm mb-6">{error}</div>
       )}
 
       {sessions.length > 0 && (

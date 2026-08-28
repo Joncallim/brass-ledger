@@ -57,7 +57,7 @@ export function RecordsScreen({
       </div>
 
       {error && (
-        <div className="border border-red-600/70 bg-red-950/40 text-red-300 px-4 py-3 text-sm mb-5">{error}</div>
+        <div className="border border-red-600 bg-red-950/40 text-red-300 px-4 py-3 text-sm mb-5">{error}</div>
       )}
 
       <div className="flex gap-3 mb-6">
@@ -159,7 +159,7 @@ export function RecordsScreen({
                           <button
                             type="button"
                             onClick={() => { onDelete(s.id); setConfirmDelete(null); }}
-                            className="text-xs border border-red-600/70 text-red-400 px-2 py-1 hover:bg-red-950/40"
+                            className="text-xs border border-red-600 text-red-400 px-2 py-1 hover:bg-red-950/40"
                           >
                             Yes, delete
                           </button>
@@ -176,7 +176,7 @@ export function RecordsScreen({
                           type="button"
                           onClick={() => setConfirmDelete(s.id)}
                           disabled={busy}
-                          className="text-xs border border-border px-2 py-1 hover:border-red-600/70 hover:text-red-400 disabled:opacity-40"
+                          className="text-xs border border-border px-2 py-1 hover:border-red-600 hover:text-red-400 disabled:opacity-40"
                         >
                           Delete
                         </button>
