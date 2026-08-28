@@ -465,6 +465,8 @@ export function App() {
         <MemosScreen
           memos={cycle.memos}
           selections={cycle.selections}
+          session={cycle.session}
+          chiefPositions={validPreview?.chiefPositions ?? []}
           staffNegotiations={cycle.staffNegotiations}
           commanderIntent={cycle.commanderIntent}
           staffModules={scenario?.staffModules ?? []}
@@ -503,6 +505,8 @@ export function App() {
           currentPreviewKey={currentPreviewKey}
           previewLoading={previewLoading}
           selections={cycle.selections}
+          session={cycle.session}
+          chiefPositions={validPreview?.chiefPositions ?? []}
           acceptedRiskChoices={cycle.acceptedRiskChoices}
           staffNegotiations={cycle.staffNegotiations}
           commanderIntent={cycle.commanderIntent}

@@ -470,6 +470,10 @@ test("chief conversation routes persist revisions and reject stale responses", a
   const commitment = responseBody.session.state.activeCommitments.find((entry: { id: string }) => entry.id === `conversation-1-${chiefId}-${memo.id}-${option.id}`);
   assert.ok(commitment);
   assert.equal(commitment.type, "doctrine");
+  assert.equal(commitment.chiefId, chiefId);
+  assert.equal(commitment.memoId, memo.id);
+  assert.equal(commitment.optionId, option.id);
+  assert.ok(["protected_boundary", "sequencing_promise", "bounded_concession", "accepted_risk", "recorded_dissent"].includes(commitment.term));
   assert.equal(commitment.turnMade, 1);
   assert.equal(commitment.fulfilled, null);
   assert.match(commitment.label, /bounded order/i);

@@ -1293,10 +1293,24 @@ export const externalTechNodeSchema = z.object({
 });
 export type ExternalTechNode = z.infer<typeof externalTechNodeSchema>;
 
+export const chiefTermSchema = z.enum([
+  "protected_boundary",
+  "sequencing_promise",
+  "bounded_concession",
+  "accepted_risk",
+  "recorded_dissent",
+  "deferred",
+]);
+export type ChiefTerm = z.infer<typeof chiefTermSchema>;
+
 export const activeCommitmentSchema = z.object({
   id: z.string(),
   type: z.enum(["doctrine", "alliance", "cabinet", "program"]),
   label: z.string(),
+  chiefId: z.string().nullable().optional(),
+  memoId: z.string().nullable().optional(),
+  optionId: z.string().nullable().optional(),
+  term: chiefTermSchema.optional(),
   turnMade: z.number().int().min(1),
   fulfilled: z.boolean().nullable().default(null),
 });
@@ -1548,7 +1562,7 @@ export type AuthoritativeAction = z.infer<typeof authoritativeActionSchema>;
 
 export const gameSessionSchema = z.object({
   id: z.string(),
-  campaignId: z.string().min(1),
+  campaignId: z.string().min(1).default("legacy-unbound"),
   saveFormatVersion: z.literal("8"),
   engineVersion: z.literal("0.1.0").default("0.1.0"),
   revision: z.number().int().min(0).default(0),
@@ -2387,6 +2401,15 @@ function conversationCommitmentLabel(chief: ChiefArchetype, option: MemoOption, 
   return `${chief.title} ${closingText}: ${option.label}`;
 }
 
+function chiefTermForClosingChoice(closingChoice: string): ChiefTerm {
+  if (closingChoice === "closing-dissent-on-record") return "recorded_dissent";
+  if (closingChoice === "closing-override") return "accepted_risk";
+  if (closingChoice === "closing-reframe") return "bounded_concession";
+  if (closingChoice === "closing-bounded-order") return "protected_boundary";
+  if (closingChoice === "closing-defer") return "deferred";
+  return "sequencing_promise";
+}
+
 export function updateCommitmentsFromChiefConversation(
   state: CampaignState,
   chief: ChiefArchetype,
@@ -2407,6 +2430,10 @@ export function updateCommitmentsFromChiefConversation(
       id,
       type: commitmentTypeForOption(option),
       label: conversationCommitmentLabel(chief, option, closingChoice),
+      chiefId: chief.id,
+      memoId: memo.id,
+      optionId: option.id,
+      term: chiefTermForClosingChoice(closingChoice),
       turnMade: state.turn,
       fulfilled: null,
     },

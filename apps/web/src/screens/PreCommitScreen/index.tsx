@@ -1,4 +1,4 @@
-import { directorateLabel, type AcceptedRiskOverride, type CommanderIntent, type DirectorateId, type MemoSelection, type StaffNegotiation } from "@brass-ledger/shared";
+import { directorateLabel, type AcceptedRiskOverride, type ChiefPositionEntry, type CommanderIntent, type DirectorateId, type GameSession, type MemoSelection, type StaffNegotiation } from "@brass-ledger/shared";
 import type { PreviewPayload } from "../../lib/types";
 import { isPreviewValid } from "../../lib/previewValidity";
 import { AcceptedRiskDocket } from "./AcceptedRiskDocket";
@@ -11,6 +11,8 @@ type Props = {
   currentPreviewKey: string;
   previewLoading: boolean;
   selections: MemoSelection[];
+  session?: GameSession;
+  chiefPositions?: ChiefPositionEntry[];
   acceptedRiskChoices: Record<string, boolean>;
   staffNegotiations: StaffNegotiation[];
   commanderIntent?: CommanderIntent;
@@ -35,6 +37,8 @@ export function PreCommitScreen({
   currentPreviewKey,
   previewLoading,
   selections,
+  session,
+  chiefPositions = [],
   acceptedRiskChoices,
   staffNegotiations,
   commanderIntent,
@@ -61,6 +65,13 @@ export function PreCommitScreen({
   const burden = preview?.projectedResult.directorateBurden ?? [];
   const mainEffortChoices = burden.filter((entry) => entry.burdenPoints > 0);
   const secondaryRiskChoices = burden.filter((entry) => entry.burdenLevel !== "light" && entry.directorate !== commanderIntent?.mainEffort);
+  const currentConversations = session?.state.conversationHistory.filter((conversation) => conversation.turn === turnNumber) ?? [];
+  const openTerms = session?.state.activeCommitments.filter((commitment) => commitment.fulfilled === null) ?? [];
+  const conflicts = currentConversations.filter((conversation) => !selections.some((selection) => selection.memoId === conversation.memoId && selection.optionId === conversation.optionId));
+  const termLabel: Record<string, string> = {
+    protected_boundary: "Protected boundary", sequencing_promise: "Sequencing promise", bounded_concession: "Bounded concession",
+    accepted_risk: "Accepted risk", recorded_dissent: "Dissent on record", deferred: "Deferral",
+  };
 
   return (
     <div className="p-6 max-w-2xl">
@@ -118,6 +129,19 @@ export function PreCommitScreen({
                 {secondaryRiskChoices.map((entry) => <option key={entry.directorate} value={entry.directorate}>{directorateLabel(entry.directorate)} ({entry.burdenLevel})</option>)}
               </select>
             </label>
+          </div>
+        </section>
+        <section className="border border-border bg-surface px-4 py-3">
+          <p className="text-xs uppercase tracking-widest text-ink/50 mb-1">Command ledger</p>
+          <p className="text-xs text-ink/60 mb-3">Chief support, recorded terms, and any contradictions carried into this order.</p>
+          <div className="space-y-2 text-xs">
+            {chiefPositions.map((position) => (
+              <p key={`${position.chiefId}:${position.memoId}`} className="text-ink/65"><span className={position.position === "support" ? "text-green-400" : position.position === "oppose" ? "text-red-400" : "text-yellow-400"}>{position.chiefName}: {position.position.replace("_", " ")}</span> — {position.requiredCondition}</p>
+            ))}
+            {currentConversations.map((conversation) => <p key={conversation.id} className="text-ink/60">Discussed: {conversation.chiefName} on {conversation.memoTitle} · {conversation.status === "completed" ? "recorded" : "still open"}</p>)}
+            {openTerms.map((commitment) => <p key={commitment.id} className="text-ink/60">{termLabel[commitment.term ?? "sequencing_promise"] ?? commitment.term}: {commitment.label}</p>)}
+            {chiefPositions.length === 0 && currentConversations.length === 0 && openTerms.length === 0 && <p className="text-ink/40">No chief term is currently carried into this order.</p>}
+            {conflicts.map((conversation) => <p key={`conflict:${conversation.id}`} className="text-red-400">Conflict: {conversation.chiefName} discussed an option no longer in this packet. Restore it or reconcile the decision before committing.</p>)}
           </div>
         </section>
         {(preview?.predictedEvents ?? []).filter((event) => event.doctrineTrigger && event.causalContext).length > 0 && (

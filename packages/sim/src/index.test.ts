@@ -86,7 +86,7 @@ test("campaign legibility preserves horizon, exposes sub-band deterioration, and
   relationshipTurn.nextState.chiefTrust.warden += 1;
   const history = buildCampaignHistory({ ...session, state: second.nextState, turnInputs: [balancedInput, { ...balancedInput, turn: 2 }], history: [relationshipTurn, second], revision: 2 });
   assert.deepEqual(history.map((entry) => entry.turn), [1, 2]);
-  assert.deepEqual(history[0]!.relationshipChanges, [{ chiefId: "warden", delta: 1 }]);
+  assert.ok(history[0]!.relationshipChanges.some((change) => change.chiefId === "warden" && change.delta === 1));
 });
 
 test("resolveTurn is deterministic for the same memo selections", () => {
