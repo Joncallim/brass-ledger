@@ -1,5 +1,5 @@
 import { access, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
-import { constants, copyFileSync, existsSync, mkdirSync, readdirSync, renameSync } from "node:fs";
+import { constants, copyFileSync, existsSync, mkdirSync, readdirSync, renameSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
@@ -342,6 +342,42 @@ export function resolveDefaultSaveDir(): string {
   return path.join(os.homedir(), ".brass-ledger", "saves");
 }
 
+/** Copy, never move, legacy saves into the durable location. Each file stages
+ * beside its target before rename, so an interrupted migration leaves the
+ * source intact and a later launch can safely retry it. */
+export function migrateLegacySaveFiles(destination: string, legacyCandidates: string[]): number {
+  let copied = 0;
+  for (const candidate of legacyCandidates) {
+    try {
+      if (path.resolve(candidate) !== path.resolve(destination) && existsSync(candidate)) {
+        const entries = readdirSync(candidate).filter((entry) => entry.endsWith(".json"));
+        if (entries.length > 0) {
+          mkdirSync(destination, { recursive: true });
+          for (const entry of entries) {
+            const source = path.join(candidate, entry);
+            const target = path.join(destination, entry);
+            if (existsSync(target)) continue;
+            const staging = `${target}.migration-${process.pid}-${Date.now()}`;
+            try {
+              copyFileSync(source, staging);
+              renameSync(staging, target);
+              copied += 1;
+            } catch {
+              // Copy is deliberately non-destructive. A partial staging file
+              // is never treated as a session and a later pass can retry.
+              try { if (existsSync(staging)) unlinkSync(staging); } catch { /* best effort */ }
+            }
+          }
+        }
+      }
+    } catch {
+      // Keep the destination authoritative; a later startup can retry a
+      // partially completed copy without ever serving directly from legacy.
+    }
+  }
+  return copied;
+}
+
 export function resolveSaveDirWithMigration(legacyCandidates: string[]): string {
   if (process.env.BRASS_LEDGER_SAVE_DIR) {
     return path.resolve(process.env.BRASS_LEDGER_SAVE_DIR);
@@ -355,28 +391,7 @@ export function resolveSaveDirWithMigration(legacyCandidates: string[]): string 
   } catch {
     return destination;
   }
-  for (const candidate of legacyCandidates) {
-    try {
-      if (path.resolve(candidate) !== path.resolve(destination) && existsSync(candidate)) {
-        const entries = readdirSync(candidate).filter((entry) => entry.endsWith(".json"));
-        if (entries.length > 0) {
-          mkdirSync(destination, { recursive: true });
-          for (const entry of entries) {
-            const source = path.join(candidate, entry);
-            const target = path.join(destination, entry);
-            if (existsSync(target)) continue;
-            const staging = `${target}.migration-${process.pid}-${Date.now()}`;
-            copyFileSync(source, staging);
-            renameSync(staging, target);
-          }
-          return destination;
-        }
-      }
-    } catch {
-      // Keep the destination authoritative; a later startup can retry a
-      // partially completed copy without ever serving directly from legacy.
-    }
-  }
+  migrateLegacySaveFiles(destination, legacyCandidates);
   return destination;
 }
 

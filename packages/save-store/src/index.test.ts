@@ -1,6 +1,6 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { chmod, mkdir, mkdtemp, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, readdir, rm, stat, utimes, writeFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 
@@ -13,6 +13,7 @@ import {
   SaveStoreIOError,
   SessionNotFoundError,
   migrateSessionPayload,
+  migrateLegacySaveFiles,
   type SaveStore,
 } from "./index.js";
 import { createInitialGameSession, gameSessionSchema, type GameSession } from "@brass-ledger/shared";
@@ -441,6 +442,41 @@ describe("resolveSaveDirWithMigration", () => {
     const dir = resolveSaveDirWithMigration(["/tmp/missing"]);
     assert.match(dir, /custom[/\\]test[/\\]dir/);
     delete process.env.BRASS_LEDGER_SAVE_DIR;
+  });
+});
+
+describe("legacy save-file migration", () => {
+  let legacyDir: string;
+  let durableDir: string;
+
+  before(async () => {
+    legacyDir = await mkdtemp(path.join(os.tmpdir(), "brass-ledger-test-legacy-"));
+    durableDir = await mkdtemp(path.join(os.tmpdir(), "brass-ledger-test-durable-"));
+  });
+
+  after(async () => {
+    await rm(legacyDir, { recursive: true, force: true });
+    await rm(durableDir, { recursive: true, force: true });
+  });
+
+  it("copies source records atomically, preserves the source, and is idempotent after interruption/retry", async () => {
+    const file = "00000000-0000-1000-8000-000000000210.json";
+    const content = "{ not necessarily parseable yet }";
+    await writeFile(path.join(legacyDir, file), content, "utf8");
+    assert.equal(migrateLegacySaveFiles(durableDir, [legacyDir]), 1);
+    assert.equal(await readFile(path.join(legacyDir, file), "utf8"), content, "source must remain recoverable");
+    assert.equal(await readFile(path.join(durableDir, file), "utf8"), content);
+    assert.equal(migrateLegacySaveFiles(durableDir, [legacyDir]), 0, "a retry must not replace the completed destination");
+    assert.deepEqual((await readdir(durableDir)).filter((entry) => entry.includes(".migration-")), []);
+  });
+
+  it("does not overwrite a newer durable duplicate", async () => {
+    const file = "00000000-0000-1000-8000-000000000211.json";
+    await writeFile(path.join(legacyDir, file), "legacy", "utf8");
+    await writeFile(path.join(durableDir, file), "durable", "utf8");
+    assert.equal(migrateLegacySaveFiles(durableDir, [legacyDir]), 0);
+    assert.equal(await readFile(path.join(durableDir, file), "utf8"), "durable");
+    assert.equal(await readFile(path.join(legacyDir, file), "utf8"), "legacy");
   });
 });
 
