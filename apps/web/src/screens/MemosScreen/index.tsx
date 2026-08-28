@@ -1,10 +1,14 @@
-import type { DecisionMemo, MemoSelection, StaffModuleDefinition, StaffNegotiation } from "@brass-ledger/shared";
+import { directorateLabel, type DecisionMemo, type MemoSelection, type StaffModuleDefinition, type StaffNegotiation } from "@brass-ledger/shared";
 import type { PreviewPayload } from "../../lib/types";
 import { MemoPanel } from "./MemoPanel";
 import { StatusBadge } from "../../components/StatusBadge";
 import { BurdenBar } from "../../components/BurdenBar";
 import { coalitionPostureLabel, pluralize } from "../../lib/labels";
 import { StaffModuleConsequences } from "../../components/StaffModuleConsequences";
+
+function slackClass(status: "room" | "tight" | "overdrawn") {
+  return status === "overdrawn" ? "text-red-400" : status === "tight" ? "text-yellow-400" : "text-green-400";
+}
 
 const posturePalette: Record<string, string> = {
   supporting: "text-green-400",
@@ -43,6 +47,13 @@ export function MemosScreen({
   const projectedFunctions = preview?.projectedResult.staffFunctions ?? [];
   const projectedModules = preview?.projectedResult.staffModules ?? [];
   const warningCount = preview?.acceptedRiskCandidates.length ?? 0;
+  const packetSummary = preview?.packetSummary;
+  const selectedChoices = memos.flatMap((memo) => {
+    const optionId = selections.find((selection) => selection.memoId === memo.id)?.optionId;
+    const option = memo.options.find((candidate) => candidate.id === optionId);
+    return option ? [{ memo, option }] : [];
+  });
+  const skippedOptionalMemos = memos.filter((memo) => memo.optional && !selections.some((selection) => selection.memoId === memo.id));
 
   function getSelection(memoId: string) {
     return selections.find((s) => s.memoId === memoId)?.optionId ?? null;
@@ -107,6 +118,35 @@ export function MemosScreen({
       </div>
 
       <div className="w-64 shrink-0 border-l border-border p-4 bg-paper/40">
+        <section className="mb-5 border border-border bg-surface px-3 py-3">
+          <p className="text-xs uppercase tracking-widest text-ink/40 mb-2">This month&apos;s packet</p>
+          {selectedChoices.length === 0 ? (
+            <p className="text-xs text-ink/40">Select an option to begin assembling the month&apos;s work.</p>
+          ) : (
+            <div className="space-y-2">
+              {selectedChoices.map(({ memo, option }) => (
+                <div key={memo.id}>
+                  <p className="text-xs text-ink/40">{memo.title}</p>
+                  <p className="text-xs text-ink/70 leading-snug">{option.label}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {packetSummary && (
+            <div className="mt-3 border-t border-border pt-2 text-xs text-ink/60">
+              <p>Organisational slack: <span className={slackClass(packetSummary.slackStatus)}>{Math.max(0, packetSummary.slackPoints)} points, {packetSummary.slackStatus}.</span></p>
+              {packetSummary.strainedDirectorates.length > 0 && (
+                <p className="mt-1">Pressure carried: {packetSummary.strainedDirectorates.map(directorateLabel).join(", ")}.</p>
+              )}
+            </div>
+          )}
+          {skippedOptionalMemos.length > 0 && (
+            <div className="mt-3 border-t border-border pt-2">
+              <p className="text-xs text-ink/40">Deliberately not taking</p>
+              {skippedOptionalMemos.map((memo) => <p key={memo.id} className="text-xs text-ink/60 leading-snug">{memo.title}</p>)}
+            </div>
+          )}
+        </section>
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs uppercase tracking-widest text-ink/40">Forecast staff burden</p>
           {previewLoading && <span className="text-xs text-ink/40 animate-pulse">Updating…</span>}
