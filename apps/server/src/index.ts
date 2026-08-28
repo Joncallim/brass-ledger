@@ -458,6 +458,7 @@ function scenarioPayload(scenario: ReturnType<typeof getDefaultScenario>) {
     title: scenario.title,
     description: scenario.description,
     contentVersion: scenario.contentVersion,
+    trainingExercise: scenario.trainingExercise,
     maxTurns: scenario.maxTurns,
     openingVariants: scenario.openingVariants,
     commandPressureProfiles: scenario.commandPressureProfiles,

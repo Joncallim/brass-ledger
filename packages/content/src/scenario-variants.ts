@@ -73,3 +73,58 @@ export const longRebuildScenario = variant((scenario) => {
       maxTurn: ["training-payoff", "depot-breakthrough", "experience-dividend", "public-patience-recovery"].includes(event.id) ? 16 : Math.min(16, event.maxTurn + 2),
     }));
 });
+
+/**
+ * A short, optional introduction that deliberately uses the ordinary scenario,
+ * session, turn-resolution, save, and replay paths. Memos appear as concepts
+ * become relevant; the engine never recognises this scenario by id.
+ */
+export const staffExerciseScenario = variant((scenario) => {
+  scenario.id = "staff-exercise";
+  scenario.title = "Staff Exercise";
+  scenario.contentVersion = "0.13.0-staff-exercise";
+  scenario.trainingExercise = true;
+  scenario.description = "A four-month command exercise for learning the real Brass Ledger loop. It begins with two decisions, then introduces uncertainty, command relationships, and long-term sequencing one month at a time.";
+  scenario.maxTurns = 4;
+  scenario.initialState.maxTurns = 4;
+  scenario.initialState.seed = 14017;
+  scenario.memoTemplates = scenario.memoTemplates
+    .filter((memo) => ["posture", "intelligence-focus", "sustainment-focus", "alliance-frame"].includes(memo.id))
+    .map((memo) => ({
+      ...memo,
+      turn: memo.id === "posture" || memo.id === "sustainment-focus" ? 1 : memo.id === "intelligence-focus" ? 2 : 3,
+      whyNow: memo.id === "posture"
+        ? "Exercise 1 — compare visible tempo with the staff work it demands. A more dramatic order can overload the room that must carry it."
+        : memo.id === "sustainment-focus"
+          ? "Exercise 1 — support is part of the decision. Choose what the headquarters can actually sustain, not just what it can announce."
+          : memo.id === "intelligence-focus"
+            ? "Exercise 2 — confidence is not certainty. The forecast can be useful while the warning picture remains incomplete."
+            : "Exercise 3 — command choices shape allied and domestic room. Chiefs can support with a condition or put dissent on the record.",
+    }));
+  scenario.events = scenario.events
+    .filter((event) => ["uncertain-warning", "commercial-lift-squeeze", "training-payoff"].includes(event.id))
+    .map((event) => ({ ...event, maxTurn: Math.min(event.maxTurn, 4) }));
+  scenario.openingVariants = [{
+    id: "exercise-baseline",
+    title: "Staff exercise baseline",
+    briefing: "This exercise starts from a fixed, visible command picture so your decisions—not a hidden opening swing—teach the four monthly lessons.",
+    stateDelta: { domestic: { cabinetCover: 1 } },
+  }];
+  scenario.commandPressureProfiles = [{
+    id: "standard",
+    label: "Exercise pressure",
+    description: "The Staff Exercise has one authored, visible pressure level.",
+    openingStateDelta: {},
+  }];
+  scenario.staffAssistanceProfiles = [{
+    id: "guided",
+    label: "Guided staff picture",
+    description: "Names the consequence categories as they first appear. It never changes simulation outcomes.",
+    forecastDetail: "guided",
+  }, {
+    id: "standard",
+    label: "Standard staff picture",
+    description: "Uses the normal campaign presentation without changing the exercise's simulation.",
+    forecastDetail: "standard",
+  }];
+});

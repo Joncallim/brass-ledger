@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { scenarioSummarySchema, chiefSpriteDeterministicSeed, gameSessionSchema, turnInputSchema } from "@brass-ledger/shared";
 import { hashPromptText } from "@brass-ledger/headless";
-import { soloScenario } from "@brass-ledger/content";
+import { soloScenario, staffExerciseScenario } from "@brass-ledger/content";
 import { campaignStateHash, ineligibleStaffNegotiations, resolveTurn } from "@brass-ledger/sim";
 
 const saveDir = await mkdtemp(path.join(tmpdir(), "brass-ledger-routes-"));
@@ -132,11 +132,17 @@ test("scenario and session payloads expose S1-S5 staff contracts", async () => {
 test("scenario creation and discovery use the canonical registry", async () => {
   const scenarios = await app.inject({ method: "GET", url: "/api/scenarios" });
   assert.equal(scenarios.statusCode, 200);
-  assert.deepEqual(scenarios.json().scenarios.map((entry: { id: string }) => entry.id), [soloScenario.id, "short-warning-coalition", "long-rebuild-industrial"]);
+  assert.deepEqual(scenarios.json().scenarios.map((entry: { id: string }) => entry.id), [staffExerciseScenario.id, soloScenario.id, "short-warning-coalition", "long-rebuild-industrial"]);
+  assert.equal(scenarios.json().scenarios[0].trainingExercise, true);
 
   const created = await app.inject({ method: "POST", url: "/api/sessions", payload: { scenarioId: soloScenario.id } });
   assert.equal(created.statusCode, 200);
   assert.equal(created.json().session.scenarioId, soloScenario.id);
+
+  const exercise = await app.inject({ method: "POST", url: "/api/sessions", payload: { scenarioId: staffExerciseScenario.id, staffAssistanceId: "guided" } });
+  assert.equal(exercise.statusCode, 200);
+  assert.equal(exercise.json().memos.length, 2);
+  assert.equal(exercise.json().session.state.maxTurns, 4);
 
   const unavailable = await app.inject({ method: "POST", url: "/api/sessions", payload: { scenarioId: "not-installed" } });
   assert.equal(unavailable.statusCode, 400);

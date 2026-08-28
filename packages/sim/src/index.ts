@@ -204,7 +204,7 @@ function phaseToLevel(phase: string): 0 | 1 | 2 {
 }
 
 export function deriveDecisionMemos(scenario: ScenarioDefinition, state: CampaignState) {
-  return scenario.memoTemplates.map((memo) => {
+  return scenario.memoTemplates.filter((memo) => memo.turn === undefined || memo.turn <= state.turn).map((memo) => {
     if (memo.id !== "posture") {
       return memo;
     }

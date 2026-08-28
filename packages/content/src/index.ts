@@ -1,5 +1,5 @@
 export { soloScenario } from "./scenario";
-export { longRebuildScenario, shortWarningCoalitionScenario } from "./scenario-variants";
+export { longRebuildScenario, shortWarningCoalitionScenario, staffExerciseScenario } from "./scenario-variants";
 export { defaultScenarioId, getDefaultScenario, getScenario, listScenarios, scenarioRegistry } from "./scenario-registry";
 export { doctrineGenes, resolveDoctrineGenes } from "./doctrine-genes";
 export { staffModuleDefinitions, resolveStaffModules } from "./staff-module-definitions";

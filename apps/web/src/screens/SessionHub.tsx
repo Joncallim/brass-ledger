@@ -68,6 +68,7 @@ export function SessionHub({ sessions, scenarioTitle, scenarioDescription, scena
                   className={`border p-4 text-left disabled:opacity-50 ${selected ? "border-brass bg-brass/10" : "border-border hover:border-brass"}`}
                 >
                   <span className="block text-sm font-medium text-ink">{candidate.title}</span>
+                  {candidate.trainingExercise && <span className="mt-1 inline-block border border-brass/50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-brass">Recommended first</span>}
                   <span className="mt-1 block text-xs leading-relaxed text-ink/60">{candidate.description}</span>
                   <span className="mt-3 block text-xs text-ink/45">{candidate.maxTurns} months · {candidate.openingVariants.length} possible opening briefs</span>
                 </button>

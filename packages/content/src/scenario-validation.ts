@@ -15,11 +15,13 @@ export function validateScenarioRegistry(scenarios: readonly ScenarioDefinition[
     const identity = `${scenario.id}@${scenario.contentVersion}`;
     if (identities.has(identity)) throw new Error(`Duplicate scenario identity: ${identity}`);
     identities.add(identity);
-    if (scenario.maxTurns < 6 || scenario.initialState.turn !== 1 || scenario.initialState.maxTurns !== scenario.maxTurns) {
+    const minimumTurns = scenario.trainingExercise ? 4 : 6;
+    if (scenario.maxTurns < minimumTurns || scenario.initialState.turn !== 1 || scenario.initialState.maxTurns !== scenario.maxTurns) {
       throw new Error(`Scenario ${scenario.id} has an invalid campaign horizon.`);
     }
-    if (scenario.memoTemplates.length < 4 || scenario.memoTemplates.length > 5) {
-      throw new Error(`Scenario ${scenario.id} must surface 4-5 decision memos each month.`);
+    const minimumMemos = scenario.trainingExercise ? 2 : 4;
+    if (scenario.memoTemplates.length < minimumMemos || scenario.memoTemplates.length > 5) {
+      throw new Error(`Scenario ${scenario.id} must surface ${scenario.trainingExercise ? "2-5" : "4-5"} decision memos each month.`);
     }
     const pressureIds = new Set<string>();
     for (const profile of scenario.commandPressureProfiles) {

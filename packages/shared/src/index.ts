@@ -1548,6 +1548,8 @@ export const scenarioDefinitionSchema = z.object({
   title: z.string(),
   description: z.string(),
   contentVersion: z.string(),
+  /** A bounded learning campaign. It still uses ordinary sessions, turns, and replay. */
+  trainingExercise: z.boolean().default(false),
   maxTurns: z.number().int(),
   chiefs: z.array(chiefArchetypeSchema),
   staffCapacities: z.array(staffCapacityDefinitionSchema).default([]),
@@ -1692,6 +1694,7 @@ export const scenarioSummarySchema = z.object({
   title: z.string(),
   description: z.string(),
   contentVersion: z.string(),
+  trainingExercise: z.boolean().default(false),
   maxTurns: z.number().int(),
   openingVariants: z.array(openingVariantSchema).default([]),
   commandPressureProfiles: z.array(commandPressureProfileSchema).default([]),

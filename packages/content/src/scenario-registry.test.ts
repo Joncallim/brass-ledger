@@ -9,11 +9,11 @@ test("the canonical scenario registry resolves the configured default by immutab
   assert.equal(scenario.id, defaultScenarioId);
   assert.equal(getScenario(scenario.id, scenario.contentVersion), scenario);
   assert.equal(getScenario(scenario.id, "missing-version"), undefined);
-  assert.deepEqual(listScenarios().map((entry) => entry.id), [defaultScenarioId, "short-warning-coalition", "long-rebuild-industrial"]);
+  assert.deepEqual(listScenarios().map((entry) => entry.id), ["staff-exercise", defaultScenarioId, "short-warning-coalition", "long-rebuild-industrial"]);
 });
 
 test("registered scenarios differ through authored campaign structure, not only opening values", () => {
-  const [baseline, shortWarning, longRebuild] = listScenarios();
+  const [, baseline, shortWarning, longRebuild] = listScenarios();
   assert.ok(baseline && shortWarning && longRebuild);
   assert.equal(shortWarning.maxTurns, 8);
   assert.equal(shortWarning.memoTemplates.length, baseline.memoTemplates.length - 1);
@@ -21,6 +21,15 @@ test("registered scenarios differ through authored campaign structure, not only 
   assert.equal(longRebuild.maxTurns, 16);
   assert.equal(longRebuild.memoTemplates.find((memo) => memo.id === "alliance-frame")?.optional, true);
   assert.ok(longRebuild.events.some((event) => event.maxTurn === 16));
+});
+
+test("Staff Exercise is a four-turn training scenario with two real opening decisions", async () => {
+  const { staffExerciseScenario } = await import("./scenario-variants");
+  const { deriveDecisionMemos } = await import("@brass-ledger/sim");
+  assert.equal(staffExerciseScenario.trainingExercise, true);
+  assert.equal(staffExerciseScenario.maxTurns, 4);
+  assert.deepEqual(deriveDecisionMemos(staffExerciseScenario, staffExerciseScenario.initialState).map((memo) => memo.id), ["posture", "sustainment-focus"]);
+  assert.deepEqual(deriveDecisionMemos(staffExerciseScenario, { ...staffExerciseScenario.initialState, turn: 3 }).map((memo) => memo.id), ["posture", "intelligence-focus", "sustainment-focus", "alliance-frame"]);
 });
 
 test("registry validation rejects a scenario with an unresolved authored reference", () => {
