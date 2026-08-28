@@ -1546,6 +1546,26 @@ export const gameSessionSchema = z.object({
 });
 export type GameSession = z.infer<typeof gameSessionSchema>;
 
+export function buildCampaignHistory(session: GameSession) {
+  return session.history.map((result) => {
+    const legibility = buildCampaignLegibility(result.nextState, result.previousState);
+    const changedRisks = legibility.risks.filter((risk) => risk.trend !== "stable");
+    return {
+      turn: result.input.turn,
+      risks: changedRisks,
+      events: result.triggeredEvents.map((event) => ({ id: event.id, title: event.title })),
+      programmePhases: result.nextState.capabilityPrograms
+        .filter((program) => result.previousState.capabilityPrograms.find((prior) => prior.id === program.id)?.phase !== program.phase)
+        .map((program) => ({ id: program.id, phase: program.phase })),
+      commitmentsOpened: result.nextState.activeCommitments.filter((commitment) => !result.previousState.activeCommitments.some((prior) => prior.id === commitment.id)).map((commitment) => commitment.label),
+      commitmentsClosed: result.nextState.activeCommitments.filter((commitment) => {
+        const prior = result.previousState.activeCommitments.find((entry) => entry.id === commitment.id);
+        return prior?.fulfilled === null && commitment.fulfilled !== null;
+      }).map((commitment) => commitment.label),
+    };
+  });
+}
+
 export const sessionExportSchema = z.object({
   exportedAt: z.string(),
   engineVersion: z.literal("0.1.0").default("0.1.0"),

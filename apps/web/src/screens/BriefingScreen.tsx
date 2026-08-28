@@ -1,5 +1,5 @@
 import type { GameSession, DecisionMemo, StaffFunctionReadout } from "@brass-ledger/shared";
-import { buildCampaignLegibility, buildStrategicMetricBriefs, evaluateCampaignObjectives } from "@brass-ledger/shared";
+import { buildCampaignHistory, buildCampaignLegibility, buildStrategicMetricBriefs, evaluateCampaignObjectives } from "@brass-ledger/shared";
 import { StatusBadge } from "../components/StatusBadge";
 import {
   commitmentTypeLabel,
@@ -31,6 +31,7 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
   // second strategic rules engine.
   const strategicMetrics = buildStrategicMetricBriefs(state);
   const campaignLegibility = buildCampaignLegibility(state);
+  const campaignHistory = buildCampaignHistory(session).slice(-6).reverse();
 
   return (
     <div className="p-6 max-w-4xl">
@@ -92,6 +93,26 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
               ))}
             </div>
           </section>
+
+          {campaignHistory.length > 0 && (
+            <section>
+              <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Command history</p>
+              <p className="text-xs text-ink/50 mb-3">The pattern created by your prior packets. Latest month first.</p>
+              <div className="space-y-2">
+                {campaignHistory.map((entry) => (
+                  <div key={entry.turn} className="border border-border px-3 py-2 text-xs">
+                    <p className="font-semibold text-ink/70">Month {entry.turn}</p>
+                    {entry.risks.length > 0 && <p className="mt-1 text-ink/55">{entry.risks.map((risk) => `${risk.label} ${risk.trend}`).join(" · ")}</p>}
+                    {entry.events.length > 0 && <p className="mt-1 text-yellow-400">{entry.events.map((event) => event.title).join(" · ")}</p>}
+                    {entry.programmePhases.length > 0 && <p className="mt-1 text-green-400">Programme phase: {entry.programmePhases.map((program) => labels.program(program.id)).join(", ")}</p>}
+                    {entry.commitmentsOpened.length > 0 && <p className="mt-1 text-ink/50">Promise made: {entry.commitmentsOpened.join("; ")}</p>}
+                    {entry.commitmentsClosed.length > 0 && <p className="mt-1 text-ink/50">Promise closed: {entry.commitmentsClosed.join("; ")}</p>}
+                    {entry.risks.length === 0 && entry.events.length === 0 && entry.programmePhases.length === 0 && entry.commitmentsOpened.length === 0 && entry.commitmentsClosed.length === 0 && <p className="mt-1 text-ink/40">No major strategic shift recorded.</p>}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section>
             <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Closest to breaking</p>
