@@ -34,6 +34,7 @@ Always consult this domain before changing game rules, interface direction, spri
 - [[doctrine-mechanics-roadmap]]
 - [[detailed-dialogue-and-advisor-styles]]
 - [[development-stages]]
+- [[playability-test-script]]
 - [[sprite-design-logic]]
 - [[backend-review/review-summary]]
 
