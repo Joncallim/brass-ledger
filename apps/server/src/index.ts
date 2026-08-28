@@ -255,7 +255,7 @@ function assertCanonicalImport(session: GameSession) {
   if (session.saveFormatVersion !== "8") {
     throw new Error("This campaign file uses a save format this version of Brass Ledger cannot read.");
   }
-  const expectedOpening = createInitialGameSession(scenario, session.campaignId);
+  const expectedOpening = createInitialGameSession(scenario, session.campaignId, session);
   if (session.openingVariantId !== expectedOpening.openingVariantId || stableJson(session.initialState) !== stableJson(expectedOpening.initialState)) {
     throw new Error("This campaign file does not start from the scenario's opening position, so it cannot be accepted as a genuine campaign.");
   }
@@ -267,7 +267,7 @@ function assertCanonicalSession(session: GameSession) {
   if (session.engineVersion !== "0.1.0" || session.saveFormatVersion !== "8") {
     throw new Error("This saved campaign belongs to an incompatible engine, scenario, content version, or save format.");
   }
-  const expectedOpening = createInitialGameSession(scenario, session.campaignId);
+  const expectedOpening = createInitialGameSession(scenario, session.campaignId, session);
   if (session.openingVariantId !== expectedOpening.openingVariantId || stableJson(session.initialState) !== stableJson(expectedOpening.initialState)) {
     throw new Error("This saved campaign does not match the current scenario opening state.");
   }
@@ -343,12 +343,12 @@ async function listSessionRecords() {
   });
 }
 
-function createSession(scenarioId?: string) {
+function createSession(scenarioId?: string, profiles: { commandPressureId?: string; staffAssistanceId?: string } = {}) {
   const scenario = scenarioId ? getScenario(scenarioId) : getDefaultScenario();
   if (!scenario) throw new Error("That scenario is not installed in this copy of Brass Ledger.");
   const sessionId = randomUUID();
   return {
-    ...createInitialGameSession(scenario, sessionId),
+    ...createInitialGameSession(scenario, sessionId, profiles),
     id: sessionId,
   };
 }
@@ -443,6 +443,8 @@ function parseHeadlessRunBody(body: unknown) {
     validate: value.validate === true,
     includeSprites: value.includeSprites === true || value.sprites === true,
     autoAcceptRisks: value.autoAcceptRisks === true,
+    commandPressureId: typeof value.commandPressureId === "string" ? value.commandPressureId : undefined,
+    staffAssistanceId: typeof value.staffAssistanceId === "string" ? value.staffAssistanceId : undefined,
   };
 }
 
@@ -458,6 +460,8 @@ function scenarioPayload(scenario: ReturnType<typeof getDefaultScenario>) {
     contentVersion: scenario.contentVersion,
     maxTurns: scenario.maxTurns,
     openingVariants: scenario.openingVariants,
+    commandPressureProfiles: scenario.commandPressureProfiles,
+    staffAssistanceProfiles: scenario.staffAssistanceProfiles,
     chiefs: scenario.chiefs,
     staffCapacities: scenario.staffCapacities,
     staffFunctions: scenario.staffFunctions,
@@ -517,12 +521,27 @@ app.get("/api/sessions", async (_request, reply) => {
 
 app.post("/api/sessions", async (request, reply) => {
   try {
-    const scenarioId = (request.body as { scenarioId?: unknown } | undefined)?.scenarioId;
+    const body = request.body as { scenarioId?: unknown; commandPressureId?: unknown; staffAssistanceId?: unknown } | undefined;
+    const scenarioId = body?.scenarioId;
     if (scenarioId !== undefined && (typeof scenarioId !== "string" || !getScenario(scenarioId))) {
       reply.code(400);
       return { error: "That scenario is not installed in this copy of Brass Ledger." };
     }
-    const session = createSession(typeof scenarioId === "string" ? scenarioId : undefined);
+    const scenario = typeof scenarioId === "string" ? getScenario(scenarioId)! : getDefaultScenario();
+    const commandPressureId = body?.commandPressureId;
+    const staffAssistanceId = body?.staffAssistanceId;
+    if (commandPressureId !== undefined && (typeof commandPressureId !== "string" || !scenario.commandPressureProfiles.some((profile) => profile.id === commandPressureId))) {
+      reply.code(400);
+      return { error: "That command pressure profile is not available for this scenario." };
+    }
+    if (staffAssistanceId !== undefined && (typeof staffAssistanceId !== "string" || !scenario.staffAssistanceProfiles.some((profile) => profile.id === staffAssistanceId))) {
+      reply.code(400);
+      return { error: "That staff assistance profile is not available for this scenario." };
+    }
+    const session = createSession(typeof scenarioId === "string" ? scenarioId : undefined, {
+      commandPressureId: typeof commandPressureId === "string" ? commandPressureId : undefined,
+      staffAssistanceId: typeof staffAssistanceId === "string" ? staffAssistanceId : undefined,
+    });
     await writeSession(session);
     return sessionPayload(session);
   } catch (error) {

@@ -22,6 +22,7 @@ type Props = {
   selections: MemoSelection[];
   staffNegotiations: StaffNegotiation[];
   commanderIntent?: CommanderIntent;
+  staffAssistanceDetail?: "guided" | "standard" | "sparse";
   staffModules: StaffModuleDefinition[];
   preview: PreviewPayload | null;
   previewLoading: boolean;
@@ -38,6 +39,7 @@ export function MemosScreen({
   selections,
   staffNegotiations,
   commanderIntent,
+  staffAssistanceDetail = "standard",
   staffModules,
   preview,
   previewLoading,
@@ -80,9 +82,11 @@ export function MemosScreen({
               {memos.filter((m) => !m.optional).length} required · {memos.filter((m) => m.optional).length} optional
             </p>
             <p className="text-xs text-ink/50 mt-1 max-w-lg leading-relaxed">
-              Choose one course of action per memo. The panel on the right updates as you choose, so you can see the
-              work each choice loads onto your staff before you commit anything. The small tags on an option are the
-              themes your chiefs and outside events react to.
+              {staffAssistanceDetail === "guided"
+                ? "Choose one course per memo, then use the right-hand forecast to name which staff lane is binding before you commit. Forecast warnings show work your packet creates; they never choose or accept risk for you."
+                : staffAssistanceDetail === "sparse"
+                  ? "Choose one course per memo. The forecast reports the staff work your packet creates, but leaves more of the trade-off for your own reading."
+                  : "Choose one course of action per memo. The panel on the right updates as you choose, so you can see the work each choice loads onto your staff before you commit anything. The small tags on an option are the themes your chiefs and outside events react to."}
             </p>
           </div>
           <button

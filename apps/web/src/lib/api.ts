@@ -52,10 +52,11 @@ export function listScenarios() {
   return fetchJson<{ scenarios: ScenarioSummary[] }>(`${BASE}/scenarios`);
 }
 
-export function createSession(scenarioId?: string) {
+export function createSession(options: { scenarioId?: string; commandPressureId?: string; staffAssistanceId?: string } | string = {}) {
+  const body = typeof options === "string" ? { scenarioId: options } : options;
   return fetchJson<SessionEnvelope>(`${BASE}/sessions`, {
     method: "POST",
-    body: scenarioId ? JSON.stringify({ scenarioId }) : undefined,
+    body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
   });
 }
 

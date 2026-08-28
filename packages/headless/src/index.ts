@@ -134,6 +134,10 @@ export type HeadlessRunOptions = {
   scenarioId?: string;
   /** Stable campaign identity for a newly-created campaign. It selects the authored opening variation and is retained on export. */
   campaignSeed?: string;
+  /** Authored opening pressure for a newly-created campaign. */
+  commandPressureId?: string;
+  /** Presentation-only forecast/detail mode for a newly-created campaign. */
+  staffAssistanceId?: string;
   turns?: number;
   session?: GameSession;
   inputs?: TurnInput[];
@@ -279,7 +283,10 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
   const scenario = requestedScenario;
   const sessionId = options.campaignSeed ?? randomUUID();
   let session = options.session ?? {
-    ...createInitialGameSession(scenario, sessionId),
+    ...createInitialGameSession(scenario, sessionId, {
+      commandPressureId: options.commandPressureId,
+      staffAssistanceId: options.staffAssistanceId,
+    }),
     id: sessionId,
   };
   const turns = options.turns ?? 1;

@@ -992,6 +992,25 @@ export const openingVariantSchema = z.object({
 });
 export type OpeningVariant = z.infer<typeof openingVariantSchema>;
 
+/** Command pressure is an authored opening condition, never a hidden outcome
+ * multiplier. Staff assistance changes presentation only and is recorded so a
+ * completed campaign can be compared honestly. */
+export const commandPressureProfileSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  description: z.string().min(1),
+  openingStateDelta: stateDeltaSchema,
+});
+export type CommandPressureProfile = z.infer<typeof commandPressureProfileSchema>;
+
+export const staffAssistanceProfileSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  description: z.string().min(1),
+  forecastDetail: z.enum(["guided", "standard", "sparse"]),
+});
+export type StaffAssistanceProfile = z.infer<typeof staffAssistanceProfileSchema>;
+
 const emptyStateDelta: StateDelta = {
   resources: {},
   forceGeneration: {},
@@ -1538,6 +1557,8 @@ export const scenarioDefinitionSchema = z.object({
   memoTemplates: z.array(decisionMemoSchema),
   events: z.array(eventDefinitionSchema),
   openingVariants: z.array(openingVariantSchema).default([]),
+  commandPressureProfiles: z.array(commandPressureProfileSchema).min(1).default([{ id: "standard", label: "Standard pressure", description: "The scenario's intended opening pressure.", openingStateDelta: {} }]),
+  staffAssistanceProfiles: z.array(staffAssistanceProfileSchema).min(1).default([{ id: "standard", label: "Standard staff picture", description: "The scenario's intended forecast and explanation detail.", forecastDetail: "standard" }]),
   initialState: campaignStateSchema,
   doctrineProfile: doctrineProfileSchema,
   // Doctrine 3: the composed advice/burden lens, computed once at scenario-definition
@@ -1607,6 +1628,8 @@ export const gameSessionSchema = z.object({
   scenarioId: z.string(),
   contentVersion: z.string(),
   openingVariantId: z.string().nullable().default(null),
+  commandPressureId: z.string().min(1).default("standard"),
+  staffAssistanceId: z.string().min(1).default("standard"),
   advisorRoster: z.array(sessionAdvisorSchema),
   state: campaignStateSchema,
   initialState: campaignStateSchema,
@@ -1671,6 +1694,8 @@ export const scenarioSummarySchema = z.object({
   contentVersion: z.string(),
   maxTurns: z.number().int(),
   openingVariants: z.array(openingVariantSchema).default([]),
+  commandPressureProfiles: z.array(commandPressureProfileSchema).default([]),
+  staffAssistanceProfiles: z.array(staffAssistanceProfileSchema).default([]),
   chiefs: z.array(chiefArchetypeSchema),
   staffCapacities: z.array(staffCapacityDefinitionSchema).default([]),
   staffFunctions: z.array(staffFunctionDefinitionSchema).default([]),
@@ -4872,12 +4897,29 @@ export function openingVariantForCampaign(scenario: ScenarioDefinition, campaign
   return scenario.openingVariants[hashString(`${scenario.id}:${scenario.contentVersion}:${campaignId}:opening`) % scenario.openingVariants.length];
 }
 
-export function createInitialGameSession(scenario: ScenarioDefinition, sessionSeed = scenario.id): GameSession {
+export function commandPressureProfileForScenario(scenario: ScenarioDefinition, profileId: string) {
+  return scenario.commandPressureProfiles.find((profile) => profile.id === profileId);
+}
+
+export function staffAssistanceProfileForScenario(scenario: ScenarioDefinition, profileId: string) {
+  return scenario.staffAssistanceProfiles.find((profile) => profile.id === profileId);
+}
+
+export function createInitialGameSession(
+  scenario: ScenarioDefinition,
+  sessionSeed = scenario.id,
+  profiles: { commandPressureId?: string; staffAssistanceId?: string } = {},
+): GameSession {
   const timestamp = new Date().toISOString();
+  const commandPressureId = profiles.commandPressureId ?? "standard";
+  const staffAssistanceId = profiles.staffAssistanceId ?? "standard";
+  const commandPressure = commandPressureProfileForScenario(scenario, commandPressureId);
+  const staffAssistance = staffAssistanceProfileForScenario(scenario, staffAssistanceId);
+  if (!commandPressure) throw new Error(`Scenario ${scenario.id} does not provide command pressure profile ${commandPressureId}.`);
+  if (!staffAssistance) throw new Error(`Scenario ${scenario.id} does not provide staff assistance profile ${staffAssistanceId}.`);
   const openingVariant = openingVariantForCampaign(scenario, sessionSeed);
-  const initialState = openingVariant
-    ? applyOpeningStateDelta(scenario.initialState, openingVariant.stateDelta)
-    : deepClone(scenario.initialState);
+  const pressuredState = applyOpeningStateDelta(scenario.initialState, commandPressure.openingStateDelta);
+  const initialState = openingVariant ? applyOpeningStateDelta(pressuredState, openingVariant.stateDelta) : pressuredState;
   return {
     id: scenario.id,
     campaignId: sessionSeed,
@@ -4887,6 +4929,8 @@ export function createInitialGameSession(scenario: ScenarioDefinition, sessionSe
     scenarioId: scenario.id,
     contentVersion: scenario.contentVersion,
     openingVariantId: openingVariant?.id ?? null,
+    commandPressureId,
+    staffAssistanceId,
     advisorRoster: generateAdvisorRoster(scenario.chiefs, sessionSeed),
     state: initialState,
     initialState: deepClone(initialState),

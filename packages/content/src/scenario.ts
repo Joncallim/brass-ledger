@@ -51,6 +51,15 @@ export const soloScenario = scenarioDefinitionSchema.parse({
     "You run a joint headquarters trying to rebuild a credible defense during a slow-burning crisis. Warning about the adversary's intentions is never quite clean, the reserve force is already strained, and sustainment cannot support everything you would like to do at once. Every month you weigh deterrence, force generation, alliance politics, and how much political cover you can afford to spend, and you live with what each choice costs the next month.",
   contentVersion: "0.13.0",
   maxTurns: 12,
+  commandPressureProfiles: [
+    { id: "standard", label: "Standard pressure", description: "The intended opening balance: pressure is serious, but every staff lane has room to recover through deliberate choices.", openingStateDelta: {} },
+    { id: "elevated", label: "Elevated pressure", description: "Begin with thinner political cover, less warning time, and a more strained reserve. The simulation changes only through these visible opening conditions.", openingStateDelta: { forceGeneration: { reserveStrain: 5 }, domestic: { cabinetCover: -5 }, escalation: { warningTime: -5, probeTempo: 3 } } },
+  ],
+  staffAssistanceProfiles: [
+    { id: "guided", label: "Guided staff picture", description: "Shows clearer forecast bands and more explicit cause-and-effect guidance. It never changes simulation outcomes.", forecastDetail: "guided" },
+    { id: "standard", label: "Standard staff picture", description: "Uses the scenario's intended information model and explanation detail.", forecastDetail: "standard" },
+    { id: "sparse", label: "Sparse staff picture", description: "Keeps legitimate headquarters information but reduces forecast hints. It never changes simulation outcomes.", forecastDetail: "sparse" },
+  ],
   chiefs: [
     { id: "warden", name: "Maj. Gen. Ruth Warden", genderPresentation: "female", directorate: "people", title: "Chief of People", doctrineBias: "preserve deployable experience before chasing visible tempo", temperament: "plainspoken and protective", competence: 0.78, riskTolerance: 0.34, preferredTags: ["retention", "reserve", "recovery", "training"], concernTags: ["escalatory", "tempo-spike"], dialogue: chiefDialogues.warden },
     { id: "halden", name: "Dr. Elias Halden", genderPresentation: "male", directorate: "intelligence", title: "Chief of Intelligence", doctrineBias: "confidence before commitment", temperament: "clinical and skeptical", competence: 0.9, riskTolerance: 0.28, preferredTags: ["collection", "warning", "counter-deception", "industrial-watch"], concernTags: ["escalatory", "public-commitment"], dialogue: chiefDialogues.halden },

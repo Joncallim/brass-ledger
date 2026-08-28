@@ -40,6 +40,8 @@ export function App() {
   const [scenario, setScenario] = useState<ScenarioSummary | null>(null);
   const [scenarios, setScenarios] = useState<ScenarioSummary[]>([]);
   const [selectedScenarioId, setSelectedScenarioId] = useState<string | null>(null);
+  const [selectedCommandPressureId, setSelectedCommandPressureId] = useState("standard");
+  const [selectedStaffAssistanceId, setSelectedStaffAssistanceId] = useState("standard");
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [cycle, setCycle] = useState<TurnCycleState>(emptyTurnCycle);
   const [busy, setBusy] = useState(false);
@@ -133,7 +135,7 @@ export function App() {
     setBusy(true);
     setError(null);
     try {
-      const data = await createSession(scenarioId);
+      const data = await createSession({ scenarioId, commandPressureId: selectedCommandPressureId, staffAssistanceId: selectedStaffAssistanceId });
       const createdScenario = scenarios.find((candidate) => candidate.id === data.session.scenarioId && candidate.contentVersion === data.session.contentVersion);
       if (createdScenario) setScenario(createdScenario);
       const newCycle: TurnCycleState = { ...emptyTurnCycle, session: data.session, memos: data.memos, latestResult: null };
@@ -455,6 +457,8 @@ export function App() {
           scenarioDescription={scenario?.description ?? "Loading the scenario…"}
           scenarios={scenarios}
           selectedScenarioId={selectedScenarioId}
+          selectedCommandPressureId={selectedCommandPressureId}
+          selectedStaffAssistanceId={selectedStaffAssistanceId}
           busy={busy}
           error={error}
           onLoad={handleLoadSession}
@@ -463,8 +467,12 @@ export function App() {
             if (selected) {
               setSelectedScenarioId(id);
               setScenario(selected);
+              setSelectedCommandPressureId(selected.commandPressureProfiles.some((profile) => profile.id === "standard") ? "standard" : selected.commandPressureProfiles[0]?.id ?? "standard");
+              setSelectedStaffAssistanceId(selected.staffAssistanceProfiles.some((profile) => profile.id === "standard") ? "standard" : selected.staffAssistanceProfiles[0]?.id ?? "standard");
             }
           }}
+          onSelectCommandPressure={setSelectedCommandPressureId}
+          onSelectStaffAssistance={setSelectedStaffAssistanceId}
           onNew={handleNewSession}
         />
       )}
@@ -488,6 +496,7 @@ export function App() {
           chiefPositions={validPreview?.chiefPositions ?? []}
           staffNegotiations={cycle.staffNegotiations}
           commanderIntent={cycle.commanderIntent}
+          staffAssistanceDetail={scenario?.staffAssistanceProfiles.find((profile) => profile.id === cycle.session.staffAssistanceId)?.forecastDetail}
           staffModules={scenario?.staffModules ?? []}
           preview={validPreview}
           previewLoading={previewLoading}

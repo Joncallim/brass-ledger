@@ -21,6 +21,18 @@ export function validateScenarioRegistry(scenarios: readonly ScenarioDefinition[
     if (scenario.memoTemplates.length < 4 || scenario.memoTemplates.length > 5) {
       throw new Error(`Scenario ${scenario.id} must surface 4-5 decision memos each month.`);
     }
+    const pressureIds = new Set<string>();
+    for (const profile of scenario.commandPressureProfiles) {
+      if (pressureIds.has(profile.id)) throw new Error(`Scenario ${scenario.id} repeats command pressure profile ${profile.id}.`);
+      pressureIds.add(profile.id);
+    }
+    if (!pressureIds.has("standard")) throw new Error(`Scenario ${scenario.id} must provide a standard command pressure profile.`);
+    const assistanceIds = new Set<string>();
+    for (const profile of scenario.staffAssistanceProfiles) {
+      if (assistanceIds.has(profile.id)) throw new Error(`Scenario ${scenario.id} repeats staff assistance profile ${profile.id}.`);
+      assistanceIds.add(profile.id);
+    }
+    if (!assistanceIds.has("standard")) throw new Error(`Scenario ${scenario.id} must provide a standard staff assistance profile.`);
     const openingVariantIds = new Set<string>();
     for (const variant of scenario.openingVariants) {
       if (openingVariantIds.has(variant.id)) throw new Error(`Scenario ${scenario.id} repeats opening variant ${variant.id}.`);

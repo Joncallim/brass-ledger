@@ -32,6 +32,8 @@ type CliOptions = {
   autoAcceptRisks: boolean;
   scenarioId: string | null;
   campaignSeed: string | null;
+  commandPressureId: string | null;
+  staffAssistanceId: string | null;
 };
 
 function readOptions(argv: string[]): CliOptions {
@@ -50,6 +52,8 @@ function readOptions(argv: string[]): CliOptions {
     autoAcceptRisks: false,
     scenarioId: null,
     campaignSeed: null,
+    commandPressureId: null,
+    staffAssistanceId: null,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -76,6 +80,18 @@ function readOptions(argv: string[]): CliOptions {
       const value = argv[index + 1];
       if (!value?.trim()) throw new Error("--seed requires a non-empty campaign seed.");
       options.campaignSeed = value;
+      index += 1;
+    }
+    if (arg === "--pressure") {
+      const value = argv[index + 1];
+      if (!value?.trim()) throw new Error("--pressure requires an authored command pressure profile ID.");
+      options.commandPressureId = value;
+      index += 1;
+    }
+    if (arg === "--assistance") {
+      const value = argv[index + 1];
+      if (!value?.trim()) throw new Error("--assistance requires an authored staff assistance profile ID.");
+      options.staffAssistanceId = value;
       index += 1;
     }
     if (arg === "--batch") {
@@ -255,6 +271,9 @@ if (session && options.scenarioId) {
 if (session && options.campaignSeed) {
   throw new Error("--seed cannot be combined with --session or --resume; saved campaigns retain their own campaign identity.");
 }
+if (session && (options.commandPressureId || options.staffAssistanceId)) {
+  throw new Error("--pressure and --assistance cannot be combined with --session or --resume; saved campaigns retain their recorded conditions.");
+}
 
 const inputs = await readInputs(options.inputPath);
 let output;
@@ -269,6 +288,8 @@ try {
     autoAcceptRisks: options.autoAcceptRisks,
     scenarioId: options.scenarioId ?? undefined,
     campaignSeed: options.campaignSeed ?? undefined,
+    commandPressureId: options.commandPressureId ?? undefined,
+    staffAssistanceId: options.staffAssistanceId ?? undefined,
   });
 } catch (error) {
   if (error instanceof HeadlessAcceptedRiskError) {

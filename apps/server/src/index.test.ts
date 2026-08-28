@@ -143,6 +143,19 @@ test("scenario creation and discovery use the canonical registry", async () => {
   assert.match(unavailable.json().error, /not installed/i);
 });
 
+test("session creation records scenario-authored pressure and presentation-only assistance", async () => {
+  const created = await app.inject({
+    method: "POST",
+    url: "/api/sessions",
+    payload: { scenarioId: soloScenario.id, commandPressureId: "elevated", staffAssistanceId: "guided" },
+  });
+  assert.equal(created.statusCode, 200);
+  assert.equal(created.json().session.commandPressureId, "elevated");
+  assert.equal(created.json().session.staffAssistanceId, "guided");
+  const rejected = await app.inject({ method: "POST", url: "/api/sessions", payload: { commandPressureId: "uninstalled" } });
+  assert.equal(rejected.statusCode, 400);
+});
+
 test("scenario response carries the schema-valid sprite visual language registry", async () => {
   const response = await app.inject({ method: "GET", url: "/api/scenario" });
   const payload = response.json().scenario;

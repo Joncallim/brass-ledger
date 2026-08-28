@@ -39,3 +39,14 @@ test("campaign identity selects a bounded authored opening deterministically", (
   assert.ok(scenario.openingVariants.some((variant) => variant.id === first.openingVariantId));
   assert.notDeepEqual(first.initialState, scenario.initialState);
 });
+
+test("authored pressure changes only the visible opening while assistance leaves simulation state unchanged", () => {
+  const scenario = getDefaultScenario();
+  const standard = createInitialGameSession(scenario, "profile-seed", { commandPressureId: "standard", staffAssistanceId: "standard" });
+  const elevated = createInitialGameSession(scenario, "profile-seed", { commandPressureId: "elevated", staffAssistanceId: "guided" });
+  const sparse = createInitialGameSession(scenario, "profile-seed", { commandPressureId: "standard", staffAssistanceId: "sparse" });
+  assert.notDeepEqual(elevated.initialState, standard.initialState);
+  assert.deepEqual(sparse.initialState, standard.initialState);
+  assert.equal(elevated.commandPressureId, "elevated");
+  assert.equal(elevated.staffAssistanceId, "guided");
+});

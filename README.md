@@ -116,6 +116,8 @@ Useful flags:
 | `--turns N` | Run up to `N` turns. |
 | `--scenario id` | Start a new campaign using an installed scenario ID. Saved sessions always retain their own scenario. |
 | `--seed value` | Use a repeatable campaign identity for a new run, including its authored opening variation. |
+| `--pressure id` | Start a new campaign with a scenario-authored command-pressure profile; its visible opening conditions are recorded in the save. |
+| `--assistance id` | Start a new campaign with a staff-assistance presentation profile; it changes forecast/explanation detail, never simulation outcomes. |
 | `--json` | Print machine-readable output. |
 | `--input file.json` | Use one turn input or an array of turn inputs. |
 | `--session file.json` | Continue from a saved `GameSession` or exported session JSON. |

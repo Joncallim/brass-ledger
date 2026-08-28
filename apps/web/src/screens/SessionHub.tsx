@@ -8,14 +8,19 @@ type Props = {
   scenarioDescription: string;
   scenarios: ScenarioSummary[];
   selectedScenarioId: string | null;
+  selectedCommandPressureId: string;
+  selectedStaffAssistanceId: string;
   busy: boolean;
   error: string | null;
   onLoad: (id: string) => void;
   onSelectScenario: (scenarioId: string) => void;
+  onSelectCommandPressure: (profileId: string) => void;
+  onSelectStaffAssistance: (profileId: string) => void;
   onNew: (scenarioId?: string) => void;
 };
 
-export function SessionHub({ sessions, scenarioTitle, scenarioDescription, scenarios, selectedScenarioId, busy, error, onLoad, onSelectScenario, onNew }: Props) {
+export function SessionHub({ sessions, scenarioTitle, scenarioDescription, scenarios, selectedScenarioId, selectedCommandPressureId, selectedStaffAssistanceId, busy, error, onLoad, onSelectScenario, onSelectCommandPressure, onSelectStaffAssistance, onNew }: Props) {
+  const selectedScenario = scenarios.find((scenario) => scenario.id === selectedScenarioId) ?? scenarios[0];
   return (
     <div className="p-6 max-w-3xl">
       <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Campaign</p>
@@ -69,6 +74,25 @@ export function SessionHub({ sessions, scenarioTitle, scenarioDescription, scena
               );
             })}
           </div>
+        </section>
+      )}
+
+      {selectedScenario && (
+        <section className="mb-8 grid gap-4 sm:grid-cols-2" aria-label="Campaign conditions">
+          <label className="block text-sm text-ink/70">
+            <span className="block text-xs uppercase tracking-widest text-ink/40 mb-2">Command pressure</span>
+            <select value={selectedCommandPressureId} onChange={(event) => onSelectCommandPressure(event.target.value)} disabled={busy} className="w-full border border-border bg-paper px-3 py-2 text-ink">
+              {selectedScenario.commandPressureProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.label}</option>)}
+            </select>
+            <span className="mt-1 block text-xs leading-relaxed text-ink/50">{selectedScenario.commandPressureProfiles.find((profile) => profile.id === selectedCommandPressureId)?.description}</span>
+          </label>
+          <label className="block text-sm text-ink/70">
+            <span className="block text-xs uppercase tracking-widest text-ink/40 mb-2">Staff assistance</span>
+            <select value={selectedStaffAssistanceId} onChange={(event) => onSelectStaffAssistance(event.target.value)} disabled={busy} className="w-full border border-border bg-paper px-3 py-2 text-ink">
+              {selectedScenario.staffAssistanceProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.label}</option>)}
+            </select>
+            <span className="mt-1 block text-xs leading-relaxed text-ink/50">{selectedScenario.staffAssistanceProfiles.find((profile) => profile.id === selectedStaffAssistanceId)?.description}</span>
+          </label>
         </section>
       )}
 

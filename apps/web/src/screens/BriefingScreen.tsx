@@ -35,6 +35,8 @@ export function BriefingScreen({ session, memos, staffReadouts, scenario, labels
   const campaignHistory = buildCampaignHistory(session).slice(-6).reverse();
   const chiefName = (chiefId: string) => session.advisorRoster.find((chief) => chief.chiefId === chiefId)?.displayName ?? chiefId;
   const openingVariant = scenario?.openingVariants.find((variant) => variant.id === session.openingVariantId);
+  const commandPressure = scenario?.commandPressureProfiles.find((profile) => profile.id === session.commandPressureId);
+  const staffAssistance = scenario?.staffAssistanceProfiles.find((profile) => profile.id === session.staffAssistanceId);
 
   return (
     <div className="p-6 max-w-4xl">
@@ -58,6 +60,12 @@ export function BriefingScreen({ session, memos, staffReadouts, scenario, labels
         )}
         {openingVariant && state.turn === 1 && (
           <p className="text-sm text-ink/65 mb-2"><span className="font-medium text-ink">Opening brief — {openingVariant.title}:</span> {openingVariant.briefing}</p>
+        )}
+        {state.turn === 1 && commandPressure && (
+          <p className="text-xs text-ink/50 mb-1"><span className="font-medium text-ink/70">Command pressure — {commandPressure.label}:</span> {commandPressure.description}</p>
+        )}
+        {staffAssistance && (
+          <p className="text-xs text-ink/50"><span className="font-medium text-ink/70">Staff picture — {staffAssistance.label}:</span> {staffAssistance.description}</p>
         )}
       </div>
 
