@@ -1385,12 +1385,26 @@ export const staffNegotiationSchema = z.object({
 });
 export type StaffNegotiation = z.infer<typeof staffNegotiationSchema>;
 
+/** A bounded, replayed declaration of where the packet is really concentrating
+ * command attention. It grants no standing bonus: the simulator checks it
+ * against the selected packet and uses that actual concentration. */
+export const commanderIntentSchema = z.object({
+  mainEffort: directorateSchema,
+  acceptedSecondaryRisk: directorateSchema.optional(),
+}).superRefine((intent, ctx) => {
+  if (intent.acceptedSecondaryRisk === intent.mainEffort) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "The accepted secondary risk must be outside the declared main effort.", path: ["acceptedSecondaryRisk"] });
+  }
+});
+export type CommanderIntent = z.infer<typeof commanderIntentSchema>;
+
 export const turnInputSchema = z.object({
   turn: z.number().int().min(1),
   selectedActionIds: z.array(z.string()).default([]),
   selections: z.array(memoSelectionSchema),
   acceptedRiskOverrides: z.array(acceptedRiskOverrideSchema).default([]),
   staffNegotiations: z.array(staffNegotiationSchema).default([]),
+  commanderIntent: commanderIntentSchema.optional(),
 });
 export type TurnInput = z.infer<typeof turnInputSchema>;
 
@@ -1562,6 +1576,9 @@ export function buildCampaignHistory(session: GameSession) {
         const prior = result.previousState.activeCommitments.find((entry) => entry.id === commitment.id);
         return prior?.fulfilled === null && commitment.fulfilled !== null;
       }).map((commitment) => commitment.label),
+      relationshipChanges: Object.entries(result.nextState.chiefTrust)
+        .map(([chiefId, trustAfter]) => ({ chiefId, delta: trustAfter - (result.previousState.chiefTrust[chiefId] ?? trustAfter) }))
+        .filter((change) => change.delta !== 0),
     };
   });
 }

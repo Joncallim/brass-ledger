@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { ScenarioSummary, MemoSelection, StaffNegotiation, AcceptedRiskOverride, StaffFunctionReadout, ChiefConversationRecord } from "@brass-ledger/shared";
+import type { ScenarioSummary, MemoSelection, StaffNegotiation, AcceptedRiskOverride, StaffFunctionReadout, ChiefConversationRecord, CommanderIntent } from "@brass-ledger/shared";
 import { buildStaffFunctionReadouts, buildDirectorateBurden } from "@brass-ledger/shared";
 import type { AppRoute, TurnCycleState, SessionSummary, TurnStep } from "./lib/types";
 import {
@@ -31,6 +31,7 @@ const emptyTurnCycle: TurnCycleState = {
   preview: null,
   acceptedRiskChoices: {},
   staffNegotiations: [],
+  commanderIntent: undefined,
   latestResult: null,
 };
 
@@ -63,7 +64,7 @@ export function App() {
 
   const labels = scenarioLabels(scenario);
 
-  const currentPreviewKey = previewFingerprint(cycle.selections, cycle.staffNegotiations, cycle.session?.revision ?? null);
+  const currentPreviewKey = previewFingerprint(cycle.selections, cycle.staffNegotiations, cycle.session?.revision ?? null, cycle.commanderIntent);
   // ONE gated projection for EVERY preview consumer (staff readouts, chief
   // positions/coalitions, MemosScreen, PreCommitScreen, commit handling): a
   // preview may be consumed only when it is published, key-matched to the
@@ -184,6 +185,14 @@ export function App() {
     });
   }
 
+  function handleCommanderIntent(intent: CommanderIntent | undefined) {
+    setCycle((prev) => {
+      const nextCycle = { ...prev, commanderIntent: intent, preview: null, acceptedRiskChoices: {} };
+      if (nextCycle.selections.length > 0) requestPreview(nextCycle, nextCycle.selections, nextCycle.staffNegotiations, intent);
+      return nextCycle;
+    });
+  }
+
   async function handleCommit() {
     if (!sessionId || !cycle.session) return;
     // Defense in depth (closing pass 3 P1): even if the commit button ever
@@ -207,6 +216,7 @@ export function App() {
         cycle.selections,
         overrides,
         cycle.staffNegotiations,
+        cycle.commanderIntent,
         cycle.session.revision,
       );
       const newCycle: TurnCycleState = {
@@ -456,6 +466,7 @@ export function App() {
           memos={cycle.memos}
           selections={cycle.selections}
           staffNegotiations={cycle.staffNegotiations}
+          commanderIntent={cycle.commanderIntent}
           staffModules={scenario?.staffModules ?? []}
           preview={validPreview}
           previewLoading={previewLoading}
@@ -494,12 +505,14 @@ export function App() {
           selections={cycle.selections}
           acceptedRiskChoices={cycle.acceptedRiskChoices}
           staffNegotiations={cycle.staffNegotiations}
+          commanderIntent={cycle.commanderIntent}
           negotiationCandidates={negotiationCandidates}
           turnNumber={cycle.session.state.turn}
           busy={busy}
           error={error}
           onAcceptRisk={handleAcceptRisk}
           onNegotiation={handleNegotiation}
+          onCommanderIntent={handleCommanderIntent}
           onCommit={handleCommit}
           onBack={() => navigateStep("chiefs")}
         />

@@ -16,6 +16,7 @@ import {
   defaultDoctrineMechanicsState,
   doctrineGeneSchema,
   doctrineRiskKeys,
+  turnInputSchema,
   neutralDoctrineLens,
   scenarioDefinitionSchema,
   startChiefConversation,
@@ -81,8 +82,11 @@ test("campaign legibility preserves horizon, exposes sub-band deterioration, and
   const first = resolveTurn(soloScenario, previous, balancedInput);
   const second = resolveTurn(soloScenario, first.nextState, { ...balancedInput, turn: 2 });
   const session = createInitialGameSession(soloScenario, "00000000-0000-1000-8000-000000000111");
-  const history = buildCampaignHistory({ ...session, state: second.nextState, turnInputs: [balancedInput, { ...balancedInput, turn: 2 }], history: [first, second], revision: 2 });
+  const relationshipTurn = structuredClone(first);
+  relationshipTurn.nextState.chiefTrust.warden += 1;
+  const history = buildCampaignHistory({ ...session, state: second.nextState, turnInputs: [balancedInput, { ...balancedInput, turn: 2 }], history: [relationshipTurn, second], revision: 2 });
   assert.deepEqual(history.map((entry) => entry.turn), [1, 2]);
+  assert.deepEqual(history[0]!.relationshipChanges, [{ chiefId: "warden", delta: 1 }]);
 });
 
 test("resolveTurn is deterministic for the same memo selections", () => {
@@ -1574,6 +1578,31 @@ test("doctrine bet: main effort pays a readiness dividend when concentration lea
   assert.ok(bet, "expected a main-effort doctrine-bet after-action note");
   assert.ok(bet.detail.includes("dividend"));
   assert.ok(result.nextState.resources.readiness > soloScenario.initialState.resources.readiness - 0.01);
+});
+
+test("Commander’s Intent is replayed packet evidence, not a free concentration bonus", () => {
+  const packet: TurnInput = {
+    turn: 1,
+    selectedActionIds: [],
+    selections: [
+      { memoId: "posture", optionId: "tempo-hold" },
+      { memoId: "intelligence-focus", optionId: "deception-hunt" },
+      { memoId: "sustainment-focus", optionId: "repair-first" },
+      { memoId: "alliance-frame", optionId: "quiet-reassurance" },
+      { memoId: "force-development", optionId: "deception-grid" },
+    ],
+  };
+  const observed = resolveTurn(soloScenario, soloScenario.initialState, packet);
+  const alternate = observed.directorateBurden
+    .filter((entry) => entry.burdenPoints > 0 && entry.directorate !== "intelligence")
+    .sort((left, right) => left.burdenPoints - right.burdenPoints)[0]!;
+  const declared = resolveTurn(soloScenario, soloScenario.initialState, {
+    ...packet,
+    commanderIntent: { mainEffort: alternate.directorate },
+  });
+  assert.ok(declared.nextState.doctrineMechanics.mainEffortFocus < observed.nextState.doctrineMechanics.mainEffortFocus);
+  assert.ok(declared.afterAction.some((entry) => entry.heading === "Command intent: dispersed effort"));
+  assert.throws(() => turnInputSchema.parse({ ...packet, commanderIntent: { mainEffort: "plans", acceptedSecondaryRisk: "plans" } }));
 });
 
 test("doctrine bet: main effort costs readiness when concentration leaves another lane overloaded", () => {

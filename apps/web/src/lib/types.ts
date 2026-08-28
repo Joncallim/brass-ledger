@@ -5,6 +5,7 @@ import type {
   TurnResult,
   MemoSelection,
   StaffNegotiation,
+  CommanderIntent,
   ChiefConversationRecord,
   ReplayValidation,
   AcceptedRiskOverride,
@@ -57,6 +58,7 @@ export type TurnCycleState = {
   preview: PreviewPayload | null;
   acceptedRiskChoices: Record<string, boolean>;
   staffNegotiations: StaffNegotiation[];
+  commanderIntent?: CommanderIntent;
   latestResult: TurnResult | null;
 };
 

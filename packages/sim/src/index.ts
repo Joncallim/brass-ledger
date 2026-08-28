@@ -85,6 +85,7 @@ import {
   type AcceptedRiskOverride,
   type BurdenBias,
   type CampaignState,
+  type CommanderIntent,
   type ChiefCoalitionEntry,
   type ChiefPositionEntry,
   type DecisionPreviewEntry,
@@ -236,6 +237,24 @@ function validateSelections(memos: DecisionMemo[], input: TurnInput) {
   for (const memo of memos) {
     if (!memo.optional && !seen.has(memo.id)) {
       throw new Error(`Required memo ${memo.title} is missing a selected option.`);
+    }
+  }
+}
+
+// The declaration is replayed input, but it only has meaning when the packet
+// itself bears it. This same validation therefore covers server, CLI, import,
+// preview, and deterministic replay.
+function validateCommanderIntent(input: TurnInput, directorateBurden: DirectorateBurden[]) {
+  const intent = input.commanderIntent;
+  if (!intent) return;
+  const mainEffort = directorateBurden.find((entry) => entry.directorate === intent.mainEffort);
+  if (!mainEffort || mainEffort.burdenPoints <= 0) {
+    throw new Error(`Declared main effort ${directorateLabel(intent.mainEffort)} is not carried by this packet.`);
+  }
+  if (intent.acceptedSecondaryRisk) {
+    const secondary = directorateBurden.find((entry) => entry.directorate === intent.acceptedSecondaryRisk);
+    if (!secondary || secondary.burdenLevel === "light") {
+      throw new Error(`Accepted secondary risk ${directorateLabel(intent.acceptedSecondaryRisk)} is not a strained lane in this packet.`);
     }
   }
 }
@@ -1488,6 +1507,7 @@ type DoctrineResolutionInput = {
   chiefs: ScenarioDefinition["chiefs"];
   previousChiefTrust: Record<string, number>;
   acceptedRiskOverrides: AcceptedRiskOverride[];
+  commanderIntent?: CommanderIntent;
   /** Doctrine 5: staff-module/coordination totals for orderClarity, staffSynchronization, and systemPressure, added inside their base formulas before clamp/round and consequence checks. */
   moduleDoctrineOffsets?: Partial<Record<ModuleEffectLane, number>>;
 };
@@ -1504,6 +1524,7 @@ function resolveDoctrineMechanics({
   chiefs,
   previousChiefTrust,
   acceptedRiskOverrides,
+  commanderIntent,
   moduleDoctrineOffsets = {},
 }: DoctrineResolutionInput): DoctrineResolution {
   const tags = new Set(selectedOptions.flatMap((option) => option.tags));
@@ -1601,17 +1622,27 @@ function resolveDoctrineMechanics({
   }
   const totalBurdenPoints = [...burdenByDirectorate.values()].reduce((sum, value) => sum + value, 0);
   const maxDirectoratePoints = burdenByDirectorate.size > 0 ? Math.max(...burdenByDirectorate.values()) : 0;
+  const declaredMainEffortPoints = commanderIntent
+    ? burdenByDirectorate.get(commanderIntent.mainEffort) ?? 0
+    : maxDirectoratePoints;
   const mainEffortFocus =
     totalBurdenPoints > 0
-      ? clamp(round((100 * maxDirectoratePoints) / totalBurdenPoints) + (factionOffset.mainEffortFocus ?? 0), 0, 100)
+      ? clamp(round((100 * declaredMainEffortPoints) / totalBurdenPoints) + (factionOffset.mainEffortFocus ?? 0), 0, 100)
       : clamp(defaultDoctrineMechanicsState.mainEffortFocus + (factionOffset.mainEffortFocus ?? 0), 0, 100);
-  const mainEffortDirectorate = [...burdenByDirectorate.entries()].find(([, points]) => points === maxDirectoratePoints)?.[0];
+  const mainEffortDirectorate = commanderIntent?.mainEffort
+    ?? [...burdenByDirectorate.entries()].find(([, points]) => points === maxDirectoratePoints)?.[0];
   const neglectedLanes = directorateBurden.filter((entry) => entry.directorate !== mainEffortDirectorate && entry.burdenLevel === "overloaded");
   // Threshold calibrated to this scenario's content: every memo option spreads points across
   // 2-4 directorates by design, so a perfectly even 6-lane split sits near 17% and the
   // maximum concentration any real 5-memo turn can reach is ~41%. >35 requires genuinely
   // favoring one lane over the others, not just an artifact of how burden happens to fall.
   const mainEffortConcentrated = mainEffortFocus > 35 && totalBurdenPoints > 0;
+  if (commanderIntent && !mainEffortConcentrated) {
+    notes.push({
+      heading: "Command intent: dispersed effort",
+      detail: `You named ${directorateLabel(commanderIntent.mainEffort)} as the main effort, but the packet did not concentrate enough work there to make that priority real. The declaration creates no dividend on its own.`,
+    });
+  }
   if (mainEffortConcentrated && neglectedLanes.length > 0 && mainEffortDirectorate) {
     resources = { ...resources, readiness: clamp(resources.readiness - Math.min(4, neglectedLanes.length * 2), 0, 100) };
     notes.push({
@@ -1668,6 +1699,12 @@ function resolveDoctrineMechanics({
     strainedLanes === 0
       ? clamp(defaultDoctrineMechanicsState.secondaryRiskAccepted + (factionOffset.secondaryRiskAccepted ?? 0), 0, 100)
       : clamp(round((100 * Math.min(acceptedRiskOverrides.length, strainedLanes)) / strainedLanes) + (factionOffset.secondaryRiskAccepted ?? 0), 0, 100);
+  if (commanderIntent?.acceptedSecondaryRisk) {
+    notes.push({
+      heading: "Command intent: accepted secondary risk",
+      detail: `${directorateLabel(commanderIntent.acceptedSecondaryRisk)} was deliberately left as the secondary risk. This records the trade-off; it does not remove staff warnings or their consequences.`,
+    });
+  }
   if (strainedLanes > 0 && acceptedRiskOverrides.length === 0) {
     notes.push({
       heading: "Doctrine: unacknowledged risk",
@@ -2427,6 +2464,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   // attention — burden routing, chief positions, readout warnings, after-action notes.
   const lens = scenario.doctrineLens;
   const directorateBurden = buildDirectorateBurden(memos, input.selections, scenario.staffCapacities, staffNegotiations, lens.burdenBias);
+  validateCommanderIntent(input, directorateBurden);
 
   let nextStrategic = cloneState(previousState.strategic);
   let nextResources = cloneState(previousState.resources);
@@ -2496,6 +2534,7 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     chiefs: scenario.chiefs,
     previousChiefTrust: previousState.chiefTrust,
     acceptedRiskOverrides: input.acceptedRiskOverrides ?? [],
+    commanderIntent: input.commanderIntent,
     moduleDoctrineOffsets: moduleResolution.moduleDoctrineOffsets,
   });
   nextStrategic = doctrineResolution.strategic;

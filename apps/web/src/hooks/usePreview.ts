@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { MemoSelection, StaffNegotiation } from "@brass-ledger/shared";
+import type { CommanderIntent, MemoSelection, StaffNegotiation } from "@brass-ledger/shared";
 import type { PreviewPayload, TurnCycleState } from "../lib/types";
 import { previewTurn } from "../lib/api";
 
@@ -23,6 +23,7 @@ export function previewFingerprint(
   selections: MemoSelection[],
   staffNegotiations: StaffNegotiation[],
   revision: number | null = null,
+  commanderIntent: CommanderIntent | undefined = undefined,
 ): string {
   const tupleKey = (tuple: (string | number | null)[]) => JSON.stringify(tuple);
   const selectionKey = JSON.stringify(
@@ -35,7 +36,7 @@ export function previewFingerprint(
       .map((n) => [n.directorate, n.reliefPoints, n.cost, n.note ?? null])
       .sort((a, b) => (tupleKey(a) < tupleKey(b) ? -1 : tupleKey(a) > tupleKey(b) ? 1 : 0)),
   );
-  return `${revision ?? "none"}\u00a7${selectionKey}\u00a7${negotiationKey}`;
+  return `${revision ?? "none"}\u00a7${selectionKey}\u00a7${negotiationKey}\u00a7${JSON.stringify(commanderIntent ?? null)}`;
 }
 
 export function usePreview(sessionId: string | null) {
@@ -56,7 +57,7 @@ export function usePreview(sessionId: string | null) {
   const generationRef = useRef(0);
 
   const requestPreview = useCallback(
-    (cycle: TurnCycleState, selections?: MemoSelection[], staffNegotiations?: StaffNegotiation[]) => {
+    (cycle: TurnCycleState, selections?: MemoSelection[], staffNegotiations?: StaffNegotiation[], commanderIntent?: CommanderIntent) => {
       if (!sessionId) return;
       if (timerRef.current) clearTimeout(timerRef.current);
 
@@ -80,6 +81,7 @@ export function usePreview(sessionId: string | null) {
         // advanced the revision invalidates the published preview even before
         // the app re-requests one (closing pass 4 P1).
         cycle.session?.revision ?? null,
+        commanderIntent ?? cycle.commanderIntent,
       );
 
       timerRef.current = setTimeout(async () => {
@@ -90,7 +92,7 @@ export function usePreview(sessionId: string | null) {
         setLoading(true);
         setError(null);
         try {
-          const data = await previewTurn(sessionId, cycle, selections, staffNegotiations, signal);
+          const data = await previewTurn(sessionId, cycle, selections, staffNegotiations, signal, commanderIntent ?? cycle.commanderIntent);
           if (generationRef.current !== generation) return;
           setPreview(data);
           setPreviewKey(fingerprint);

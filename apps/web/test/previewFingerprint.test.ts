@@ -49,3 +49,15 @@ test("previewFingerprint includes the session revision: an identical selection s
   // Stability: the same revision keeps the same key.
   assert.equal(previewFingerprint(selections, [], 1), previewFingerprint(selections, [], 1));
 });
+
+test("previewFingerprint invalidates a forecast when Commander’s Intent changes", () => {
+  const selections: MemoSelection[] = [{ memoId: "posture", optionId: "tempo-hold" }];
+  assert.notEqual(
+    previewFingerprint(selections, [], 3, { mainEffort: "operations" }),
+    previewFingerprint(selections, [], 3, { mainEffort: "intelligence" }),
+  );
+  assert.notEqual(
+    previewFingerprint(selections, [], 3, { mainEffort: "operations" }),
+    previewFingerprint(selections, [], 3, { mainEffort: "operations", acceptedSecondaryRisk: "plans" }),
+  );
+});

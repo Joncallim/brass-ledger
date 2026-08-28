@@ -65,6 +65,7 @@ export function previewTurn(
   extraSelections?: MemoSelection[],
   staffNegotiations?: StaffNegotiation[],
   signal?: AbortSignal,
+  commanderIntent?: import("@brass-ledger/shared").CommanderIntent,
 ) {
   const selections = extraSelections ?? cycle.selections;
   const negotiations = staffNegotiations ?? cycle.staffNegotiations;
@@ -72,7 +73,7 @@ export function previewTurn(
   return fetchJson<PreviewPayload>(`${BASE}/sessions/${sessionId}/preview-turn`, {
     method: "POST",
     body: JSON.stringify({
-      input: { turn, selections, acceptedRiskOverrides: [], staffNegotiations: negotiations },
+      input: { turn, selections, acceptedRiskOverrides: [], staffNegotiations: negotiations, commanderIntent: commanderIntent ?? cycle.commanderIntent },
     }),
     signal,
   });
@@ -84,12 +85,13 @@ export function resolveTurn(
   selections: MemoSelection[],
   acceptedRiskOverrides: AcceptedRiskOverride[],
   staffNegotiations: StaffNegotiation[],
+  commanderIntent: import("@brass-ledger/shared").CommanderIntent | undefined,
   expectedRevision?: number,
 ) {
   return fetchJson<SessionEnvelope & { result: import("@brass-ledger/shared").TurnResult }>(`${BASE}/sessions/${sessionId}/resolve-turn`, {
     method: "POST",
     body: JSON.stringify({
-      input: { turn: session.state.turn, selections, acceptedRiskOverrides, staffNegotiations },
+      input: { turn: session.state.turn, selections, acceptedRiskOverrides, staffNegotiations, commanderIntent },
       expectedRevision,
     }),
   });

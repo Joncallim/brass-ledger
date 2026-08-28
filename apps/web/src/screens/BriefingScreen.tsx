@@ -32,6 +32,7 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
   const strategicMetrics = buildStrategicMetricBriefs(state);
   const campaignLegibility = buildCampaignLegibility(state);
   const campaignHistory = buildCampaignHistory(session).slice(-6).reverse();
+  const chiefName = (chiefId: string) => session.advisorRoster.find((chief) => chief.chiefId === chiefId)?.displayName ?? chiefId;
 
   return (
     <div className="p-6 max-w-4xl">
@@ -107,7 +108,8 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
                     {entry.programmePhases.length > 0 && <p className="mt-1 text-green-400">Programme phase: {entry.programmePhases.map((program) => labels.program(program.id)).join(", ")}</p>}
                     {entry.commitmentsOpened.length > 0 && <p className="mt-1 text-ink/50">Promise made: {entry.commitmentsOpened.join("; ")}</p>}
                     {entry.commitmentsClosed.length > 0 && <p className="mt-1 text-ink/50">Promise closed: {entry.commitmentsClosed.join("; ")}</p>}
-                    {entry.risks.length === 0 && entry.events.length === 0 && entry.programmePhases.length === 0 && entry.commitmentsOpened.length === 0 && entry.commitmentsClosed.length === 0 && <p className="mt-1 text-ink/40">No major strategic shift recorded.</p>}
+                    {entry.relationshipChanges.length > 0 && <p className="mt-1 text-ink/50">Chief relationship: {entry.relationshipChanges.map((change) => `${chiefName(change.chiefId)} ${change.delta > 0 ? "+" : ""}${change.delta}`).join(" · ")}</p>}
+                    {entry.risks.length === 0 && entry.events.length === 0 && entry.programmePhases.length === 0 && entry.commitmentsOpened.length === 0 && entry.commitmentsClosed.length === 0 && entry.relationshipChanges.length === 0 && <p className="mt-1 text-ink/40">No major strategic shift recorded.</p>}
                   </div>
                 ))}
               </div>
