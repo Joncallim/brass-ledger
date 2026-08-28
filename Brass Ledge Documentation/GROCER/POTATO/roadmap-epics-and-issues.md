@@ -39,28 +39,24 @@ where the engine actually stands, not the older status fields in
 | Stage 4 — Agent chiefs and negotiation | Complete | Issues #17–#20; agenda memory, coalitions, commitments, pre-commit negotiation. |
 | Stage 5 — Content expansion and balance | Complete | Issues #28–#30; batch telemetry, content validation, expanded event set. |
 | Stage 6 — Browser interface rebuild | Complete | Six-screen client under `apps/web/src`; #66 was closed by PR #70. Remaining follow-up issues, if any, are tracked on GitHub rather than inferred from this historical list. |
-| **Stage 7 — Packaged game** | **Complete locally; remote attestation pending** | Epic #41 exit criteria are met by the compiled release, offline save/replay path, Electron shell, and no-dev-server release smoke. GitHub Actions is enabled, but its current runs fail before a runner is assigned (zero-duration jobs with no steps); see the remote-attestation record below. |
+| **Stage 7 — Packaged game** | **Complete and remotely attested** | Epic #41 exit criteria are met by the compiled release, offline save/replay path, Electron shell, no-dev-server release smoke, green CI, and green Linux/macOS/Windows packaged-desktop smoke on `a263e43`. |
 | **Sprite & asset generation pipeline** | **Subsequent epic** | Epic #48. Deferred from Stage 6 (`POTATO/stage-6-gui-design.md`). |
 | **Doctrine faction-gene system & optional staff modules** | **Subsequent epic** | Epic #49. Phases 2–5 of [[doctrine-mechanics-roadmap]]. |
 
 ### Remote Attestation Record
 
-The repository's remote release gate cannot currently attest a revision. The
-latest CI and desktop-package runs for `2437937` each have `runner_id: 0` and
-an empty `steps` array, so GitHub never assigned a hosted runner. GitHub's
-check annotation identifies failed recent account payments or an insufficient
-spending limit; this is an account-side allocation blocker, not a failing
-project step. The repository is private, Actions are enabled, and branch
-protection/ruleset APIs report that the current plan does not provide those
-features for this private repository. Track the required account remediation
-and eventual green remote evidence in GitHub issue #92.
+The former GitHub-hosted runner allocation failure is resolved and issue #92
+is closed. On `a263e43`, CI run
+[`33215009310`](https://github.com/Joncallim/brass-ledger/actions/runs/33215009310)
+completed its `verify` job, including content/GROCER/assets validation, full
+tests, build, and Chromium E2E. Desktop package run
+[`33215009328`](https://github.com/Joncallim/brass-ledger/actions/runs/33215009328)
+completed the Linux AppImage, macOS DMG, and Windows NSIS builds and their
+platform-specific packaged-desktop smokes.
 
-Until a hosted runner can be assigned, the alternate attestation is the
-documented local release gate: clean dependency install; GROCER/content/asset
-validation; unit and browser E2E tests; production release assembly; Linux
-AppImage packaging; and a packaged desktop smoke that creates and resolves a
-real turn. A green GitHub CI run and the macOS/Windows desktop matrix remain
-required before a public release claim.
+The documented local gate remains useful release evidence, but hosted
+attestation is no longer a release blocker. Public deployment is instead gated
+on the outstanding #90 fresh-player playability observations.
 
 ## Epic — Stage 7: Packaged Game (#41)
 

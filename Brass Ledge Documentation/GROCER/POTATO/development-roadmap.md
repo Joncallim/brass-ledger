@@ -27,10 +27,12 @@ This is the canonical development roadmap for Brass Ledger. It consolidates and 
 non-authoritative consumer of the engine contracts; current follow-up work is
 tracked on GitHub rather than in the historical Stage 6 issue references.
 
-**Forward roadmap:** Stage 7 is complete locally and awaits remote GitHub
-Actions attestation (issue #92). The onboarding/pacing epic (issue #90) awaits
-the documented fresh-player observations. Current status and all later epics
-are tracked in [[roadmap-epics-and-issues]].
+**Forward roadmap:** Stage 7 has passed both local and hosted release
+attestation: CI and the Linux, macOS, and Windows packaged-desktop smokes are
+green on `a263e43`. Issue #92 is closed. The onboarding/pacing epic (issue
+#90) still awaits the documented fresh-player observations that gate public
+deployment. Current status and all later epics are tracked in
+[[roadmap-epics-and-issues]].
 
 ## Direction
 
