@@ -153,6 +153,18 @@ test("a small batch is deterministic across independent runs", async () => {
   assert.deepEqual(first, second);
 });
 
+test("batch telemetry reports replay-safe intent and packet strategy families", async () => {
+  const telemetry = await runHeadlessBatch(16);
+  assert.ok(telemetry.packetFamilies.length > 0, "complete packet families are retained");
+  assert.ok(telemetry.packetFamilies.every((family) => family.packetId === family.selections.join("|") && family.turns > 0 && family.campaigns > 0));
+  assert.ok(telemetry.intentFamilies.length > 0, "the batch policy declares an observed main effort");
+  assert.ok(telemetry.intentFamilies.every((family) => family.turns > 0 && family.campaigns > 0));
+  assert.ok(telemetry.optionalMemoTakeRate > 0 && telemetry.optionalMemoTakeRate < 1, "the optional memo remains a real choice");
+  assert.equal(telemetry.repeatedOptionLoopRate, 1, "the current fixed policy makes its loop visible rather than hiding it");
+  assert.equal(Object.keys(telemetry.overloadProfileByStrategy).length, 4);
+  assert.equal(Object.keys(telemetry.programmeCompletionRates).length, soloScenario.capabilityPrograms.length);
+});
+
 test("partial strategy cohorts retain zero-valued telemetry", async () => {
   for (const campaignCount of [1, 2, 3]) {
     const telemetry = await runHeadlessBatch(campaignCount);

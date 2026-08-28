@@ -40,6 +40,15 @@ export type BalanceTelemetry = {
   dominantOptions: OptionRate[];
   /** Per-strategy selection rates (keyed by strategyId), for cohort rotation locks. */
   strategyOptionSelectionRates: Record<string, OptionRate[]>;
+  /** Complete per-turn decision packets, grouped without exposing hidden event outcomes. */
+  packetFamilies: PacketFamilyTelemetry[];
+  /** Declared main efforts are measured separately from option rates. */
+  intentFamilies: IntentFamilyTelemetry[];
+  optionalMemoTakeRate: number;
+  repeatedOptionLoopRate: number;
+  overloadProfileByStrategy: Record<string, number>;
+  programmeCompletionRates: Record<string, number>;
+  collapseReasons: Record<string, number>;
   doctrineEvents: DoctrineEventTelemetry[];
   doctrineStrategies: DoctrineStrategyTelemetry[];
   /** D4 gate: no-tradeoff doctrine strategies, evaluated per module set against each set's balanced-cycle cohort. */
@@ -52,6 +61,23 @@ export type BalanceTelemetry = {
   moduleSetRows: ModuleSetTelemetry[];
   pairedDeltas: PairedModuleDelta[];
   twoVsSevenCalibration: { meanIncidentLadderDelta: number; meanStaffSynchronizationDelta: number; meanScoreDelta: number; winRateDelta: number };
+};
+
+export type PacketFamilyTelemetry = {
+  packetId: string;
+  selections: string[];
+  turns: number;
+  campaigns: number;
+  winRate: number;
+  meanScore: number;
+};
+
+export type IntentFamilyTelemetry = {
+  mainEffort: DirectorateId;
+  campaigns: number;
+  turns: number;
+  winRate: number;
+  meanScore: number;
 };
 
 export type ModuleSetTelemetry = DoctrineStrategyTelemetry & {
@@ -442,8 +468,15 @@ function batchInputForScenario(scenario: ScenarioDefinition, session: GameSessio
 }
 
 function policyForScenario(scenario: ScenarioDefinition, session: GameSession, input: TurnInput): TurnInput {
-  const candidates = previewTurn(scenario, session.state, { ...input, acceptedRiskOverrides: [] }).acceptedRiskCandidates;
-  return { ...input, acceptedRiskOverrides: [...(input.acceptedRiskOverrides ?? []), ...candidates] };
+  const preview = previewTurn(scenario, session.state, { ...input, acceptedRiskOverrides: [] });
+  const mainEffort = [...preview.projectedResult.directorateBurden]
+    .filter((entry) => entry.burdenPoints > 0)
+    .sort((left, right) => right.burdenPoints - left.burdenPoints || left.directorate.localeCompare(right.directorate))[0]?.directorate;
+  return {
+    ...input,
+    acceptedRiskOverrides: [...(input.acceptedRiskOverrides ?? []), ...preview.acceptedRiskCandidates],
+    ...(mainEffort ? { commanderIntent: { mainEffort } } : {}),
+  };
 }
 
 type EventSampleStat = { attempted: boolean; qualifying: boolean; fired: boolean; cost: number };
@@ -454,6 +487,8 @@ type BatchSample = {
   optionCounts: Record<string, number>; memoCounts: Record<string, number>;
   overloadCounts: Record<string, number>; acceptedRiskCounts: Record<string, number>;
   negotiations: number; fulfilled: number; broken: number;
+  packetCounts: Record<string, number>; intentCounts: Partial<Record<DirectorateId, number>>;
+  optionalOpportunities: number; optionalTaken: number; repeatedSelections: number; selectionTransitions: number;
 };
 
 function simulateBatchSample(scenario: ScenarioDefinition, campaignIndex: number, replicate: number, strategyId: StrategyId): BatchSample {
@@ -463,10 +498,25 @@ function simulateBatchSample(scenario: ScenarioDefinition, campaignIndex: number
   for (const event of scenario.events.filter((candidate) => candidate.doctrineTrigger)) eventStats[event.id] = { attempted: false, qualifying: false, fired: false, cost: 0 };
   const optionCounts: Record<string, number> = {}; const memoCounts: Record<string, number> = {};
   const overloadCounts: Record<string, number> = {}; const acceptedRiskCounts: Record<string, number> = {};
+  const packetCounts: Record<string, number> = {}; const intentCounts: Partial<Record<DirectorateId, number>> = {};
+  let optionalOpportunities = 0; let optionalTaken = 0; let repeatedSelections = 0; let selectionTransitions = 0;
+  let priorSelections = new Set<string>();
   let negotiations = 0;
   while (session.state.campaignStatus === "active" && session.state.turn <= scenario.maxTurns) {
     const base = batchInputForScenario(scenario, session, replicate, strategyId);
     const input = policyForScenario(scenario, session, base);
+    const packet = input.selections.map((selection) => `${selection.memoId}:${selection.optionId}`).sort();
+    const packetKey = packet.join("|");
+    packetCounts[packetKey] = (packetCounts[packetKey] ?? 0) + 1;
+    if (input.commanderIntent) intentCounts[input.commanderIntent.mainEffort] = (intentCounts[input.commanderIntent.mainEffort] ?? 0) + 1;
+    const optionalMemos = deriveDecisionMemos(scenario, session.state).filter((memo) => memo.optional);
+    optionalOpportunities += optionalMemos.length;
+    optionalTaken += optionalMemos.filter((memo) => input.selections.some((selection) => selection.memoId === memo.id)).length;
+    if (turns > 0) {
+      selectionTransitions += packet.length;
+      repeatedSelections += packet.filter((selection) => priorSelections.has(selection)).length;
+    }
+    priorSelections = new Set(packet);
     const selectedTags = new Set(input.selections.flatMap((selection) => memosForSelection(scenario, session.state, selection)));
     for (const selection of input.selections) {
       const key = `${selection.memoId}:${selection.optionId}`;
@@ -492,7 +542,7 @@ function simulateBatchSample(scenario: ScenarioDefinition, campaignIndex: number
   }
   let fulfilled = 0; let broken = 0;
   for (const commitment of session.state.activeCommitments) { if (commitment.fulfilled === true) fulfilled += 1; else if (commitment.fulfilled === false) broken += 1; }
-  return { session, turns, rawScore: rawCampaignScore(session.state), final: session.state, strategyId, meanCoordination: turns ? coordination / turns : 0, incidentOffset, readinessOffset, eventStats, optionCounts, memoCounts, overloadCounts, acceptedRiskCounts, negotiations, fulfilled, broken };
+  return { session, turns, rawScore: rawCampaignScore(session.state), final: session.state, strategyId, meanCoordination: turns ? coordination / turns : 0, incidentOffset, readinessOffset, eventStats, optionCounts, memoCounts, overloadCounts, acceptedRiskCounts, negotiations, fulfilled, broken, packetCounts, intentCounts, optionalOpportunities, optionalTaken, repeatedSelections, selectionTransitions };
 }
 
 function moduleRow(scenario: ScenarioDefinition, moduleSet: "enabled" | "disabled", strategyId: StrategyId, samples: BatchSample[]): ModuleSetTelemetry {
@@ -624,6 +674,43 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
   const overloadFrequency = Object.fromEntries(Object.entries(allOverloads).map(([key, value]) => [key, totalTurns ? value / totalTurns : 0]));
   const acceptedRiskFrequency = Object.fromEntries(Object.entries(allRisks).map(([key, value]) => [key, totalTurns ? value / totalTurns : 0]));
   const commitmentTotal = fulfilled + broken;
+  const packetTotals = new Map<string, { turns: number; campaigns: BatchSample[] }>();
+  const intentTotals = new Map<DirectorateId, { turns: number; campaigns: BatchSample[] }>();
+  const programmeCompletions: Record<string, number> = {};
+  const collapseReasons: Record<string, number> = {};
+  let optionalOpportunities = 0; let optionalTaken = 0; let repeatedSelections = 0; let selectionTransitions = 0;
+  for (const sample of enabledSamplesAll) {
+    optionalOpportunities += sample.optionalOpportunities; optionalTaken += sample.optionalTaken;
+    repeatedSelections += sample.repeatedSelections; selectionTransitions += sample.selectionTransitions;
+    for (const [packetId, turns] of Object.entries(sample.packetCounts)) {
+      const entry = packetTotals.get(packetId) ?? { turns: 0, campaigns: [] };
+      entry.turns += turns; entry.campaigns.push(sample); packetTotals.set(packetId, entry);
+    }
+    for (const [mainEffort, turns] of Object.entries(sample.intentCounts) as [DirectorateId, number][]) {
+      const entry = intentTotals.get(mainEffort) ?? { turns: 0, campaigns: [] };
+      entry.turns += turns; entry.campaigns.push(sample); intentTotals.set(mainEffort, entry);
+    }
+    for (const programme of sample.final.capabilityPrograms) if (programme.phase === "operational") programmeCompletions[programme.id] = (programmeCompletions[programme.id] ?? 0) + 1;
+    if (sample.final.campaignStatus === "lost") {
+      const reason = sample.final.campaignOutcome ?? "unclassified-loss";
+      collapseReasons[reason] = (collapseReasons[reason] ?? 0) + 1;
+    }
+  }
+  const packetFamilies = [...packetTotals.entries()].map(([packetId, entry]) => {
+    const campaigns = [...new Set(entry.campaigns)];
+    return { packetId, selections: packetId.split("|"), turns: entry.turns, campaigns: campaigns.length, winRate: campaigns.length ? campaigns.filter((sample) => sample.final.campaignStatus === "won").length / campaigns.length : 0, meanScore: campaigns.length ? campaigns.reduce((sum, sample) => sum + sample.final.campaignScore, 0) / campaigns.length : 0 };
+  }).sort((left, right) => right.turns - left.turns || left.packetId.localeCompare(right.packetId));
+  const intentFamilies = [...intentTotals.entries()].map(([mainEffort, entry]) => {
+    const campaigns = [...new Set(entry.campaigns)];
+    return { mainEffort, turns: entry.turns, campaigns: campaigns.length, winRate: campaigns.length ? campaigns.filter((sample) => sample.final.campaignStatus === "won").length / campaigns.length : 0, meanScore: campaigns.length ? campaigns.reduce((sum, sample) => sum + sample.final.campaignScore, 0) / campaigns.length : 0 };
+  }).sort((left, right) => left.mainEffort.localeCompare(right.mainEffort));
+  const overloadProfileByStrategy = Object.fromEntries(orderedStrategies.map((strategyId) => {
+    const samples = enabledSamplesAll.filter((sample) => sample.strategyId === strategyId);
+    const overloadedTurns = samples.reduce((sum, sample) => sum + Object.values(sample.overloadCounts).reduce((inner, count) => inner + count, 0), 0);
+    const turns = samples.reduce((sum, sample) => sum + sample.turns, 0);
+    return [strategyId, turns ? overloadedTurns / turns : 0];
+  }));
+  const programmeCompletionRates = Object.fromEntries(soloScenario.capabilityPrograms.map((programme) => [programme.id, enabledSamplesAll.length ? (programmeCompletions[programme.id] ?? 0) / enabledSamplesAll.length : 0]));
   const scoreStats = { min: allScores[0] ?? 0, max: allScores.at(-1) ?? 0, mean: allScores.length ? allScores.reduce((a, b) => a + b, 0) / allScores.length : 0, p25: percentile(allScores, 25), p75: percentile(allScores, 75) };
   // D4 doctrine-strategy dominance detector (restored — spec F correction #21 / telemetry
   // acceptance #2): scoped WITHIN each module set, so the enabled and disabled sets are
@@ -660,6 +747,6 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
   return {
     campaignCount, pairCount: allSamples, simulationCount: allSamples * 2, moduleSetRows: allRows, pairedDeltas: deltas,
     twoVsSevenCalibration,
-    totalTurns, outcomeDistribution: { won: enabled.reduce((a, r) => a + r.wonCampaigns, 0), lost: enabled.reduce((a, r) => a + r.lostCampaigns, 0), active: enabled.reduce((a, r) => a + r.activeCampaigns, 0) }, scoreStats, overloadFrequency, acceptedRiskFrequency, negotiationFrequency: campaignCount ? negotiations / campaignCount : 0, commitmentFulfillmentRate: commitmentTotal ? fulfilled / commitmentTotal : null, commitmentBreachRate: commitmentTotal ? broken / commitmentTotal : null, optionSelectionRates, dominantOptions: optionSelectionRates.filter((entry) => entry.selectionRate > 0.75), strategyOptionSelectionRates, doctrineEvents, doctrineStrategies: legacyRows, dominantDoctrineStrategies, modulePairDominance, balanceWarnings,
+    totalTurns, outcomeDistribution: { won: enabled.reduce((a, r) => a + r.wonCampaigns, 0), lost: enabled.reduce((a, r) => a + r.lostCampaigns, 0), active: enabled.reduce((a, r) => a + r.activeCampaigns, 0) }, scoreStats, overloadFrequency, acceptedRiskFrequency, negotiationFrequency: campaignCount ? negotiations / campaignCount : 0, commitmentFulfillmentRate: commitmentTotal ? fulfilled / commitmentTotal : null, commitmentBreachRate: commitmentTotal ? broken / commitmentTotal : null, optionSelectionRates, dominantOptions: optionSelectionRates.filter((entry) => entry.selectionRate > 0.75), strategyOptionSelectionRates, packetFamilies, intentFamilies, optionalMemoTakeRate: optionalOpportunities ? optionalTaken / optionalOpportunities : 0, repeatedOptionLoopRate: selectionTransitions ? repeatedSelections / selectionTransitions : 0, overloadProfileByStrategy, programmeCompletionRates, collapseReasons, doctrineEvents, doctrineStrategies: legacyRows, dominantDoctrineStrategies, modulePairDominance, balanceWarnings,
   };
 }

@@ -183,6 +183,10 @@ if (options.batch !== null) {
     } else {
       console.log("No dominant options detected.");
     }
+    console.log(`Packet families: ${telemetry.packetFamilies.length}; optional memo take ${(telemetry.optionalMemoTakeRate * 100).toFixed(0)}%; repeated-option loops ${(telemetry.repeatedOptionLoopRate * 100).toFixed(0)}%`);
+    console.log(`Declared efforts: ${telemetry.intentFamilies.map((family) => `${family.mainEffort} (${family.campaigns} campaigns, ${(family.winRate * 100).toFixed(0)}% win)`).join(", ") || "none"}`);
+    const collapseReasons = Object.entries(telemetry.collapseReasons);
+    if (collapseReasons.length > 0) console.log(`Collapse reasons: ${collapseReasons.map(([reason, count]) => `${count}× ${reason}`).join("; ")}`);
     console.log("Doctrine event telemetry:");
     for (const event of telemetry.doctrineEvents) {
       console.log(`  ${event.eventId}: attempts ${event.attemptedCampaigns}, maturation ${(event.maturationRate * 100).toFixed(0)}%, firing ${(event.firingReliability * 100).toFixed(0)}%, hit ${(event.campaignHitRate * 100).toFixed(0)}%`);
