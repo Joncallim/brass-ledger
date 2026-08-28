@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { ScenarioSummary } from "@brass-ledger/shared";
 
 type Props = { scenario: ScenarioSummary | null; onClose: () => void };
@@ -12,12 +13,19 @@ const sharedEntries = [
 ] as const;
 
 export function FieldManual({ scenario, onClose }: Props) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    closeRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
   return (
     <div className="fixed inset-0 z-50 bg-ink/55 p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="field-manual-title">
       <section className="mx-auto max-w-3xl bg-paper text-ink border border-border shadow-xl p-5">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div><p className="text-xs uppercase tracking-widest text-ink/40">Field manual</p><h2 id="field-manual-title" className="text-xl font-semibold">Command language</h2></div>
-          <button type="button" onClick={onClose} className="border border-border px-3 py-1 text-sm hover:border-brass">Close</button>
+          <button ref={closeRef} type="button" onClick={onClose} className="border border-border px-3 py-1 text-sm hover:border-brass">Close</button>
         </div>
         <p className="text-sm text-ink/60 mb-5">Plain-language guidance for the terms that recur in a Brass Ledger campaign. Advanced causal detail remains in each turn’s explainability.</p>
         <div className="grid gap-3 sm:grid-cols-2">
