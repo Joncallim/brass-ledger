@@ -1773,6 +1773,73 @@ export function countMetCampaignObjectives(state: CampaignState) {
   return { met: checks.filter((entry) => entry.met).length, total: checks.length };
 }
 
+export type CampaignRiskMargin = {
+  key: "force" | "political" | "escalation";
+  label: string;
+  margin: number;
+  status: "secure" | "watch" | "critical";
+  trend: "improving" | "stable" | "worsening";
+  detail: string;
+};
+
+/**
+ * The canonical player-facing campaign orientation. These are directly
+ * observable command conditions only; adversary-derived S2 estimates remain
+ * in their own confidence-aware readouts rather than being turned into false
+ * precision here. The same collapse margins are consumed by the resolver.
+ */
+export function buildCampaignLegibility(state: CampaignState, previous?: CampaignState) {
+  const measures = [
+    {
+      key: "force" as const,
+      label: "Credible force",
+      current: state.strategic.forceGeneration.deployableUnits,
+      previous: previous?.strategic.forceGeneration.deployableUnits,
+      limit: 3.5,
+      direction: "higher" as const,
+      detail: "Deployable formations before the posture can no longer be held.",
+    },
+    {
+      key: "political" as const,
+      label: "Political cover",
+      current: state.strategic.domestic.cabinetCover,
+      previous: previous?.strategic.domestic.cabinetCover,
+      limit: 12,
+      direction: "higher" as const,
+      detail: "Cabinet room before the campaign loses domestic cover.",
+    },
+    {
+      key: "escalation" as const,
+      label: "Escalation control",
+      current: state.strategic.escalation.incidentLadder,
+      previous: previous?.strategic.escalation.incidentLadder,
+      limit: 82,
+      direction: "lower" as const,
+      detail: "Room before the incident ladder runs beyond command control.",
+    },
+  ];
+  const risks: CampaignRiskMargin[] = measures.map((measure) => {
+    const margin = roundMetric(measure.direction === "higher" ? measure.current - measure.limit : measure.limit - measure.current);
+    const movement = measure.previous === undefined ? 0 : measure.current - measure.previous;
+    const beneficialMovement = measure.direction === "higher" ? movement : -movement;
+    return {
+      key: measure.key,
+      label: measure.label,
+      margin,
+      status: margin <= 8 ? "critical" : margin <= 20 ? "watch" : "secure",
+      trend: beneficialMovement > 0.5 ? "improving" : beneficialMovement < -0.5 ? "worsening" : "stable",
+      detail: measure.detail,
+    };
+  });
+  return {
+    month: Math.min(state.turn, state.maxTurns),
+    maxTurns: state.maxTurns,
+    turnsRemaining: Math.max(0, state.maxTurns - state.turn + 1),
+    risks: risks.sort((left, right) => left.margin - right.margin),
+    milestones: evaluateCampaignObjectives(state),
+  };
+}
+
 export function buildStrategicMetricBriefs(state: CampaignState): StrategicMetricBrief[] {
   const force = state.strategic.forceGeneration;
   const intel = state.strategic.intelligence;

@@ -1,5 +1,5 @@
 import type { GameSession, DecisionMemo, StaffFunctionReadout } from "@brass-ledger/shared";
-import { buildStrategicMetricBriefs, evaluateCampaignObjectives } from "@brass-ledger/shared";
+import { buildCampaignLegibility, buildStrategicMetricBriefs, evaluateCampaignObjectives } from "@brass-ledger/shared";
 import { StatusBadge } from "../components/StatusBadge";
 import {
   commitmentTypeLabel,
@@ -30,6 +30,7 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
   // Shared derives the wording and thresholds so no React screen becomes a
   // second strategic rules engine.
   const strategicMetrics = buildStrategicMetricBriefs(state);
+  const campaignLegibility = buildCampaignLegibility(state);
 
   return (
     <div className="p-6 max-w-4xl">
@@ -88,6 +89,21 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
                     {metric.detailLines.map((line) => <p key={line}>{line}</p>)}
                   </div>
                 </details>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Closest to breaking</p>
+            <p className="text-xs text-ink/50 mb-3 leading-relaxed">Directly observable margins to campaign failure. They show command room, not a forecast of an adversary move.</p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {campaignLegibility.risks.map((risk) => (
+                <div key={risk.key} className="border border-border px-3 py-2">
+                  <div className="flex justify-between gap-2 text-xs"><span className="text-ink/60">{risk.label}</span><span className={risk.status === "critical" ? "text-red-400" : risk.status === "watch" ? "text-yellow-400" : "text-green-400"}>{risk.status}</span></div>
+                  <p className="mt-1 font-mono text-sm text-ink">{Math.max(0, Math.round(risk.margin))} room</p>
+                  <p className={`mt-1 text-xs ${risk.trend === "worsening" ? "text-red-400" : risk.trend === "improving" ? "text-green-400" : "text-ink/40"}`}>{risk.trend}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-ink/45">{risk.detail}</p>
+                </div>
               ))}
             </div>
           </section>

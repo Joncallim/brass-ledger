@@ -1,4 +1,4 @@
-import type { TurnResult, StaffFunctionReadout } from "@brass-ledger/shared";
+import { buildCampaignLegibility, type TurnResult, type StaffFunctionReadout } from "@brass-ledger/shared";
 import { StaffConsequences } from "./StaffConsequences";
 import { StaffModuleConsequences } from "../../components/StaffModuleConsequences";
 import { EventList } from "./EventList";
@@ -17,6 +17,10 @@ type Props = {
 export function AfterActionScreen({ result, previousStaffFunctions, labels, onNextMonth, onViewRecords }: Props) {
   const isCampaignOver = result.nextState.campaignStatus !== "active";
   const won = result.nextState.campaignStatus === "won";
+  const legibility = buildCampaignLegibility(result.nextState, result.previousState);
+  const mainGain = result.afterAction.find((note) => /gain|improved|recovered|dividend/i.test(note.heading + note.detail));
+  const mainCost = result.afterAction.find((note) => /cost|slipped|overload|strain|debt/i.test(note.heading + note.detail));
+  const matured = result.afterAction.find((note) => /matured|fulfilled|breach|commitment/i.test(note.heading + note.detail));
 
   return (
     <div className="p-6 max-w-3xl">
@@ -54,6 +58,15 @@ export function AfterActionScreen({ result, previousStaffFunctions, labels, onNe
       </div>
 
       <div className="space-y-6">
+        <section className="border border-border p-4">
+          <p className="text-xs uppercase tracking-widest text-ink/40 mb-3">Command consequence digest</p>
+          <div className="grid gap-3 sm:grid-cols-2 text-sm">
+            <div><p className="text-xs text-green-400 mb-1">Main gain</p><p className="text-ink/65">{mainGain?.detail ?? "No single gain dominated this month; the packet held the current position."}</p></div>
+            <div><p className="text-xs text-red-400 mb-1">Main cost</p><p className="text-ink/65">{mainCost?.detail ?? "No single new cost dominated the month; remaining pressure still carries forward."}</p></div>
+            <div><p className="text-xs text-yellow-400 mb-1">What matured</p><p className="text-ink/65">{matured?.detail ?? "No commitment, programme, or doctrine consequence closed this month."}</p></div>
+            <div><p className="text-xs text-ink/45 mb-1">Next pressure</p><p className="text-ink/65">{legibility.risks.slice(0, 2).map((risk) => `${risk.label}: ${risk.status}, ${risk.trend}`).join(" · ")}</p></div>
+          </div>
+        </section>
         <StaffConsequences
           previous={previousStaffFunctions}
           current={result.staffFunctions}

@@ -115,6 +115,7 @@ import {
   type TurnInput,
   type TurnResult,
   buildChiefCoalitions,
+  buildCampaignLegibility,
   buildChiefPositions,
   buildDirectorateBurden,
   buildStaffFunctionReadouts,
@@ -1927,11 +1928,9 @@ export function rawCampaignScore(state: CampaignState): number {
 
 export function assessOutcome(state: CampaignState) {
   const checks = evaluateCampaignObjectives(state);
+  const legibility = buildCampaignLegibility(state);
   const metCount = checks.filter((entry) => entry.met).length;
-  const collapse =
-    state.strategic.domestic.cabinetCover <= 12 ||
-    state.strategic.escalation.incidentLadder >= 82 ||
-    state.strategic.forceGeneration.deployableUnits <= 3.5;
+  const collapse = legibility.risks.some((risk) => risk.margin <= 0);
   // maxTurns is the actual length of this campaign — it is scenario data, so a
   // longer (e.g. multi-year) campaign is just a scenario with a larger
   // maxTurns. Nothing about ending the campaign should hardcode a turn count.
@@ -1944,9 +1943,9 @@ export function assessOutcome(state: CampaignState) {
   // Name the condition that actually ended the campaign rather than listing all
   // three, so the player learns which one they lost control of.
   const collapseReasons = [
-    state.strategic.domestic.cabinetCover <= 12 ? "domestic cover collapsed" : "",
-    state.strategic.escalation.incidentLadder >= 82 ? "escalation ran beyond control" : "",
-    state.strategic.forceGeneration.deployableUnits <= 3.5 ? "the deployable force fell too low to hold a credible posture" : "",
+    legibility.risks.find((risk) => risk.key === "political")!.margin <= 0 ? "domestic cover collapsed" : "",
+    legibility.risks.find((risk) => risk.key === "escalation")!.margin <= 0 ? "escalation ran beyond control" : "",
+    legibility.risks.find((risk) => risk.key === "force")!.margin <= 0 ? "the deployable force fell too low to hold a credible posture" : "",
   ].filter(Boolean);
 
   return {
