@@ -12,6 +12,7 @@ import { usePreview, previewFingerprint } from "./hooks/usePreview";
 import { isPreviewValid } from "./lib/previewValidity";
 import { scenarioLabels } from "./lib/labels";
 import { AppShell } from "./components/AppShell";
+import { FieldManual } from "./components/FieldManual";
 import { SessionHub } from "./screens/SessionHub";
 import { BriefingScreen } from "./screens/BriefingScreen";
 import { MemosScreen } from "./screens/MemosScreen";
@@ -50,6 +51,7 @@ export function App() {
   const [conversationBusy, setConversationBusy] = useState(false);
   const [conversationError, setConversationError] = useState<string | null>(null);
   const [validationResults, setValidationResults] = useState<Record<string, { ok: boolean; checkedTurns: number; failedAtTurn: number | null }>>({});
+  const [fieldManualOpen, setFieldManualOpen] = useState(false);
 
   const sessionId = route.screen === "session" ? route.sessionId : null;
   const { preview, previewKey, loading: previewLoading, error: previewError, requestPreview, clearPreview, setPreview } = usePreview(sessionId);
@@ -450,6 +452,8 @@ export function App() {
       onNavigateRecords={() => { setRoute({ screen: "records" }); setError(null); }}
       showRail={showRail}
     >
+      <button type="button" onClick={() => setFieldManualOpen(true)} className="fixed right-4 bottom-4 z-40 border border-border bg-paper px-3 py-2 text-xs text-ink shadow hover:border-brass">Field manual</button>
+      {fieldManualOpen && <FieldManual scenario={scenario} onClose={() => setFieldManualOpen(false)} />}
       {route.screen === "hub" && (
         <SessionHub
           sessions={sessions}
