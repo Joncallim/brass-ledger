@@ -12,6 +12,7 @@ import {
   SaveStoreCorruptError,
   SaveStoreIOError,
   SessionNotFoundError,
+  migrateSessionPayload,
   type SaveStore,
 } from "./index.js";
 import { createInitialGameSession, gameSessionSchema, type GameSession } from "@brass-ledger/shared";
@@ -789,6 +790,24 @@ describe("v5 to v6 save migration", () => {
 
     const migrated = await store.read(id);
     assert.equal(migrated.history[0].replayHash, v6Session.history[0].replayHash);
+  });
+});
+
+describe("v8 campaign-ledger migration", () => {
+  it("safely assigns campaign identity to an action-free v8 save", () => {
+    const session = makeSession({ id: "00000000-0000-1000-8000-000000000240" });
+    const legacy = { ...session, campaignId: undefined, authoritativeActions: [] };
+    const migrated = migrateSessionPayload(legacy) as Record<string, unknown>;
+    assert.equal(migrated.campaignId, session.id);
+    assert.ok(gameSessionSchema.safeParse(migrated).success);
+  });
+
+  it("does not manufacture campaign provenance for a pre-bound v8 conversation ledger", () => {
+    const session = makeSession({ id: "00000000-0000-1000-8000-000000000241" });
+    const legacy = { ...session, campaignId: undefined, authoritativeActions: [{ type: "chief-conversation-open" }] };
+    const migrated = migrateSessionPayload(legacy) as Record<string, unknown>;
+    assert.equal(migrated.campaignId, undefined, "the missing provenance is not guessed");
+    assert.equal(gameSessionSchema.safeParse(migrated).success, false, "the old ledger stays explicitly unreadable instead of trusted");
   });
 });
 

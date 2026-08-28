@@ -125,7 +125,7 @@ Useful flags:
 | `--save` | Save the session to the save store after the run. |
 | `--list` | List all saved sessions. |
 
-Saves are stored in a stable per-user directory (e.g. `~/Library/Application Support/Brass Ledger/saves` on macOS, `~/.local/share/brass-ledger/saves` on Linux). Override with `BRASS_LEDGER_SAVE_DIR`. Sessions can be resumed across CLI and server runs; replay hashes are preserved exactly.
+Saves are stored in a stable per-user directory (e.g. `~/Library/Application Support/Brass Ledger/saves` on macOS, `~/.local/share/brass-ledger/saves` on Linux). Override with `BRASS_LEDGER_SAVE_DIR`. Sessions can be resumed across CLI and server runs; replay hashes and the campaign-bound action ledger are checked before an imported campaign is accepted. Corrupt or incompatible files remain visible in Records for deletion or recovery rather than silently disappearing. Action-free older saves can migrate to the current format; older conversation ledgers that lack independently verifiable campaign provenance remain explicitly incompatible rather than being trusted.
 
 ## Headless API
 
