@@ -19,7 +19,8 @@ const { createRoot } = await import("react-dom/client");
 const memos = [
   {
     id: "posture", title: "Posture", category: "Operations", optional: false, options: [
-      { id: "hold", label: "Hold the line", summary: "Preserve readiness.", tags: [], burden: [] },
+      { id: "hold", label: "Hold the line", summary: "Preserve readiness.", tradeoffs: [], tags: [], burden: [] },
+      { id: "surge", label: "Surge forward", summary: "Trade recovery for visibility.", tradeoffs: ["Higher current pressure."], tags: [], burden: [{ directorate: "operations", points: 2 }] },
     ],
   },
   {
@@ -61,5 +62,37 @@ test("MemosScreen presents the selected portfolio, capacity left, and optional w
   assert.match(container.textContent ?? "", /Pressure carried: Plans/);
   assert.match(container.textContent ?? "", /Deliberately not taking/);
   assert.match(container.textContent ?? "", /Industrial capacity/);
+  act(() => root.unmount());
+});
+
+test("MemosScreen compares the selected course with authored alternative facts without a score", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  act(() => {
+    root.render(<MemosScreen
+      memos={memos}
+      selections={[{ memoId: "posture", optionId: "hold" }]}
+      staffNegotiations={[]}
+      staffModules={[]}
+      preview={preview}
+      previewLoading={false}
+      previewError={null}
+      canProceed
+      onSelect={() => {}}
+      onProceed={() => {}}
+      onBack={() => {}}
+    />);
+  });
+  const compare = container.querySelector("select")!;
+  act(() => {
+    compare.value = "surge";
+    compare.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
+  });
+  assert.match(container.textContent ?? "", /Current course/);
+  assert.match(container.textContent ?? "", /Alternative/);
+  assert.match(container.textContent ?? "", /Surge forward/);
+  assert.match(container.textContent ?? "", /Staff work: Operations 2/);
+  assert.doesNotMatch(container.textContent ?? "", /recommended|overall score/i);
   act(() => root.unmount());
 });

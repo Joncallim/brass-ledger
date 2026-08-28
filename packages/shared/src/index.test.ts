@@ -14,6 +14,7 @@ import {
   chiefSpriteDeterministicSeed,
   chiefSpriteVariantStateSchema,
   createInitialGameSession,
+  describeMemoOptionForComparison,
   decisionPreviewEntrySchema,
   defaultStaffFunctionDefinitions,
   defaultStaffMechanicsState,
@@ -25,6 +26,7 @@ import {
   generateAdvisorRoster,
   moduleEffectDirection,
   moduleEffectLaneSchema,
+  memoOptionSchema,
   optionalStaffModuleSchema,
   relationshipLabel,
   resolveSpriteBasePalette,
@@ -1759,4 +1761,21 @@ test("pre-Doctrine-5 previews and summaries parse with additive module-field def
   // A 0.10.0 scenario summary carried no staffModules; it defaults to [].
   const parsedSummary = scenarioSummarySchema.parse(baseScenarioSummary([ordinaryEvent]));
   assert.deepEqual(parsedSummary.staffModules, [], "old scenario summaries default staffModules to []");
+});
+
+test("memo option comparison exposes authored facts without a recommendation or hidden state", () => {
+  const option = memoOptionSchema.parse({
+    id: "comparison-option", label: "Comparison option", summary: "An authored summary.",
+    tradeoffs: ["A known trade-off."], burden: [{ directorate: "operations", points: 2 }], tags: ["deterrence"],
+  });
+  const comparison = describeMemoOptionForComparison(option);
+  assert.deepEqual(comparison, {
+    id: option.id,
+    label: option.label,
+    summary: option.summary,
+    tradeoffs: option.tradeoffs,
+    burden: option.burden,
+    tags: option.tags,
+  });
+  assert.deepEqual(Object.keys(comparison).sort(), ["burden", "id", "label", "summary", "tags", "tradeoffs"]);
 });

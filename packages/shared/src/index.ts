@@ -1445,6 +1445,22 @@ export const commandPacketSummarySchema = z.object({
 });
 export type CommandPacketSummary = z.infer<typeof commandPacketSummarySchema>;
 
+/** The authored facts a player may compare between two courses of action.
+ * This intentionally excludes projected events, hidden rolls, and a synthetic
+ * score: it is a portable presentation contract, not a recommendation. */
+export type MemoOptionComparison = Pick<MemoOption, "id" | "label" | "summary" | "tradeoffs" | "burden" | "tags">;
+
+export function describeMemoOptionForComparison(option: MemoOption): MemoOptionComparison {
+  return {
+    id: option.id,
+    label: option.label,
+    summary: option.summary,
+    tradeoffs: option.tradeoffs,
+    burden: option.burden,
+    tags: option.tags,
+  };
+}
+
 export const turnPreviewSchema = z.object({
   decisionPreviews: z.array(decisionPreviewEntrySchema),
   acceptedRiskCandidates: z.array(acceptedRiskOverrideSchema),
