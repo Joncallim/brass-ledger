@@ -480,6 +480,14 @@ function batchInputForScenario(scenario: ScenarioDefinition, session: GameSessio
     "adaptive-cell-sprawl": { posture: "measured-deterrence", "intelligence-focus": "industrial-watch", "sustainment-focus": "lift-assurance", "alliance-frame": "quiet-reassurance", "force-development": "fires-prototype" },
     "sustainment-delay": { posture: "quiet-recovery", "intelligence-focus": "warning-net", "sustainment-focus": "repair-first", "alliance-frame": "quiet-reassurance" },
   };
+  // Narrow Strait deliberately removes the optional force-development memo.
+  // Keep the adaptive-cell cohort pointed at its actual risky behaviour rather
+  // than silently testing an otherwise coherent industrial/sustainment packet:
+  // the public modernization case creates the competing cross-functional work
+  // that the authored doctrine event is meant to punish.
+  if (scenario.id === "short-warning-coalition") {
+    targeted["adaptive-cell-sprawl"]["alliance-frame"] = "modernization-case";
+  }
   const optionalIncludeCount = replicate - Math.floor((replicate + 2) / 3);
   return {
     turn: session.state.turn, selectedActionIds: [], acceptedRiskOverrides: [], staffNegotiations: [],

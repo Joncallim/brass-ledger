@@ -41,7 +41,23 @@ export const shortWarningCoalitionScenario = variant((scenario) => {
   // mature, making warning, posture, and alliance choices binding.
   scenario.events = scenario.events
     .filter((event) => !["training-payoff", "experience-dividend", "depot-breakthrough"].includes(event.id))
-    .map((event) => ({ ...event, minTurn: Math.max(1, event.minTurn - 1), maxTurn: Math.min(8, event.maxTurn) }));
+    .map((event) => {
+      const accelerated = { ...event, minTurn: Math.max(1, event.minTurn - 1), maxTurn: Math.min(8, event.maxTurn) };
+      if (event.id !== "doctrine-sustainment-patience-gap") return accelerated;
+      // In this short-warning campaign, repeatedly choosing an invisible
+      // recovery posture is not a free route to full political cover: the
+      // coalition deadline makes the resulting escalation materially sharper.
+      // The shared event stays calibrated for the longer baseline; this
+      // scenario-specific consequence is ordinary authored event data.
+      return {
+        ...accelerated,
+        triggerTags: ["slow-burn", "repair"],
+        stateDelta: {
+          ...accelerated.stateDelta,
+          escalation: { ...accelerated.stateDelta.escalation, incidentLadder: 55 },
+        },
+      };
+    });
 });
 
 export const longRebuildScenario = variant((scenario) => {

@@ -322,6 +322,21 @@ test("N=240 satisfies the doctrine balance gates with real balanced hit rates", 
   assert.ok(telemetry.totalTurns > 0);
 });
 
+test("Narrow Strait's short-horizon cohort exposes both authored overuse risks without a dominant strategy", async () => {
+  const telemetry = await runHeadlessBatch(240, "short-warning-coalition");
+
+  assert.equal(telemetry.scenarioId, "short-warning-coalition");
+  assert.deepEqual(telemetry.dominantDoctrineStrategies, []);
+  assert.deepEqual(telemetry.modulePairDominance, []);
+  assert.deepEqual(telemetry.balanceWarnings, []);
+
+  const adaptive = telemetry.doctrineStrategies.find((entry) => entry.moduleSet === "enabled" && entry.strategyId === "adaptive-cell-sprawl")!;
+  const sustainment = telemetry.doctrineStrategies.find((entry) => entry.moduleSet === "enabled" && entry.strategyId === "sustainment-delay")!;
+  assert.equal(adaptive.doctrineCampaignHitRate, 1, "the shortened scenario must exercise the adaptive-cell consequence");
+  assert.equal(sustainment.doctrineCampaignHitRate, 1, "the shortened scenario must exercise the sustainment-delay consequence");
+  assert.ok(sustainment.winRate < 1, "the patience-gap consequence must prevent a no-tradeoff sustainment route");
+});
+
 test("two N=240 runs deep-equal telemetry", async () => {
   const first = await runHeadlessBatch(240);
   const second = await runHeadlessBatch(240);
