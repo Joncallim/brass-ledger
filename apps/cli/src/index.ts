@@ -185,15 +185,12 @@ if (options.listSessions) {
 }
 
 if (options.batch !== null) {
-  if (options.scenarioId) {
-    throw new Error("--scenario is not supported with --batch until scenario-specific balance policies are authored.");
-  }
-  const telemetry = await runHeadlessBatch(options.batch);
+  const telemetry = await runHeadlessBatch(options.batch, options.scenarioId ?? undefined);
   if (options.json) {
     console.log(JSON.stringify(telemetry, null, 2));
   } else {
     const { outcomeDistribution: od, scoreStats: ss, dominantOptions, overloadFrequency, acceptedRiskFrequency } = telemetry;
-    console.log(`Batch: ${telemetry.campaignCount} campaigns, ${telemetry.totalTurns} total turns`);
+    console.log(`${telemetry.scenarioId} balance batch: ${telemetry.campaignCount} campaigns, ${telemetry.totalTurns} total turns`);
     console.log(`Outcomes: ${od.won} won / ${od.lost} lost / ${od.active} active`);
     console.log(`Score: min ${ss.min} p25 ${ss.p25} mean ${ss.mean} p75 ${ss.p75} max ${ss.max}`);
     const fulfil = telemetry.commitmentFulfillmentRate;

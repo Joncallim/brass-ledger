@@ -138,6 +138,16 @@ test("batch run outputs balance telemetry with outcome distribution and option r
   assert.ok(typeof body.scoreStats.mean === "number");
 });
 
+test("batch run selects an authored non-default scenario", async () => {
+  const result = await runCli(["--batch", "8", "--scenario", "short-warning-coalition", "--json"]);
+
+  assert.equal(result.code, 0, result.stderr);
+  const body = JSON.parse(result.stdout);
+  assert.equal(body.scenarioId, "short-warning-coalition");
+  assert.equal(body.contentVersion, "0.13.0-short-warning");
+  assert.equal(body.campaignCount, 8);
+});
+
 test("batch run produces varied selection rates when cycling options", async () => {
   const result = await runCli(["--batch", "9", "--json"]);
 
@@ -154,7 +164,7 @@ test("batch text output shows outcome and dominant-option report", async () => {
   const result = await runCli(["--batch", "6"]);
 
   assert.equal(result.code, 0, result.stderr);
-  assert.match(result.stdout, /Batch:/);
+  assert.match(result.stdout, /brass-ledger-jhq balance batch:/);
   assert.match(result.stdout, /Outcomes:/);
   assert.match(result.stdout, /Score:/);
   assert.match(result.stdout, /dominant options/i);

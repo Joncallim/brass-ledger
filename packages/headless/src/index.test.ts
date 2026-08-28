@@ -54,6 +54,17 @@ test("every shipped scenario completes a deterministic replay-validated campaign
   }
 });
 
+test("non-default scenarios have deterministic, scenario-bound balance telemetry", async () => {
+  const first = await runHeadlessBatch(8, "short-warning-coalition");
+  const second = await runHeadlessBatch(8, "short-warning-coalition");
+
+  assert.equal(first.scenarioId, "short-warning-coalition");
+  assert.equal(first.contentVersion, "0.13.0-short-warning");
+  assert.equal(first.campaignCount, 8);
+  assert.ok(first.totalTurns > 0, "the scenario policy resolves real turns");
+  assert.deepEqual(first, second, "scenario balance cohorts are replayable and deterministic");
+});
+
 test("sprite output is additive, schema-valid, and renderer-equivalent", async () => {
   const without = await runHeadlessCampaign({ turns: 0 });
   assert.equal(without.sprites, undefined);

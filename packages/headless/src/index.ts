@@ -27,6 +27,9 @@ export type OptionRate = {
 };
 
 export type BalanceTelemetry = {
+  /** Content identity of the scenario this deterministic balance cohort exercised. */
+  scenarioId: string;
+  contentVersion: string;
   campaignCount: number;
   totalTurns: number;
   outcomeDistribution: { won: number; lost: number; active: number };
@@ -258,7 +261,7 @@ function percentile(sorted: number[], p: number): number {
  * cohort's expected size or from the module count.  This is important because
  * the batch is also used as the balance-gate witness.
  */
-function memosForSelection(scenario: typeof soloScenario, state: GameSession["state"], selection: { memoId: string; optionId: string }) {
+function memosForSelection(scenario: ScenarioDefinition, state: GameSession["state"], selection: { memoId: string; optionId: string }) {
   return deriveDecisionMemos(scenario, state).find((memo) => memo.id === selection.memoId)?.options.find((option) => option.id === selection.optionId)?.tags ?? [];
 }
 
@@ -449,10 +452,10 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
   };
 }
 
-function disabledScenario(): ScenarioDefinition {
+function disabledScenario(scenario: ScenarioDefinition): ScenarioDefinition {
   return scenarioDefinitionSchema.parse({
-    ...soloScenario,
-    doctrineProfile: { ...soloScenario.doctrineProfile, optionalStaffModules: [] },
+    ...scenario,
+    doctrineProfile: { ...scenario.doctrineProfile, optionalStaffModules: [] },
     staffModules: [],
   });
 }
@@ -585,8 +588,10 @@ function moduleRow(scenario: ScenarioDefinition, moduleSet: "enabled" | "disable
 }
 
 /** Paired Doctrine 5 telemetry: every campaign index runs enabled and disabled with identical strategy/seed/traces. */
-export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTelemetry> {
-  const disabled = disabledScenario(); const deltas: PairedModuleDelta[] = [];
+export async function runHeadlessBatch(campaignCount: number, scenarioId?: string): Promise<BalanceTelemetry> {
+  const scenario = scenarioId ? getScenario(scenarioId) : getDefaultScenario();
+  if (!scenario) throw new Error(`No installed scenario matches ${scenarioId}.`);
+  const disabled = disabledScenario(scenario); const deltas: PairedModuleDelta[] = [];
   const allRows: ModuleSetTelemetry[] = [];
   const enabledSamplesAll: BatchSample[] = []; const disabledSamplesAll: BatchSample[] = [];
   for (const strategyId of orderedStrategies) {
@@ -594,18 +599,18 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
     for (let replicate = 0; replicate < Math.ceil(campaignCount / orderedStrategies.length); replicate += 1) {
       const ci = replicate * orderedStrategies.length + orderedStrategies.indexOf(strategyId);
       if (ci >= campaignCount) continue;
-      enabledSamples.push(simulateBatchSample(soloScenario, ci, replicate, strategyId));
+      enabledSamples.push(simulateBatchSample(scenario, ci, replicate, strategyId));
       disabledSamples.push(simulateBatchSample(disabled, ci, replicate, strategyId));
     }
-    const enabledRow = moduleRow(soloScenario, "enabled", strategyId, enabledSamples); const disabledRow = moduleRow(disabled, "disabled", strategyId, disabledSamples);
+    const enabledRow = moduleRow(scenario, "enabled", strategyId, enabledSamples); const disabledRow = moduleRow(disabled, "disabled", strategyId, disabledSamples);
     enabledSamplesAll.push(...enabledSamples); disabledSamplesAll.push(...disabledSamples);
     allRows.push(enabledRow, disabledRow);
     deltas.push({ strategyId, meanScoreDelta: enabledRow.meanScore - disabledRow.meanScore, winRateDelta: enabledRow.winRate - disabledRow.winRate, meanIncidentLadderDelta: enabledRow.meanIncidentLadder - disabledRow.meanIncidentLadder, meanStaffSynchronizationDelta: enabledRow.meanStaffSynchronization - disabledRow.meanStaffSynchronization });
   }
   const enabled = allRows.filter((r) => r.moduleSet === "enabled"); const allSamples = enabled.reduce((a, r) => a + r.campaigns, 0);
   const first = enabled[0];
-  const two = scenarioDefinitionSchema.parse({ ...soloScenario, doctrineProfile: { ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J8"] }, staffModules: staffModuleDefinitions.filter((d) => d.id === "J6" || d.id === "J8") });
-  const seven = scenarioDefinitionSchema.parse({ ...soloScenario, doctrineProfile: { ...soloScenario.doctrineProfile, optionalStaffModules: ["J6", "J7", "J8", "J9", "STRATCOM", "MED", "ENGINEER"] }, staffModules: [...staffModuleDefinitions] });
+  const two = scenarioDefinitionSchema.parse({ ...scenario, doctrineProfile: { ...scenario.doctrineProfile, optionalStaffModules: ["J6", "J8"] }, staffModules: staffModuleDefinitions.filter((d) => d.id === "J6" || d.id === "J8") });
+  const seven = scenarioDefinitionSchema.parse({ ...scenario, doctrineProfile: { ...scenario.doctrineProfile, optionalStaffModules: ["J6", "J7", "J8", "J9", "STRATCOM", "MED", "ENGINEER"] }, staffModules: [...staffModuleDefinitions] });
   const twoSamples: BatchSample[] = []; const sevenSamples: BatchSample[] = [];
   for (let ci = 0; ci < campaignCount; ci += 1) { const strategyId = orderedStrategies[ci % orderedStrategies.length]!; const replicate = Math.floor(ci / orderedStrategies.length); twoSamples.push(simulateBatchSample(two, ci, replicate, strategyId)); sevenSamples.push(simulateBatchSample(seven, ci, replicate, strategyId)); }
   const meanState = (samples: BatchSample[], fn: (state: CampaignState) => number) => samples.length ? samples.reduce((a, s) => a + fn(s.final), 0) / samples.length : 0;
@@ -622,8 +627,8 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
     const counts = new Map<string, number>(); const totals = new Map<string, number>();
     for (let replicate = 0; replicate < Math.ceil(campaignCount / 4); replicate += 1) {
       const ci = replicate * 4 + orderedStrategies.indexOf(strategyId); if (ci >= campaignCount) continue;
-      const session = { ...createInitialGameSession(soloScenario, `telemetry-${ci}`), id: `telemetry-${ci}` };
-      for (const selection of batchInputForScenario(soloScenario, session, replicate, strategyId).selections) { const key = `${selection.memoId}:${selection.optionId}`; counts.set(key, (counts.get(key) ?? 0) + 1); totals.set(selection.memoId, (totals.get(selection.memoId) ?? 0) + 1); }
+      const session = { ...createInitialGameSession(scenario, `telemetry-${ci}`), id: `telemetry-${ci}` };
+      for (const selection of batchInputForScenario(scenario, session, replicate, strategyId).selections) { const key = `${selection.memoId}:${selection.optionId}`; counts.set(key, (counts.get(key) ?? 0) + 1); totals.set(selection.memoId, (totals.get(selection.memoId) ?? 0) + 1); }
     }
     strategyOptionSelectionRates[strategyId] = [...counts.entries()].map(([key, count]) => { const [memoId, optionId] = key.split(":"); return { memoId, optionId, selectionRate: count / (totals.get(memoId) ?? 1) }; }).sort((a, b) => a.optionId.localeCompare(b.optionId) || a.memoId.localeCompare(b.memoId));
   }
@@ -635,7 +640,7 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
   for (const moduleSet of ["enabled", "disabled"] as const) {
     for (const strategyId of orderedStrategies) {
       const samples = (moduleSet === "enabled" ? enabledSamplesAll : disabledSamplesAll).filter((sample) => sample.strategyId === strategyId);
-      for (const event of (moduleSet === "enabled" ? soloScenario : disabled).events.filter((candidate) => candidate.doctrineTrigger)) {
+      for (const event of (moduleSet === "enabled" ? scenario : disabled).events.filter((candidate) => candidate.doctrineTrigger)) {
         if (targetStrategyForEvent(event.id) !== strategyId) continue;
         const stats = samples.map((sample) => sample.eventStats[event.id]!).filter(Boolean);
         const attempted = stats.filter((stat) => stat.attempted).length;
@@ -733,7 +738,7 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
     const turns = samples.reduce((sum, sample) => sum + sample.turns, 0);
     return [strategyId, turns ? overloadedTurns / turns : 0];
   }));
-  const programmeCompletionRates = Object.fromEntries(soloScenario.capabilityPrograms.map((programme) => [programme.id, enabledSamplesAll.length ? (programmeCompletions[programme.id] ?? 0) / enabledSamplesAll.length : 0]));
+  const programmeCompletionRates = Object.fromEntries(scenario.capabilityPrograms.map((programme) => [programme.id, enabledSamplesAll.length ? (programmeCompletions[programme.id] ?? 0) / enabledSamplesAll.length : 0]));
   const scoreStats = { min: allScores[0] ?? 0, max: allScores.at(-1) ?? 0, mean: allScores.length ? allScores.reduce((a, b) => a + b, 0) / allScores.length : 0, p25: percentile(allScores, 25), p75: percentile(allScores, 75) };
   // D4 doctrine-strategy dominance detector (restored — spec F correction #21 / telemetry
   // acceptance #2): scoped WITHIN each module set, so the enabled and disabled sets are
@@ -768,6 +773,7 @@ export async function runHeadlessBatch(campaignCount: number): Promise<BalanceTe
     .map((row) => row.strategyId)
     .sort();
   return {
+    scenarioId: scenario.id, contentVersion: scenario.contentVersion,
     campaignCount, pairCount: allSamples, simulationCount: allSamples * 2, moduleSetRows: allRows, pairedDeltas: deltas,
     twoVsSevenCalibration,
     totalTurns, outcomeDistribution: { won: enabled.reduce((a, r) => a + r.wonCampaigns, 0), lost: enabled.reduce((a, r) => a + r.lostCampaigns, 0), active: enabled.reduce((a, r) => a + r.activeCampaigns, 0) }, scoreStats, overloadFrequency, acceptedRiskFrequency, negotiationFrequency: campaignCount ? negotiations / campaignCount : 0, commitmentFulfillmentRate: commitmentTotal ? fulfilled / commitmentTotal : null, commitmentBreachRate: commitmentTotal ? broken / commitmentTotal : null, optionSelectionRates, dominantOptions: optionSelectionRates.filter((entry) => entry.selectionRate > 0.75), strategyOptionSelectionRates, packetFamilies, intentFamilies, optionalMemoTakeRate: optionalOpportunities ? optionalTaken / optionalOpportunities : 0, repeatedOptionLoopRate: selectionTransitions ? repeatedSelections / selectionTransitions : 0, overloadProfileByStrategy, programmeCompletionRates, collapseReasons, doctrineEvents, doctrineStrategies: legacyRows, dominantDoctrineStrategies, modulePairDominance, balanceWarnings,

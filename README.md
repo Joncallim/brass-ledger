@@ -114,6 +114,7 @@ Useful flags:
 | Flag | Use |
 | --- | --- |
 | `--turns N` | Run up to `N` turns. |
+| `--batch N` | Run a deterministic balance cohort. Combine with `--scenario id` to inspect any installed scenario's authored campaign problem. |
 | `--scenario id` | Start a new campaign using an installed scenario ID. Saved sessions always retain their own scenario. |
 | `--seed value` | Use a repeatable campaign identity for a new run, including its authored opening variation. |
 | `--pressure id` | Start a new campaign with a scenario-authored command-pressure profile; its visible opening conditions are recorded in the save. |
