@@ -63,6 +63,7 @@ test("MemosScreen presents the selected portfolio, capacity left, and optional w
   assert.match(container.textContent ?? "", /Pressure carried: Plans/);
   assert.match(container.textContent ?? "", /Deliberately not taking/);
   assert.match(container.textContent ?? "", /Industrial capacity/);
+  assert.doesNotMatch(container.textContent ?? "", /Previous choice:|Changed issue — why now:/);
   act(() => root.unmount());
 });
 
@@ -152,6 +153,37 @@ test("MemosScreen names the required memo that blocks progression", () => {
   });
   assert.match(container.textContent ?? "", /Choose an option for Industrial capacity/);
   assert.match(container.textContent ?? "", /before you can hear from the chiefs/);
+  act(() => root.unmount());
+  container.remove();
+});
+
+test("MemosScreen can pace a memo with an explicitly supplied prior choice and changed-issue context", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  act(() => {
+    root.render(<MemosScreen
+      memos={memos}
+      selections={[]}
+      staffNegotiations={[]}
+      staffModules={[]}
+      pacingPresentation={{
+        priorChoices: [{ memoId: "posture", optionLabel: "Hold the line" }],
+        issueChanges: [{ memoId: "posture", whyNow: "The opposing force has reinforced the frontier." }],
+      }}
+      preview={null}
+      previewLoading={false}
+      previewError={null}
+      canProceed={false}
+      onSelect={() => {}}
+      onCommanderIntent={() => {}}
+      onProceed={() => {}}
+      onBack={() => {}}
+    />);
+  });
+  assert.match(container.textContent ?? "", /Previous choice: Hold the line/);
+  assert.match(container.textContent ?? "", /Changed issue — why now: The opposing force has reinforced the frontier/);
+  assert.doesNotMatch(container.textContent ?? "", /recommended|automatically selected/i);
   act(() => root.unmount());
   container.remove();
 });

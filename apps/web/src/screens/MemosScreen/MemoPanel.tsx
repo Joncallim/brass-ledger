@@ -6,10 +6,16 @@ type Props = {
   memo: DecisionMemo;
   selectedOptionId: string | null;
   enabled: boolean;
+  priorChoice?: {
+    optionLabel: string;
+  };
+  issueChange?: {
+    whyNow: string;
+  };
   onSelect: (optionId: string | null) => void;
 };
 
-export function MemoPanel({ memo, selectedOptionId, enabled, onSelect }: Props) {
+export function MemoPanel({ memo, selectedOptionId, enabled, priorChoice, issueChange, onSelect }: Props) {
   const [expanded, setExpanded] = useState(true);
   const [comparisonOptionId, setComparisonOptionId] = useState("");
   const selectedOption = memo.options.find((option) => option.id === selectedOptionId);
@@ -54,6 +60,18 @@ export function MemoPanel({ memo, selectedOptionId, enabled, onSelect }: Props) 
         <div className="px-4 pb-4">
           {memo.issue && (
             <p className="text-xs text-ink/60 leading-relaxed mb-3">{memo.issue}</p>
+          )}
+
+          {priorChoice && (
+            <p className="text-xs text-ink/50 leading-relaxed mb-2" aria-label="Previous month's choice">
+              <span className="text-ink/40">Previous choice: </span>{priorChoice.optionLabel}
+            </p>
+          )}
+
+          {issueChange && (
+            <aside className="border-l-2 border-brass/60 bg-paper/50 px-3 py-2 text-xs text-ink/65 leading-relaxed mb-3" aria-label="Why this issue needs attention now">
+              <span className="font-medium text-ink">Changed issue — why now: </span>{issueChange.whyNow}
+            </aside>
           )}
 
           {memo.optional && (

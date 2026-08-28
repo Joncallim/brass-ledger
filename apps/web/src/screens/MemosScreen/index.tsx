@@ -25,6 +25,12 @@ type Props = {
   commanderIntent?: CommanderIntent;
   staffAssistanceDetail?: "guided" | "standard" | "sparse";
   staffModules: StaffModuleDefinition[];
+  /**
+   * Optional, display-only context from a prior packet. The Memos screen does
+   * not infer this from session history: callers decide which prior choice and
+   * changed issue deserve to be surfaced for the current packet.
+   */
+  pacingPresentation?: MemosPacingPresentation;
   preview: PreviewPayload | null;
   previewLoading: boolean;
   previewError: string | null;
@@ -42,6 +48,7 @@ export function MemosScreen({
   commanderIntent,
   staffAssistanceDetail = "standard",
   staffModules,
+  pacingPresentation,
   preview,
   previewLoading,
   previewError,
@@ -152,6 +159,8 @@ export function MemosScreen({
               memo={memo}
               selectedOptionId={getSelection(memo.id)}
               enabled={isEnabled(memo)}
+              priorChoice={pacingPresentation?.priorChoices?.find((choice) => choice.memoId === memo.id)}
+              issueChange={pacingPresentation?.issueChanges?.find((change) => change.memoId === memo.id)}
               onSelect={(optionId) => onSelect(memo.id, optionId)}
             />
           ))}
@@ -283,3 +292,17 @@ export function MemosScreen({
     </div>
   );
 }
+
+/** Presentation-only context for pacing a new packet against the last one. */
+export type MemosPacingPresentation = {
+  /** A player-visible reference to the course chosen for the same memo previously. */
+  priorChoices?: Array<{
+    memoId: string;
+    optionLabel: string;
+  }>;
+  /** Explains why a recurring memo needs attention now; never recommends a course. */
+  issueChanges?: Array<{
+    memoId: string;
+    whyNow: string;
+  }>;
+};
