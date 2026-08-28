@@ -21,10 +21,20 @@ async function filesBelow(directory) {
 
 function unpackedExecutable(files) {
   if (process.platform === "darwin") {
-    return files.find((file) => file.endsWith("Brass Ledger.app/Contents/MacOS/Brass Ledger"));
+    // electron-builder derives the app bundle and binary names from
+    // executableName.  On the arm64 macOS runner that produces
+    // brass-ledger.app/Contents/MacOS/brass-ledger, not the display-name
+    // casing used by older Intel builds.  Match the actual bundle layout and
+    // product stem so the smoke test verifies either supported packaging
+    // variant instead of rejecting a valid unpacked app before it can run.
+    return files.find((file) =>
+      file.includes(".app/Contents/MacOS/") && /^brass.*ledger/i.test(path.basename(file)),
+    );
   }
   if (process.platform === "win32") {
-    return files.find((file) => file.endsWith(path.join("win-unpacked", "Brass Ledger.exe")));
+    return files.find((file) =>
+      file.includes(`${path.sep}win-unpacked${path.sep}`) && /^brass.*ledger\.exe$/i.test(path.basename(file)),
+    );
   }
   return files.find((file) =>
     file.includes(`${path.sep}linux-unpacked${path.sep}`) &&
