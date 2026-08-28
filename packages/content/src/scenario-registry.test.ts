@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { defaultScenarioId, getDefaultScenario, getScenario, listScenarios } from "./scenario-registry";
+import { createInitialGameSession } from "@brass-ledger/shared";
 import { validateScenarioRegistry } from "./scenario-validation";
 
 test("the canonical scenario registry resolves the configured default by immutable identity", () => {
@@ -27,4 +28,14 @@ test("registry validation rejects a scenario with an unresolved authored referen
   invalid.id = "invalid-reference";
   invalid.memoTemplates[0]!.options[0]!.programPushes[0]!.programId = "not-installed";
   assert.throws(() => validateScenarioRegistry([getDefaultScenario(), invalid]), /unknown programme not-installed/);
+});
+
+test("campaign identity selects a bounded authored opening deterministically", () => {
+  const scenario = getDefaultScenario();
+  const first = createInitialGameSession(scenario, "opening-seed-a");
+  const repeated = createInitialGameSession(scenario, "opening-seed-a");
+  assert.equal(first.openingVariantId, repeated.openingVariantId);
+  assert.deepEqual(first.initialState, repeated.initialState);
+  assert.ok(scenario.openingVariants.some((variant) => variant.id === first.openingVariantId));
+  assert.notDeepEqual(first.initialState, scenario.initialState);
 });

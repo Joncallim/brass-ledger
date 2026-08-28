@@ -22,7 +22,7 @@ function variant(mutator: (scenario: ScenarioDefinition) => void): ScenarioDefin
 export const shortWarningCoalitionScenario = variant((scenario) => {
   scenario.id = "short-warning-coalition";
   scenario.title = "Narrow Strait";
-  scenario.contentVersion = "0.12.0-short-warning";
+  scenario.contentVersion = "0.13.0-short-warning";
   scenario.description = "A coalition crisis has arrived with little warning. You have a capable force already in theater, but political room and allied patience are thin. Move quickly enough to make the coalition credible without spending the mandate that keeps it together.";
   scenario.maxTurns = 8;
   scenario.initialState.maxTurns = 8;
@@ -47,7 +47,7 @@ export const shortWarningCoalitionScenario = variant((scenario) => {
 export const longRebuildScenario = variant((scenario) => {
   scenario.id = "long-rebuild-industrial";
   scenario.title = "Foundry Winter";
-  scenario.contentVersion = "0.12.0-long-rebuild";
+  scenario.contentVersion = "0.13.0-long-rebuild";
   scenario.description = "You inherit a headquarters whose readiness has been hollowed out by years of deferred repair. The immediate theater is quieter, but industrial capacity and recovery time are scarce. Build a force that can endure without letting the political mandate decay first.";
   scenario.maxTurns = 16;
   scenario.initialState.maxTurns = 16;

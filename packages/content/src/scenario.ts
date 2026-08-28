@@ -49,7 +49,7 @@ export const soloScenario = scenarioDefinitionSchema.parse({
   title: "Brass Ledger",
   description:
     "You run a joint headquarters trying to rebuild a credible defense during a slow-burning crisis. Warning about the adversary's intentions is never quite clean, the reserve force is already strained, and sustainment cannot support everything you would like to do at once. Every month you weigh deterrence, force generation, alliance politics, and how much political cover you can afford to spend, and you live with what each choice costs the next month.",
-  contentVersion: "0.12.0",
+  contentVersion: "0.13.0",
   maxTurns: 12,
   chiefs: [
     { id: "warden", name: "Maj. Gen. Ruth Warden", genderPresentation: "female", directorate: "people", title: "Chief of People", doctrineBias: "preserve deployable experience before chasing visible tempo", temperament: "plainspoken and protective", competence: 0.78, riskTolerance: 0.34, preferredTags: ["retention", "reserve", "recovery", "training"], concernTags: ["escalatory", "tempo-spike"], dialogue: chiefDialogues.warden },
@@ -257,6 +257,26 @@ export const soloScenario = scenarioDefinitionSchema.parse({
       stateDelta: { alliance: { politicalAlignment: -18 }, domestic: { cabinetCover: -10, publicPatience: -8, mediaHeat: 5 }, resources: { politicalCapital: -4 }, forceGeneration: { reserveStrain: 16, deployableUnits: -1.5 }, escalation: { incidentLadder: 28 } }, constraintShifts: [],
       doctrineTrigger: { sourceGeneId: "sustainment-first-operational-reach", sourceGeneLabel: "Sustainment-First Operational Reach", patternId: "tempo", vulnerability: "Slower visible posture; political frustration when the public wants immediate action", evidenceRefs: ["CELERY/doctrine-proof-register#US Army ADP 4-0 Sustainment", "CELERY/doctrine-proof-register#Sustainment Warfighting Function Elements"], conditions: [{ variable: "relativeTempo", comparison: "lte", threshold: 30 }], sustainedTurns: 3 },
       causalContext: { betLabel: "Repeated slow-burn sequencing until supportability was earned", maturedRiskLabel: "Relative tempo stayed at or below 30 for three slow-burn turns", staffFunctionRefs: ["S4", "S5"] },
+    },
+  ],
+  openingVariants: [
+    {
+      id: "reserve-callout",
+      title: "Reserve call-out",
+      briefing: "A regional reserve call-out has bought cabinet time, but it has increased the strain on the people who must sustain the opening posture.",
+      stateDelta: { forceGeneration: { reserveStrain: 5, personnelShortfalls: 2 }, domestic: { committeeTolerance: 3 } },
+    },
+    {
+      id: "uncertain-warning",
+      title: "Uncertain warning",
+      briefing: "Collection reporting is thinner than expected. The headquarters has more time to act than it can confidently explain, so intelligence confidence starts under pressure.",
+      stateDelta: { intelligence: { confidence: -6, warningReliability: -4, deceptionPressure: 4 }, escalation: { warningTime: 5 } },
+    },
+    {
+      id: "commercial-lift-squeeze",
+      title: "Commercial lift squeeze",
+      briefing: "Commercial lift bookings have tightened before the campaign begins. The force is intact, but its opening posture has less physical room to move.",
+      stateDelta: { sustainment: { liftAvailability: -7, depotBacklog: 4 }, resources: { readiness: -2 } },
     },
   ],
   initialState: {

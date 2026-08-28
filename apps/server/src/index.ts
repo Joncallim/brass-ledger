@@ -255,7 +255,8 @@ function assertCanonicalImport(session: GameSession) {
   if (session.saveFormatVersion !== "8") {
     throw new Error("This campaign file uses a save format this version of Brass Ledger cannot read.");
   }
-  if (stableJson(session.initialState) !== stableJson(scenario.initialState)) {
+  const expectedOpening = createInitialGameSession(scenario, session.campaignId);
+  if (session.openingVariantId !== expectedOpening.openingVariantId || stableJson(session.initialState) !== stableJson(expectedOpening.initialState)) {
     throw new Error("This campaign file does not start from the scenario's opening position, so it cannot be accepted as a genuine campaign.");
   }
   assertReplayableSession(session);
@@ -266,7 +267,8 @@ function assertCanonicalSession(session: GameSession) {
   if (session.engineVersion !== "0.1.0" || session.saveFormatVersion !== "8") {
     throw new Error("This saved campaign belongs to an incompatible engine, scenario, content version, or save format.");
   }
-  if (stableJson(session.initialState) !== stableJson(scenario.initialState)) {
+  const expectedOpening = createInitialGameSession(scenario, session.campaignId);
+  if (session.openingVariantId !== expectedOpening.openingVariantId || stableJson(session.initialState) !== stableJson(expectedOpening.initialState)) {
     throw new Error("This saved campaign does not match the current scenario opening state.");
   }
   return session;
@@ -455,6 +457,7 @@ function scenarioPayload(scenario: ReturnType<typeof getDefaultScenario>) {
     description: scenario.description,
     contentVersion: scenario.contentVersion,
     maxTurns: scenario.maxTurns,
+    openingVariants: scenario.openingVariants,
     chiefs: scenario.chiefs,
     staffCapacities: scenario.staffCapacities,
     staffFunctions: scenario.staffFunctions,

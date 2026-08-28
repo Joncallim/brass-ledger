@@ -474,6 +474,7 @@ export function App() {
           session={cycle.session}
           memos={cycle.memos}
           staffReadouts={currentStaffFunctions}
+          scenario={scenario}
           labels={labels}
           onProceed={() => navigateStep("memos")}
         />

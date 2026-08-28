@@ -981,6 +981,17 @@ export const stateDeltaSchema = z.object({
 }).partial();
 export type StateDelta = z.infer<typeof stateDeltaSchema>;
 
+/** A bounded, player-visible change to an otherwise authored campaign opening.
+ * The selected variant is derived from the campaign identity, never from an
+ * unrecorded runtime roll, so imports and replays can verify it exactly. */
+export const openingVariantSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  briefing: z.string().min(1),
+  stateDelta: stateDeltaSchema,
+});
+export type OpeningVariant = z.infer<typeof openingVariantSchema>;
+
 const emptyStateDelta: StateDelta = {
   resources: {},
   forceGeneration: {},
@@ -1526,6 +1537,7 @@ export const scenarioDefinitionSchema = z.object({
   externalConstraints: z.array(externalConstraintDefinitionSchema),
   memoTemplates: z.array(decisionMemoSchema),
   events: z.array(eventDefinitionSchema),
+  openingVariants: z.array(openingVariantSchema).default([]),
   initialState: campaignStateSchema,
   doctrineProfile: doctrineProfileSchema,
   // Doctrine 3: the composed advice/burden lens, computed once at scenario-definition
@@ -1594,6 +1606,7 @@ export const gameSessionSchema = z.object({
   revision: z.number().int().min(0).default(0),
   scenarioId: z.string(),
   contentVersion: z.string(),
+  openingVariantId: z.string().nullable().default(null),
   advisorRoster: z.array(sessionAdvisorSchema),
   state: campaignStateSchema,
   initialState: campaignStateSchema,
@@ -1657,6 +1670,7 @@ export const scenarioSummarySchema = z.object({
   description: z.string(),
   contentVersion: z.string(),
   maxTurns: z.number().int(),
+  openingVariants: z.array(openingVariantSchema).default([]),
   chiefs: z.array(chiefArchetypeSchema),
   staffCapacities: z.array(staffCapacityDefinitionSchema).default([]),
   staffFunctions: z.array(staffFunctionDefinitionSchema).default([]),
@@ -4825,9 +4839,45 @@ export function buildAdvisorPortraitDataUri(sprite: SpriteSpec) {
 
 
 
+function clampOpeningMetric(value: number, minimum = 0, maximum = 100) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+/** Applies a content-authored opening delta while preserving CampaignState's
+ * strategic convenience mirrors. This is intentionally separate from turn
+ * resolution: it runs only once while a new campaign identity is established. */
+export function applyOpeningStateDelta(state: CampaignState, delta: StateDelta): CampaignState {
+  const next = deepClone(state);
+  const apply = (target: Record<string, number>, changes: Record<string, number> | undefined, minimum = 0, maximum = 100) => {
+    for (const [key, amount] of Object.entries(changes ?? {})) target[key] = clampOpeningMetric((target[key] ?? 0) + amount, key === "deployableUnits" ? 2 : minimum, key === "deployableUnits" ? 12 : maximum);
+  };
+  apply(next.resources as Record<string, number>, delta.resources);
+  apply(next.strategic.forceGeneration as Record<string, number>, delta.forceGeneration);
+  apply(next.strategic.intelligence as Record<string, number>, delta.intelligence);
+  apply(next.strategic.sustainment as Record<string, number>, delta.sustainment);
+  apply(next.strategic.alliance as Record<string, number>, delta.alliance);
+  apply(next.strategic.domestic as Record<string, number>, delta.domestic);
+  apply(next.strategic.escalation as Record<string, number>, delta.escalation);
+  next.forceGeneration = deepClone(next.strategic.forceGeneration);
+  next.intel = deepClone(next.strategic.intelligence);
+  next.sustainment = deepClone(next.strategic.sustainment);
+  next.alliance = deepClone(next.strategic.alliance);
+  next.domestic = deepClone(next.strategic.domestic);
+  next.escalation = deepClone(next.strategic.escalation);
+  return campaignStateSchema.parse(next);
+}
+
+export function openingVariantForCampaign(scenario: ScenarioDefinition, campaignId: string): OpeningVariant | undefined {
+  if (scenario.openingVariants.length === 0) return undefined;
+  return scenario.openingVariants[hashString(`${scenario.id}:${scenario.contentVersion}:${campaignId}:opening`) % scenario.openingVariants.length];
+}
+
 export function createInitialGameSession(scenario: ScenarioDefinition, sessionSeed = scenario.id): GameSession {
   const timestamp = new Date().toISOString();
-  const initialState = deepClone(scenario.initialState);
+  const openingVariant = openingVariantForCampaign(scenario, sessionSeed);
+  const initialState = openingVariant
+    ? applyOpeningStateDelta(scenario.initialState, openingVariant.stateDelta)
+    : deepClone(scenario.initialState);
   return {
     id: scenario.id,
     campaignId: sessionSeed,
@@ -4836,6 +4886,7 @@ export function createInitialGameSession(scenario: ScenarioDefinition, sessionSe
     revision: 0,
     scenarioId: scenario.id,
     contentVersion: scenario.contentVersion,
+    openingVariantId: openingVariant?.id ?? null,
     advisorRoster: generateAdvisorRoster(scenario.chiefs, sessionSeed),
     state: initialState,
     initialState: deepClone(initialState),

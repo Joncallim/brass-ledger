@@ -64,7 +64,7 @@ export function SessionHub({ sessions, scenarioTitle, scenarioDescription, scena
                 >
                   <span className="block text-sm font-medium text-ink">{candidate.title}</span>
                   <span className="mt-1 block text-xs leading-relaxed text-ink/60">{candidate.description}</span>
-                  <span className="mt-3 block text-xs text-ink/45">{candidate.maxTurns} months</span>
+                  <span className="mt-3 block text-xs text-ink/45">{candidate.maxTurns} months · {candidate.openingVariants.length} possible opening briefs</span>
                 </button>
               );
             })}

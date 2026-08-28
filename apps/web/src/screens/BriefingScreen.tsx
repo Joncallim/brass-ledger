@@ -1,4 +1,4 @@
-import type { GameSession, DecisionMemo, StaffFunctionReadout } from "@brass-ledger/shared";
+import type { GameSession, DecisionMemo, StaffFunctionReadout, ScenarioSummary } from "@brass-ledger/shared";
 import { buildCampaignHistory, buildCampaignLegibility, buildStrategicMetricBriefs, evaluateCampaignObjectives } from "@brass-ledger/shared";
 import { StatusBadge } from "../components/StatusBadge";
 import {
@@ -13,11 +13,12 @@ type Props = {
   session: GameSession;
   memos: DecisionMemo[];
   staffReadouts: StaffFunctionReadout[];
+  scenario?: ScenarioSummary;
   labels: ScenarioLabels;
   onProceed: () => void;
 };
 
-export function BriefingScreen({ session, memos, staffReadouts, labels, onProceed }: Props) {
+export function BriefingScreen({ session, memos, staffReadouts, scenario, labels, onProceed }: Props) {
   const state = session.state;
   const briefing = state.briefing;
   const objectiveChecks = evaluateCampaignObjectives(state);
@@ -33,6 +34,7 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
   const campaignLegibility = buildCampaignLegibility(state);
   const campaignHistory = buildCampaignHistory(session).slice(-6).reverse();
   const chiefName = (chiefId: string) => session.advisorRoster.find((chief) => chief.chiefId === chiefId)?.displayName ?? chiefId;
+  const openingVariant = scenario?.openingVariants.find((variant) => variant.id === session.openingVariantId);
 
   return (
     <div className="p-6 max-w-4xl">
@@ -53,6 +55,9 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
           <p className="text-sm text-red-400 mb-2">
             ⚠ Not currently met: {unmetObjective.label} — {unmetObjective.note}
           </p>
+        )}
+        {openingVariant && state.turn === 1 && (
+          <p className="text-sm text-ink/65 mb-2"><span className="font-medium text-ink">Opening brief — {openingVariant.title}:</span> {openingVariant.briefing}</p>
         )}
       </div>
 

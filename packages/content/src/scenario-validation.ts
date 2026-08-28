@@ -21,6 +21,12 @@ export function validateScenarioRegistry(scenarios: readonly ScenarioDefinition[
     if (scenario.memoTemplates.length < 4 || scenario.memoTemplates.length > 5) {
       throw new Error(`Scenario ${scenario.id} must surface 4-5 decision memos each month.`);
     }
+    const openingVariantIds = new Set<string>();
+    for (const variant of scenario.openingVariants) {
+      if (openingVariantIds.has(variant.id)) throw new Error(`Scenario ${scenario.id} repeats opening variant ${variant.id}.`);
+      openingVariantIds.add(variant.id);
+      if (Object.keys(variant.stateDelta).length === 0) throw new Error(`Scenario ${scenario.id} opening variant ${variant.id} has no authored change.`);
+    }
     const programmeIds = new Set(scenario.capabilityPrograms.map((programme) => programme.id));
     const constraintIds = new Set(scenario.externalConstraints.map((constraint) => constraint.id));
     const memoIds = new Set<string>();

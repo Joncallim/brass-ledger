@@ -705,6 +705,15 @@ test("import rejects forged session exports and accepts replayable exports under
   });
   assert.equal(rejected.statusCode, 409);
 
+  const forgedOpening = structuredClone(exportData);
+  forgedOpening.session.openingVariantId = "forged-opening";
+  const openingRejected = await app.inject({
+    method: "POST",
+    url: "/api/sessions/import",
+    payload: { exportData: forgedOpening },
+  });
+  assert.equal(openingRejected.statusCode, 409);
+
   const accepted = await app.inject({
     method: "POST",
     url: "/api/sessions/import",
