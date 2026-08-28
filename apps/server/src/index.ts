@@ -23,6 +23,7 @@ import {
 } from "@brass-ledger/save-store";
 import {
   buildChiefPositions,
+  campaignDisplayName,
   buildDirectorateBurden,
   buildStaffFunctionReadouts,
   continueChiefConversation,
@@ -344,6 +345,7 @@ function summarizeSession(session: GameSession) {
   const milestones = countMetCampaignObjectives(session.state);
   return {
     id: session.id,
+    displayName: campaignDisplayName(session.state),
     scenarioId: session.scenarioId,
     contentVersion: session.contentVersion,
     saveFormatVersion: session.saveFormatVersion,

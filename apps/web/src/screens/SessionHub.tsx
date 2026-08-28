@@ -64,7 +64,10 @@ export function SessionHub({ sessions, scenarioTitle, scenarioDescription, busy,
             <tbody>
               {sessions.map((s) => (
                 <tr key={s.id} className="border-b border-border/50 hover:bg-paper/60">
-                  <td className="px-3 py-2 font-mono text-xs text-ink/50">{s.id.slice(0, 8)}</td>
+                  <td className="px-3 py-2">
+                    <p className="text-sm text-ink/75">{s.displayName ?? "Saved campaign"}</p>
+                    <p className="mt-0.5 font-mono text-[10px] text-ink/35" title={s.id}>{s.id.slice(0, 8)} · {s.updatedAt ? new Date(s.updatedAt).toLocaleString() : "date unavailable"}</p>
+                  </td>
                   <td className="px-3 py-2 text-ink/70">{s.turn}</td>
                   <td className="px-3 py-2 text-ink/70">{s.milestonesMet} of {s.milestonesTotal}</td>
                   <td className="px-3 py-2">

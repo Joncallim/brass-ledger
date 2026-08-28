@@ -1840,6 +1840,15 @@ export function buildCampaignLegibility(state: CampaignState, previous?: Campaig
   };
 }
 
+/** A stable player-facing identity derived from the authoritative opening seed. */
+export function campaignDisplayName(state: CampaignState) {
+  const callsigns = ["Anvil", "Beacon", "Cedar", "Falcon", "Harbor", "Lantern", "Northstar", "Vanguard"];
+  const phases = ["Watch", "Line", "Shield", "Resolve", "Horizon", "Bridge", "Signal", "Reserve"];
+  const left = callsigns[Math.abs(state.seed) % callsigns.length];
+  const right = phases[Math.floor(Math.abs(state.seed) / callsigns.length) % phases.length];
+  return `${left} ${right}`;
+}
+
 export function buildStrategicMetricBriefs(state: CampaignState): StrategicMetricBrief[] {
   const force = state.strategic.forceGeneration;
   const intel = state.strategic.intelligence;

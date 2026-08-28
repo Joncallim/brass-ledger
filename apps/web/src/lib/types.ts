@@ -12,6 +12,8 @@ import type {
 
 export type SessionSummary = {
   id: string;
+  displayName?: string;
+  updatedAt?: string;
   turn?: number;
   milestonesMet?: number;
   milestonesTotal?: number;

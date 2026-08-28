@@ -100,7 +100,10 @@ export function RecordsScreen({
               const validation = validationResults[s.id];
               return (
                 <tr key={s.id} className="border-b border-border/50 hover:bg-paper/40">
-                  <td className="px-3 py-2 font-mono text-xs text-ink/50">{s.id.slice(0, 12)}…</td>
+                  <td className="px-3 py-2">
+                    <p className="text-xs text-ink/70">{s.displayName ?? "Campaign record"}</p>
+                    <p className="mt-0.5 font-mono text-[10px] text-ink/40" title={s.id}>{s.id.slice(0, 12)}…</p>
+                  </td>
                   <td className="px-3 py-2 text-ink/70">{unavailable ? "—" : s.turn}</td>
                   <td className="px-3 py-2 text-ink/70">{unavailable ? "—" : `${s.milestonesMet} of ${s.milestonesTotal}`}</td>
                   <td className="px-3 py-2">
