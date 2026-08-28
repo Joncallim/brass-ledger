@@ -264,13 +264,13 @@ describe("Doctrine 5 pre-module save boundary (issue #59 criterion 4)", () => {
 });
 
 describe("Doctrine 5 module save/store round-trip (issue #59 test-plan Save/store/server #2)", () => {
-  it("a 0.11.0 resolved session with historical module readouts migrates to the dialogue content version without changing state", async () => {
+  it("a 0.11.0 resolved session preserves the 0.12 dialogue migration boundary without changing state", async () => {
     const saveDir = await mkdtemp(path.join(os.tmpdir(), "brass-ledger-test-d5modules-"));
     const store = createFileSystemSaveStore(saveDir);
     try {
       const id = "00000000-0000-1000-8000-000000000060";
       const session = makeSession({ id });
-      assert.equal(session.contentVersion, "0.12.0", "the dialogue-only content migration must admit existing sessions");
+      assert.equal(session.contentVersion, soloScenario.contentVersion, "the fresh session must use the current scenario content version");
 
       const selections = [
         { memoId: "posture", optionId: "quiet-recovery" },
@@ -297,7 +297,8 @@ describe("Doctrine 5 module save/store round-trip (issue #59 test-plan Save/stor
       const raw011 = gameSessionSchema.parse({ ...resolved, contentVersion: "0.11.0" });
       await store.create(raw011);
       const loaded = await store.read(id);
-      assert.equal(loaded.contentVersion, "0.12.0", "raw 0.11.0 payload upgrades at the store boundary");
+      assert.equal(loaded.contentVersion, "0.12.0", "raw 0.11.0 payload upgrades only through the documented dialogue migration");
+      assert.notEqual(loaded.contentVersion, soloScenario.contentVersion, "the store must not silently claim compatibility with later scenario content");
       assert.deepEqual(loaded.state, resolved.state, "dialogue migration must not alter campaign state");
       assert.equal(loaded.history.length, 1);
       assert.equal(JSON.stringify(loaded.history[0]!.staffModules), JSON.stringify(writtenReadouts), "historical staffModules readouts survive byte-exact");
