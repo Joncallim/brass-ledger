@@ -19,11 +19,35 @@ const positionLabel: Record<string, string> = {
 };
 
 export function ChiefConversationSheet({ conversation, chiefName, busy, error, onRespond, onClose }: Props) {
+  const dialogRef = useRef<HTMLDivElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      const focusable = [...(dialogRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ) ?? [])].filter((element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true");
+      if (focusable.length === 0) {
+        e.preventDefault();
+        return;
+      }
+
+      const currentIndex = focusable.indexOf(document.activeElement as HTMLElement);
+      if (e.shiftKey ? currentIndex <= 0 : currentIndex === -1 || currentIndex === focusable.length - 1) {
+        e.preventDefault();
+        (e.shiftKey ? focusable.at(-1) : focusable[0])?.focus();
+      }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -40,7 +64,9 @@ export function ChiefConversationSheet({ conversation, chiefName, busy, error, o
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
+      aria-modal="true"
       aria-labelledby="conversation-title"
       className="fixed inset-y-0 right-0 w-[480px] bg-paper border-l border-border shadow-xl flex flex-col z-50"
     >
@@ -60,6 +86,7 @@ export function ChiefConversationSheet({ conversation, chiefName, busy, error, o
           </span>
           <button
             type="button"
+            ref={closeButtonRef}
             onClick={onClose}
             className="text-ink/40 hover:text-ink border-none bg-transparent text-xl leading-none"
             aria-label="Close conversation"

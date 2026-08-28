@@ -8,7 +8,7 @@ type Props = {
   advisor: SessionAdvisor | undefined;
   sprite: SpriteSpec | undefined;
   memos: DecisionMemo[];
-  onTalk: () => void;
+  onTalk: (invoker: HTMLButtonElement) => void;
 };
 
 const positionMeta = {
@@ -76,7 +76,7 @@ export function ChiefPositionCard({ position, advisor, sprite, memos, onTalk }: 
       <div className="mt-3">
         <button
           type="button"
-          onClick={onTalk}
+          onClick={(event) => onTalk(event.currentTarget)}
           className="text-xs border border-border px-2.5 py-1 hover:border-brass hover:text-brass transition-colors"
         >
           Talk to {position.chiefName.split(" ").at(-1) ?? "this chief"}

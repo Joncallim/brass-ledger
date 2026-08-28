@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { buildChiefSpriteSpec, relationshipLabel, type ChiefPositionEntry, type ChiefCoalitionEntry, type SessionAdvisor, type ChiefConversationRecord, type GameSession, type DecisionMemo, type ScenarioSummary } from "@brass-ledger/shared";
 import { CoalitionSummary } from "./CoalitionSummary";
 import { ChiefPositionCard } from "./ChiefPositionCard";
@@ -37,10 +37,25 @@ export function ChiefsPaperScreen({
   onBack,
 }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const conversationInvokerRef = useRef<HTMLButtonElement | null>(null);
+  const restoreConversationFocusRef = useRef(false);
 
-  function handleTalk(position: ChiefPositionEntry) {
+  useEffect(() => {
+    if (!sheetOpen && restoreConversationFocusRef.current) {
+      restoreConversationFocusRef.current = false;
+      conversationInvokerRef.current?.focus();
+    }
+  }, [sheetOpen]);
+
+  function handleTalk(position: ChiefPositionEntry, invoker: HTMLButtonElement) {
+    conversationInvokerRef.current = invoker;
     onOpenConversation(position.chiefId, position.memoId, position.optionId);
     setSheetOpen(true);
+  }
+
+  function handleCloseConversation() {
+    restoreConversationFocusRef.current = true;
+    setSheetOpen(false);
   }
 
   function handleRespond(responseId: string) {
@@ -106,7 +121,7 @@ export function ChiefsPaperScreen({
                   advisor={advisor}
                   sprite={sprite}
                   memos={memos}
-                  onTalk={() => handleTalk(position)}
+                  onTalk={(invoker) => handleTalk(position, invoker)}
                 />
                 {positions.length > 1 && (
                   <div className="border-t border-border px-4 py-3">
@@ -122,7 +137,11 @@ export function ChiefsPaperScreen({
                             <span className="text-ink/40"> — {issueOption?.label ?? "Selected option"}</span>
                             <span className="ml-2 text-ink/50">{issue.requiredCondition}</span>
                           </div>
-                          <button type="button" onClick={() => handleTalk(issue)} className="shrink-0 border border-border px-2 py-1 hover:border-brass hover:text-brass">
+                          <button
+                            type="button"
+                            onClick={(event) => handleTalk(issue, event.currentTarget)}
+                            className="shrink-0 border border-border px-2 py-1 hover:border-brass hover:text-brass"
+                          >
                             Discuss
                           </button>
                         </div>
@@ -161,7 +180,7 @@ export function ChiefsPaperScreen({
         <>
           <div
             className="fixed inset-0 bg-ink/20 z-40"
-            onClick={() => setSheetOpen(false)}
+            onClick={handleCloseConversation}
             aria-hidden="true"
           />
           <ChiefConversationSheet
@@ -170,7 +189,7 @@ export function ChiefsPaperScreen({
             busy={conversationBusy}
             error={conversationError}
             onRespond={handleRespond}
-            onClose={() => setSheetOpen(false)}
+            onClose={handleCloseConversation}
           />
         </>
       )}
