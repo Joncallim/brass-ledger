@@ -89,6 +89,7 @@ export function MemoPanel({ memo, selectedOptionId, enabled, onSelect }: Props) 
                   <label className="block text-xs text-ink/60">
                     Compare courses
                     <select
+                      aria-label="Compare courses"
                       value={comparisonOptionId}
                       onChange={(event) => setComparisonOptionId(event.target.value)}
                       className="mt-1 block w-full border border-border bg-canvas px-2 py-1.5 text-sm text-ink"

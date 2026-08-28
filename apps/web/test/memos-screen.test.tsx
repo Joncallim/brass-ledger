@@ -33,7 +33,7 @@ const memos = [
 const preview = {
   decisionPreviews: [], acceptedRiskCandidates: [], predictedEvents: [], chiefCoalitions: [],
   packetSummary: { mainEffort: "operations", mainEffortSource: "observed", slackPoints: 3, slackStatus: "room", strainedDirectorates: ["plans"] },
-  projectedResult: { staffFunctions: [], staffModules: [] },
+  projectedResult: { staffFunctions: [], staffModules: [], directorateBurden: [{ directorate: "operations", burdenPoints: 2, capacity: 4, burdenLevel: "light" }] },
 } as unknown as PreviewPayload;
 
 test("MemosScreen presents the selected portfolio, capacity left, and optional work deliberately skipped", () => {
@@ -51,6 +51,7 @@ test("MemosScreen presents the selected portfolio, capacity left, and optional w
       previewError={null}
       canProceed
       onSelect={() => {}}
+      onCommanderIntent={() => {}}
       onProceed={() => {}}
       onBack={() => {}}
     />);
@@ -80,11 +81,12 @@ test("MemosScreen compares the selected course with authored alternative facts w
       previewError={null}
       canProceed
       onSelect={() => {}}
+      onCommanderIntent={() => {}}
       onProceed={() => {}}
       onBack={() => {}}
     />);
   });
-  const compare = container.querySelector("select")!;
+  const compare = container.querySelector('select[aria-label="Compare courses"]')!;
   act(() => {
     compare.value = "surge";
     compare.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
@@ -94,5 +96,35 @@ test("MemosScreen compares the selected course with authored alternative facts w
   assert.match(container.textContent ?? "", /Surge forward/);
   assert.match(container.textContent ?? "", /Staff work: Operations 2/);
   assert.doesNotMatch(container.textContent ?? "", /recommended|overall score/i);
+  act(() => root.unmount());
+});
+
+test("MemosScreen records Commander’s Intent during packet assembly", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const intents: unknown[] = [];
+  act(() => {
+    root.render(<MemosScreen
+      memos={memos}
+      selections={[{ memoId: "posture", optionId: "hold" }]}
+      staffNegotiations={[]}
+      staffModules={[]}
+      preview={preview}
+      previewLoading={false}
+      previewError={null}
+      canProceed
+      onSelect={() => {}}
+      onCommanderIntent={(intent) => intents.push(intent)}
+      onProceed={() => {}}
+      onBack={() => {}}
+    />);
+  });
+  const intentSelect = container.querySelector('select[aria-label="Main effort"]')!;
+  act(() => {
+    intentSelect.value = "operations";
+    intentSelect.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
+  });
+  assert.deepEqual(intents, [{ mainEffort: "operations" }]);
   act(() => root.unmount());
 });

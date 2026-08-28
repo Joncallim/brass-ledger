@@ -1,4 +1,4 @@
-import { directorateLabel, type DecisionMemo, type MemoSelection, type StaffModuleDefinition, type StaffNegotiation } from "@brass-ledger/shared";
+import { directorateLabel, type CommanderIntent, type DecisionMemo, type DirectorateId, type MemoSelection, type StaffModuleDefinition, type StaffNegotiation } from "@brass-ledger/shared";
 import type { PreviewPayload } from "../../lib/types";
 import { MemoPanel } from "./MemoPanel";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -21,12 +21,14 @@ type Props = {
   memos: DecisionMemo[];
   selections: MemoSelection[];
   staffNegotiations: StaffNegotiation[];
+  commanderIntent?: CommanderIntent;
   staffModules: StaffModuleDefinition[];
   preview: PreviewPayload | null;
   previewLoading: boolean;
   previewError: string | null;
   canProceed: boolean;
   onSelect: (memoId: string, optionId: string | null) => void;
+  onCommanderIntent: (intent: CommanderIntent | undefined) => void;
   onProceed: () => void;
   onBack: () => void;
 };
@@ -35,12 +37,14 @@ export function MemosScreen({
   memos,
   selections,
   staffNegotiations,
+  commanderIntent,
   staffModules,
   preview,
   previewLoading,
   previewError,
   canProceed,
   onSelect,
+  onCommanderIntent,
   onProceed,
   onBack,
 }: Props) {
@@ -48,6 +52,9 @@ export function MemosScreen({
   const projectedModules = preview?.projectedResult.staffModules ?? [];
   const warningCount = preview?.acceptedRiskCandidates.length ?? 0;
   const packetSummary = preview?.packetSummary;
+  const directorateBurden = preview?.projectedResult.directorateBurden ?? [];
+  const mainEffortChoices = directorateBurden.filter((entry) => entry.burdenPoints > 0);
+  const secondaryRiskChoices = directorateBurden.filter((entry) => entry.burdenLevel !== "light" && entry.directorate !== commanderIntent?.mainEffort);
   const selectedChoices = memos.flatMap((memo) => {
     const optionId = selections.find((selection) => selection.memoId === memo.id)?.optionId;
     const option = memo.options.find((candidate) => candidate.id === optionId);
@@ -88,6 +95,43 @@ export function MemosScreen({
         </div>
 
         <div className="space-y-3 max-w-2xl">
+          {mainEffortChoices.length > 0 && (
+            <section className="border border-border bg-surface px-4 py-3">
+              <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Commander&apos;s intent</p>
+              <p className="text-xs text-ink/60 mb-3">Name the effort this packet is actually carrying before you take it to the chiefs. It changes the authoritative concentration check; it is not a free bonus.</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-xs text-ink/65">Main effort
+                  <select
+                    aria-label="Main effort"
+                    className="mt-1 block w-full border border-border bg-canvas px-2 py-1.5 text-sm text-ink"
+                    value={commanderIntent?.mainEffort ?? ""}
+                    onChange={(event) => {
+                      const mainEffort = event.target.value as DirectorateId;
+                      onCommanderIntent(mainEffort ? { mainEffort } : undefined);
+                    }}
+                  >
+                    <option value="">Use observed packet concentration</option>
+                    {mainEffortChoices.map((entry) => <option key={entry.directorate} value={entry.directorate}>{directorateLabel(entry.directorate)} ({entry.burdenPoints} staff load)</option>)}
+                  </select>
+                </label>
+                <label className="text-xs text-ink/65">Deliberately accepted secondary risk
+                  <select
+                    aria-label="Accepted secondary risk"
+                    disabled={!commanderIntent}
+                    className="mt-1 block w-full border border-border bg-canvas px-2 py-1.5 text-sm text-ink disabled:opacity-50"
+                    value={commanderIntent?.acceptedSecondaryRisk ?? ""}
+                    onChange={(event) => onCommanderIntent(commanderIntent ? {
+                      mainEffort: commanderIntent.mainEffort,
+                      ...(event.target.value ? { acceptedSecondaryRisk: event.target.value as DirectorateId } : {}),
+                    } : undefined)}
+                  >
+                    <option value="">No declared secondary risk</option>
+                    {secondaryRiskChoices.map((entry) => <option key={entry.directorate} value={entry.directorate}>{directorateLabel(entry.directorate)} ({entry.burdenLevel})</option>)}
+                  </select>
+                </label>
+              </div>
+            </section>
+          )}
           {memos.map((memo) => (
             <MemoPanel
               key={memo.id}

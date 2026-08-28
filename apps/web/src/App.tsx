@@ -475,6 +475,7 @@ export function App() {
           previewError={previewError}
           canProceed={validPreview !== null && cycle.selections.length > 0}
           onSelect={handleSelectMemo}
+          onCommanderIntent={handleCommanderIntent}
           onProceed={() => navigateStep("chiefs")}
           onBack={() => navigateStep("briefing")}
         />
@@ -509,14 +510,12 @@ export function App() {
           chiefPositions={validPreview?.chiefPositions ?? []}
           acceptedRiskChoices={cycle.acceptedRiskChoices}
           staffNegotiations={cycle.staffNegotiations}
-          commanderIntent={cycle.commanderIntent}
           negotiationCandidates={negotiationCandidates}
           turnNumber={cycle.session.state.turn}
           busy={busy}
           error={error}
           onAcceptRisk={handleAcceptRisk}
           onNegotiation={handleNegotiation}
-          onCommanderIntent={handleCommanderIntent}
           onCommit={handleCommit}
           onBack={() => navigateStep("chiefs")}
         />

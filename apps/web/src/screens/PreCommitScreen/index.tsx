@@ -1,4 +1,4 @@
-import { directorateLabel, type AcceptedRiskOverride, type ChiefPositionEntry, type CommanderIntent, type DirectorateId, type GameSession, type MemoSelection, type StaffNegotiation } from "@brass-ledger/shared";
+import { directorateLabel, type AcceptedRiskOverride, type ChiefPositionEntry, type GameSession, type MemoSelection, type StaffNegotiation } from "@brass-ledger/shared";
 import type { PreviewPayload } from "../../lib/types";
 import { isPreviewValid } from "../../lib/previewValidity";
 import { AcceptedRiskDocket } from "./AcceptedRiskDocket";
@@ -15,14 +15,12 @@ type Props = {
   chiefPositions?: ChiefPositionEntry[];
   acceptedRiskChoices: Record<string, boolean>;
   staffNegotiations: StaffNegotiation[];
-  commanderIntent?: CommanderIntent;
   negotiationCandidates: StaffNegotiation["directorate"][];
   turnNumber: number;
   busy: boolean;
   error: string | null;
   onAcceptRisk: (risk: AcceptedRiskOverride, accepted: boolean) => void;
   onNegotiation: (directorate: StaffNegotiation["directorate"], enabled: boolean) => void;
-  onCommanderIntent: (intent: CommanderIntent | undefined) => void;
   onCommit: () => void;
   onBack: () => void;
 };
@@ -41,14 +39,12 @@ export function PreCommitScreen({
   chiefPositions = [],
   acceptedRiskChoices,
   staffNegotiations,
-  commanderIntent,
   negotiationCandidates,
   turnNumber,
   busy,
   error,
   onAcceptRisk,
   onNegotiation,
-  onCommanderIntent,
   onCommit,
   onBack,
 }: Props) {
@@ -62,8 +58,6 @@ export function PreCommitScreen({
   // accepted".
   const burden = preview?.projectedResult.directorateBurden ?? [];
   const packetSummary = preview?.packetSummary;
-  const mainEffortChoices = burden.filter((entry) => entry.burdenPoints > 0);
-  const secondaryRiskChoices = burden.filter((entry) => entry.burdenLevel !== "light" && entry.directorate !== commanderIntent?.mainEffort);
   const currentConversations = session?.state.conversationHistory.filter((conversation) => conversation.turn === turnNumber) ?? [];
   const openTerms = session?.state.activeCommitments.filter((commitment) => commitment.fulfilled === null) ?? [];
   const conflicts = currentConversations.filter((conversation) => !selections.some((selection) => selection.memoId === conversation.memoId && selection.optionId === conversation.optionId));
@@ -99,39 +93,6 @@ export function PreCommitScreen({
       )}
 
       <div className="space-y-4 mb-6">
-        <section className="border border-border bg-surface px-4 py-3">
-          <p className="text-xs uppercase tracking-widest text-ink/50 mb-1">Commander’s intent</p>
-          <p className="text-xs text-ink/60 mb-3">Name the effort this packet is actually carrying. It changes the authoritative concentration check; it is not a free bonus.</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs text-ink/65">Main effort
-              <select
-                className="mt-1 block w-full border border-border bg-canvas px-2 py-1.5 text-sm text-ink"
-                value={commanderIntent?.mainEffort ?? ""}
-                onChange={(event) => {
-                  const mainEffort = event.target.value as DirectorateId;
-                  onCommanderIntent(mainEffort ? { mainEffort } : undefined);
-                }}
-              >
-                <option value="">Use observed packet concentration</option>
-                {mainEffortChoices.map((entry) => <option key={entry.directorate} value={entry.directorate}>{directorateLabel(entry.directorate)} ({entry.burdenPoints} staff load)</option>)}
-              </select>
-            </label>
-            <label className="text-xs text-ink/65">Deliberately accepted secondary risk
-              <select
-                disabled={!commanderIntent}
-                className="mt-1 block w-full border border-border bg-canvas px-2 py-1.5 text-sm text-ink disabled:opacity-50"
-                value={commanderIntent?.acceptedSecondaryRisk ?? ""}
-                onChange={(event) => onCommanderIntent(commanderIntent ? {
-                  mainEffort: commanderIntent.mainEffort,
-                  ...(event.target.value ? { acceptedSecondaryRisk: event.target.value as DirectorateId } : {}),
-                } : undefined)}
-              >
-                <option value="">No declared secondary risk</option>
-                {secondaryRiskChoices.map((entry) => <option key={entry.directorate} value={entry.directorate}>{directorateLabel(entry.directorate)} ({entry.burdenLevel})</option>)}
-              </select>
-            </label>
-          </div>
-        </section>
         {packetSummary && (
           <section className="border border-border bg-surface px-4 py-3">
             <p className="text-xs uppercase tracking-widest text-ink/50 mb-1">Packet balance</p>
