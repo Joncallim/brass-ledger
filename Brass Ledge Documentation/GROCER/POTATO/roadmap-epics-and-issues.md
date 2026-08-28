@@ -46,13 +46,14 @@ where the engine actually stands, not the older status fields in
 ### Remote Attestation Record
 
 The repository's remote release gate cannot currently attest a revision. The
-latest CI and desktop-package runs for `f90a060` were retried four times and
-each job ended in roughly five seconds with `runner_id: 0`, an empty `steps`
-array, and zero billed milliseconds. GitHub therefore never assigned a hosted
-runner: this is an allocation/platform limitation, not a failing project step.
-The repository is private, Actions are enabled, and the available API does not
-return a more specific allocation reason. Branch protection/ruleset APIs also
-report that the plan does not provide those features for this private repository.
+latest CI and desktop-package runs for `2437937` each have `runner_id: 0` and
+an empty `steps` array, so GitHub never assigned a hosted runner. GitHub's
+check annotation identifies failed recent account payments or an insufficient
+spending limit; this is an account-side allocation blocker, not a failing
+project step. The repository is private, Actions are enabled, and branch
+protection/ruleset APIs report that the current plan does not provide those
+features for this private repository. Track the required account remediation
+and eventual green remote evidence in GitHub issue #92.
 
 Until a hosted runner can be assigned, the alternate attestation is the
 documented local release gate: clean dependency install; GROCER/content/asset
