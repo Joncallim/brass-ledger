@@ -1,5 +1,5 @@
 import type { GameSession, DecisionMemo, StaffFunctionReadout } from "@brass-ledger/shared";
-import { evaluateCampaignObjectives } from "@brass-ledger/shared";
+import { buildStrategicMetricBriefs, evaluateCampaignObjectives } from "@brass-ledger/shared";
 import { StatusBadge } from "../components/StatusBadge";
 import {
   commitmentTypeLabel,
@@ -26,13 +26,17 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
   const openCommitments = state.activeCommitments.filter((c) => c.fulfilled === null);
   const requiredCount = memos.filter((m) => !m.optional).length;
   const optionalCount = memos.filter((m) => m.optional).length;
+  const turnsRemaining = Math.max(0, state.maxTurns - state.turn + 1);
+  // Shared derives the wording and thresholds so no React screen becomes a
+  // second strategic rules engine.
+  const strategicMetrics = buildStrategicMetricBriefs(state);
 
   return (
     <div className="p-6 max-w-4xl">
       <div className="mb-6">
         <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Monthly brief</p>
         <h2 className="text-xl font-semibold tracking-tight text-ink mb-1">
-          Month {state.turn}
+          Month {state.turn} of {state.maxTurns}
           {state.campaignStatus !== "active" && (
             <span className={`ml-3 text-sm ${state.campaignStatus === "won" ? "text-green-400" : "text-red-400"}`}>
               — campaign {state.campaignStatus === "won" ? "won" : "lost"}
@@ -40,8 +44,7 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
           )}
         </h2>
         <p className="text-xs text-ink/40 mb-2">
-          This campaign has a set length, but it is not shown here — track your progress by milestones instead. It
-          can also end early if the headquarters loses domestic cover, credible readiness, or escalation control.
+          {turnsRemaining} {turnsRemaining === 1 ? "decision cycle remains" : "decision cycles remain"}. The campaign can still end early if the headquarters loses domestic cover, credible readiness, or escalation control.
         </p>
         {unmetObjective && (
           <p className="text-sm text-red-400 mb-2">
@@ -65,6 +68,29 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
               <p className="text-sm text-ink leading-relaxed">{briefing.commandersIntent}</p>
             </section>
           )}
+
+          <section>
+            <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Command picture</p>
+            <p className="text-xs text-ink/50 mb-3 leading-relaxed">
+              The few conditions that determine whether you still have room to command. These are current margins,
+              not a promise about uncertain adversary moves.
+            </p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {strategicMetrics.map((metric) => (
+                <details key={metric.key} className="border border-border px-3 py-2 group">
+                  <summary className="cursor-pointer list-none flex items-baseline justify-between gap-2">
+                    <span className="text-xs uppercase tracking-wide text-ink/45">{metric.label}</span>
+                    <span className="font-mono text-sm text-ink">{metric.headline}</span>
+                  </summary>
+                  <p className="mt-1 text-xs text-ink/60">{metric.status}</p>
+                  <div className="mt-2 border-t border-border pt-2 text-xs text-ink/45 space-y-1">
+                    <p className="uppercase tracking-wide text-[10px]">{metric.detailTitle}</p>
+                    {metric.detailLines.map((line) => <p key={line}>{line}</p>)}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </section>
 
           <section>
             <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">How your staff stand today</p>
@@ -181,7 +207,7 @@ export function BriefingScreen({ session, memos, staffReadouts, labels, onProcee
                       {Math.round(c.severity)}
                     </span>
                     <span className="text-ink/60 flex-1 truncate" title={labels.constraint(c.id)}>{labels.constraint(c.id)}</span>
-                    <span className={`text-ink/40 border border-border px-1 ${c.trend === "worsening" ? "border-red-600/70/60 text-red-400" : c.trend === "improving" ? "border-green-600/60 text-green-400" : ""}`}>
+                    <span className={`text-ink/40 border border-border px-1 ${c.trend === "worsening" ? "border-red-600/70 text-red-400" : c.trend === "improving" ? "border-green-600/60 text-green-400" : ""}`}>
                       {constraintTrendLabel[c.trend] ?? c.trend}
                     </span>
                   </div>

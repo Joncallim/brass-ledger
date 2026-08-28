@@ -47,10 +47,9 @@ export function ChiefsPaperScreen({
     onRespond(activeConversation.chiefId, responseId);
   }
 
-  const uniquePositions = Object.values(
-    chiefPositions.reduce<Record<string, ChiefPositionEntry>>((acc, pos) => {
-      const key = pos.chiefId;
-      if (!acc[key]) acc[key] = pos;
+  const positionsByChief = Object.values(
+    chiefPositions.reduce<Record<string, ChiefPositionEntry[]>>((acc, position) => {
+      (acc[position.chiefId] ??= []).push(position);
       return acc;
     }, {}),
   );
@@ -79,7 +78,8 @@ export function ChiefsPaperScreen({
         <CoalitionSummary coalitions={chiefCoalitions} />
 
         <div className="space-y-3 mb-8">
-          {uniquePositions.map((position) => {
+          {positionsByChief.map((positions) => {
+            const position = positions[0]!;
             const advisor = advisorRoster.find((a) => a.chiefId === position.chiefId);
             const chief = scenario.chiefs.find((candidate) => candidate.id === position.chiefId);
             const sprite = advisor && chief
@@ -96,17 +96,41 @@ export function ChiefsPaperScreen({
               })
               : undefined;
             return (
-              <ChiefPositionCard
-                key={position.chiefId}
-                position={position}
-                advisor={advisor}
-                sprite={sprite}
-                memos={memos}
-                onTalk={() => handleTalk(position)}
-              />
+              <div key={position.chiefId} className="border border-border">
+                <ChiefPositionCard
+                  position={position}
+                  advisor={advisor}
+                  sprite={sprite}
+                  memos={memos}
+                  onTalk={() => handleTalk(position)}
+                />
+                {positions.length > 1 && (
+                  <div className="border-t border-border px-4 py-3">
+                    <p className="text-xs uppercase tracking-widest text-ink/40 mb-2">Other selected issues</p>
+                    <div className="space-y-2">
+                      {positions.slice(1).map((issue) => {
+                        const issueMemo = memos.find((memo) => memo.id === issue.memoId);
+                        const issueOption = issueMemo?.options.find((option) => option.id === issue.optionId);
+                        return (
+                        <div key={`${issue.memoId}:${issue.optionId}`} className="flex items-center justify-between gap-3 text-xs">
+                          <div className="min-w-0">
+                            <span className="text-ink/70 font-medium">{issueMemo?.title ?? "Selected issue"}</span>
+                            <span className="text-ink/40"> — {issueOption?.label ?? "Selected option"}</span>
+                            <span className="ml-2 text-ink/50">{issue.requiredCondition}</span>
+                          </div>
+                          <button type="button" onClick={() => handleTalk(issue)} className="shrink-0 border border-border px-2 py-1 hover:border-brass hover:text-brass">
+                            Discuss
+                          </button>
+                        </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             );
           })}
-          {uniquePositions.length === 0 && (
+          {positionsByChief.length === 0 && (
             <p className="text-sm text-ink/40">
               No chief has a position yet, because no option is selected. Go back to the memos and choose an option.
             </p>

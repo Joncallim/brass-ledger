@@ -27,12 +27,40 @@ function migrateStaffFunctionReadout(readout: Record<string, unknown>): Record<s
 export function migrateSessionPayload(payload: unknown): unknown {
   if (typeof payload !== "object" || payload === null) return payload;
   const session = payload as Record<string, unknown>;
+  if (session.saveFormatVersion === "8" && session.contentVersion === "0.11.0") {
+    return { ...session, contentVersion: "0.12.0" };
+  }
+  if (session.saveFormatVersion === "7") {
+    const actions = Array.isArray(session.authoritativeActions) ? session.authoritativeActions : [];
+    // v7 action records lacked an independently verifiable transition
+    // envelope.  Only action-free sessions can be safely upgraded.
+    if (actions.length > 0) return payload;
+    return { ...session, saveFormatVersion: "8", contentVersion: session.contentVersion === "0.11.0" ? "0.12.0" : session.contentVersion, authoritativeActions: [] };
+  }
   // Dialogue 0.12.0 is content-side and deterministic; existing v6 transcripts,
   // agenda memory, state, and replay hashes remain valid. Upgrade the compatibility
   // marker so active and completed 0.11.0 campaigns can continue with the new voice
   // contracts instead of being stranded at an arbitrary content boundary.
-  if (session.saveFormatVersion === "6" && session.contentVersion === "0.11.0") {
-    return { ...session, contentVersion: "0.12.0" };
+  if (session.saveFormatVersion === "6") {
+    // v6 did not record conversations as authoritative actions.  A campaign
+    // with no conversation state can be upgraded safely because relationship
+    // state is then wholly resolver-derived; anything else must remain an
+    // explicitly incompatible record rather than being silently trusted.
+    const state = session.state as Record<string, unknown> | undefined;
+    const historyHasConversation = Array.isArray(session.history) && session.history.some((entry) => {
+      const previous = (entry as Record<string, unknown> | null)?.previousState as Record<string, unknown> | undefined;
+      return Array.isArray(previous?.conversationHistory) && previous.conversationHistory.length > 0;
+    });
+    const hasConversation = Array.isArray(state?.conversationHistory) && state.conversationHistory.length > 0;
+    if (!hasConversation && !historyHasConversation) {
+      return {
+        ...session,
+        saveFormatVersion: "8",
+        contentVersion: session.contentVersion === "0.11.0" ? "0.12.0" : session.contentVersion,
+        authoritativeActions: [],
+      };
+    }
+    return payload;
   }
   if (session.saveFormatVersion !== "5") return payload;
 
@@ -54,7 +82,8 @@ export function migrateSessionPayload(payload: unknown): unknown {
 
   return {
     ...session,
-    saveFormatVersion: "6",
+    saveFormatVersion: "8",
+    authoritativeActions: [],
     history,
   };
 }

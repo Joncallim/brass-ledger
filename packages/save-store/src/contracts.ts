@@ -1,11 +1,20 @@
 import type { GameSession } from "@brass-ledger/shared";
 
+export type SaveRecord = {
+  id: string;
+  fileName: string;
+  status: "healthy" | "corrupt" | "incompatible";
+  reason?: string;
+  session?: GameSession;
+};
+
 export interface SaveStore {
   create(session: GameSession): Promise<void>;
   read(sessionId: string): Promise<GameSession>;
   write(session: GameSession, expectedRevision?: number): Promise<void>;
   delete(sessionId: string): Promise<void>;
   list(): Promise<GameSession[]>;
+  listRecords(): Promise<SaveRecord[]>;
 }
 
 export class InvalidSessionIdError extends Error {

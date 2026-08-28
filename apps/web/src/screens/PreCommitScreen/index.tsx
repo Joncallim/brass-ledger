@@ -76,7 +76,7 @@ export function PreCommitScreen({
       </div>
 
       {error && (
-        <div className="border border-red-600/70/60 bg-red-950/40 text-red-300 px-4 py-3 text-sm mb-5">{error}</div>
+        <div className="border border-red-600/70 bg-red-950/40 text-red-300 px-4 py-3 text-sm mb-5">{error}</div>
       )}
 
       <div className="space-y-4 mb-6">
@@ -88,7 +88,7 @@ export function PreCommitScreen({
                 <div key={event.id}>
                   <p className="text-sm font-semibold text-yellow-200">{event.title}</p>
                   <p className="text-xs text-yellow-100/70">Bet: {event.causalContext!.betLabel}</p>
-                  <p className="text-xs text-yellow-100/70">{event.causalContext!.maturedRiskLabel}; threshold: {event.doctrineTrigger!.conditions.map((condition) => `${condition.variable} ${condition.comparison} ${condition.threshold}`).join(", ")}; sustained {event.doctrineTrigger!.sustainedTurns} turns.</p>
+                  <p className="text-xs text-yellow-100/70">{event.causalContext!.maturedRiskLabel} This risk is building through repeated choices; exact engine thresholds are intentionally not shown in the command brief.</p>
                   <p className="text-xs text-yellow-100/70">Consequence: {event.summary}</p>
                 </div>
               ))}

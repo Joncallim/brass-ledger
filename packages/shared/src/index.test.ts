@@ -602,7 +602,7 @@ test("roster identity is order-independent and sprite derivation does not mutate
 test("gameSessionSchema strips output-only sprite keys nested in a real session export", () => {
   const session = {
     id: "00000000-0000-0000-0000-000000000099",
-    saveFormatVersion: "6",
+    saveFormatVersion: "8",
     engineVersion: "0.1.0",
     revision: 0,
     scenarioId: "test-scenario",
@@ -1565,7 +1565,7 @@ test("turnResultSchema accepts a doctrine event in triggeredEvents", () => {
 test("gameSessionSchema round-trips a mid-streak doctrineMaturity state", () => {
   const session = {
     id: "00000000-0000-0000-0000-000000000000",
-    saveFormatVersion: "6",
+    saveFormatVersion: "8",
     engineVersion: "0.1.0",
     revision: 0,
     scenarioId: "test-scenario",
@@ -1583,10 +1583,10 @@ test("gameSessionSchema round-trips a mid-streak doctrineMaturity state", () => 
   assert.equal(parsed.state.doctrineMaturity["doctrine-sustainment-patience-gap"]?.acceptedRiskRefs.length, 1);
 });
 
-test("gameSessionSchema parses a legacy-only v6 session roster (no sprite fields stored)", () => {
+test("gameSessionSchema parses a current session roster without sprite output fields", () => {
   const parsed = gameSessionSchema.parse({
     id: "00000000-0000-0000-0000-000000000001",
-    saveFormatVersion: "6",
+    saveFormatVersion: "8",
     engineVersion: "0.1.0",
     revision: 0,
     scenarioId: "test-scenario",

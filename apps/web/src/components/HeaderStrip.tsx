@@ -26,7 +26,7 @@ export function HeaderStrip({ briefing, state, onNavigateHub, onNavigateRecords 
         <>
           <span className="text-ink/30">|</span>
           <span className="text-xs text-ink/60 font-mono">
-            Month {state.turn}
+            Month {Math.min(state.turn, state.maxTurns)} of {state.maxTurns}
           </span>
           <span className="text-ink/30">|</span>
           <span className={`text-xs font-mono ${

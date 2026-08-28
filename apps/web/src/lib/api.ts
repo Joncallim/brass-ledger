@@ -100,13 +100,14 @@ export function openChiefConversation(
   chiefId: string,
   memoId: string,
   optionId: string,
+  selections: MemoSelection[],
   expectedRevision?: number,
 ) {
   return fetchJson<SessionEnvelope & { conversation: import("@brass-ledger/shared").ChiefConversationRecord }>(
     `${BASE}/sessions/${sessionId}/chiefs/${chiefId}/conversation/open`,
     {
       method: "POST",
-      body: JSON.stringify({ memoId, optionId, expectedRevision }),
+      body: JSON.stringify({ memoId, optionId, selections, expectedRevision }),
     },
   );
 }

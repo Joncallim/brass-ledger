@@ -15,7 +15,7 @@ const positionMeta = {
   support: { symbol: "▲", label: "Supports", color: "text-green-400 border-green-700/60 bg-green-950/40" },
   accept_risk: { symbol: "~", label: "Accepts the risk", color: "text-yellow-400 border-yellow-700/60 bg-yellow-950/40" },
   request_conditions: { symbol: "~", label: "Wants conditions", color: "text-yellow-400 border-yellow-700/60 bg-yellow-950/40" },
-  oppose: { symbol: "▼", label: "Objects", color: "text-red-400 border-red-600/70/60 bg-red-950/40" },
+  oppose: { symbol: "▼", label: "Objects", color: "text-red-400 border-red-600/70 bg-red-950/40" },
 };
 
 export function ChiefPositionCard({ position, advisor, sprite, memos, onTalk }: Props) {

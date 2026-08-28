@@ -1,5 +1,5 @@
 import { access, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
-import { constants, existsSync, readdirSync } from "node:fs";
+import { constants, copyFileSync, existsSync, mkdirSync, readdirSync, renameSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
@@ -16,6 +16,7 @@ import {
   SaveStoreIOError,
   SessionExistsError,
   SessionNotFoundError,
+  type SaveRecord,
   type SaveStore,
 } from "./contracts.js";
 
@@ -256,6 +257,16 @@ export function createFileSystemSaveStore(saveDir: string): SaveStore {
     },
 
     async list() {
+      const records = await this.listRecords();
+      return records
+        .filter((record): record is SaveRecord & { status: "healthy"; session: GameSession } =>
+          record.status === "healthy" && record.session !== undefined,
+        )
+        .map((record) => record.session)
+        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+    },
+
+    async listRecords() {
       await ensureStore();
       let files: string[];
       try {
@@ -264,19 +275,45 @@ export function createFileSystemSaveStore(saveDir: string): SaveStore {
         throw new SaveStoreIOError("list", null, { cause: error });
       }
 
-      const sessions: GameSession[] = [];
+      const records: SaveRecord[] = [];
       for (const fileName of files) {
         const sessionId = fileName.slice(0, -".json".length);
         try {
-          sessions.push(await readSessionFile(path.join(dataDir, fileName), sessionId));
+          const session = await readSessionFile(path.join(dataDir, fileName), sessionId);
+          records.push({ id: sessionId, fileName, status: "healthy", session });
         } catch (error) {
           if (error instanceof SaveStoreCorruptError || error instanceof SessionNotFoundError) {
+            let status: SaveRecord["status"] = "corrupt";
+            try {
+              const raw = await readFile(path.join(dataDir, fileName), "utf8");
+              const parsed = JSON.parse(raw) as { saveFormatVersion?: unknown };
+              if (
+                parsed &&
+                typeof parsed === "object" &&
+                "saveFormatVersion" in parsed &&
+                parsed.saveFormatVersion !== "8"
+              ) {
+                status = "incompatible";
+              }
+            } catch {
+              // It is already a corrupt record. Do not let an inspection failure hide it.
+            }
+            records.push({
+              id: sessionId,
+              fileName,
+              status,
+              reason: status === "incompatible"
+                ? "This campaign was saved by an unsupported Brass Ledger version and was not opened."
+                : "This campaign file is damaged or incomplete and was not opened.",
+            });
             continue;
           }
           throw error;
         }
       }
-      return sessions.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+      return records.sort((left, right) =>
+        (right.session?.updatedAt ?? "").localeCompare(left.session?.updatedAt ?? ""),
+      );
     },
   };
 }
@@ -309,17 +346,38 @@ export function resolveSaveDirWithMigration(legacyCandidates: string[]): string 
   if (process.env.BRASS_LEDGER_SAVE_DIR) {
     return path.resolve(process.env.BRASS_LEDGER_SAVE_DIR);
   }
+  const destination = resolveDefaultSaveDir();
+  // Once the durable location contains any records it is authoritative.  This
+  // prevents a repository checkout or a replaced release folder from taking
+  // ownership back on a later launch.
+  try {
+    if (existsSync(destination) && readdirSync(destination).some((entry) => entry.endsWith(".json"))) return destination;
+  } catch {
+    return destination;
+  }
   for (const candidate of legacyCandidates) {
     try {
-      if (existsSync(candidate)) {
-        const entries = readdirSync(candidate);
-        if (entries.some((entry) => entry.endsWith(".json"))) return candidate;
+      if (path.resolve(candidate) !== path.resolve(destination) && existsSync(candidate)) {
+        const entries = readdirSync(candidate).filter((entry) => entry.endsWith(".json"));
+        if (entries.length > 0) {
+          mkdirSync(destination, { recursive: true });
+          for (const entry of entries) {
+            const source = path.join(candidate, entry);
+            const target = path.join(destination, entry);
+            if (existsSync(target)) continue;
+            const staging = `${target}.migration-${process.pid}-${Date.now()}`;
+            copyFileSync(source, staging);
+            renameSync(staging, target);
+          }
+          return destination;
+        }
       }
     } catch {
-      // An inaccessible legacy directory cannot be safely migrated.
+      // Keep the destination authoritative; a later startup can retry a
+      // partially completed copy without ever serving directly from legacy.
     }
   }
-  return resolveDefaultSaveDir();
+  return destination;
 }
 
 export function isSaveStoreError(error: unknown): boolean {

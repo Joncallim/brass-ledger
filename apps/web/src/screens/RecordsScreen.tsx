@@ -57,7 +57,7 @@ export function RecordsScreen({
       </div>
 
       {error && (
-        <div className="border border-red-600/70/60 bg-red-950/40 text-red-300 px-4 py-3 text-sm mb-5">{error}</div>
+        <div className="border border-red-600/70 bg-red-950/40 text-red-300 px-4 py-3 text-sm mb-5">{error}</div>
       )}
 
       <div className="flex gap-3 mb-6">
@@ -96,20 +96,24 @@ export function RecordsScreen({
           </thead>
           <tbody>
             {sessions.map((s) => {
+              const unavailable = s.recordStatus !== undefined;
               const validation = validationResults[s.id];
               return (
                 <tr key={s.id} className="border-b border-border/50 hover:bg-paper/40">
                   <td className="px-3 py-2 font-mono text-xs text-ink/50">{s.id.slice(0, 12)}…</td>
-                  <td className="px-3 py-2 text-ink/70">{s.turn}</td>
-                  <td className="px-3 py-2 text-ink/70">{s.milestonesMet} of {s.milestonesTotal}</td>
+                  <td className="px-3 py-2 text-ink/70">{unavailable ? "—" : s.turn}</td>
+                  <td className="px-3 py-2 text-ink/70">{unavailable ? "—" : `${s.milestonesMet} of ${s.milestonesTotal}`}</td>
                   <td className="px-3 py-2">
-                    <span className={`text-xs ${s.campaignStatus === "won" ? "text-green-400" : s.campaignStatus === "lost" ? "text-red-400" : "text-ink/60"}`}>
-                      {campaignStatusLabel[s.campaignStatus] ?? s.campaignStatus}
+                    <span className={`text-xs ${unavailable ? "text-red-400" : s.campaignStatus === "won" ? "text-green-400" : s.campaignStatus === "lost" ? "text-red-400" : "text-ink/60"}`}>
+                      {unavailable ? (s.recordStatus === "corrupt" ? "Damaged file" : "Incompatible file") : (campaignStatusLabel[s.campaignStatus ?? ""] ?? s.campaignStatus)}
                     </span>
+                    {unavailable && <p className="mt-1 max-w-xs text-xs leading-snug text-ink/50">{s.recordReason}</p>}
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs text-ink/60">{Math.round(s.campaignScore)}</td>
+                  <td className="px-3 py-2 font-mono text-xs text-ink/60">{unavailable ? "—" : Math.round(s.campaignScore ?? 0)}</td>
                   <td className="px-3 py-2">
-                    {validation ? (
+                    {unavailable ? (
+                      <span className="text-xs text-ink/40">Not available</span>
+                    ) : validation ? (
                       <span className={`text-xs ${validation.ok ? "text-green-400" : "text-red-400"}`}>
                         {validation.ok
                           ? `✓ ${validation.checkedTurns} ${pluralize(validation.checkedTurns, "month")} verified`
@@ -132,7 +136,7 @@ export function RecordsScreen({
                       <button
                         type="button"
                         onClick={() => onLoad(s.id)}
-                        disabled={busy}
+                        disabled={busy || unavailable}
                         className="text-xs border border-border px-2 py-1 hover:border-brass disabled:opacity-40"
                       >
                         Open
@@ -140,8 +144,8 @@ export function RecordsScreen({
                       <button
                         type="button"
                         onClick={() => onExport(s.id)}
-                        disabled={busy}
-                        title="Save a copy of this campaign to a file"
+                        disabled={busy || unavailable}
+                        title={unavailable ? "Only a safe campaign can be exported through the normal export path" : "Save a copy of this campaign to a file"}
                         className="text-xs border border-border px-2 py-1 hover:border-brass disabled:opacity-40"
                       >
                         Save to file
@@ -152,7 +156,7 @@ export function RecordsScreen({
                           <button
                             type="button"
                             onClick={() => { onDelete(s.id); setConfirmDelete(null); }}
-                            className="text-xs border border-red-600/70/60 text-red-400 px-2 py-1 hover:bg-red-950/40"
+                            className="text-xs border border-red-600/70 text-red-400 px-2 py-1 hover:bg-red-950/40"
                           >
                             Yes, delete
                           </button>
@@ -169,7 +173,7 @@ export function RecordsScreen({
                           type="button"
                           onClick={() => setConfirmDelete(s.id)}
                           disabled={busy}
-                          className="text-xs border border-border px-2 py-1 hover:border-red-600/70/60 hover:text-red-400 disabled:opacity-40"
+                          className="text-xs border border-border px-2 py-1 hover:border-red-600/70 hover:text-red-400 disabled:opacity-40"
                         >
                           Delete
                         </button>

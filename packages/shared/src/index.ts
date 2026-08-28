@@ -1495,9 +1495,43 @@ export const scenarioDefinitionSchema = z.object({
 });
 export type ScenarioDefinition = z.infer<typeof scenarioDefinitionSchema>;
 
+// Every mutation made between turn resolutions must be present here.  A save is
+// not trustworthy merely because its turn inputs replay: the relationship state
+// that exists immediately before a turn must be reconstructable too.
+const authoritativeActionContextSchema = {
+  sequence: z.number().int().min(1),
+  turn: z.number().int().min(1),
+  revisionBefore: z.number().int().min(0),
+  revisionAfter: z.number().int().min(1),
+  scenarioId: z.string(),
+  contentVersion: z.string(),
+  preStateHash: z.string().regex(/^[a-f0-9]{64}$/),
+  postStateHash: z.string().regex(/^[a-f0-9]{64}$/),
+};
+
+export const authoritativeActionSchema = z.discriminatedUnion("type", [
+  z.object({
+    ...authoritativeActionContextSchema,
+    type: z.literal("chief-conversation-open"),
+    chiefId: z.string(),
+    memoId: z.string(),
+    optionId: z.string(),
+    // The packet is evidence for why this chief/topic was legal. It is kept
+    // with the action so replay never has to trust a browser-only selection.
+    packetSelections: z.array(memoSelectionSchema).min(1),
+  }),
+  z.object({
+    ...authoritativeActionContextSchema,
+    type: z.literal("chief-conversation-response"),
+    chiefId: z.string(),
+    responseId: z.string(),
+  }),
+]);
+export type AuthoritativeAction = z.infer<typeof authoritativeActionSchema>;
+
 export const gameSessionSchema = z.object({
   id: z.string(),
-  saveFormatVersion: z.literal("6"),
+  saveFormatVersion: z.literal("8"),
   engineVersion: z.literal("0.1.0").default("0.1.0"),
   revision: z.number().int().min(0).default(0),
   scenarioId: z.string(),
@@ -1506,6 +1540,7 @@ export const gameSessionSchema = z.object({
   state: campaignStateSchema,
   initialState: campaignStateSchema,
   turnInputs: z.array(turnInputSchema),
+  authoritativeActions: z.array(authoritativeActionSchema).default([]),
   history: z.array(turnResultSchema),
   updatedAt: z.string(),
 });
@@ -1530,7 +1565,7 @@ export const replayValidationSchema = z.object({
   ok: z.boolean(),
   checkedTurns: z.number().int(),
   failedAtTurn: z.number().int().nullable().default(null),
-  failureKind: z.enum(["none", "history_length_mismatch", "replay_hash_mismatch", "state_mismatch", "final_state_mismatch"]).default("none"),
+  failureKind: z.enum(["none", "history_length_mismatch", "authoritative_action_mismatch", "replay_hash_mismatch", "state_mismatch", "final_state_mismatch"]).default("none"),
   diffs: z.array(replayValidationDiffSchema),
 });
 export type ReplayValidation = z.infer<typeof replayValidationSchema>;
@@ -4606,7 +4641,7 @@ export function createInitialGameSession(scenario: ScenarioDefinition, sessionSe
   const initialState = deepClone(scenario.initialState);
   return {
     id: scenario.id,
-    saveFormatVersion: "6",
+    saveFormatVersion: "8",
     engineVersion: "0.1.0",
     revision: 0,
     scenarioId: scenario.id,
@@ -4615,6 +4650,7 @@ export function createInitialGameSession(scenario: ScenarioDefinition, sessionSe
     state: initialState,
     initialState: deepClone(initialState),
     turnInputs: [],
+    authoritativeActions: [],
     history: [],
     updatedAt: timestamp,
   };

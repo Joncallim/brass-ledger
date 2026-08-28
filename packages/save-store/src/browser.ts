@@ -328,5 +328,14 @@ export function createBrowserSaveStore(_storage?: Storage): SaveStore {
         right.updatedAt.localeCompare(left.updatedAt),
       );
     },
+
+    async listRecords() {
+      const { sessions } = readAll();
+      return [...sessions.values()]
+        .map((session) => ({ id: session.id, fileName: `${session.id}.json`, status: "healthy" as const, session }))
+        .sort((left, right) =>
+          (right.session?.updatedAt ?? "").localeCompare(left.session?.updatedAt ?? ""),
+        );
+    },
   };
 }

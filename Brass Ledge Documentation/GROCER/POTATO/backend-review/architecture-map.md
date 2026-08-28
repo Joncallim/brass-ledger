@@ -19,7 +19,7 @@ flowchart LR
   Server --> Content["@brass-ledger/content scenario"]
   Server --> Shared["@brass-ledger/shared schemas + helpers"]
   Server --> Sim["@brass-ledger/sim turn engine"]
-  Server --> Store["data/saves/*.json"]
+  Server --> Store["per-user saves/*.json"]
   Sim --> Shared
   Content --> Shared
 ```
@@ -32,12 +32,12 @@ flowchart LR
 | `packages/sim` | Deterministic game turn resolution, preview, replay validation | [[components/simulation]] |
 | `packages/shared` | Zod contracts, state summaries, advisor/chief conversation helpers | [[components/shared-contracts]] |
 | `packages/content` | Scenario data and content validation script | [[components/content]] |
-| `data/saves` | JSON save persistence | [[components/file-save-store]] |
+| per-user save directory | JSON save persistence | [[components/file-save-store]] |
 
 ## Key Data Flow
 
 1. New sessions are created in `apps/server/src/index.ts` using `createInitialGameSession(soloScenario, sessionId)`.
-2. The server writes the whole session to `data/saves/{id}.json`.
+2. The server writes each authoritative session to the configured per-user save directory.
 3. Turn previews call `previewTurn`, which internally calls `resolveTurn` but does not persist.
 4. Turn resolution reads the saved session, optionally checks `expectedRevision`, parses `TurnInput`, calls `resolveTurn`, appends input/result history, increments `revision`, validates replay, writes the next session, and returns the payload.
 5. Conversations optionally check `expectedRevision`, mutate `state.conversationHistory` and `state.chiefTrust`, increment `revision`, then write the whole session back.

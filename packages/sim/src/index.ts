@@ -118,12 +118,17 @@ import {
   buildChiefPositions,
   buildDirectorateBurden,
   buildStaffFunctionReadouts,
+  continueChiefConversation,
   defaultDoctrineMechanicsState,
   directorateLabel,
   evaluateCampaignObjectives,
+  getConversationRecordForTurn,
   moduleEffectLaneSchema,
   staffFunctionForDirectorate,
   summarizeState,
+  startChiefConversation,
+  updateChiefAgendaMemoryFromConversation,
+  updateCommitmentsFromChiefConversation,
   updateChiefAgendaMemoryFromPositions,
   underpricedLaneWarningSuffix,
 } from "@brass-ledger/shared";
@@ -1959,6 +1964,28 @@ function normalizeState(state: CampaignState) {
   return JSON.parse(JSON.stringify(state, (_key, value) => (typeof value === "number" ? Number(value.toFixed(3)) : value))) as CampaignState;
 }
 
+function canonicalJson(value: unknown): string {
+  if (value === null) return "null";
+  if (typeof value === "number") return JSON.stringify(Object.is(value, -0) ? 0 : value);
+  if (typeof value === "string" || typeof value === "boolean") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .filter(([, entry]) => entry !== undefined)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`)
+      .join(",")}}`;
+  }
+  throw new Error("Cannot canonicalize an unsupported authoritative state value.");
+}
+
+/** Stable, full-state digest used to bind an inter-turn action to the exact
+ * transition it claims to have caused.  It is a verifier input, never a
+ * substitute for re-executing the action. */
+export function campaignStateHash(state: CampaignState) {
+  return createHash("sha256").update(canonicalJson(normalizeState(state))).digest("hex");
+}
+
 function turnReplayComparableState(state: CampaignState) {
   const comparable = normalizeState(state);
   return {
@@ -2643,11 +2670,95 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
   };
 }
 
-export function validateReplaySession(scenario: ScenarioDefinition, session: { initialState: CampaignState; turnInputs: TurnInput[]; history: TurnResult[]; state: CampaignState }): ReplayValidation {
+function replayAuthoritativeActions(
+  scenario: ScenarioDefinition,
+  state: CampaignState,
+  actions: Array<import("@brass-ledger/shared").AuthoritativeAction>,
+  revision: number,
+  expectedSequence: number,
+): { state: CampaignState; revision: number; nextSequence: number; error: string | null } {
+  let current = cloneState(state);
+  let currentRevision = revision;
+  let sequence = expectedSequence;
+  for (const action of actions) {
+    if (action.sequence !== sequence) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action sequence is not contiguous" };
+    if (action.turn !== current.turn) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action turn does not match replay state" };
+    if (action.revisionBefore !== currentRevision || action.revisionAfter !== currentRevision + 1) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action revision context is invalid" };
+    if (action.scenarioId !== scenario.id || action.contentVersion !== scenario.contentVersion) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action scenario/content identity is invalid" };
+    if (action.preStateHash !== campaignStateHash(current)) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action pre-state digest does not match replay state" };
+    const chief = scenario.chiefs.find((entry) => entry.id === action.chiefId);
+    if (!chief) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action references an unknown chief" };
+    if (action.type === "chief-conversation-open") {
+      if (getConversationRecordForTurn(current, chief.id)) return { state: current, revision: currentRevision, nextSequence: sequence, error: "chief was engaged more than once in one month" };
+      const memos = deriveDecisionMemos(scenario, current);
+      const selectedMemoIds = new Set<string>();
+      for (const selection of action.packetSelections) {
+        if (selectedMemoIds.has(selection.memoId)) return { state: current, revision: currentRevision, nextSequence: sequence, error: "conversation packet repeats a memo" };
+        selectedMemoIds.add(selection.memoId);
+        const selectedMemo = memos.find((entry) => entry.id === selection.memoId);
+        if (!selectedMemo?.options.some((entry) => entry.id === selection.optionId)) {
+          return { state: current, revision: currentRevision, nextSequence: sequence, error: "conversation packet references an unavailable selection" };
+        }
+      }
+      const memo = memos.find((entry) => entry.id === action.memoId);
+      const option = memo?.options.find((entry) => entry.id === action.optionId);
+      if (!memo || !option) return { state: current, revision: currentRevision, nextSequence: sequence, error: "conversation references an unavailable option" };
+      if (!action.packetSelections.some((selection) => selection.memoId === memo.id && selection.optionId === option.id)) {
+        return { state: current, revision: currentRevision, nextSequence: sequence, error: "conversation target is absent from its recorded packet" };
+      }
+      const burden = buildDirectorateBurden(memos, [{ memoId: memo.id, optionId: option.id }], scenario.staffCapacities, [], scenario.doctrineLens.burdenBias);
+      const position = buildChiefPositions(scenario.chiefs, current, memo, option, burden, scenario.staffFunctions, scenario.doctrineLens)
+        .find((entry) => entry.chiefId === chief.id);
+      if (!position) return { state: current, revision: currentRevision, nextSequence: sequence, error: "conversation has no chief position" };
+      current = {
+        ...current,
+        conversationHistory: [...current.conversationHistory, startChiefConversation(chief, memo, option, position, current)],
+      };
+      if (action.postStateHash !== campaignStateHash(current)) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action post-state digest does not match transition" };
+      currentRevision += 1;
+      sequence += 1;
+      continue;
+    }
+
+    const conversation = getConversationRecordForTurn(current, chief.id);
+    if (!conversation || conversation.status === "completed") return { state: current, revision: currentRevision, nextSequence: sequence, error: "response has no active conversation" };
+    const memos = deriveDecisionMemos(scenario, current);
+    const memo = memos.find((entry) => entry.id === conversation.memoId);
+    const option = memo?.options.find((entry) => entry.id === conversation.optionId);
+    if (!memo || !option) return { state: current, revision: currentRevision, nextSequence: sequence, error: "response references an unavailable option" };
+    let nextConversation: ReturnType<typeof continueChiefConversation>;
+    try {
+      nextConversation = continueChiefConversation(conversation, chief, memo, option, current, action.responseId);
+    } catch {
+      return { state: current, revision: currentRevision, nextSequence: sequence, error: "response is not legal for the conversation stage" };
+    }
+    current = {
+      ...current,
+      chiefTrust: { ...current.chiefTrust, [chief.id]: nextConversation.trustAfter },
+      chiefAgendaMemory: nextConversation.status === "completed"
+        ? updateChiefAgendaMemoryFromConversation(current, chief, memo, option, nextConversation)
+        : current.chiefAgendaMemory,
+      activeCommitments: nextConversation.status === "completed"
+        ? updateCommitmentsFromChiefConversation(current, chief, memo, option, nextConversation)
+        : current.activeCommitments,
+      conversationHistory: current.conversationHistory.map((entry) => entry.turn === current.turn && entry.chiefId === chief.id ? nextConversation : entry),
+    };
+    if (action.postStateHash !== campaignStateHash(current)) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action post-state digest does not match transition" };
+    currentRevision += 1;
+    sequence += 1;
+  }
+  return { state: current, revision: currentRevision, nextSequence: sequence, error: null };
+}
+
+export function validateReplaySession(scenario: ScenarioDefinition, session: { initialState: CampaignState; turnInputs: TurnInput[]; authoritativeActions?: Array<import("@brass-ledger/shared").AuthoritativeAction>; history: TurnResult[]; state: CampaignState; revision?: number }): ReplayValidation {
   let current = cloneState(session.initialState);
   let failedAtTurn: number | null = null;
   let failureKind: ReplayValidation["failureKind"] = "none";
   const diffs: ReplayValidation["diffs"] = [];
+  const actions = session.authoritativeActions ?? [];
+  let actionIndex = 0;
+  let revision = 0;
+  let nextSequence = 1;
 
   if (session.turnInputs.length !== session.history.length) {
     const turn = session.turnInputs[session.history.length]?.turn ?? session.state.turn;
@@ -2669,7 +2780,26 @@ export function validateReplaySession(scenario: ScenarioDefinition, session: { i
 
   for (let index = 0; index < session.turnInputs.length; index += 1) {
     const actual = session.history[index];
-    const preTurnDiffs = diffStates(turnReplayComparableState(current), turnReplayComparableState(actual.previousState)).map((entry) => ({
+    // The ledger is an ordered evidence stream, not a bag to be searched by
+    // turn. Consuming only the contiguous prefix means an action spliced in
+    // from a later turn (or a reordered record) cannot be skipped over and
+    // accidentally treated as though it belonged to another transition.
+    const pending: typeof actions = [];
+    while (actions[actionIndex]?.turn === current.turn) {
+      pending.push(actions[actionIndex]!);
+      actionIndex += 1;
+    }
+    const replayedActions = replayAuthoritativeActions(scenario, current, pending, revision, nextSequence);
+    if (replayedActions.error) {
+      failedAtTurn = current.turn;
+      failureKind = "authoritative_action_mismatch";
+      diffs.push({ turn: current.turn, path: "authoritativeActions", expected: "legal deterministic action", actual: replayedActions.error });
+      break;
+    }
+    current = replayedActions.state;
+    revision = replayedActions.revision;
+    nextSequence = replayedActions.nextSequence;
+    const preTurnDiffs = diffStates(normalizeState(current), normalizeState(actual.previousState)).map((entry) => ({
       turn: actual.input.turn,
       path: entry.path,
       expected: JSON.stringify(entry.expected),
@@ -2682,7 +2812,7 @@ export function validateReplaySession(scenario: ScenarioDefinition, session: { i
       break;
     }
 
-    const expected = resolveTurn(scenario, actual.previousState, session.turnInputs[index]);
+    const expected = resolveTurn(scenario, current, session.turnInputs[index]);
     if (expected.replayHash !== actual.replayHash) {
       failedAtTurn = actual.input.turn;
       failureKind = "replay_hash_mismatch";
@@ -2703,10 +2833,33 @@ export function validateReplaySession(scenario: ScenarioDefinition, session: { i
       break;
     }
     current = actual.nextState;
+    revision += 1;
   }
 
   if (failedAtTurn == null) {
-    const finalStateDiffs = diffStates(turnReplayComparableState(current), turnReplayComparableState(session.state)).map((entry) => ({
+    const remaining = actions.slice(actionIndex);
+    const replayedActions = replayAuthoritativeActions(scenario, current, remaining, revision, nextSequence);
+    if (replayedActions.error) {
+      failedAtTurn = current.turn;
+      failureKind = "authoritative_action_mismatch";
+      diffs.push({ turn: current.turn, path: "authoritativeActions", expected: "legal deterministic action", actual: replayedActions.error });
+    } else {
+      current = replayedActions.state;
+      revision = replayedActions.revision;
+      nextSequence = replayedActions.nextSequence;
+    }
+  }
+
+  if (failedAtTurn == null) {
+    if (session.revision !== undefined && session.revision !== revision) {
+      failedAtTurn = session.state.turn;
+      failureKind = "authoritative_action_mismatch";
+      diffs.push({ turn: session.state.turn, path: "revision", expected: String(revision), actual: String(session.revision) });
+    }
+  }
+
+  if (failedAtTurn == null) {
+    const finalStateDiffs = diffStates(normalizeState(current), normalizeState(session.state)).map((entry) => ({
       turn: session.state.turn,
       path: entry.path,
       expected: JSON.stringify(entry.expected),

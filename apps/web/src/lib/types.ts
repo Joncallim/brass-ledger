@@ -12,12 +12,14 @@ import type {
 
 export type SessionSummary = {
   id: string;
-  turn: number;
-  milestonesMet: number;
-  milestonesTotal: number;
-  campaignStatus: string;
-  campaignScore: number;
-  summary: string;
+  turn?: number;
+  milestonesMet?: number;
+  milestonesTotal?: number;
+  campaignStatus?: string;
+  campaignScore?: number;
+  summary?: string;
+  recordStatus?: "corrupt" | "incompatible";
+  recordReason?: string;
 };
 
 export type SessionEnvelope = {

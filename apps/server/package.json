@@ -18,7 +18,7 @@
     "@brass-ledger/save-store": "*",
     "@brass-ledger/shared": "*",
     "@brass-ledger/sim": "*",
-    "fastify": "^5.6.0",
+    "fastify": "^5.12.1",
     "@fastify/cors": "^11.1.0"
   },
   "devDependencies": {

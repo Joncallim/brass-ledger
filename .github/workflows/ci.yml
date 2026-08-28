@@ -16,6 +16,7 @@ jobs:
       - run: npm ci
       - run: npm run lint:content
       - run: npm run lint:potato
+      - run: npm run lint:assets
       - run: npm test
       - run: npm run build
       - run: npx playwright install --with-deps chromium

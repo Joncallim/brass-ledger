@@ -15,7 +15,7 @@ The project is built as a solo-developer-friendly TypeScript monorepo with share
 | `packages/sim` | Deterministic turn resolver, preview, replay validation, and engine tests. |
 | `packages/shared` | Zod schemas, serializable contracts, readout helpers, and advisor helpers. |
 | `packages/content` | Scenario data and content validation. |
-| `data/saves` | Local JSON saves used by the server. |
+| per-user application data | Local JSON saves used by the server (`BRASS_LEDGER_SAVE_DIR` can override the location). |
 | `Brass Ledge Documentation/` | Obsidian vault. The folder name is historical; the project name is Brass Ledger. |
 
 ## Getting Started
@@ -163,7 +163,7 @@ Supplying your own turn input keeps the accepted-risk contract strict:
 
 Use either a full `session` object or a full exported session as `exportData`. If projected S1-S5 warnings are not acknowledged, the API returns `428` with `acceptedRiskCandidates`. Add those candidates to `acceptedRiskOverrides`, or set `"autoAcceptRisks": true` for unattended batch simulation.
 
-The endpoint is intended for custom front-ends, tools, and batch runners. It does not persist to `data/saves`; use the session routes when you need authoritative saved campaigns.
+The endpoint is intended for custom front-ends, tools, and batch runners. It does not persist sessions; use the session routes when you need authoritative saved campaigns in the configured per-user save directory.
 
 ## Browser And Session API
 

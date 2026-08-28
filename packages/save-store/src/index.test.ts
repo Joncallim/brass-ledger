@@ -1,6 +1,6 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { chmod, mkdir, mkdtemp, readFile, rm, stat, utimes } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 
@@ -45,7 +45,7 @@ describe("FileSystemSaveStore CRUD", () => {
     const read = await store.read("00000000-0000-1000-8000-000000000001");
     assert.equal(read.id, session.id);
     assert.equal(read.revision, 0);
-    assert.equal(read.saveFormatVersion, "6");
+    assert.equal(read.saveFormatVersion, "8");
   });
 
   it("creating a duplicate session throws", async () => {
@@ -670,6 +670,28 @@ describe("Unreadable store", () => {
       await rm(tmp, { recursive: true, force: true });
     }
   });
+
+  it("lists corrupt and incompatible files as records without loading them", async () => {
+    const tmp = await mkdtemp(path.join(os.tmpdir(), "brass-ledger-test-records-"));
+    const corruptId = "00000000-0000-1000-8000-000000000093";
+    const incompatibleId = "00000000-0000-1000-8000-000000000094";
+    try {
+      await writeFile(path.join(tmp, `${corruptId}.json`), "{truncated", "utf8");
+      await writeFile(path.join(tmp, `${incompatibleId}.json`), JSON.stringify({ saveFormatVersion: "7" }), "utf8");
+      const store = createFileSystemSaveStore(tmp);
+      const records = await store.listRecords();
+      assert.deepEqual(
+        records.map((record) => ({ id: record.id, status: record.status, hasSession: Boolean(record.session) })),
+        [
+          { id: corruptId, status: "corrupt", hasSession: false },
+          { id: incompatibleId, status: "incompatible", hasSession: false },
+        ],
+      );
+      assert.deepEqual(await store.list(), []);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("v5 to v6 save migration", () => {
@@ -729,7 +751,7 @@ describe("v5 to v6 save migration", () => {
     await writeFile(path.join(saveDir, `${id}.json`), JSON.stringify(v5Payload), "utf8");
 
     const migrated = await store.read(id);
-    assert.equal(migrated.saveFormatVersion, "6");
+    assert.equal(migrated.saveFormatVersion, "8");
     assert.equal(migrated.history.length, v6Session.history.length);
     for (const [index, turnResult] of migrated.history.entries()) {
       for (const readout of turnResult.staffFunctions) {

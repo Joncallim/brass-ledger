@@ -6,7 +6,7 @@ import path from "node:path";
 import { scenarioSummarySchema, chiefSpriteDeterministicSeed, gameSessionSchema, turnInputSchema } from "@brass-ledger/shared";
 import { hashPromptText } from "@brass-ledger/headless";
 import { soloScenario } from "@brass-ledger/content";
-import { ineligibleStaffNegotiations, resolveTurn } from "@brass-ledger/sim";
+import { campaignStateHash, ineligibleStaffNegotiations, resolveTurn } from "@brass-ledger/sim";
 
 const saveDir = await mkdtemp(path.join(tmpdir(), "brass-ledger-routes-"));
 process.env.NODE_ENV = "test";
@@ -46,6 +46,34 @@ async function withAcceptedRiskCandidates(sessionId: string, input: Record<strin
     ...input,
     acceptedRiskOverrides: preview.json().acceptedRiskCandidates,
   };
+}
+
+async function exportConversationLedger() {
+  const created = await createSession();
+  const memo = created.memos[0];
+  const option = memo.options[0];
+  const chiefId = created.session.advisorRoster[0].chiefId;
+  const opened = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${created.session.id}/chiefs/${chiefId}/conversation/open`,
+    payload: { memoId: memo.id, optionId: option.id, selections: [{ memoId: memo.id, optionId: option.id }], expectedRevision: 0 },
+  });
+  assert.equal(opened.statusCode, 200);
+  const responseId = opened.json().conversation.choices[0].id;
+  const responded = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${created.session.id}/chiefs/${chiefId}/respond`,
+    payload: { responseId, expectedRevision: 1 },
+  });
+  assert.equal(responded.statusCode, 200);
+  const exported = await app.inject({ method: "GET", url: `/api/sessions/${created.session.id}/export` });
+  assert.equal(exported.statusCode, 200);
+  return { exportData: exported.json(), created, chiefId, memo, option };
+}
+
+async function assertImportRejected(exportData: unknown) {
+  const rejected = await app.inject({ method: "POST", url: "/api/sessions/import", payload: { exportData } });
+  assert.equal(rejected.statusCode, 409);
 }
 
 test("CORS accepts configured origins and rejects unlisted ports", async () => {
@@ -389,7 +417,7 @@ test("chief conversation routes persist revisions and reject stale responses", a
   const opened = await app.inject({
     method: "POST",
     url: `/api/sessions/${id}/chiefs/${chiefId}/conversation/open`,
-    payload: { memoId: memo.id, optionId: option.id, expectedRevision: 0 },
+    payload: { memoId: memo.id, optionId: option.id, selections: [{ memoId: memo.id, optionId: option.id }], expectedRevision: 0 },
   });
   assert.equal(opened.statusCode, 200);
   const openedBody = opened.json();
@@ -471,6 +499,105 @@ test("chief conversation routes persist revisions and reject stale responses", a
   assert.equal(imported.statusCode, 200);
   assert.equal(imported.json().session.history.length, 1);
   assert.equal(imported.json().session.state.conversationHistory[0].status, "completed");
+});
+
+test("import rejects a conversation action whose ledger context is forged", async () => {
+  const created = await createSession();
+  const id = created.session.id;
+  const memo = created.memos[0];
+  const option = memo.options[0];
+  const chiefId = created.session.advisorRoster[0].chiefId;
+  const opened = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/chiefs/${chiefId}/conversation/open`,
+    payload: { memoId: memo.id, optionId: option.id, selections: [{ memoId: memo.id, optionId: option.id }], expectedRevision: 0 },
+  });
+  assert.equal(opened.statusCode, 200);
+  const exported = await app.inject({ method: "GET", url: `/api/sessions/${id}/export` });
+  const forged = exported.json();
+  forged.session.authoritativeActions[0].preStateHash = "0".repeat(64);
+  const rejected = await app.inject({ method: "POST", url: "/api/sessions/import", payload: { exportData: forged } });
+  assert.equal(rejected.statusCode, 409);
+  assert.match(rejected.json().error, /authoritative_action_mismatch/i);
+});
+
+test("import re-executes action transitions instead of trusting recomputed action digests", async () => {
+  const created = await createSession();
+  const id = created.session.id;
+  const memo = created.memos[0];
+  const option = memo.options[0];
+  const chiefId = created.session.advisorRoster[0].chiefId;
+  await app.inject({
+    method: "POST", url: `/api/sessions/${id}/chiefs/${chiefId}/conversation/open`,
+    payload: { memoId: memo.id, optionId: option.id, selections: [{ memoId: memo.id, optionId: option.id }], expectedRevision: 0 },
+  });
+  const exported = (await app.inject({ method: "GET", url: `/api/sessions/${id}/export` })).json();
+  // This is structurally valid and its post-action digest matches the forged
+  // state. Replay must still calculate the real opening transition and reject.
+  exported.session.state.chiefTrust[chiefId] += 9;
+  exported.session.authoritativeActions[0].postStateHash = campaignStateHash(exported.session.state);
+  const rejected = await app.inject({ method: "POST", url: "/api/sessions/import", payload: { exportData: exported } });
+  assert.equal(rejected.statusCode, 409);
+  assert.match(rejected.json().error, /authoritative_action_mismatch/i);
+});
+
+test("import rejects hostile ledger chronology and context changes", async () => {
+  const { exportData, created, chiefId, memo, option } = await exportConversationLedger();
+  const actions = exportData.session.authoritativeActions;
+  assert.equal(actions.length, 2, "fixture has an open and its first response");
+
+  const deleted = structuredClone(exportData);
+  deleted.session.authoritativeActions.splice(0, 1);
+  await assertImportRejected(deleted);
+
+  const duplicated = structuredClone(exportData);
+  duplicated.session.authoritativeActions.splice(1, 0, structuredClone(duplicated.session.authoritativeActions[0]));
+  await assertImportRejected(duplicated);
+
+  const reordered = structuredClone(exportData);
+  reordered.session.authoritativeActions.reverse();
+  await assertImportRejected(reordered);
+
+  const wrongChief = structuredClone(exportData);
+  wrongChief.session.authoritativeActions[0].chiefId = created.session.advisorRoster.find((entry: { chiefId: string }) => entry.chiefId !== chiefId).chiefId;
+  await assertImportRejected(wrongChief);
+
+  const wrongMemo = structuredClone(exportData);
+  const otherMemo = created.memos.find((entry: { id: string }) => entry.id !== memo.id);
+  wrongMemo.session.authoritativeActions[0].memoId = otherMemo.id;
+  wrongMemo.session.authoritativeActions[0].optionId = otherMemo.options[0].id;
+  wrongMemo.session.authoritativeActions[0].packetSelections = [{ memoId: otherMemo.id, optionId: otherMemo.options[0].id }];
+  await assertImportRejected(wrongMemo);
+
+  const wrongPacket = structuredClone(exportData);
+  wrongPacket.session.authoritativeActions[0].packetSelections = [{ memoId: memo.id, optionId: created.memos.find((entry: { id: string }) => entry.id === memo.id).options.find((entry: { id: string }) => entry.id !== option.id).id }];
+  await assertImportRejected(wrongPacket);
+
+  const wrongState = structuredClone(exportData);
+  wrongState.session.authoritativeActions[0].preStateHash = wrongState.session.authoritativeActions[1].preStateHash;
+  await assertImportRejected(wrongState);
+});
+
+test("import rejects forged relationship state and replays a valid v8 ledger repeatably", async () => {
+  const { exportData, chiefId } = await exportConversationLedger();
+  const variants: Array<[string, (session: any) => void]> = [
+    ["trust", (session) => { session.state.chiefTrust[chiefId] += 3; }],
+    ["agenda memory", (session) => { session.state.chiefAgendaMemory[chiefId] = { chiefId, lastTurn: 1, lastMemoId: "posture", lastOptionId: "surge-exercises", lastPosition: "support", notes: ["forged"] }; }],
+    ["commitments", (session) => { session.state.activeCommitments.push({ id: "forged", chiefId, type: "doctrine", label: "forged", turnMade: 1, fulfilled: null }); }],
+    ["conversation history", (session) => { session.state.conversationHistory[0].memoId = "intelligence-focus"; }],
+  ];
+  for (const [label, mutate] of variants) {
+    const forged = structuredClone(exportData);
+    mutate(forged.session);
+    await assertImportRejected(forged);
+    assert.ok(label);
+  }
+
+  const first = await app.inject({ method: "POST", url: "/api/sessions/import", payload: { exportData } });
+  const second = await app.inject({ method: "POST", url: "/api/sessions/import", payload: { exportData } });
+  assert.equal(first.statusCode, 200);
+  assert.equal(second.statusCode, 200);
+  assert.deepEqual(first.json().session.state, second.json().session.state);
 });
 
 test("import rejects forged session exports and accepts replayable exports under a fresh revision", async () => {
@@ -587,6 +714,7 @@ test("import rejects replay-consistent exports whose recorded turn requested ine
   const result = resolveTurn(soloScenario, session.initialState, parsedIneligibleInput);
   const replayConsistent = {
     ...session,
+    revision: session.revision + 1,
     turnInputs: [parsedIneligibleInput],
     history: [result],
     state: result.nextState,
@@ -619,6 +747,7 @@ test("import rejects replay-consistent exports whose recorded turn requested ine
   const eligibleResult = resolveTurn(soloScenario, session.initialState, turnInputSchema.parse(eligibleInput));
   const eligibleSession = {
     ...session,
+    revision: session.revision + 1,
     turnInputs: [turnInputSchema.parse(eligibleInput)],
     history: [eligibleResult],
     state: eligibleResult.nextState,
@@ -742,12 +871,30 @@ test("invalid session identifiers are rejected as client errors", async () => {
   assert.match(response.json().error, /not a valid campaign id/i);
 });
 
-test("session listing skips malformed persisted save files", async () => {
+test("session listing retains malformed persisted save files as manageable tombstones", async () => {
   await writeFile(path.join(saveDir, "malformed.json"), "{not valid json", "utf8");
   const listed = await app.inject({ method: "GET", url: "/api/sessions" });
 
   assert.equal(listed.statusCode, 200);
-  assert.ok(Array.isArray(listed.json().sessions));
+  const record = listed.json().sessions.find((entry: { id: string }) => entry.id === "malformed");
+  assert.deepEqual(record, {
+    id: "malformed",
+    recordStatus: "corrupt",
+    recordReason: "This campaign file is damaged or incomplete and was not opened.",
+  });
+});
+
+test("session listing retains canonical-incompatible saves as manageable tombstones", async () => {
+  const created = await createSession();
+  const savePath = path.join(saveDir, `${created.session.id}.json`);
+  const persisted = JSON.parse(await readFile(savePath, "utf8"));
+  persisted.contentVersion = "0.9.0";
+  await writeFile(savePath, JSON.stringify(persisted), "utf8");
+
+  const listed = await app.inject({ method: "GET", url: "/api/sessions" });
+  const record = listed.json().sessions.find((entry: { id: string }) => entry.id === created.session.id);
+  assert.equal(record.recordStatus, "incompatible");
+  assert.match(record.recordReason, /different engine, scenario, content set, or save format/i);
 });
 
 test("corrupt sessions return a storage failure rather than a misleading 404", async () => {
@@ -783,7 +930,7 @@ test("simultaneous authoritative mutations do not both apply against one revisio
     app.inject({
       method: "POST",
       url: `/api/sessions/${id}/chiefs/${chiefId}/conversation/open`,
-      payload: { memoId: memo.id, optionId: option.id, expectedRevision: 0 },
+      payload: { memoId: memo.id, optionId: option.id, selections: [{ memoId: memo.id, optionId: option.id }], expectedRevision: 0 },
     }),
   ]);
 

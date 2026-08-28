@@ -18,6 +18,7 @@ import {
   SaveStoreIOError,
   SessionExistsError,
   SessionNotFoundError,
+  type SaveRecord,
   type SaveStore,
 } from "@brass-ledger/save-store";
 import {
@@ -32,6 +33,7 @@ import {
   getConversationRecordForTurn,
   replayValidationSchema,
   relationshipDeltaLabel,
+  memoSelectionSchema,
   sessionExportSchema,
   startChiefConversation,
   summarizeState,
@@ -44,7 +46,7 @@ import {
   type ReplayValidation,
   type TurnInput,
 } from "@brass-ledger/shared";
-import { deriveDecisionMemos, ineligibleStaffNegotiations, previewTurn, resolveTurn, validateReplaySession } from "@brass-ledger/sim";
+import { campaignStateHash, deriveDecisionMemos, ineligibleStaffNegotiations, previewTurn, resolveTurn, validateReplaySession } from "@brass-ledger/sim";
 
 export const app = Fastify({ logger: process.env.NODE_ENV !== "test" });
 
@@ -242,7 +244,7 @@ function assertCanonicalImport(session: GameSession) {
   if (session.scenarioId !== soloScenario.id || session.contentVersion !== soloScenario.contentVersion) {
     throw new Error("This campaign file was played on a different scenario or a different content version, so it cannot be opened here.");
   }
-  if (session.saveFormatVersion !== "6") {
+  if (session.saveFormatVersion !== "8") {
     throw new Error("This campaign file uses a save format this version of Brass Ledger cannot read.");
   }
   if (stableJson(session.initialState) !== stableJson(soloScenario.initialState)) {
@@ -252,7 +254,7 @@ function assertCanonicalImport(session: GameSession) {
 }
 
 function assertCanonicalSession(session: GameSession) {
-  if (session.engineVersion !== "0.1.0" || session.scenarioId !== soloScenario.id || session.contentVersion !== soloScenario.contentVersion || session.saveFormatVersion !== "6") {
+  if (session.engineVersion !== "0.1.0" || session.scenarioId !== soloScenario.id || session.contentVersion !== soloScenario.contentVersion || session.saveFormatVersion !== "8") {
     throw new Error("This saved campaign belongs to an incompatible engine, scenario, content version, or save format.");
   }
   if (stableJson(session.initialState) !== stableJson(soloScenario.initialState)) {
@@ -310,11 +312,24 @@ async function readSession(sessionId: string) {
   return assertCanonicalSession(await saveStore.read(sessionId));
 }
 
-async function listSessions() {
-  const sessions = await saveStore.list();
-  return sessions.filter((session) => {
-    try { assertCanonicalSession(session); return true; } catch { return false; }
-  }).sort((left: GameSession, right: GameSession) => right.updatedAt.localeCompare(left.updatedAt));
+async function listSessionRecords() {
+  const records = await saveStore.listRecords();
+  return records.map((record): SaveRecord => {
+    if (record.status !== "healthy" || !record.session) return record;
+    try {
+      assertCanonicalSession(record.session);
+      return record;
+    } catch {
+      // A structurally readable record can still be unsafe to open here: never
+      // discard it, but do not expose it as a playable campaign either.
+      return {
+        id: record.id,
+        fileName: record.fileName,
+        status: "incompatible",
+        reason: "This campaign belongs to a different engine, scenario, content set, or save format and was not opened.",
+      };
+    }
+  });
 }
 
 function createSession() {
@@ -342,6 +357,15 @@ function summarizeSession(session: GameSession) {
     campaignOutcome: session.state.campaignOutcome,
     replayCount: session.history.length,
     summary: session.state.campaignOutcome ?? summarizeState(session.state),
+  };
+}
+
+function summarizeSaveRecord(record: SaveRecord) {
+  if (record.status === "healthy" && record.session) return summarizeSession(record.session);
+  return {
+    id: record.id,
+    recordStatus: record.status,
+    recordReason: record.reason ?? "This campaign could not be opened safely.",
   };
 }
 
@@ -463,8 +487,8 @@ app.post("/api/headless/run", async (request, reply) => {
 
 app.get("/api/sessions", async (_request, reply) => {
   try {
-    const sessions = await listSessions();
-    return { sessions: sessions.map(summarizeSession) };
+    const records = await listSessionRecords();
+    return { sessions: records.map(summarizeSaveRecord) };
   } catch (error) {
     const mapped = mapStorageError(reply, error);
     if (mapped) return mapped;
@@ -562,7 +586,7 @@ app.post("/api/sessions/:id/preview-turn", async (request, reply) => {
 app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, reply) => {
   try {
     const { id, chiefId } = request.params as { id: string; chiefId: string };
-    const body = (request.body ?? {}) as { memoId?: string; optionId?: string; expectedRevision?: unknown };
+    const body = (request.body ?? {}) as { memoId?: string; optionId?: string; selections?: unknown; expectedRevision?: unknown };
     if (!body.memoId || !body.optionId) {
       reply.code(400);
       return { error: "A conversation needs both a memoId and an optionId." };
@@ -571,6 +595,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
     return await withSessionLock(id, async () => {
       const session = await readSession(id);
       assertExpectedRevision(session, body.expectedRevision);
+      const selections = Array.isArray(body.selections) ? body.selections.map((selection) => memoSelectionSchema.parse(selection)) : [];
       const chief = soloScenario.chiefs.find((entry) => entry.id === chiefId);
       if (!chief) {
         reply.code(404);
@@ -585,12 +610,21 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
         return { error: "That option is no longer on the memo. Reload the campaign and choose again." };
       }
 
+      if (!selections.some((selection) => selection.memoId === memo.id && selection.optionId === option.id)) {
+        reply.code(409);
+        return { error: "Chiefs can only be engaged on an option in the current decision packet. Return to the memos, select it, and refresh the forecast first." };
+      }
+
       const existing = getConversationRecordForTurn(session.state, chiefId);
       if (existing && existing.memoId === memo.id && existing.optionId === option.id) {
         return {
           ...sessionPayload(session),
           conversation: existing,
         };
+      }
+      if (existing) {
+        reply.code(409);
+        return { error: "You have already engaged this chief this month. Their earlier position remains on the command ledger.", conversation: existing };
       }
 
       const selectedBurden = buildDirectorateBurden(
@@ -615,15 +649,20 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
       }
 
       const conversation = startChiefConversation(chief, memo, option, position, session.state);
+      const nextState = {
+        ...session.state,
+        conversationHistory: [...session.state.conversationHistory, conversation],
+      };
       const updatedSession = gameSessionSchema.parse(advanceSessionRevision({
         ...session,
-        state: {
-          ...session.state,
-          conversationHistory: [
-            ...session.state.conversationHistory.filter((entry: ChiefConversationRecord) => !(entry.turn === session.state.turn && entry.chiefId === chiefId)),
-            conversation,
-          ],
-        },
+        state: nextState,
+        authoritativeActions: [...session.authoritativeActions, {
+          type: "chief-conversation-open" as const, sequence: session.authoritativeActions.length + 1,
+          turn: session.state.turn, revisionBefore: session.revision, revisionAfter: session.revision + 1,
+          scenarioId: session.scenarioId, contentVersion: session.contentVersion,
+          preStateHash: campaignStateHash(session.state), postStateHash: campaignStateHash(nextState),
+          chiefId, memoId: memo.id, optionId: option.id, packetSelections: selections,
+        }],
       }));
 
       await writeSession(updatedSession, session.revision);
@@ -687,20 +726,25 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
           ? updateCommitmentsFromChiefConversation(session.state, chief, memo, option, nextConversation)
           : session.state.activeCommitments;
 
+      const nextState = {
+        ...session.state,
+        chiefTrust: { ...session.state.chiefTrust, [chiefId]: nextConversation.trustAfter },
+        chiefAgendaMemory: nextChiefAgendaMemory,
+        activeCommitments: nextCommitments,
+        conversationHistory: session.state.conversationHistory.map((entry: ChiefConversationRecord) =>
+          entry.turn === session.state.turn && entry.chiefId === chiefId ? nextConversation : entry,
+        ),
+      };
       const updatedSession = gameSessionSchema.parse(advanceSessionRevision({
         ...session,
-        state: {
-          ...session.state,
-          chiefTrust: {
-            ...session.state.chiefTrust,
-            [chiefId]: nextConversation.trustAfter,
-          },
-          chiefAgendaMemory: nextChiefAgendaMemory,
-          activeCommitments: nextCommitments,
-          conversationHistory: session.state.conversationHistory.map((entry: ChiefConversationRecord) =>
-            entry.turn === session.state.turn && entry.chiefId === chiefId ? nextConversation : entry,
-          ),
-        },
+        state: nextState,
+        authoritativeActions: [...session.authoritativeActions, {
+          type: "chief-conversation-response" as const, sequence: session.authoritativeActions.length + 1,
+          turn: session.state.turn, revisionBefore: session.revision, revisionAfter: session.revision + 1,
+          scenarioId: session.scenarioId, contentVersion: session.contentVersion,
+          preStateHash: campaignStateHash(session.state), postStateHash: campaignStateHash(nextState),
+          chiefId, responseId,
+        }],
       }));
 
       await writeSession(updatedSession, session.revision);
@@ -733,6 +777,17 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
     return await withSessionLock(id, async () => {
       const session = await readSession(id);
       assertExpectedRevision(session, body.expectedRevision);
+      const detachedConversations = session.state.conversationHistory.filter((conversation) =>
+        conversation.turn === session.state.turn
+        && !input.selections.some((selection) => selection.memoId === conversation.memoId && selection.optionId === conversation.optionId),
+      );
+      if (detachedConversations.length > 0) {
+        reply.code(409);
+        return {
+          error: "This month cannot be committed because a chief conversation is tied to an option no longer in the packet. Restore that option or return to Chiefs Paper and record a deliberate override next month.",
+          detachedConversations,
+        };
+      }
       const ineligibleNegotiations = ineligibleStaffNegotiations(soloScenario, session.state, input);
       if (ineligibleNegotiations.length > 0) {
         reply.code(400);

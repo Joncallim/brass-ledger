@@ -1,11 +1,11 @@
 ---
 type: backend-component
 component: file-save-store
-package: data/saves
+package: per-user application data
 role: JSON session persistence
 risk_level: high
 source:
-  - data/saves
+  - configured per-user save directory
   - apps/server/src/index.ts
 tags:
   - backend-review
@@ -17,7 +17,7 @@ Backlink: [[POTATO]]
 
 # File Save Store
 
-The save store persists each session as one JSON file under `data/saves`.
+The save store persists each session as one JSON file under the platform per-user save directory (or `BRASS_LEDGER_SAVE_DIR` when explicitly configured).
 
 ## Strengths
 

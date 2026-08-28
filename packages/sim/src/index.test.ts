@@ -25,7 +25,7 @@ import {
   type CampaignState,
   type ScenarioDefinition,
 } from "@brass-ledger/shared";
-import { previewTurn, resolveTurn, validateReplaySession, chooseEvents, type Rng } from "./index";
+import { previewTurn, resolveTurn, validateReplaySession, chooseEvents, campaignStateHash, type Rng } from "./index";
 
 const balancedInput: TurnInput = {
   turn: 1,
@@ -50,6 +50,16 @@ const highTempoInput: TurnInput = {
     { memoId: "force-development", optionId: "fires-prototype" },
   ],
 };
+
+test("canonical authoritative state digest ignores record insertion order but detects state changes", () => {
+  const baseline = structuredClone(soloScenario.initialState);
+  const reordered = Object.fromEntries(Object.entries(baseline).reverse()) as CampaignState;
+  // Rebuild a nested record in a deliberately different insertion order.
+  reordered.chiefTrust = Object.fromEntries(Object.entries(baseline.chiefTrust).reverse());
+  assert.equal(campaignStateHash(baseline), campaignStateHash(reordered));
+  reordered.chiefTrust.warden = (reordered.chiefTrust.warden ?? 0) - 1;
+  assert.notEqual(campaignStateHash(baseline), campaignStateHash(reordered));
+});
 
 test("resolveTurn is deterministic for the same memo selections", () => {
   const left = resolveTurn(soloScenario, soloScenario.initialState, balancedInput);

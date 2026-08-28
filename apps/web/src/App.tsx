@@ -116,7 +116,7 @@ export function App() {
       clearPreview();
       setActiveConversation(null);
       const step: TurnStep = latestResult && data.session.state.campaignStatus === "active" ? "briefing" : latestResult ? "after-action" : "briefing";
-      setRoute({ screen: "session", sessionId: id, step: latestResult ? "after-action" : "briefing" });
+      setRoute({ screen: "session", sessionId: id, step });
     } catch (err) {
       setError(describeError(err, "Could not open that campaign. It may have been deleted. Go back and try another."));
     } finally {
@@ -233,7 +233,7 @@ export function App() {
     setConversationBusy(true);
     setConversationError(null);
     try {
-      const data = await openChiefConversation(sessionId, chiefId, memoId, optionId, cycle.session?.revision);
+      const data = await openChiefConversation(sessionId, chiefId, memoId, optionId, cycle.selections, cycle.session?.revision);
       setActiveConversation(data.conversation);
       setCycle((prev) => {
         const revisionAdvanced = data.session.revision !== prev.session?.revision;
@@ -413,8 +413,11 @@ export function App() {
     void bootstrap();
   }, []);
 
-  const chiefPositions = validPreview?.projectedResult.chiefPositions ?? cycle.latestResult?.chiefPositions ?? [];
-  const chiefCoalitions = validPreview?.chiefCoalitions ?? cycle.latestResult?.chiefCoalitions ?? [];
+  // Previous results are historical reporting, never advice for the current
+  // packet.  During a replacement forecast this deliberately renders empty
+  // and the chiefs surface explains that it is recalculating.
+  const chiefPositions = validPreview?.projectedResult.chiefPositions ?? [];
+  const chiefCoalitions = validPreview?.chiefCoalitions ?? [];
   const showRail = route.screen === "session";
 
   return (
@@ -512,7 +515,7 @@ export function App() {
                   cycle.latestResult.memos,
                   cycle.latestResult.input.selections,
                   scenario?.staffCapacities ?? [],
-                  undefined,
+                  cycle.latestResult.input.staffNegotiations,
                   scenario?.doctrineLens?.burdenBias,
                 ),
                 cycle.latestResult.previousState,
