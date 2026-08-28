@@ -4,12 +4,15 @@ import { doctrineGenes, resolveDoctrineGenes, soloScenario } from "@brass-ledger
 import {
   applyDoctrineGenes,
   buildChiefPositions,
+  buildCampaignHistory,
+  buildCampaignLegibility,
   buildDirectorateBurden,
   buildStaffFunctionReadouts,
   campaignStateSchema,
   composeBurdenLens,
   composeDoctrineLens,
   continueChiefConversation,
+  createInitialGameSession,
   defaultDoctrineMechanicsState,
   doctrineGeneSchema,
   doctrineRiskKeys,
@@ -59,6 +62,27 @@ test("canonical authoritative state digest ignores record insertion order but de
   assert.equal(campaignStateHash(baseline), campaignStateHash(reordered));
   reordered.chiefTrust.warden = (reordered.chiefTrust.warden ?? 0) - 1;
   assert.notEqual(campaignStateHash(baseline), campaignStateHash(reordered));
+});
+
+test("campaign legibility preserves horizon, exposes sub-band deterioration, and keeps history chronological", () => {
+  const previous = structuredClone(soloScenario.initialState);
+  const worsening = campaignStateSchema.parse({
+    ...previous,
+    strategic: {
+      ...previous.strategic,
+      domestic: { ...previous.strategic.domestic, cabinetCover: previous.strategic.domestic.cabinetCover - 2 },
+    },
+    domestic: { ...previous.domestic, cabinetCover: previous.domestic.cabinetCover - 2 },
+  });
+  const orientation = buildCampaignLegibility(worsening, previous);
+  assert.equal(orientation.turnsRemaining, previous.maxTurns - previous.turn + 1);
+  assert.equal(orientation.risks.find((risk) => risk.key === "political")?.trend, "worsening");
+
+  const first = resolveTurn(soloScenario, previous, balancedInput);
+  const second = resolveTurn(soloScenario, first.nextState, { ...balancedInput, turn: 2 });
+  const session = createInitialGameSession(soloScenario, "00000000-0000-1000-8000-000000000111");
+  const history = buildCampaignHistory({ ...session, state: second.nextState, turnInputs: [balancedInput, { ...balancedInput, turn: 2 }], history: [first, second], revision: 2 });
+  assert.deepEqual(history.map((entry) => entry.turn), [1, 2]);
 });
 
 test("resolveTurn is deterministic for the same memo selections", () => {
