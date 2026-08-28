@@ -1,6 +1,7 @@
 import type { GameSession, DecisionMemo, StaffFunctionReadout, ScenarioSummary } from "@brass-ledger/shared";
 import { buildCampaignHistory, buildCampaignLegibility, buildStrategicMetricBriefs, evaluateCampaignObjectives } from "@brass-ledger/shared";
 import { StatusBadge } from "../components/StatusBadge";
+import { ContextualTeaching } from "../components/ContextualTeaching";
 import {
   commitmentTypeLabel,
   constraintTrendLabel,
@@ -291,6 +292,9 @@ export function BriefingScreen({ session, memos, staffReadouts, scenario, labels
       </div>
 
       <div className="mt-8 pt-6 border-t border-border">
+        <ContextualTeaching concept="staff-functions" title="Your five staff functions">
+          S1–S5 are the headquarters functions that make a packet executable. Burden is this month&apos;s work against a function&apos;s capacity; strained or overloaded work creates real follow-through costs. Read the table before choosing memos.
+        </ContextualTeaching>
         <p className="text-xs text-ink/40 mb-4">
           {requiredCount} {pluralize(requiredCount, "decision")} you must make this month
           {optionalCount > 0 && `, and ${optionalCount} you can skip`}.

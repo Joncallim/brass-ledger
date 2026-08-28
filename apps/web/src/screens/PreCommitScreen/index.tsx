@@ -4,6 +4,7 @@ import { isPreviewValid } from "../../lib/previewValidity";
 import { AcceptedRiskDocket } from "./AcceptedRiskDocket";
 import { StaffNegotiationPanel } from "./StaffNegotiationPanel";
 import { StaffModuleConsequences } from "../../components/StaffModuleConsequences";
+import { ContextualTeaching } from "../../components/ContextualTeaching";
 
 type Props = {
   preview: PreviewPayload | null;
@@ -70,6 +71,9 @@ export function PreCommitScreen({
 
   return (
     <div className="p-6 max-w-2xl">
+      <ContextualTeaching concept="accepted-risk" title="Accept risk deliberately">
+        A warning is a named cost of this packet, not a puzzle with one correct answer. You can revise the packet, seek available staff relief, or explicitly accept the risk when the strategic gain is worth carrying it.
+      </ContextualTeaching>
       <div className="flex items-center justify-between mb-5 gap-4">
         <div>
           <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Final review</p>

@@ -3,6 +3,7 @@ import { buildChiefSpriteSpec, relationshipLabel, type ChiefPositionEntry, type 
 import { CoalitionSummary } from "./CoalitionSummary";
 import { ChiefPositionCard } from "./ChiefPositionCard";
 import { ChiefConversationSheet } from "./ChiefConversationSheet";
+import { ContextualTeaching } from "../../components/ContextualTeaching";
 
 type Props = {
   chiefPositions: ChiefPositionEntry[];
@@ -57,6 +58,9 @@ export function ChiefsPaperScreen({
   return (
     <div className="relative">
       <div className="p-6 max-w-3xl">
+        <ContextualTeaching concept="chief-terms" title="Chiefs can constrain the packet">
+          A chief may support, attach a condition, or record dissent. Discussion is about the selected issue in this month&apos;s packet; a promise can shape later choices, but you remain responsible for accepting its cost.
+        </ContextualTeaching>
         <div className="flex items-center justify-between mb-5 gap-4">
           <div>
             <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Chiefs paper</p>

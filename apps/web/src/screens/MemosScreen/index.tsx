@@ -5,6 +5,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { BurdenBar } from "../../components/BurdenBar";
 import { coalitionPostureLabel, pluralize } from "../../lib/labels";
 import { StaffModuleConsequences } from "../../components/StaffModuleConsequences";
+import { ContextualTeaching } from "../../components/ContextualTeaching";
 
 function slackClass(status: "room" | "tight" | "overdrawn") {
   return status === "overdrawn" ? "text-red-400" : status === "tight" ? "text-yellow-400" : "text-green-400";
@@ -99,6 +100,9 @@ export function MemosScreen({
         </div>
 
         <div className="space-y-3 max-w-2xl">
+          <ContextualTeaching concept="forecast" title="Forecast before you commit">
+            The forecast is a projection, not a recommendation. As you change the packet, use it to see which staff lane becomes binding and how confident the picture is. It never accepts a warning or selects a course for you.
+          </ContextualTeaching>
           {mainEffortChoices.length > 0 && (
             <section className="border border-border bg-surface px-4 py-3">
               <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Commander&apos;s intent</p>
