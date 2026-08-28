@@ -117,6 +117,7 @@ import {
   type TurnResult,
   buildChiefCoalitions,
   buildCampaignLegibility,
+  buildCommandPacketSummary,
   buildChiefPositions,
   buildDirectorateBurden,
   buildStaffFunctionReadouts,
@@ -2416,6 +2417,7 @@ export function previewTurn(scenario: ScenarioDefinition, state: CampaignState, 
     // coordination load so every client (web, server, headless) reads one engine result.
     staffModules: projectedResult.staffModules,
     coordinationLoad: projectedResult.coordinationLoad,
+    packetSummary: buildCommandPacketSummary(projectedResult.directorateBurden, input.commanderIntent),
   };
 }
 

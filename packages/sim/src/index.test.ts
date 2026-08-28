@@ -6,6 +6,7 @@ import {
   buildChiefPositions,
   buildCampaignHistory,
   buildCampaignLegibility,
+  buildCommandPacketSummary,
   buildDirectorateBurden,
   buildStaffFunctionReadouts,
   campaignStateSchema,
@@ -1603,6 +1604,10 @@ test("Commander’s Intent is replayed packet evidence, not a free concentration
   assert.ok(declared.nextState.doctrineMechanics.mainEffortFocus < observed.nextState.doctrineMechanics.mainEffortFocus);
   assert.ok(declared.afterAction.some((entry) => entry.heading === "Command intent: dispersed effort"));
   assert.throws(() => turnInputSchema.parse({ ...packet, commanderIntent: { mainEffort: "plans", acceptedSecondaryRisk: "plans" } }));
+  const summary = buildCommandPacketSummary(declared.directorateBurden, { mainEffort: alternate.directorate });
+  assert.equal(summary.mainEffortSource, "declared");
+  assert.equal(summary.mainEffort, alternate.directorate);
+  assert.ok(summary.slackPoints <= declared.directorateBurden.reduce((sum, entry) => sum + entry.capacity, 0));
 });
 
 test("doctrine bet: main effort costs readiness when concentration leaves another lane overloaded", () => {

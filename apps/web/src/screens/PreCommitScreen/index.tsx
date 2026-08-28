@@ -63,6 +63,7 @@ export function PreCommitScreen({
   const canCommit =
     isPreviewValid(preview, previewKey, currentPreviewKey, previewLoading) && selections.length > 0;
   const burden = preview?.projectedResult.directorateBurden ?? [];
+  const packetSummary = preview?.packetSummary;
   const mainEffortChoices = burden.filter((entry) => entry.burdenPoints > 0);
   const secondaryRiskChoices = burden.filter((entry) => entry.burdenLevel !== "light" && entry.directorate !== commanderIntent?.mainEffort);
   const currentConversations = session?.state.conversationHistory.filter((conversation) => conversation.turn === turnNumber) ?? [];
@@ -131,6 +132,13 @@ export function PreCommitScreen({
             </label>
           </div>
         </section>
+        {packetSummary && (
+          <section className="border border-border bg-surface px-4 py-3">
+            <p className="text-xs uppercase tracking-widest text-ink/50 mb-1">Packet balance</p>
+            <p className="text-xs text-ink/60">{packetSummary.mainEffort ? `${packetSummary.mainEffortSource === "declared" ? "Declared" : "Observed"} main effort: ${directorateLabel(packetSummary.mainEffort)}.` : "No main effort is carried by this packet."} Organisational slack: <span className={packetSummary.slackStatus === "overdrawn" ? "text-red-400" : packetSummary.slackStatus === "tight" ? "text-yellow-400" : "text-green-400"}>{Math.max(0, packetSummary.slackPoints)} points, {packetSummary.slackStatus}.</span></p>
+            {packetSummary.strainedDirectorates.length > 0 && <p className="mt-1 text-xs text-ink/50">Pressure carried: {packetSummary.strainedDirectorates.map(directorateLabel).join(", ")}.</p>}
+          </section>
+        )}
         <section className="border border-border bg-surface px-4 py-3">
           <p className="text-xs uppercase tracking-widest text-ink/50 mb-1">Command ledger</p>
           <p className="text-xs text-ink/60 mb-3">Chief support, recorded terms, and any contradictions carried into this order.</p>

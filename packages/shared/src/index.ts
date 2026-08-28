@@ -1436,6 +1436,15 @@ export const decisionPreviewEntrySchema = z.object({
 });
 export type DecisionPreviewEntry = z.infer<typeof decisionPreviewEntrySchema>;
 
+export const commandPacketSummarySchema = z.object({
+  mainEffort: directorateSchema.nullable(),
+  mainEffortSource: z.enum(["declared", "observed"]),
+  slackPoints: z.number(),
+  slackStatus: z.enum(["room", "tight", "overdrawn"]),
+  strainedDirectorates: z.array(directorateSchema),
+});
+export type CommandPacketSummary = z.infer<typeof commandPacketSummarySchema>;
+
 export const turnPreviewSchema = z.object({
   decisionPreviews: z.array(decisionPreviewEntrySchema),
   acceptedRiskCandidates: z.array(acceptedRiskOverrideSchema),
@@ -1443,6 +1452,7 @@ export const turnPreviewSchema = z.object({
   chiefCoalitions: z.array(chiefCoalitionEntrySchema).default([]),
   staffModules: z.array(staffModuleReadoutSchema).default([]),
   coordinationLoad: z.number().min(0).max(1).default(0),
+  packetSummary: commandPacketSummarySchema.optional(),
 });
 export type TurnPreview = z.infer<typeof turnPreviewSchema>;
 
@@ -2092,6 +2102,25 @@ export function buildDirectorateBurden(
             : `${directorateLabel(directorate)} has room to absorb what you have chosen.`,
     };
   });
+}
+
+/** Canonical player-facing packet orientation. This intentionally reports the
+ * capacity the packet consumes, not a score or a recommended choice. */
+export function buildCommandPacketSummary(
+  burden: DirectorateBurden[],
+  commanderIntent?: CommanderIntent,
+): CommandPacketSummary {
+  const totalCapacity = burden.reduce((sum, entry) => sum + entry.capacity, 0);
+  const totalLoad = burden.reduce((sum, entry) => sum + entry.burdenPoints, 0);
+  const slackPoints = totalCapacity - totalLoad;
+  const observed = [...burden].sort((left, right) => right.burdenPoints - left.burdenPoints)[0];
+  return {
+    mainEffort: commanderIntent?.mainEffort ?? (observed && observed.burdenPoints > 0 ? observed.directorate : null),
+    mainEffortSource: commanderIntent ? "declared" : "observed",
+    slackPoints,
+    slackStatus: slackPoints < 0 ? "overdrawn" : slackPoints <= Math.max(2, totalCapacity * 0.15) ? "tight" : "room",
+    strainedDirectorates: burden.filter((entry) => entry.burdenLevel !== "light").map((entry) => entry.directorate),
+  };
 }
 
 function staffMetricStatus(value: number, inverted = false): StaffFunctionMetric["status"] {
