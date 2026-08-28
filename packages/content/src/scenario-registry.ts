@@ -1,12 +1,13 @@
 import type { ScenarioDefinition } from "@brass-ledger/shared";
 import { soloScenario } from "./scenario";
+import { longRebuildScenario, shortWarningCoalitionScenario } from "./scenario-variants";
 
 /**
  * Canonical authored scenario registry.  Runtime callers must resolve a
  * scenario from the persisted session identity; `defaultScenarioId` is only
  * for creating a new campaign when the caller deliberately omits a choice.
  */
-export const scenarioRegistry = [soloScenario] as const satisfies readonly ScenarioDefinition[];
+export const scenarioRegistry = [soloScenario, shortWarningCoalitionScenario, longRebuildScenario] as const satisfies readonly ScenarioDefinition[];
 
 export const defaultScenarioId = soloScenario.id;
 

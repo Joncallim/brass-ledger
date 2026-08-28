@@ -132,7 +132,7 @@ test("scenario and session payloads expose S1-S5 staff contracts", async () => {
 test("scenario creation and discovery use the canonical registry", async () => {
   const scenarios = await app.inject({ method: "GET", url: "/api/scenarios" });
   assert.equal(scenarios.statusCode, 200);
-  assert.deepEqual(scenarios.json().scenarios.map((entry: { id: string }) => entry.id), [soloScenario.id]);
+  assert.deepEqual(scenarios.json().scenarios.map((entry: { id: string }) => entry.id), [soloScenario.id, "short-warning-coalition", "long-rebuild-industrial"]);
 
   const created = await app.inject({ method: "POST", url: "/api/sessions", payload: { scenarioId: soloScenario.id } });
   assert.equal(created.statusCode, 200);
