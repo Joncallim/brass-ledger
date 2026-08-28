@@ -128,3 +128,30 @@ test("MemosScreen records Commander’s Intent during packet assembly", () => {
   assert.deepEqual(intents, [{ mainEffort: "operations" }]);
   act(() => root.unmount());
 });
+
+test("MemosScreen names the required memo that blocks progression", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const twoRequiredMemos = memos.map((memo, index) => index === 1 ? { ...memo, optional: false } : memo);
+  act(() => {
+    root.render(<MemosScreen
+      memos={twoRequiredMemos}
+      selections={[{ memoId: "posture", optionId: "hold" }]}
+      staffNegotiations={[]}
+      staffModules={[]}
+      preview={preview}
+      previewLoading={false}
+      previewError={null}
+      canProceed={false}
+      onSelect={() => {}}
+      onCommanderIntent={() => {}}
+      onProceed={() => {}}
+      onBack={() => {}}
+    />);
+  });
+  assert.match(container.textContent ?? "", /Choose an option for Industrial capacity/);
+  assert.match(container.textContent ?? "", /before you can hear from the chiefs/);
+  act(() => root.unmount());
+  container.remove();
+});

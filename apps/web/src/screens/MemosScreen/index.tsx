@@ -64,6 +64,7 @@ export function MemosScreen({
     return option ? [{ memo, option }] : [];
   });
   const skippedOptionalMemos = memos.filter((memo) => memo.optional && !selections.some((selection) => selection.memoId === memo.id));
+  const missingRequiredMemos = memos.filter((memo) => !memo.optional && !selections.some((selection) => selection.memoId === memo.id));
 
   function getSelection(memoId: string) {
     return selections.find((s) => s.memoId === memoId)?.optionId ?? null;
@@ -162,8 +163,9 @@ export function MemosScreen({
           </button>
           {!canProceed && (
             <p className="text-xs text-ink/40 mt-2">
-              Choose at least one option to continue. Every required memo needs an option before you can commit the
-              month.
+              {missingRequiredMemos.length > 0
+                ? <>Choose an option for {missingRequiredMemos.map((memo) => memo.title).join(", ")}. Every required memo needs a course before you can hear from the chiefs.</>
+                : "The forecast is still updating for this packet. Wait for the current forecast before hearing from the chiefs."}
             </p>
           )}
         </div>
