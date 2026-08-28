@@ -2654,6 +2654,15 @@ export function resolveTurn(scenario: ScenarioDefinition, previousState: Campaig
     }),
     ...resolveBurdenDissent(directorateBurden, lens.burdenBias, input.acceptedRiskOverrides ?? [], scenario.staffFunctions),
     ...(moduleResolution.note ? [moduleResolution.note] : []),
+    ...nextCommitments
+      .filter((commitment) => {
+        const prior = previousState.activeCommitments.find((entry) => entry.id === commitment.id);
+        return prior?.fulfilled === null && commitment.fulfilled !== null && commitment.chiefId;
+      })
+      .map((commitment) => ({
+        heading: commitment.fulfilled ? "Chief term honoured" : "Chief term breached",
+        detail: `${commitment.label} was ${commitment.fulfilled ? "honoured" : "breached"} by what the month actually carried. The result is now part of the relationship record.`,
+      })),
   ];
   const staffFunctions = buildStaffFunctionReadouts(scenario.staffFunctions, directorateBurden, nextState, lens.burdenBias);
   const explainability = createExplainability(selectedPairs, directorateBurden, triggeredEvents, previousState, nextState, nodeName);
