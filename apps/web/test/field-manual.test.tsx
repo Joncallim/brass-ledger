@@ -46,3 +46,25 @@ test("FieldManual returns focus to its opener after Close or Escape", async () =
   container.remove();
   opener.remove();
 });
+
+test("FieldManual explains every recurring onboarding concept in player language", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  act(() => root.render(<FieldManual scenario={null} onClose={() => {}} />));
+
+  const text = container.textContent ?? "";
+  for (const term of [
+    "Burden",
+    "Uncertainty and confidence",
+    "Staff relief and negotiation",
+    "Programme phase",
+    "Doctrine risk",
+    "Campaign horizon and outcomes",
+  ]) assert.match(text, new RegExp(term));
+  assert.match(text, /What changes it:/);
+  assert.match(text, /Do not assume:/);
+
+  act(() => root.unmount());
+  container.remove();
+});
