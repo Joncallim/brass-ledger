@@ -155,3 +155,41 @@ test("create, play, and record a full campaign month", async ({ page }) => {
     });
   });
 });
+
+test("Staff Exercise resolves through the normal save and replay path", async ({ page }) => {
+  await page.goto("/");
+
+  // The training exercise is an authored scenario, not a client-side tutorial
+  // route. Start it from the same hub and resolve its opening packet through
+  // the ordinary server-owned turn path.
+  await page.getByRole("button", { name: /Staff Exercise/ }).click();
+  await page.getByRole("button", { name: "Start new campaign" }).click();
+  await expect(page.getByRole("heading", { name: /^Month 1 of 4/ })).toBeVisible();
+
+  await page.getByRole("button", { name: "Open decision memos →" }).click();
+  const openingMemos = page.locator('fieldset:has(input[type="radio"])');
+  await expect(openingMemos).toHaveCount(2);
+  for (let index = 0; index < await openingMemos.count(); index++) {
+    await openingMemos.nth(index).locator('input[type="radio"]').first().check();
+  }
+  await expect(page.getByRole("button", { name: "Hear from the chiefs →" })).toBeEnabled();
+  await page.getByRole("button", { name: "Hear from the chiefs →" }).click();
+  await page.getByRole("button", { name: "Continue to final review →" }).click();
+
+  const risks = page.locator('div.border.border-border.p-4', { hasText: "Staff risk warnings" }).locator('input[type="checkbox"]');
+  for (let index = 0; index < await risks.count(); index++) {
+    await risks.nth(index).check();
+  }
+  await expect(page.getByRole("button", { name: "Commit the month" })).toBeEnabled();
+  await page.getByRole("button", { name: "Commit the month" }).click();
+  await expect(page.getByText("What happened in month 1")).toBeVisible();
+
+  await page.getByRole("button", { name: "Go to records" }).click();
+  // The persisted display name is the authored opening-brief title, while the
+  // scenario identity remains in the save itself. This isolated E2E store has
+  // exactly the exercise session we just resolved.
+  const exerciseRow = page.locator("table tbody tr").first();
+  await expect(exerciseRow).toBeVisible();
+  await exerciseRow.getByRole("button", { name: "Check replay" }).click();
+  await expect(exerciseRow.getByText(/verified/)).toBeVisible();
+});
