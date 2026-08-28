@@ -39,9 +39,27 @@ where the engine actually stands, not the older status fields in
 | Stage 4 — Agent chiefs and negotiation | Complete | Issues #17–#20; agenda memory, coalitions, commitments, pre-commit negotiation. |
 | Stage 5 — Content expansion and balance | Complete | Issues #28–#30; batch telemetry, content validation, expanded event set. |
 | Stage 6 — Browser interface rebuild | Complete | Six-screen client under `apps/web/src`; #66 was closed by PR #70. Remaining follow-up issues, if any, are tracked on GitHub rather than inferred from this historical list. |
-| **Stage 7 — Packaged game** | **Complete locally; remote attestation pending** | Epic #41 exit criteria are met by the compiled release, offline save/replay path, Electron shell, and no-dev-server release smoke. GitHub CI/release attestation still requires repository credentials. |
+| **Stage 7 — Packaged game** | **Complete locally; remote attestation pending** | Epic #41 exit criteria are met by the compiled release, offline save/replay path, Electron shell, and no-dev-server release smoke. GitHub Actions is enabled, but its current runs fail before a runner is assigned (zero-duration jobs with no steps); see the remote-attestation record below. |
 | **Sprite & asset generation pipeline** | **Subsequent epic** | Epic #48. Deferred from Stage 6 (`POTATO/stage-6-gui-design.md`). |
 | **Doctrine faction-gene system & optional staff modules** | **Subsequent epic** | Epic #49. Phases 2–5 of [[doctrine-mechanics-roadmap]]. |
+
+### Remote Attestation Record
+
+The repository's remote release gate cannot currently attest a revision. The
+latest CI and desktop-package runs for `f90a060` were retried four times and
+each job ended in roughly five seconds with `runner_id: 0`, an empty `steps`
+array, and zero billed milliseconds. GitHub therefore never assigned a hosted
+runner: this is an allocation/platform limitation, not a failing project step.
+The repository is private, Actions are enabled, and the available API does not
+return a more specific allocation reason. Branch protection/ruleset APIs also
+report that the plan does not provide those features for this private repository.
+
+Until a hosted runner can be assigned, the alternate attestation is the
+documented local release gate: clean dependency install; GROCER/content/asset
+validation; unit and browser E2E tests; production release assembly; Linux
+AppImage packaging; and a packaged desktop smoke that creates and resolves a
+real turn. A green GitHub CI run and the macOS/Windows desktop matrix remain
+required before a public release claim.
 
 ## Epic — Stage 7: Packaged Game (#41)
 
