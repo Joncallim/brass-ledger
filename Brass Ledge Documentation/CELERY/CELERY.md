@@ -1,7 +1,7 @@
 ---
 type: strategy-playbook
 project: Brass Ledger
-status: active
+status: archived
 created_on: 2026-06-07
 tags:
   - CELERY
@@ -9,7 +9,11 @@ tags:
   - s1-s5
 ---
 
-# CELERY
+# CELERY — Legacy Archive
+
+> The canonical active CELERY documentation is
+> [[../GROCER/CELERY/CELERY|GROCER/CELERY]]. Do not update this copy or use it
+> to make implementation decisions.
 
 CELERY is the Brass Ledger military staff repository. It describes the S1-S5 staff system as a supreme commander playbook: what each function contributes, what failure looks like, and how a commander should use staff advice before issuing guidance.
 

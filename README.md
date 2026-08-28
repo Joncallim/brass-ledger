@@ -190,10 +190,14 @@ Open `Brass Ledge Documentation/` directly in Obsidian. The canonical vault inde
 
 Primary implementation-facing docs:
 
-- `Brass Ledge Documentation/POTATO/POTATO.md`
-- `Brass Ledge Documentation/POTATO/development-stages.md`
-- `Brass Ledge Documentation/POTATO/compiled-engine-roadmap.md`
-- `Brass Ledge Documentation/POTATO/backend-review/api-surface.md`
+- `Brass Ledge Documentation/GROCER/POTATO/POTATO.md`
+- `Brass Ledge Documentation/GROCER/POTATO/development-stages.md`
+- `Brass Ledge Documentation/GROCER/POTATO/compiled-engine-roadmap.md`
+- `Brass Ledge Documentation/GROCER/POTATO/backend-review/api-surface.md`
+
+The sibling `POTATO/`, `CELERY/`, `CARROT/`, and `CAPSICUM/` directories are
+legacy archival copies. Do not use them as implementation inputs; all active
+documentation changes belong under `GROCER/`.
 
 ## Development Notes
 

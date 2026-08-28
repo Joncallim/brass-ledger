@@ -1,12 +1,16 @@
 ---
 type: repository-frame
 project: Brass Ledger
-status: framed
+status: archived
 tags:
   - CAPSICUM
 ---
 
-# CAPSICUM Database
+# CAPSICUM — Legacy Archive
+
+> The canonical active CAPSICUM documentation is
+> [[../GROCER/CAPSICUM/README|GROCER/CAPSICUM]]. Do not update this copy or use
+> it to make implementation decisions.
 
 CAPSICUM will contain the Brass Ledger design language: UI/UX framework, sprite design, visual rules, layout patterns, motion, typography, and product tone.
 

@@ -1,14 +1,18 @@
 ---
 type: source-of-truth
 project: Brass Ledger
-status: active
+status: archived
 created_on: 2026-06-06
 tags:
   - POTATO
   - source-of-truth
 ---
 
-# POTATO
+# POTATO — Legacy Archive
+
+> The canonical active POTATO documentation is
+> [[../GROCER/POTATO/POTATO|GROCER/POTATO]]. Do not update this copy or use it
+> to make implementation decisions.
 
 POTATO is the game-engine and mechanics domain inside [[../GROCER/GROCER]]. Design, engine, backend, sprite, S1-S5, and development-stage decisions should be recorded here before they are treated as settled.
 

@@ -1,14 +1,18 @@
 ---
 type: carrot-index
 project: Brass Ledger
-status: active
+status: archived
 created_on: 2026-06-07
 tags:
   - CARROT
   - source-of-truth
 ---
 
-# CARROT
+# CARROT — Legacy Archive
+
+> The canonical active CARROT documentation is
+> [[../GROCER/CARROT/CARROT|GROCER/CARROT]]. Do not update this copy or use it
+> to make implementation decisions.
 
 CARROT is the Brass Ledger scenario and worldbuilding vault. It owns the fictional world, campaign templates, faction generation, theater definitions, trigger events, and later procedural content rules.
 
