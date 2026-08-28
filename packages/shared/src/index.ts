@@ -1519,6 +1519,9 @@ const authoritativeActionContextSchema = {
   revisionAfter: z.number().int().min(1),
   scenarioId: z.string(),
   contentVersion: z.string(),
+  // Stable across import: the session id changes for storage isolation, but
+  // ledger evidence must remain bound to the campaign that produced it.
+  campaignId: z.string().min(1),
   preStateHash: z.string().regex(/^[a-f0-9]{64}$/),
   postStateHash: z.string().regex(/^[a-f0-9]{64}$/),
 };
@@ -1545,6 +1548,7 @@ export type AuthoritativeAction = z.infer<typeof authoritativeActionSchema>;
 
 export const gameSessionSchema = z.object({
   id: z.string(),
+  campaignId: z.string().min(1),
   saveFormatVersion: z.literal("8"),
   engineVersion: z.literal("0.1.0").default("0.1.0"),
   revision: z.number().int().min(0).default(0),
@@ -4754,6 +4758,7 @@ export function createInitialGameSession(scenario: ScenarioDefinition, sessionSe
   const initialState = deepClone(scenario.initialState);
   return {
     id: scenario.id,
+    campaignId: sessionSeed,
     saveFormatVersion: "8",
     engineVersion: "0.1.0",
     revision: 0,

@@ -2714,6 +2714,7 @@ function replayAuthoritativeActions(
   actions: Array<import("@brass-ledger/shared").AuthoritativeAction>,
   revision: number,
   expectedSequence: number,
+  campaignId: string | undefined,
 ): { state: CampaignState; revision: number; nextSequence: number; error: string | null } {
   let current = cloneState(state);
   let currentRevision = revision;
@@ -2723,6 +2724,7 @@ function replayAuthoritativeActions(
     if (action.turn !== current.turn) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action turn does not match replay state" };
     if (action.revisionBefore !== currentRevision || action.revisionAfter !== currentRevision + 1) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action revision context is invalid" };
     if (action.scenarioId !== scenario.id || action.contentVersion !== scenario.contentVersion) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action scenario/content identity is invalid" };
+    if (!campaignId || action.campaignId !== campaignId) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action campaign identity is invalid" };
     if (action.preStateHash !== campaignStateHash(current)) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action pre-state digest does not match replay state" };
     const chief = scenario.chiefs.find((entry) => entry.id === action.chiefId);
     if (!chief) return { state: current, revision: currentRevision, nextSequence: sequence, error: "action references an unknown chief" };
@@ -2788,7 +2790,7 @@ function replayAuthoritativeActions(
   return { state: current, revision: currentRevision, nextSequence: sequence, error: null };
 }
 
-export function validateReplaySession(scenario: ScenarioDefinition, session: { initialState: CampaignState; turnInputs: TurnInput[]; authoritativeActions?: Array<import("@brass-ledger/shared").AuthoritativeAction>; history: TurnResult[]; state: CampaignState; revision?: number }): ReplayValidation {
+export function validateReplaySession(scenario: ScenarioDefinition, session: { initialState: CampaignState; turnInputs: TurnInput[]; authoritativeActions?: Array<import("@brass-ledger/shared").AuthoritativeAction>; history: TurnResult[]; state: CampaignState; revision?: number; campaignId?: string }): ReplayValidation {
   let current = cloneState(session.initialState);
   let failedAtTurn: number | null = null;
   let failureKind: ReplayValidation["failureKind"] = "none";
@@ -2827,7 +2829,7 @@ export function validateReplaySession(scenario: ScenarioDefinition, session: { i
       pending.push(actions[actionIndex]!);
       actionIndex += 1;
     }
-    const replayedActions = replayAuthoritativeActions(scenario, current, pending, revision, nextSequence);
+    const replayedActions = replayAuthoritativeActions(scenario, current, pending, revision, nextSequence, session.campaignId);
     if (replayedActions.error) {
       failedAtTurn = current.turn;
       failureKind = "authoritative_action_mismatch";
@@ -2876,7 +2878,7 @@ export function validateReplaySession(scenario: ScenarioDefinition, session: { i
 
   if (failedAtTurn == null) {
     const remaining = actions.slice(actionIndex);
-    const replayedActions = replayAuthoritativeActions(scenario, current, remaining, revision, nextSequence);
+    const replayedActions = replayAuthoritativeActions(scenario, current, remaining, revision, nextSequence, session.campaignId);
     if (replayedActions.error) {
       failedAtTurn = current.turn;
       failureKind = "authoritative_action_mismatch";

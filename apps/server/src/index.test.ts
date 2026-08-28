@@ -576,6 +576,41 @@ test("import rejects hostile ledger chronology and context changes", async () =>
   const wrongState = structuredClone(exportData);
   wrongState.session.authoritativeActions[0].preStateHash = wrongState.session.authoritativeActions[1].preStateHash;
   await assertImportRejected(wrongState);
+
+  const foreignTurn = structuredClone(exportData);
+  foreignTurn.session.authoritativeActions.push({
+    ...structuredClone(foreignTurn.session.authoritativeActions[0]),
+    sequence: foreignTurn.session.authoritativeActions.length + 1,
+    turn: 2,
+  });
+  await assertImportRejected(foreignTurn);
+
+  const crossScenario = structuredClone(exportData);
+  crossScenario.session.authoritativeActions[0].scenarioId = "another-scenario";
+  await assertImportRejected(crossScenario);
+
+  const crossContent = structuredClone(exportData);
+  crossContent.session.authoritativeActions[0].contentVersion = "another-content-version";
+  await assertImportRejected(crossContent);
+
+  const impossiblePacket = structuredClone(exportData);
+  impossiblePacket.session.authoritativeActions[0].packetSelections = [
+    ...impossiblePacket.session.authoritativeActions[0].packetSelections,
+    ...impossiblePacket.session.authoritativeActions[0].packetSelections,
+  ];
+  await assertImportRejected(impossiblePacket);
+
+  const alternateResponse = exportData.session.state.conversationHistory[0].choices
+    .find((choice: { id: string }) => choice.id !== exportData.session.authoritativeActions[1].responseId);
+  assert.ok(alternateResponse, "fixture requires a structurally valid alternate response");
+  const changedResponse = structuredClone(exportData);
+  changedResponse.session.authoritativeActions[1].responseId = alternateResponse.id;
+  await assertImportRejected(changedResponse);
+
+  const foreignCampaign = await exportConversationLedger();
+  const crossCampaign = structuredClone(exportData);
+  crossCampaign.session.authoritativeActions[0] = structuredClone(foreignCampaign.exportData.session.authoritativeActions[0]);
+  await assertImportRejected(crossCampaign);
 });
 
 test("import rejects forged relationship state and replays a valid v8 ledger repeatably", async () => {

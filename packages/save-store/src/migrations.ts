@@ -27,15 +27,27 @@ function migrateStaffFunctionReadout(readout: Record<string, unknown>): Record<s
 export function migrateSessionPayload(payload: unknown): unknown {
   if (typeof payload !== "object" || payload === null) return payload;
   const session = payload as Record<string, unknown>;
-  if (session.saveFormatVersion === "8" && session.contentVersion === "0.11.0") {
-    return { ...session, contentVersion: "0.12.0" };
+  if (session.saveFormatVersion === "8") {
+    const actions = Array.isArray(session.authoritativeActions) ? session.authoritativeActions : [];
+    // A pre-campaign-bound conversation ledger cannot be safely upgraded: two
+    // campaigns can share an opening state, so its records are transplantable.
+    // Action-free v8 saves have no such provenance claim and can be upgraded.
+    if (!(typeof session.campaignId === "string" && session.campaignId.length > 0) && actions.length === 0) {
+      return {
+        ...session,
+        campaignId: typeof session.id === "string" && session.id.length > 0 ? session.id : undefined,
+        contentVersion: session.contentVersion === "0.11.0" ? "0.12.0" : session.contentVersion,
+      };
+    }
+    if (session.contentVersion === "0.11.0") return { ...session, contentVersion: "0.12.0" };
+    return payload;
   }
   if (session.saveFormatVersion === "7") {
     const actions = Array.isArray(session.authoritativeActions) ? session.authoritativeActions : [];
     // v7 action records lacked an independently verifiable transition
     // envelope.  Only action-free sessions can be safely upgraded.
     if (actions.length > 0) return payload;
-    return { ...session, saveFormatVersion: "8", contentVersion: session.contentVersion === "0.11.0" ? "0.12.0" : session.contentVersion, authoritativeActions: [] };
+    return { ...session, saveFormatVersion: "8", contentVersion: session.contentVersion === "0.11.0" ? "0.12.0" : session.contentVersion, authoritativeActions: [], campaignId: session.id };
   }
   // Dialogue 0.12.0 is content-side and deterministic; existing v6 transcripts,
   // agenda memory, state, and replay hashes remain valid. Upgrade the compatibility
@@ -58,6 +70,7 @@ export function migrateSessionPayload(payload: unknown): unknown {
         saveFormatVersion: "8",
         contentVersion: session.contentVersion === "0.11.0" ? "0.12.0" : session.contentVersion,
         authoritativeActions: [],
+        campaignId: session.id,
       };
     }
     return payload;
@@ -84,6 +97,7 @@ export function migrateSessionPayload(payload: unknown): unknown {
     ...session,
     saveFormatVersion: "8",
     authoritativeActions: [],
+    campaignId: session.id,
     history,
   };
 }
