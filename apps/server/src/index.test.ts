@@ -505,6 +505,42 @@ test("chief conversation routes persist revisions and reject stale responses", a
   assert.equal(imported.json().session.state.conversationHistory[0].status, "completed");
 });
 
+test("chief conversation routes enforce one topic per chief per month", async () => {
+  const created = await createSession();
+  const id = created.session.id;
+  const chiefId = created.session.advisorRoster[0].chiefId;
+  const [firstMemo, secondMemo] = created.memos;
+  assert.ok(firstMemo && secondMemo, "fixture needs two memo topics");
+  const firstOption = firstMemo.options[0];
+  const secondOption = secondMemo.options[0];
+  assert.ok(firstOption && secondOption, "fixture needs an option for each topic");
+  const selections = [
+    { memoId: firstMemo.id, optionId: firstOption.id },
+    { memoId: secondMemo.id, optionId: secondOption.id },
+  ];
+
+  const opened = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/chiefs/${chiefId}/conversation/open`,
+    payload: { ...selections[0], selections, expectedRevision: 0 },
+  });
+  assert.equal(opened.statusCode, 200);
+
+  const alternateTopic = await app.inject({
+    method: "POST",
+    url: `/api/sessions/${id}/chiefs/${chiefId}/conversation/open`,
+    payload: { ...selections[1], selections, expectedRevision: 1 },
+  });
+  assert.equal(alternateTopic.statusCode, 409);
+  assert.match(alternateTopic.json().error, /already engaged this chief this month/i);
+  assert.equal(alternateTopic.json().conversation.memoId, firstMemo.id, "the original topic remains on the command ledger");
+
+  const loaded = await app.inject({ method: "GET", url: `/api/sessions/${id}` });
+  assert.equal(loaded.statusCode, 200);
+  assert.equal(loaded.json().session.revision, 1, "the rejected topic switch cannot mutate authoritative state");
+  assert.equal(loaded.json().session.state.conversationHistory.length, 1);
+});
+
 test("import rejects a conversation action whose ledger context is forged", async () => {
   const created = await createSession();
   const id = created.session.id;

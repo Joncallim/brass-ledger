@@ -171,6 +171,46 @@ test("chiefs paper derives portrait props from chief id, session, and position e
   assert.equal((html.match(/data:image\/svg\+xml/g) ?? []).length, 2);
 });
 
+test("chiefs paper preserves every selected issue for a chief instead of discarding later positions", () => {
+  const session = createInitialGameSession(soloScenario, "web-chief-issues-session");
+  const scenario = { ...soloScenario, spriteVisualLanguage } as unknown as ScenarioSummary;
+  const chief = soloScenario.chiefs[0]!;
+  const [firstMemo, secondMemo] = soloScenario.memoTemplates;
+  const firstOption = firstMemo!.options[0]!;
+  const secondOption = secondMemo!.options[0]!;
+  const positions = [
+    {
+      chiefId: chief.id, chiefName: chief.name, directorate: chief.directorate, position: "support",
+      memoId: firstMemo!.id, optionId: firstOption.id, institutionalReason: "first reason", agendaMemoryNote: "", adviceStyleNote: "",
+      staffReadoutEvidence: { staffFunctionLabel: "People", metricLabel: "trust", metricStatus: "healthy", metricValue: 80, burdenLevel: "light", burdenPoints: 0 },
+    },
+    {
+      chiefId: chief.id, chiefName: chief.name, directorate: chief.directorate, position: "oppose",
+      memoId: secondMemo!.id, optionId: secondOption.id, institutionalReason: "second reason", agendaMemoryNote: "", adviceStyleNote: "",
+      staffReadoutEvidence: { staffFunctionLabel: "Operations", metricLabel: "readiness", metricStatus: "strained", metricValue: 35, burdenLevel: "strained", burdenPoints: 4 },
+    },
+  ] as any;
+  const html = renderToStaticMarkup(<ChiefsPaperScreen
+    chiefPositions={positions}
+    chiefCoalitions={[]}
+    advisorRoster={session.advisorRoster}
+    session={session}
+    scenario={scenario}
+    memos={[firstMemo!, secondMemo!]}
+    conversationBusy={false}
+    conversationError={null}
+    activeConversation={null}
+    onOpenConversation={() => {}}
+    onRespond={() => {}}
+    onProceed={() => {}}
+    onBack={() => {}}
+  />);
+  assert.match(html, /Other selected issues/);
+  assert.ok(html.includes(secondMemo!.title), "the later memo-specific position remains visible");
+  assert.ok(html.includes(secondOption.label), "the later selected option remains visible");
+  assert.match(html, /Discuss/, "the player can explicitly choose the later issue as the conversation topic");
+});
+
 test("chiefs paper passes real session state into the sprite variant, not a neutral default", () => {
   const session = createInitialGameSession(soloScenario, "web-sprite-state-session");
   const scenario = { ...soloScenario, spriteVisualLanguage } as unknown as ScenarioSummary;
