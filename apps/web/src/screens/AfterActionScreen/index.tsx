@@ -10,11 +10,12 @@ type Props = {
   result: TurnResult;
   previousStaffFunctions: StaffFunctionReadout[];
   labels: ScenarioLabels;
+  compactPresentation?: boolean;
   onNextMonth: () => void;
   onViewRecords: () => void;
 };
 
-export function AfterActionScreen({ result, previousStaffFunctions, labels, onNextMonth, onViewRecords }: Props) {
+export function AfterActionScreen({ result, previousStaffFunctions, labels, compactPresentation = false, onNextMonth, onViewRecords }: Props) {
   const isCampaignOver = result.nextState.campaignStatus !== "active";
   const won = result.nextState.campaignStatus === "won";
   const legibility = buildCampaignLegibility(result.nextState, result.previousState);
@@ -67,16 +68,18 @@ export function AfterActionScreen({ result, previousStaffFunctions, labels, onNe
             <div><p className="text-xs text-ink/45 mb-1">Next pressure</p><p className="text-ink/65">{legibility.risks.slice(0, 2).map((risk) => `${risk.label}: ${risk.status}, ${risk.trend}`).join(" · ")}</p></div>
           </div>
         </section>
-        <StaffConsequences
-          previous={previousStaffFunctions}
-          current={result.staffFunctions}
-        />
-
-        <StaffModuleConsequences modules={result.staffModules} />
+        <details open={!compactPresentation} className="group">
+          <summary className="cursor-pointer list-none text-xs uppercase tracking-widest text-ink/40">Staff consequences {compactPresentation ? "— expand detail" : ""}</summary>
+          <div className="mt-3 space-y-6">
+            <StaffConsequences previous={previousStaffFunctions} current={result.staffFunctions} />
+            <StaffModuleConsequences modules={result.staffModules} />
+          </div>
+        </details>
 
         {result.afterAction.length > 0 && (
-          <section>
-            <p className="text-xs uppercase tracking-widest text-ink/40 mb-3">After-action notes</p>
+          <details open={!compactPresentation} className="group">
+            <summary className="cursor-pointer list-none text-xs uppercase tracking-widest text-ink/40">After-action notes {compactPresentation ? "— expand detail" : ""}</summary>
+            <div className="mt-3">
             <div className="space-y-2">
               {result.afterAction.map((note, index) => (
                 <div key={`${note.heading}:${index}`} className="border border-border px-4 py-3">
@@ -85,7 +88,8 @@ export function AfterActionScreen({ result, previousStaffFunctions, labels, onNe
                 </div>
               ))}
             </div>
-          </section>
+            </div>
+          </details>
         )}
 
         <EventList events={result.triggeredEvents} />

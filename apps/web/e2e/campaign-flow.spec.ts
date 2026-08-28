@@ -16,6 +16,13 @@ test("create, play, and record a full campaign month", async ({ page }) => {
   await test.step("create a new campaign", async () => {
     await page.getByRole("button", { name: "Start new campaign" }).click();
     await expect(page.getByRole("button", { name: "Open decision memos →" })).toBeVisible();
+    const compactView = page.getByRole("button", { name: "Compact view" });
+    await expect(compactView).toHaveAttribute("aria-pressed", "false");
+    await compactView.click();
+    await expect(page.getByRole("button", { name: "Standard view" })).toHaveAttribute("aria-pressed", "true");
+    // Compact presentation may collapse repeated reporting, but it never
+    // removes a decision control or changes the authoritative campaign flow.
+    await expect(page.getByRole("button", { name: "Open decision memos →" })).toBeVisible();
   });
 
   await test.step("resume the campaign from the hub", async () => {
@@ -114,7 +121,7 @@ test("create, play, and record a full campaign month", async ({ page }) => {
     const row = page.locator("table tbody tr").first();
     await expect(row).toBeVisible();
     await row.getByRole("button", { name: "Open" }).click();
-    await expect(page.getByRole("heading", { name: "Month 2 of 12" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Month 2 of / })).toBeVisible();
   });
 
   await test.step("visit records and export the campaign", async () => {

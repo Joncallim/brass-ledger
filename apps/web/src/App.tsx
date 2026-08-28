@@ -13,6 +13,7 @@ import { isPreviewValid } from "./lib/previewValidity";
 import { scenarioLabels } from "./lib/labels";
 import { AppShell } from "./components/AppShell";
 import { FieldManual } from "./components/FieldManual";
+import { PresentationModeToggle, type PresentationMode } from "./components/PresentationModeToggle";
 import { SessionHub } from "./screens/SessionHub";
 import { BriefingScreen } from "./screens/BriefingScreen";
 import { MemosScreen } from "./screens/MemosScreen";
@@ -36,6 +37,16 @@ const emptyTurnCycle: TurnCycleState = {
   latestResult: null,
 };
 
+const presentationStorageKey = "brass-ledger.presentation-mode";
+
+function readPresentationMode(): PresentationMode {
+  try {
+    return window.localStorage.getItem(presentationStorageKey) === "compact" ? "compact" : "standard";
+  } catch {
+    return "standard";
+  }
+}
+
 export function App() {
   const [route, setRoute] = useState<AppRoute>({ screen: "hub" });
   const [scenario, setScenario] = useState<ScenarioSummary | null>(null);
@@ -52,6 +63,7 @@ export function App() {
   const [conversationError, setConversationError] = useState<string | null>(null);
   const [validationResults, setValidationResults] = useState<Record<string, { ok: boolean; checkedTurns: number; failedAtTurn: number | null }>>({});
   const [fieldManualOpen, setFieldManualOpen] = useState(false);
+  const [presentationMode, setPresentationMode] = useState<PresentationMode>(readPresentationMode);
   const fieldManualTriggerRef = useRef<HTMLButtonElement>(null);
 
   const sessionId = route.screen === "session" ? route.sessionId : null;
@@ -443,6 +455,12 @@ export function App() {
   const chiefPositions = validPreview?.projectedResult.chiefPositions ?? [];
   const chiefCoalitions = validPreview?.chiefCoalitions ?? [];
   const showRail = route.screen === "session";
+  const compactPresentation = presentationMode === "compact";
+
+  function handlePresentationMode(mode: PresentationMode) {
+    setPresentationMode(mode);
+    try { window.localStorage.setItem(presentationStorageKey, mode); } catch { /* Preferences remain optional. */ }
+  }
 
   return (
     <AppShell
@@ -453,7 +471,10 @@ export function App() {
       onNavigateRecords={() => { setRoute({ screen: "records" }); setError(null); }}
       showRail={showRail}
     >
-      <button ref={fieldManualTriggerRef} type="button" onClick={() => setFieldManualOpen(true)} aria-haspopup="dialog" aria-expanded={fieldManualOpen} className="fixed right-4 bottom-4 z-40 border border-border bg-paper px-3 py-2 text-xs text-ink shadow hover:border-brass">Field manual</button>
+      <div className="fixed right-4 bottom-4 z-40 flex gap-2">
+        <PresentationModeToggle mode={presentationMode} onChange={handlePresentationMode} />
+        <button ref={fieldManualTriggerRef} type="button" onClick={() => setFieldManualOpen(true)} aria-haspopup="dialog" aria-expanded={fieldManualOpen} className="border border-border bg-paper px-3 py-2 text-xs text-ink shadow hover:border-brass">Field manual</button>
+      </div>
       {fieldManualOpen && <FieldManual scenario={scenario} onClose={() => setFieldManualOpen(false)} returnFocusRef={fieldManualTriggerRef} />}
       {route.screen === "hub" && (
         <SessionHub
@@ -489,6 +510,7 @@ export function App() {
           staffReadouts={currentStaffFunctions}
           scenario={scenario}
           labels={labels}
+          compactPresentation={compactPresentation}
           onProceed={() => navigateStep("memos")}
         />
       )}
@@ -572,6 +594,7 @@ export function App() {
               )
             : []}
           labels={labels}
+          compactPresentation={compactPresentation}
           onNextMonth={handleNextMonth}
           onViewRecords={() => setRoute({ screen: "records" })}
         />

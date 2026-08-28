@@ -16,10 +16,11 @@ type Props = {
   staffReadouts: StaffFunctionReadout[];
   scenario?: ScenarioSummary;
   labels: ScenarioLabels;
+  compactPresentation?: boolean;
   onProceed: () => void;
 };
 
-export function BriefingScreen({ session, memos, staffReadouts, scenario, labels, onProceed }: Props) {
+export function BriefingScreen({ session, memos, staffReadouts, scenario, labels, compactPresentation = false, onProceed }: Props) {
   const state = session.state;
   const briefing = state.briefing;
   const objectiveChecks = evaluateCampaignObjectives(state);
@@ -114,7 +115,7 @@ export function BriefingScreen({ session, memos, staffReadouts, scenario, labels
               <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Command history</p>
               <p className="text-xs text-ink/50 mb-3">The pattern created by your prior packets. Latest month first.</p>
               <div className="space-y-2">
-                {campaignHistory.map((entry) => (
+                {campaignHistory.slice(0, compactPresentation ? 1 : campaignHistory.length).map((entry) => (
                   <div key={entry.turn} className="border border-border px-3 py-2 text-xs">
                     <p className="font-semibold text-ink/70">Month {entry.turn}</p>
                     {entry.risks.length > 0 && <p className="mt-1 text-ink/55">{entry.risks.map((risk) => `${risk.label} ${risk.trend}`).join(" · ")}</p>}
@@ -126,6 +127,24 @@ export function BriefingScreen({ session, memos, staffReadouts, scenario, labels
                     {entry.risks.length === 0 && entry.events.length === 0 && entry.programmePhases.length === 0 && entry.commitmentsOpened.length === 0 && entry.commitmentsClosed.length === 0 && entry.relationshipChanges.length === 0 && <p className="mt-1 text-ink/40">No major strategic shift recorded.</p>}
                   </div>
                 ))}
+                {compactPresentation && campaignHistory.length > 1 && (
+                  <details className="border border-border px-3 py-2 text-xs">
+                    <summary className="cursor-pointer text-ink/60">Show {campaignHistory.length - 1} earlier {pluralize("month", campaignHistory.length - 1)} of command history</summary>
+                    <div className="mt-2 space-y-2">
+                      {campaignHistory.slice(1).map((entry) => (
+                        <div key={entry.turn} className="border-t border-border pt-2">
+                          <p className="font-semibold text-ink/70">Month {entry.turn}</p>
+                          {entry.risks.length > 0 && <p className="mt-1 text-ink/55">{entry.risks.map((risk) => `${risk.label} ${risk.trend}`).join(" · ")}</p>}
+                          {entry.events.length > 0 && <p className="mt-1 text-yellow-400">{entry.events.map((event) => event.title).join(" · ")}</p>}
+                          {entry.programmePhases.length > 0 && <p className="mt-1 text-green-400">Programme phase: {entry.programmePhases.map((program) => labels.program(program.id)).join(", ")}</p>}
+                          {entry.commitmentsOpened.length > 0 && <p className="mt-1 text-ink/50">Promise made: {entry.commitmentsOpened.join("; ")}</p>}
+                          {entry.commitmentsClosed.length > 0 && <p className="mt-1 text-ink/50">Promise closed: {entry.commitmentsClosed.join("; ")}</p>}
+                          {entry.relationshipChanges.length > 0 && <p className="mt-1 text-ink/50">Chief relationship: {entry.relationshipChanges.map((change) => `${chiefName(change.chiefId)} ${change.delta > 0 ? "+" : ""}${change.delta}`).join(" · ")}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
               </div>
             </section>
           )}
@@ -145,8 +164,10 @@ export function BriefingScreen({ session, memos, staffReadouts, scenario, labels
             </div>
           </section>
 
-          <section>
-            <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">How your staff stand today</p>
+          <details open={!compactPresentation} className="group">
+            <summary className="cursor-pointer list-none">
+              <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">How your staff stand today <span className="normal-case tracking-normal text-ink/50">{compactPresentation ? "— expand stable staff detail" : ""}</span></p>
+            </summary>
             <p className="text-xs text-ink/50 mb-3 leading-relaxed">
               Your five staff functions each have a limited amount of work they can absorb in a month. Burden is how
               many points of work they are carrying against that limit.
@@ -181,7 +202,7 @@ export function BriefingScreen({ session, memos, staffReadouts, scenario, labels
                 ))}
               </tbody>
             </table>
-          </section>
+          </details>
 
           {openCommitments.length > 0 && (
             <section>
