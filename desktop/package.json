@@ -2,6 +2,8 @@
   "name": "brass-ledger-desktop",
   "version": "0.1.0",
   "description": "Desktop release shell for Brass Ledger",
+  "author": "Jonathan Callim",
+  "desktopName": "brass-ledger",
   "private": true,
   "type": "module",
   "main": "main.mjs",
@@ -14,13 +16,19 @@
   "build": {
     "appId": "ai.brass-ledger.desktop",
     "productName": "Brass Ledger",
+    "executableName": "brass-ledger",
     "files": [
       "main.mjs",
       "server/**/*",
       "web/**/*"
     ],
     "mac": { "target": "dmg" },
-    "linux": { "target": "AppImage" },
+    "linux": {
+      "target": "AppImage",
+      "synopsis": "A strategic command campaign",
+      "category": "Game",
+      "syncDesktopName": true
+    },
     "win": { "target": "nsis" }
   },
   "dependencies": {
