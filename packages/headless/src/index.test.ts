@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
+import { listScenarios, soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
 import { buildAdvisorPortraitSvg, buildSpritePixels, spritePixelRuns, spriteSpecSchema, gameSessionSchema, SPRITE_NEGATIVE_PROMPT, createInitialGameSession, type TurnInput } from "@brass-ledger/shared";
 import { acceptedRiskCandidatesForInput, createBatchSession, hashPromptText, replicateSeedFor, runHeadlessBatch, runHeadlessCampaign } from "./index";
 
@@ -26,6 +26,32 @@ test("batch campaigns use paired replicate seeds across strategies", () => {
   assert.notEqual(balanced.state.seed, nextReplicate.state.seed, "different replicates get different seeds");
   assert.equal(replicateSeedFor(0), soloScenario.initialState.seed);
   assert.equal(replicateSeedFor(1), soloScenario.initialState.seed + 1009);
+});
+
+test("every shipped scenario completes a deterministic replay-validated campaign", async () => {
+  for (const scenario of listScenarios()) {
+    const first = await runHeadlessCampaign({
+      scenarioId: scenario.id,
+      campaignSeed: `terminal-${scenario.id}`,
+      turns: scenario.maxTurns + 1,
+      validate: true,
+    });
+    const second = await runHeadlessCampaign({
+      scenarioId: scenario.id,
+      campaignSeed: `terminal-${scenario.id}`,
+      turns: scenario.maxTurns + 1,
+      validate: true,
+    });
+
+    assert.notEqual(first.session.status, "active", `${scenario.id} reaches a terminal outcome`);
+    assert.equal(first.turnSummaries.length <= scenario.maxTurns, true, `${scenario.id} never resolves beyond its authored horizon`);
+    assert.equal(first.validation?.ok, true, `${scenario.id} validates its full replay`);
+    assert.deepEqual(
+      { status: first.session.status, score: first.session.score, outcome: first.session.outcome, replay: first.validation },
+      { status: second.session.status, score: second.session.score, outcome: second.session.outcome, replay: second.validation },
+      `${scenario.id} has a repeatable terminal campaign for the same seed`,
+    );
+  }
 });
 
 test("sprite output is additive, schema-valid, and renderer-equivalent", async () => {
