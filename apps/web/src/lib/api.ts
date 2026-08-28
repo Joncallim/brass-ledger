@@ -3,6 +3,7 @@ import type {
   StaffNegotiation,
   AcceptedRiskOverride,
   SessionExport,
+  ScenarioSummary,
 } from "@brass-ledger/shared";
 import type {
   SessionEnvelope,
@@ -47,8 +48,15 @@ export function listSessions() {
   return fetchJson<{ sessions: SessionSummary[] }>(`${BASE}/sessions`);
 }
 
-export function createSession() {
-  return fetchJson<SessionEnvelope>(`${BASE}/sessions`, { method: "POST" });
+export function listScenarios() {
+  return fetchJson<{ scenarios: ScenarioSummary[] }>(`${BASE}/scenarios`);
+}
+
+export function createSession(scenarioId?: string) {
+  return fetchJson<SessionEnvelope>(`${BASE}/sessions`, {
+    method: "POST",
+    body: scenarioId ? JSON.stringify({ scenarioId }) : undefined,
+  });
 }
 
 export function loadSession(id: string) {

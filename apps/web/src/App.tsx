@@ -4,7 +4,7 @@ import { buildStaffFunctionReadouts, buildDirectorateBurden } from "@brass-ledge
 import type { AppRoute, TurnCycleState, SessionSummary, TurnStep } from "./lib/types";
 import {
   describeError,
-  listSessions, createSession, loadSession, deleteSession,
+  listSessions, listScenarios, createSession, loadSession, deleteSession,
   resolveTurn, exportSession, importSession, validateReplay,
   openChiefConversation, respondToChief,
 } from "./lib/api";
@@ -38,6 +38,8 @@ const emptyTurnCycle: TurnCycleState = {
 export function App() {
   const [route, setRoute] = useState<AppRoute>({ screen: "hub" });
   const [scenario, setScenario] = useState<ScenarioSummary | null>(null);
+  const [scenarios, setScenarios] = useState<ScenarioSummary[]>([]);
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string | null>(null);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [cycle, setCycle] = useState<TurnCycleState>(emptyTurnCycle);
   const [busy, setBusy] = useState(false);
@@ -111,6 +113,8 @@ export function App() {
     setError(null);
     try {
       const data = await loadSession(id);
+      const loadedScenario = scenarios.find((candidate) => candidate.id === data.session.scenarioId && candidate.contentVersion === data.session.contentVersion);
+      if (loadedScenario) setScenario(loadedScenario);
       const latestResult = data.session.history.at(-1) ?? null;
       const newCycle: TurnCycleState = { ...emptyTurnCycle, session: data.session, memos: data.memos, latestResult };
       setCycle(newCycle);
@@ -125,11 +129,13 @@ export function App() {
     }
   }
 
-  async function handleNewSession() {
+  async function handleNewSession(scenarioId?: string) {
     setBusy(true);
     setError(null);
     try {
-      const data = await createSession();
+      const data = await createSession(scenarioId);
+      const createdScenario = scenarios.find((candidate) => candidate.id === data.session.scenarioId && candidate.contentVersion === data.session.contentVersion);
+      if (createdScenario) setScenario(createdScenario);
       const newCycle: TurnCycleState = { ...emptyTurnCycle, session: data.session, memos: data.memos, latestResult: null };
       setCycle(newCycle);
       clearPreview();
@@ -411,10 +417,13 @@ export function App() {
     async function bootstrap() {
       try {
         const [scenarioData, recordsData] = await Promise.all([
-          fetch("/api/scenario").then((r) => r.json()) as Promise<{ scenario: ScenarioSummary }>,
+          listScenarios(),
           listSessions(),
         ]);
-        setScenario(scenarioData.scenario);
+        const defaultScenario = scenarioData.scenarios[0] ?? null;
+        setScenarios(scenarioData.scenarios);
+        setScenario(defaultScenario);
+        setSelectedScenarioId(defaultScenario?.id ?? null);
         setSessions(recordsData.sessions);
       } catch {
         setError("Cannot reach the Brass Ledger server. Check that it is running, then reload this page.");
@@ -444,9 +453,18 @@ export function App() {
           sessions={sessions}
           scenarioTitle={scenario?.title ?? "Brass Ledger"}
           scenarioDescription={scenario?.description ?? "Loading the scenario…"}
+          scenarios={scenarios}
+          selectedScenarioId={selectedScenarioId}
           busy={busy}
           error={error}
           onLoad={handleLoadSession}
+          onSelectScenario={(id) => {
+            const selected = scenarios.find((candidate) => candidate.id === id);
+            if (selected) {
+              setSelectedScenarioId(id);
+              setScenario(selected);
+            }
+          }}
           onNew={handleNewSession}
         />
       )}

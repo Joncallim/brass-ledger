@@ -1,3 +1,4 @@
+import type { ScenarioSummary } from "@brass-ledger/shared";
 import type { SessionSummary } from "../lib/types";
 import { campaignStatusLabel } from "../lib/labels";
 
@@ -5,13 +6,16 @@ type Props = {
   sessions: SessionSummary[];
   scenarioTitle: string;
   scenarioDescription: string;
+  scenarios: ScenarioSummary[];
+  selectedScenarioId: string | null;
   busy: boolean;
   error: string | null;
   onLoad: (id: string) => void;
-  onNew: () => void;
+  onSelectScenario: (scenarioId: string) => void;
+  onNew: (scenarioId?: string) => void;
 };
 
-export function SessionHub({ sessions, scenarioTitle, scenarioDescription, busy, error, onLoad, onNew }: Props) {
+export function SessionHub({ sessions, scenarioTitle, scenarioDescription, scenarios, selectedScenarioId, busy, error, onLoad, onSelectScenario, onNew }: Props) {
   return (
     <div className="p-6 max-w-3xl">
       <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Campaign</p>
@@ -35,13 +39,38 @@ export function SessionHub({ sessions, scenarioTitle, scenarioDescription, busy,
         )}
         <button
           type="button"
-          onClick={onNew}
+          onClick={() => onNew(selectedScenarioId ?? undefined)}
           disabled={busy}
           className="px-4 py-2 border border-border text-ink hover:border-brass disabled:opacity-50 text-sm"
         >
           Start new campaign
         </button>
       </div>
+
+      {scenarios.length > 1 && (
+        <section className="mb-8" aria-label="Choose scenario">
+          <p className="text-xs uppercase tracking-widest text-ink/40 mb-3">Choose a campaign</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {scenarios.map((candidate) => {
+              const selected = candidate.id === selectedScenarioId;
+              return (
+                <button
+                  key={candidate.id}
+                  type="button"
+                  onClick={() => onSelectScenario(candidate.id)}
+                  disabled={busy}
+                  aria-pressed={selected}
+                  className={`border p-4 text-left disabled:opacity-50 ${selected ? "border-brass bg-brass/10" : "border-border hover:border-brass"}`}
+                >
+                  <span className="block text-sm font-medium text-ink">{candidate.title}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-ink/60">{candidate.description}</span>
+                  <span className="mt-3 block text-xs text-ink/45">{candidate.maxTurns} months</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {error && (
         <div className="border border-red-600/70 bg-red-950/40 text-red-300 px-4 py-3 text-sm mb-6">{error}</div>

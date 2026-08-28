@@ -65,10 +65,10 @@ function appFetchMock(conversations?: {
   const previewCalls: ReturnType<typeof deferredPreviewCall>[] = [];
   const resolveTurnCalls: Array<{ expectedRevision?: number }> = [];
   const fetchMock = (url: string, init?: RequestInit) => {
-    if (url === "/api/scenario") {
+    if (url === "/api/scenarios") {
       // The server transports the sprite visual-language table on the scenario
       // summary (it is NOT part of the raw content scenario).
-      return Promise.resolve({ ok: true, json: async () => ({ scenario: { ...soloScenario, spriteVisualLanguage } }) });
+      return Promise.resolve({ ok: true, json: async () => ({ scenarios: [{ ...soloScenario, spriteVisualLanguage }] }) });
     }
     if (url === "/api/sessions" && !init?.method) {
       return Promise.resolve({ ok: true, json: async () => ({ sessions: [summary] }) });
