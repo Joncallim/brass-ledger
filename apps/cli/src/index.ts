@@ -30,6 +30,7 @@ type CliOptions = {
   listSessions: boolean;
   validate: boolean;
   autoAcceptRisks: boolean;
+  scenarioId: string | null;
 };
 
 function readOptions(argv: string[]): CliOptions {
@@ -46,6 +47,7 @@ function readOptions(argv: string[]): CliOptions {
     listSessions: false,
     validate: false,
     autoAcceptRisks: false,
+    scenarioId: null,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -60,6 +62,12 @@ function readOptions(argv: string[]): CliOptions {
       const value = argv[index + 1];
       if (!value) throw new Error("--resume requires a session ID.");
       options.resumeId = value;
+      index += 1;
+    }
+    if (arg === "--scenario") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--scenario requires a registered scenario ID.");
+      options.scenarioId = value;
       index += 1;
     }
     if (arg === "--batch") {
@@ -153,6 +161,9 @@ if (options.listSessions) {
 }
 
 if (options.batch !== null) {
+  if (options.scenarioId) {
+    throw new Error("--scenario is not supported with --batch until scenario-specific balance policies are authored.");
+  }
   const telemetry = await runHeadlessBatch(options.batch);
   if (options.json) {
     console.log(JSON.stringify(telemetry, null, 2));
@@ -230,6 +241,10 @@ if (options.sessionPath) {
   }
 }
 
+if (session && options.scenarioId) {
+  throw new Error("--scenario cannot be combined with --session or --resume; saved campaigns select their own scenario.");
+}
+
 const inputs = await readInputs(options.inputPath);
 let output;
 
@@ -241,6 +256,7 @@ try {
     validate: options.validate,
     includeSprites: options.sprites,
     autoAcceptRisks: options.autoAcceptRisks,
+    scenarioId: options.scenarioId ?? undefined,
   });
 } catch (error) {
   if (error instanceof HeadlessAcceptedRiskError) {
