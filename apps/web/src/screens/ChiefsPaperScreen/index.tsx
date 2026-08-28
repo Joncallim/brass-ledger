@@ -15,6 +15,7 @@ type Props = {
   conversationBusy: boolean;
   conversationError: string | null;
   activeConversation: ChiefConversationRecord | null;
+  compactPresentation?: boolean;
   onOpenConversation: (chiefId: string, memoId: string, optionId: string) => void;
   onRespond: (chiefId: string, responseId: string) => void;
   onProceed: () => void;
@@ -31,6 +32,7 @@ export function ChiefsPaperScreen({
   conversationBusy,
   conversationError,
   activeConversation,
+  compactPresentation = false,
   onOpenConversation,
   onRespond,
   onProceed,
@@ -69,6 +71,16 @@ export function ChiefsPaperScreen({
       return acc;
     }, {}),
   );
+  const priorPositions = session.history.at(-1)?.chiefPositions ?? [];
+  function pacingStatus(position: ChiefPositionEntry): "stable" | "changed" | "new" {
+    const prior = priorPositions.find((entry) => entry.chiefId === position.chiefId && entry.memoId === position.memoId);
+    if (!prior) return "new";
+    return prior.optionId === position.optionId
+      && prior.position === position.position
+      && prior.requiredCondition === position.requiredCondition
+      ? "stable"
+      : "changed";
+  }
 
   return (
     <div className="relative">
@@ -121,6 +133,8 @@ export function ChiefsPaperScreen({
                   advisor={advisor}
                   sprite={sprite}
                   memos={memos}
+                  compactPresentation={compactPresentation}
+                  pacingStatus={pacingStatus(position)}
                   onTalk={(invoker) => handleTalk(position, invoker)}
                 />
                 {positions.length > 1 && (

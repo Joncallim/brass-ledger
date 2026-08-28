@@ -1,4 +1,4 @@
-import { directorateLabel, type CommanderIntent, type DecisionMemo, type DirectorateId, type MemoSelection, type StaffModuleDefinition, type StaffNegotiation } from "@brass-ledger/shared";
+import { directorateLabel, type CommanderIntent, type DecisionMemo, type DirectorateId, type MemoSelection, type StaffModuleDefinition, type StaffNegotiation, type TurnResult } from "@brass-ledger/shared";
 import type { PreviewPayload } from "../../lib/types";
 import { MemoPanel } from "./MemoPanel";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -306,3 +306,28 @@ export type MemosPacingPresentation = {
     whyNow: string;
   }>;
 };
+
+/**
+ * Turns the prior resolved packet into display context for the next packet.
+ * It deliberately reports only authored labels and current memo wording: it
+ * neither predicts an outcome nor carries a prior option into the selection.
+ */
+export function buildMemosPacingPresentation(
+  memos: DecisionMemo[],
+  history: readonly Pick<TurnResult, "input" | "memos">[],
+): MemosPacingPresentation | undefined {
+  const priorTurn = history.at(-1);
+  if (!priorTurn) return undefined;
+  const priorChoices = priorTurn.input.selections.flatMap((selection) => {
+    const priorMemo = priorTurn.memos.find((memo) => memo.id === selection.memoId);
+    const priorOption = priorMemo?.options.find((option) => option.id === selection.optionId);
+    return priorOption ? [{ memoId: selection.memoId, optionLabel: priorOption.label }] : [];
+  });
+  const issueChanges = memos.flatMap((memo) => {
+    const priorMemo = priorTurn.memos.find((candidate) => candidate.id === memo.id);
+    return priorMemo && priorMemo.issue !== memo.issue && memo.issue
+      ? [{ memoId: memo.id, whyNow: memo.issue }]
+      : [];
+  });
+  return { priorChoices, issueChanges };
+}

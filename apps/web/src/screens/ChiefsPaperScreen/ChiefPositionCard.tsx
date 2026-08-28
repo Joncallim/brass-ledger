@@ -8,6 +8,8 @@ type Props = {
   advisor: SessionAdvisor | undefined;
   sprite: SpriteSpec | undefined;
   memos: DecisionMemo[];
+  compactPresentation?: boolean;
+  pacingStatus?: "stable" | "changed" | "new";
   onTalk: (invoker: HTMLButtonElement) => void;
 };
 
@@ -18,7 +20,7 @@ const positionMeta = {
   oppose: { symbol: "▼", label: "Objects", color: "text-red-400 border-red-600 bg-red-950/40" },
 };
 
-export function ChiefPositionCard({ position, advisor, sprite, memos, onTalk }: Props) {
+export function ChiefPositionCard({ position, advisor, sprite, memos, compactPresentation = false, pacingStatus, onTalk }: Props) {
   const meta = positionMeta[position.position] ?? positionMeta.accept_risk;
   const memo = memos.find((m) => m.id === position.memoId);
   const option = memo?.options.find((o) => o.id === position.optionId);
@@ -57,21 +59,23 @@ export function ChiefPositionCard({ position, advisor, sprite, memos, onTalk }: 
         <span className="text-ink/70 font-medium">{optionLabel}</span>
       </div>
 
-      {position.institutionalReason && (
-        <p className="text-sm text-ink/70 leading-relaxed mb-2">
-          {position.institutionalReason}
+      {pacingStatus && pacingStatus !== "stable" && (
+        <p className="mb-2 text-xs font-medium text-brass" aria-label="Chief position changed since last month">
+          {pacingStatus === "new" ? "New chief position on this packet." : "Chief position or term changed since last month."}
         </p>
       )}
 
-      <StaffReadoutEvidence evidence={position.staffReadoutEvidence} />
-
-      {position.agendaMemoryNote && (
-        <p className="text-xs text-ink/40 mt-2 italic">{position.agendaMemoryNote}</p>
-      )}
-
-      {position.adviceStyleNote && (
-        <p className="text-xs text-ink/40 mt-2 italic">{position.adviceStyleNote}</p>
-      )}
+      <details open={!compactPresentation || pacingStatus !== "stable"}>
+        <summary className="cursor-pointer text-xs text-ink/50">
+          {compactPresentation && pacingStatus === "stable" ? "Stable support — expand staff evidence" : "Staff evidence and advice"}
+        </summary>
+        <div className="mt-2">
+          {position.institutionalReason && <p className="text-sm text-ink/70 leading-relaxed mb-2">{position.institutionalReason}</p>}
+          <StaffReadoutEvidence evidence={position.staffReadoutEvidence} />
+          {position.agendaMemoryNote && <p className="text-xs text-ink/40 mt-2 italic">{position.agendaMemoryNote}</p>}
+          {position.adviceStyleNote && <p className="text-xs text-ink/40 mt-2 italic">{position.adviceStyleNote}</p>}
+        </div>
+      </details>
 
       <div className="mt-3">
         <button

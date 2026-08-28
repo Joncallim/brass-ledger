@@ -4,7 +4,7 @@ import { JSDOM } from "jsdom";
 import { act } from "react";
 import type { DecisionMemo } from "@brass-ledger/shared";
 import type { PreviewPayload } from "../src/lib/types";
-import { MemosScreen } from "../src/screens/MemosScreen";
+import { buildMemosPacingPresentation, MemosScreen } from "../src/screens/MemosScreen";
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>");
 const globals = globalThis as unknown as Record<string, unknown>;
@@ -186,4 +186,19 @@ test("MemosScreen can pace a memo with an explicitly supplied prior choice and c
   assert.doesNotMatch(container.textContent ?? "", /recommended|automatically selected/i);
   act(() => root.unmount());
   container.remove();
+});
+
+test("buildMemosPacingPresentation reports authored prior choices and only changed current issues", () => {
+  const priorMemos = structuredClone(memos);
+  priorMemos[0]!.issue = "Hold the frontier with the current force.";
+  const currentMemos = structuredClone(memos);
+  currentMemos[0]!.issue = "The frontier has changed and needs a fresh decision.";
+  const presentation = buildMemosPacingPresentation(currentMemos, [{
+    input: { selections: [{ memoId: "posture", optionId: "hold" }] },
+    memos: priorMemos,
+  }] as any);
+  assert.deepEqual(presentation, {
+    priorChoices: [{ memoId: "posture", optionLabel: "Hold the line" }],
+    issueChanges: [{ memoId: "posture", whyNow: "The frontier has changed and needs a fresh decision." }],
+  });
 });

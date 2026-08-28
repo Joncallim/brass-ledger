@@ -16,7 +16,7 @@ import { FieldManual } from "./components/FieldManual";
 import { PresentationModeToggle, type PresentationMode } from "./components/PresentationModeToggle";
 import { SessionHub } from "./screens/SessionHub";
 import { BriefingScreen } from "./screens/BriefingScreen";
-import { MemosScreen } from "./screens/MemosScreen";
+import { buildMemosPacingPresentation, MemosScreen } from "./screens/MemosScreen";
 import { ChiefsPaperScreen } from "./screens/ChiefsPaperScreen";
 import { PreCommitScreen } from "./screens/PreCommitScreen";
 import { AfterActionScreen } from "./screens/AfterActionScreen";
@@ -527,12 +527,11 @@ export function App() {
         <MemosScreen
           memos={cycle.memos}
           selections={cycle.selections}
-          session={cycle.session}
-          chiefPositions={validPreview?.chiefPositions ?? []}
           staffNegotiations={cycle.staffNegotiations}
           commanderIntent={cycle.commanderIntent}
           staffAssistanceDetail={scenario?.staffAssistanceProfiles.find((profile) => profile.id === cycle.session.staffAssistanceId)?.forecastDetail}
           staffModules={scenario?.staffModules ?? []}
+          pacingPresentation={buildMemosPacingPresentation(cycle.memos, cycle.session.history)}
           preview={validPreview}
           previewLoading={previewLoading}
           previewError={previewError}
@@ -555,6 +554,7 @@ export function App() {
           conversationBusy={conversationBusy}
           conversationError={conversationError}
           activeConversation={activeConversation}
+          compactPresentation={compactPresentation}
           onOpenConversation={handleOpenConversation}
           onRespond={handleRespond}
           onProceed={() => navigateStep("commit")}
