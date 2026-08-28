@@ -362,6 +362,29 @@ test("chief conversations branch across multiple stages and update trust deltas"
   assert.match(commitment.label, /bounded order/i);
 });
 
+test("chief dialogue is authored, decision-specific, stateful, and deterministic", () => {
+  const halden = soloScenario.chiefs.find((chief) => chief.id === "halden")!;
+  const briggs = soloScenario.chiefs.find((chief) => chief.id === "briggs")!;
+  const posture = soloScenario.memoTemplates.find((memo) => memo.id === "posture")!;
+  const intelligence = soloScenario.memoTemplates.find((memo) => memo.id === "intelligence-focus")!;
+  const measured = posture.options.find((option) => option.id === "measured-deterrence")!;
+  const warning = intelligence.options.find((option) => option.id === "warning-net")!;
+  const haldenPosition = buildChiefPositions(soloScenario.chiefs, soloScenario.initialState, posture, measured).find((position) => position.chiefId === halden.id)!;
+  const briggsPosition = buildChiefPositions(soloScenario.chiefs, soloScenario.initialState, posture, measured).find((position) => position.chiefId === briggs.id)!;
+  const haldenOpening = startChiefConversation(halden, posture, measured, haldenPosition, soloScenario.initialState);
+  const briggsOpening = startChiefConversation(briggs, posture, measured, briggsPosition, soloScenario.initialState);
+  assert.match(haldenOpening.transcript[0]!.text, /estimate|fact|inference/i);
+  assert.match(briggsOpening.transcript[0]!.text, /field|contact/i);
+  const warningPosition = buildChiefPositions(soloScenario.chiefs, soloScenario.initialState, intelligence, warning).find((position) => position.chiefId === halden.id)!;
+  const warningOpening = startChiefConversation(halden, intelligence, warning, warningPosition, soloScenario.initialState);
+  assert.notDeepEqual(haldenOpening.transcript, warningOpening.transcript);
+  assert.deepEqual(haldenOpening, startChiefConversation(halden, posture, measured, haldenPosition, soloScenario.initialState));
+
+  const overriddenState = { ...soloScenario.initialState, chiefTrust: { ...soloScenario.initialState.chiefTrust, halden: 38 }, conversationHistory: [{ ...haldenOpening, status: "completed" as const, stage: "completed" as const, choiceTrail: ["closing-override"], totalTrustDelta: -3 }] };
+  const overridden = startChiefConversation(halden, posture, measured, haldenPosition, overriddenState);
+  assert.match(overridden.transcript.map((turn) => turn.text).join(" "), /overr(?:id|od)|support is no longer automatic/i);
+});
+
 test("validateReplaySession reports mismatched history length without throwing", () => {
   const validation = validateReplaySession(soloScenario, {
     initialState: soloScenario.initialState,

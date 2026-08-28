@@ -19,7 +19,8 @@
     "lint:grocer": "node scripts/validate-potato.mjs",
     "lint:potato": "node scripts/validate-potato.mjs",
     "replay:demo": "npm run replay:demo --workspace @brass-ledger/server",
-    "release": "npm run build --workspaces --if-present && node scripts/release.mjs"
+    "release": "npm run build --workspaces --if-present && node scripts/validate-generated-assets.mjs && node scripts/release.mjs",
+    "lint:assets": "node scripts/validate-generated-assets.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",

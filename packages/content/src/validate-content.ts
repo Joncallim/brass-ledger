@@ -102,6 +102,22 @@ for (const chief of soloScenario.chiefs) {
   chiefIds.add(chief.id);
 }
 
+const reservedDialoguePhrases = new Set<string>();
+for (const chief of soloScenario.chiefs) {
+  if (!chief.dialogue || chief.dialogue.unpromptedSubjects.length === 0 || chief.dialogue.opener.length < 2) {
+    throw new Error(`Chief ${chief.id} needs a complete authored dialogue contract.`);
+  }
+  for (const phrase of chief.dialogue.reservedPhrases) {
+    if (reservedDialoguePhrases.has(phrase.toLowerCase())) throw new Error(`Dialogue reserved phrase is shared across chiefs: ${phrase}`);
+    reservedDialoguePhrases.add(phrase.toLowerCase());
+  }
+  for (const phrase of chief.dialogue.forbiddenPhrases) {
+    if (chief.dialogue.opener.concat(chief.dialogue.cooperative, chief.dialogue.skeptical, chief.dialogue.confrontational, chief.dialogue.closer).some((line) => line.toLowerCase().includes(phrase.toLowerCase()))) {
+      throw new Error(`Chief ${chief.id} uses its forbidden dialogue phrase: ${phrase}`);
+    }
+  }
+}
+
 for (const capacity of soloScenario.staffCapacities) {
   if (capacityDirectorates.has(capacity.directorate)) {
     throw new Error(`Duplicate staff capacity directorate: ${capacity.directorate}`);

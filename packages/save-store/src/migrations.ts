@@ -27,6 +27,13 @@ function migrateStaffFunctionReadout(readout: Record<string, unknown>): Record<s
 export function migrateSessionPayload(payload: unknown): unknown {
   if (typeof payload !== "object" || payload === null) return payload;
   const session = payload as Record<string, unknown>;
+  // Dialogue 0.12.0 is content-side and deterministic; existing v6 transcripts,
+  // agenda memory, state, and replay hashes remain valid. Upgrade the compatibility
+  // marker so active and completed 0.11.0 campaigns can continue with the new voice
+  // contracts instead of being stranded at an arbitrary content boundary.
+  if (session.saveFormatVersion === "6" && session.contentVersion === "0.11.0") {
+    return { ...session, contentVersion: "0.12.0" };
+  }
   if (session.saveFormatVersion !== "5") return payload;
 
   const history = Array.isArray(session.history)

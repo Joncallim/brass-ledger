@@ -605,6 +605,24 @@ export const explainabilityEntrySchema = z.object({
 });
 export type ExplainabilityEntry = z.infer<typeof explainabilityEntrySchema>;
 
+export const chiefDialogueProfileSchema = z.object({
+  cadence: z.string().min(1),
+  argumentMode: z.string().min(1),
+  pressureResponse: z.string().min(1),
+  disagreementStyle: z.string().min(1),
+  trustPositiveTell: z.string().min(1),
+  trustNegativeTell: z.string().min(1),
+  unpromptedSubjects: z.array(z.string()).min(1),
+  reservedPhrases: z.array(z.string()).min(2),
+  forbiddenPhrases: z.array(z.string()).min(1),
+  opener: z.array(z.string()).min(2),
+  cooperative: z.array(z.string()).min(2),
+  skeptical: z.array(z.string()).min(2),
+  confrontational: z.array(z.string()).min(2),
+  closer: z.array(z.string()).min(2),
+});
+export type ChiefDialogueProfile = z.infer<typeof chiefDialogueProfileSchema>;
+
 export const chiefArchetypeSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -617,6 +635,9 @@ export const chiefArchetypeSchema = z.object({
   riskTolerance: z.number().min(0).max(1),
   preferredTags: z.array(z.string()),
   concernTags: z.array(z.string()),
+  // Optional at the transport boundary so historical scenario summaries remain
+  // readable; shipped content validation requires it for every playable chief.
+  dialogue: chiefDialogueProfileSchema.optional(),
 });
 export type ChiefArchetype = z.infer<typeof chiefArchetypeSchema>;
 
@@ -2729,13 +2750,28 @@ const chiefVoiceLibrary: Record<string, ChiefVoiceProfile> = {
 };
 
 function chiefVoice(chief: ChiefArchetype) {
-  return chiefVoiceLibrary[chief.id] ?? {
-    opener: ["The chief answers in a careful, institutional register."],
-    cooperative: ["If the month stays honest, I can support it."],
-    skeptical: ["I need the room to be sharper about the risk it is accepting."],
-    confrontational: ["I will not let the packet hide its real cost."],
-    closer: ["Give me a bounded order and I can carry it."],
+  return chief.dialogue ?? chiefVoiceLibrary[chief.id] ?? {
+    opener: ["The chief answers in a careful, institutional register."], cooperative: ["If the month stays honest, I can support it."], skeptical: ["I need the room to be sharper about the risk it is accepting."], confrontational: ["I will not let the packet hide its real cost."], closer: ["Give me a bounded order and I can carry it."],
   };
+}
+
+function relationshipLine(chief: ChiefArchetype, state: CampaignState) {
+  if (!chief.dialogue) return null;
+  const completed = state.conversationHistory.filter((entry) => entry.chiefId === chief.id && entry.status === "completed");
+  const last = completed.at(-1);
+  const trust = state.chiefTrust[chief.id] ?? 50;
+  const priorClosing = last?.choiceTrail.at(-1);
+  const trustDirection = completed.slice(-2).reduce((sum, entry) => sum + entry.totalTrustDelta, 0);
+  const commitment = state.activeCommitments.find((entry) => entry.id.includes(`-${chief.id}-`) && entry.fulfilled !== null);
+  if (commitment?.fulfilled) return `${chief.dialogue.trustPositiveTell} You kept the earlier commitment, and that changes what I am prepared to carry now.`;
+  if (commitment?.fulfilled === false) return `${chief.dialogue.trustNegativeTell} The earlier commitment broke; do not ask me to treat this as a fresh ledger.`;
+  if (priorClosing === "closing-override") return `${chief.dialogue.trustNegativeTell} Last time you overrode the objection, so I am naming the cost before it becomes someone else's problem.`;
+  if (priorClosing === "closing-defer") return `You deferred the last order. ${chief.dialogue.pressureResponse}; delay has not made that underlying condition disappear.`;
+  if (priorClosing === "closing-bounded-order" || priorClosing === "closing-reframe") return `${chief.dialogue.trustPositiveTell} You protected the last boundary; I can be more specific about this one.`;
+  if (trust >= 72 || trustDirection >= 3) return `${chief.dialogue.trustPositiveTell} That is why I will give you the usable version, not merely the safe answer.`;
+  if (trust < 44 || trustDirection <= -3) return `${chief.dialogue.trustNegativeTell} I will still give you the facts; support is no longer automatic.`;
+  if ((state.chiefAgendaMemory[chief.id]?.pressure ?? 0) >= 4) return `${chief.dialogue.pressureResponse}; this office has been carrying the same pressure across more than one month.`;
+  return null;
 }
 
 function statePressureLine(chief: ChiefArchetype, state: CampaignState) {
@@ -2864,6 +2900,7 @@ function stageIntro(
   const voice = chiefVoice(chief);
   const topic = conversationTopicProfile(memo, option, state);
   const trust = state.chiefTrust[chief.id] ?? 50;
+  const relationship = relationshipLine(chief, state);
   const positionLine =
     position.position === "support"
       ? `${chief.title} thinks ${option.label.toLowerCase()} is workable if the room stays disciplined.`
@@ -2877,6 +2914,7 @@ function stageIntro(
     { speaker: chief.name, role: "advisor" as const, text: `${pick(voice.opener, seed)} ${positionLine}` },
     { speaker: chief.name, role: "advisor" as const, text: `${position.institutionalReason} ${topic.hiddenRisk}` },
     { speaker: chief.name, role: "advisor" as const, text: position.staffReadoutEvidence.rationale },
+    ...(relationship ? [{ speaker: chief.name, role: "advisor" as const, text: relationship }] : []),
     ...(position.agendaMemoryNote ? [{ speaker: chief.name, role: "advisor" as const, text: position.agendaMemoryNote }] : []),
     { speaker: chief.name, role: "advisor" as const, text: `${statePressureLine(chief, state)} ${optionBurdenLine(chief, option)}` },
     { speaker: chief.name, role: "advisor" as const, text: `${trustColorText(trust)} ${topic.operationalPayoff}` },
