@@ -78,6 +78,17 @@ test("default JSON run records accepted risks and validates replay", async () =>
   assert.equal(body.sessionExport, undefined, "CLI JSON output should not dump the full session by default");
 });
 
+test("--seed selects a repeatable campaign opening", async () => {
+  const first = await runCli(["--seed", "cli-repeatable-opening", "--turns", "0", "--json", "--validate"]);
+  const second = await runCli(["--seed", "cli-repeatable-opening", "--turns", "0", "--json", "--validate"]);
+  assert.equal(first.code, 0, first.stderr);
+  assert.equal(second.code, 0, second.stderr);
+  const firstBody = JSON.parse(first.stdout);
+  const secondBody = JSON.parse(second.stdout);
+  assert.equal(firstBody.session.openingVariantId, secondBody.session.openingVariantId);
+  assert.deepEqual(firstBody.session.initialState, secondBody.session.initialState);
+});
+
 test("--sprites adds schema payloads to JSON and preserves plain-text count output", async () => {
   const json = await runCli(["--turns", "1", "--sprites", "--json"]);
   assert.equal(json.code, 0, json.stderr);

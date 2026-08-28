@@ -132,6 +132,8 @@ export type DoctrineStrategyTelemetry = {
 export type HeadlessRunOptions = {
   /** Selects a registered scenario for a newly-created campaign. Ignored when session is supplied. */
   scenarioId?: string;
+  /** Stable campaign identity for a newly-created campaign. It selects the authored opening variation and is retained on export. */
+  campaignSeed?: string;
   turns?: number;
   session?: GameSession;
   inputs?: TurnInput[];
@@ -275,7 +277,7 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
     throw new Error(`No installed scenario matches ${identity}.`);
   }
   const scenario = requestedScenario;
-  const sessionId = randomUUID();
+  const sessionId = options.campaignSeed ?? randomUUID();
   let session = options.session ?? {
     ...createInitialGameSession(scenario, sessionId),
     id: sessionId,

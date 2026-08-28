@@ -31,6 +31,7 @@ type CliOptions = {
   validate: boolean;
   autoAcceptRisks: boolean;
   scenarioId: string | null;
+  campaignSeed: string | null;
 };
 
 function readOptions(argv: string[]): CliOptions {
@@ -48,6 +49,7 @@ function readOptions(argv: string[]): CliOptions {
     validate: false,
     autoAcceptRisks: false,
     scenarioId: null,
+    campaignSeed: null,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -68,6 +70,12 @@ function readOptions(argv: string[]): CliOptions {
       const value = argv[index + 1];
       if (!value) throw new Error("--scenario requires a registered scenario ID.");
       options.scenarioId = value;
+      index += 1;
+    }
+    if (arg === "--seed") {
+      const value = argv[index + 1];
+      if (!value?.trim()) throw new Error("--seed requires a non-empty campaign seed.");
+      options.campaignSeed = value;
       index += 1;
     }
     if (arg === "--batch") {
@@ -244,6 +252,9 @@ if (options.sessionPath) {
 if (session && options.scenarioId) {
   throw new Error("--scenario cannot be combined with --session or --resume; saved campaigns select their own scenario.");
 }
+if (session && options.campaignSeed) {
+  throw new Error("--seed cannot be combined with --session or --resume; saved campaigns retain their own campaign identity.");
+}
 
 const inputs = await readInputs(options.inputPath);
 let output;
@@ -257,6 +268,7 @@ try {
     includeSprites: options.sprites,
     autoAcceptRisks: options.autoAcceptRisks,
     scenarioId: options.scenarioId ?? undefined,
+    campaignSeed: options.campaignSeed ?? undefined,
   });
 } catch (error) {
   if (error instanceof HeadlessAcceptedRiskError) {

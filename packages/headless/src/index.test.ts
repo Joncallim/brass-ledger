@@ -305,3 +305,11 @@ test("balanced cohort rotates through every posture option (round-2 F2)", async 
     assert.ok(entry.selectionRate < 0.6, `posture option ${entry.optionId} selection rate ${entry.selectionRate} shows a pinned rotation`);
   }
 });
+
+test("a supplied campaign seed selects the same replayable authored opening", async () => {
+  const first = await runHeadlessCampaign({ campaignSeed: "fixed-opening-seed", turns: 0, validate: true });
+  const second = await runHeadlessCampaign({ campaignSeed: "fixed-opening-seed", turns: 0, validate: true });
+  assert.equal(first.session.openingVariantId, second.session.openingVariantId);
+  assert.deepEqual(first.session.initialState, second.session.initialState);
+  assert.equal(first.validation?.ok, true);
+});

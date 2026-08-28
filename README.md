@@ -115,6 +115,7 @@ Useful flags:
 | --- | --- |
 | `--turns N` | Run up to `N` turns. |
 | `--scenario id` | Start a new campaign using an installed scenario ID. Saved sessions always retain their own scenario. |
+| `--seed value` | Use a repeatable campaign identity for a new run, including its authored opening variation. |
 | `--json` | Print machine-readable output. |
 | `--input file.json` | Use one turn input or an array of turn inputs. |
 | `--session file.json` | Continue from a saved `GameSession` or exported session JSON. |
