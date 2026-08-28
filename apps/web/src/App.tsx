@@ -65,6 +65,11 @@ export function App() {
   const [fieldManualOpen, setFieldManualOpen] = useState(false);
   const [presentationMode, setPresentationMode] = useState<PresentationMode>(readPresentationMode);
   const fieldManualTriggerRef = useRef<HTMLButtonElement>(null);
+  // File inputs may report the same selection more than once while React is
+  // reconciling the screen. Import creates a new authoritative campaign each
+  // time, so guard the whole async transaction synchronously rather than
+  // relying on the next render to disable the control.
+  const importInFlightRef = useRef(false);
 
   const sessionId = route.screen === "session" ? route.sessionId : null;
   const { preview, previewKey, loading: previewLoading, error: previewError, requestPreview, clearPreview, setPreview } = usePreview(sessionId);
@@ -364,6 +369,8 @@ export function App() {
   }
 
   async function handleImportSession(file: File) {
+    if (importInFlightRef.current) return;
+    importInFlightRef.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -374,6 +381,7 @@ export function App() {
     } catch (err) {
       setError(describeError(err, "Could not read that file. It must be a campaign file saved from this version of Brass Ledger."));
     } finally {
+      importInFlightRef.current = false;
       setBusy(false);
     }
   }
