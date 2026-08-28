@@ -60,8 +60,6 @@ export function PreCommitScreen({
   // replacement request debounces) AND resolved (closing pass 3 P1) — an empty
   // candidate list from a null/stale preview must never look like "all
   // accepted".
-  const canCommit =
-    isPreviewValid(preview, previewKey, currentPreviewKey, previewLoading) && selections.length > 0;
   const burden = preview?.projectedResult.directorateBurden ?? [];
   const packetSummary = preview?.packetSummary;
   const mainEffortChoices = burden.filter((entry) => entry.burdenPoints > 0);
@@ -69,6 +67,8 @@ export function PreCommitScreen({
   const currentConversations = session?.state.conversationHistory.filter((conversation) => conversation.turn === turnNumber) ?? [];
   const openTerms = session?.state.activeCommitments.filter((commitment) => commitment.fulfilled === null) ?? [];
   const conflicts = currentConversations.filter((conversation) => !selections.some((selection) => selection.memoId === conversation.memoId && selection.optionId === conversation.optionId));
+  const canCommit =
+    isPreviewValid(preview, previewKey, currentPreviewKey, previewLoading) && selections.length > 0 && conflicts.length === 0;
   const termLabel: Record<string, string> = {
     protected_boundary: "Protected boundary", sequencing_promise: "Sequencing promise", bounded_concession: "Bounded concession",
     accepted_risk: "Accepted risk", recorded_dissent: "Dissent on record", deferred: "Deferral",
@@ -204,6 +204,10 @@ export function PreCommitScreen({
             You cannot commit yet: {candidates.length - acceptedCount} of {candidates.length} staff warnings are
             still unaccepted. Tick each one in "Staff risk warnings" above to confirm you are going ahead knowing the
             risk.
+          </p>
+        ) : conflicts.length > 0 ? (
+          <p className="text-xs text-red-400 mt-2">
+            You cannot commit while a recorded chief conversation conflicts with this packet. Restore the discussed option or reconcile the decision first.
           </p>
         ) : !canCommit ? (
           <p className="text-xs text-ink/50 mt-2">

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
 import { act } from "react";
-import type { MemoSelection, StaffNegotiation } from "@brass-ledger/shared";
+import type { GameSession, MemoSelection, StaffNegotiation } from "@brass-ledger/shared";
 import type { PreviewPayload } from "../src/lib/types";
 import { PreCommitScreen } from "../src/screens/PreCommitScreen";
 
@@ -40,6 +40,7 @@ const DEFAULT_PROPS = {
   turnNumber: 1,
   busy: false,
   error: null as string | null,
+  session: undefined as GameSession | undefined,
   onAcceptRisk: () => {},
   onNegotiation: () => {},
   onCommit: () => {},
@@ -92,5 +93,25 @@ test("PreCommitScreen enables commit only for a published, key-matched, non-load
     commitButton.click();
   });
   assert.deepEqual(commitCalls, ["commit"], "clicking commit fires the handler only when the preview is valid");
+  act(() => root.unmount());
+});
+
+test("PreCommitScreen refuses a fresh preview when it contradicts a recorded chief conversation", () => {
+  const session = {
+    state: {
+      conversationHistory: [{
+        id: "conversation-1",
+        chiefName: "Chief Halden",
+        memoId: "posture",
+        optionId: "tempo-escalate",
+        turn: 1,
+        status: "completed",
+      }],
+      activeCommitments: [],
+    },
+  } as GameSession;
+  const { root, commitButton } = renderScreen({ session });
+  assert.equal(commitButton.disabled, true, "a conflict announced in the command ledger must block commit");
+  assert.match(document.body.textContent ?? "", /You cannot commit while a recorded chief conversation conflicts/);
   act(() => root.unmount());
 });
