@@ -104,6 +104,11 @@ export function MemosScreen({
           <ContextualTeaching concept="forecast" title="Forecast before you commit">
             The forecast is a projection, not a recommendation. As you change the packet, use it to see which staff lane becomes binding and how confident the picture is. It never accepts a warning or selects a course for you.
           </ContextualTeaching>
+          {preview && (
+            <ContextualTeaching concept="uncertainty-confidence" title="Confidence is not certainty">
+              The forecast can be useful without being exact. Read confidence as the strength of the command picture, not a promise that the visible posture will unfold exactly as projected.
+            </ContextualTeaching>
+          )}
           {mainEffortChoices.length > 0 && (
             <section className="border border-border bg-surface px-4 py-3">
               <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Commander&apos;s intent</p>

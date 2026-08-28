@@ -74,6 +74,11 @@ export function PreCommitScreen({
       <ContextualTeaching concept="accepted-risk" title="Accept risk deliberately">
         A warning is a named cost of this packet, not a puzzle with one correct answer. You can revise the packet, seek available staff relief, or explicitly accept the risk when the strategic gain is worth carrying it.
       </ContextualTeaching>
+      {negotiationCandidates.length > 0 && (
+        <ContextualTeaching concept="staff-relief" title="Staff relief still has a cost">
+          Relief moves or defers named work when it is actually available for this packet. It can change the forecast, so review the replacement projection before committing; it never silently clears every warning.
+        </ContextualTeaching>
+      )}
       <div className="flex items-center justify-between mb-5 gap-4">
         <div>
           <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Final review</p>
@@ -118,6 +123,10 @@ export function PreCommitScreen({
           </div>
         </section>
         {(preview?.predictedEvents ?? []).filter((event) => event.doctrineTrigger && event.causalContext).length > 0 && (
+          <>
+          <ContextualTeaching concept="doctrine-risk" title="Repeated choices create doctrine risk">
+            This is a pattern warning, not a hidden penalty for one option. Use it to judge whether the packet still supports the approach your command has been building over several months.
+          </ContextualTeaching>
           <section className="border border-yellow-800/60 bg-yellow-950/30 px-4 py-3">
             <p className="text-xs uppercase tracking-widest text-yellow-300/80 mb-2">Doctrine risks that may mature</p>
             <div className="space-y-3">
@@ -131,6 +140,7 @@ export function PreCommitScreen({
               ))}
             </div>
           </section>
+          </>
         )}
 
         <AcceptedRiskDocket
