@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, type KeyboardEvent, type RefObject } from "react";
 import type { ScenarioSummary } from "@brass-ledger/shared";
 
 type Props = {
@@ -31,6 +31,7 @@ const sharedEntries: ManualEntry[] = [
 
 export function FieldManual({ scenario, onClose, returnFocusRef }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
   const dismiss = () => {
     onClose();
     // Let React remove the focused dialog control before restoring focus.
@@ -42,8 +43,24 @@ export function FieldManual({ scenario, onClose, returnFocusRef }: Props) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+  function trapFocus(event: KeyboardEvent<HTMLElement>) {
+    if (event.key !== "Tab") return;
+    const focusable = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) ?? []).filter((element) => !element.hasAttribute("hidden"));
+    if (focusable.length === 0) return;
+    const first = focusable[0]!;
+    const last = focusable.at(-1)!;
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
   return (
-    <div className="fixed inset-0 z-50 bg-ink/55 p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="field-manual-title">
+    <div ref={dialogRef} onKeyDown={trapFocus} className="fixed inset-0 z-50 bg-ink/55 p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="field-manual-title">
       <section className="mx-auto max-w-3xl bg-paper text-ink border border-border shadow-xl p-5">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div><p className="text-xs uppercase tracking-widest text-ink/40">Field manual</p><h2 id="field-manual-title" className="text-xl font-semibold">Command language</h2></div>

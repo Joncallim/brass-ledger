@@ -47,6 +47,31 @@ test("FieldManual returns focus to its opener after Close or Escape", async () =
   opener.remove();
 });
 
+test("FieldManual keeps Tab and Shift+Tab inside its modal boundary", () => {
+  const container = document.createElement("div");
+  const background = document.createElement("button");
+  background.textContent = "Background control";
+  document.body.append(background, container);
+  const root = createRoot(container);
+  act(() => root.render(<FieldManual scenario={null} onClose={() => {}} />));
+
+  const close = container.querySelector("button") as HTMLButtonElement;
+  close.focus();
+  const forward = new dom.window.KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
+  act(() => close.dispatchEvent(forward));
+  assert.equal(forward.defaultPrevented, true);
+  assert.equal(document.activeElement, close);
+
+  const backward = new dom.window.KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true });
+  act(() => close.dispatchEvent(backward));
+  assert.equal(backward.defaultPrevented, true);
+  assert.equal(document.activeElement, close);
+
+  act(() => root.unmount());
+  container.remove();
+  background.remove();
+});
+
 test("FieldManual explains every recurring onboarding concept in player language", () => {
   const container = document.createElement("div");
   document.body.append(container);
