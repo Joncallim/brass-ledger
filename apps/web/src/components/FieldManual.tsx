@@ -1,7 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import type { ScenarioSummary } from "@brass-ledger/shared";
 
-type Props = { scenario: ScenarioSummary | null; onClose: () => void };
+type Props = {
+  scenario: ScenarioSummary | null;
+  onClose: () => void;
+  /** The control that opened the manual. Dialog dismissal must not strand keyboard focus. */
+  returnFocusRef?: RefObject<HTMLElement | null>;
+};
 
 const sharedEntries = [
   ["Burden", "The work your packet asks a staff lane to absorb this month.", "High burden makes follow-through less reliable.", "A green headline does not mean the staff has room."],
@@ -12,20 +17,25 @@ const sharedEntries = [
   ["Campaign horizon", "The months available to build a strategy before the campaign closes.", "Use it to decide what can mature in time.", "A long horizon does not make immediate pressure disappear."],
 ] as const;
 
-export function FieldManual({ scenario, onClose }: Props) {
+export function FieldManual({ scenario, onClose, returnFocusRef }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const dismiss = () => {
+    onClose();
+    // Let React remove the focused dialog control before restoring focus.
+    queueMicrotask(() => returnFocusRef?.current?.focus());
+  };
   useEffect(() => {
     closeRef.current?.focus();
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") dismiss(); };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, []);
   return (
     <div className="fixed inset-0 z-50 bg-ink/55 p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="field-manual-title">
       <section className="mx-auto max-w-3xl bg-paper text-ink border border-border shadow-xl p-5">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div><p className="text-xs uppercase tracking-widest text-ink/40">Field manual</p><h2 id="field-manual-title" className="text-xl font-semibold">Command language</h2></div>
-          <button ref={closeRef} type="button" onClick={onClose} className="border border-border px-3 py-1 text-sm hover:border-brass">Close</button>
+          <button ref={closeRef} type="button" onClick={dismiss} className="border border-border px-3 py-1 text-sm hover:border-brass">Close</button>
         </div>
         <p className="text-sm text-ink/60 mb-5">Plain-language guidance for the terms that recur in a Brass Ledger campaign. Advanced causal detail remains in each turn’s explainability.</p>
         <div className="grid gap-3 sm:grid-cols-2">
