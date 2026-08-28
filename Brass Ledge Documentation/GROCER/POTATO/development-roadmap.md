@@ -23,9 +23,14 @@ This is the canonical development roadmap for Brass Ledger. It consolidates and 
 
 ## Current Status
 
-**Stage 6 (Browser Interface Rebuild):** Built, in verification. Six-screen client under `apps/web/src`; polish bugs tracked in issues #35, #36.
+**Stages 0–6:** Complete. The six-screen client under `apps/web/src` is a
+non-authoritative consumer of the engine contracts; current follow-up work is
+tracked on GitHub rather than in the historical Stage 6 issue references.
 
-**Forward roadmap:** Stages 7 and beyond are tracked as GitHub epics in [[roadmap-epics-and-issues]].
+**Forward roadmap:** Stage 7 is complete locally and awaits remote GitHub
+Actions attestation (issue #92). The onboarding/pacing epic (issue #90) awaits
+the documented fresh-player observations. Current status and all later epics
+are tracked in [[roadmap-epics-and-issues]].
 
 ## Direction
 
@@ -198,7 +203,7 @@ Implemented:
 
 ## Stage 6: Browser Interface Rebuild
 
-Status: built, in verification.
+Status: complete.
 
 Gate (exit criteria from Stage 5):
 
@@ -222,9 +227,8 @@ Implemented:
 - No browser-only rule logic.
 - Six-screen command-console UI.
 
-Remaining:
-
-- Polish and integration bugs tracked in [[roadmap-epics-and-issues]].
+Current follow-up work is tracked in [[roadmap-epics-and-issues]] rather than
+being inferred from this historical stage definition.
 
 ## Forward Roadmap
 
