@@ -60,6 +60,41 @@ test("create, play, and record a full campaign month", async ({ page }) => {
     await page.getByRole("button", { name: "Continue to final review →" }).click();
   });
 
+  await test.step("block a chief conversation detached from the final packet", async () => {
+    // A completed conversation is authoritative and bound to the option that
+    // was discussed. Changing that memo locally must not let the player commit
+    // a different option while retaining its trust/commitment effects.
+    await page.getByRole("button", { name: "← Back to chiefs" }).click();
+    await page.getByRole("button", { name: "← Back to memos" }).click();
+    const firstMemoOptions = page.locator('fieldset:has(input[type="radio"])').first().locator('input[type="radio"]');
+    expect(await firstMemoOptions.count()).toBeGreaterThan(1);
+    const replacementPreview = page.waitForResponse((response) => response.url().includes("/preview-turn") && response.request().method() === "POST");
+    await firstMemoOptions.nth(1).check();
+    expect((await replacementPreview).ok()).toBeTruthy();
+    await expect(page.getByRole("button", { name: "Hear from the chiefs →" })).toBeEnabled();
+    await page.getByRole("button", { name: "Hear from the chiefs →" }).click();
+    await page.getByRole("button", { name: "Continue to final review →" }).click();
+
+    const conflictRiskCheckboxes = page.locator('div.border.border-border.p-4', { hasText: "Staff risk warnings" }).locator('input[type="checkbox"]');
+    for (let index = 0; index < await conflictRiskCheckboxes.count(); index++) {
+      await conflictRiskCheckboxes.nth(index).check();
+    }
+    const commitButton = page.getByRole("button", { name: "Commit the month" });
+    await expect(commitButton).toBeDisabled();
+    await expect(page.getByText("You cannot commit while a recorded chief conversation conflicts with this packet.")).toBeVisible();
+
+    // Restoring the discussed option is the explicit reconciliation path.
+    await page.getByRole("button", { name: "← Back to chiefs" }).click();
+    await page.getByRole("button", { name: "← Back to memos" }).click();
+    const restoredMemoOptions = page.locator('fieldset:has(input[type="radio"])').first().locator('input[type="radio"]');
+    const restoredPreview = page.waitForResponse((response) => response.url().includes("/preview-turn") && response.request().method() === "POST");
+    await restoredMemoOptions.first().check();
+    expect((await restoredPreview).ok()).toBeTruthy();
+    await page.getByRole("button", { name: "Hear from the chiefs →" }).click();
+    await page.getByRole("button", { name: "Continue to final review →" }).click();
+    await expect(page.getByText("You cannot commit while a recorded chief conversation conflicts with this packet.")).not.toBeVisible();
+  });
+
   await test.step("accept any staff warnings and commit the month", async () => {
     const riskSection = page.locator("div.border.border-border.p-4", { hasText: "Staff risk warnings" });
     const riskCheckboxes = riskSection.locator('input[type="checkbox"]');
