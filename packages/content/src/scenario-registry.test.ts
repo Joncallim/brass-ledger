@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { defaultScenarioId, getDefaultScenario, getScenario, listScenarios } from "./scenario-registry";
+import { validateScenarioRegistry } from "./scenario-validation";
 
 test("the canonical scenario registry resolves the configured default by immutable identity", () => {
   const scenario = getDefaultScenario();
@@ -19,4 +20,11 @@ test("registered scenarios differ through authored campaign structure, not only 
   assert.equal(longRebuild.maxTurns, 16);
   assert.equal(longRebuild.memoTemplates.find((memo) => memo.id === "alliance-frame")?.optional, true);
   assert.ok(longRebuild.events.some((event) => event.maxTurn === 16));
+});
+
+test("registry validation rejects a scenario with an unresolved authored reference", () => {
+  const invalid = structuredClone(getDefaultScenario());
+  invalid.id = "invalid-reference";
+  invalid.memoTemplates[0]!.options[0]!.programPushes[0]!.programId = "not-installed";
+  assert.throws(() => validateScenarioRegistry([getDefaultScenario(), invalid]), /unknown programme not-installed/);
 });

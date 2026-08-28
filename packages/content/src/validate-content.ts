@@ -20,7 +20,11 @@ import { spriteVisualLanguage } from "./sprite-visual-language";
 import { resolveDoctrineGenes, doctrineGenes } from "./doctrine-genes";
 import { staffModuleDefinitions, resolveStaffModules } from "./staff-module-definitions";
 import { doctrineEventCostMass } from "./index";
+import { scenarioRegistry } from "./scenario-registry";
+import { validateScenarioRegistry } from "./scenario-validation";
 const { soloScenario } = (await import(new URL("./scenario.ts", import.meta.url).href)) as typeof import("./scenario");
+
+validateScenarioRegistry(scenarioRegistry);
 
 const spriteRoles = ["S1", "S2", "S3", "S4", "S5", "training"] as const;
 const directorateRoles = { people: "S1", intelligence: "S2", operations: "S3", sustainment: "S4", plans: "S5", training: "training" } as const;
