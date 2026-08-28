@@ -74,8 +74,16 @@ test("create, play, and record a full campaign month", async ({ page }) => {
     await expect(page.getByRole("button", { name: "Go to records" })).toBeVisible();
   });
 
+  await test.step("reopen an active campaign at the next monthly brief", async () => {
+    await page.getByRole("button", { name: "BRASS LEDGER" }).click();
+    const row = page.locator("table tbody tr").first();
+    await expect(row).toBeVisible();
+    await row.getByRole("button", { name: "Open" }).click();
+    await expect(page.getByRole("heading", { name: "Month 2 of 12" })).toBeVisible();
+  });
+
   await test.step("visit records and export the campaign", async () => {
-    await page.getByRole("button", { name: "Go to records" }).click();
+    await page.getByRole("button", { name: "Records" }).click();
     await expect(page.getByRole("heading", { name: "Campaign records" })).toBeVisible();
 
     const row = page.locator("table tbody tr").first();
