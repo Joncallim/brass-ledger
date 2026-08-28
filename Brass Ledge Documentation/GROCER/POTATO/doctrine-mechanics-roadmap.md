@@ -104,9 +104,9 @@ type DoctrineGene = {
 
 - ✅ Phase 1: Add doctrine variables to state, initialized neutrally. *(Landed — issue #55.)*
 - ✅ Phase 2: Add scenario-level doctrine genes from [[../CELERY/faction-doctrine-gene-bank]]. *(Landed — issue #56: DoctrineGene/DoctrineProfile in shared, content gene registry, profile applied to the opening baseline at scenario-definition time; the sim derives its pull targets and recompute offsets from the biased baseline so the bias is durable.)*
-- Phase 3: Let genes alter chief advice style and burden routing. *(Issue #57.)*
-- Phase 4: Add faction-specific events that mature from overused doctrine. *(Issue #58.)*
-- Phase 5: Add optional staff modules: J6/C2, J8 finance, J9 policy/civil affairs, STRATCOM, medical, engineering. *(Issue #59.)*
+- ✅ Phase 3: Let genes alter chief advice style and burden routing. *(Landed — issue #57: faction doctrine advice styles and burden-routing leans are composed into the scenario profile, surfaced to chiefs, and recorded in after-action readouts.)*
+- ✅ Phase 4: Add faction-specific events that mature from overused doctrine. *(Landed — issue #58: deterministic faction event pressure matures from doctrine overuse, with counterweights, telemetry, and replay coverage.)*
+- ✅ Phase 5: Add optional staff modules: J6/C2, J8 finance, J9 policy/civil affairs, STRATCOM, medical, engineering. *(Landed — issue #59: optional cells are content-defined, gated by negotiation eligibility, resolved deterministically, and covered through save/import/replay paths.)*
 
 ## Player-Facing Rules
 
