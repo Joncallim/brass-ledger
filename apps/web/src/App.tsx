@@ -555,6 +555,7 @@ export function App() {
           conversationBusy={conversationBusy}
           conversationError={conversationError}
           activeConversation={activeConversation}
+          compactPresentation={compactPresentation}
           onOpenConversation={handleOpenConversation}
           onRespond={handleRespond}
           onProceed={() => navigateStep("commit")}

@@ -15,6 +15,7 @@ type Props = {
   conversationBusy: boolean;
   conversationError: string | null;
   activeConversation: ChiefConversationRecord | null;
+  compactPresentation?: boolean;
   onOpenConversation: (chiefId: string, memoId: string, optionId: string) => void;
   onRespond: (chiefId: string, responseId: string) => void;
   onProceed: () => void;
@@ -31,6 +32,7 @@ export function ChiefsPaperScreen({
   conversationBusy,
   conversationError,
   activeConversation,
+  compactPresentation = false,
   onOpenConversation,
   onRespond,
   onProceed,
@@ -121,6 +123,7 @@ export function ChiefsPaperScreen({
                   advisor={advisor}
                   sprite={sprite}
                   memos={memos}
+                  compactPresentation={compactPresentation}
                   onTalk={(invoker) => handleTalk(position, invoker)}
                 />
                 {positions.length > 1 && (
