@@ -38,8 +38,8 @@ where the engine actually stands, not the older status fields in
 | Stage 3 — Dual tech tree and industry model | Complete | Internal/external tech nodes, S2 estimates (noted done in #17). |
 | Stage 4 — Agent chiefs and negotiation | Complete | Issues #17–#20; agenda memory, coalitions, commitments, pre-commit negotiation. |
 | Stage 5 — Content expansion and balance | Complete | Issues #28–#30; batch telemetry, content validation, expanded event set. |
-| Stage 6 — Browser interface rebuild | Built, in verification | Six-screen client under `apps/web/src`; polish bugs #35, #36, #66 open. |
-| **Stage 7 — Packaged game** | **Subsequent epic** | Epic #41. |
+| Stage 6 — Browser interface rebuild | Complete | Six-screen client under `apps/web/src`; #66 was closed by PR #70. Remaining follow-up issues, if any, are tracked on GitHub rather than inferred from this historical list. |
+| **Stage 7 — Packaged game** | **Complete locally; remote attestation pending** | Epic #41 exit criteria are met by the compiled release, offline save/replay path, Electron shell, and no-dev-server release smoke. GitHub CI/release attestation still requires repository credentials. |
 | **Sprite & asset generation pipeline** | **Subsequent epic** | Epic #48. Deferred from Stage 6 (`POTATO/stage-6-gui-design.md`). |
 | **Doctrine faction-gene system & optional staff modules** | **Subsequent epic** | Epic #49. Phases 2–5 of [[doctrine-mechanics-roadmap]]. |
 
