@@ -17,6 +17,7 @@
     "appId": "ai.brass-ledger.desktop",
     "productName": "Brass Ledger",
     "executableName": "brass-ledger",
+    "afterPack": "./after-pack.mjs",
     "files": [
       "main.mjs",
       "server/**/*",

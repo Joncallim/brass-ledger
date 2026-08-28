@@ -18,6 +18,7 @@ const desktopDir = path.join(rootDir, "desktop");
 const desktopMain = path.join(desktopDir, "main.mjs");
 const desktopPackage = path.join(desktopDir, "package.json");
 const desktopLockfile = path.join(desktopDir, "package-lock.json");
+const desktopAfterPack = path.join(desktopDir, "after-pack.mjs");
 
 function assertFile(label, filePath) {
   if (!existsSync(filePath)) {
@@ -32,6 +33,7 @@ assertFile("cli bundle", cliSrc);
 assertFile("desktop wrapper", desktopMain);
 assertFile("desktop package template", desktopPackage);
 assertFile("desktop dependency lockfile", desktopLockfile);
+assertFile("desktop packaging hook", desktopAfterPack);
 
 if (await recoverInterruptedRelease(releaseDir, backupDir)) {
   console.warn("Recovered the previous release from an interrupted replacement.");
@@ -50,6 +52,7 @@ await cp(cliSrc, path.join(stagingDir, "cli/brass-ledger"));
 await cp(desktopMain, path.join(stagingDir, "main.mjs"));
 await cp(desktopPackage, path.join(stagingDir, "package.json"));
 await cp(desktopLockfile, path.join(stagingDir, "package-lock.json"));
+await cp(desktopAfterPack, path.join(stagingDir, "after-pack.mjs"));
 
 console.log("Installing production dependencies...");
 const npmArgs = ["ci", "--omit=dev", "--ignore-scripts"];
