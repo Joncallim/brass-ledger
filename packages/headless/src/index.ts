@@ -1,4 +1,4 @@
-import { doctrineEventCostMass, soloScenario, spriteVisualLanguage, staffModuleDefinitions } from "@brass-ledger/content";
+import { doctrineEventCostMass, getDefaultScenario, getScenario, soloScenario, spriteVisualLanguage, staffModuleDefinitions } from "@brass-ledger/content";
 import { createHash, randomUUID } from "node:crypto";
 import {
   buildAdvisorPortraitSvg,
@@ -130,6 +130,8 @@ export type DoctrineStrategyTelemetry = {
 };
 
 export type HeadlessRunOptions = {
+  /** Selects a registered scenario for a newly-created campaign. Ignored when session is supplied. */
+  scenarioId?: string;
   turns?: number;
   session?: GameSession;
   inputs?: TurnInput[];
@@ -261,9 +263,21 @@ function targetStrategyForEvent(eventId: string): StrategyId {
 }
 
 export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
+  const requestedScenario = options.session
+    ? getScenario(options.session.scenarioId, options.session.contentVersion)
+    : options.scenarioId
+      ? getScenario(options.scenarioId)
+      : getDefaultScenario();
+  if (!requestedScenario) {
+    const identity = options.session
+      ? `${options.session.scenarioId}@${options.session.contentVersion}`
+      : options.scenarioId ?? "the configured default";
+    throw new Error(`No installed scenario matches ${identity}.`);
+  }
+  const scenario = requestedScenario;
   const sessionId = randomUUID();
   let session = options.session ?? {
-    ...createInitialGameSession(soloScenario, sessionId),
+    ...createInitialGameSession(scenario, sessionId),
     id: sessionId,
   };
   const turns = options.turns ?? 1;
@@ -272,18 +286,18 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
   const turnSummaries = [];
   for (let index = 0; index < turns && session.state.campaignStatus === "active"; index += 1) {
     const providedInput = providedInputs[index];
-    const baseInput = providedInput ?? defaultInput(session, soloScenario);
+    const baseInput = providedInput ?? defaultInput(session, scenario);
     // Closing pass 7 P1: supplied inputs share the /resolve-turn input-validity
     // contract — an ineligible relief negotiation must never reach the resolver
     // (checked BEFORE the accepted-risk precondition, exactly like /resolve-turn).
     // Auto-generated default inputs carry no negotiations, so this is a no-op there.
-    const ineligible = ineligibleStaffNegotiations(soloScenario, session.state, baseInput);
+    const ineligible = ineligibleStaffNegotiations(scenario, session.state, baseInput);
     if (ineligible.length > 0) {
       throw new HeadlessIneligibleNegotiationError(ineligible);
     }
     const autoAcceptRisks = options.autoAcceptRisks === true || providedInput === undefined;
-    const input = inputWithAcceptedRiskPolicy(session, baseInput, autoAcceptRisks, soloScenario);
-    const result = resolveTurn(soloScenario, session.state, input);
+    const input = inputWithAcceptedRiskPolicy(session, baseInput, autoAcceptRisks, scenario);
+    const result = resolveTurn(scenario, session.state, input);
     session = {
       ...session,
       revision: session.revision + 1,
@@ -357,14 +371,14 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
     });
   }
 
-  const validation: ReplayValidation | undefined = options.validate ? validateReplaySession(soloScenario, session) : undefined;
+  const validation: ReplayValidation | undefined = options.validate ? validateReplaySession(scenario, session) : undefined;
 
   return {
     scenario: {
-      id: soloScenario.id,
-      title: soloScenario.title,
-      contentVersion: soloScenario.contentVersion,
-      staffModules: soloScenario.staffModules,
+      id: scenario.id,
+      title: scenario.title,
+      contentVersion: scenario.contentVersion,
+      staffModules: scenario.staffModules,
     },
     session: {
       id: session.id,
@@ -375,10 +389,10 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
       staffModules: session.history.at(-1)?.staffModules ?? [],
       coordinationLoad: session.history.at(-1)?.coordinationLoad ?? 0,
       staffFunctions: buildStaffFunctionReadouts(
-        soloScenario.staffFunctions,
-        buildDirectorateBurden(deriveDecisionMemos(soloScenario, session.state), [], soloScenario.staffCapacities, [], soloScenario.doctrineLens.burdenBias),
+        scenario.staffFunctions,
+        buildDirectorateBurden(deriveDecisionMemos(scenario, session.state), [], scenario.staffCapacities, [], scenario.doctrineLens.burdenBias),
         session.state,
-        soloScenario.doctrineLens.burdenBias,
+        scenario.doctrineLens.burdenBias,
       ),
       techTree: {
         internalTech: session.state.internalTech.map((node) => ({ id: node.id, level: node.level, progress: node.progress })),
@@ -397,7 +411,7 @@ export async function runHeadlessCampaign(options: HeadlessRunOptions = {}) {
     validation,
     sprites: options.includeSprites
       ? session.advisorRoster.map((advisor): HeadlessSpriteOutput => {
-        const chief = soloScenario.chiefs.find((candidate) => candidate.id === advisor.chiefId);
+        const chief = scenario.chiefs.find((candidate) => candidate.id === advisor.chiefId);
         if (!chief) throw new Error(`Missing chief for advisor ${advisor.chiefId}`);
         const position = session.history.at(-1)?.chiefPositions.find((candidate) => candidate.chiefId === advisor.chiefId);
         const spec = buildChiefSpriteSpec({

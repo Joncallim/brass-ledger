@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import Fastify, { type FastifyReply } from "fastify";
 import cors from "@fastify/cors";
-import { soloScenario, spriteVisualLanguage } from "@brass-ledger/content";
+import { getDefaultScenario, getScenario, listScenarios, spriteVisualLanguage } from "@brass-ledger/content";
 import { HeadlessAcceptedRiskError, HeadlessIneligibleNegotiationError, runHeadlessCampaign } from "@brass-ledger/headless";
 import {
   createFileSystemSaveStore,
@@ -202,11 +202,20 @@ function stableJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
+function scenarioForSession(session: Pick<GameSession, "scenarioId" | "contentVersion">) {
+  const scenario = getScenario(session.scenarioId, session.contentVersion);
+  if (!scenario) {
+    throw new Error("This campaign belongs to a scenario or content version that is not installed here.");
+  }
+  return scenario;
+}
+
 function assertReplayableSession(session: GameSession) {
+  const scenario = scenarioForSession(session);
   if (session.turnInputs.length !== session.history.length) {
     throw new Error("This campaign file is inconsistent: it records a different number of choices than results.");
   }
-  const validation = replayValidationSchema.parse(validateReplaySession(soloScenario, session));
+  const validation = replayValidationSchema.parse(validateReplaySession(scenario, session));
   if (!validation.ok) {
     throw new Error(
       `This campaign cannot be replayed from its own history, so it may have been edited or corrupted `
@@ -221,7 +230,7 @@ function assertReplayableSession(session: GameSession) {
   // negotiations. Each historical turn is checked against the state recorded
   // before it (already proven equal to the replayed state above).
   for (let index = 0; index < session.turnInputs.length; index += 1) {
-    const ineligible = ineligibleStaffNegotiations(soloScenario, session.history[index].previousState, session.turnInputs[index]);
+    const ineligible = ineligibleStaffNegotiations(scenario, session.history[index].previousState, session.turnInputs[index]);
     if (ineligible.length > 0) {
       throw new Error(
         "This campaign file requests relief for directorates the recorded selections did not offer "
@@ -242,23 +251,22 @@ function assertCanonicalImport(session: GameSession) {
   if (session.engineVersion !== "0.1.0") {
     throw new Error("This campaign file was saved by a different version of the Brass Ledger engine. A campaign can only be opened by the version that saved it.");
   }
-  if (session.scenarioId !== soloScenario.id || session.contentVersion !== soloScenario.contentVersion) {
-    throw new Error("This campaign file was played on a different scenario or a different content version, so it cannot be opened here.");
-  }
+  const scenario = scenarioForSession(session);
   if (session.saveFormatVersion !== "8") {
     throw new Error("This campaign file uses a save format this version of Brass Ledger cannot read.");
   }
-  if (stableJson(session.initialState) !== stableJson(soloScenario.initialState)) {
+  if (stableJson(session.initialState) !== stableJson(scenario.initialState)) {
     throw new Error("This campaign file does not start from the scenario's opening position, so it cannot be accepted as a genuine campaign.");
   }
   assertReplayableSession(session);
 }
 
 function assertCanonicalSession(session: GameSession) {
-  if (session.engineVersion !== "0.1.0" || session.scenarioId !== soloScenario.id || session.contentVersion !== soloScenario.contentVersion || session.saveFormatVersion !== "8") {
+  const scenario = scenarioForSession(session);
+  if (session.engineVersion !== "0.1.0" || session.saveFormatVersion !== "8") {
     throw new Error("This saved campaign belongs to an incompatible engine, scenario, content version, or save format.");
   }
-  if (stableJson(session.initialState) !== stableJson(soloScenario.initialState)) {
+  if (stableJson(session.initialState) !== stableJson(scenario.initialState)) {
     throw new Error("This saved campaign does not match the current scenario opening state.");
   }
   return session;
@@ -333,10 +341,12 @@ async function listSessionRecords() {
   });
 }
 
-function createSession() {
+function createSession(scenarioId?: string) {
+  const scenario = scenarioId ? getScenario(scenarioId) : getDefaultScenario();
+  if (!scenario) throw new Error("That scenario is not installed in this copy of Brass Ledger.");
   const sessionId = randomUUID();
   return {
-    ...createInitialGameSession(soloScenario, sessionId),
+    ...createInitialGameSession(scenario, sessionId),
     id: sessionId,
   };
 }
@@ -372,15 +382,16 @@ function summarizeSaveRecord(record: SaveRecord) {
 }
 
 function sessionPayload(session: GameSession) {
-  const memos = deriveDecisionMemos(soloScenario, session.state);
+  const scenario = scenarioForSession(session);
+  const memos = deriveDecisionMemos(scenario, session.state);
   // Doctrine 3 (issue #57): the standing-session readouts must use the same lens as
   // resolveTurn, or the session screen would silently diverge from turn results.
-  const directorateBurden = buildDirectorateBurden(memos, [], soloScenario.staffCapacities, [], soloScenario.doctrineLens.burdenBias);
+  const directorateBurden = buildDirectorateBurden(memos, [], scenario.staffCapacities, [], scenario.doctrineLens.burdenBias);
   return {
     session,
     summary: summarizeSession(session),
     memos,
-    staffFunctions: buildStaffFunctionReadouts(soloScenario.staffFunctions, directorateBurden, session.state, soloScenario.doctrineLens.burdenBias),
+    staffFunctions: buildStaffFunctionReadouts(scenario.staffFunctions, directorateBurden, session.state, scenario.doctrineLens.burdenBias),
   };
 }
 
@@ -389,7 +400,7 @@ function riskKey(risk: AcceptedRiskOverride) {
 }
 
 function missingAcceptedRiskCandidates(session: GameSession, input: TurnInput) {
-  const preview = previewTurn(soloScenario, session.state, { ...input, acceptedRiskOverrides: [] });
+  const preview = previewTurn(scenarioForSession(session), session.state, { ...input, acceptedRiskOverrides: [] });
   const accepted = new Set((input.acceptedRiskOverrides ?? []).map(riskKey));
   return preview.acceptedRiskCandidates.filter((candidate) => !accepted.has(riskKey(candidate)));
 }
@@ -437,25 +448,28 @@ app.get("/", { config: { cors: { origin: true } } }, async (_request, reply) => 
 
 app.get("/api/health", async () => ({ ok: true }));
 
-app.get("/api/scenario", async () => ({
-  scenario: {
-    id: soloScenario.id,
-    title: soloScenario.title,
-    description: soloScenario.description,
-    contentVersion: soloScenario.contentVersion,
-    maxTurns: soloScenario.maxTurns,
-    chiefs: soloScenario.chiefs,
-    staffCapacities: soloScenario.staffCapacities,
-    staffFunctions: soloScenario.staffFunctions,
-    decisionMemos: soloScenario.memoTemplates,
-    capabilityPrograms: soloScenario.capabilityPrograms,
-    externalConstraints: soloScenario.externalConstraints,
-    events: soloScenario.events,
-    doctrineLens: soloScenario.doctrineLens,
-    staffModules: soloScenario.staffModules,
+function scenarioPayload(scenario: ReturnType<typeof getDefaultScenario>) {
+  return {
+    id: scenario.id,
+    title: scenario.title,
+    description: scenario.description,
+    contentVersion: scenario.contentVersion,
+    maxTurns: scenario.maxTurns,
+    chiefs: scenario.chiefs,
+    staffCapacities: scenario.staffCapacities,
+    staffFunctions: scenario.staffFunctions,
+    decisionMemos: scenario.memoTemplates,
+    capabilityPrograms: scenario.capabilityPrograms,
+    externalConstraints: scenario.externalConstraints,
+    events: scenario.events,
+    doctrineLens: scenario.doctrineLens,
+    staffModules: scenario.staffModules,
     spriteVisualLanguage,
-  },
-}));
+  };
+}
+
+app.get("/api/scenarios", async () => ({ scenarios: listScenarios().map(scenarioPayload) }));
+app.get("/api/scenario", async () => ({ scenario: scenarioPayload(getDefaultScenario()) }));
 
 app.post("/api/headless/run", async (request, reply) => {
   try {
@@ -498,9 +512,14 @@ app.get("/api/sessions", async (_request, reply) => {
   }
 });
 
-app.post("/api/sessions", async (_request, reply) => {
+app.post("/api/sessions", async (request, reply) => {
   try {
-    const session = createSession();
+    const scenarioId = (request.body as { scenarioId?: unknown } | undefined)?.scenarioId;
+    if (scenarioId !== undefined && (typeof scenarioId !== "string" || !getScenario(scenarioId))) {
+      reply.code(400);
+      return { error: "That scenario is not installed in this copy of Brass Ledger." };
+    }
+    const session = createSession(typeof scenarioId === "string" ? scenarioId : undefined);
     await writeSession(session);
     return sessionPayload(session);
   } catch (error) {
@@ -560,9 +579,10 @@ app.post("/api/sessions/:id/save", async (request, reply) => {
 app.post("/api/sessions/:id/preview-turn", async (request, reply) => {
   try {
     const session = await readSession((request.params as { id: string }).id);
+    const scenario = scenarioForSession(session);
     const body = (request.body ?? {}) as { input?: unknown };
     const input = turnInputSchema.parse(body.input);
-    const preview = previewTurn(soloScenario, session.state, input);
+    const preview = previewTurn(scenario, session.state, input);
     return {
       ...preview,
       chiefPositions: preview.projectedResult.chiefPositions,
@@ -596,15 +616,16 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
 
     return await withSessionLock(id, async () => {
       const session = await readSession(id);
+      const scenario = scenarioForSession(session);
       assertExpectedRevision(session, body.expectedRevision);
       const selections = Array.isArray(body.selections) ? body.selections.map((selection) => memoSelectionSchema.parse(selection)) : [];
-      const chief = soloScenario.chiefs.find((entry) => entry.id === chiefId);
+      const chief = scenario.chiefs.find((entry) => entry.id === chiefId);
       if (!chief) {
         reply.code(404);
         return { error: "There is no chief with that id in this scenario." };
       }
 
-      const memos = deriveDecisionMemos(soloScenario, session.state);
+      const memos = deriveDecisionMemos(scenario, session.state);
       const memo = memos.find((entry) => entry.id === body.memoId);
       const option = memo?.options.find((entry) => entry.id === body.optionId);
       if (!memo || !option) {
@@ -632,18 +653,18 @@ app.post("/api/sessions/:id/chiefs/:chiefId/conversation/open", async (request, 
       const selectedBurden = buildDirectorateBurden(
         memos,
         [{ memoId: memo.id, optionId: option.id }],
-        soloScenario.staffCapacities,
+        scenario.staffCapacities,
         [],
-        soloScenario.doctrineLens.burdenBias,
+        scenario.doctrineLens.burdenBias,
       );
       const position = buildChiefPositions(
-        soloScenario.chiefs,
+        scenario.chiefs,
         session.state,
         memo,
         option,
         selectedBurden,
-        soloScenario.staffFunctions,
-        soloScenario.doctrineLens,
+        scenario.staffFunctions,
+        scenario.doctrineLens,
       ).find((entry) => entry.chiefId === chiefId);
       if (!position) {
         reply.code(400);
@@ -694,8 +715,9 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
 
     return await withSessionLock(id, async () => {
       const session = await readSession(id);
+      const scenario = scenarioForSession(session);
       assertExpectedRevision(session, body.expectedRevision);
-      const chief = soloScenario.chiefs.find((entry) => entry.id === chiefId);
+      const chief = scenario.chiefs.find((entry) => entry.id === chiefId);
       if (!chief) {
         reply.code(404);
         return { error: "There is no chief with that id in this scenario." };
@@ -711,7 +733,7 @@ app.post("/api/sessions/:id/chiefs/:chiefId/respond", async (request, reply) => 
         return { error: "This conversation is already finished. You can speak to each chief once a month.", conversation };
       }
 
-      const memos = deriveDecisionMemos(soloScenario, session.state);
+      const memos = deriveDecisionMemos(scenario, session.state);
       const memo = memos.find((entry) => entry.id === conversation.memoId);
       const option = memo?.options.find((entry) => entry.id === conversation.optionId);
       if (!memo || !option) {
@@ -780,6 +802,7 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
     const input = turnInputSchema.parse(body.input);
     return await withSessionLock(id, async () => {
       const session = await readSession(id);
+      const scenario = scenarioForSession(session);
       assertExpectedRevision(session, body.expectedRevision);
       const detachedConversations = session.state.conversationHistory.filter((conversation) =>
         conversation.turn === session.state.turn
@@ -792,7 +815,7 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
           detachedConversations,
         };
       }
-      const ineligibleNegotiations = ineligibleStaffNegotiations(soloScenario, session.state, input);
+      const ineligibleNegotiations = ineligibleStaffNegotiations(scenario, session.state, input);
       if (ineligibleNegotiations.length > 0) {
         reply.code(400);
         return {
@@ -813,7 +836,7 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
           acceptedRiskCandidates: missingAcceptedRisks,
         };
       }
-      const result = resolveTurn(soloScenario, session.state, input);
+      const result = resolveTurn(scenario, session.state, input);
       const nextSession = gameSessionSchema.parse(advanceSessionRevision({
         ...session,
         state: result.nextState,
@@ -839,6 +862,7 @@ app.post("/api/sessions/:id/resolve-turn", async (request, reply) => {
 app.get("/api/sessions/:id/export", async (request, reply) => {
   try {
     const session = await readSession((request.params as { id: string }).id);
+    const scenario = scenarioForSession(session);
     return sessionExportSchema.parse({
       exportedAt: new Date().toISOString(),
       session,
@@ -880,9 +904,10 @@ app.post("/api/sessions/import", async (request, reply) => {
 app.get("/api/sessions/:id/replay", async (request, reply) => {
   try {
     const session = await readSession((request.params as { id: string }).id);
+    const scenario = scenarioForSession(session);
     return {
       session,
-      validation: replayValidationSchema.parse(validateReplaySession(soloScenario, session)),
+      validation: replayValidationSchema.parse(validateReplaySession(scenario, session)),
     };
   } catch (error) {
     const mapped = mapStorageError(reply, error);

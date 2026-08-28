@@ -129,6 +129,20 @@ test("scenario and session payloads expose S1-S5 staff contracts", async () => {
   assert.deepEqual(created.staffFunctions.map((entry: { id: string }) => entry.id), ["S1", "S2", "S3", "S4", "S5"]);
 });
 
+test("scenario creation and discovery use the canonical registry", async () => {
+  const scenarios = await app.inject({ method: "GET", url: "/api/scenarios" });
+  assert.equal(scenarios.statusCode, 200);
+  assert.deepEqual(scenarios.json().scenarios.map((entry: { id: string }) => entry.id), [soloScenario.id]);
+
+  const created = await app.inject({ method: "POST", url: "/api/sessions", payload: { scenarioId: soloScenario.id } });
+  assert.equal(created.statusCode, 200);
+  assert.equal(created.json().session.scenarioId, soloScenario.id);
+
+  const unavailable = await app.inject({ method: "POST", url: "/api/sessions", payload: { scenarioId: "not-installed" } });
+  assert.equal(unavailable.statusCode, 400);
+  assert.match(unavailable.json().error, /not installed/i);
+});
+
 test("scenario response carries the schema-valid sprite visual language registry", async () => {
   const response = await app.inject({ method: "GET", url: "/api/scenario" });
   const payload = response.json().scenario;
