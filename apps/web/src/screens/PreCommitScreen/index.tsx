@@ -1,4 +1,4 @@
-import { directorateLabel, type AcceptedRiskOverride, type ChiefPositionEntry, type GameSession, type MemoSelection, type StaffNegotiation } from "@brass-ledger/shared";
+import { directorateLabel, type AcceptedRiskOverride, type ChiefConversationRecord, type ChiefPositionEntry, type GameSession, type MemoSelection, type StaffNegotiation } from "@brass-ledger/shared";
 import type { PreviewPayload } from "../../lib/types";
 import { isPreviewValid } from "../../lib/previewValidity";
 import { AcceptedRiskDocket } from "./AcceptedRiskDocket";
@@ -24,6 +24,7 @@ type Props = {
   onNegotiation: (directorate: StaffNegotiation["directorate"], enabled: boolean) => void;
   onCommit: () => void;
   onBack: () => void;
+  onRestoreConflict?: (conversation: ChiefConversationRecord) => void;
 };
 
 function riskKey(risk: AcceptedRiskOverride) {
@@ -48,6 +49,7 @@ export function PreCommitScreen({
   onNegotiation,
   onCommit,
   onBack,
+  onRestoreConflict = () => {},
 }: Props) {
   const candidates = preview?.acceptedRiskCandidates ?? [];
   const acceptedCount = candidates.filter((r) => acceptedRiskChoices[riskKey(r)] === true).length;
@@ -68,6 +70,12 @@ export function PreCommitScreen({
     protected_boundary: "Protected boundary", sequencing_promise: "Sequencing promise", bounded_concession: "Bounded concession",
     accepted_risk: "Accepted risk", recorded_dissent: "Dissent on record", deferred: "Deferral",
   };
+
+  function focusRiskWarnings() {
+    // Same-page anchors scroll visually, but do not consistently move keyboard
+    // focus. Keep the acknowledgement destination usable without pointer travel.
+    document.getElementById("staff-risk-warnings")?.focus();
+  }
 
   return (
     <div className="p-6 max-w-2xl">
@@ -119,7 +127,14 @@ export function PreCommitScreen({
             {currentConversations.map((conversation) => <p key={conversation.id} className="text-ink/60">Discussed: {conversation.chiefName} on {conversation.memoTitle} · {conversation.status === "completed" ? "recorded" : "still open"}</p>)}
             {openTerms.map((commitment) => <p key={commitment.id} className="text-ink/60">{termLabel[commitment.term ?? "sequencing_promise"] ?? commitment.term}: {commitment.label}</p>)}
             {chiefPositions.length === 0 && currentConversations.length === 0 && openTerms.length === 0 && <p className="text-ink/40">No chief term is currently carried into this order.</p>}
-            {conflicts.map((conversation) => <p key={`conflict:${conversation.id}`} className="text-red-400">Conflict: {conversation.chiefName} discussed an option no longer in this packet. Restore it or reconcile the decision before committing.</p>)}
+            {conflicts.map((conversation) => (
+              <div key={`conflict:${conversation.id}`} className="text-red-400">
+                <p>Conflict: {conversation.chiefName} discussed {conversation.memoTitle} — {conversation.optionLabel}, which is no longer in this packet.</p>
+                <button type="button" onClick={() => onRestoreConflict(conversation)} className="mt-1 border border-red-600 px-2 py-1 text-xs hover:border-brass hover:text-brass">
+                  Restore that discussed option and return to chiefs
+                </button>
+              </div>
+            ))}
           </div>
         </section>
         {(preview?.predictedEvents ?? []).filter((event) => event.doctrineTrigger && event.causalContext).length > 0 && (
@@ -177,12 +192,11 @@ export function PreCommitScreen({
         {!allAccepted ? (
           <p className="text-xs text-red-400 mt-2">
             You cannot commit yet: {candidates.length - acceptedCount} of {candidates.length} staff warnings are
-            still unaccepted. Tick each one in "Staff risk warnings" above to confirm you are going ahead knowing the
-            risk.
+            still unaccepted. <a href="#staff-risk-warnings" onClick={focusRiskWarnings} className="underline hover:text-brass">Go to the named staff risk warnings</a> to confirm you are going ahead knowing the risk.
           </p>
         ) : conflicts.length > 0 ? (
           <p className="text-xs text-red-400 mt-2">
-            You cannot commit while a recorded chief conversation conflicts with this packet. Restore the discussed option or reconcile the decision first.
+            You cannot commit while a recorded chief conversation conflicts with this packet. Use the named conflict above to restore its discussed option and review it with the chiefs.
           </p>
         ) : !canCommit ? (
           <p className="text-xs text-ink/50 mt-2">

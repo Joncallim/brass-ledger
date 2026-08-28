@@ -110,8 +110,30 @@ test("PreCommitScreen refuses a fresh preview when it contradicts a recorded chi
       activeCommitments: [],
     },
   } as GameSession;
-  const { root, commitButton } = renderScreen({ session });
+  const restored: string[] = [];
+  const { root, commitButton } = renderScreen({
+    session,
+    onRestoreConflict: (conversation) => restored.push(conversation.id),
+  });
   assert.equal(commitButton.disabled, true, "a conflict announced in the command ledger must block commit");
   assert.match(document.body.textContent ?? "", /You cannot commit while a recorded chief conversation conflicts/);
+  const restoreButton = [...document.querySelectorAll("button")].find((button) => button.textContent?.includes("Restore that discussed option"));
+  assert.ok(restoreButton, "the blocker gives an explicit route back to the discussed option");
+  act(() => restoreButton.click());
+  assert.deepEqual(restored, ["conversation-1"], "restoring remains an explicit player action, not an automatic selection");
+  act(() => root.unmount());
+});
+
+test("PreCommitScreen links an unaccepted risk directly to its acknowledgement", () => {
+  const warningPreview = {
+    ...preview,
+    acceptedRiskCandidates: [{ staffFunctionId: "S4", warningText: "Tempo exceeds support." }],
+  } as unknown as PreviewPayload;
+  const { root } = renderScreen({ preview: warningPreview });
+  const link = document.querySelector('a[href="#staff-risk-warnings"]');
+  assert.ok(link, "the disabled commit reason links to the exact warnings section");
+  assert.equal(document.querySelector("#staff-risk-warnings")?.getAttribute("tabindex"), "-1", "the warning destination can receive keyboard focus");
+  act(() => (link as HTMLAnchorElement).click());
+  assert.equal(document.activeElement?.id, "staff-risk-warnings", "activating the route moves keyboard focus to the acknowledgement");
   act(() => root.unmount());
 });

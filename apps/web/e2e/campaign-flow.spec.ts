@@ -90,14 +90,13 @@ test("create, play, and record a full campaign month", async ({ page }) => {
     await expect(commitButton).toBeDisabled();
     await expect(page.getByText("You cannot commit while a recorded chief conversation conflicts with this packet.")).toBeVisible();
 
-    // Restoring the discussed option is the explicit reconciliation path.
-    await page.getByRole("button", { name: "← Back to chiefs" }).click();
-    await page.getByRole("button", { name: "← Back to memos" }).click();
-    const restoredMemoOptions = page.locator('fieldset:has(input[type="radio"])').first().locator('input[type="radio"]');
+    // The blocker provides the exact discussed option as an explicit route;
+    // clicking it is still the commander's deliberate selection, never an
+    // automatic reconciliation.
     const restoredPreview = page.waitForResponse((response) => response.url().includes("/preview-turn") && response.request().method() === "POST");
-    await restoredMemoOptions.first().check();
+    await page.getByRole("button", { name: "Restore that discussed option and return to chiefs" }).click();
     expect((await restoredPreview).ok()).toBeTruthy();
-    await page.getByRole("button", { name: "Hear from the chiefs →" }).click();
+    await expect(page.getByRole("button", { name: "Continue to final review →" })).toBeVisible();
     await page.getByRole("button", { name: "Continue to final review →" }).click();
     await expect(page.getByText("You cannot commit while a recorded chief conversation conflicts with this packet.")).not.toBeVisible();
   });

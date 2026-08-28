@@ -201,6 +201,11 @@ export function App() {
     }));
   }
 
+  function handleRestoreConflict(conversation: ChiefConversationRecord) {
+    handleSelectMemo(conversation.memoId, conversation.optionId);
+    navigateStep("chiefs");
+  }
+
   function handleNegotiation(directorate: StaffNegotiation["directorate"], enabled: boolean) {
     setCycle((prev) => {
       const filtered = prev.staffNegotiations.filter((n) => n.directorate !== directorate);
@@ -581,6 +586,7 @@ export function App() {
           onNegotiation={handleNegotiation}
           onCommit={handleCommit}
           onBack={() => navigateStep("chiefs")}
+          onRestoreConflict={handleRestoreConflict}
         />
       )}
 

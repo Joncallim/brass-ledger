@@ -1,5 +1,5 @@
 import type { ChiefPositionEntry, SessionAdvisor, DecisionMemo, SpriteSpec } from "@brass-ledger/shared";
-import { directorateLabel } from "@brass-ledger/shared";
+import { directorateLabel, relationshipLabel } from "@brass-ledger/shared";
 import { ChiefPortrait } from "../../components/ChiefPortrait";
 import { StaffReadoutEvidence } from "./StaffReadoutEvidence";
 
@@ -9,7 +9,8 @@ type Props = {
   sprite: SpriteSpec | undefined;
   memos: DecisionMemo[];
   compactPresentation?: boolean;
-  pacingStatus?: "stable" | "changed" | "new";
+  pacingStatus?: { kind: "stable" | "changed" | "new"; changes?: string[] };
+  trust: number;
   onTalk: (invoker: HTMLButtonElement) => void;
 };
 
@@ -20,7 +21,7 @@ const positionMeta = {
   oppose: { symbol: "▼", label: "Objects", color: "text-red-400 border-red-600 bg-red-950/40" },
 };
 
-export function ChiefPositionCard({ position, advisor, sprite, memos, compactPresentation = false, pacingStatus, onTalk }: Props) {
+export function ChiefPositionCard({ position, advisor, sprite, memos, compactPresentation = false, pacingStatus, trust, onTalk }: Props) {
   const meta = positionMeta[position.position] ?? positionMeta.accept_risk;
   const memo = memos.find((m) => m.id === position.memoId);
   const option = memo?.options.find((o) => o.id === position.optionId);
@@ -59,15 +60,19 @@ export function ChiefPositionCard({ position, advisor, sprite, memos, compactPre
         <span className="text-ink/70 font-medium">{optionLabel}</span>
       </div>
 
-      {pacingStatus && pacingStatus !== "stable" && (
+      <p className="mb-2 text-xs text-ink/50">Relationship: {relationshipLabel(trust)}</p>
+
+      {pacingStatus && pacingStatus.kind !== "stable" && (
         <p className="mb-2 text-xs font-medium text-brass" aria-label="Chief position changed since last month">
-          {pacingStatus === "new" ? "New chief position on this packet." : "Chief position or term changed since last month."}
+          {pacingStatus.kind === "new"
+            ? "New chief position on this packet."
+            : `Changed since last month: ${pacingStatus.changes?.join(", ") ?? "chief advice"}.`}
         </p>
       )}
 
-      <details open={!compactPresentation || pacingStatus !== "stable"}>
+      <details open={!compactPresentation || pacingStatus?.kind !== "stable"}>
         <summary className="cursor-pointer text-xs text-ink/50">
-          {compactPresentation && pacingStatus === "stable" ? "Stable support — expand staff evidence" : "Staff evidence and advice"}
+          {compactPresentation && pacingStatus?.kind === "stable" ? "Stable support — expand staff evidence" : "Staff evidence and advice"}
         </summary>
         <div className="mt-2">
           {position.institutionalReason && <p className="text-sm text-ink/70 leading-relaxed mb-2">{position.institutionalReason}</p>}

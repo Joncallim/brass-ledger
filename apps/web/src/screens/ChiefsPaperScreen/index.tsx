@@ -5,6 +5,11 @@ import { ChiefPositionCard } from "./ChiefPositionCard";
 import { ChiefConversationSheet } from "./ChiefConversationSheet";
 import { ContextualTeaching } from "../../components/ContextualTeaching";
 
+type ChiefPacingStatus =
+  | { kind: "new" }
+  | { kind: "stable" }
+  | { kind: "changed"; changes: string[] };
+
 type Props = {
   chiefPositions: ChiefPositionEntry[];
   chiefCoalitions: ChiefCoalitionEntry[];
@@ -71,15 +76,21 @@ export function ChiefsPaperScreen({
       return acc;
     }, {}),
   );
-  const priorPositions = session.history.at(-1)?.chiefPositions ?? [];
-  function pacingStatus(position: ChiefPositionEntry): "stable" | "changed" | "new" {
+  const priorResult = session.history.at(-1);
+  const priorPositions = priorResult?.chiefPositions ?? [];
+  function pacingStatus(position: ChiefPositionEntry): ChiefPacingStatus {
     const prior = priorPositions.find((entry) => entry.chiefId === position.chiefId && entry.memoId === position.memoId);
-    if (!prior) return "new";
-    return prior.optionId === position.optionId
-      && prior.position === position.position
-      && prior.requiredCondition === position.requiredCondition
-      ? "stable"
-      : "changed";
+    if (!prior) return { kind: "new" };
+
+    const changes: string[] = [];
+    if (prior.optionId !== position.optionId) changes.push("selected option");
+    if (prior.position !== position.position) changes.push("position");
+    if (prior.requiredCondition !== position.requiredCondition) changes.push("condition");
+    if (prior.institutionalReason !== position.institutionalReason) changes.push("advice");
+    if (prior.agendaMemoryNote !== position.agendaMemoryNote || prior.adviceStyleNote !== position.adviceStyleNote) changes.push("memory");
+    if (JSON.stringify(prior.staffReadoutEvidence) !== JSON.stringify(position.staffReadoutEvidence)) changes.push("staff evidence");
+    if ((priorResult?.nextState.chiefTrust[position.chiefId] ?? 50) !== (session.state.chiefTrust[position.chiefId] ?? 50)) changes.push("trust");
+    return changes.length === 0 ? { kind: "stable" } : { kind: "changed", changes };
   }
 
   return (
@@ -135,6 +146,7 @@ export function ChiefsPaperScreen({
                   memos={memos}
                   compactPresentation={compactPresentation}
                   pacingStatus={pacingStatus(position)}
+                  trust={session.state.chiefTrust[position.chiefId] ?? 50}
                   onTalk={(invoker) => handleTalk(position, invoker)}
                 />
                 {positions.length > 1 && (

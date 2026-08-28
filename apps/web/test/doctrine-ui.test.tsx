@@ -171,6 +171,46 @@ test("chiefs paper derives portrait props from chief id, session, and position e
   assert.equal((html.match(/data:image\/svg\+xml/g) ?? []).length, 2);
 });
 
+test("compact chiefs paper keeps changed trust and staff evidence expanded", () => {
+  const session = createInitialGameSession(soloScenario, "web-chief-pacing-session");
+  const scenario = { ...soloScenario, spriteVisualLanguage } as unknown as ScenarioSummary;
+  const chief = soloScenario.chiefs[0]!;
+  const memo = soloScenario.memoTemplates[0]!;
+  const option = memo.options[0]!;
+  const priorPosition = {
+    chiefId: chief.id, chiefName: chief.name, directorate: chief.directorate, position: "support",
+    memoId: memo.id, optionId: option.id, institutionalReason: "Same course.", requiredCondition: "",
+    confidenceNote: "", consequenceIfIgnored: "", agendaMemoryNote: "Prior note.", adviceStyleNote: "Prior voice.",
+    staffReadoutEvidence: { staffFunctionLabel: "Operations", metricLabel: "Tempo", metricStatus: "healthy", metricValue: 70, burdenLevel: "light", burdenPoints: 1 },
+  } as any;
+  const currentPosition = {
+    ...priorPosition,
+    agendaMemoryNote: "New memory from last month.",
+    staffReadoutEvidence: { ...priorPosition.staffReadoutEvidence, metricValue: 42, burdenLevel: "strained", burdenPoints: 4 },
+  } as any;
+  session.history = [{ chiefPositions: [priorPosition], nextState: { chiefTrust: { [chief.id]: 50 } } } as any];
+  session.state.chiefTrust[chief.id] = 42;
+  const html = renderToStaticMarkup(<ChiefsPaperScreen
+    chiefPositions={[currentPosition]}
+    chiefCoalitions={[]}
+    advisorRoster={session.advisorRoster}
+    session={session}
+    scenario={scenario}
+    memos={[memo]}
+    compactPresentation
+    conversationBusy={false}
+    conversationError={null}
+    activeConversation={null}
+    onOpenConversation={() => {}}
+    onRespond={() => {}}
+    onProceed={() => {}}
+    onBack={() => {}}
+  />);
+  assert.match(html, /Changed since last month: memory, staff evidence, trust\./);
+  assert.match(html, /<details open=""/, "changed evidence remains expanded in Compact view");
+  assert.doesNotMatch(html, /Stable support — expand staff evidence/);
+});
+
 test("chiefs paper preserves every selected issue for a chief instead of discarding later positions", () => {
   const session = createInitialGameSession(soloScenario, "web-chief-issues-session");
   const scenario = { ...soloScenario, spriteVisualLanguage } as unknown as ScenarioSummary;
