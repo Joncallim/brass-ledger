@@ -55,8 +55,9 @@ completed the Linux AppImage, macOS DMG, and Windows NSIS builds and their
 platform-specific packaged-desktop smokes.
 
 The documented local gate remains useful release evidence, but hosted
-attestation is no longer a release blocker. Public deployment is instead gated
-on the outstanding #90 fresh-player playability observations.
+attestation is no longer a release blocker. The unauthenticated public game is
+live at `https://brassledger.jo-nas.com`; the outstanding #90 fresh-player
+playability observations remain the sole condition for closing that epic.
 
 ## Epic — Stage 7: Packaged Game (#41)
 

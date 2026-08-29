@@ -29,9 +29,10 @@ tracked on GitHub rather than in the historical Stage 6 issue references.
 
 **Forward roadmap:** Stage 7 has passed both local and hosted release
 attestation: CI and the Linux, macOS, and Windows packaged-desktop smokes are
-green on `a263e43`. Issue #92 is closed. The onboarding/pacing epic (issue
-#90) still awaits the documented fresh-player observations that gate public
-deployment. Current status and all later epics are tracked in
+green on `a263e43`. Issue #92 is closed and the unauthenticated public game is
+live at `https://brassledger.jo-nas.com`. The onboarding/pacing epic (issue
+#90) still awaits the documented fresh-player observations required to close
+the epic. Current status and all later epics are tracked in
 [[roadmap-epics-and-issues]].
 
 ## Direction
