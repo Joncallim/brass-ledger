@@ -205,3 +205,17 @@ test("Staff Exercise resolves through the normal save and replay path", async ({
   await exerciseRow.getByRole("button", { name: "Check replay" }).click();
   await expect(exerciseRow.getByText(/verified/)).toBeVisible();
 });
+
+test("memo choices reflow on a narrow screen without horizontal overflow", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.getByRole("button", { name: /Staff Exercise/ }).click();
+  await page.getByRole("button", { name: "Start new campaign" }).click();
+  await page.getByRole("button", { name: "Open decision memos →" }).click();
+
+  await expect(page.getByText("Staff workload if you choose this")).toBeVisible();
+  await expect(page.getByText("Pick an option first.")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+    await page.evaluate(() => document.documentElement.clientWidth),
+  );
+});

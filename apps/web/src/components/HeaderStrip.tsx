@@ -12,7 +12,7 @@ export function HeaderStrip({ briefing, state, onNavigateHub, onNavigateRecords 
   const milestones = state ? countMetCampaignObjectives(state) : null;
 
   return (
-    <header className="flex items-center gap-4 px-4 py-2 border-b border-border bg-paper/80 shrink-0">
+    <header className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 border-b border-border bg-paper/80 shrink-0 sm:flex-nowrap sm:gap-4 sm:px-4">
       <button
         type="button"
         onClick={onNavigateHub}
@@ -24,12 +24,12 @@ export function HeaderStrip({ briefing, state, onNavigateHub, onNavigateRecords 
 
       {state && (
         <>
-          <span className="text-ink/30">|</span>
+          <span className="hidden text-ink/30 sm:inline">|</span>
           <span className="text-xs text-ink/60 font-mono">
             Month {Math.min(state.turn, state.maxTurns)} of {state.maxTurns}
           </span>
-          <span className="text-ink/30">|</span>
-          <span className={`text-xs font-mono ${
+          <span className="hidden text-ink/30 sm:inline">|</span>
+          <span className={`hidden text-xs font-mono sm:inline ${
             state.campaignStatus === "won" ? "text-green-400" :
             state.campaignStatus === "lost" ? "text-red-400" : "text-ink/60"
           }`}>
@@ -39,9 +39,9 @@ export function HeaderStrip({ briefing, state, onNavigateHub, onNavigateRecords 
           </span>
           {milestones && milestones.total > 0 && (
             <>
-              <span className="text-ink/30">|</span>
+              <span className="hidden text-ink/30 md:inline">|</span>
               <span
-                className="text-xs text-ink/50"
+                className="hidden text-xs text-ink/50 md:inline"
                 title="How many campaign objectives you are currently meeting"
               >
                 {milestones.met} of {milestones.total} milestones met
@@ -53,8 +53,8 @@ export function HeaderStrip({ briefing, state, onNavigateHub, onNavigateRecords 
 
       {briefing && (
         <>
-          <span className="text-ink/30">|</span>
-          <span className="text-xs text-ink/50 truncate">{briefing.theater}</span>
+          <span className="hidden text-ink/30 lg:inline">|</span>
+          <span className="hidden min-w-0 text-xs text-ink/50 truncate lg:inline">{briefing.theater}</span>
         </>
       )}
 

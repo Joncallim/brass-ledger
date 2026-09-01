@@ -96,9 +96,9 @@ export function BriefingScreen({ session, memos, staffReadouts, scenario, labels
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {strategicMetrics.map((metric) => (
                 <details key={metric.key} className="border border-border px-3 py-2 group">
-                  <summary className="cursor-pointer list-none flex items-baseline justify-between gap-2">
-                    <span className="text-xs uppercase tracking-wide text-ink/45">{metric.label}</span>
-                    <span className="font-mono text-sm text-ink">{metric.headline}</span>
+                  <summary className="cursor-pointer list-none flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+                    <span className="min-w-0 break-words text-xs uppercase tracking-wide text-ink/45">{metric.label}</span>
+                    <span className="min-w-0 break-words text-right font-mono text-sm text-ink">{metric.headline}</span>
                   </summary>
                   <p className="mt-1 text-xs text-ink/60">{metric.status}</p>
                   <div className="mt-2 border-t border-border pt-2 text-xs text-ink/45 space-y-1">

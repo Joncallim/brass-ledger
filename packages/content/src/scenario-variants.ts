@@ -100,7 +100,7 @@ export const staffExerciseScenario = variant((scenario) => {
   scenario.title = "Staff Exercise";
   scenario.contentVersion = "0.13.0-staff-exercise";
   scenario.trainingExercise = true;
-  scenario.description = "A four-month command exercise for learning the real Brass Ledger loop. It begins with two decisions, then introduces uncertainty, command relationships, and long-term sequencing one month at a time.";
+  scenario.description = "Learn the game by playing four short months. Start with two choices, see their results, then meet uncertainty, chiefs, and longer-term trade-offs one step at a time.";
   scenario.maxTurns = 4;
   scenario.initialState.maxTurns = 4;
   scenario.initialState.seed = 14017;
@@ -110,12 +110,12 @@ export const staffExerciseScenario = variant((scenario) => {
       ...memo,
       turn: memo.id === "posture" || memo.id === "sustainment-focus" ? 1 : memo.id === "intelligence-focus" ? 2 : 3,
       whyNow: memo.id === "posture"
-        ? "Exercise 1 — compare visible tempo with the staff work it demands. A more dramatic order can overload the room that must carry it."
+        ? "Exercise 1 — pick the response you want. Then check the workload panel: a stronger public signal can also create more strain for the teams carrying it out."
         : memo.id === "sustainment-focus"
-          ? "Exercise 1 — support is part of the decision. Choose what the headquarters can actually sustain, not just what it can announce."
+          ? "Exercise 1 — every order needs people and supplies behind it. Choose what you can keep doing next month, not just what looks good today."
           : memo.id === "intelligence-focus"
-            ? "Exercise 2 — confidence is not certainty. The forecast can be useful while the warning picture remains incomplete."
-            : "Exercise 3 — command choices shape allied and domestic room. Chiefs can support with a condition or put dissent on the record.",
+            ? "Exercise 2 — the forecast can be uncertain. Use it to see what could happen, not what will happen."
+            : "Exercise 3 — chiefs and partners may back you, ask for a promise, or disagree. You still choose; their response changes what your plan can carry.",
     }));
   scenario.events = scenario.events
     .filter((event) => ["uncertain-warning", "commercial-lift-squeeze", "training-payoff"].includes(event.id))

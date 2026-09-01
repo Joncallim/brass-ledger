@@ -16,13 +16,13 @@ export function StaffRail({ readouts }: Props) {
   }
 
   return (
-    <aside className="w-48 shrink-0 border-r border-border flex flex-col bg-paper/40">
+    <aside className="hidden md:flex w-48 shrink-0 overflow-y-auto border-r border-border flex-col bg-paper/40">
       <div className="px-3 pt-3 pb-2 border-b border-border/60">
         <p className="text-xs uppercase tracking-widest text-ink/40">Your staff</p>
         <p className="text-xs text-ink/30 mt-0.5 leading-snug">Select one for detail</p>
       </div>
 
-      <div className="flex-1 flex flex-col gap-px p-2">
+      <div className="flex flex-col gap-px p-2">
         {readouts.map((readout) => (
           <StaffFunctionBadge
             key={readout.id}
@@ -34,7 +34,7 @@ export function StaffRail({ readouts }: Props) {
       </div>
 
       {activeReadout && (
-        <div className="border-t border-border">
+        <div className="sticky bottom-0 border-t border-border">
           <StaffFunctionDetail readout={activeReadout} onClose={() => setActiveId(null)} />
         </div>
       )}

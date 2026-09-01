@@ -82,20 +82,20 @@ export function MemosScreen({
   }
 
   return (
-    <div className="flex gap-0 h-full">
-      <div className="flex-1 min-w-0 p-6 overflow-y-auto">
-        <div className="flex items-center justify-between mb-5">
-          <div>
+    <div className="flex min-h-full flex-col xl:flex-row">
+      <div className="min-w-0 flex-1 p-4 sm:p-6">
+        <div className="flex items-start justify-between gap-3 mb-5">
+          <div className="min-w-0">
             <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Decision memos</p>
             <p className="text-sm text-ink/60">
               {memos.filter((m) => !m.optional).length} required · {memos.filter((m) => m.optional).length} optional
             </p>
             <p className="text-xs text-ink/50 mt-1 max-w-lg leading-relaxed">
               {staffAssistanceDetail === "guided"
-                ? "Choose one course per memo, then use the right-hand forecast to name which staff lane is binding before you commit. Forecast warnings show work your packet creates; they never choose or accept risk for you."
+                ? "Pick one option in every required memo. After each choice, look to the workload panel: it shows who must do the work and whether they still have room. There is no automatically correct option—choose the benefit you want and decide whether its cost is worth it."
                 : staffAssistanceDetail === "sparse"
-                  ? "Choose one course per memo. The forecast reports the staff work your packet creates, but leaves more of the trade-off for your own reading."
-                  : "Choose one course of action per memo. The panel on the right updates as you choose, so you can see the work each choice loads onto your staff before you commit anything. The small tags on an option are the themes your chiefs and outside events react to."}
+                  ? "Pick one option in every required memo. The workload panel shows the work your choices create, but leaves more of the trade-off for you to read yourself."
+                  : "Pick one option in every required memo. The workload panel updates as you choose, showing the work each choice adds before you commit. The small tags show themes that chiefs and later events may react to."}
             </p>
           </div>
           <button
@@ -108,18 +108,18 @@ export function MemosScreen({
         </div>
 
         <div className="space-y-3 max-w-2xl">
-          <ContextualTeaching concept="forecast" title="Forecast before you commit">
-            The forecast is a projection, not a recommendation. As you change the packet, use it to see which staff lane becomes binding and how confident the picture is. It never accepts a warning or selects a course for you.
+          <ContextualTeaching concept="forecast" title="Choose, then check the workload">
+            Pick an option first. Then use the workload panel to see which teams must carry it and whether they have room. This is a preview of the cost, not advice about what you should choose.
           </ContextualTeaching>
           {preview && (
             <ContextualTeaching concept="uncertainty-confidence" title="Confidence is not certainty">
-              The forecast can be useful without being exact. Read confidence as the strength of the command picture, not a promise that the visible posture will unfold exactly as projected.
+              A forecast can still help when it is not exact. Confidence tells you how solid the information is, not whether the result is guaranteed.
             </ContextualTeaching>
           )}
           {mainEffortChoices.length > 0 && (
             <section className="border border-border bg-surface px-4 py-3">
               <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Commander&apos;s intent</p>
-              <p className="text-xs text-ink/60 mb-3">Name the effort this packet is actually carrying before you take it to the chiefs. It changes the authoritative concentration check; it is not a free bonus.</p>
+              <p className="text-xs text-ink/60 mb-3">Optional: name the team this plan is mainly about. Leave this blank to let the game infer it from your choices. It does not add a bonus.</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="text-xs text-ink/65">Main effort
                   <select
@@ -185,7 +185,7 @@ export function MemosScreen({
         </div>
       </div>
 
-      <div className="w-64 shrink-0 border-l border-border p-4 bg-paper/40">
+      <div className="w-full border-t border-border bg-paper/40 p-4 xl:w-64 xl:shrink-0 xl:border-t-0 xl:border-l">
         <section className="mb-5 border border-border bg-surface px-3 py-3">
           <p className="text-xs uppercase tracking-widest text-ink/40 mb-2">This month&apos;s packet</p>
           {selectedChoices.length === 0 ? (
@@ -202,9 +202,9 @@ export function MemosScreen({
           )}
           {packetSummary && (
             <div className="mt-3 border-t border-border pt-2 text-xs text-ink/60">
-              <p>Organisational slack: <span className={slackClass(packetSummary.slackStatus)}>{Math.max(0, packetSummary.slackPoints)} points, {packetSummary.slackStatus}.</span></p>
+              <p>Headquarters room left: <span className={slackClass(packetSummary.slackStatus)}>{Math.max(0, packetSummary.slackPoints)} points, {packetSummary.slackStatus}.</span></p>
               {packetSummary.strainedDirectorates.length > 0 && (
-                <p className="mt-1">Pressure carried: {packetSummary.strainedDirectorates.map(directorateLabel).join(", ")}.</p>
+                <p className="mt-1">Teams already under pressure: {packetSummary.strainedDirectorates.map(directorateLabel).join(", ")}.</p>
               )}
             </div>
           )}
@@ -216,7 +216,7 @@ export function MemosScreen({
           )}
         </section>
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs uppercase tracking-widest text-ink/40">Forecast staff burden</p>
+          <p className="text-xs uppercase tracking-widest text-ink/40">Staff workload if you choose this</p>
           {previewLoading && <span className="text-xs text-ink/40 animate-pulse">Updating…</span>}
         </div>
 

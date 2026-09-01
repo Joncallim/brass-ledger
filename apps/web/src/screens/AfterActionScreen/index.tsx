@@ -4,6 +4,7 @@ import { StaffModuleConsequences } from "../../components/StaffModuleConsequence
 import { EventList } from "./EventList";
 import { ProgramProgress } from "./ProgramProgress";
 import { ExplainabilityDrawer } from "../../components/ExplainabilityDrawer";
+import { ContextualTeaching } from "../../components/ContextualTeaching";
 import type { ScenarioLabels } from "../../lib/labels";
 
 type Props = {
@@ -59,6 +60,9 @@ export function AfterActionScreen({ result, previousStaffFunctions, labels, comp
       </div>
 
       <div className="space-y-6">
+        <ContextualTeaching concept="after-action" title="Read the result, then adjust">
+          Read this in four parts: what worked, what it cost, what carried forward, and what needs attention next month. On the next turn, change the part of the plan that caused the cost you do not want to carry.
+        </ContextualTeaching>
         <section className="border border-border p-4">
           <p className="text-xs uppercase tracking-widest text-ink/40 mb-3">Command consequence digest</p>
           <div className="grid gap-3 sm:grid-cols-2 text-sm">

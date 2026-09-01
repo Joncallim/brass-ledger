@@ -79,8 +79,8 @@ export function PreCommitScreen({
 
   return (
     <div className="p-6 max-w-2xl">
-      <ContextualTeaching concept="accepted-risk" title="Accept risk deliberately">
-        A warning is a named cost of this packet, not a puzzle with one correct answer. You can revise the packet, seek available staff relief, or explicitly accept the risk when the strategic gain is worth carrying it.
+      <ContextualTeaching concept="accepted-risk" title="Make the final call">
+        This is your last check. You can go back and change a choice, request relief when it is offered, or carry a warning knowingly. When you commit, the month runs and this packet cannot be undone.
       </ContextualTeaching>
       {negotiationCandidates.length > 0 && (
         <ContextualTeaching concept="staff-relief" title="Staff relief still has a cost">
@@ -113,8 +113,8 @@ export function PreCommitScreen({
         {packetSummary && (
           <section className="border border-border bg-surface px-4 py-3">
             <p className="text-xs uppercase tracking-widest text-ink/50 mb-1">Packet balance</p>
-            <p className="text-xs text-ink/60">{packetSummary.mainEffort ? `${packetSummary.mainEffortSource === "declared" ? "Declared" : "Observed"} main effort: ${directorateLabel(packetSummary.mainEffort)}.` : "No main effort is carried by this packet."} Organisational slack: <span className={packetSummary.slackStatus === "overdrawn" ? "text-red-400" : packetSummary.slackStatus === "tight" ? "text-yellow-400" : "text-green-400"}>{Math.max(0, packetSummary.slackPoints)} points, {packetSummary.slackStatus}.</span></p>
-            {packetSummary.strainedDirectorates.length > 0 && <p className="mt-1 text-xs text-ink/50">Pressure carried: {packetSummary.strainedDirectorates.map(directorateLabel).join(", ")}.</p>}
+            <p className="text-xs text-ink/60">{packetSummary.mainEffort ? `${packetSummary.mainEffortSource === "declared" ? "Named" : "Observed"} main effort: ${directorateLabel(packetSummary.mainEffort)}.` : "No main effort is carried by these choices."} Headquarters room left: <span className={packetSummary.slackStatus === "overdrawn" ? "text-red-400" : packetSummary.slackStatus === "tight" ? "text-yellow-400" : "text-green-400"}>{Math.max(0, packetSummary.slackPoints)} points, {packetSummary.slackStatus}.</span></p>
+            {packetSummary.strainedDirectorates.length > 0 && <p className="mt-1 text-xs text-ink/50">Teams already under pressure: {packetSummary.strainedDirectorates.map(directorateLabel).join(", ")}.</p>}
           </section>
         )}
         <section className="border border-border bg-surface px-4 py-3">

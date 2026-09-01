@@ -96,8 +96,8 @@ export function ChiefsPaperScreen({
   return (
     <div className="relative">
       <div className="p-6 max-w-3xl">
-        <ContextualTeaching concept="chief-terms" title="Chiefs can constrain the packet">
-          A chief may support, attach a condition, or record dissent. Discussion is about the selected issue in this month&apos;s packet; a promise can shape later choices, but you remain responsible for accepting its cost.
+        <ContextualTeaching concept="chief-terms" title="What your chiefs can do">
+          Your chiefs respond to the choices you made. They may back a choice, back it only if you meet a condition, or object. Talking is optional; it can build trust or put a promise on the record, but it does not change your selected option.
         </ContextualTeaching>
         <div className="flex items-center justify-between mb-5 gap-4">
           <div>

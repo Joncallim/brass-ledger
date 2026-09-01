@@ -34,8 +34,8 @@ export function AcceptedRiskDocket({ candidates, choices, onChange }: Props) {
         </span>
       </div>
       <p className="text-xs text-ink/50 mb-3 leading-relaxed">
-        Your choices push these staff functions past what they can comfortably carry. Tick each warning to record
-        that you are going ahead knowing the risk. You cannot commit the month until all of them are ticked.
+        Your choices push these teams past what they can comfortably carry. Tick a warning only when you understand
+        the risk and still want this plan. Ticking records your decision; it does not remove the consequence.
       </p>
       <div className="space-y-2">
         {candidates.map((risk) => {

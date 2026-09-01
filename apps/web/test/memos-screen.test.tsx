@@ -59,8 +59,8 @@ test("MemosScreen presents the selected portfolio, capacity left, and optional w
   assert.match(container.textContent ?? "", /This month's packet/);
   assert.match(container.textContent ?? "", /Posture/);
   assert.match(container.textContent ?? "", /Hold the line/);
-  assert.match(container.textContent ?? "", /Organisational slack: 3 points, room/);
-  assert.match(container.textContent ?? "", /Pressure carried: Plans/);
+  assert.match(container.textContent ?? "", /Headquarters room left: 3 points, room/);
+  assert.match(container.textContent ?? "", /Teams already under pressure: Plans/);
   assert.match(container.textContent ?? "", /Deliberately not taking/);
   assert.match(container.textContent ?? "", /Industrial capacity/);
   assert.doesNotMatch(container.textContent ?? "", /Previous choice:|Changed issue — why now:/);
