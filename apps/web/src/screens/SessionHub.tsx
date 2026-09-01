@@ -4,8 +4,6 @@ import { campaignStatusLabel } from "../lib/labels";
 
 type Props = {
   sessions: SessionSummary[];
-  scenarioTitle: string;
-  scenarioDescription: string;
   scenarios: ScenarioSummary[];
   selectedScenarioId: string | null;
   selectedCommandPressureId: string;
@@ -19,38 +17,16 @@ type Props = {
   onNew: (scenarioId?: string) => void;
 };
 
-export function SessionHub({ sessions, scenarioTitle, scenarioDescription, scenarios, selectedScenarioId, selectedCommandPressureId, selectedStaffAssistanceId, busy, error, onLoad, onSelectScenario, onSelectCommandPressure, onSelectStaffAssistance, onNew }: Props) {
+export function SessionHub({ sessions, scenarios, selectedScenarioId, selectedCommandPressureId, selectedStaffAssistanceId, busy, error, onLoad, onSelectScenario, onSelectCommandPressure, onSelectStaffAssistance, onNew }: Props) {
   const selectedScenario = scenarios.find((scenario) => scenario.id === selectedScenarioId) ?? scenarios[0];
   return (
     <div className="p-6 max-w-3xl">
-      <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Campaign</p>
-      <h1 className="text-2xl font-semibold tracking-tight text-ink mb-2">{scenarioTitle}</h1>
-      <p className="text-sm text-ink/60 leading-relaxed mb-4 max-w-xl">{scenarioDescription}</p>
+      <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">New campaign</p>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink mb-2">Choose your campaign</h1>
       <p className="text-sm text-ink/50 leading-relaxed mb-6 max-w-xl">
         You command a joint headquarters. Each month you read the brief, choose one course of action per decision
         memo, hear what your chiefs think, then commit the month and live with the results.
       </p>
-
-      <div className="flex gap-3 mb-8">
-        {sessions.length > 0 && (
-          <button
-            type="button"
-            onClick={() => onLoad(sessions[0].id)}
-            disabled={busy}
-            className="px-4 py-2 bg-brass text-white border border-brass hover:bg-brass/90 disabled:opacity-50 text-sm font-medium"
-          >
-            Continue last campaign
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => onNew(selectedScenarioId ?? undefined)}
-          disabled={busy}
-          className="px-4 py-2 border border-border text-ink hover:border-brass disabled:opacity-50 text-sm"
-        >
-          Start new campaign
-        </button>
-      </div>
 
       {scenarios.length > 1 && (
         <section className="mb-8" aria-label="Choose scenario">
@@ -96,6 +72,27 @@ export function SessionHub({ sessions, scenarioTitle, scenarioDescription, scena
           </label>
         </section>
       )}
+
+      <div className="flex gap-3 mb-8">
+        {sessions.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onLoad(sessions[0].id)}
+            disabled={busy}
+            className="px-4 py-2 bg-brass text-white border border-brass hover:bg-brass/90 disabled:opacity-50 text-sm font-medium"
+          >
+            Continue last campaign
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => onNew(selectedScenarioId ?? undefined)}
+          disabled={busy}
+          className="px-4 py-2 border border-border text-ink hover:border-brass disabled:opacity-50 text-sm"
+        >
+          Start new campaign
+        </button>
+      </div>
 
       {error && (
         <div className="border border-red-600 bg-red-950/40 text-red-300 px-4 py-3 text-sm mb-6">{error}</div>

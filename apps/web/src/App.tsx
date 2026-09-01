@@ -492,8 +492,6 @@ export function App() {
       {route.screen === "hub" && (
         <SessionHub
           sessions={sessions}
-          scenarioTitle={scenario?.title ?? "Brass Ledger"}
-          scenarioDescription={scenario?.description ?? "Loading the scenario…"}
           scenarios={scenarios}
           selectedScenarioId={selectedScenarioId}
           selectedCommandPressureId={selectedCommandPressureId}

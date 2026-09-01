@@ -3,10 +3,12 @@ import { readFileSync } from "node:fs";
 
 test("loads the campaign hub and shows the fetched scenario", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Choose your campaign" })).toBeVisible();
   // The fallback shell also renders an <h1>"Brass Ledger" and a usable start button while
   // /api/scenario is loading (or if it fails), so assert scenario-only content to prove the
   // fetch actually succeeded rather than the loading/error fallback.
   await expect(page.getByText("rebuild a credible defense during a slow-burning crisis")).toBeVisible();
+  await expect(page.getByText("rebuild a credible defense during a slow-burning crisis")).toHaveCount(1);
   await expect(page.getByRole("button", { name: "Start new campaign" })).toBeVisible();
 });
 
