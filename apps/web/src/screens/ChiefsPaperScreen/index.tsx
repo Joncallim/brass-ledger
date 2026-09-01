@@ -156,12 +156,25 @@ export function ChiefsPaperScreen({
                       {positions.slice(1).map((issue) => {
                         const issueMemo = memos.find((memo) => memo.id === issue.memoId);
                         const issueOption = issueMemo?.options.find((option) => option.id === issue.optionId);
+                        const issuePacing = pacingStatus(issue);
                         return (
                         <div key={`${issue.memoId}:${issue.optionId}`} className="flex items-center justify-between gap-3 text-xs">
                           <div className="min-w-0">
                             <span className="text-ink/70 font-medium">{issueMemo?.title ?? "Selected issue"}</span>
                             <span className="text-ink/40"> — {issueOption?.label ?? "Selected option"}</span>
                             <span className="ml-2 text-ink/50">{issue.requiredCondition}</span>
+                            {compactPresentation && (
+                              <p
+                                className={`mt-1 font-medium ${issuePacing.kind === "stable" ? "text-ink/40" : "text-brass"}`}
+                                aria-label={`Chief position ${issuePacing.kind}`}
+                              >
+                                {issuePacing.kind === "stable"
+                                  ? "Stable since last month."
+                                  : issuePacing.kind === "new"
+                                    ? "New chief position on this packet."
+                                    : `Changed since last month: ${issuePacing.changes.join(", ")}.`}
+                              </p>
+                            )}
                           </div>
                           <button
                             type="button"

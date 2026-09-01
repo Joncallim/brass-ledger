@@ -232,6 +232,9 @@ export function BriefingScreen({ session, memos, staffReadouts, scenario, labels
         <div className="space-y-6">
           {objectiveChecks.length > 0 && (
             <section>
+              <ContextualTeaching concept="campaign-horizon" title="The campaign has a horizon">
+                Each month uses part of the time available to build a strategy. These milestones show what must be true by the end; a promising long-term plan still has to survive this month&apos;s pressure.
+              </ContextualTeaching>
               <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">
                 Campaign milestones — {metCount} of {objectiveChecks.length} met
               </p>
@@ -252,6 +255,9 @@ export function BriefingScreen({ session, memos, staffReadouts, scenario, labels
 
           {state.capabilityPrograms.length > 0 && (
             <section>
+              <ContextualTeaching concept="program-phase" title="A programme is not useful all at once">
+                Progress and phase show where a long-running capability build stands. Starting a programme can be strategically necessary, but its operational benefit may arrive later while its present burden is real.
+              </ContextualTeaching>
               <p className="text-xs uppercase tracking-widest text-ink/40 mb-1">Capability programs</p>
               <p className="text-xs text-ink/50 mb-3 leading-relaxed">
                 Long-running builds. The number is progress out of 100; the tag is the stage reached.

@@ -16,6 +16,8 @@ test("create, play, and record a full campaign month", async ({ page }) => {
   await test.step("create a new campaign", async () => {
     await page.getByRole("button", { name: "Start new campaign" }).click();
     await expect(page.getByRole("button", { name: "Open decision memos →" })).toBeVisible();
+    await expect(page.getByText("First time here — The campaign has a horizon")).toBeVisible();
+    await expect(page.getByText("First time here — A programme is not useful all at once")).toBeVisible();
     const compactView = page.getByRole("button", { name: "Compact view" });
     await expect(compactView).toHaveAttribute("aria-pressed", "false");
     await compactView.click();
@@ -165,23 +167,32 @@ test("Staff Exercise resolves through the normal save and replay path", async ({
   await page.getByRole("button", { name: "Start new campaign" }).click();
   await expect(page.getByRole("heading", { name: /^Month 1 of 4/ })).toBeVisible();
 
-  await page.getByRole("button", { name: "Open decision memos →" }).click();
-  const openingMemos = page.locator('fieldset:has(input[type="radio"])');
-  await expect(openingMemos).toHaveCount(2);
-  for (let index = 0; index < await openingMemos.count(); index++) {
-    await openingMemos.nth(index).locator('input[type="radio"]').first().check();
-  }
-  await expect(page.getByRole("button", { name: "Hear from the chiefs →" })).toBeEnabled();
-  await page.getByRole("button", { name: "Hear from the chiefs →" }).click();
-  await page.getByRole("button", { name: "Continue to final review →" }).click();
+  for (let month = 1; month <= 4; month++) {
+    await page.getByRole("button", { name: "Open decision memos →" }).click();
+    const memos = page.locator('fieldset:has(input[type="radio"])');
+    if (month === 1) await expect(memos).toHaveCount(2);
+    expect(await memos.count()).toBeGreaterThan(0);
+    for (let index = 0; index < await memos.count(); index++) {
+      await memos.nth(index).locator('input[type="radio"]').first().check();
+    }
+    await expect(page.getByRole("button", { name: "Hear from the chiefs →" })).toBeEnabled();
+    await page.getByRole("button", { name: "Hear from the chiefs →" }).click();
+    await page.getByRole("button", { name: "Continue to final review →" }).click();
 
-  const risks = page.locator('div.border.border-border.p-4', { hasText: "Staff risk warnings" }).locator('input[type="checkbox"]');
-  for (let index = 0; index < await risks.count(); index++) {
-    await risks.nth(index).check();
+    const risks = page.locator('div.border.border-border.p-4', { hasText: "Staff risk warnings" }).locator('input[type="checkbox"]');
+    for (let index = 0; index < await risks.count(); index++) {
+      await risks.nth(index).check();
+    }
+    await expect(page.getByRole("button", { name: "Commit the month" })).toBeEnabled();
+    await page.getByRole("button", { name: "Commit the month" }).click();
+
+    if (month < 4) {
+      await expect(page.getByText(`What happened in month ${month}`)).toBeVisible();
+      await page.getByRole("button", { name: "Start next month →" }).click();
+      await expect(page.getByRole("heading", { name: new RegExp(`^Month ${month + 1} of 4`) })).toBeVisible();
+    }
   }
-  await expect(page.getByRole("button", { name: "Commit the month" })).toBeEnabled();
-  await page.getByRole("button", { name: "Commit the month" }).click();
-  await expect(page.getByText("What happened in month 1")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Campaign (won|lost)/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Go to records" }).click();
   // The persisted display name is the authored opening-brief title, while the

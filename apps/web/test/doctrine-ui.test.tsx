@@ -251,6 +251,43 @@ test("chiefs paper preserves every selected issue for a chief instead of discard
   assert.match(html, /Discuss/, "the player can explicitly choose the later issue as the conversation topic");
 });
 
+test("compact chiefs paper shows pacing for every selected issue, including later stable positions", () => {
+  const session = createInitialGameSession(soloScenario, "web-chief-issue-pacing-session");
+  const scenario = { ...soloScenario, spriteVisualLanguage } as unknown as ScenarioSummary;
+  const chief = soloScenario.chiefs[0]!;
+  const [firstMemo, secondMemo] = soloScenario.memoTemplates;
+  const firstOption = firstMemo!.options[0]!;
+  const secondOption = secondMemo!.options[0]!;
+  const base = {
+    chiefId: chief.id, chiefName: chief.name, directorate: chief.directorate, position: "support",
+    institutionalReason: "Same course.", requiredCondition: "", confidenceNote: "", consequenceIfIgnored: "",
+    agendaMemoryNote: "", adviceStyleNote: "",
+    staffReadoutEvidence: { staffFunctionLabel: "Operations", metricLabel: "Tempo", metricStatus: "healthy", metricValue: 70, burdenLevel: "light", burdenPoints: 1 },
+  } as any;
+  const firstPosition = { ...base, memoId: firstMemo!.id, optionId: firstOption.id };
+  const secondPosition = { ...base, memoId: secondMemo!.id, optionId: secondOption.id };
+  session.history = [{ chiefPositions: [firstPosition, secondPosition], nextState: { chiefTrust: { [chief.id]: 50 } } } as any];
+  session.state.chiefTrust[chief.id] = 50;
+  const html = renderToStaticMarkup(<ChiefsPaperScreen
+    chiefPositions={[{ ...firstPosition, agendaMemoryNote: "Changed memory." }, secondPosition]}
+    chiefCoalitions={[]}
+    advisorRoster={session.advisorRoster}
+    session={session}
+    scenario={scenario}
+    memos={[firstMemo!, secondMemo!]}
+    compactPresentation
+    conversationBusy={false}
+    conversationError={null}
+    activeConversation={null}
+    onOpenConversation={() => {}}
+    onRespond={() => {}}
+    onProceed={() => {}}
+    onBack={() => {}}
+  />);
+  assert.match(html, /Stable since last month\./, "the later issue receives stable pacing too");
+  assert.match(html, /aria-label="Chief position stable"/);
+});
+
 test("chiefs paper passes real session state into the sprite variant, not a neutral default", () => {
   const session = createInitialGameSession(soloScenario, "web-sprite-state-session");
   const scenario = { ...soloScenario, spriteVisualLanguage } as unknown as ScenarioSummary;
