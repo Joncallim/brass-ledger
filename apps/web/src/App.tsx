@@ -469,6 +469,7 @@ export function App() {
   const chiefCoalitions = validPreview?.chiefCoalitions ?? [];
   const showRail = route.screen === "session";
   const compactPresentation = presentationMode === "compact";
+  const contentKey = route.screen === "session" ? `${route.sessionId}:${route.step}` : route.screen;
 
   function handlePresentationMode(mode: PresentationMode) {
     setPresentationMode(mode);
@@ -483,6 +484,7 @@ export function App() {
       onNavigateHub={() => { setRoute({ screen: "hub" }); setError(null); }}
       onNavigateRecords={() => { setRoute({ screen: "records" }); setError(null); }}
       showRail={showRail}
+      contentKey={contentKey}
     >
       <div className="fixed right-4 bottom-4 z-40 flex gap-2">
         <PresentationModeToggle mode={presentationMode} onChange={handlePresentationMode} />

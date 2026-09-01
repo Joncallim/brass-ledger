@@ -213,6 +213,7 @@ test("memo choices reflow on a narrow screen without horizontal overflow", async
   await page.getByRole("button", { name: "Start new campaign" }).click();
   await page.getByRole("button", { name: "Open decision memos →" }).click();
 
+  expect(await page.locator("main").evaluate((element) => element.scrollTop)).toBe(0);
   await expect(page.getByText("Staff workload if you choose this")).toBeVisible();
   await expect(page.getByText("Pick an option first.")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
