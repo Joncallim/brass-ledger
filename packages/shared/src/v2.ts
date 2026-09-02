@@ -7,11 +7,16 @@ import { z } from "zod";
  * unreviewed mechanics as opaque future payloads.
  */
 export const v2RulesetTag = "v2" as const;
+/**
+ * #97 changes the persisted bootstrap state. Earlier V2 skeleton saves are
+ * intentionally not parsed as this format: no migration has been authored.
+ */
+export const v2CurrentRulesetVersion = "0.3.0-prototype" as const;
 export const sha256DigestSchema = z.string().regex(/^[a-f0-9]{64}$/, "must be a lowercase SHA-256 digest");
 
 export const v2IdentitySchema = z.object({
   ruleset: z.literal(v2RulesetTag),
-  rulesetVersion: z.string().min(1),
+  rulesetVersion: z.literal(v2CurrentRulesetVersion),
   scenarioId: z.string().min(1),
   contentVersion: z.string().min(1),
   contentDigest: sha256DigestSchema,
@@ -26,8 +31,59 @@ export type V2Identity = z.infer<typeof v2IdentitySchema>;
 export const v2BootstrapStateSchema = z.object({
   cycle: z.number().int().min(1),
   seed: z.string().min(1),
+  /** Null until the one opening declaration has been authoritatively recorded. */
+  standingIntent: z.lazy(() => v2StandingIntentSchema).nullable(),
 }).strict();
 export type V2BootstrapState = z.infer<typeof v2BootstrapStateSchema>;
+
+/**
+ * Internal, serialisable vocabulary for the four B1 choices. Presentation
+ * owns the plain-language questions and answers; these identifiers are never
+ * player-facing labels.
+ */
+export const v2MainPrioritySchema = z.enum(["beacon-security", "partner-cooperation", "ravellan-understanding"]);
+export const v2RedLineSchema = z.enum(["civilian-shipping", "partner-consultation", "reserve-readiness"]);
+export const v2ToleratedCostSchema = z.enum(["weaker-deterrence", "political-friction", "reserve-strain"]);
+export const v2DefaultStyleSchema = z.enum(["quiet-preparation", "visible-deterrence", "partner-consultation"]);
+
+export const v2StandingIntentSchema = z.object({
+  mainPriority: v2MainPrioritySchema,
+  redLine: v2RedLineSchema,
+  toleratedCost: v2ToleratedCostSchema,
+  defaultStyle: v2DefaultStyleSchema,
+}).strict();
+export type V2StandingIntent = z.infer<typeof v2StandingIntentSchema>;
+
+export const v2IntentReasonRefSchema = z.discriminatedUnion("field", [
+  z.object({ field: z.literal("mainPriority"), value: v2MainPrioritySchema }).strict(),
+  z.object({ field: z.literal("redLine"), value: v2RedLineSchema }).strict(),
+  z.object({ field: z.literal("toleratedCost"), value: v2ToleratedCostSchema }).strict(),
+  z.object({ field: z.literal("defaultStyle"), value: v2DefaultStyleSchema }).strict(),
+]);
+export type V2IntentReasonRef = z.infer<typeof v2IntentReasonRefSchema>;
+
+/** Canonical, typed references for later recommendation/readout contracts. */
+export function v2IntentReasonRefs(intent: V2StandingIntent): readonly [
+  Extract<V2IntentReasonRef, { field: "redLine" }>,
+  Extract<V2IntentReasonRef, { field: "mainPriority" }>,
+  Extract<V2IntentReasonRef, { field: "defaultStyle" }>,
+  Extract<V2IntentReasonRef, { field: "toleratedCost" }>,
+] {
+  return [
+    { field: "redLine", value: intent.redLine },
+    { field: "mainPriority", value: intent.mainPriority },
+    { field: "defaultStyle", value: intent.defaultStyle },
+    { field: "toleratedCost", value: intent.toleratedCost },
+  ];
+}
+
+/** The opening action is separate from a cycle command and consumes no token. */
+export const v2IntentDeclarationSchema = z.object({
+  cycle: z.literal(1),
+  expectedRevision: z.number().int().min(0),
+  intent: v2StandingIntentSchema,
+}).strict();
+export type V2IntentDeclaration = z.infer<typeof v2IntentDeclarationSchema>;
 
 /** Fixed named owners keep delegation legible without making it UI-owned. */
 export const v2OfficerSchema = z.enum(["intelligence", "operations", "political"]);
@@ -127,7 +183,25 @@ export const v2CommandSetLedgerEntrySchema = z.object({
 }).strict();
 export type V2CommandSetLedgerEntry = z.infer<typeof v2CommandSetLedgerEntrySchema>;
 
-export const v2ActionLedgerSchema = z.array(v2CommandSetLedgerEntrySchema);
+export const v2IntentDeclarationLedgerEntrySchema = z.object({
+  kind: z.literal("intent-declaration"),
+  intentDeclaration: v2IntentDeclarationSchema,
+  preState: v2BootstrapStateSchema,
+  postState: v2BootstrapStateSchema,
+  preRevision: z.number().int().min(0),
+  postRevision: z.number().int().min(0),
+  preStateHash: sha256DigestSchema,
+  postStateHash: sha256DigestSchema,
+}).strict();
+export type V2IntentDeclarationLedgerEntry = z.infer<typeof v2IntentDeclarationLedgerEntrySchema>;
+
+export const v2ActionLedgerEntrySchema = z.discriminatedUnion("kind", [
+  v2IntentDeclarationLedgerEntrySchema,
+  v2CommandSetLedgerEntrySchema,
+]);
+export type V2ActionLedgerEntry = z.infer<typeof v2ActionLedgerEntrySchema>;
+
+export const v2ActionLedgerSchema = z.array(v2ActionLedgerEntrySchema);
 export type V2ActionLedger = z.infer<typeof v2ActionLedgerSchema>;
 
 export const v2SessionSchema = z.object({

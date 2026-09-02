@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { scenarioSummarySchema, chiefSpriteDeterministicSeed, gameSessionSchema, turnInputSchema } from "@brass-ledger/shared";
+import { scenarioSummarySchema, chiefSpriteDeterministicSeed, gameSessionSchema, turnInputSchema, v2CurrentRulesetVersion } from "@brass-ledger/shared";
 import { hashPromptText } from "@brass-ledger/headless";
 import { soloScenario, staffExerciseScenario } from "@brass-ledger/content";
 import { campaignStateHash, ineligibleStaffNegotiations, resolveTurn, v2FinalSessionDigest, v2InitialStateDigest } from "@brass-ledger/sim";
@@ -78,8 +78,8 @@ async function assertImportRejected(exportData: unknown) {
 
 function validV2Export() {
   const digest = "a".repeat(64);
-  const identity = { ruleset: "v2" as const, rulesetVersion: "0.2.0-prototype", scenarioId: "kestrel-strait", contentVersion: "2026.09.02", contentDigest: digest };
-  const initialState = { cycle: 1 as const, seed: "kestrel-seed" };
+  const identity = { ruleset: "v2" as const, rulesetVersion: v2CurrentRulesetVersion, scenarioId: "kestrel-strait", contentVersion: "2026.09.02", contentDigest: digest };
+  const initialState = { cycle: 1 as const, seed: "kestrel-seed", standingIntent: null };
   const session = {
     id: "v2-save-1", campaignId: "v2-campaign-1", revision: 0, identity,
     initialState, state: initialState, actionLedger: [] as [], updatedAt: "2026-09-02T00:00:00.000Z",
@@ -104,8 +104,8 @@ test("V2 imports surface skeleton tampering instead of falling through to V1", a
   const valid = validV2Export();
   const cases: Array<[string, unknown, string]> = [
     ["initial digest", { ...valid, session: { ...valid.session, initialStateDigest: "0".repeat(64) } }, "v2_initial_state_digest_mismatch"],
-    ["state change", { ...valid, session: { ...valid.session, state: { cycle: 1, seed: "changed" } } }, "v2_state_changed_without_ledger"],
-    ["action", { ...valid, session: { ...valid.session, actionLedger: [{}] } }, "v2_nonempty_ledger_unsupported"],
+    ["state change", { ...valid, session: { ...valid.session, state: { cycle: 1, seed: "changed", standingIntent: null } } }, "v2_state_changed_without_ledger"],
+    ["action", { ...valid, session: { ...valid.session, actionLedger: [{ kind: "command-set" }] } }, "v2_nonempty_ledger_unsupported"],
   ];
   for (const [_name, exportData, code] of cases) {
     const response = await app.inject({ method: "POST", url: "/api/sessions/import", payload: { exportData } });

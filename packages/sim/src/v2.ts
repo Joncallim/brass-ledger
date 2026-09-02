@@ -5,9 +5,12 @@ import {
   type V2CommandSetLedgerEntry,
   type V2FinalOrder,
   type V2Identity,
+  type V2IntentDeclaration,
+  type V2IntentDeclarationLedgerEntry,
   type V2Session,
   v2AgendaIssueSchema,
   v2CommandSetSchema,
+  v2IntentDeclarationSchema,
   v2SessionSchema,
 } from "@brass-ledger/shared";
 
@@ -23,7 +26,7 @@ export class V2ReplayValidationError extends Error {
 
 export class V2CommandValidationError extends Error {
   constructor(
-    readonly code: "v2_invalid_command" | "v2_stale_revision" | "v2_wrong_cycle" | "v2_invalid_agenda" | "v2_disposition_count" | "v2_disposition_order" | "v2_illegal_intervention" | "v2_illegal_defer" | "v2_intervention_limit",
+    readonly code: "v2_invalid_command" | "v2_stale_revision" | "v2_wrong_cycle" | "v2_invalid_agenda" | "v2_disposition_count" | "v2_disposition_order" | "v2_illegal_intervention" | "v2_illegal_defer" | "v2_intervention_limit" | "v2_missing_standing_intent" | "v2_intent_already_declared" | "v2_invalid_intent_declaration",
     message: string,
   ) {
     super(message);
@@ -43,6 +46,42 @@ export type V2ResolvedCommandSet = {
   postState: V2Session["state"];
   postRevision: number;
 };
+
+export type V2ResolvedIntentDeclaration = {
+  postState: V2Session["state"];
+  postRevision: number;
+};
+
+/**
+ * Records the immutable opening direction. It is deliberately not an order:
+ * it leaves cycle and intervention budget unchanged while occupying exactly
+ * one revisioned, replayable action.
+ */
+export function declareV2StandingIntent(
+  state: V2Session["state"],
+  revision: number,
+  rawDeclaration: unknown,
+): V2ResolvedIntentDeclaration {
+  let declaration: V2IntentDeclaration;
+  try {
+    declaration = v2IntentDeclarationSchema.parse(rawDeclaration);
+  } catch {
+    throw new V2CommandValidationError("v2_invalid_intent_declaration", "The opening intent declaration does not match the authoritative contract.");
+  }
+  if (revision !== 0) {
+    throw new V2CommandValidationError("v2_invalid_intent_declaration", "The opening standing intent must be the first V2 revision.");
+  }
+  if (declaration.expectedRevision !== revision) {
+    throw new V2CommandValidationError("v2_stale_revision", "The opening intent declaration was created for a stale revision.");
+  }
+  if (state.cycle !== 1 || declaration.cycle !== state.cycle) {
+    throw new V2CommandValidationError("v2_wrong_cycle", "Standing intent can only be declared during cycle 1.");
+  }
+  if (state.standingIntent !== null) {
+    throw new V2CommandValidationError("v2_intent_already_declared", "Standing intent is immutable once declared.");
+  }
+  return { postState: { ...state, standingIntent: declaration.intent }, postRevision: revision + 1 };
+}
 
 function validateTrustedAgenda(agenda: readonly V2AgendaIssue[]): void {
   if (agenda.length === 0) {
@@ -116,6 +155,9 @@ export function resolveV2CommandSet(
   }
   if (commandSet.cycle !== state.cycle) {
     throw new V2CommandValidationError("v2_wrong_cycle", "The command set does not target the current cycle.");
+  }
+  if (state.standingIntent === null) {
+    throw new V2CommandValidationError("v2_missing_standing_intent", "The opening standing intent must be declared before any command set.");
   }
   let interventions = 0;
   const finalOrders: V2FinalOrder[] = [];
@@ -248,23 +290,50 @@ export function createV2CommandSetLedgerEntry(
   };
 }
 
+export function createV2IntentDeclarationLedgerEntry(
+  state: V2Session["state"],
+  revision: number,
+  rawDeclaration: unknown,
+): V2IntentDeclarationLedgerEntry {
+  let intentDeclaration: V2IntentDeclaration;
+  try {
+    intentDeclaration = v2IntentDeclarationSchema.parse(rawDeclaration);
+  } catch {
+    throw new V2CommandValidationError("v2_invalid_intent_declaration", "The opening intent declaration does not match the authoritative contract.");
+  }
+  const resolved = declareV2StandingIntent(state, revision, intentDeclaration);
+  return {
+    kind: "intent-declaration",
+    intentDeclaration,
+    preState: state,
+    postState: resolved.postState,
+    preRevision: revision,
+    postRevision: resolved.postRevision,
+    preStateHash: v2StateHash(state),
+    postStateHash: v2StateHash(resolved.postState),
+  };
+}
+
 /**
  * Verifies an imported V2 root against itself only. This is suitable for the
  * server import path: a non-empty ledger additionally requires a trusted agenda
  * provider so replay never treats saved client data as authored game content.
  */
 export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProvider?: V2TrustedAgendaProvider): V2Session {
-  // Keep #95's registry-less import boundary stable. It cannot treat a saved
-  // agenda as content, so it rejects all non-empty ledgers before structural
-  // parsing. A real V2 dispatcher must supply the trusted provider below.
+  // Keep #95's registry-less import boundary stable for commands: the server
+  // cannot trust a saved agenda without live authored content. An opening
+  // intent declaration has no agenda and can be structurally replayed alone.
   if (trustedAgendaProvider === undefined
     && typeof rawSession === "object" && rawSession !== null
     && Array.isArray((rawSession as { actionLedger?: unknown }).actionLedger)
-    && (rawSession as { actionLedger: unknown[] }).actionLedger.length !== 0) {
+    && (rawSession as { actionLedger: Array<{ kind?: unknown }> }).actionLedger.some((entry) => entry?.kind === "command-set")) {
     throw new V2ReplayValidationError("v2_nonempty_ledger_unsupported", "V2 actions cannot be replayed without a trusted authored agenda provider.");
   }
   const session = v2SessionSchema.parse(rawSession);
   const identity = session.identity;
+  if (session.initialState.standingIntent !== null) {
+    throw new V2ReplayValidationError("v2_ledger_transition_invalid", "A V2 session must begin before its opening standing-intent declaration.");
+  }
   const initialDigest = v2InitialStateDigest(identity, session.initialState);
   if (session.initialStateDigest !== initialDigest) {
     throw new V2ReplayValidationError("v2_initial_state_digest_mismatch", "V2 initial-state digest does not match its canonical identity envelope.");
@@ -273,36 +342,48 @@ export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProv
     if (canonicalV2Json(session.state) !== canonicalV2Json(session.initialState)) {
       throw new V2ReplayValidationError("v2_state_changed_without_ledger", "A zero-action V2 ledger cannot change state.");
     }
+    if (session.revision !== 0) {
+      throw new V2ReplayValidationError("v2_ledger_revision_mismatch", "A zero-action V2 ledger must have revision zero.");
+    }
   } else {
-    if (trustedAgendaProvider === undefined) throw new V2ReplayValidationError("v2_trusted_agenda_required", "A non-empty V2 ledger requires a trusted authored agenda provider for replay.");
     let replayState = session.initialState;
     let replayRevision = 0;
     for (const entry of session.actionLedger) {
       if (canonicalV2Json(entry.preState) !== canonicalV2Json(replayState)) {
         throw new V2ReplayValidationError("v2_ledger_pre_state_mismatch", "A V2 ledger entry does not begin at the reconstructed state.");
       }
-      if (entry.preRevision !== replayRevision || entry.commandSet.expectedRevision !== replayRevision) {
+      const expectedRevision = entry.kind === "intent-declaration"
+        ? entry.intentDeclaration.expectedRevision
+        : entry.commandSet.expectedRevision;
+      if (entry.preRevision !== replayRevision || expectedRevision !== replayRevision) {
         throw new V2ReplayValidationError("v2_ledger_revision_mismatch", "A V2 ledger entry has an invalid revision chain.");
       }
       if (entry.preStateHash !== v2StateHash(entry.preState) || entry.postStateHash !== v2StateHash(entry.postState)) {
         throw new V2ReplayValidationError("v2_ledger_hash_mismatch", "A V2 ledger entry has invalid canonical state evidence.");
       }
-      let resolved: V2ResolvedCommandSet;
+      let resolved: V2ResolvedCommandSet | V2ResolvedIntentDeclaration;
       try {
-        const trustedAgenda = trustedAgendaProvider(replayState);
-        const canonicalCommandSet = canonicalizeV2CommandSet(trustedAgenda, entry.commandSet);
-        if (canonicalV2Json(entry.commandSet) !== canonicalV2Json(canonicalCommandSet)) {
-          throw new V2CommandValidationError("v2_disposition_order", "A V2 ledger command is not stored in canonical agenda order.");
+        if (entry.kind === "intent-declaration") {
+          resolved = declareV2StandingIntent(replayState, replayRevision, entry.intentDeclaration);
+        } else {
+          if (trustedAgendaProvider === undefined) throw new V2CommandValidationError("v2_missing_standing_intent", "A V2 command requires its trusted authored agenda.");
+          const trustedAgenda = trustedAgendaProvider(replayState);
+          const canonicalCommandSet = canonicalizeV2CommandSet(trustedAgenda, entry.commandSet);
+          if (canonicalV2Json(entry.commandSet) !== canonicalV2Json(canonicalCommandSet)) {
+            throw new V2CommandValidationError("v2_disposition_order", "A V2 ledger command is not stored in canonical agenda order.");
+          }
+          resolved = resolveV2CommandSet(replayState, replayRevision, trustedAgenda, canonicalCommandSet);
         }
-        resolved = resolveV2CommandSet(replayState, replayRevision, trustedAgenda, canonicalCommandSet);
       } catch (error) {
         if (error instanceof V2CommandValidationError) {
           throw new V2ReplayValidationError("v2_ledger_transition_invalid", `A V2 ledger command is no longer legal: ${error.code}.`);
         }
         throw error;
       }
-      if (entry.interventionCost !== resolved.interventionCost
-        || canonicalV2Json(entry.finalOrders) !== canonicalV2Json(resolved.finalOrders)
+      const commandEvidenceMatches = entry.kind !== "command-set"
+        || (resolved as V2ResolvedCommandSet).interventionCost === entry.interventionCost
+          && canonicalV2Json((resolved as V2ResolvedCommandSet).finalOrders) === canonicalV2Json(entry.finalOrders);
+      if (!commandEvidenceMatches
         || canonicalV2Json(entry.postState) !== canonicalV2Json(resolved.postState)) {
         throw new V2ReplayValidationError("v2_ledger_post_state_mismatch", "A V2 ledger entry does not match authoritative re-execution.");
       }

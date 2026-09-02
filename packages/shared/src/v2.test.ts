@@ -8,6 +8,9 @@ import {
   v2AgendaIssueSchema,
   v2CommandSetSchema,
   v2FinalOrderSchema,
+  v2IntentDeclarationSchema,
+  v2IntentReasonRefs,
+  v2CurrentRulesetVersion,
   v2SessionExportSchema,
   v2SessionSchema,
 } from "./index";
@@ -18,9 +21,9 @@ const v2Session = {
   id: "v2-save-1",
   campaignId: "v2-campaign-1",
   revision: 0,
-  identity: { ruleset: "v2", rulesetVersion: "0.2.0-prototype", scenarioId: "kestrel-strait", contentVersion: "2026.09.02", contentDigest: digest },
-  initialState: { cycle: 1, seed: "kestrel-seed" },
-  state: { cycle: 1, seed: "kestrel-seed" },
+  identity: { ruleset: "v2", rulesetVersion: v2CurrentRulesetVersion, scenarioId: "kestrel-strait", contentVersion: "2026.09.02", contentDigest: digest },
+  initialState: { cycle: 1, seed: "kestrel-seed", standingIntent: null },
+  state: { cycle: 1, seed: "kestrel-seed", standingIntent: null },
   actionLedger: [],
   initialStateDigest: digest,
   finalStateDigest: digest,
@@ -37,6 +40,7 @@ test("V2 identity/session/export roots round-trip with an explicit required empt
 test("V2 roots reject missing ledgers, unknown mechanics, malformed digests, and untagged lookalikes", () => {
   assert.throws(() => v2SessionSchema.parse(({ ...v2Session, actionLedger: undefined })), /actionLedger/i);
   assert.throws(() => v2SessionSchema.parse(({ ...v2Session, state: { ...v2Session.state, hiddenPosture: "testing" } })), /unrecognized key/i);
+  assert.throws(() => v2SessionSchema.parse(({ ...v2Session, identity: { ...v2Session.identity, rulesetVersion: "0.2.0-prototype" }, initialState: { cycle: 1, seed: "legacy-v2" }, state: { cycle: 1, seed: "legacy-v2" } })), /0.3.0-prototype/i);
   assert.throws(() => v2SessionSchema.parse(({ ...v2Session, identity: { ...v2Session.identity, contentDigest: "not-a-digest" } })), /SHA-256/i);
   assert.equal(isV2SessionPayload({ ...v2Session, identity: { ...v2Session.identity, ruleset: "v1" } }), false);
 });
@@ -79,4 +83,24 @@ test("V2 persisted final orders cannot contradict their disposition or intervent
   assert.throws(() => v2FinalOrderSchema.parse({
     issueId: "shipping-probe", responsibleOfficer: "operations", disposition: "intervene", orderId: "visible-surge", interventionCost: 0,
   }));
+});
+
+test("V2 opening standing intent is complete, strictly mapped, and has one canonical reason reference per choice", () => {
+  const intent = {
+    mainPriority: "beacon-security",
+    redLine: "civilian-shipping",
+    toleratedCost: "political-friction",
+    defaultStyle: "partner-consultation",
+  } as const;
+  const declaration = { cycle: 1, expectedRevision: 0, intent } as const;
+  assert.deepEqual(v2IntentDeclarationSchema.parse(declaration), declaration);
+  assert.deepEqual(v2IntentReasonRefs(intent), [
+    { field: "redLine", value: "civilian-shipping" },
+    { field: "mainPriority", value: "beacon-security" },
+    { field: "defaultStyle", value: "partner-consultation" },
+    { field: "toleratedCost", value: "political-friction" },
+  ]);
+  assert.throws(() => v2IntentDeclarationSchema.parse({ ...declaration, cycle: 2 }));
+  assert.throws(() => v2IntentDeclarationSchema.parse({ ...declaration, intent: { ...intent, mainPriority: "protect-the-beacon" } }));
+  assert.throws(() => v2SessionSchema.parse({ ...v2Session, initialState: { ...v2Session.initialState, standingIntent: intent, reasonRefs: [] } }), /unrecognized key/i);
 });
