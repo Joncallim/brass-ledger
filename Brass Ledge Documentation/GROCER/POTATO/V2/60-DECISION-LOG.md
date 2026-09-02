@@ -35,3 +35,19 @@ Backlink: [[README]]
 `BLOCKED: PRODUCT DECISION REQUIRED` — record the missing decision, why code
 depends on it, options, trade-offs, recommended reversible default, and changed
 code (preferably none). No agent may convert an open question into game truth.
+
+## Open escalation
+
+### B6 — Ravellan authored policy matrix
+
+`BLOCKED: PRODUCT DECISION REQUIRED` — #99 has frozen posture prose, four action
+families, observation timing, and the information boundary, but not an executable
+authored policy. Implementation requires: stable action IDs and cycle scope;
+closed signal IDs/values (including weak coverage, denial, disunity, reserve
+exhaustion, discovery, and absence); per-posture action and next-posture
+precedence for conflicting observations; observation memory/expiry; and the
+seed's role in initial posture/tie-breaking. Options are a compact explicit
+per-cycle matrix (recommended: deterministic, inspectable, and prototype-sized)
+or a broader policy system (rejected: adds unneeded design authority). No safe
+mechanical scaffolding exists beyond contracts already frozen, because any
+transition table would determine Ravellan behaviour. No code changed.
