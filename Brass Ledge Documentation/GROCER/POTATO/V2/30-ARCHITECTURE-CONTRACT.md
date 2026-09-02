@@ -20,9 +20,10 @@ mutation, expectedRevision checks, save persistence, and scenario resolution.
 World truth, HQ belief, campaign/institution state, and presentation may be
 represented with nested contracts but must have separate types/fields and
 explicit transition functions. World truth is persisted/replayable and may be
-read by world/external/consequence functions. Adversary policy may read its own
-posture, doctrine/objective, and seed, but reads coalition state only through
-its separate persisted `AdversaryObservation` projection. HQ belief is the only intelligence
+read by world/external/consequence functions. Adversary policy may read only
+cycle, its own persisted posture/preparation, and its separate persisted
+`AdversaryObservation` projection; identity and seed are initialisation-only.
+HQ belief is the only intelligence
 input to recommendations and player-visible estimates. Presentation must never
 derive hidden facts locally.
 

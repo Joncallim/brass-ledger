@@ -26,7 +26,7 @@ Ravellan Maritime Command. Ravellan seeks a limited seizure of the Beacon
 Channel relay before coalition reinforcement becomes politically feasible.
 Its doctrine is probe, conceal preparation, exploit a visible weak boundary,
 and stop short of open war when denied. Its hidden posture is one of
-`testing`, `preparing-seizure`, or `feinting`; it can probe shipping, seed a
+`testing`, `genuine_preparation`, or `coercive_feint`; it can probe shipping, seed a
 deception narrative, prepare the seizure, or pause to consolidate. Those are
 the only prototype action families.
 

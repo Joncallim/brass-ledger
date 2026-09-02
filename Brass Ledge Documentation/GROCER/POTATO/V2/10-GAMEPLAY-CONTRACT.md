@@ -17,8 +17,8 @@ For each command cycle, in this order:
 
 1. Advance elapsed world conditions.
 2. Advance external state from world truth, then select adversary policy using
-   only its own persisted posture, doctrine/objective, seed, and persisted
-   authored observation records.
+   only cycle, its own persisted posture/preparation, and persisted authored
+   observation records. Identity and seed initialise Ravellan only.
 3. Advance existing consequences according to their own lifecycle.
 4. Update HQ belief only from authorised observation/intelligence rules.
 5. Build the command agenda from HQ belief, commitments, and actionable effects.
