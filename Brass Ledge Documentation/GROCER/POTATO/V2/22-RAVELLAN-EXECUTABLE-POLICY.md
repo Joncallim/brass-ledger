@@ -17,7 +17,11 @@ Preparation is `none`, `developing`, or `ready`; only `prepare_beacon_seizure` a
 
 ## Authorised observations
 
-Policy receives only its posture/preparation, V2 identity/seed, and active persisted records—never campaign state, score, intent, private order, HQ belief, secret intelligence, Lattice, or future input.
+Initialisation alone receives V2 ruleset identity, Kestrel scenario identity, and
+campaign seed to derive opening posture/preparation. Normal cycle policy receives
+only cycle, posture, preparation, and active persisted records—never seed,
+identity, campaign state, score, intent, private order, HQ belief, secret
+intelligence, Lattice, or future input.
 
 | Signal | Values | Lifetime |
 | --- | --- | --- |
@@ -31,7 +35,7 @@ Every record has signal ID, value, observed cycle, and source. A cycle-N signal 
 
 ## Seed and evaluation
 
-Hash V2 ruleset identity, Kestrel scenario identity, seed, and `ravellan-opening`; modulo 3 maps 0 to genuine preparation, 1 to coercive feint, 2 to testing. Seed has no other role. Cycle 1 always selects `probe_shipping` and preserves posture. Cycles 2–5 evaluate the posture table top-to-bottom; skip an illegal preferred action, first matching legal row wins. No utility, roll, or seed tie-break exists.
+Initialisation hashes V2 ruleset identity, Kestrel scenario identity, seed, and `ravellan-opening`; modulo 3 maps 0 to genuine preparation, 1 to coercive feint, 2 to testing. Seed has no other role. Cycle 1 always selects `probe_shipping` and preserves posture. Cycles 2–5 evaluate the posture table top-to-bottom; skip an illegal preferred action, first matching legal row wins. No utility, roll, or seed tie-break exists.
 
 ## Policy rows
 
@@ -51,7 +55,11 @@ Hash V2 ruleset identity, Kestrel scenario identity, seed, and `ravellan-opening
 4. **CF-4:** demonstrated denial OR coherent unity → prefer `pause_consolidate`, remain (skip in cycle 2).
 5. **CF-5:** otherwise → `probe_shipping`, remain.
 
-Thus weak/fractured/exhausted selects CF-1; fracture with credible Beacon uses CF-3; reserve exhaustion alone never transitions posture; exhaustion with coherent unity uses CF-2 before CF-4. No score resolves conflicts.
+Thus `beacon_coverage_signal = weak` + `visible_denial_signal = withheld` +
+`coalition_unity_signal = fractured` selects CF-1, regardless of whether
+`reserve_exhaustion_signal = suspected` is also present. Fracture with credible
+Beacon uses CF-3; reserve exhaustion alone never transitions posture; exhaustion
+with coherent unity uses CF-2 before CF-4. No score resolves conflicts.
 
 ### `testing`
 
