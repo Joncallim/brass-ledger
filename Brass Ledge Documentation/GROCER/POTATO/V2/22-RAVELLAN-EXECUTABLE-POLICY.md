@@ -35,7 +35,7 @@ Every record has signal ID, value, observed cycle, and source. A cycle-N signal 
 
 ## Seed and evaluation
 
-Initialisation hashes V2 ruleset identity, Kestrel scenario identity, seed, and `ravellan-opening`; modulo 3 maps 0 to genuine preparation, 1 to coercive feint, 2 to testing. Seed has no other role. Cycle 1 always selects `probe_shipping` and preserves posture. Cycles 2–5 evaluate the posture table top-to-bottom; skip an illegal preferred action, first matching legal row wins. No utility, roll, or seed tie-break exists.
+Initialisation hashes V2 ruleset identity, Kestrel scenario identity, seed, and `ravellan-opening`; modulo 3 maps 0 to genuine preparation, 1 to coercive feint, 2 to testing. Initial preparation is `developing` for genuine preparation and `none` for coercive feint/testing; no opening is ready. Seed has no other role. Cycle 1 always selects `probe_shipping` and preserves posture. Cycles 2–5 evaluate the posture table top-to-bottom: a matching row whose preferred action is illegal is skipped in full—no action or transition applies—and evaluation continues. The first matching legal row wins. No utility, roll, or seed tie-break exists.
 
 ## Policy rows
 
