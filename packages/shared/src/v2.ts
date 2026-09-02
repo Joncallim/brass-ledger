@@ -18,19 +18,116 @@ export const v2IdentitySchema = z.object({
 }).strict();
 export type V2Identity = z.infer<typeof v2IdentitySchema>;
 
-/** The only V2 state legal before the turn/state-contract issues land. */
+/**
+ * The deliberately small state surface owned by the order contract.  Later
+ * issues add world, belief, commitments, and consequences as separate fields;
+ * none of those may be smuggled into this root before their contracts exist.
+ */
 export const v2BootstrapStateSchema = z.object({
-  cycle: z.literal(1),
+  cycle: z.number().int().min(1),
   seed: z.string().min(1),
 }).strict();
 export type V2BootstrapState = z.infer<typeof v2BootstrapStateSchema>;
 
+/** Fixed named owners keep delegation legible without making it UI-owned. */
+export const v2OfficerSchema = z.enum(["intelligence", "operations", "political"]);
+export type V2Officer = z.infer<typeof v2OfficerSchema>;
+
 /**
- * A V2 ledger is required from its first save, but no V2 action is legal until
- * the authoritative order contract is implemented.  An explicit empty tuple
- * prevents a caller from smuggling an unvalidated action through this root.
+ * Content supplies these trusted agenda definitions.  They are intentionally
+ * not a player command payload: a browser may submit dispositions only.
  */
-export const v2ActionLedgerSchema = z.tuple([]);
+export const v2AgendaOrderSchema = z.object({
+  id: z.string().min(1),
+}).strict();
+export type V2AgendaOrder = z.infer<typeof v2AgendaOrderSchema>;
+
+export const v2AgendaIssueSchema = z.object({
+  id: z.string().min(1),
+  responsibleOfficer: v2OfficerSchema,
+  recommendedOrderId: z.string().min(1),
+  /** Exactly one staff recommendation plus one or two authored alternatives. */
+  authoredOrders: z.array(v2AgendaOrderSchema).min(2).max(3),
+  mayDefer: z.boolean(),
+}).strict();
+export type V2AgendaIssue = z.infer<typeof v2AgendaIssueSchema>;
+
+export const v2DelegateDispositionSchema = z.object({
+  issueId: z.string().min(1),
+  kind: z.literal("delegate"),
+}).strict();
+export const v2InterveneDispositionSchema = z.object({
+  issueId: z.string().min(1),
+  kind: z.literal("intervene"),
+  orderId: z.string().min(1),
+}).strict();
+export const v2DeferDispositionSchema = z.object({
+  issueId: z.string().min(1),
+  kind: z.literal("defer"),
+}).strict();
+export const v2IssueDispositionSchema = z.discriminatedUnion("kind", [
+  v2DelegateDispositionSchema,
+  v2InterveneDispositionSchema,
+  v2DeferDispositionSchema,
+]);
+export type V2IssueDisposition = z.infer<typeof v2IssueDispositionSchema>;
+
+/** One all-or-nothing cycle command. Agenda order is verified by the sim. */
+export const v2CommandSetSchema = z.object({
+  cycle: z.number().int().min(1),
+  expectedRevision: z.number().int().min(0),
+  dispositions: z.array(v2IssueDispositionSchema),
+}).strict();
+export type V2CommandSet = z.infer<typeof v2CommandSetSchema>;
+
+/** The authoritative result stored in the ledger, never supplied by a client. */
+export const v2DelegatedFinalOrderSchema = z.object({
+  issueId: z.string().min(1),
+  responsibleOfficer: v2OfficerSchema,
+  disposition: z.literal("delegate"),
+  orderId: z.string().min(1),
+  interventionCost: z.literal(0),
+}).strict();
+export const v2IntervenedFinalOrderSchema = z.object({
+  issueId: z.string().min(1),
+  responsibleOfficer: v2OfficerSchema,
+  disposition: z.literal("intervene"),
+  orderId: z.string().min(1),
+  interventionCost: z.literal(1),
+}).strict();
+export const v2DeferredFinalOrderSchema = z.object({
+  issueId: z.string().min(1),
+  responsibleOfficer: v2OfficerSchema,
+  disposition: z.literal("defer"),
+  orderId: z.null(),
+  interventionCost: z.literal(0),
+}).strict();
+export const v2FinalOrderSchema = z.discriminatedUnion("disposition", [
+  v2DelegatedFinalOrderSchema,
+  v2IntervenedFinalOrderSchema,
+  v2DeferredFinalOrderSchema,
+]);
+export type V2FinalOrder = z.infer<typeof v2FinalOrderSchema>;
+
+/**
+ * Every entry carries its canonical input and output evidence. Future action
+ * kinds must be explicitly discriminated rather than appended as opaque data.
+ */
+export const v2CommandSetLedgerEntrySchema = z.object({
+  kind: z.literal("command-set"),
+  commandSet: v2CommandSetSchema,
+  finalOrders: z.array(v2FinalOrderSchema),
+  interventionCost: z.number().int().min(0).max(2),
+  preState: v2BootstrapStateSchema,
+  postState: v2BootstrapStateSchema,
+  preRevision: z.number().int().min(0),
+  postRevision: z.number().int().min(0),
+  preStateHash: sha256DigestSchema,
+  postStateHash: sha256DigestSchema,
+}).strict();
+export type V2CommandSetLedgerEntry = z.infer<typeof v2CommandSetLedgerEntrySchema>;
+
+export const v2ActionLedgerSchema = z.array(v2CommandSetLedgerEntrySchema);
 export type V2ActionLedger = z.infer<typeof v2ActionLedgerSchema>;
 
 export const v2SessionSchema = z.object({

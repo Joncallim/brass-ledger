@@ -5,6 +5,9 @@ import {
   createInitialGameSession,
   isV2ExportPayload,
   isV2SessionPayload,
+  v2AgendaIssueSchema,
+  v2CommandSetSchema,
+  v2FinalOrderSchema,
   v2SessionExportSchema,
   v2SessionSchema,
 } from "./index";
@@ -42,4 +45,38 @@ test("V1 remains a distinct legacy path and does not gain a V2 ledger requiremen
   const v1 = gameSessionSchema.parse(createInitialGameSession(soloScenario, "legacy"));
   assert.deepEqual(v1.authoritativeActions, []);
   assert.equal(isV2SessionPayload(v1), false);
+});
+
+test("V2 command contracts accept only explicit officers and one strict disposition shape", () => {
+  const issue = {
+    id: "shipping-probe", responsibleOfficer: "operations", recommendedOrderId: "quiet-escort",
+    authoredOrders: [{ id: "quiet-escort" }, { id: "visible-surge" }], mayDefer: false,
+  };
+  assert.deepEqual(v2AgendaIssueSchema.parse(issue), issue);
+  assert.deepEqual(v2CommandSetSchema.parse({
+    cycle: 1, expectedRevision: 0,
+    dispositions: [{ issueId: "shipping-probe", kind: "intervene", orderId: "visible-surge" }],
+  }).dispositions[0], { issueId: "shipping-probe", kind: "intervene", orderId: "visible-surge" });
+  assert.throws(() => v2AgendaIssueSchema.parse({ ...issue, responsibleOfficer: "browser" }), /operations|intelligence|political/i);
+  assert.throws(() => v2AgendaIssueSchema.parse({ ...issue, authoredOrders: [{ id: "quiet-escort" }] }));
+  assert.throws(() => v2AgendaIssueSchema.parse({ ...issue, authoredOrders: [{ id: "quiet-escort" }, { id: "visible-surge" }, { id: "reroute" }, { id: "extra" }] }));
+  assert.throws(() => v2CommandSetSchema.parse({
+    cycle: 1, expectedRevision: 0,
+    dispositions: [{ issueId: "shipping-probe", kind: "delegate", orderId: "client-invented" }],
+  }), /unrecognized key/i);
+});
+
+test("V2 persisted final orders cannot contradict their disposition or intervention cost", () => {
+  assert.deepEqual(v2FinalOrderSchema.parse({
+    issueId: "shipping-probe", responsibleOfficer: "operations", disposition: "delegate", orderId: "quiet-escort", interventionCost: 0,
+  }).orderId, "quiet-escort");
+  assert.throws(() => v2FinalOrderSchema.parse({
+    issueId: "shipping-probe", responsibleOfficer: "operations", disposition: "delegate", orderId: null, interventionCost: 0,
+  }));
+  assert.throws(() => v2FinalOrderSchema.parse({
+    issueId: "shipping-probe", responsibleOfficer: "operations", disposition: "defer", orderId: "quiet-escort", interventionCost: 0,
+  }));
+  assert.throws(() => v2FinalOrderSchema.parse({
+    issueId: "shipping-probe", responsibleOfficer: "operations", disposition: "intervene", orderId: "visible-surge", interventionCost: 0,
+  }));
 });
