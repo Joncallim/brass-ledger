@@ -59,6 +59,18 @@ attestation is no longer a release blocker. The unauthenticated public game is
 live at `https://brassledger.jo-nas.com`; the outstanding #90 fresh-player
 playability observations remain the sole condition for closing that epic.
 
+## V2 Fun-First Experiment
+
+Human play falsified the premise that the existing mandatory headquarters loop
+needs only better onboarding and pacing. The canonical V2 authority is
+[[V2/README]]. It is a bounded, versioned six-cycle experiment; it freezes
+scenario expansion, graphics, doctrine growth, tutorial expansion, and unrelated
+presentation work until the human V2 gate has evidence. The GitHub V2 epic and
+dependency graph are recorded in [[V2/50-EXECUTION-PLAN]].
+
+Issue #90 remains useful implementation history but is superseded as a product
+direction by V2; do not erase its accessibility or legibility evidence.
+
 ## Epic — Stage 7: Packaged Game (#41)
 
 Turn the compiled, headless-first engine into a distributable game with offline

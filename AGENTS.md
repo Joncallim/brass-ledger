@@ -6,6 +6,19 @@ Brass Ledger is a headless-first strategic leadership simulator. The
 deterministic TypeScript engine and shared schemas are authoritative; the CLI,
 Fastify server, browser workbench, and desktop shell are clients of those rules.
 
+## Current Product Priority — V2 Fun-First Prototype
+
+Before V2 implementation, read `Brass Ledge Documentation/GROCER/POTATO/V2/README.md`
+and its numbered contracts. The current Briefing → Memos → Chiefs → Final Review
+interaction is not a protected product invariant. V1 deterministic replay,
+save/import/export, server-authoritative mutation, stale-write rejection, and
+headless boundaries remain protected.
+
+Until the V2 human gate passes, do not expand scenarios, graphics, doctrine,
+tutorials, unrelated presentation polish, meta-progression, or generic plugin
+frameworks. Escalate unspecified gameplay decisions; do not invent them. A
+green automated gate cannot close a human fun gate.
+
 ## Read First
 
 Start with `README.md`, then the affected workspace manifests and tests. For

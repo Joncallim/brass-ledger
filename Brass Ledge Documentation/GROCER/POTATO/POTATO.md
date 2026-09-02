@@ -36,6 +36,7 @@ Always consult this domain before changing game rules, interface direction, spri
 - [[development-stages]]
 - [[playability-test-script]]
 - [[sprite-design-logic]]
+- [[V2/README]]
 - [[backend-review/review-summary]]
 
 ## Current Direction
