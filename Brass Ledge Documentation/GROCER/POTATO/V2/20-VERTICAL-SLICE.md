@@ -16,6 +16,9 @@ courses, Lattice timing, visible Ravellan signals, consequence records, recovery
 terminal predicates, and terminal truth reveal. Agents must not fill gaps with
 new mechanics.
 
+[[22-RAVELLAN-EXECUTABLE-POLICY]] supplies the complete executable posture,
+observation, precedence, preparation, and terminal-behaviour matrix for #99.
+
 ## Setting and fixed authority
 
 The slice is **Kestrel Strait**, a fictional coalition headquarters facing the
