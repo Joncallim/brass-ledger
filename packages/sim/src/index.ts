@@ -81,6 +81,7 @@
  *   true facts is more effective and harder to detect than outright misinformation.
  */
 import { createHash } from "node:crypto";
+export * from "./v2.js";
 import {
   type AcceptedRiskOverride,
   type BurdenBias,

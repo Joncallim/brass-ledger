@@ -44,8 +44,11 @@ initialState, action, preState, postState }`; the final-session digest uses the
 same envelope with the complete ordered ledger and reconstructed final state.
 The stored content digest is over canonical authored V2 content after reference
 resolution. #95 must publish golden vectors, a mismatch error contract, a
-required-ledger discriminator for V2, and paired DTO non-interference tests;
-V1’s legacy optional-ledger path remains unchanged.
+required-ledger discriminator for V2, and paired V1 DTO/import non-interference
+tests; V1’s legacy optional-ledger path remains unchanged. A V2 player DTO does
+not exist until #105 supplies a V2 world/belief projection. Its hidden-truth
+non-interference test belongs to #105; #95 must not invent a presentation root
+merely to make that test vacuous.
 
 Server mutation remains authoritative and revision-protected; one cycle command
 set is one atomic revisioned mutation. Headless and
@@ -54,7 +57,7 @@ derived recommendations or mutate a whole session.
 
 ## Player-safe projection
 
-Server endpoints return a V2 player DTO, never raw world truth, truth
+Once #105 exists, server endpoints return a V2 player DTO, never raw world truth, truth
 provenance, future preparation, adversary observations, oracle data, or private
 ledger fields. Agenda membership, legal orders, task targets, reasons, previews,
 and reveal derive only from HQ belief plus public campaign state. Holding those

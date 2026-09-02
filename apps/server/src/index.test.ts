@@ -6,7 +6,7 @@ import path from "node:path";
 import { scenarioSummarySchema, chiefSpriteDeterministicSeed, gameSessionSchema, turnInputSchema } from "@brass-ledger/shared";
 import { hashPromptText } from "@brass-ledger/headless";
 import { soloScenario, staffExerciseScenario } from "@brass-ledger/content";
-import { campaignStateHash, ineligibleStaffNegotiations, resolveTurn } from "@brass-ledger/sim";
+import { campaignStateHash, ineligibleStaffNegotiations, resolveTurn, v2FinalSessionDigest, v2InitialStateDigest } from "@brass-ledger/sim";
 
 const saveDir = await mkdtemp(path.join(tmpdir(), "brass-ledger-routes-"));
 process.env.NODE_ENV = "test";
@@ -75,6 +75,72 @@ async function assertImportRejected(exportData: unknown) {
   const rejected = await app.inject({ method: "POST", url: "/api/sessions/import", payload: { exportData } });
   assert.equal(rejected.statusCode, 409);
 }
+
+function validV2Export() {
+  const digest = "a".repeat(64);
+  const identity = { ruleset: "v2" as const, rulesetVersion: "0.2.0-prototype", scenarioId: "kestrel-strait", contentVersion: "2026.09.02", contentDigest: digest };
+  const initialState = { cycle: 1 as const, seed: "kestrel-seed" };
+  const session = {
+    id: "v2-save-1", campaignId: "v2-campaign-1", revision: 0, identity,
+    initialState, state: initialState, actionLedger: [] as [], updatedAt: "2026-09-02T00:00:00.000Z",
+  };
+  return {
+    exportedAt: "2026-09-02T00:00:00.000Z",
+    session: { ...session, initialStateDigest: v2InitialStateDigest(identity, initialState), finalStateDigest: v2FinalSessionDigest(session) },
+  };
+}
+
+test("V2-tagged imports validate their skeleton before the intentional unsupported response", async () => {
+  const response = await app.inject({
+    method: "POST",
+    url: "/api/sessions/import",
+    payload: { exportData: validV2Export() },
+  });
+  assert.equal(response.statusCode, 409);
+  assert.match(response.json().error, /V2 campaign imports are not available/i);
+});
+
+test("V2 imports surface skeleton tampering instead of falling through to V1", async () => {
+  const valid = validV2Export();
+  const cases: Array<[string, unknown, string]> = [
+    ["initial digest", { ...valid, session: { ...valid.session, initialStateDigest: "0".repeat(64) } }, "v2_initial_state_digest_mismatch"],
+    ["state change", { ...valid, session: { ...valid.session, state: { cycle: 1, seed: "changed" } } }, "v2_state_changed_without_ledger"],
+    ["action", { ...valid, session: { ...valid.session, actionLedger: [{}] } }, "v2_nonempty_ledger_unsupported"],
+  ];
+  for (const [_name, exportData, code] of cases) {
+    const response = await app.inject({ method: "POST", url: "/api/sessions/import", payload: { exportData } });
+    assert.equal(response.statusCode, 409, `${_name}: ${JSON.stringify(response.json())}`);
+    assert.equal(response.json().code, code);
+  }
+});
+
+test("a forged but recomputed V2 identity remains unavailable without a trusted registry", async () => {
+  const valid = validV2Export();
+  const identity = { ...valid.session.identity, contentDigest: "b".repeat(64) };
+  const session = {
+    ...valid.session,
+    identity,
+    initialStateDigest: v2InitialStateDigest(identity, valid.session.initialState),
+  };
+  const forged = {
+    ...valid,
+    session: { ...session, finalStateDigest: v2FinalSessionDigest(session) },
+  };
+  const response = await app.inject({ method: "POST", url: "/api/sessions/import", payload: { exportData: forged } });
+  assert.equal(response.statusCode, 409);
+  assert.match(response.json().error, /V2 campaign imports are not available/i);
+  assert.equal(response.json().code, undefined);
+});
+
+test("V1 export/import and session DTO stay on the legacy path", async () => {
+  const created = await createSession();
+  assert.equal("identity" in created.session, false);
+  const exported = await app.inject({ method: "GET", url: `/api/sessions/${created.session.id}/export` });
+  assert.equal(exported.statusCode, 200);
+  const imported = await app.inject({ method: "POST", url: "/api/sessions/import", payload: { exportData: exported.json() } });
+  assert.equal(imported.statusCode, 200);
+  assert.equal("identity" in imported.json().session, false);
+});
 
 test("CORS accepts configured origins and rejects unlisted ports", async () => {
   const allowed = await app.inject({

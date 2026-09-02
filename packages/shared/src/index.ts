@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export * from "./v2.js";
+
 export const directorateSchema = z.enum([
   "people",
   "intelligence",

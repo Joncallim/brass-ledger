@@ -31,11 +31,14 @@ import {
   createInitialGameSession,
   directorateLabel,
   gameSessionSchema,
+  isV2ExportPayload,
   getConversationRecordForTurn,
   replayValidationSchema,
   relationshipDeltaLabel,
   memoSelectionSchema,
   sessionExportSchema,
+  v2IdentitySchema,
+  v2SessionExportSchema,
   startChiefConversation,
   summarizeState,
   turnInputSchema,
@@ -47,7 +50,7 @@ import {
   type ReplayValidation,
   type TurnInput,
 } from "@brass-ledger/shared";
-import { campaignStateHash, deriveDecisionMemos, ineligibleStaffNegotiations, previewTurn, resolveTurn, validateReplaySession } from "@brass-ledger/sim";
+import { campaignStateHash, deriveDecisionMemos, ineligibleStaffNegotiations, previewTurn, resolveTurn, validateReplaySession, validateV2ReplayIntegrity, V2ReplayValidationError } from "@brass-ledger/sim";
 
 export const app = Fastify({ logger: process.env.NODE_ENV !== "test" });
 
@@ -900,6 +903,28 @@ app.get("/api/sessions/:id/export", async (request, reply) => {
 app.post("/api/sessions/import", async (request, reply) => {
   try {
     const body = (request.body ?? {}) as { exportData?: unknown };
+    // V2 has a separately tagged save root.  There is no registered V2 scenario
+    // or transition dispatcher at #95, so reject it explicitly instead of letting
+    // the permissive legacy parser discard identity/ledger fields and misread it.
+    if (isV2ExportPayload(body.exportData)) {
+      try {
+        // #95 has no V2 registry, so no imported identity can be trusted as
+        // live content. Verify only internal ledger/digest/state integrity;
+        // #103 must resolve trusted registry identity before full replay.
+        const rawSession = (body.exportData as { session: unknown }).session;
+        v2IdentitySchema.parse((rawSession as { identity: unknown }).identity);
+        validateV2ReplayIntegrity(rawSession);
+      } catch (error) {
+        if (error instanceof V2ReplayValidationError) {
+          reply.code(409);
+          return { error: error.message, code: error.code };
+        }
+        throw error;
+      }
+      v2SessionExportSchema.parse(body.exportData);
+      reply.code(409);
+      return { error: "V2 campaign imports are not available until the V2 scenario registry and replay dispatcher are installed." };
+    }
     const parsed = sessionExportSchema.parse(migrateExportData(body.exportData));
     const session = parsed.session;
     try {
