@@ -15,19 +15,20 @@ Backlink: [[README]]
 | D4 | Start at two intervention tokens per cycle. | Tests scarcity without implying final balance. |
 | D5 | Lattice Cell unlocks task collection. | A capability must change information/action space, not add a numeric bonus. |
 | D6 | #90 is superseded as a product premise, while its completed accessibility/legibility work remains reusable history. | Human play falsified “improve the existing loop” as the current path to fun. |
+| D7 | Delegation executes the responsible officer's recommendation, with visible dissent. | Keeps command-by-exception meaningful without letting a player bypass intervention scarcity by selecting a chief. |
+| D8 | Player intent is four Chief-of-Staff questions in ordinary language, applied red line → priority → default style → tolerable cost. | Preserves strategic identity without exposing implementation jargon or a score. |
+| D9 | Use the supplied B2 Kestrel Strait design as the canonical six-cycle prototype. | It resolves adversary, branch, Lattice, recovery, terminal, and information ambiguity. |
+| D10 | Use evidence-backed natural-language intelligence judgement, Pareto laboratory diagnostics, and the approved 3/8-player human gates. | Avoids confidence meters, score optimization, and synthetic fun certification. |
 
-## BLOCKED: PRODUCT DECISION REQUIRED
+## Resolved B1–B5 decisions
 
 | ID | Missing decision and why code depends on it | Options / trade-off | Recommended reversible default | Affected work |
 | --- | --- | --- | --- | --- |
-| B1 | What delegation executes when chiefs disagree, and whether intent is four fields or curated bundles. This defines legal orders and scarcity. | Lead recommendation; chief selection disposition; curated bundles. | Lead authored recommendation executes with visible dissent; four fields get deterministic precedence and each field must receive one visible reference. | #96–#98, #103, #105 |
-| B2 | Exact per-cycle agenda/order/branch matrix, including initial WorldTruth/HQ-belief/known-doctrine table, signals/delays, Lattice advances, promises, recovery, final predicates, terminal truth-reveal policy, a cycle with more than two credible interventions, and each nonterminal pressure/influence beat. Content agents would otherwise design the game. | Fully author matrix; reduce slice; change mechanic. | Author one compact Kestrel matrix before #103; no code beyond version skeleton. | #99–#103 |
-| B3 | HQ confidence semantics and task-collection effect. | Numeric probability; ordinal bands; authored evidence states. | Authored evidence states with support/refute refs and deterministic transitions. | #100, #102, #103 |
-| B4 | Laboratory viability/oracle outcome relation beyond named Pareto axes. | Scalar score; Pareto with human-set floor; qualitative diagnostics. | Pareto axes plus human-authored viability floors; oracle is test-only. | #107 |
-| B5 | Human-gate sample size and pass/fail rule, including formative-smoke escalation criteria. | Fixed sample; iterative research; mixed threshold. | Product owner sets it after a formative smoke; no agent closes the gate. | #109–#110 |
-
-Safe reversible work may proceed only through #95’s identity/rejection skeleton.
-All later implementation issues are blocked until their listed decision is made.
+| B1 | Resolved as D7–D8. | Responsible officer recommendation with visible dissent; ordinary-language four-question intent. | Implement exactly. | #96–#98, #103, #105 |
+| B2 | Resolved as D9 and [[21-KESTREL-SIX-CYCLE-CANON]]. | Canonical authored Kestrel cycle matrix. | Implement exactly. | #99–#103 |
+| B3 | Resolved as D10. | Natural-language judgement over bounded evidence. | No confidence meters or percentages. | #100, #102, #103 |
+| B4 | Resolved as D10. | Pareto viability diagnostics; oracle test-only. | No scalar score. | #107 |
+| B5 | Resolved as D10. | 3-player formative / 8-player formal gate. | Human-only closure. | #109–#110 |
 
 ## Required escalation format
 

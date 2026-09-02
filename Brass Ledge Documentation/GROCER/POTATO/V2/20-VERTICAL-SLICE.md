@@ -7,7 +7,16 @@ status: active
 
 Backlink: [[README]]
 
-## Setting and opening
+## Canonical B2 authority
+
+[[21-KESTREL-SIX-CYCLE-CANON]] is the complete canonical six-cycle design. It
+supersedes earlier provisional Kestrel wording in this note where they differ.
+It freezes the known/hidden information boundary, named issue owners, legal
+courses, Lattice timing, visible Ravellan signals, consequence records, recovery,
+terminal predicates, and terminal truth reveal. Agents must not fill gaps with
+new mechanics.
+
+## Historical scaffold
 
 The slice is **Kestrel Strait**, a fictional coalition headquarters facing the
 Ravellan Maritime Command. Ravellan seeks a limited seizure of the Beacon

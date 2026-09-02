@@ -14,6 +14,7 @@ contract. Read these notes in numeric order before V2 implementation.
 - [[00-NORTH-STAR]] — product finding and intent.
 - [[10-GAMEPLAY-CONTRACT]] — authoritative cycle semantics.
 - [[20-VERTICAL-SLICE]] — frozen six-cycle test content.
+- [[21-KESTREL-SIX-CYCLE-CANON]] — canonical B2 cycle and adversary design.
 - [[30-ARCHITECTURE-CONTRACT]] — information and compatibility boundaries.
 - [[40-EVALUATION-CONTRACT]] — machine versus human proof.
 - [[50-EXECUTION-PLAN]] — dependency-ordered issue graph.

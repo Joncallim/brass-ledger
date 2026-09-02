@@ -43,10 +43,18 @@ order and consumes one intervention token; **defer** is legal only when the
 issue declares it. There is no player-facing global best-option score. Staff
 reasons are discrete content/reason references, not hidden numeric utility.
 
-Standing intent has four declared fields: `mainEffort`, `protectedBoundary`,
-`acceptableSecondaryRisk`, and `posture`. Intent guides recommendation ties and
-explains trade-offs; it never forces a result. The prototype starts with two
-intervention tokens per cycle. This is an experiment, not a permanent rule.
+At campaign opening the Chief of Staff asks four plain-language questions:
+what matters most; what staff must not spend without asking; which temporary cost
+is tolerable; and how headquarters should normally behave when several reasonable
+options remain. These are player language, not exposed implementation labels.
+
+Each agenda issue has one named responsible officer. Delegate executes that
+officer's recommendation; other chiefs may visibly dissent. Staff applies the
+standing orders in this priority: avoid the red line where a viable alternative
+exists; support what matters most; use the default style to break remaining
+ties; then prefer the declared tolerable cost. It must explain the result in
+ordinary language, never as a score. The prototype starts with two intervention
+tokens per cycle. This is an experiment, not a permanent rule.
 
 A cycle submits one atomic command set with `expectedRevision`; all
 dispositions, intervention costs, and task actions validate together or reject
