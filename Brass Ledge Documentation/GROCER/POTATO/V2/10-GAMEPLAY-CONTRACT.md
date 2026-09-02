@@ -17,7 +17,8 @@ For each command cycle, in this order:
 
 1. Advance elapsed world conditions.
 2. Advance external state from world truth, then select adversary policy using
-   only its persisted observation records, posture, doctrine/objective, and seed.
+   only its own persisted posture, doctrine/objective, seed, and persisted
+   authored observation records.
 3. Advance existing consequences according to their own lifecycle.
 4. Update HQ belief only from authorised observation/intelligence rules.
 5. Build the command agenda from HQ belief, commitments, and actionable effects.
@@ -66,8 +67,10 @@ start; records made in step 9 first tick next cycle.
 ## Information, consequences, and fairness
 
 World truth may contain adversary posture and external event preparation. HQ
-belief is a separate, serialisable state of observations, confidence, and known
-commitments. A consequence records provenance (`player-caused`,
+belief is a separate, serialisable state of observations, bounded internal
+evidence, assessment quality, and known commitments. Its player projection is
+natural staff judgement: it never serialises percentages, confidence bands,
+meters, or player-facing probability. A consequence records provenance (`player-caused`,
 `player-conditioned`, `adversary-caused`, or `external`) and visibility. An
 external shock may occur without player causation; preparation can change its
 severity.

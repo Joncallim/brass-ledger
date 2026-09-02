@@ -13,4 +13,4 @@ Backlink: [[README]]
 | T2 | General adversary AI / four authored families | Authored bounded policy | Test fairness and counterplay cheaply; limited variety. | Slice shows policy is predictable for the wrong reason. |
 | T3 | Universal meters / typed consequences | Exposure, promise, preparation, investment, opportunity | Preserves causal meaning; more schemas. | Two concrete uses fail to need distinct lifecycles. |
 | T4 | Full campaign / six cycles | Six cycles | Fast hypothesis test; cannot prove long-campaign retention. | Human evidence asks for a longer arc. |
-| T5 | Finalise numbers / hold prototype values | Two interventions and authored discrete bands | Avoids false precision; balance remains provisional. | Laboratory plus human evidence supports a stable value. |
+| T5 | Finalise numbers / hold prototype values | Two interventions and authored discrete evidence states | Avoids false precision; balance remains provisional. | Laboratory plus human evidence supports a stable value. |

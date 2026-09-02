@@ -16,9 +16,9 @@ reason to implement gameplay before the listed product decisions are made.
 | Strategy depth | Intent could be ceremonial; non-dominance had no relation. | Require causal use of intent fields; laboratory uses test-only Pareto axes and keeps intelligence diagnostic-only; B1/B4 remain human-owned. |
 | Adversary/fairness | World-truth-readable adversary contradicted observation-only fairness. | Gameplay/architecture isolate `AdversaryObservation`; B2 must author policy and signal matrix. |
 | Narrative/persistence | Consequences lacked transitions, promises could be implicit, recovery was non-executable. | B2 requires record, branch, promise, and recovery matrices before content implementation. |
-| Information/uncertainty | Provenance and endpoint shape could leak posture; confidence was open. | Added player-safe projection and visible attribution; B3 blocks semantics. |
+| Information/uncertainty | Provenance and endpoint shape could leak posture; confidence was open. | B3 now fixes authored evidence with natural-language judgement, player-safe projection, and visible attribution; numeric or band UI is forbidden. |
 | Replay/state integrity | Ledger payload, digest, content identity, and command atomicity were underspecified. | Added V2 atomic command set, digest, immutable identity, and rejection requirements. |
-| AI-agent ambiguity | Agents could invent timing, severity, predicates, and confidence thresholds. | B1–B4 are explicit stop points; no code past version skeleton. |
+| AI-agent ambiguity | Agents could invent timing, severity, predicates, and confidence thresholds. | B1–B5 and the authored matrix resolve those choices; implementation must not add mechanics. |
 | Scope/YAGNI | Generic lifecycle/recommendation systems were premature singleton abstractions. | Start with concrete discriminated Kestrel records/authored rules; generalise only after two uses. |
 
 ## Required re-review

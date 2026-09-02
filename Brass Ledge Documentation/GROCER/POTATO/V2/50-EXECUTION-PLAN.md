@@ -9,8 +9,8 @@ Backlink: [[README]]
 
 ## Dependency graph
 
-`Bootstrap → Version skeleton → Turn/order contracts → Intent → Recommendation`
-then `→ Adversary` and `→ HQ belief`, then `→ Consequences → Capability → Content
+`Bootstrap → Version skeleton → Turn/order contracts → Intent → Adversary → HQ belief
+→ Recommendation → Consequences → Capability → Content`
 → Headless execution → Command Room + Consequence Reveal → Laboratory → Browser
 E2E → Human harness → Human gate`.
 
@@ -77,7 +77,7 @@ intent, commitments, capability → disposition + reasons. **Owner:** sim.
 **Positive:** two chiefs differ from one belief. **Reject:** changed hidden truth
 alters advice with unchanged belief; numeric best score leaks. **Machine proof:**
 isolation/reason tests. **Human proof:** slice. **Compatibility:** no V1 advice
-regression. **Trade-off:** authored reasons. **Dependencies:** 3,4,7. **Unlocks:** 10–13.
+regression. **Trade-off:** authored reasons. **Dependencies:** 3,4,6,7. **Unlocks:** 10–13.
 
 ### 6. Minimal adversary hidden-state model
 
@@ -92,7 +92,9 @@ V1 untouched. **Trade-off:** small policy. **Dependencies:** 2,3. **Unlocks:** 1
 ### 7. HQ belief / intelligence projection
 
 **Player hypothesis:** uncertainty makes information choices strategic. **Scope:**
-world-to-belief updates, confidence bands, visibility rules. **Out:** omniscient
+world-to-belief updates, bounded authored evidence states, natural-language
+judgement, and visibility rules. **Out:** numeric percentages, confidence bands,
+meters, player-facing probability, or omniscient
 UI/forecast. **Inputs/outputs:** observations → HQ belief. **Owner:** sim/shared.
 **Positive:** task collection narrows a legitimate uncertainty. **Reject:** hidden
 posture leaks to preview or recommendation. **Machine proof:** paired isolation
@@ -110,7 +112,7 @@ shock differs from player-conditioned severity. **Reject:** causal text calls an
 external event player-caused; no recovery path. **Machine proof:** lifecycle and
 recovery tests. **Human proof:** consequence review. **Compatibility:** V1 state
 unchanged. **Trade-off:** five concrete records; generalise only after two uses.
-**Dependencies:** 3,6,7. **Unlocks:** 9,10.
+**Dependencies:** 3,4,5,6,7. **Unlocks:** 9,10.
 
 ### 9. Institutional capability prototype
 
@@ -131,7 +133,9 @@ contracts → validated content. **Owner:** content. **Positive:** three viable
 routes and no universal final answer. **Reject:** generic meters or a doomed
 seed. **Machine proof:** content/reachability tests. **Human proof:** slice.
 **Compatibility:** registry V1 scenarios unchanged. **Trade-off:** one fiction.
-**Dependencies:** 4–9. **Unlocks:** 11–15.
+**Dependencies:** 3 → 4 → 6 → 7 → 5 → 8 → 9. The authored matrix in
+[[20-VERTICAL-SLICE]] is the implementation authority; B1–B5 are resolved.
+**Unlocks:** 11–15.
 
 ### 11. Headless six-turn campaign execution
 
