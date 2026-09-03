@@ -19,17 +19,20 @@ and a costly recovery path before terminal crisis.
 
 The future headless laboratory runs stable deterministic policies: delegate-all,
 intervene-all-where-legal, recovery-first, deterrence-first, intelligence-first,
-random-valid, and test-only oracle. Oracle is a diagnostic upper bound only and
-must never be used in staff/player paths. It reports seed viability, dominance,
-early collapse/snowball, capability relevance, final-choice sameness, adversary
-responsiveness, and whether information changes action quality. Comparison is
-laboratory-only Pareto comparison across Beacon security, partner consent,
-reserve readiness, and commitment integrity. Earned intelligence is reported as
-a diagnostic rather than a success axis; capability relevance requires a changed
-legal decision or a non-intelligence terminal effect. This is not a player score,
-staff utility, or adversary input. A policy is dominated only when
-another is at least as good on every axis and strictly better on one over the
-same viable seed set. Prototype viability requires no forced hard loss before
+**coalition-first**, random-valid, and test-only oracle. Coalition-first protects
+consultation/partner authority and prefers joint/coherent action when legally
+available; it is a diagnostic strategy probe, not staff/player AI. Oracle is a
+diagnostic upper bound only and must never be used in staff/player paths. It
+reports seed viability, dominance, Decision Elasticity/fake-choice findings,
+early collapse/snowball, strategy separation, capability relevance, final-choice
+sameness, adversary responsiveness, and whether information changes action
+quality. Comparison is laboratory-only Pareto comparison across Beacon security,
+partner consent, reserve readiness, and commitment integrity. Earned intelligence
+is reported as a diagnostic rather than a success axis; capability relevance
+requires a changed legal decision or a non-intelligence terminal effect. This is
+not a player score, staff utility, or adversary input. A policy is dominated only
+when another is at least as good on every axis and strictly better on one over
+the same viable seed set. Prototype viability requires no forced hard loss before
 the final crisis, materially different non-oracle strategies reaching cycle six,
 at least two non-dominated terminal profiles across authored seeds, and a costly
 recovery path through cycle five. Oracle uses hidden truth only to diagnose seed
