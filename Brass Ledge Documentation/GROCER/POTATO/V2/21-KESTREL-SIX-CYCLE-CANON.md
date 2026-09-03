@@ -7,7 +7,7 @@ status: active
 
 Backlink: [[README]]
 
-This is the product/content canon for the Kestrel experiment. Exact implementation mechanics live in the detailed numbered contracts, especially [[22-RAVELLAN-EXECUTABLE-POLICY]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[36-KESTREL-AGENDA-COURSE-MATRIX]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] and [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
+This is the product/content canon for the Kestrel experiment. Exact mechanics live in the detailed contracts, especially [[22-RAVELLAN-EXECUTABLE-POLICY]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[27-KESTREL-TERMINAL-MATRIX]], [[36-KESTREL-AGENDA-COURSE-MATRIX]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] and [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
 
 ## Purpose
 
@@ -49,11 +49,11 @@ Opening hidden posture is exactly:
 
 Exact transitions/actions are only those in [[22-RAVELLAN-EXECUTABLE-POLICY]]. In particular:
 
-- `testing → genuine_preparation` occurs only through T-1's authored opportunity (`weak` coverage + `fractured` coalition), not from reserve exhaustion alone;
-- `testing → coercive_feint` occurs only through T-2's credible coverage + coherent coalition condition when its pause action is legal;
-- `coercive_feint → genuine_preparation` occurs only through CF-1 (`weak` + `withheld` + `fractured`);
-- `genuine_preparation → coercive_feint` occurs only through GP-1's discovery + credible coverage + coherent coalition condition when legal;
-- suspected reserve exhaustion can change pressure behavior but does **not** itself transition testing/feint into genuine preparation.
+- `testing → genuine_preparation` only through T-1's weak-coverage + fractured-coalition opportunity, not reserve exhaustion alone;
+- `testing → coercive_feint` only through T-2's credible-coverage + coherent-coalition condition when pause is legal;
+- `coercive_feint → genuine_preparation` only through CF-1 weak + withheld + fractured;
+- `genuine_preparation → coercive_feint` only through GP-1 discovery + credible coverage + coherent coalition when legal;
+- reserve-exhaustion suspicion may change pressure behavior but does not itself convert testing/feint into genuine preparation.
 
 Ravellan reads only the closed public/detectable observations in [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]]. It never reads HQ belief, private intent/order, score or future choice.
 
@@ -68,11 +68,11 @@ At opening, Chief of Staff asks:
 
 Staff follows red line → priority → style → tolerated cost before commitment/chief tie-breaking. This is persistent strategic direction, not a hidden optimisation score.
 
-## Cycle 1 — Ownership
+# Cycle 1 — Ownership
 
 Situation:
 
-- Ravellan's opening shipping pressure/patrol increase;
+- Ravellan opening shipping pressure/patrol increase;
 - partner asks what coalition intends;
 - HQ cannot distinguish coercion/testing/preparation.
 
@@ -82,7 +82,7 @@ Issues:
 - partner consultation;
 - first Lattice protection.
 
-Key trade-offs:
+Trade-offs:
 
 - ordinary watch preserves reserve but is detectably weak;
 - reinforced watch contains exposure but strains reserve and is detectably credible;
@@ -92,9 +92,9 @@ Key trade-offs:
 
 The player is not arbitrarily forced to “fail one of three”; standing direction/delegation and interventions determine which costs/commitments are accepted.
 
-## Cycle 2 — Consequence
+# Cycle 2 — Consequence
 
-The C1 probe pressure persists into the shipping problem regardless of the newly selected hidden C2 Ravellan action.
+The C1 probe pressure persists into the shipping problem regardless of newly selected hidden C2 Ravellan action.
 
 Shipping courses:
 
@@ -110,11 +110,11 @@ Political courses:
 
 The formal C1 channel + joint warning can coordinate a visible surge and avoid its partner penalty. Joint warning without the established channel is not blanket operational permission.
 
-Public accusation always damages partner consent; an active promise additionally breaches. It also publicly signals fracture/discovery to Ravellan. Whether that risky course is ever rational across compatible hidden worlds is a #107 local-dominance question, not something content may assume.
+Public accusation always damages partner consent; an active promise additionally breaches. It also publicly signals fracture/discovery to Ravellan. Whether that risky course is rational in any compatible hidden history is a #107 local-dominance question, not something content may assume.
 
 Second Lattice protection appears only if C1 protection succeeded.
 
-## Cycle 3 — Doubt
+# Cycle 3 — Doubt
 
 Before command, HQ receives the same two directional indicators across hidden openings:
 
@@ -130,20 +130,20 @@ Possible issues:
 - partner reassurance when materially relevant;
 - final Lattice protection if still reachable.
 
-Focused staging collection diverts Beacon coverage and reads physical seizure preparation only; it never reads hidden posture. Reassuring the partner creates a detectably coherent coalition posture.
+Focused staging collection diverts Beacon coverage and reads physical seizure preparation only; it never reads hidden posture. Reassuring partner creates a detectably coherent coalition posture.
 
 Canonical live-Lattice histories contain >2 credible intervention candidates for two normal tokens.
 
-## Cycle 4 — Payoff
+# Cycle 4 — Payoff
 
-Ravellan's observable **pressure pattern changes ambiguously** according to the real hidden action:
+Ravellan's observable **pressure pattern changes ambiguously** according to actual hidden action:
 
 - lull;
 - thinning/plateau;
 - contradictory visible posture;
 - or continued pressure.
 
-The situation never says “Ravellan is preparing” because the action ID is hidden.
+The situation never says “Ravellan is preparing” because the action ID remains hidden.
 
 Main operational courses:
 
@@ -151,13 +151,13 @@ Main operational courses:
 - prepare Beacon quietly — improve/prep Beacon at reserve cost and become detectably targeted enough that Ravellan can suspect discovery;
 - press visible advantage — overt denial at reserve/political risk.
 
-If Lattice matured, Task Collection can target one named question outside the normal intervention budget.
+If Lattice matured, Task Collection can target one named question outside normal intervention budget.
 
 If Lattice did not mature, partner liaison is a **commander-only one-intervention fallback**, narrower and obligation-bearing.
 
-C3 reassurance + C4 quiet targeted preparation creates a normal-play path to the coherent + credible + discovery observations needed for #99 GP-1 at C5.
+C3 reassurance + C4 quiet targeted preparation creates a normal-play path to coherent + credible + discovery observations needed for #99 GP-1 at C5.
 
-## Cycle 5 — Pain
+# Cycle 5 — Pain
 
 The hard collision:
 
@@ -166,9 +166,9 @@ The hard collision:
 - partner authority deadline;
 - optional one-shot attribution if legitimately credible.
 
-C5 uses the complete atomic command set. Issue ordering cannot change state/signals.
+C5 uses the complete atomic command package. Issue ordering cannot change state/signals.
 
-### Partner authority / tempo
+## Partner authority / tempo
 
 The C5 authority result is explicit:
 
@@ -181,9 +181,9 @@ Honour consultation:
 
 - preserves/fulfils commitments;
 - can create C6 joint authority if partner not withdrawn;
-- permits **same-cycle** partner-sensitive action only if the active C1 formal channel provides rapid coordination.
+- permits **same-cycle** partner-sensitive action only if active C1 formal channel provides rapid coordination.
 
-Without that channel, honouring is too slow for the immediate window. The player can:
+Without that channel, honouring is too slow for immediate window. Player can:
 
 - act then inform — buy tempo by accepting breach/political damage;
 - political concession — buy immediate coordinated authority at severe cost;
@@ -191,28 +191,30 @@ Without that channel, honouring is too slow for the immediate window. The player
 
 If partner already withdrew, honouring remains legal without forced concession; it preserves integrity but not access.
 
-### Beacon posture
+## Beacon posture
 
 - quiet reinforcement — physical preparation/coverage with lower political signalling;
 - visible reinforcement — same physical purpose plus overt denial/targeted discovery signal that can influence Ravellan's C6 strong-denial exception when paired with coherent authority;
 - hold — conserve escalation/readiness at physical risk.
 
-Thus visible is not a strictly worse quiet option.
+Thus visible reinforcement is not simply a worse quiet option.
 
-### Attribution
+## Reserve
 
-Credible attribution is a **one-shot opportunity**.
+Keeping reserve forward worsens real reserve condition / maintains preparation, but C5 does **not** emit a dead reserve-exhaustion observation because no later normal Ravellan decision can consume it.
 
-- use now → immediate political/discovery effects, `credible → used`, Hold And Expose unavailable at C6;
-- hold → preserve final Hold And Expose route but give up immediate effect.
+Emergency consolidation improves reserve while worsening Beacon exposure. Simultaneous C5 reserve/exposure effects aggregate then clamp once.
+
+## Attribution
+
+Credible attribution is a **one-shot, source-sensitive opportunity**.
+
+- use now → immediate political/discovery effects, `credible → used`, protected source exposed/compromised as a known severe cost, Hold And Expose unavailable at C6;
+- hold → preserve final Hold And Expose route and source, but give up immediate public effect.
 
 Later evidence does not regenerate a spent Kestrel attribution opportunity.
 
-### Simultaneous reserve/exposure
-
-C5 signed reserve/exposure effects aggregate from the full order set and clamp once. The player can spend scarce interventions to offset a physical trade-off, but that opportunity cost leaves other pressures delegated.
-
-## Cycle 6 — Reckoning
+# Cycle 6 — Reckoning
 
 The current overt crisis is projected safely as:
 
@@ -222,34 +224,49 @@ The current overt crisis is projected safely as:
 
 Prior hidden posture/preparation/history remains hidden until debrief.
 
-Final courses:
+The terminal route set is intentionally **pruned using only this overt crisis family + player-known coalition state** so the game does not pad the finale with known self-harm buttons.
 
-### Quiet Denial
+## `pressure-receding`
 
-- requires prepared denial against actual seizure;
-- always legal for threshold/pressure-receding as restrained defence / acceptance of de-escalation;
-- cleanest when preparation, exposure and preparation-specific warning line up.
+Legal:
 
-### Joint Visible Denial
+- Quiet Denial — restrained defence / accept de-escalation;
+- Hold And Expose only when unspent credible attribution + partner access makes exposure meaningful under [[27-KESTREL-TERMINAL-MATRIX]].
 
-- requires actual C5 joint/concession authority + non-brittle pre-route reserve;
-- spends final reserve;
-- can be overreaction in weak/retreating crisis.
+Not legal:
 
-### Emergency Mobilisation
+- Joint Visible Denial;
+- Emergency Mobilisation.
 
-- always legal as comeback attempt;
-- physical success depends on pre-route reserve/preparation;
-- successful use always incurs `emergency-surge` severe cost and can further harm an uncoordinated partnership.
+The game does not offer a needless mobilisation after the immediate confrontation has visibly receded.
 
-### Hold And Expose
+## `threshold-confrontation`
 
-- requires **unspent credible attribution** + partner access;
-- consumes it;
-- politically strengthens partner position;
-- against seizure is safe only with adequate physical denial preparation/exposure control.
+Legal:
 
-Final route effects mutate authoritative reserve/partner/attribution state before Pareto vector/classification.
+- Quiet Denial;
+- Hold And Expose when its unspent-evidence/access predicates hold;
+- Joint Visible Denial only where known partner/pressure state gives the visible joint response value Quiet does not already provide.
+
+Emergency Mobilisation is not legal: no prepared seizure is underway.
+
+## `seizure-underway`
+
+Potential routes:
+
+- Quiet Denial only if Beacon was prepared;
+- Joint Visible Denial only with C5 joint/concession authority + pre-route reserve not brittle;
+- Emergency Mobilisation always legal here as brute-force comeback attempt;
+- Hold And Expose only with unspent credible attribution + partner access, and it still needs adequate physical preparation/exposure to hold Beacon.
+
+## Final route costs/effects
+
+Final courses mutate authoritative state **before** Pareto vector/classification:
+
+- Quiet seizure defence can incur `late-reaction` reserve cost if warning/exposure were inadequate;
+- Joint Visible Denial spends final reserve;
+- successful Emergency spends reserve and always carries severe `emergency-surge`, and can further damage uncoordinated partner access;
+- Hold And Expose consumes the attribution opportunity, improves partner position where possible and carries severe `attribution-source-exposed`.
 
 Outcome classes:
 
@@ -258,9 +275,9 @@ Outcome classes:
 - Political Defeat;
 - Operational Defeat.
 
-No course is universal across viable player-safe terminal states.
+No displayed route should be a player-safe dominated trap, and no final course is universal across viable terminal states.
 
-## Persistent state families
+# Persistent state families
 
 Concrete Kestrel state includes:
 
@@ -277,26 +294,26 @@ Concrete Kestrel state includes:
 - HQ evidence/assessment;
 - hidden Ravellan posture/preparation/observations.
 
-## Recovery
+# Recovery
 
 Before C6, promised counterplay remains costly but real:
 
 - reserve → recovery/consolidation;
 - Beacon → preparation/reinforcement;
 - partner → reassurance/consultation/concession depending objective/history;
-- withdrawn partner → concession restores access at severe cost, while honouring remains a distinct non-recovery integrity choice;
+- withdrawn partner → concession restores access at severe cost, while honouring remains distinct non-recovery integrity choice;
 - missed Lattice → narrower liaison;
 - information weakness → remaining focused/Lattice/liaison options while temporally useful.
 
 No authored seed may force hard loss before C6 without meaningful earlier counterplay.
 
-## Evaluation path
+# Evaluation path
 
 After #104 complete headless play:
 
-1. #107 structural lab must clear unresolved fake/dominated/impossible/unfair issues;
+1. #107 structural lab clears unresolved fake/dominated/impossible/unfair/dead-state issues;
 2. run 3-player non-gating formative smoke;
-3. only if continuation is warranted, build main Command Room/Reveal browser tranche;
+3. only if continuation warranted, build main Command Room/Reveal browser tranche;
 4. #108 authoritative browser E2E;
 5. 8-player formal human gate.
 
