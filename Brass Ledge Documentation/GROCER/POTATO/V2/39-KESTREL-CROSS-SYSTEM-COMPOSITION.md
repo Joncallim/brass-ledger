@@ -157,6 +157,7 @@ Stable ID: `partner-authority`
 States:
 
 - `pending`
+- `none`
 - `joint`
 - `unilateral`
 - `concession`
@@ -169,16 +170,24 @@ The Cycle-5 `c5-partner-authority` issue always resolves this record before rout
 
 ### `honour-consultation`
 
-Inapplicable when `partner-consent = withdrawn`.
+This course remains legal even if partner consent has already reached `withdrawn`. The player may choose to keep their word without paying a concession merely to avoid an invalid command set.
 
-Otherwise:
+If `partner-consent != withdrawn`:
 
 - `partner-authority → joint`;
 - active consultation promise → `honoured`;
 - active liaison obligation → `fulfilled`;
 - improve partner consent one step if below cooperative.
 
-It provides same-cycle authority for the partner-sensitive actions below.
+If `partner-consent = withdrawn`:
+
+- `partner-authority → none`;
+- active consultation promise → `honoured`;
+- active liaison obligation → `fulfilled` where the consultation satisfies it;
+- do **not** improve partner consent;
+- do not create same-cycle joint authority.
+
+This preserves a meaningful hard option: accept political defeat / lost access while maintaining commitment integrity, rather than being forced to buy recovery through concession.
 
 ### `political-concession`
 
@@ -214,6 +223,8 @@ For Kestrel these are exactly:
 With `partner-authority = joint|concession`, they are coordinated and do not add a separate partner-consent penalty.
 
 With `partner-authority = unilateral`, the one package-level deterioration above applies.
+
+With `partner-authority = none`, partner-sensitive actions are not legally compatible with the command set.
 
 `keep-reserve-forward` is not a separate partner-sensitive action in this prototype; do not invent a hidden visibility predicate for it.
 
@@ -274,6 +285,8 @@ For terminal resolution:
 `partnerAccess = partner-consent != withdrawn`
 
 `jointAuthority = partnerAccess AND partner-authority in {joint, concession}`
+
+`partner-authority = none|unilateral` does not provide joint authority.
 
 Do not infer full joint military authority from `partner-consent = cooperative` alone. A healthy relationship and an authorised joint action are different things.
 
@@ -381,7 +394,7 @@ Apply the `informal-liaison > formal-consultation-agreement` tie-break from Sect
 
 ### C5 partner authority
 
-`honour-consultation` is inapplicable at `partner-consent = withdrawn`. `act-then-inform` carries the cross-issue requirement in Section 6.
+`honour-consultation` remains legal at withdrawn consent but resolves authority to `none` and cannot restore access. `act-then-inform` carries the cross-issue requirement in Section 6.
 
 ## 16. UI/headless command-draft implications
 
@@ -409,6 +422,7 @@ Server/sim remains the final authority and rejects an invalid combination.
 - C2 public accusation damages partner consent even without a formal promise;
 - C5 same-cycle partner authority produces the same result regardless issue-array order;
 - C5 ordinal reserve/exposure effects are order-independent;
+- withdrawn consent + honour consultation remains a legal non-recovery choice and does not force concession;
 - two qualifying C5 reserve orders count as one Ravellan deployment-observation event;
 - no `pressure-receding` terminal state forces Emergency Mobilisation;
 - Emergency Mobilisation cannot produce clean Strategic Success merely by starting with usable reserve;
@@ -430,4 +444,4 @@ The exact ledger insertion point remains conditioned on the final committed #99 
 
 ## Rejection conditions
 
-Reject downstream implementation if it reads hidden posture in collection, lets array order change simultaneous results, treats cooperative partner sentiment as automatic joint military authority, makes liaison free through delegation, forces emergency mobilisation after Ravellan backs down, lets generic coercion attribution count as seizure warning, or gives final-course costs only in prose without changing authoritative terminal state.
+Reject downstream implementation if it reads hidden posture in collection, lets array order change simultaneous results, treats cooperative partner sentiment as automatic joint military authority, makes liaison free through delegation, forces concession merely because partner access was already lost, forces emergency mobilisation after Ravellan backs down, lets generic coercion attribution count as seizure warning, or gives final-course costs only in prose without changing authoritative terminal state.
