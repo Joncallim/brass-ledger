@@ -9,14 +9,14 @@ Backlink: [[README]]
 
 This is the implementation authority for #107. It exists to falsify broken structure before browser/human time is spent. It cannot certify fun.
 
-[[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] and [[27-KESTREL-TERMINAL-MATRIX]] supply the final composed-system invariants.
+[[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] and [[27-KESTREL-TERMINAL-MATRIX]] supply final composed-system invariants.
 
 ## Machine / human boundary
 
 The lab may determine:
 
 - seed fairness/viability;
-- policy or local-course dominance;
+- policy/local-course dominance;
 - fake/inelastic choices;
 - information/capability/recovery value;
 - adversary signal reachability/isolation;
@@ -24,7 +24,7 @@ The lab may determine:
 - final-route diversity;
 - structural snowball/triviality.
 
-It may not determine ownership, tension, regret, comprehension under real UI/prose, or voluntary replay desire.
+It may not determine ownership, tension, regret, comprehension under real UI/prose or voluntary replay desire.
 
 ## Deterministic policy cohort
 
@@ -38,7 +38,7 @@ Attempt to spend maximum intervention budget through a fixed authored preference
 
 ### `recovery-first`
 
-Prefer authored recovery for threatened reserve/partner/Beacon/information dimensions, then stable fallback order.
+Prefer authored recovery for threatened reserve/partner/Beacon/information dimensions, then stable fallback.
 
 ### `deterrence-first`
 
@@ -46,7 +46,7 @@ Prefer visible/physical Beacon denial and forward readiness, then stable fallbac
 
 ### `intelligence-first`
 
-Use understanding-oriented opening intent; protect scheduled Lattice; prefer legitimate information-producing courses/Task Collection. Target choice itself is varied separately by the target-elasticity diagnostic.
+Use understanding-oriented opening intent; protect scheduled Lattice; prefer legitimate information-producing courses/Task Collection. Target choice is varied separately by target-elasticity diagnostic.
 
 ### `coalition-first`
 
@@ -54,17 +54,17 @@ Use partner-oriented opening intent; preserve consultation/authority/commitments
 
 ### `random-valid`
 
-Enumerate the bounded **complete legal command sets** through the authoritative validator and select deterministically/uniformly from those sets using persisted lab seed input. Never sample issue choices independently then repair an invalid package.
+Enumerate bounded **complete legal command sets** through authoritative validator and select deterministically/uniformly using persisted lab seed input. Never sample issue choices independently then repair an invalid package.
 
 ### Intent matrix
 
-For generic policies not defined by one fixed opening philosophy, exercise the 81 standing-intent combinations where computationally practical. Report fixed-intent policies honestly.
+For generic policies not defined by fixed philosophy, exercise the 81 standing-intent combinations where computationally practical. Report fixed-intent policies honestly.
 
 ## Oracle frontier
 
-Test-only oracle may inspect hidden truth to enumerate feasible legal continuations and the non-dominated terminal frontier.
+Test-only oracle may inspect hidden truth to enumerate feasible legal continuations and non-dominated terminal frontier.
 
-It does not emit a canonical “best move”, define staff advice, create a scalar optimum or enter live player paths.
+It never emits canonical “best move”, defines staff advice, creates scalar optimum or enters live player path.
 
 ## Outcome relation
 
@@ -75,13 +75,11 @@ Primary Pareto axes:
 - reserve readiness;
 - commitment integrity.
 
-Also retain terminal classification and explicit severe-cost flags as separate structural evidence.
+Also retain terminal classification + explicit severe-cost flags as separate structural evidence.
 
-Do not convert these to one weighted score.
+Do not collapse to weighted score.
 
-### Why severe/classification remains separate
-
-Some authored costs intentionally do not become a fifth global optimisation axis, e.g. source exposure from public attribution. Local course dominance must nevertheless treat a new severe-cost flag / worse terminal classification as a real downside rather than calling it a free Pareto improvement.
+Some authored costs intentionally do not become extra global axes, e.g. source exposure. Local dominance must still treat stricter severe-cost / worse classification as downside.
 
 ## Diagnostic 1 — seed viability / oracle fairness
 
@@ -90,16 +88,16 @@ Require:
 - no forced hard loss pre-C6 without meaningful earlier counterplay;
 - materially different non-oracle strategies reach C6;
 - at least two non-dominated terminal profiles across viable seeds;
-- costly recovery remains reachable through C5 where promised;
-- oracle frontier does not prove hidden truth was required to avoid otherwise unavoidable defeat.
+- costly recovery reachable through C5 where promised;
+- oracle frontier does not prove hidden truth required to avoid otherwise unavoidable defeat.
 
-Report earliest avoidable decision/countermeasure for a doomed branch.
+Report earliest avoidable decision/countermeasure for doomed branch.
 
 ## Diagnostic 2 — policy dominance
 
-Across identical viable comparison sets, policy A dominates B only when A is at least as good on every primary Pareto axis, no worse in terminal classification/severe-cost status where applicable, and strictly better somewhere.
+Across identical viable comparison sets, A dominates B only when A is at least as good on every main Pareto axis, no worse in classification/severe-cost status where applicable, and strictly better somewhere.
 
-Flag especially universal dominance by delegate-all, intervene-all, or one strategic-family probe.
+Flag especially universal dominance by delegate-all, intervene-all or one strategic-family probe.
 
 Do not fix by randomising Ravellan.
 
@@ -107,7 +105,7 @@ Do not fix by randomising Ravellan.
 
 From identical verified pre-state, branch every authored consequential alternative.
 
-Elastic if at least one alternative changes later:
+Elastic if alternatives change later:
 
 - concrete persistent state;
 - HQ evidence/assessment;
@@ -122,25 +120,19 @@ Report first divergence, reconvergence and terminal effect.
 
 ## Diagnostic 4 — player-safe local course dominance
 
-Elasticity alone is insufficient: an option can change things yet remain an objective trap.
+For each important **player-safe pre-state**, group hidden histories producing same legitimate player information/legal course set.
 
-For each important **player-safe pre-state**, group hidden seed/world histories that produce the same legitimate player information and legal course set.
-
-Compare course A/B across every compatible hidden reality using:
+Compare courses across every compatible hidden reality using:
 
 - terminal Pareto vector;
 - terminal classification;
 - explicit severe-cost flags;
 - later legal action/recovery/capability space;
-- information value as specific evidence/action-space effect rather than evidence count.
+- information value as specific evidence/action-space effect.
 
-Flag A as player-safe dominated by B only when:
+Flag A dominated by B only when B is no worse across **every** compatible hidden reality, strictly better somewhere, and A has no compensating information/capability/recovery value.
 
-- B is no worse across **every** compatible hidden reality on that combined relation;
-- B is strictly better in at least one;
-- A provides no compensating information/capability/recovery option.
-
-Do **not** flag a legitimate risky course that wins in some compatible hidden realities and loses in others.
+Do **not** flag a risky course that wins in some compatible hidden realities and loses in others.
 
 Explicitly test:
 
@@ -150,9 +142,9 @@ Explicitly test:
 - C5 quiet / visible / hold Beacon;
 - C5 honour / unilateral / concession packages where comparable;
 - C5 hold vs use source-sensitive one-shot attribution;
-- every displayed C6 legal route in the same safe terminal state.
+- every displayed C6 legal route in same safe terminal state.
 
-A route pruned by [[27-KESTREL-TERMINAL-MATRIX]] must not reappear in this comparison as a legal player option.
+A route pruned by [[27-KESTREL-TERMINAL-MATRIX]] must not reappear as legal player option.
 
 ## Diagnostic 5 — intervention / delegation value
 
@@ -176,7 +168,7 @@ Intelligence-, coalition-, deterrence- and recovery-first must diverge on at lea
 
 Compare equivalent histories with/without legitimate evidence.
 
-Information is relevant when it changes assessment, advice, attribution/route availability, later rational/legal action or terminal result through a belief-dependent choice.
+Information is relevant when it changes assessment, advice, attribution/route availability, later rational/legal action or terminal result through belief-dependent choice.
 
 Do not require information to always improve outcome.
 
@@ -188,9 +180,9 @@ Lattice passes only if maturity changes legal information/action space and creat
 
 Require at least one viable non-Lattice non-defeat history.
 
-From identical pre-task state, at least two Lattice targets must create different downstream evidence/assessment/attribution/recommendation/route effects. Random variance is not a valid fix for equivalent targets.
+From identical pre-task state, at least two Lattice targets must create different downstream evidence/assessment/attribution/recommendation/route effects. Random variance is not valid fix.
 
-Reroute monitoring and liaison must remain narrower/cost-different alternatives.
+Reroute monitoring and liaison remain narrower/cost-different alternatives.
 
 ## Diagnostic 9 — recovery reachability
 
@@ -200,9 +192,9 @@ From every reachable non-terminal C1–C5 state, test promised counterplay:
 - partner → reassurance/consultation/concession or integrity-only honour after withdrawal;
 - Beacon → preparation/reinforcement;
 - missed Lattice → liaison;
-- information weakness → remaining temporally useful collection route.
+- information weakness → remaining temporally useful collection.
 
-Flag recovery that exists in UI but cannot change the threatened state, or is costless/dominant.
+Flag recovery present in UI but unable to change threatened state, or costless/dominant.
 
 ## Diagnostic 10 — terminal route diversity / dominance
 
@@ -216,21 +208,19 @@ Verify:
 
 - pressure-receding never displays Joint/Emergency;
 - threshold never displays Emergency;
-- Joint is pruned when clean/credible Quiet + cooperative partner makes it known-inferior;
-- Hold/Expose is pruned when source exposure would buy no terminal advantage under 27's player-known predicates;
-- Emergency only appears for seizure and cannot produce clean Strategic Success;
-- public attribution source exposure is represented in severe/classification evidence;
+- Joint pruned when clean/credible Quiet + cooperative partner makes it known-inferior;
+- Hold/Expose pruned when source exposure buys no terminal advantage under 27's player-known predicates;
+- Emergency only for seizure and never clean Strategic Success;
+- public attribution source exposure represented in severe/classification evidence;
 - C5 use attribution removes C6 Hold/Expose;
-- each displayed route is non-dominated under Diagnostic 4 or creates a blocking design finding;
-- no one final course is universal across viable states.
+- every displayed route is non-dominated under Diagnostic 4 or creates blocking finding;
+- no final course universal across viable states.
 
 ## Diagnostic 11 — intent relevance
 
 Holding world/seed fixed, vary one standing-intent answer at a time.
 
-Every answer option must change at least one reachable recommendation/reason or downstream delegated consequence.
-
-Require at least one real trade between intent fields, not only additive benefits.
+Every answer option must change at least one reachable recommendation/reason or downstream delegated consequence. Require at least one real trade between intent fields.
 
 ## Diagnostic 12 — adversary responsiveness / signal reachability / isolation
 
@@ -243,7 +233,9 @@ Using #99 + 37A:
 - prove C6 strong-denial exception reachable through normal C5 visible/joint or attribution signals;
 - same-value signal candidates coalesce;
 - no legal package creates contradictory same-ID values;
-- visible/quiet C5 reinforcement diverge through targeted discovery path.
+- visible/quiet C5 reinforcement diverge through targeted discovery path;
+- `reserve_exhaustion_signal` is emitted only from qualifying C2–C4 history where another normal Ravellan decision can consume it;
+- **C5 reserve use emits no dead reserve-exhaustion observation**.
 
 ## Diagnostic 13 — composed-command integrity
 
@@ -256,7 +248,6 @@ Using 39:
 - C5 rapid-channel consultation/tempo rules;
 - withdrawn + honour legal without forced concession;
 - C5 state invariant to issue order;
-- max one qualifying C5 reserve-deployment event;
 - attribution Hold/Use elastic and source-sensitive.
 
 ## Diagnostic 14 — snowball / trivial late game
@@ -274,17 +265,19 @@ Per cycle report:
 - intervention budget;
 - mechanically elastic alternatives.
 
-C3/C5 must each expose >2 credible personal-intervention candidates in the promised canonical histories. Flag collision manufactured by fake/dominated choices.
+C3/C5 must each expose >2 credible personal-intervention candidates in promised canonical histories. Flag collision manufactured by fake/dominated choices.
+
+## Diagnostic 16 — dead state / observation
+
+Every persisted prototype field, evidence family and adversary observation should have at least one downstream consumer in the remaining slice, debrief/replay-integrity purpose, or explicit human-facing causal purpose.
+
+Flag a field/observation that is produced, persisted and tested but cannot affect any later policy/state/legality/readout/debrief value.
+
+Do not keep dead state merely for symmetry/future generalisation. The C5 reserve-exhaustion observation is the canonical regression fixture: it must remain absent because no later Kestrel Ravellan policy reads it.
 
 ## Counterfactual integrity
 
-Counterfactual branches:
-
-- clone verified canonical state/revision;
-- use normal authoritative sim transitions;
-- never mutate source run;
-- remain deterministic;
-- remain clearly diagnostic, never player history/truth.
+Counterfactual branches clone verified canonical state/revision, use normal authoritative sim transitions, never mutate source, remain deterministic and remain diagnostic rather than player history.
 
 ## Report
 
@@ -301,6 +294,7 @@ Produce deterministic machine-readable output + concise human summary with:
 - terminal route diversity;
 - adversary fairness/signal reachability;
 - composed-command failures;
+- dead-state/observation findings;
 - snowball warnings;
 - agenda collision stats.
 
@@ -327,12 +321,13 @@ Deliberately construct:
 - invalid all-Delegate package;
 - issue-order-dependent state;
 - contradictory same-cycle adversary signal;
+- **dead observation with no downstream consumer**;
 - universal final route;
 - severe-cost-blind local-dominance bug;
 - trivial snowball.
 
-Then run against canonical Kestrel. Green structure only authorises the formative smoke/UI spend; it never passes #110.
+Then run against canonical Kestrel. Green structure only authorises formative smoke/UI spend; never #110.
 
 ## Rejection conditions
 
-Reject #107 if it emits a scalar fun/balance score, treats severe/source costs as free because they are outside the four main axes, trains a gameplay agent, treats oracle frontier as live recommendation truth, samples invalid issue combinations then silently repairs them, feeds diagnostic data into gameplay, dynamically changes Ravellan to pass metrics or claims machine evidence passes the human gate.
+Reject #107 if it emits scalar fun/balance score, treats severe/source costs as free because outside main axes, trains gameplay agent, treats oracle frontier as live recommendation truth, samples invalid issue combinations then silently repairs them, preserves dead state merely for symmetry, feeds diagnostic data into gameplay, dynamically changes Ravellan to pass metrics or claims machine evidence passes human gate.
