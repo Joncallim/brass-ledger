@@ -7,299 +7,277 @@ status: active
 
 Backlink: [[README]]
 
-This document is the implementation authority for the player-facing interaction model of **#105 — V2 Command Room UI**. It introduces no new simulation mechanic; it defines how the already-authoritative command-by-exception contract is presented.
+This is the player-facing authority for **#105 — command by exception without recreating an approval workflow**. It introduces no simulation rules; it presents the safe authoritative state from [[38-PLAYER-SAFE-PROJECTION-CONTRACT]].
 
-## Product purpose
+## Start gate
 
-The player is the commander, not a clerk approving every staff action.
+Do not begin the main browser tranche until:
 
-The Command Room should answer:
+`#104 complete → #107 complete → 3-player formative smoke does not trigger stop/redesign`
+
+under [[50-EXECUTION-PLAN]] / [[35-HUMAN-PLAYTEST-HARNESS]].
+
+## Product rule
+
+The player should answer five questions quickly:
 
 1. What changed?
-2. What does my staff intend to do?
+2. What will my headquarters do if I leave it alone?
 3. Why?
-4. Where do my chiefs disagree?
-5. Which one or two things do I personally want to change?
+4. Where is the disagreement/cost?
+5. Which one or two things do I personally change?
 
-The UI must make **delegation implicit in interaction but explicit in the authoritative submitted command set**.
+No mandatory Briefing → Memos → Chiefs → Final Review chain.
 
 ## One command surface
 
-Do not recreate the V1 sequence of mandatory Briefing → Memos → Chiefs → Final Review screens.
+Each cycle uses one primary Command Room containing:
 
-For each cycle, render one primary Command Room containing:
+- compact situation/change;
+- standing direction;
+- personal-attention budget;
+- ordered consequential agenda;
+- responsible officer + intended order;
+- 2–4 decisive reasons;
+- known direct cost/commitment;
+- visible dissent;
+- authored alternatives;
+- safe cross-issue requirement/conflict notices;
+- one `Issue Orders` action.
 
-- compact current situation/change summary;
-- standing command direction summary;
-- current personal-intervention budget;
-- ordered agenda issues;
-- responsible-officer recommendation/reasons;
-- visible dissent where authored;
-- legal intervention alternatives;
-- legal defer control only where the issue permits it;
-- one final `Issue Orders` action.
-
-Detailed history/state may be accessible through secondary disclosure, but no secondary screen is mandatory to submit a legal command.
+History/detail may be secondary disclosure, never mandatory paperwork.
 
 ## Implicit delegation
 
-When a cycle opens, every agenda issue begins in the local draft state:
+Every issue opens locally as:
 
 `delegate`
 
-The player does not need to click an “Approve” or “Delegate” button on each item.
+The player need not click Approve/Delegate.
 
-Each issue should read conceptually as:
+Conceptually:
 
-> **Operations intends to keep the reserve back.**
+> **Operations intends: Hold the reserve.**
 >
-> [reasons]
+> [why]
 >
 > **Change this order**
 
-If the player takes no action on that issue, the final command set still submits an explicit authoritative `delegate` disposition.
+If untouched, browser submits `delegate`; server/sim derives the actual delegated order from authoritative recommendation.
 
-The browser does not compute the delegated order. It submits `delegate`; the server/sim uses the authoritative recommendation.
+The untouched all-Delegate package must be legal in every reachable state. If not, that is a content/recommendation defect — never something React repairs.
 
-This is critical: implicit interaction must not become UI-owned recommendation logic.
+## Issue anatomy
 
-## Issue card anatomy
+Order content as:
 
-Each agenda issue shows, in this priority order:
+1. human issue title / why now;
+2. responsible officer + intended course;
+3. decisive reasons;
+4. known immediate/future commitment cost that the commander can legitimately know;
+5. dissent/concern;
+6. commander controls.
 
-### 1. Human issue title / why now
+Do not dump matched tags/rules or expose implementation labels.
 
-One concise statement of what requires command attention now.
+## Commander controls / authority
 
-### 2. Responsible officer and intended course
+`Change this order` reveals legal authored alternatives.
 
-Example:
+Selecting a normal alternate:
 
-> **Operations intends: Hold the reserve.**
+- changes disposition to `intervene`;
+- consumes one normal personal-attention token.
 
-Do not lead with implementation fields such as `recommendedOrderId`.
+Returning to Delegate returns the token.
 
-### 3. Decisive recommendation reasons
+If Defer exists in some future/legal issue, expose it only where authoritative content allows it; do not invent it merely for UI symmetry.
 
-Render the 2–4 canonical reason references selected by [[24-STAFF-RECOMMENDATION-POLICY]] in ordinary language.
+### Commander-only liaison
 
-Do not dump every matched rule/tag.
+`request-partner-liaison` is `requiresIntervention = true` under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
 
-### 4. Known cost/exposure
+It must:
 
-Show only known direct trade-offs or commitments associated with the intended course.
+- never appear as staff intended/delegated course;
+- clearly consume one normal intervention;
+- show the known liaison obligation before selection.
 
-Do not show predicted hidden events, hidden posture, win probability, or omniscient outcome preview.
+Task Collection remains separate and costs no normal intervention once Lattice is operational.
 
-### 5. Dissent
+## Personal-attention budget
 
-If present, show the dissenting chief compactly:
-
-> **Intelligence disagrees:** We still do not know whether the probe covers real preparation.
-
-Dissent does not create a separate mandatory interaction.
-
-### 6. Commander controls
-
-Default state is delegated.
-
-Primary control:
-
-`Change this order`
-
-Activating it reveals the one or two authored alternative orders.
-
-Selecting an alternative changes the draft disposition to `intervene` and consumes one personal-intervention token in the local draft.
-
-If the issue legally allows defer, expose `Defer` alongside the authored alternatives and explain the known consequence of delay without forecasting hidden truth.
-
-## Intervention budget
-
-Show the prototype budget plainly, e.g.:
+Show plainly, e.g.:
 
 > **Personal attention: 1 of 2 used**
 
-Do not call these action points, energy, command mana, or another gamified resource.
+Do not theme it as energy/action points/mana.
 
-When both interventions are used:
+At 2/2:
 
-- other legal intervention alternatives remain inspectable;
-- selecting a third intervention must require first returning another issue to Delegate/Defer or otherwise resolving the draft to the legal limit;
-- do not silently replace an earlier intervention;
-- do not disable explanation/history merely because the budget is exhausted.
+- other alternatives remain inspectable;
+- third normal intervention cannot submit;
+- selecting another requires explicitly undoing/changing an earlier intervention;
+- never silently replace an earlier choice.
 
-Changing an intervened issue back to Delegate returns its token immediately in the local draft.
+## Cross-issue package constraints
 
-Defer consumes no intervention unless the authoritative issue contract explicitly says otherwise; Kestrel currently treats defer as zero-cost where legal.
+Some C5 choices are only meaningful/compatible as part of a complete package. The safe DTO may expose requirement/conflict refs; browser may explain/prevent an invalid draft, but **does not own the rule**.
 
-## Standing direction presentation
+Required behavior:
 
-Show the opening intent in player language, compactly.
+- untouched staff package is legal;
+- changed draft may become incompatible;
+- explain the conflict in player-safe language;
+- do not silently change another issue;
+- server remains final validator.
 
-Example:
+### C5 partner authority / tempo
 
-> **Your direction**
->
+Player must be able to understand before submission:
+
+- active C1 formal consultation channel + `honour-consultation` can authorise an immediate partner-sensitive C5 action;
+- without that rapid channel, honouring remains legal but is too slow for same-cycle visible reinforcement/public attribution;
+- `act-then-inform` buys immediate unilateral tempo at breach/political cost;
+- political concession buys immediate coordinated authority at severe cost;
+- withdrawn partner may still honour commitments without being forced into concession, but that does not restore access.
+
+Do not show hidden outcome predictions; these are known authority/timing constraints.
+
+## Attribution must disclose the one-shot/source trade
+
+When C5 `use-attribution` is legal, show **before selection** that:
+
+- the current credible attribution opportunity is one-shot;
+- public use spends it (`credible → used`);
+- Hold And Expose will therefore not be available at C6 unless another explicitly authorised future rule existed (none does in Kestrel);
+- public attribution exposes/compromises the protected source and is a known severe cost.
+
+This is not an omniscient preview. It is the immediate known cost of publishing the evidence.
+
+Do not hide this until the consequence screen.
+
+## Standing direction
+
+Show compact ordinary-language direction, e.g.:
+
 > Keep Beacon secure · Do not burn the reserve without asking · Political heat is acceptable · Prepare quietly by default
 
-Do not display `mainPriority`, `redLine`, `toleratedCost`, `defaultStyle` field names to normal players.
+No normal-player `mainPriority` / `redLine` implementation jargon. Intent is immutable during Kestrel.
 
-Intent is immutable during Kestrel. Do not add an edit control.
+## Situation / intelligence / public state
 
-## Situation/change summary
+Lead with what changed since the last command.
 
-Lead with **what changed since the previous command**, not a complete state dashboard.
+Use only [[38-PLAYER-SAFE-PROJECTION-CONTRACT]]:
 
-The summary may include:
+- safe world manifestation;
+- HQ judgement/reasons/gaps;
+- public Beacon/reserve/partner/commitment/capability state;
+- safe Cycle-6 crisis family;
+- no raw hidden state/signal/action IDs.
 
-- newly matured consequence;
-- new HQ intelligence judgement;
-- changed partner position;
-- Ravellan's observable action/effect;
-- capability payoff;
-- commitment deadline.
+## Known-cost boundary
 
-Stable background state belongs in optional detail.
+May show:
 
-Do not show raw internal enums/meters by default.
+- direct reserve/exposure/civilian cost;
+- explicit promise/obligation creation/breach;
+- authority/timing requirement;
+- one-shot/source cost;
+- belief-safe chief concern.
 
-## No omniscient preview
+May not show:
 
-The Command Room may show:
-
-- explicit immediate authored cost of an order;
-- known commitment created/breached;
-- current staff reasoning;
-- belief-safe likely concern expressed by a chief.
-
-It may not show:
-
+- hidden Ravellan response;
 - exact future event;
-- hidden Ravellan reaction;
-- terminal outcome prediction;
-- hidden probability;
-- “best choice” badge;
-- global option score.
+- predicted terminal classification;
+- probability;
+- best-choice badge/global score;
+- V1 `predictedEvents` on V2.
 
-Existing V1 `predictedEvents` behavior must not leak into V2 player presentation.
+## Command summary / Issue Orders
 
-## Command summary before submission
+Adjacent to one `Issue Orders` action, summarise:
 
-A compact inline summary adjacent to `Issue Orders` should say what the commander is personally changing and what remains delegated.
-
-Example:
-
-> **You are personally changing:**
-> - Move the reserve forward
-> - Protect Lattice
+> **You are personally changing:** …
 >
-> **Staff will handle:**
-> - Partner reassurance
-> - Shipping posture
+> **Staff will handle:** …
 
-This is not a second review screen. It is part of the same Command Room.
+Do not make this a second mandatory review screen.
 
-Do not require another confirmation modal unless destructive/session-level behavior outside ordinary command submission requires it.
+Submission sends:
 
-## Issue Orders
-
-The primary submission verb is:
-
-**Issue Orders**
-
-Avoid generic workflow language such as `Submit`, `Complete`, `Next`, or `Finish Turn` for the main command action.
-
-Submission sends one atomic V2 command set with:
-
-- current cycle;
+- cycle;
 - `expectedRevision`;
-- exactly one disposition for every authoritative agenda issue.
+- one disposition per authoritative agenda issue;
+- selected legal Task Collection / commander-only liaison action where applicable.
 
-The browser must not send final delegated order IDs as authority.
+Browser never sends delegated final order output, partner-authority result, consequences or state patches as authority.
 
-If the server rejects stale revision:
+## Rejection / stale reconciliation
+
+For invalid cross-issue package:
+
+- explain safe conflict;
+- keep draft editable;
+- never auto-repair another issue.
+
+For stale revision:
 
 - do not retry silently;
-- refresh/reconcile authoritative state;
-- explain that the situation changed before orders were accepted;
-- preserve only draft choices that can be safely remapped to the new authoritative issue IDs/orders; otherwise require the player to review the changed issue.
+- refresh authoritative projection;
+- show changed issue/recommendation/reason;
+- preserve only choices that still map safely; otherwise require review.
 
-## After submission
+## Consequence transition
 
-Successful command submission transitions to the Consequence Reveal described in [[29-CONSEQUENCE-REVEAL-CONTRACT]].
+Successful orders always flow through [[29-CONSEQUENCE-REVEAL-CONTRACT]] before the next Command Room. Do not skip the causal payoff.
 
-Do not immediately dump the player into the next Command Room without showing the authoritative consequences of the orders they just issued.
+## Cycle 1
 
-## Cycle 1 opening intent
-
-Kestrel begins with the four standing-direction questions before the first ordinary command set.
-
-This should be one concise opening command-intent surface, not a settings form.
-
-After the immutable declaration is authoritatively accepted, show the resulting direction in player language and enter the Cycle-1 Command Room.
-
-Do not consume an intervention token.
+Opening four-question standing-intent declaration is one concise command surface, not settings. It costs no intervention.
 
 ## Cycle 6
 
-Cycle 6 uses the same Command Room principles but presents the legal final courses from [[27-KESTREL-TERMINAL-MATRIX]].
+Display only routes legal under [[27-KESTREL-TERMINAL-MATRIX]] for the safe overt crisis family.
 
-The player sees:
+The player sees known campaign state and immediate route costs. Do not show pruned player-safe dominated routes merely to increase button count.
 
-- the observable crisis;
-- current HQ judgement/evidence;
-- current persistent history that legitimately affects availability;
-- legal final courses;
-- known immediate trade-offs.
+Prior hidden Ravellan history remains hidden until terminal debrief.
 
-Do not expose hidden prior Ravellan posture/preparation before orders resolve.
+## Accessibility / density
 
-## Accessibility / keyboard contract
+Primary flow must be keyboard-operable with semantic labelled issue groups, associated recommendation/dissent, announced budget/errors, predictable focus and no colour-only meaning.
 
-Every primary command flow must be operable by keyboard.
-
-At minimum:
-
-- semantic headings for situation and agenda;
-- each issue is a labelled group;
-- recommendation and dissent are programmatically associated with the issue;
-- alternative-order selection uses native buttons/radio semantics as appropriate;
-- obvious focus state;
-- intervention-budget changes announced accessibly;
-- stale-write/error messages use an announced status/error region;
-- focus returns predictably when alternative choices collapse;
-- no status relies on colour alone.
-
-## Density rule
-
-Required reading should remain shallow even though underlying state is deep.
-
-Default view prioritises:
+Default required reading remains:
 
 1. what changed;
-2. staff intended action;
+2. intended action;
 3. decisive reasons;
-4. disagreement/known cost;
-5. commander exception controls.
+4. disagreement/known cost/requirement;
+5. exception controls.
 
-Do not put full consequence history, raw evidence ledger, all chief commentary, doctrine text or simulation diagnostics in the required path.
+Keep full history/evidence/doctrine/diagnostics out of the required path.
 
 ## Required #105 tests
 
 At minimum prove:
 
-- every issue defaults locally to Delegate but submitted command set contains an explicit disposition for every issue;
-- browser never supplies/chooses the delegated final order as authority;
-- intervention selection/undo updates the two-token draft budget deterministically;
-- a third intervention cannot be submitted;
-- legal defer is shown only where authored;
-- reason/dissent rendering uses server-derived canonical refs and contains no hidden truth/score;
-- standing intent uses player language and is not editable in Kestrel;
-- stale-revision rejection cannot silently commit an outdated draft;
-- no V2 surface renders `predictedEvents` or hidden posture/preparation;
-- primary flow is keyboard-operable/accessibility-labelled;
-- V1 client path remains available and unchanged in semantics.
+- all issues default Delegate and untouched package is server-legal;
+- browser never supplies delegated final order as authority;
+- intervention/undo/two-token limit deterministic;
+- liaison never delegates and consumes one token;
+- Task Collection does not consume normal token;
+- safe C5 cross-issue conflicts displayed; invalid draft cannot submit; no silent repair;
+- withdrawn + honour remains selectable without forced concession;
+- one-shot attribution + source-exposure cost shown before use;
+- safe Cycle-6 crisis family + pruned legal route set only;
+- no raw hidden state/action/signal/predicted outcome;
+- stale draft cannot commit silently;
+- keyboard/accessibility flow;
+- V1 client semantics unchanged.
 
 ## Rejection conditions
 
-Reject #105 if it recreates mandatory packet/chiefs/review stages, requires clicking Delegate on every issue, computes recommendations in React, shows a best-option score, exposes hidden truth, automatically submits orders, or adds pre-gate graphics/polish unrelated to the plain-text fun hypothesis.
+Reject #105 if it recreates approval paperwork, requires Delegate clicks, computes recommendation/package legality in React as authority, hides a known one-shot/source/commitment cost, silently repairs incompatible orders, displays pruned trap routes, exposes hidden truth, auto-submits orders, or spends scope on pre-gate polish unrelated to the plain-text fun hypothesis.
