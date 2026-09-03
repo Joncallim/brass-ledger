@@ -29,6 +29,8 @@ contract. Read these notes in numeric order before V2 implementation.
 - [[33-HEADLESS-SIX-CYCLE-EXECUTION]] — #104 complete headless run/replay/transcript contract.
 - [[34-BROWSER-E2E-CONTRACT]] — #108 authoritative-browser/E2E hostile verification contract.
 - [[35-HUMAN-PLAYTEST-HARNESS]] — #109 non-leading human-study protocol and coding contract.
+- [[36-KESTREL-AGENDA-COURSE-MATRIX]] — stable issue/order IDs, intent tags and chief tie-breaks for #98/#103.
+- [[37-RAVELLAN-WORLD-EFFECT-MATRIX]] — #103 mapping from hidden adversary decisions to bounded world/player manifestations.
 - [[40-EVALUATION-CONTRACT]] — machine versus human proof.
 - [[50-EXECUTION-PLAN]] — dependency-ordered issue graph.
 - [[60-DECISION-LOG]] and [[70-TRADEOFF-REGISTER]] — settled choices and limits.
