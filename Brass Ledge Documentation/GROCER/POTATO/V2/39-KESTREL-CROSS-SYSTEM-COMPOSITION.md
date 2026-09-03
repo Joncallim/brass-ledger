@@ -17,6 +17,31 @@ A collection target may inspect only the physical/action-history facts explicitl
 
 Holding all target-authorised facts constant while changing hidden posture alone must produce an identical result.
 
+### Cycle-2 `reroute-and-monitor` observation payoff
+
+Rerouting traffic buys a real observation opportunity at the cost of civilian disruption/political friction. Without this payoff, the course is dominated by quiet escort.
+
+The order queues exactly one **indicator-only** evidence result for the C3 HQ-belief update. It reads only:
+
+- seizure-preparation state immediately after the C2 Ravellan decision; and
+- the verified C2 normal Ravellan action.
+
+Result:
+
+- preparation `developing|ready` + C2 action `probe_shipping` → `reroute-auxiliary-integrated`, implication `preparation`, class `indicator`;
+- preparation `none` + C2 action `probe_shipping|seed_deception` → `reroute-auxiliary-coercive`, implication `coercion`, class `indicator`;
+- otherwise → `reroute-auxiliary-unclear`, implication `ambiguous`, class `indicator`.
+
+Lifecycle:
+
+- observed/usable at C3;
+- remains active through C5 unless explicitly superseded by a newer observation of the same auxiliary-tasking question;
+- expires before C6 assessment reduction.
+
+This clue **does not replace or remove** either item in the mandatory C3 conflicting bundle, so C3 remains `unclear + conflicted`. Its value is that it can remain as a weak directional clue after the generic conflict expires and can later be corroborated/contradicted by Lattice/liaison evidence.
+
+Same authorised facts + different hidden posture must give the same reroute result.
+
 ### Cycle-3 `staging-area-focus`
 
 Reads seizure preparation only:
@@ -39,6 +64,8 @@ Reads seizure preparation plus the most recent verified normal Ravellan action i
 - preparation `none` + `probe_shipping|seed_deception` → `lattice-auxiliary-coercive`, `coercion`, `corroborating`;
 - otherwise → `lattice-auxiliary-mixed`, `ambiguous`, `indicator`.
 
+A Lattice auxiliary result explicitly supersedes any older active `reroute-auxiliary-*` or liaison result that answers the same auxiliary-tasking question, while evidence from other named questions remains independent.
+
 ### Lattice `political-operational-sync`
 
 Reads only the two most recent verified normal Ravellan actions:
@@ -50,11 +77,11 @@ Reads only the two most recent verified normal Ravellan actions:
 
 ### Partner liaison
 
-Uses exactly the auxiliary-tasking authorised facts above, with any directional result downgraded to `indicator`.
+Uses exactly the auxiliary-tasking authorised facts above, with any directional result downgraded to `indicator`. A newer liaison result supersedes the older reroute clue for the same auxiliary-tasking question.
 
 ### Isolation proof
 
-For focused collection, every Lattice target and liaison, changing hidden posture alone while target-authorised facts remain fixed must leave result deep-equal.
+Reroute monitoring, focused collection, every Lattice target and liaison require paired tests that change hidden posture while target-authorised facts remain fixed. Result must be deep-equal.
 
 ## 2. Binding commitments are not routine universal defaults
 
@@ -73,17 +100,13 @@ Formal consultation has two concrete benefits:
 
 Only `request-partner-liaison` has Kestrel's bounded `requiresIntervention = true` semantics.
 
-It remains a legal player alternative but:
+It remains a legal player alternative but is excluded from staff recommendation candidates, always consumes one normal intervention and can never execute through Delegate.
 
-- is excluded from staff recommendation candidates;
-- always consumes one normal intervention;
-- can never execute through Delegate.
-
-Its obligation is explicit, not a `political-friction` tolerated-cost tag.
+Its obligation is explicit, not a tolerated-cost tag.
 
 ## 4. Atomic complete command-set composition
 
-Cross-issue effects derive from the **complete validated final-order set**. Agenda/object/array application order may not change the result.
+Cross-issue effects derive from the **complete validated final-order set**. Agenda/object/array order may not change the result.
 
 Individual causal effects remain replay-visible even where net movement cancels.
 
@@ -95,72 +118,66 @@ Critical invariant:
 
 ### Coordinated visible surge
 
-Active C1 consultation promise + C2 `joint-non-attributive-warning` + `visible-patrol-surge` means the surge is coordinated:
+Active C1 consultation promise + C2 joint warning + visible patrol surge means coordinated surge:
 
 - no partner-consent worsening from the surge;
-- coherent-unity observation where detectable;
+- coherent unity where detectable;
 - reserve strain / visible denial / credible coverage still apply.
 
 A joint warning without the pre-arranged channel is not blanket operational consent.
 
 ### Public accusation
 
-C2 `public-accusation` is always unilateral in Kestrel:
+C2 public accusation is always unilateral:
 
 - worsen partner one step;
 - emit fractured unity where public;
 - breach active consultation promise;
 - may emit discovery suspicion.
 
-The baseline partner cost exists even if no promise was made.
+Baseline partner cost exists without the promise.
 
 ## 6. C5 explicit partner authority and tempo
 
-Add player-known concrete record:
+Add player-known record:
 
 `partner-authority = pending | none | joint | unilateral | concession`
 
-Opening: `pending`.
+Opening `pending`.
 
 Pre-command:
 
 `rapidConsultationChannel = consultation-promise == active`
 
-Only the still-active formal channel provides rapid C5 coordination.
-
 ### Honour consultation
 
 Always player-legal.
 
-If partner not withdrawn:
+Partner not withdrawn:
 
-- authority → `joint` for C6;
-- active promise → `honoured`;
-- active liaison obligation → `fulfilled`;
+- authority → joint for C6;
+- active promise → honoured;
+- active liaison → fulfilled;
 - improve partner one step if below cooperative.
 
-If partner withdrawn:
+Partner withdrawn:
 
-- authority → `none`;
-- honour/fulfil active commitment where applicable;
-- no partner improvement or joint authority.
+- authority → none;
+- honour/fulfil active commitments where applicable;
+- no partner recovery or joint authority.
 
-For immediate C5 partner-sensitive actions:
-
-- compatible only when `rapidConsultationChannel = true` and partner is not withdrawn;
-- otherwise consultation is too slow for the current action window even though non-withdrawn consultation can produce joint authority by C6.
+Immediate C5 sensitive actions are compatible with honour only when the rapid channel was active and partner not withdrawn. Otherwise consultation is too slow for the immediate action window even though it can provide C6 joint authority.
 
 ### Political concession
 
 Where legal:
 
-- authority → `concession`;
-- concession record → active;
+- authority → concession;
+- concession active;
 - withdrawn partner → conditional;
-- honour an active unbreached consultation promise;
-- fulfil active liaison obligation where satisfied;
-- supplies immediate same-cycle authority;
-- remains severe terminal cost.
+- honour active unbreached promise / fulfil liaison where applicable;
+- immediate same-cycle authority;
+- severe terminal cost.
 
 ### Act then inform
 
@@ -168,98 +185,65 @@ Player-legal only with at least one same-cycle partner-sensitive action.
 
 When valid:
 
-- authority → `unilateral`;
-- active promise/liaison obligation → `breached`;
-- worsen partner one step total for the package;
+- authority → unilateral;
+- active promise/liaison → breached;
+- worsen partner one step total for package;
 - emit fractured unity;
-- supplies immediate freedom for the sensitive action.
+- immediate freedom for sensitive action.
 
 ### Partner-sensitive C5 actions
 
-Exactly:
+Exactly visible reinforce and use attribution.
 
-- `visible-reinforce-beacon`;
-- `use-attribution`.
+Concession is immediate/coordinated; unilateral is immediate with political damage; joint-from-honour is immediate only with pre-command rapid channel; none is incompatible.
 
-Compatibility:
-
-- concession → immediate coordinated;
-- unilateral → immediate with package political damage;
-- joint from honour → immediate only if rapid channel was active pre-command;
-- none → incompatible.
-
-`keep-reserve-forward` is not partner-sensitive in Kestrel.
+Keep-reserve-forward is not partner-sensitive.
 
 ## 7. C5 staff recommendation package must itself be legal
 
-Derive staff intent:
+1. derive beacon/reserve recommendations normally;
+2. `use-attribution` is staff-recommendation-applicable only if evidence prerequisite holds **and** pre-command rapid channel is active with non-withdrawn partner; otherwise hold attribution is staff baseline;
+3. staff package needs immediate authority if intended package contains visible reinforce or use attribution;
+4. derive partner authority with act candidate only if immediate authority needed; honour candidate for immediate package only with non-withdrawn + rapid channel; honour remains candidate when no immediate sensitive action is intended, including at withdrawn; concession only under existing prerequisites;
+5. validate full all-Delegate package. Failure is a content/recommendation defect, not UI repair.
 
-1. recommend beacon/reserve through normal rules;
-2. for C5 attribution, `use-attribution` is staff-recommendation-applicable only when its evidence prerequisite holds **and** pre-command rapid channel is active with non-withdrawn partner. Otherwise `hold-attribution` is staff baseline; player may still construct unilateral/concession use through intervention;
-3. `staffPackageNeedsImmediatePartnerAuthority = true` if intended package contains visible reinforce or use attribution;
-4. derive partner-authority recommendation with:
-   - act-then-inform candidate only if immediate authority is needed;
-   - honour candidate for immediate package only with non-withdrawn partner + rapid channel;
-   - honour remains candidate when no immediate sensitive action is intended, including at withdrawn consent, so staff never forces recovery;
-   - concession only under existing state prerequisites;
-5. validate the full all-Delegate package. Failure is a content/recommendation defect, never a UI repair task.
+Players may deliberately construct a different valid package through intervention.
 
-A player may deliberately construct a different valid package through interventions.
+## 8. C5 ordinal effects aggregate before clamping
 
-## 8. C5 ordinal state effects aggregate before clamping
+For Beacon exposure and reserve condition, sum signed C5 effects from complete command set then clamp once from pre-command state. Improve +1; worsen -1.
 
-For Beacon exposure and reserve condition, sum all signed C5 step effects from the complete command set, then clamp once from pre-command state.
+Quiet reinforce exposure +1 plus emergency consolidation -1 nets zero regardless issue order while preparation may still become prepared and both effects remain in history.
 
-Improve `+1`; worsen `-1`.
-
-Quiet reinforce exposure +1 plus emergency consolidation exposure -1 therefore nets zero regardless issue order while preparation may still become `prepared` and both causal effects remain recorded.
-
-Apply the same rule to reserve effects from quiet/visible reinforcement, keep-forward and consolidation.
+Apply same rule to reserve effects from reinforcement, keep-forward and consolidation.
 
 ## 9. Ravellan exhaustion observation counts deployment cycles
 
 The second detectable significant reserve-deployment **cycle**, not order object, creates/refreshes exhaustion suspicion.
 
-Qualifying:
+Qualifying: C2 visible surge; C3 forward reserve; C4 press visible; C5 either visible reinforce or keep forward. Both C5 qualifiers together count once. C1 reinforce/quiet reinforcement do not count.
 
-- C2 visible patrol surge;
-- C3 forward reserve preparation;
-- C4 press visible advantage;
-- C5 if either visible reinforce or keep reserve forward.
+Exact emissions are frozen in [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
 
-Both C5 qualifiers together count once. C1 reinforce/quiet reinforcement do not count.
+## 10. Attribution is one-shot
 
-Exact signal emissions are frozen in [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
+`attribution-opportunity = credible` means an **unspent** politically usable attribution opportunity.
 
-## 10. Attribution is a one-shot strategic opportunity
+C5 use attribution:
 
-`attribution-opportunity = credible` means HQ currently has an **unspent** politically usable attribution opportunity.
+- credible → used;
+- applies immediate partner/public/discovery effects;
+- permanently spends the opportunity for Kestrel.
 
-C5 `use-attribution`:
+Later evidence can still change HQ belief but cannot regenerate credible attribution after `used` during this slice.
 
-- `credible → used`;
-- applies its existing immediate partner/public/discovery effects;
-- permanently spends that opportunity for the remainder of Kestrel.
-
-Once `used`, later evidence can still change HQ belief but does **not** regenerate `attribution-opportunity = credible` during this six-cycle slice.
-
-This is intentionally bounded: the player chooses whether to spend the evidence now for immediate political/deterrent effect or preserve it for the final Hold And Expose course.
-
-Therefore:
-
-- **Hold And Expose requires `attribution-opportunity = credible`, not `used`;**
-- using attribution in C5 removes Hold And Expose from the C6 legal route set;
-- the known action-space consequence (“this spends the attribution opportunity”) is player-safe and should be visible when considering C5 use.
-
-This makes `hold-attribution` versus `use-attribution` mechanically elastic instead of a fake choice.
+Therefore Hold And Expose requires **credible, not used**. C5 use removes C6 Hold/Expose. The known action-space cost (“this spends the attribution opportunity”) is player-safe and should be visible.
 
 ## 11. Terminal warning is preparation-specific
 
-Generic credible attribution cannot count as seizure warning because coercion evidence can also make attribution credible.
+`usableWarning = HQ assessment preparation + weak OR preparation + coherent`
 
-`usableWarning = HQ assessment is preparation + weak OR preparation + coherent`
-
-No other state qualifies without a later explicit preparation-only warning decision.
+Generic credible attribution cannot count as seizure warning.
 
 ## 12. Terminal joint authority
 
@@ -267,125 +251,84 @@ No other state qualifies without a later explicit preparation-only warning decis
 
 `jointAuthority = partnerAccess AND partner-authority in {joint, concession}`
 
-By C6, a non-withdrawn joint result from honour consultation is fully available even if it was too slow for an immediate C5 sensitive action.
-
-None/unilateral do not create joint authority; healthy sentiment alone is not permission.
+By C6, non-withdrawn joint from honour is fully available even if too slow for immediate C5 action. None/unilateral do not create joint authority; sentiment alone is not permission.
 
 ## 13. Quiet Denial is the restrained non-seizure fallback
 
-- against actual seizure: legal only if Beacon prepared;
-- against threshold challenge or pressure receding: always legal.
-
-In non-seizure crises it means maintain restrained defence / accept de-escalation without manufacturing a larger confrontation. Abort must never force Emergency Mobilisation.
+Against seizure, Quiet is legal only if Beacon prepared. Against threshold/pressure-receding it is always legal and means maintain restrained defence / accept de-escalation. Abort never forces Emergency Mobilisation.
 
 ## 14. Final courses change authoritative terminal state
 
-Physical feasibility uses pre-route state; route costs/effects then mutate final state before Pareto/classification.
+Physical feasibility uses pre-route state; route effects then mutate final state before Pareto/classification.
 
 ### Quiet Denial
 
-Against seizure:
+Seizure: prepared + controlled exposure + usable warning → clean hold; otherwise prepared + usable reserve → late reaction holds, reserve worsens one, severe `late-reaction`; otherwise Beacon lost.
 
-- prepared + controlled exposure + usable warning → clean hold;
-- otherwise prepared + reserve usable → late reaction holds, reserve worsens one, severe `late-reaction`;
-- otherwise Beacon lost.
-
-Against threshold/abort: no automatic reserve/partner movement.
+Threshold/abort: no automatic reserve/partner movement.
 
 ### Joint Visible Denial
 
-- feasibility uses pre-route joint authority/reserve/preparation;
-- worsen reserve one terminal step;
-- preserve access because joint authority is required.
+Feasibility uses pre-route joint authority/reserve/preparation; worsen reserve one; preserve access because joint authority required.
 
 ### Emergency Mobilisation
 
-- pre-route reserve usable/strained succeeds; brittle succeeds only with prepared denial;
-- worsen reserve one terminal step;
-- held Beacon always sets severe `emergency-surge`;
-- absent joint authority, worsen non-withdrawn partner one step.
-
-It is a comeback route, never a clean substitute.
+Pre-route reserve usable/strained succeeds; brittle succeeds only with prepared denial. Worsen reserve one; held Beacon always severe `emergency-surge`; absent joint authority worsen non-withdrawn partner one.
 
 ### Hold And Expose
 
-- requires **unspent `attribution-opportunity = credible`** + partner access;
-- `credible → used`;
-- improve non-withdrawn partner one step if below cooperative;
-- against seizure, Beacon held only with prepared denial + controlled exposure;
-- against threshold/abort, Beacon held.
-
-Because the opportunity is one-shot, C5 use and C6 Hold/Expose are alternative timings for the same political asset, not cumulative double benefits.
+Requires **credible unspent attribution** + partner access; credible → used; improve non-withdrawn partner one if below cooperative; seizure held only with prepared denial + controlled exposure; threshold/abort held.
 
 ## 15. Severe cost / Pareto use post-route state
 
-Overreaction after route effects:
+Overreaction: Emergency vs threshold/abort; Joint vs abort; Joint vs threshold when post-route reserve brittle or authority required concession.
 
-- Emergency against threshold/abort;
-- Joint Visible against abort;
-- Joint Visible against threshold when post-route reserve is brittle or authority required concession.
+All state-based severe-cost predicates from the base consequence contract are evaluated on post-route final state. Add `late-reaction` and `emergency-surge`.
 
-All state-based severe-cost predicates from the base consequence contract are evaluated on **post-route final state** where relevant. In particular, a route that leaves the reserve `brittle` cannot evade the existing brittle-reserve severe cost merely because it began `strained`.
+Classification remains Operational Defeat → Political Defeat → Costly Success → Strategic Success. Pareto uses post-route reserve/partner state.
 
-`severeCost` also includes `late-reaction` and `emergency-surge`.
+## 16. Safe C6 crisis family
 
-Classification remains Operational Defeat → Political Defeat → Costly Success → Strategic Success.
-
-Pareto uses post-route reserve/partner state.
-
-## 16. Safe Cycle-6 crisis family
-
-Normal staff/player DTOs use:
-
-- `attempt_seizure` → `seizure-underway`;
-- `threshold_challenge` → `threshold-confrontation`;
-- `abort_and_pressure` → `pressure-receding`.
-
-Raw terminal action IDs and prior hidden history remain private until debrief.
+Normal staff/player DTOs use `seizure-underway`, `threshold-confrontation`, `pressure-receding`, derived from the private terminal behavior. Raw #99 action ID/prior hidden history stays private until debrief.
 
 ## 17. Recommendation metadata corrections
 
-- C1 Political final tie: informal liaison > formal agreement.
-- C4 liaison: requires intervention; no tolerated-cost tag.
-- C5 use-attribution: supports partner cooperation when politically usable; not `ravellan-understanding`; presentation must name that it spends the one-shot attribution opportunity.
+- C1 Political tie: informal liaison > formal agreement.
+- C2 reroute-and-monitor again `supports: ravellan-understanding` because Section 1 now gives it a real persistent observation payoff.
+- C4 liaison requires intervention; no tolerated-cost tag.
+- C5 use attribution supports partner cooperation when usable, not Ravellan understanding; presentation names one-shot spend.
 - C5 authority recommendation follows Sections 6–7.
 
-## 18. UI/headless draft constraints
+## 18. UI/headless constraints
 
-Safe agenda may expose cross-issue requirement/conflict refs and the known one-shot attribution-spend effect, never hidden truth.
-
-UI/headless keep alternatives inspectable, explain incompatibility, prevent invalid submission and never silently alter another issue. Server/sim remains final authority.
+Safe agenda may expose cross-issue requirement/conflict refs and known one-shot attribution-spend effect, never hidden truth. UI/headless explain incompatibility, prevent invalid submission and never silently alter another issue. Server/sim remains final authority.
 
 ## 19. Laboratory additions
 
 #107 additionally proves:
 
-- collection posture isolation;
+- posture isolation for reroute/focused/Lattice/liaison results;
+- reroute vs quiet escort is mechanically elastic because reroute creates the persistent clue at real civilian/political cost;
 - formal consultation not universal baseline but selectable by partner direction;
-- active formal channel creates reachable C5 same-cycle consultation advantage;
-- liaison never delegates and costs one intervention;
+- active formal channel creates C5 same-cycle consultation advantage;
+- liaison never delegates/costs one intervention;
 - C2 coordinated/uncoordinated surge and accusation baseline cost;
-- all-Delegate C5 package legal in every reachable state;
-- without rapid channel, honour + immediate sensitive action incompatible while act/concession can buy tempo;
-- with active channel, honour + sensitive action compatible;
-- withdrawn + honour remains legal non-recovery choice;
-- C5 state results issue-order invariant;
-- random-valid and other lab actors choose/construct **complete legal command sets**, not independently sampled issue dispositions that violate cross-issue constraints;
-- two C5 reserve qualifiers count one observation event;
-- `hold-attribution` and `use-attribution` are mechanically elastic because C5 use removes C6 Hold/Expose while providing immediate effects;
+- all-Delegate C5 package legal every reachable state;
+- consultation-vs-tempo compatibility rules;
+- withdrawn + honour legal non-recovery choice;
+- C5 effects issue-order invariant;
+- lab actors, including random-valid, construct **complete legal command sets**; random-valid selects deterministically/uniformly from the bounded complete legal-set enumeration rather than independently sampling issues then repairing;
+- two C5 reserve qualifiers count one event;
+- hold vs use attribution mechanically elastic because use removes C6 Hold/Expose while giving immediate effect;
 - pressure-receding never forces Emergency;
 - successful Emergency cannot be clean Strategic Success;
 - Hold/Expose has reachable Pareto advantage while Quiet remains useful;
-- no final route becomes universal.
-
-For `random-valid`, enumerate the bounded legal complete command sets for the current agenda through the authoritative validator and select deterministically/uniformly from those sets; do not sample issue choices independently then repair them.
+- no final route universal.
 
 ## 20. Replay/version integration
 
-New persisted partner authority/coordination state follows [[30-ARCHITECTURE-CONTRACT]]: replay-verifiable transition or pure derivation, tamper rejection, hashes/revisions, prototype version increment when persisted semantics change, no invented migration, V1 isolation.
-
-Exact ledger insertion waits for final committed #99 replay implementation.
+New persisted partner authority/coordination/evidence follows [[30-ARCHITECTURE-CONTRACT]]: replay-verifiable transition or pure derivation, tamper rejection, hashes/revisions, prototype version increment when persisted semantics change, no invented migration, V1 isolation. Exact ledger insertion waits for final committed #99 replay implementation.
 
 ## Rejection conditions
 
-Reject implementation if it reads hidden posture in collection, permits invalid all-Delegate staff intent, erases consultation-vs-tempo tradeoff, makes C5 attribution use strictly free by preserving the same C6 opportunity, lets array order change results, treats partner sentiment as authority, makes liaison free, forces concession after withdrawal, forces mobilisation after de-escalation, treats coercion evidence as seizure warning, or leaves final-course costs only in prose.
+Reject implementation if it reads hidden posture in collection, restores reroute as a dominated cosmetic trap, permits invalid all-Delegate staff intent, erases consultation-vs-tempo or attribution-timing tradeoffs, lets array order change results, treats partner sentiment as authority, makes liaison free, forces concession after withdrawal/mobilisation after de-escalation, treats coercion evidence as seizure warning, or leaves final-course costs only in prose.
