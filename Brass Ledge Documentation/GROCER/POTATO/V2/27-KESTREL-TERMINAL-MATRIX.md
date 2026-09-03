@@ -7,397 +7,299 @@ status: active
 
 Backlink: [[README]]
 
-This document is the implementation authority for the **Cycle-6 final-route availability and outcome predicates** consumed by #103 and later headless/UI work. It does not change Ravellan's terminal-behaviour choice in [[22-RAVELLAN-EXECUTABLE-POLICY]].
+This document is the implementation authority for Kestrel Cycle-6 final-course legality, physical resolution, final state effects and terminal classification. It is aligned with [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]]; 39 still owns cross-system composition details.
 
-## Product purpose
-
-Cycle 6 must test the campaign the player actually built.
-
-It must **not** collapse to:
-
-> “Guess Ravellan's hidden posture and click the matching counter.”
-
-Final courses therefore depend on accumulated physical preparation, reserve condition, partner consent, commitments and legitimate intelligence. The same final order can be sensible in one history and disastrous or unnecessarily costly in another.
+The final crisis tests the **campaign the player built**. It is not a secret-posture matching puzzle.
 
 ## Inputs
 
-Terminal coalition resolution may read only the verified campaign state available after Ravellan's Cycle-6 terminal behaviour is selected:
+Terminal resolution may use only verified canonical state/history:
 
-- Ravellan terminal behaviour: `attempt_seizure`, `threshold_challenge`, or `abort_and_pressure`;
-- `beacon-exposure`;
-- `beacon-preparation`;
-- `reserve-condition`;
-- `partner-consent`;
-- `consultation-promise`;
-- `political-concession`;
-- `liaison-obligation`;
-- `attribution-opportunity`;
-- current HQ `ravellan-intent` assessment/evidence state;
-- authored severe-cost/history flags from [[25-KESTREL-CONSEQUENCE-MATRIX]].
+- observable Ravellan terminal crisis behavior selected by #99;
+- Beacon exposure;
+- Beacon preparation;
+- reserve condition;
+- HQ assessment/evidence;
+- attribution opportunity;
+- partner consent;
+- C5 partner authority;
+- consultation promise;
+- political concession;
+- liaison obligation;
+- other explicit severe-cost history flags frozen in [[25-KESTREL-CONSEQUENCE-MATRIX]] / [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
 
-The coalition terminal resolver may use actual Ravellan terminal behaviour because the event is now occurring in the world. Player-facing pre-order presentation may reveal only what is legitimately observable about that behaviour at Cycle 6; it must not expose prior hidden posture/preparation.
+The player-facing route screen consumes the safe crisis family from 39, never raw prior Ravellan posture/preparation.
 
-## Derived terminal predicates
+## Derived predicates
+
+### Controlled exposure
+
+`controlledExposure = beacon-exposure != open`
 
 ### Prepared denial
 
 `preparedDenial = beacon-preparation == prepared`
 
-### Exposure controlled
-
-`exposureControlled = beacon-exposure != open`
-
 ### Usable warning
 
-`usableWarning =` current HQ assessment is `preparation + weak` or `preparation + coherent`, **or** an active credible attribution opportunity/equivalent authored preparation evidence supplies a legitimate warning.
+Preparation-specific only:
 
-`unclear + conflicted` is not a usable warning by itself. The player may still choose a military route; it simply cannot claim the information advantage required by the strongest Quiet Denial result.
+`usableWarning = HQ assessment direction == preparation`
+
+Both `preparation + weak` and `preparation + coherent` qualify.
+
+`coercion + coherent` or a generic credible attribution opportunity does **not** qualify as seizure warning.
 
 ### Partner access
 
 `partnerAccess = partner-consent != withdrawn`
 
-A political concession may restore `partner-consent` to at least `conditional` before terminal evaluation. The concession remains a severe cost; it does not create a hidden extra access override.
-
 ### Joint authority
 
-`jointAuthority = partnerAccess` AND one of:
+`jointAuthority = partnerAccess AND partner-authority in {joint, concession}`
 
-- `partner-consent = cooperative`;
-- `partner-consent = uneasy` and consultation promise is not `breached`;
-- `partner-consent = conditional` and `political-concession = active` or an authored honoured consultation/fulfilled liaison obligation supplies the authority.
+Partner sentiment alone does not create operational authority.
 
-A `breached` consultation promise with merely `conditional` consent is not sufficient for clean joint authority unless political concession explicitly recovered it.
+### Unspent attribution
 
-### Credible exposure case
+`unspentAttribution = attribution-opportunity == credible`
 
-`credibleExposure = attribution-opportunity == credible OR attribution-opportunity == used`
+`used` is not equivalent. C5 use spends the one-shot opportunity and removes Hold And Expose from C6.
 
-### Reserve can surge
+## Player-safe crisis family
 
-- `usable` → yes;
-- `strained` → yes, with terminal cost;
-- `brittle` → only effectively if `preparedDenial` is also true; otherwise brute-force mobilisation cannot produce a clean physical denial.
+Project the private #99 terminal behavior to:
 
-## Final course availability
+- `attempt_seizure` → `seizure-underway`;
+- `threshold_challenge` → `threshold-confrontation`;
+- `abort_and_pressure` → `pressure-receding`.
+
+Prior hidden posture/preparation remains unavailable until terminal debrief.
+
+## Final course IDs
+
+Exactly four final course IDs exist:
+
+- `quiet-denial`
+- `joint-visible-denial`
+- `emergency-mobilisation`
+- `hold-and-expose`
+
+No fifth “correct answer” route may be invented in content/UI.
+
+## Route legality
 
 ### Quiet Denial
 
-Stable ID: `quiet-denial`
+Against `seizure-underway`:
 
-Legal when:
+- legal only if `preparedDenial`.
 
-- `preparedDenial` is true.
+Against `threshold-confrontation` or `pressure-receding`:
 
-It remains legal with weak/conflicted intelligence, but its best outcome requires `usableWarning` and controlled exposure.
+- always legal.
 
-If Beacon was never prepared, this route is unavailable rather than becoming a meaningless “quiet” button with no plan behind it.
+In non-seizure crises it means maintain the restrained defensive posture / accept de-escalation without manufacturing a larger confrontation.
 
 ### Joint Visible Denial
 
-Stable ID: `joint-visible-denial`
+Legal only when:
 
-Legal when:
+- `jointAuthority`;
+- reserve condition != `brittle`.
 
-- `jointAuthority` is true;
-- reserve condition is not `brittle`, **or** `preparedDenial` is true.
-
-A brittle reserve plus no prepared denial makes a credible joint military response unavailable.
+The route represents an authorised coalition show of force, not merely a healthy relationship.
 
 ### Emergency Mobilisation
 
-Stable ID: `emergency-mobilisation`
+Always legal as the authored brute-force recovery course.
 
-Always legal while the campaign remains non-corrupt/replay-valid.
-
-This is the final brute-force comeback route. `brittle` reserve may make it fail physically if no prepared denial exists, but the player must still be allowed to attempt it rather than receiving a hidden hard lock.
+Physical success still depends on the pre-route reserve/preparation state below.
 
 ### Hold And Expose
 
-Stable ID: `hold-and-expose`
+Legal only when:
 
-Legal when:
+- `unspentAttribution`;
+- `partnerAccess`.
 
-- `credibleExposure` is true;
-- `partnerAccess` is true.
+Using attribution in C5 removes this route. The opportunity is one-shot.
 
-This route uses legitimate intelligence and coalition politics to resist a manufactured crisis without automatically making a large military surge.
+## Resolution order
 
-It does not require the HQ assessment to be `coercion`; the player can choose it against a suspected real move, but physical success against an actual seizure then depends on prior Beacon preparation.
+For the selected legal route:
 
-## Physical Beacon outcome
+1. read **pre-route** state for physical feasibility;
+2. determine whether Beacon is held/lost;
+3. apply the route's authoritative terminal reserve/partner/attribution effects;
+4. derive final partner access / severe-cost flags from **post-route** state/history;
+5. derive terminal Pareto vector and classification;
+6. persist/replay the complete transition;
+7. only after terminal completion expose the truth debrief.
 
-Resolve `beaconHeld` from Ravellan terminal behaviour and the selected final course.
+Do not classify from pre-route state and then append costs only in prose.
 
-### Ravellan: `attempt_seizure`
+## Quiet Denial
 
-#### Quiet Denial
+### Against seizure
 
-Beacon is held if all are true:
+Beacon is held cleanly if all:
 
 - `preparedDenial`;
-- `exposureControlled`;
+- `controlledExposure`;
 - `usableWarning`.
 
-If prepared but either exposure is `open` or warning is not usable, Beacon is held only if reserve condition is `usable`; this represents the prepared plan surviving through retained reaction capacity but creates severe operational cost.
+If the clean condition fails but:
+
+- `preparedDenial`;
+- pre-route reserve condition = `usable`;
+
+then a late reaction still holds Beacon:
+
+- worsen reserve one terminal step;
+- set severe-cost flag `late-reaction`.
 
 Otherwise Beacon is lost.
 
-#### Joint Visible Denial
+### Against threshold / pressure receding
 
-Beacon is held if:
+Beacon remains held.
 
-- `jointAuthority`;
-- and either reserve condition is `usable` or `strained`, or `preparedDenial` is true.
+No automatic reserve or partner movement.
 
-If reserve is `brittle` and there is no prepared denial, Beacon is lost.
+This is the restrained non-seizure fallback and prevents a Ravellan backdown from forcing an irrational mobilisation.
 
-#### Emergency Mobilisation
+## Joint Visible Denial
 
-Beacon is held if:
+Physical result:
 
-- reserve is `usable`; or
-- reserve is `strained`; or
-- reserve is `brittle` **and** `preparedDenial` is true.
+- against seizure: Beacon held if `preparedDenial` OR `controlledExposure`;
+- against threshold/pressure receding: Beacon held.
 
-If reserve is `brittle` and Beacon was not prepared, the emergency surge is too late/fragile and Beacon is lost.
+Terminal effects:
 
-#### Hold And Expose
+- worsen reserve one step;
+- preserve partner access because joint authority is required;
+- political concession, if it was the authority source, remains an active severe-cost history.
 
-Beacon is held only if:
+This course can be correct, but it spends force readiness and can be overreaction against a weak/non-seizure crisis.
 
-- `credibleExposure`;
-- `preparedDenial`;
-- `exposureControlled`.
+## Emergency Mobilisation
 
-The political exposure does not physically stop a genuine prepared seizure by itself. Prior denial preparation must carry the physical burden.
+Physical result uses pre-route state:
 
-### Ravellan: `threshold_challenge`
+- reserve `usable` or `strained` → Beacon held;
+- reserve `brittle` + `preparedDenial` → Beacon held;
+- reserve `brittle` without prepared denial → Beacon lost.
 
-No prepared seizure is executed. Beacon remains physically held for all four legal final courses.
+Terminal effects when Beacon held:
 
-The important differentiation is political access and self-inflicted cost below.
+- worsen reserve one step;
+- set severe-cost flag `emergency-surge`;
+- if no `jointAuthority` and partner is not already withdrawn, worsen partner consent one step.
 
-A route can therefore “hold Beacon” while still producing political defeat.
+Emergency Mobilisation is deliberately the costly comeback route. A successful emergency surge is never a clean Strategic Success solely because the reserve began usable.
 
-### Ravellan: `abort_and_pressure`
+## Hold And Expose
 
-Beacon remains physically held for all legal final courses.
+Selecting it consumes the unspent opportunity:
 
-The final choice determines whether the coalition preserves itself cheaply, spends unnecessary readiness/political capital, or converts legitimate evidence into a stronger political position.
+`attribution-opportunity: credible → used`
 
-## Partner-access outcome
+Terminal effects:
 
-Start from terminal `partnerAccess`.
+- improve partner consent one step if below cooperative and not withdrawn.
 
-Then apply route-specific political effects.
+Physical result:
 
-### Quiet Denial
+- against seizure: Beacon held only if `preparedDenial AND controlledExposure`;
+- against threshold/pressure receding: Beacon held.
 
-Does not itself worsen partner access.
+This route is strong when the campaign preserved evidence/political access and weak when a real seizure meets poor physical preparation.
 
-If the campaign already ended with `partner-consent = withdrawn`, access remains lost.
+## Severe-cost derivation
 
-### Joint Visible Denial
+`severeCost` is true if any authored severe-cost condition is true after route effects, including:
 
-Requires joint authority, so successful execution preserves immediate partner access. Existing concession/breach costs remain visible in outcome classification.
+- post-route reserve condition = `brittle`;
+- consultation promise = `breached`;
+- political concession = `active`;
+- liaison obligation = `breached`;
+- unresolved/compromised commitment history already frozen by the consequence contract;
+- `late-reaction`;
+- `emergency-surge`;
+- authored route overreaction below.
 
-### Emergency Mobilisation
+### Overreaction
 
-If consultation promise is `breached` and partner consent is `conditional`, emergency unilateral mobilisation causes partner access to fail at terminal resolution unless `political-concession = active` explicitly recovered immediate authority.
+- Emergency Mobilisation against threshold/pressure receding → overreaction;
+- Joint Visible Denial against pressure receding → overreaction;
+- Joint Visible Denial against threshold → overreaction when post-route reserve is brittle OR authority required political concession.
 
-If partner consent is `withdrawn`, access remains lost.
-
-Otherwise immediate access survives but may be a costly success.
-
-### Hold And Expose
-
-If `credibleExposure` and partner access exist, the route preserves immediate access. If the evidence had only become public through an earlier promise breach, that breach remains a severe cost but does not automatically erase current access unless partner state says so.
-
-## Authored overreaction cost
-
-Create the terminal severe-cost flag `overreaction` when the coalition commits a disproportionately expensive visible military response to a non-seizure outcome.
-
-For Kestrel:
-
-- `emergency-mobilisation` against `threshold_challenge` → `overreaction = true`;
-- `emergency-mobilisation` against `abort_and_pressure` → `overreaction = true`;
-- `joint-visible-denial` against `abort_and_pressure` → `overreaction = true`;
-- `joint-visible-denial` against `threshold_challenge` → `overreaction = true` only if reserve ends `brittle` or partner support required an active political concession;
-- Quiet Denial never creates the overreaction flag by itself;
-- Hold And Expose never creates the military overreaction flag.
-
-This is a discrete terminal interpretation, not a hidden utility score.
-
-## Severe-cost set
-
-`severeCost = true` if any canonical severe-cost condition from [[25-KESTREL-CONSEQUENCE-MATRIX]] is present, including:
-
-- reserve ends `brittle`;
-- consultation promise is `breached`;
-- political concession is `active`;
-- liaison obligation is `breached`;
-- partner remains only `conditional` because immediate support was recovered through concession/breach history;
-- `overreaction = true`;
-- an authored attempt-seizure route used emergency/strained reaction because warning/exposure failed despite prior preparation.
-
-Do not count the number of severe costs into a player score.
+Do not add a numeric overreaction score.
 
 ## Terminal classification
 
-Evaluate in this order.
+Use this precedence:
 
-### Operational Defeat
+1. **Operational Defeat** — Beacon lost.
+2. **Political Defeat** — Beacon held but final partner access is lost (`partner-consent = withdrawn`).
+3. **Costly Success** — Beacon held + partner access survives + `severeCost`.
+4. **Strategic Success** — Beacon held + partner access survives + no severe cost.
 
-If `beaconHeld = false`:
+Do not compress this to one player score.
 
-**Outcome:** `operational-defeat`
+## Pareto vector
 
-This classification takes precedence even if partner access remains.
+The headless laboratory separately reports the post-route four-axis vector:
 
-### Political Defeat
+- Beacon security;
+- partner consent/access;
+- reserve readiness;
+- commitment integrity.
 
-Else, if `partnerAccessAfterRoute = false`:
+Classification is reported alongside the vector; neither becomes a hidden gameplay utility function.
 
-**Outcome:** `political-defeat`
+## Route design intent
 
-Beacon remains physically secure but coalition access/control is strategically untenable.
+### Quiet Denial
 
-### Costly Success
+Rewards prior physical preparation and warning. Also supplies the rational restrained response when the confrontation does not become a seizure.
 
-Else, if `severeCost = true`:
+### Joint Visible Denial
 
-**Outcome:** `costly-success`
+Rewards preserved coalition authority and enough force readiness. It can deter/deny strongly but spends reserve and may be unnecessary escalation.
 
-Beacon is secure and partner access survives, but the campaign ends with a major self-inflicted or unavoidable strategic cost.
+### Emergency Mobilisation
 
-### Strategic Success
+Preserves comeback viability after earlier mistakes, but at real military/political cost.
 
-Else:
+### Hold And Expose
 
-**Outcome:** `strategic-success`
+Rewards preserving legitimate evidence and partner access; the player must choose whether to spend the same one-shot attribution opportunity in C5 or retain this final route.
 
-Beacon is secure, coalition access survives, and no canonical severe-cost condition dominates the result.
+No route is intended to dominate across every player-safe terminal state.
 
-There is no scalar victory score.
-
-## Route differentiation requirements
-
-The authored seed/history matrix must include reachable examples demonstrating all of the following:
-
-1. **Quiet intelligence-led denial:** Lattice/evidence and Beacon preparation make Quiet Denial a clean answer to an actual seizure without requiring a visible mobilisation.
-2. **Coalition-led deterrence:** healthy consultation/consent makes Joint Visible Denial a strong answer where a damaged partnership would make it unavailable or costly.
-3. **Reserve-backed recovery:** Emergency Mobilisation can still save Beacon after earlier mistakes when reserve/preparation has not crossed the authored failure boundary.
-4. **Information/political route:** Hold And Expose can cleanly defeat a threshold challenge/feint when credible evidence and partner access exist.
-5. **No universal route:** each final course must have at least one viable history in which another legal course yields a strictly better terminal classification or Pareto profile.
-
-## Examples that must be reachable in tests
-
-### Example A — prepared intelligence route
-
-History:
-
-- Beacon prepared;
-- exposure contained/thin;
-- usable warning;
-- reserve usable/strained;
-- partner access intact;
-- Ravellan attempts seizure.
-
-Quiet Denial → Beacon held; can be Strategic Success if no severe cost.
-
-Emergency Mobilisation → Beacon held but normally Costly Success because the heavier response spends more than necessary.
-
-### Example B — feint with credible attribution
-
-History:
-
-- credible exposure case;
-- partner access healthy;
-- Ravellan threshold challenge;
-- reserve usable.
-
-Hold And Expose → Strategic Success where no prior severe cost exists.
-
-Emergency Mobilisation → Costly Success through overreaction.
-
-### Example C — damaged partnership
-
-History:
-
-- partner consent withdrawn;
-- Beacon prepared;
-- Ravellan threshold challenge.
-
-Quiet Denial may hold Beacon physically but terminal classification is Political Defeat.
-
-Joint Visible Denial and Hold And Expose are unavailable because required partner access/authority does not exist.
-
-### Example D — brittle comeback limit
-
-History:
-
-- reserve brittle;
-- Beacon not prepared;
-- exposure open;
-- Ravellan attempts seizure.
-
-Emergency Mobilisation remains legal but Beacon is lost → Operational Defeat.
-
-This state must be reachable only through avoidable accumulated decisions; laboratory viability must reject a seed that forces it without meaningful earlier counterplay.
-
-### Example E — brittle but prepared recovery
-
-History:
-
-- reserve brittle;
-- Beacon prepared;
-- Ravellan attempts seizure.
-
-Emergency Mobilisation can still hold Beacon → Costly Success.
-
-The player's earlier preparation preserves a painful comeback route.
-
-## Terminal debrief contract
-
-After outcome resolution, terminal presentation has two clearly separated layers.
-
-### What HQ believed at the time
-
-Show the major HQ assessment at each decisive command window and the evidence legitimately available then.
-
-### What was actually happening
-
-Reveal after the campaign only:
-
-- Ravellan opening posture;
-- posture transitions;
-- seizure preparation progression;
-- major genuine/deceptive signals;
-- why the terminal Ravellan behaviour followed from the executable policy;
-- how the coalition final course interacted with the state actually built.
-
-Do not expose numeric weights because none exist.
-
-The debrief should support counterfactual understanding without claiming there was one correct strategy.
-
-## Required terminal tests
+## Required tests
 
 At minimum prove:
 
-- route availability predicates exactly;
-- attempt-seizure physical outcome for every legal route and relevant reserve/preparation boundary;
-- threshold challenge and abort preserve physical Beacon while still allowing political/costly outcomes;
-- partner-access overrides/classification ordering;
-- overreaction flag cases exactly;
-- Operational Defeat > Political Defeat > Costly Success > Strategic Success classification precedence;
-- all four outcome classes are reachable across authored histories;
-- all four final course families are useful in at least one viable history;
-- no final course dominates all others across the viable authored seed/history set;
-- brittle reserve does not automatically remove Emergency Mobilisation;
-- hidden prior Ravellan posture is not needed by player-facing route availability; only current legitimate state/terminal behaviour and public campaign history are used;
-- V1 victory/end-state logic remains unchanged.
+- route legality uses only player-known/observable state and safe crisis family;
+- raw prior Ravellan posture/preparation never controls player route availability;
+- Quiet Denial is always available for threshold/pressure-receding and requires prepared denial for seizure;
+- Joint requires actual `partner-authority`, not merely cooperative partner consent;
+- Emergency physical success/failure follows pre-route reserve/preparation, then applies reserve/partner cost and `emergency-surge`;
+- Hold requires `credible` unspent attribution; `used` is rejected;
+- C5 attribution use therefore removes C6 Hold And Expose;
+- terminal route effects change post-route Pareto state as authored;
+- a route ending with brittle reserve receives the brittle severe cost even if it started strained;
+- all four classifications are reachable in deterministic fixtures;
+- multiple final courses are non-dominated across viable histories;
+- no pressure-receding history forces Emergency Mobilisation;
+- no one final course is universal across all viable player-safe terminal states;
+- terminal truth debrief is gated until completion;
+- V1 remains unchanged.
 
 ## Rejection conditions
 
-Reject terminal implementation if it reduces to matching final route to hidden posture, introduces a scalar score, makes Emergency Mobilisation universally safe, makes Lattice mandatory for any success, makes partner consent cosmetic, or removes the costly recovery route before the final crisis.
+Reject terminal implementation if it matches the player's final course directly to hidden Ravellan opening posture, treats generic coercion evidence as seizure warning, treats partner sentiment as joint authority, permits Hold after the attribution opportunity was spent, leaves final-course costs only in prose, classifies using stale pre-route reserve/partner state, or lacks a restrained non-seizure route.
