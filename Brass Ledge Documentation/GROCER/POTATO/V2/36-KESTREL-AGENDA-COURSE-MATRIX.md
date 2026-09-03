@@ -7,355 +7,333 @@ status: active
 
 Backlink: [[README]]
 
-This is the implementation authority for Kestrel **issue IDs, order IDs, standing-intent metadata, applicability/authority flags and responsible-chief ties** consumed by #98/#103.
+This is the implementation authority for Kestrel issue/order IDs, intent metadata, applicability/authority flags and chief ties. [[24-STAFF-RECOMMENDATION-POLICY]] owns recommendation; [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns package interaction; [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] owns adversary observations.
 
-[[24-STAFF-RECOMMENDATION-POLICY]] owns recommendation algorithm. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns complete-package interactions. [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] owns adversary observations.
+# Metadata
 
-## Metadata vocabulary
-
-### `supports`
-
+`supports`:
 - `beacon-security`
 - `partner-cooperation`
 - `ravellan-understanding`
 
-Only when a real authored mechanic supports that objective.
-
-### `crossesBoundary`
-
+`crossesBoundary`:
 - `civilian-shipping`
 - `partner-consultation`
 - `reserve-readiness`
 
-Dynamic crossing may use player-known state/commitments only.
-
-### `style`
-
+`style`:
 - `quiet-preparation`
 - `visible-deterrence`
 - `partner-consultation`
 - `neutral`
 
-### `costs`
-
+`costs`:
 - `weaker-deterrence`
 - `political-friction`
 - `reserve-strain`
 
-Reason tags, never meters.
+Tags are reasons/filters, never scores.
 
-### `requiresIntervention`
+## Commander-only courses
 
-Used only for `request-partner-liaison`: legal player alternative, excluded from staff recommendation, one normal intervention.
+Exactly these are `requiresIntervention = true`:
 
-## Global validation
+- C2 `public-accusation`;
+- C4 `request-partner-liaison`;
+- C5 `use-attribution`.
 
-For every reachable state:
+They remain player-legal when prerequisites hold but never enter recommendation candidates and always consume one normal intervention.
 
-- stable unique issue/order IDs;
-- one responsible officer;
-- explicit prerequisites/omission rules;
-- metadata backed by real mechanics;
-- authored final recommendation tie;
-- no hidden-truth metadata/tie;
-- all-Delegate staff package legal under 39.
+# Global validation
+
+Every reachable issue state must have stable unique IDs, one owner, explicit prerequisites, metadata backed by real mechanics, an authored final recommendation tie where needed, no hidden-truth tags/ties and a legal composed all-Delegate package.
 
 # Cycle 1
 
-## `c1-beacon-watch`
-Owner `operations`.
+## `c1-beacon-watch` — Operations
 
 `ordinary-watch`
-- supports none; style quiet; cost weaker deterrence;
+- style quiet; cost weaker deterrence;
 - exposure remains thin; weak coverage signal.
 
 `reinforce-watch`
-- supports Beacon; crosses reserve; style quiet; cost reserve strain;
+- supports Beacon; crosses reserve; style quiet; reserve-strain cost;
 - improve exposure, strain reserve, credible coverage.
 
-Tie: `ordinary-watch > reinforce-watch`.
+Tie: ordinary > reinforce.
 
-## `c1-partner-consultation`
-Owner `political`.
+## `c1-partner-consultation` — Political
 
 `informal-liaison`
-- no support/cost; neutral; no promise/channel.
+- neutral; no promise/channel.
 
 `formal-consultation-agreement`
-- supports partner; style partner consultation;
-- creates promise + rapid channel used by C2/C5 composition.
+- supports partner; partner-consultation style;
+- creates promise + rapid channel for later C2/C5 coordination.
 
-Tie: `informal-liaison > formal-consultation-agreement`.
+Tie: informal > formal. Partner priority/style may select formal before tie.
 
-Partner priority/style may select formal before the tie; binding commitment is not routine Political default.
+## `c1-lattice-investment` — Intelligence
 
-## `c1-lattice-investment`
-Owner `intelligence`.
-
-`leave-lattice-unprotected-c1`
-- no support; maturity unreachable.
+`leave-lattice-unprotected-c1` → maturity unreachable.
 
 `protect-lattice-c1`
-- supports understanding; Lattice 0→1.
+- supports understanding;
+- Lattice 0→1.
 
-Tie: `leave-lattice-unprotected-c1 > protect-lattice-c1`.
+Tie: leave > protect.
 
 # Cycle 2
 
-## `c2-shipping-response`
-Owner `operations`.
+## `c2-shipping-response` — Operations
 
 `quiet-escort`
-- supports partner only where alternative visible surge would violate current consultation; otherwise none;
-- crosses civilian shipping; style quiet; cost weaker deterrence;
-- limited delay, reserve preserved, withheld denial signal.
+- conditionally supports partner when visible alternative would violate consultation;
+- crosses civilian shipping; quiet; weaker-deterrence;
+- limited delay, reserve preserved, withheld denial.
 
 `visible-patrol-surge`
 - supports Beacon; crosses reserve and dynamically partner consultation unless coordinated;
-- style visible; cost reserve strain + political friction when uncoordinated;
+- visible; reserve-strain + political friction when uncoordinated;
 - visible denial/credible coverage/reserve strain.
 
 `reroute-and-monitor`
 - supports understanding;
-- crosses civilian shipping; style quiet; costs political friction + weaker deterrence;
+- crosses civilian shipping; quiet; political-friction + weaker-deterrence;
 - larger disruption, reserve preserved, bounded auxiliary clue C3–C5.
 
-Tie: `quiet-escort > visible-patrol-surge > reroute-and-monitor`.
+Tie: quiet > visible > reroute.
 
-## `c2-public-posture`
-Owner `political`. Silence is authored order.
+## `c2-public-posture` — Political
 
 `remain-silent`
-- supports none; style quiet; cost weaker deterrence.
+- quiet; weaker-deterrence.
 
 `joint-non-attributive-warning`
-- supports partner; style partner consultation; no direct course cost;
-- prerequisite partner not withdrawn;
+- supports partner; partner-consultation style;
+- partner must not be withdrawn;
 - can coordinate visible surge only with active C1 formal channel.
 
 `public-accusation`
-- supports Beacon only as overt pressure/signaling;
-- crosses partner consultation; style visible; cost political friction;
-- always worsens partner, breaches active promise, emits fracture/discovery;
-- legal as risky course under weak/ambiguous evidence.
+- `requiresIntervention = true`;
+- not a staff support course for Beacon/understanding;
+- crosses partner consultation; visible; political-friction;
+- always unilateral/partner-damaging, breaches active promise, emits fracture/discovery;
+- legal as a personal risky escalation under weak/ambiguous evidence.
 
-Tie: `remain-silent > joint-non-attributive-warning > public-accusation`.
+Recommendation tie among staff-applicable courses: silent > joint warning.
 
-Rationale: a joint public warning is a meaningful political action, not routine staff housekeeping. Partner priority or partner-consultation style can select it before the tie; otherwise the commander can spend an intervention to obtain its coordination/partner benefit. Visible-deterrence standing style may select accusation and must expose Intelligence's unsupported-attribution concern.
+Partner priority/style may select joint warning. Visible-deterrence style can **never** auto-select accusation because accusation is commander-only. Intelligence concern on accusation: evidence does not justify confident attribution.
 
-This preserves command-by-exception and prevents silence from becoming a strictly worse intervention.
+## `c2-lattice-investment` — Intelligence
 
-## `c2-lattice-investment`
-Exists only after successful C1 protection. Owner `intelligence`.
+Exists only after C1 protection.
 
 `leave-lattice-unprotected-c2` → maturity unreachable.
 
-`protect-lattice-c2` → supports understanding; Lattice 1→2.
+`protect-lattice-c2` → supports understanding; 1→2.
 
 Tie: leave > protect.
 
 # Cycle 3
 
-## `c3-reserve-posture`
-Owner `operations`.
+## `c3-reserve-posture` — Operations
 
 `forward-reserve-preparation`
-- supports Beacon; crosses reserve; style quiet; cost reserve strain;
-- Beacon prepared, reserve strained, credible coverage; may contribute to C2–C4 exhaustion history.
+- supports Beacon; crosses reserve; quiet; reserve-strain;
+- Beacon prepared, reserve strained, credible coverage; can contribute to C2–C4 exhaustion history.
 
 `hold-reserve`
-- no support; style quiet; cost weaker deterrence.
+- quiet; weaker-deterrence.
 
-At mandatory conflicted belief: `forward-reserve-preparation > hold-reserve`.
-Reserve red line can select hold first. Intelligence dissents on uncertainty.
+At mandatory conflicted belief: forward > hold. Reserve red line can select hold first; Intelligence dissents on uncertainty.
 
-## `c3-focused-collection`
-Owner `intelligence`.
+## `c3-focused-collection` — Intelligence
 
 `maintain-current-coverage`
-- supports Beacon; quiet; no direct cost.
+- supports Beacon; quiet.
 
 `focus-staging-collection`
-- supports understanding; quiet; cost weaker deterrence;
+- supports understanding; quiet; weaker-deterrence;
 - worsen exposure; queue posture-blind C4 staging evidence.
 
-Tie: `focus-staging-collection > maintain-current-coverage`.
-Beacon priority can select coverage first.
+Tie: focus > maintain. Beacon priority can select maintain first.
 
-## `c3-partner-reassurance`
-Owner `political`.
+## `c3-partner-reassurance` — Political
 
-Issue appears only when partner state/recent action makes reassurance materially relevant.
+Issue exists only when reassurance is materially relevant.
 
 `routine-contact`
-- no support; neutral; no direct cost.
+- neutral; no direct benefit.
 
 `reassure-partner`
-- supports partner; style partner consultation;
-- improves eligible partner state; coherent unity signal.
+- supports partner; partner-consultation style;
+- eligible partner improvement + coherent unity signal.
 
-Tie: `routine-contact > reassure-partner`.
+Tie: routine > reassure.
 
-Rationale: material reassurance/public coalition repair is a commander-level exception unless the standing partner priority/style already tells Political to do it. This prevents a free delegated improvement while keeping the C3 political intervention candidate real.
+Partner priority/style can select reassurance; otherwise obtaining the political benefit requires personal intervention.
 
-## `c3-lattice-investment`
-Exists only after advances 1–2. Owner `intelligence`.
+## `c3-lattice-investment` — Intelligence
+
+Exists only after advances 1–2.
 
 `leave-lattice-unprotected-c3` → maturity fails.
 
-`protect-lattice-c3` → supports understanding; Lattice 2→operational.
+`protect-lattice-c3` → supports understanding; 2→operational.
 
 Tie: leave > protect.
 
 # Cycle 4
 
-## `c4-exploit-lull`
-Stable ID retained; player copy describes actual ambiguous pressure change. Owner `operations`.
+## `c4-exploit-lull` — Operations
+
+Stable ID; copy describes actual ambiguous pressure-pattern change.
 
 `recover-reserve`
-- no support; quiet; cost weaker deterrence;
+- quiet; weaker-deterrence;
 - improve reserve, worsen exposure, weak coverage.
 
 `prepare-beacon-quietly`
-- supports Beacon; crosses reserve; quiet; cost reserve strain;
+- supports Beacon; crosses reserve; quiet; reserve-strain;
 - prepare/improve Beacon, worsen reserve, credible coverage + discovery suspicion.
 
 `press-visible-advantage`
 - supports Beacon; crosses reserve and dynamically consultation;
-- visible; reserve strain + political friction where applicable;
-- overt denial/credible coverage; may contribute to C2–C4 exhaustion history.
+- visible; reserve-strain + political friction where applicable;
+- overt denial/credible coverage; can contribute to C2–C4 exhaustion history.
 
-Tie normally: quiet prepare > recover > press.
-If reserve brittle: recover > quiet prepare > press.
+Tie normally: quiet prepare > recover > press. If reserve brittle: recover > quiet prepare > press.
 
-## `c4-partner-liaison`
-Only when Lattice unavailable and fallback relevant. Owner `intelligence`.
+## `c4-partner-liaison` — Intelligence
 
-`do-not-request-liaison` — no support/cost.
+Only when Lattice unavailable and fallback relevant.
+
+`do-not-request-liaison` — routine staff baseline.
 
 `request-partner-liaison`
-- supports understanding; partner-consultation style;
-- explicit obligation, no tolerated-cost tag;
 - `requiresIntervention = true`;
-- narrower C5 auxiliary evidence.
+- supports understanding; partner-consultation style;
+- explicit liaison obligation, no tolerated-cost tag;
+- narrower C5 evidence.
 
-Staff recommendation necessarily do-not-request. Operational Lattice Task Collection is separate zero-normal-intervention action.
+Operational Lattice Task Collection remains separate zero-normal-intervention action.
 
 # Cycle 5
 
-## `c5-beacon-posture`
-Owner `operations`.
+## `c5-beacon-posture` — Operations
 
 `quiet-reinforce-beacon`
 - supports Beacon; dynamically crosses reserve; quiet; reserve cost where applicable;
-- physical preparation/coverage, no overt discovery.
+- physical prep/coverage, no overt discovery.
 
 `visible-reinforce-beacon`
 - supports Beacon; crosses reserve; partner-sensitive;
-- visible; reserve cost + political friction when unilateral;
-- physical preparation + demonstrated denial + targeted discovery/C6 deterrence path.
+- visible; reserve cost + political friction if unilateral;
+- physical prep + demonstrated denial + targeted discovery/C6 deterrence.
 
 `hold-beacon-posture`
-- no support; quiet; weaker-deterrence cost.
+- quiet; weaker-deterrence.
 
 Tie by HQ belief:
 - preparation → quiet > visible > hold;
 - unclear/coercion → hold > quiet > visible.
 
-Standing direction precedes tie.
-
-## `c5-reserve-decision`
-Owner `operations`.
+## `c5-reserve-decision` — Operations
 
 `keep-reserve-forward`
-- supports Beacon; crosses reserve; quiet; reserve-strain cost;
+- supports Beacon; crosses reserve; quiet; reserve-strain;
 - reserve worsens; Beacon prepared;
 - no C5 reserve-exhaustion observation.
 
 `emergency-consolidation`
-- no support; quiet; weaker-deterrence cost;
+- quiet; weaker-deterrence;
 - reserve improves, exposure worsens.
 
-Tie: brittle → consolidate > keep; otherwise keep > consolidate.
-Effects compose order-independently.
+Tie: brittle → consolidate > keep; otherwise keep > consolidate. Effects compose order-independently.
 
-## `c5-attribution`
-Exists only while opportunity `credible`. Owner `political`.
+## `c5-attribution` — Political
+
+Exists only while `attribution-opportunity = credible`.
 
 `hold-attribution`
-- no support; quiet; weaker-deterrence as declined immediate public pressure;
-- preserves source/opportunity/C6 Hold route.
+- quiet; declined immediate-pressure cost;
+- preserves source/opportunity/C6 Hold route;
+- **always staff recommendation**, because the alternate is commander-only.
 
 `use-attribution`
-- supports partner when politically usable; does not support understanding;
-- partner-sensitive; style partner if coordinated else visible;
-- political friction when unilateral + severe known `attribution-source-exposed` whenever used;
+- `requiresIntervention = true`;
+- supports partner when politically usable; never supports understanding;
+- partner-sensitive; partner style when coordinated else visible;
+- political friction if unilateral + severe known `attribution-source-exposed` whenever used;
 - credible→used, immediate effects, removes C6 Hold.
 
 Player-safe copy must disclose one-shot + source cost before selection.
 
-## `c5-partner-authority`
-Owner `political`; exact package/recommendation semantics in 39.
+## `c5-partner-authority` — Political
+
+Exact package/recommendation semantics in 39.
 
 `honour-consultation`
 - supports partner; partner style;
 - always player-legal; immediate tempo cost without active rapid channel;
-- after withdrawal may preserve integrity without restoring access.
+- after withdrawal preserves integrity without restoring access.
 
 `act-then-inform`
-- supports Beacon only with immediate partner-sensitive package;
-- crosses consultation; visible; political friction;
+- supports Beacon only when package contains immediate sensitive action;
+- crosses consultation; visible; political-friction;
 - only legal with sensitive action; buys unilateral tempo with package breach/damage.
 
 `political-concession`
-- supports partner; partner style; political friction + severe concession;
-- buys immediate authority/recovery under authored prerequisites.
+- supports partner; partner style; political-friction + severe concession;
+- buys immediate authority/recovery under prerequisites.
 
-No issue-local final tie; package-composed recommendation in 39 guarantees legal all-Delegate intent.
+Package composition guarantees legal all-Delegate intent.
 
 # Cycle 6
 
 ## `c6-terminal-response`
-Expose only routes legal under [[27-KESTREL-TERMINAL-MATRIX]].
 
-Owner:
-- seizure → operations;
-- threshold/pressure receding → political.
+Expose only [[27-KESTREL-TERMINAL-MATRIX]] routes.
+
+Owner: seizure Operations; threshold/receding Political.
 
 `quiet-denial`
-- supports Beacon against seizure and restrained preservation otherwise;
-- quiet; late-reaction cost only where terminal state requires it.
+- Beacon support against seizure / restrained preservation otherwise;
+- quiet; late-reaction terminal cost only when applicable.
 
 `joint-visible-denial`
-- supports Beacon + partner; visible; terminal reserve cost;
-- displayed only where 27 says it adds real value.
+- Beacon + partner support; visible; terminal reserve cost;
+- only where 27 gives real value.
 
 `emergency-mobilisation`
-- supports Beacon; crosses reserve; visible; reserve + successful emergency-surge cost;
-- fallback-only under 27, not a permanent seizure button.
+- Beacon support; crosses reserve; visible; reserve + emergency-surge on successful hold;
+- fallback-only under 27.
 
 `hold-and-expose`
-- supports partner; not understanding;
-- partner style; weaker-deterrence against seizure + source severe cost;
-- requires unspent evidence/access/physical predicates; consumes opportunity.
+- supports partner, not understanding;
+- partner style; weaker-deterrence against seizure + source severe;
+- unspent evidence/access/physical predicates; consumes opportunity.
 
-Responsible-chief tie considers **only the pruned legal set**. Never reintroduce a removed route to satisfy a fixed preference list.
+Chief tie considers only pruned legal set.
 
 # Required metadata/recommendation tests
 
-At minimum prove:
+Prove:
 
 - stable issue/order reachability;
-- all 12 opening intent answers affect at least one reachable recommendation/reason or delegated consequence;
-- real conflicts among standing-intent fields;
-- formal consultation, C2 joint warning and C3 reassurance become delegated automatically only when command direction selects them; otherwise routine baseline or personal intervention;
-- Lattice protection similarly follows understanding direction or intervention; liaison never delegates;
+- all 12 opening intent answers affect a reachable recommendation/reason or delegated consequence;
+- real standing-intent conflicts;
+- formal consultation, C2 joint warning, C3 reassurance and Lattice protection delegate only when standing direction selects them, otherwise routine baseline/intervention;
+- **exactly** `public-accusation`, `request-partner-liaison`, `use-attribution` are commander-only under every standing intent;
+- selecting each commander-only course consumes one normal intervention;
+- visible style never auto-accuses;
+- partner intent never auto-burns attribution source;
 - reroute support matches actual clue;
 - C3 chief disagreement uses same conflicted belief;
-- C5 recommendation changes with HQ/public state, not hidden truth;
-- C5 package recommendation leaves all-Delegate legal;
+- C5 all-Delegate package legal; attribution staff baseline Hold;
 - no dead C5 exhaustion metadata;
-- attribution metadata exposes one-shot + source cost and never claims new understanding;
+- attribution metadata exposes one-shot/source cost;
 - dynamic tags use player-known state only;
 - issue omission avoids ceremonial work;
 - C6 tie uses only 27-pruned routes;
@@ -363,4 +341,4 @@ At minimum prove:
 
 ## Rejection conditions
 
-Reject metadata if a course/tag is invented to force balance, support lacks real mechanic, beneficial political action is made an unconditional free baseline rather than following command direction, chief preference pre-filters standing intent, liaison delegates, known source cost is hidden, dead signal metadata returns, tie uses array/randomness, ceremonial agenda work is added or advice reads hidden Ravellan truth.
+Reject metadata if support lacks real mechanic, a beneficial political action is universal free baseline rather than command-directed, any of the three commander-only courses can Delegate, visible style auto-accuses, partner intent auto-burns source, dead signal metadata returns, tie uses array/randomness, ceremonial issue is added or advice reads hidden Ravellan truth.
