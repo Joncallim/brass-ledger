@@ -57,14 +57,17 @@ Intervene chooses a different authored course; defer exists only when stated.
 ## World truth, adversary observations, and intelligence
 
 The seed begins as **genuine preparation**, **coercive feint**, or **testing**.
-Genuine preparation can cancel into coercion after credible denial/discovery;
-feint seeks reserve exhaustion, shipping disruption, unilateral action, or
-overreaction; testing shifts toward preparation after weak coverage, visible
-disunity, or exhausted reserve and backs away/pressures politically after
-credible denial and unity. Ravellan observes only authored public/detectable
-signals—patrol, mobilisation, statements, shipping restrictions, partner
-participation, exercises, authored visible hesitation/disagreement—normally from
-the next cycle. It never sees HQ deliberation, secret intelligence, settings,
+Genuine preparation can shift to coercion when discovery meets credible Beacon
+coverage and coherent coalition unity. A coercive feint seeks reserve exhaustion,
+shipping disruption, unilateral action, or overreaction, but converts to genuine
+preparation only when the exact weak-coverage + withheld-denial + fractured-unity
+opening in [[22-RAVELLAN-EXECUTABLE-POLICY]] appears. Testing converts to genuine
+preparation only when weak Beacon coverage and fractured unity coincide; credible
+coverage plus coherent unity shifts it toward coercion. Reserve exhaustion alone
+causes more probing, not a posture transition. Ravellan observes only authored
+public/detectable signals—patrol, mobilisation, statements, shipping restrictions,
+partner participation, exercises, authored visible hesitation/disagreement—normally
+from the next cycle. It never sees HQ deliberation, secret intelligence, settings,
 score, or future choices.
 
 HQ receives natural-language Intelligence Chief judgement, not numbers or
