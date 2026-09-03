@@ -7,286 +7,178 @@ status: active
 
 Backlink: [[README]]
 
-This is the implementation authority for **which Kestrel coalition actions create Ravellan observations** consumed by [[22-RAVELLAN-EXECUTABLE-POLICY]]. It complements [[37-RAVELLAN-WORLD-EFFECT-MATRIX]], which covers the opposite direction.
-
-[[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] controls same-cycle command composition and reserve-deployment counting.
+This is the implementation authority for which Kestrel coalition actions create the Ravellan observations consumed by [[22-RAVELLAN-EXECUTABLE-POLICY]]. [[37-RAVELLAN-WORLD-EFFECT-MATRIX]] owns the opposite direction. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns same-cycle command composition.
 
 ## Global rules
 
-- Signals come only from explicit public/detectable coalition behavior listed here.
-- Unlisted actions emit no Ravellan observation.
-- Missing means unknown, never the opposite value.
-- Private standing intent, HQ belief, collection result, Lattice/liaison tasking and deliberation never emit directly.
-- Cycle-N signals first become usable at Cycle N+1; replacement/expiry follows #99.
-- Candidate emissions are derived from the **complete validated command set**, not sequential issue order.
-- If several parts of one complete command set would emit the **same signal ID and same value**, coalesce them into one observation record. Use the stable package source ref defined below where supplied; do not create duplicate active records merely because two authored actions imply the same observation.
-- A legal command set must never emit two different values for the same signal ID at the same effective point. Such content is invalid rather than order-resolved.
+- Signals come only from explicit public/detectable behavior listed here.
+- Unlisted/private actions emit none.
+- Missing means unknown, not the opposite value.
+- Cycle-N emissions first become usable N+1; replacement/expiry follows #99.
+- Derive candidate emissions from the **complete validated command set**, not sequential issue order.
+- A legal command set must never produce two different values for the same signal ID at one effective point.
+- Where several orders could contribute to the same signal, use the explicit package-level composition below rather than persisting duplicate/conflicting observations.
 
 ## Significant reserve-deployment event
 
 Qualifying cycles:
 
-- C2 `visible-patrol-surge`;
-- C3 `forward-reserve-preparation`;
-- C4 `press-visible-advantage`;
-- C5 if either `visible-reinforce-beacon` or `keep-reserve-forward`.
+- C2 visible patrol surge;
+- C3 forward reserve preparation;
+- C4 press visible advantage;
+- C5 if either visible Beacon reinforcement or keep reserve forward.
 
-At most one event counts per cycle. When canonical history reaches the **second** qualifying cycle, emit/refresh:
-
-`reserve_exhaustion_signal = suspected`
-
-Later qualifying cycles may refresh it. C1 reinforce/quiet reinforcement may strain readiness but do not count.
+At most one event counts per cycle. The second qualifying deployment cycle creates/refreshes `reserve_exhaustion_signal = suspected`. Later qualifying cycles may refresh it. C1 reinforcement/quiet reinforcement may strain readiness but do not count.
 
 ## Cycle 1
 
-### `ordinary-watch`
-
-- `beacon_coverage_signal = weak`
-
-### `reinforce-watch`
-
-- `beacon_coverage_signal = credible`
-
-No visible-denial signal; this is stronger coverage, not show-of-force.
-
-### `informal-liaison`
-
-No signal.
-
-### `formal-consultation-agreement`
-
-- `coalition_unity_signal = coherent`
-
-Kestrel authors the resulting coordination pattern as detectably coherent without exposing private agreement content.
-
-### Lattice choice
-
-No signal.
+- `ordinary-watch` → `beacon_coverage_signal = weak`.
+- `reinforce-watch` → `beacon_coverage_signal = credible`; no demonstrated-denial signal.
+- `informal-liaison` → none.
+- `formal-consultation-agreement` → `coalition_unity_signal = coherent` from its detectably coherent coordination pattern.
+- Lattice choice → none.
 
 ## Cycle 2
 
-### `quiet-escort`
+### Shipping
 
-- `visible_denial_signal = withheld`
+- `quiet-escort` → `visible_denial_signal = withheld`.
+- `visible-patrol-surge` → `visible_denial_signal = demonstrated`, `beacon_coverage_signal = credible`, qualifying reserve event.
+- `reroute-and-monitor` → `visible_denial_signal = withheld`; its intelligence payoff is HQ evidence under 39, not an adversary-observation bonus.
 
-### `visible-patrol-surge`
+### Public posture
 
-- `visible_denial_signal = demonstrated`;
-- `beacon_coverage_signal = credible`;
-- qualifying reserve-deployment event.
+- `remain-silent` → none.
+- `joint-non-attributive-warning` → `coalition_unity_signal = coherent`.
+- `public-accusation` → `coalition_unity_signal = fractured`, `ravellan_discovery_signal = suspected`.
 
-Do **not** emit a separate unity signal from the surge. If the complete package contains the joint-warning/coordinated-surge combination under 39, the one coherent-unity observation is emitted by the joint public posture below. This avoids duplicate same-cycle unity records.
+For the C2 coordinated visible-surge package, the **single** coherent-unity record comes from the joint warning. The surge does not emit a duplicate unity record.
 
-### `reroute-and-monitor`
-
-- `visible_denial_signal = withheld`
-
-Its player intelligence payoff is the separate queued HQ evidence in 39, not a Ravellan-observation bonus.
-
-### `remain-silent`
-
-No signal.
-
-### `joint-non-attributive-warning`
-
-- `coalition_unity_signal = coherent`
-
-This single observation also represents the coordinated visible-surge package when that combination is legal under 39.
-
-### `public-accusation`
-
-- `coalition_unity_signal = fractured`;
-- `ravellan_discovery_signal = suspected`
-
-### Lattice choice
-
-No signal.
+Lattice choice → none.
 
 ## Cycle 3
 
-### `forward-reserve-preparation`
+- `forward-reserve-preparation` → `beacon_coverage_signal = credible` + qualifying reserve event; no demonstrated-denial signal.
+- `hold-reserve` → none.
+- focused/maintain collection → none; private.
+- `reassure-partner` → `coalition_unity_signal = coherent`.
+- `routine-contact` → none.
+- Lattice choice → none.
 
-- `beacon_coverage_signal = credible`;
-- qualifying reserve-deployment event.
-
-No demonstrated-denial signal.
-
-### `hold-reserve`
-
-No signal.
-
-### `focus-staging-collection` / `maintain-current-coverage`
-
-No signal. Collection is private.
-
-### `reassure-partner`
-
-- `coalition_unity_signal = coherent`
-
-Kestrel authors reassurance as a detectably restored joint posture. This makes the later coherent-denial Ravellan branch reachable through normal play.
-
-### `routine-contact`
-
-No signal.
-
-### Lattice choice
-
-No signal.
+C3 reassurance is explicitly detectable so the later coherent-denial adversary branch is reachable through normal play.
 
 ## Cycle 4
 
-### `recover-reserve`
+- `recover-reserve` → `beacon_coverage_signal = weak`.
+- `prepare-beacon-quietly` → `beacon_coverage_signal = credible` + `ravellan_discovery_signal = suspected`; no demonstrated-denial signal.
+- `press-visible-advantage` → `visible_denial_signal = demonstrated`, `beacon_coverage_signal = credible`, qualifying reserve event.
+- Lattice / liaison → none; private.
 
-- `beacon_coverage_signal = weak`
+C3 reassurance + C4 quiet targeted preparation makes #99 GP-1 reachable at C5 without private-state leakage.
 
-The pullback is detectably thinning immediate coverage.
+## Cycle 5 — package-level emissions
 
-### `prepare-beacon-quietly`
+C5 has multiple simultaneous issues, so derive signals from the complete package in the order below. This is **semantic precedence**, not array execution order.
 
-- `beacon_coverage_signal = credible`;
-- `ravellan_discovery_signal = suspected`
+### A. Beacon coverage — emit at most one value
 
-This is a targeted detectable countermeasure, not public show-of-force. Ravellan can suspect its activity has been noticed without learning private HQ evidence.
+1. If `visible-reinforce-beacon` is selected:
+   - emit `beacon_coverage_signal = credible` with source `c5-visible-reinforce`.
+   - Emergency consolidation does not overwrite this overt visible reinforcement signal.
+2. Else if `keep-reserve-forward` is selected:
+   - emit `beacon_coverage_signal = credible` with source `c5-keep-reserve-forward`.
+3. Else if `quiet-reinforce-beacon` **and** `emergency-consolidation` are both selected:
+   - emit **no new beacon-coverage signal**. The detectable picture is deliberately mixed; missing means unknown rather than forcing weak/credible.
+4. Else if `quiet-reinforce-beacon` is selected:
+   - emit `beacon_coverage_signal = credible` with source `c5-quiet-reinforce`.
+5. Else if `emergency-consolidation` is selected:
+   - emit `beacon_coverage_signal = weak` with source `c5-emergency-consolidation`.
+6. Otherwise emit no new beacon-coverage signal.
 
-Combined with C3 reassurance, this makes #99 GP-1 reachable at C5 through normal player-created public signals.
+This package rule supersedes any older per-order C5 coverage emissions.
 
-### `press-visible-advantage`
+### B. Visible denial
 
-- `visible_denial_signal = demonstrated`;
-- `beacon_coverage_signal = credible`;
-- qualifying reserve-deployment event.
+If `visible-reinforce-beacon`:
 
-### Lattice / liaison actions
+- `visible_denial_signal = demonstrated`.
 
-No signal. These are private intelligence activities.
+No other C5 order emits a visible-denial value.
 
-## Cycle 5
+### C. Discovery suspicion
 
-Use the complete package and partner-authority semantics from 39.
+Candidates:
 
-### `quiet-reinforce-beacon`
+- visible Beacon reinforcement;
+- public use of attribution.
 
-- `beacon_coverage_signal = credible`
+Emit **one** `ravellan_discovery_signal = suspected`:
 
-No discovery or demonstrated-denial signal. Quiet reinforcement is the lower-political-risk physical preparation route.
+- both selected → source `c5-visible-reinforce-plus-attribution`;
+- visible only → `c5-visible-reinforce`;
+- attribution only → `c5-public-attribution`;
+- neither → none.
 
-### `visible-reinforce-beacon`
+Visible reinforcement's discovery signal is its mechanical deterrence payoff relative to quiet reinforcement. With coherent unity/credible coverage it can participate in #99's C6 strong-denial exception.
 
-- `visible_denial_signal = demonstrated`;
-- `beacon_coverage_signal = credible`;
-- `ravellan_discovery_signal = suspected`;
-- qualifying reserve-deployment event.
+### D. Coalition unity
 
-The additional discovery signal is the **mechanical payoff for being visibly targeted**. With coherent authority it can contribute to #99's Cycle-6 strong-denial exception and make a real prepared seizure become a threshold challenge. Without coherent authority, the signal does not magically create unity and may simply expose unilateral escalation.
+Exactly one authority course resolves this signal:
 
-This is why visible reinforcement is not a dominated version of quiet reinforcement.
+- honour consultation with resulting `partner-authority = joint` → `coalition_unity_signal = coherent`;
+- political concession → `coalition_unity_signal = coherent`;
+- act then inform → `coalition_unity_signal = fractured`;
+- honour after prior withdrawal (`partner-authority = none`) → no unity signal.
 
-### `hold-beacon-posture`
+Military/attribution orders do not emit a second unity record.
 
-No signal.
+### E. Significant reserve deployment
 
-### `keep-reserve-forward`
+If either visible Beacon reinforcement or keep reserve forward is selected, count exactly **one** qualifying C5 deployment event, regardless whether both are present.
 
-- `beacon_coverage_signal = credible`;
-- qualifying reserve-deployment event.
+### Individual C5 orders with no additional signal
 
-No partner-sensitive or demonstrated-denial signal.
-
-### `emergency-consolidation`
-
-- `beacon_coverage_signal = weak`
-
-### Partner authority: `honour-consultation`
-
-If resulting authority is `joint`:
-
-- `coalition_unity_signal = coherent`
-
-If authority is `none` after prior partner withdrawal, no coherent signal.
-
-### Partner authority: `political-concession`
-
-- `coalition_unity_signal = coherent`
-
-### Partner authority: `act-then-inform`
-
-- `coalition_unity_signal = fractured`
-
-### `use-attribution`
-
-- `ravellan_discovery_signal = suspected`
-
-If `visible-reinforce-beacon` is also selected, coalesce the two identical discovery candidates into one record with stable source ref:
-
-`c5-visible-reinforce-plus-attribution`
-
-If only visible reinforcement emits discovery, source ref:
-
-`c5-visible-reinforce`
-
-If only attribution emits discovery, source ref:
-
-`c5-public-attribution`
-
-### `hold-attribution`
-
-No signal.
+- `quiet-reinforce-beacon` has no discovery/demonstrated-denial signal;
+- `hold-beacon-posture` none;
+- `hold-attribution` none;
+- quiet/nonvisible actions do not invent a unity signal.
 
 ## Cycle 6
 
-No newly emitted coalition observation is consumed by another Kestrel Ravellan policy decision; terminal behavior was already selected at Cycle-6 start.
-
-Final coalition courses still create authoritative terminal consequences under 39 but require no additional #99 observation record in this slice.
+No new coalition observation is consumed by another Kestrel Ravellan policy decision; terminal behavior was already selected at C6 start. Final courses still produce authoritative consequences under 39.
 
 ## Required playable reachability
 
 ### CF-1 / T-1 opportunity chain
 
-A normal history can produce:
-
-- C1 ordinary watch → weak coverage;
-- C2 quiet escort → withheld denial;
-- C2 public accusation → fractured unity;
-
-so C3 Ravellan policy can see the authored weak/withheld/fractured opportunity.
+C1 ordinary watch → weak coverage; C2 quiet escort → withheld denial; C2 public accusation → fractured unity. C3 policy can therefore see the authored weak/withheld/fractured opportunity.
 
 ### GP-1 denial/discovery chain
 
-A normal history can produce:
-
-- C3 reassure partner → coherent unity usable C4–C5;
-- C4 quiet Beacon preparation → credible coverage + discovery usable C5;
-
-so a C5 genuine-preparation decision can match GP-1 and transition toward coercion.
+C3 reassure partner → coherent unity usable C4–C5; C4 quiet Beacon preparation → credible coverage + discovery usable C5. A C5 genuine-preparation decision can therefore match GP-1.
 
 ### C6 strong-denial chain
 
-A normal history can produce:
-
-- C5 visible Beacon reinforcement → credible coverage + discovery;
-- C5 honour consultation through a compatible joint-authority package or political concession → coherent unity;
-
-so C6 genuine-preparation terminal policy can take the strong-denial exception.
-
-C5 public attribution is an alternate discovery source when selected and unspent evidence is deliberately consumed.
+C5 visible Beacon reinforcement → credible coverage + discovery; compatible honour/concession → coherent unity. C6 genuine-preparation terminal policy can therefore take the strong-denial exception. Public attribution is an alternate discovery source when its one-shot opportunity is spent.
 
 ## Required tests
 
-At minimum prove:
+Prove at minimum:
 
 - exact signal set for every listed action/package;
 - unlisted/private actions emit none;
 - missing never becomes opposite;
-- same-value duplicate candidates coalesce deterministically;
-- no legal package emits contradictory same-ID values;
-- coordinated C2 surge uses one coherent-unity record rather than duplicates;
-- C3 reassurance + C4 targeted preparation makes GP-1 reachable;
-- C5 visible reinforcement is mechanically distinct from quiet reinforcement and can participate in the C6 denial exception only with coherent unity;
-- C5 visible+attribution discovery coalesces to the stable composite source;
+- coordinated C2 surge has one coherent record, no duplicate;
+- C3 reassurance + C4 targeted preparation reaches GP-1;
+- every legal C5 beacon/reserve combination produces at most one beacon-coverage value;
+- visible/quiet reinforcement are mechanically distinct through C5 discovery signaling;
+- C5 discovery sources coalesce to the stable single source;
+- authority emits exactly one coherent/fractured/none unity outcome;
 - significant reserve deployment counts max once per cycle;
-- same complete command set yields identical signal set regardless issue-array order;
+- same complete command set yields identical signals regardless issue-array order;
+- no legal package produces contradictory same-ID values;
 - V1 remains unchanged.
 
 ## Rejection conditions
 
-Reject content if it infers signals from omission, reads private HQ state to decide what Ravellan notices, emits unfrozen signals, creates duplicate/contradictory same-cycle observations through issue order, double-counts reserve deployment, or leaves an adversary transition playable only through synthetic test inputs.
+Reject content if it infers signals from omission, reads private HQ state to decide what Ravellan notices, emits unfrozen signals, persists duplicate/conflicting same-cycle observations, double-counts deployment, or leaves an adversary transition playable only through synthetic test inputs.
