@@ -7,263 +7,191 @@ status: active
 
 Backlink: [[README]]
 
-This document is the implementation authority for **#104 — V2 headless six-turn campaign execution**. It defines how the complete Kestrel slice is run and replayed without browser dependency. It is execution infrastructure, not a new gameplay system.
+This document is the implementation authority for **#104 — complete replay-valid Kestrel execution without browser dependency**. It owns orchestration only. Game rules remain in shared/sim/content under [[30-ARCHITECTURE-CONTRACT]].
 
-## Product purpose
+## Purpose
 
-Before building the Command Room, the complete six-cycle experiment must be playable, replayable and inspectable headlessly.
+The headless path exists so the full six-cycle game can be:
 
-The headless path exists to support:
+- executed deterministically;
+- replay-verified;
+- exercised by [[31-HEADLESS-DESIGN-LAB]];
+- inspected through a belief-safe transcript;
+- used for the later 3-player non-gating formative smoke.
 
-- fast deterministic mechanics verification;
-- complete authored-route tests;
-- the strategy/design laboratory;
-- a non-gating plain-text formative human smoke before browser polish;
-- trusted replay/import evidence.
+It must call the same authoritative transitions later used by server/browser. It is not a simplified second implementation.
 
-It must call the same authoritative simulation transitions later used by the server/browser. It may not become a separate simplified game implementation.
+## Inputs
 
-## Ownership
+A run receives:
 
-`packages/headless` owns orchestration of a V2 run.
-
-It does **not** own:
-
-- order legality;
-- Ravellan policy;
-- HQ belief reduction;
-- recommendations;
-- consequences;
-- Lattice results;
-- terminal outcomes.
-
-Those remain in shared/sim/content according to [[30-ARCHITECTURE-CONTRACT]].
-
-## Canonical run inputs
-
-A complete Kestrel headless run receives:
-
-- resolved canonical V2 scenario/content identity;
+- resolved V2/Kestrel content identity;
 - campaign seed;
-- one valid opening standing-intent declaration;
-- a command provider/policy that receives only the player-safe current command projection and returns legal player dispositions/task choices;
-- optional deterministic run-control metadata for tests (maximum cycle guard, transcript mode).
+- one valid immutable opening standing direction;
+- a command provider receiving only the normal player-safe current projection;
+- optional non-authoritative test/run-control metadata.
 
-The ordinary command provider must not receive hidden world truth, Ravellan private state, adversary observations, oracle data or future state.
+The normal provider never receives hidden world/Ravellan state, `AdversaryObservation`, private ledger, oracle-frontier state or future branches.
 
-The `oracle` policy is not part of normal #104 execution; #107 may explicitly wrap the headless runner with separate test-only truth access.
+[[31-HEADLESS-DESIGN-LAB]] may run a **separate test-only oracle-frontier explorer** around verified simulator states. It is not a command provider and never chooses actions for a canonical run.
 
 ## Player-safe headless projection
 
-Before the browser DTO exists, #104 may expose a **headless player projection** containing only the minimum data required to make a legal command:
+Use the same information principles as [[38-PLAYER-SAFE-PROJECTION-CONTRACT]]. Before the final browser DTO exists, the headless adapter may expose only the safe information needed to decide legally:
 
-- cycle;
-- player-language standing direction;
-- belief-safe situation/change summary refs;
-- HQ Intelligence Chief judgement/reasons/gaps;
-- current agenda issue IDs/titles;
-- responsible officer;
-- authoritative staff recommendation and discrete reason refs;
-- authored dissent refs;
-- legal dispositions/orders/defer availability;
-- intervention budget/current draft usage where applicable;
-- legal Task Collection/liaison target IDs when available;
-- public persistent-state summaries required to understand known commitments/recovery.
+- cycle/revision;
+- situation/change summary;
+- standing direction;
+- HQ judgement/reasons/gaps;
+- public Kestrel state/known commitments;
+- current agenda issues;
+- responsible officer, staff recommendation/reasons/dissent;
+- legal player alternatives and personal-attention costs;
+- safe cross-issue requirement/conflict refs;
+- eligible Lattice targets / commander-only liaison where legal;
+- safe Cycle-6 crisis family and only final routes legal under [[27-KESTREL-TERMINAL-MATRIX]].
 
-It must not expose hidden Ravellan posture/preparation, adversary-observation records, truth provenance, oracle data, future event branches or a best-option score.
+Never expose hidden posture/preparation, raw Ravellan action/signal records, target selector inputs, truth provenance, future outcomes or a best-option score.
 
-The later #105 player DTO may replace/refine presentation shape, but hidden-information non-interference must already hold here.
-
-## Canonical execution sequence
-
-The headless runner must use the authoritative V2 lifecycle rather than inventing its own loop.
+## Canonical execution
 
 ### Opening
 
-1. resolve canonical scenario/content identity;
-2. create canonical initial V2 state, including #99 Ravellan opening state;
+1. resolve canonical content/ruleset identity;
+2. create canonical V2 initial state including #99 Ravellan state;
 3. persist/verify initial digest;
-4. apply the one immutable standing-intent declaration;
+4. apply immutable standing intent;
 5. enter Cycle 1.
 
 ### Cycles 1–5
 
-For each cycle:
+For each cycle, use the authoritative lifecycle/ledger order implemented by sim:
 
-1. execute the authoritative Ravellan/world system transition in canonical ledger order;
-2. advance authored consequences/lifecycles due at cycle start;
-3. resolve authorised observations/collection results into HQ evidence and assessment;
-4. build the authoritative agenda;
-5. derive responsible-officer recommendation/reasons/dissent;
-6. produce the player-safe headless command projection;
-7. call the command provider exactly once for that command window;
-8. validate the returned atomic command set/task actions through normal sim contracts;
-9. reject illegal/stale/incomplete commands; do not auto-correct them;
-10. apply authoritative order/consequence/observation/capability transitions;
-11. persist the canonical ledger/state hashes/revision;
-12. produce the belief-safe consequence reveal/transcript record;
-13. advance to the next cycle.
+1. Ravellan/world system transition;
+2. due consequence/lifecycle transitions;
+3. authorised observations/collection results → HQ evidence/assessment;
+4. agenda construction;
+5. staff recommendation/reason/dissent derivation;
+6. safe player projection;
+7. command provider returns **one complete intended player command package**;
+8. simulator derives delegated staff orders and validates the complete atomic final-order set, including [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] constraints;
+9. invalid/stale/incomplete/incompatible packages fail — never auto-correct, sample-then-repair or silently Delegate another issue;
+10. authoritative order/consequence/capability/coalition→Ravellan signal transitions execute order-independently where required;
+11. every persisted mutation is replay-verifiable under [[30-ARCHITECTURE-CONTRACT]];
+12. produce belief-safe consequence transcript;
+13. advance the cycle.
 
-Where current repository implementation splits these into more than one revisioned system/action ledger entry, preserve the canonical ledger ordering rather than forcing one synthetic headless transaction.
+Preserve whatever explicit system/player ledger entries the committed simulator requires. Headless must not collapse them into one synthetic transition merely for convenience.
 
 ### Cycle 6
 
-1. execute the authoritative Ravellan terminal decision;
-2. update legitimate HQ belief/public crisis state;
-3. derive legal final courses from [[27-KESTREL-TERMINAL-MATRIX]];
-4. obtain one legal final player course from the command provider;
-5. resolve terminal Beacon/partner/cost outcome;
-6. produce terminal classification and two-layer debrief evidence;
-7. persist final canonical state/digest;
-8. run trusted replay verification against the completed session.
+1. execute authoritative Ravellan terminal decision;
+2. project the safe overt crisis family;
+3. update any legitimate HQ/public state due before command;
+4. derive **only** routes legal under [[27-KESTREL-TERMINAL-MATRIX]];
+5. obtain one legal final player course;
+6. apply final-route authoritative state effects and terminal resolution;
+7. produce classification + two-layer debrief;
+8. persist final state/digest;
+9. complete trusted replay verification.
 
-No Cycle-6 Task Collection is legal.
+No Cycle-6 Task Collection exists.
 
-## Command-provider contract
+## Command-provider authority
 
-A headless command provider may be:
-
-- a scripted fixture sequence;
-- a deterministic named policy used by tests/lab;
-- an interactive plain-text adapter for formative smoke/manual runs.
-
-It receives only the player-safe projection plus any provider-local deterministic state.
+A provider may be scripted, deterministic lab policy, or interactive plain-text adapter.
 
 It returns player authority only:
 
-- explicit issue dispositions;
-- selected authored intervention order IDs where intervening;
-- legal defer choices;
-- legal task/liaison target choice where applicable;
-- final Cycle-6 course.
+- one disposition per authoritative agenda issue;
+- intervention order ID where intervening;
+- legal defer where applicable;
+- legal Task Collection choice / commander-only liaison action where applicable;
+- final Cycle-6 route.
 
-It does not return:
+It does **not** return delegated final order IDs as authority, staff recommendations, state patches, consequences, Ravellan actions/signals, partner-authority result or terminal outcome.
 
-- delegated final order IDs as authority;
-- staff recommendations;
-- resolved consequences;
-- Ravellan actions;
-- state patches.
-
-The simulator remains authoritative.
+For a provider that makes no personal changes, the untouched all-Delegate package must be legal in every reachable state. If it is not, that is a recommendation/content defect, not something headless repairs.
 
 ## Invalid-provider behavior
 
-If a provider returns an illegal command:
+Fail with a structured error that identifies cycle / issue or package constraint / rejection code. Preserve the last verified canonical state for diagnostics.
 
-- fail the run with a structured headless command error identifying cycle/issue/rejection code;
-- preserve the last verified canonical state for diagnostics;
-- do not silently choose Delegate;
-- do not retry with a different action unless the caller explicitly implements an external interactive correction loop.
+Do not:
 
-Automated policy bugs must fail tests rather than being hidden by forgiving orchestration.
+- silently substitute Delegate;
+- alter another issue to satisfy a cross-issue rule;
+- retry a different random action;
+- mutate provider output into legality.
 
-## Determinism
+Interactive callers may explicitly ask the human for a corrected command after a rejection; automated policy bugs must fail.
 
-Given identical:
+## Determinism / replay
 
-- V2/content identity;
-- seed;
-- opening intent;
-- deterministic command-provider outputs;
+Identical content identity, seed, standing intent and deterministic provider outputs must produce identical:
 
-headless execution must produce identical:
-
-- ordered action/system ledger;
+- ordered ledger;
 - HQ evidence/assessment history;
-- Ravellan history;
-- consequence records;
-- final state/digest;
-- terminal classification.
+- Ravellan/action/signal history;
+- persistent consequences;
+- final post-route state;
+- final digest/classification.
 
-Human-readable timestamps or non-authoritative logging metadata must not enter canonical digest/state.
+Every successful run must pass normal trusted V2 replay. A run is not successful if a persisted transition cannot be recomputed/verified.
 
-## Trusted replay closure
+Human-readable timestamps/log formatting stay outside canonical state/digest.
 
-Every successfully completed headless run must be replay-verifiable through the normal V2 trusted replay path using canonical live content.
+## Transcript
 
-The runner must not declare success if:
+Normal transcript remains belief-safe and player-like.
 
-- final digest mismatches;
-- content identity mismatches;
-- ledger ordering/revision/hash fails;
-- replay recomputation produces a different Ravellan decision, belief assessment, consequence transition, recommendation-relevant state or terminal result.
+Per cycle show:
 
-If some later issue's transition is not yet replay-verifiable, #104 is not complete.
-
-## Headless transcript
-
-Provide a deterministic, belief-safe plain-text transcript mode for developers and the non-gating formative smoke.
-
-Per cycle it should show, in player language:
-
-- situation/change summary;
-- Intelligence Chief judgement and key evidence/gap;
-- each agenda issue with staff intended course/reasons/dissent;
-- legal player alternatives;
-- submitted player exceptions/delegated items;
+- situation/change;
+- HQ judgement/evidence gap;
+- staff intended action/reasons/dissent;
+- legal alternatives and known costs/requirements;
+- personal exceptions vs delegated work;
 - consequence beats;
 - unresolved next pressure.
 
-Terminal transcript additionally shows:
+When C5 public attribution is available, the transcript must disclose the known one-shot/source-exposure cost before selection, exactly as the future UI will.
 
-- terminal classification;
-- immediate outcome explanation;
-- **What HQ believed** history;
-- **What was actually happening** debrief after completion.
+Terminal transcript shows classification, post-route public state, **What HQ believed**, then **What was actually happening** only after terminal completion.
 
-Do not show hidden truth before the terminal debrief merely because the runner is a CLI/developer tool, unless an explicit separate diagnostic/oracle flag is used outside the normal player transcript.
+## Batch execution / design lab
 
-## Formative smoke support
+Provide a bounded programmatic API suitable for #107. Runs are isolated and deterministic; counterfactual cloning belongs to the lab layer and never mutates the source/canonical history.
 
-After #104 is complete and replay-valid, the project may run the already-authorised **3-player non-gating formative smoke** using the plain-text headless slice before the browser UI exists.
+Do not add parallelism merely for speed if it compromises deterministic evidence.
 
-The runner should support this without adding tutorial/coaching logic.
+## Human-smoke sequencing
 
-It must not:
+The headless runner makes the formative smoke technically possible after #104, but the study must **not run until #107's structural gate is complete**.
 
-- suggest a preferred strategy;
-- reveal hidden state;
-- auto-select invalid/missing input;
-- generate synthetic human evidence.
+Sequence:
 
-Human evidence still belongs in [[80-HUMAN-PLAYTESTS]].
+`#104 complete → #107 complete → 3-player non-gating formative smoke → continuation/redesign decision → #105/#106 main browser tranche`
 
-## Batch execution
-
-Expose a bounded programmatic API suitable for #107 to run many deterministic seed/policy combinations without spawning browser/server processes.
-
-Batch execution must:
-
-- isolate run state;
-- not mutate global scenario/content state;
-- retain deterministic result ordering;
-- permit counterfactual cloning only through #107's explicit lab layer;
-- surface failures rather than dropping failed runs.
-
-Do not add parallelism merely for speed if it compromises deterministic ordering/logging or complicates the prototype.
-
-## Compatibility
-
-V1 CLI/headless behavior remains supported.
-
-Do not reinterpret existing V1 flags/output as V2 semantics. Add an explicit V2 mode/scenario path according to existing CLI conventions.
+The smoke remains governed by [[35-HUMAN-PLAYTEST-HARNESS]]. Headless must not add coaching, preferred-strategy hints or hidden truth to support it.
 
 ## Required #104 tests
 
 At minimum prove:
 
-- complete Cycle-1-through-6 scripted Kestrel run reaches a terminal classification and passes trusted replay;
-- at least one valid run for each Ravellan opening posture is replayable;
-- authored viable final-route families can be exercised through legal histories;
-- same seed/intent/provider outputs produce identical final digest/history;
-- provider receives no hidden Ravellan state/observations/oracle data;
-- illegal provider command fails rather than auto-delegating/auto-fixing;
-- Cycle-6 Task Collection is rejected;
-- hidden truth appears only in explicit terminal debrief/diagnostic mode;
-- batch runs remain isolated/deterministic;
-- V1 CLI/headless tests remain green.
+- complete C1→C6 scripted run reaches terminal classification and trusted replay;
+- at least one replayable run for each Ravellan opening posture;
+- same inputs/provider outputs → identical ledger/final digest;
+- provider sees no hidden state/oracle data;
+- untouched all-Delegate packages are legal in representative reachable states including C5;
+- invalid/incompatible package fails rather than being repaired;
+- C2/C5 cross-system composition and coalition→Ravellan signals follow [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] / [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]];
+- terminal route set uses [[27-KESTREL-TERMINAL-MATRIX]] and post-route state is replayed;
+- Cycle-6 Task Collection rejected;
+- hidden truth appears only in terminal debrief / isolated diagnostics;
+- batch runs isolated/deterministic;
+- V1 CLI/headless behavior remains green.
 
 ## Rejection conditions
 
-Reject #104 if it duplicates simulation rules in `packages/headless`, treats saved state as trusted without replay, auto-corrects illegal policies, exposes hidden truth in the normal headless player projection, depends on browser/server runtime, or adds generic orchestration/framework scope beyond the Kestrel experiment.
+Reject #104 if headless duplicates game rules, exposes hidden truth to normal providers, uses an oracle gameplay policy, auto-repairs invalid command packages, hides cross-issue errors, trusts saved state without replay, depends on browser/server runtime, runs the human smoke before #107, or expands into generic orchestration beyond the bounded Kestrel need.
