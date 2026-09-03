@@ -21,112 +21,133 @@ A review can validate structure. It cannot certify human fun.
 | Persistence | Consequences/promises/recovery underspecified. | Concrete Kestrel records + authored recovery. |
 | Intelligence | Confidence/provenance could leak truth. | Bounded evidence + natural language + strict DTO. |
 | Replay | State/action/digest/atomicity incomplete. | Versioned V2 action/system ledger + trusted replay. |
-| Agent ambiguity | Agents could invent missing timing/predicates. | Numbered implementation contracts + blocker escalation. |
+| Agent ambiguity | Agents could invent timing/predicates. | Numbered contracts + blocker escalation. |
 | YAGNI | Generic frameworks before proven second use. | Concrete Kestrel semantics first. |
 
 # Composed-system pass 1 — ownership / fake choice / scope
 
 | Defect | Amendment |
 | --- | --- |
-| Chief “professional acceptability” could silently override command direction. | Chief worldview now concerns/final tie/dissent only; standing direction applies first. |
-| CF/T weak-coverage opportunity existed in policy but lacked normal-play opening weak signal. | C1 ordinary watch explicitly emits weak; reinforcement credible. |
-| Coalition strategy had no lab probe. | Added coalition-first. |
-| Whole-run policy differences could hide cosmetic individual choices. | Added Decision Elasticity. |
-| Final crisis risked hidden-posture rock-paper-scissors. | Final routes depend on campaign-built player-known state. |
-| Lattice risked mandatory build. | Costly narrower liaison fallback + non-Lattice viability proof. |
-| Early mistakes could create death spiral. | Costly recovery through C5. |
-| Early success could remove late decisions. | Snowball/triviality diagnostic; no rubber-banding. |
-| UI could still be Delegate-click workflow. | Issues start locally delegated; player acts on exceptions. |
-| Consequence view could become ledger dump. | Default 1–5 material causal beats. |
-| Headless could diverge from real rules. | Same authoritative sim/replay required. |
-| Long-game ideas could contaminate prototype. | `32` provisional/non-authoritative. |
+| Chief professional filter could silently override standing direction. | Chief worldview now concern/final tie/dissent only; standing direction first. |
+| Weak-coverage adversary opportunity lacked normal-play signal. | C1 ordinary watch weak; reinforcement credible. |
+| Coalition route had no lab probe. | Added coalition-first. |
+| Whole-policy outcomes could hide cosmetic individual choices. | Added Decision Elasticity. |
+| Finale risked hidden-posture counter matching. | Final routes depend on campaign-built player-known state. |
+| Lattice risked mandatory build. | Narrower costly liaison + non-Lattice viability proof. |
+| Early mistakes/success could collapse decisions. | Recovery + snowball diagnostics; no rubber-banding. |
+| UI could remain Delegate-click workflow. | Implicit delegation. |
+| Consequence could become ledger dump. | 1–5 material causal beats. |
+| Headless could diverge. | Same authoritative sim/replay. |
+| Long-game ideas could leak pre-gate. | `32` provisional. |
 
 # Composed-system pass 2 — information / commitments / atomicity
 
 | Defect | Amendment |
 | --- | --- |
-| Directed collection read hidden Ravellan posture to select sensor result. | All collection is posture-blind and reads only target-authorised physical/action-history facts. |
-| C1 formal consultation was almost universal Political default. | Informal liaison wins final tie; partner-oriented standing direction can select formal commitment. |
-| Formal consultation risked pure liability. | Active formal channel coordinates C2 surge and gives rapid C5 consultation. |
-| Liaison one-token cost could be bypassed through staff recommendation. | Sole `requiresIntervention` course; never Delegate. |
-| C2 accusation could avoid partner cost without formal promise. | It is always unilateral/partner-damaging; active promise adds breach. |
-| C5 state could depend on issue order. | Complete-package composition + signed aggregation then one clamp. |
-| Partner sentiment implied operational permission. | Explicit `partner-authority`. |
-| Generic credible attribution could count as seizure warning. | `usableWarning` is preparation-direction HQ assessment only. |
-| Backdown could force irrational mobilisation when Beacon unprepared. | Quiet Denial is restrained non-seizure fallback. |
-| Terminal costs could exist only in prose. | Final routes mutate authoritative state before classification/Pareto. |
-| Hold And Expose risked prose-equivalent Quiet. | It consumes evidence/affects partner; seizure safety still needs physical denial. |
-| Staff/player terminal path could consume raw #99 action ID. | Safe overt crisis-family enum. |
-| Browser work was scheduled before structural falsification. | #107 + formative smoke before main UI tranche. |
+| Collection read hidden posture. | Posture-blind target-authorised physical/action-history facts only. |
+| Formal consultation nearly universal default. | Informal final tie; partner direction can select formal. |
+| Formal promise risked pure liability. | Rapid channel coordinates C2/C5. |
+| Liaison one-token cost could delegate. | Sole `requiresIntervention` course. |
+| C2 accusation could escape partner cost without promise. | Always unilateral/partner-damaging; promise adds breach. |
+| C5 state could depend on issue order. | Complete-package composition + one clamp. |
+| Partner sentiment implied permission. | Explicit partner authority. |
+| Coercion evidence could count as seizure warning. | Warning is preparation-direction assessment only. |
+| Backdown could force irrational mobilisation. | Quiet is restrained non-seizure fallback. |
+| Terminal costs only prose. | Final routes mutate state before classification. |
+| Hold/Expose risked cosmetic Quiet. | Consumes evidence/affects partner; physical safety still matters. |
+| Terminal staff could consume raw #99 IDs. | Safe crisis-family enum. |
+| UI scheduled too early. | #107 + smoke before browser tranche. |
 
-# Composed-system pass 3 — default-package legality / timing / trap buttons
-
-| Defect | Amendment |
-| --- | --- |
-| Independent C5 recommendations could form server-invalid all-Delegate package. | All-Delegate package invariant + bounded C5 recommendation composition. |
-| Honour consultation was instantaneous without prior channel, making unilateral tempo choice mostly worse politics. | Only active C1 formal channel gives rapid same-cycle honour; otherwise act/concession buy tempo. |
-| Withdrawal could force concession just to create legal authority choice. | Honour remains legal; preserves integrity while accepting lost access. |
-| C5 attribution use gave immediate benefit but still allowed C6 Hold And Expose. | One-shot attribution: `credible → used`, removing final exposure route. |
-| Reroute had greater disruption after its information payoff was removed. | Restored bounded indicator-only auxiliary clue C3–C5. |
-| Visible C5 reinforcement had quiet's physical payoff plus extra risk and no unique benefit. | Visible reinforcement emits targeted discovery and can affect C6 strong-denial behavior. |
-| Legal C5 reinforcement+recovery could emit contradictory coverage values. | Package-composed one-value-per-signal coalescing. |
-| Multiple orders could duplicate discovery/unity observations. | Stable same-value coalescing/source refs. |
-| #99 rows could be unit-test reachable but normal-play unreachable. | `37A` freezes playable opportunity/denial/C6 signal chains. |
-| Elasticity cannot catch a state-changing but strictly worse option. | Added player-safe local course dominance across compatible hidden realities. |
-| Naive dominance could remove legitimate uncertainty-dependent gambles. | Flag only courses with no upside in every compatible hidden reality and no info/recovery/action-space compensation. |
-| Correct semantics depended on remembering a large override layer. | Base contracts normalised; `39` restricted to genuine cross-system rules. |
-
-# Composed-system pass 4 — terminal/pricing/presentation fairness
+# Composed-system pass 3 — default legality / timing / trap buttons
 
 | Defect | Amendment |
 | --- | --- |
-| Finale displayed known inferior self-harm routes after overt crisis was visible. | `27` prunes player-safe dominated terminal responses: no Joint/Emergency after pressure recedes; no Emergency for threshold; Joint threshold only when it adds value over Quiet. |
-| Public attribution/exposure had too much free political upside. | Public use exposes/compromises protected source as **known severe cost**. |
-| Local-dominance diagnostic could ignore source/severe costs outside four main Pareto axes. | Local dominance also compares classification + explicit severe-cost set. |
-| #104 still referred to oracle gameplay policy and smoke immediately after #104. | Separate oracle frontier only; `#104 → #107 → smoke`. |
-| Browser contract had drifted from final C2/C5/terminal mechanics. | `34` rewritten against final mechanics. |
-| UI could hide knowable package/source costs until rejection/consequence. | `28` requires pre-selection safe requirement/cost disclosure; no silent repair. |
-| Reveal could narrate sequential C5 states that never existed. | `29` narrates authoritative net package state + causal contributions. |
-| Human harness Stage A still ran before #107. | `35` requires #107 first and codes fairness/trap/package/source comprehension. |
-| Post-gate ideas could recreate ceremony, intent-oracle sensors or free capability bypasses. | `32` inherits Kestrel invariants provisionally. |
-| High-level gameplay contract could imply only player commands belong in history. | `10` requires every persisted system/player mutation be replay-verified or purely derived. |
+| C5 independent recommendations could form invalid all-Delegate package. | Legal all-Delegate invariant + package-composed C5 recommendation. |
+| Honour consultation instantaneous without prior channel. | Active C1 channel gives rapid C5 honour; otherwise act/concession buy tempo. |
+| Withdrawal could force concession. | Honour remains legal integrity-only choice. |
+| C5 attribution use still allowed C6 Hold/Expose. | One-shot attribution. |
+| Reroute lost information payoff and became trap. | Restored bounded C3–C5 indicator clue. |
+| Visible C5 reinforcement lacked benefit over quiet. | Targeted discovery / C6 deterrence path. |
+| C5 legal package could emit contradictory coverage. | Package signal coalescing. |
+| Multiple orders could duplicate signals. | Stable coalescing/source refs. |
+| #99 rows could be synthetic-only. | `37A` playable signal chains. |
+| Elastic choice could still be strictly worse. | Player-safe local course dominance. |
+| Dominance could erase legitimate gambles. | Compare across all hidden realities compatible with same player info. |
+| Base contracts depended on broad override memory. | Base contracts normalised; `39` narrowed to true composition. |
 
-# Composed-system pass 5 — dead-state / authority normalisation
+# Composed-system pass 4 — terminal / pricing / presentation fairness
 
 | Defect | Amendment |
 | --- | --- |
-| C5 reserve-exhaustion observation survived even though C6 terminal Ravellan policy has no rule that can consume it. | Removed the entire C5 exhaustion observation. Qualifying exhaustion history is only C2–C4 where a later normal Ravellan decision can read it. Added #107 dead-state/dead-observation diagnostic + regression fixture. |
-| `36` still claimed C5 keep-reserve-forward produced the removed exhaustion effect. | Course matrix normalised; C5 reserve state remains real but dead observation metadata removed. |
-| `21` still said Emergency Mobilisation was universally legal. | High-level canon now matches pruned C6 route sets. |
-| `README` still described `39` as a broad patch layer after base contracts were normalised. | Authority map narrowed: base subsystem contracts own subsystem behavior; `39` owns genuine cross-system composition only. |
-| `30` did not explicitly assign complete-package derivation/validation to sim. | Architecture now states sim owns delegated-order derivation, complete package legality/composition and reverse observations; server/web/headless cannot duplicate them. |
-| Human evidence registry could not capture the new fairness/package/source observations. | `80` expanded to match `35`. |
-| #99 issue body still reflected its early narrow scope and omitted mandatory ledger/replay reviews. | Live #99 contract updated without touching implementation. |
+| Finale displayed known inferior responses after overt crisis visible. | Pruned backdown/threshold self-harm routes. |
+| Attribution had too much free political upside. | Protected-source exposure is disclosed severe cost. |
+| Dominance could ignore source/severe cost. | Local relation includes classification + severe flags. |
+| #104 had oracle gameplay language and pre-#107 smoke. | Separate oracle frontier; `#104 → #107 → smoke`. |
+| Browser contract drift. | `34` rewritten. |
+| UI could hide known package/source costs. | `28` pre-selection disclosure, no silent repair. |
+| Reveal could narrate nonexistent sequential C5 state. | `29` uses net authoritative package state. |
+| Human harness Stage A too early. | #107 first; fairness/trap/package/source coding added. |
+| Post-gate ideas could regress Kestrel safeguards. | `32` inherits invariants provisionally. |
+| High-level replay wording stale. | `10` covers all persisted system/player mutations. |
 
-# Current structural invariants to attack during implementation
+# Composed-system pass 5 — dead state / authority normalisation
 
-1. Adversary policy reads only authorised observations.
-2. Collection never reads hidden posture.
-3. Claimed #99 behavior paths are reachable through normal authored public signals where relied upon.
-4. All-Delegate staff package is always a legal complete command set.
-5. Liaison always consumes one personal intervention and never delegates.
-6. Standing direction materially affects recommendation/consequence.
-7. Reroute monitoring, Lattice targets and liaison are mechanically distinct.
-8. C5 consultation-vs-tempo and attribution-use-vs-preserve remain elastic.
-9. C5 state/signal outputs are issue-order independent.
-10. No legal package creates contradictory same-signal values.
-11. Visible vs quiet reinforcement have different adversary consequences.
-12. No dead persisted state/observation exists merely for symmetry; C5 exhaustion remains absent.
-13. Recovery is real/costly through C5.
-14. No player-safe course is an unintentional dominated trap.
-15. No final route is universal; known player-safe dominated terminal routes are pruned.
-16. Terminal/source/commitment costs appear in authoritative post-route state/classification and are disclosed when knowable.
-17. V1/replay/version/player-safe projection boundaries remain isolated.
-18. Machine evidence never substitutes for human fun evidence.
+| Defect | Amendment |
+| --- | --- |
+| C5 reserve-exhaustion observation had no downstream consumer. | Removed entirely; exhaustion observations only C2–C4 where later normal Ravellan policy can read them. Added dead-state diagnostic. |
+| Course matrix retained dead C5 exhaustion metadata. | `36` normalised. |
+| `21` still called Emergency universally legal. | High-level canon synced to terminal pruning. |
+| Index still treated `39` as broad patch layer. | Narrow authority map: base contracts own subsystems, `39` composition only. |
+| `30` did not explicitly assign package composition to sim. | Sim now sole authoritative package/composition owner. |
+| Human evidence template missed fairness/package/source observations. | `80` aligned to harness. |
+| #99 tracker omitted mandatory ledger/replay reviews. | Live #99 issue updated; implementation untouched. |
+
+# Composed-system pass 6 — explicit terminal-state enumeration
+
+The terminal contract was then enumerated across the abstract player-known state dimensions used by route legality: overt crisis family, reserve state, partner state/authority, attribution availability, Beacon preparation/exposure and preparation-specific warning.
+
+| Defect | Amendment |
+| --- | --- |
+| Seizure Quiet could be displayed although known current state made it unable to hold Beacon. | Quiet legality now requires a known clean or usable-reserve late-reaction hold path. |
+| Seizure Joint could be displayed although known physical state made it unable to hold Beacon. | Joint seizure legality now requires `preparedDenial OR controlledExposure`. |
+| Emergency could remain visible beside known-valid Quiet/Joint and was therefore strictly worse. | Emergency is fallback-only: legal Quiet/Joint prune it. |
+| Emergency could be known unable to hold while legal Hold/Expose could hold. | Emergency pruned in that state. |
+| Late-reaction Quiet could remain beside legal Joint with identical reserve spend but worse partner/classification/severe cost. | Late Quiet pruned whenever `jointBaseSeizure` makes Joint strictly dominate it. Clean Quiet remains where partner repair creates a genuine reserve-vs-politics trade. |
+| Pruning could theoretically create a terminal state with no selectable response. | Emergency remains as last-ditch/best-effort route when no better viable route exists, including a doomed state created by earlier campaign failure. |
+
+Private enumeration of the amended abstract terminal state space found:
+
+- **0 empty displayed route sets**;
+- **0 displayed pairwise-dominated route pairs** under the canonical player-safe Pareto + terminal-classification + explicit-severe-cost relation.
+
+This does not prove reachable content balance; #107 must reproduce the invariant through the implemented simulator and test reachable histories.
+
+# Current structural invariants
+
+Implementation/lab must actively try to falsify:
+
+1. adversary reads only authorised observations;
+2. collection never reads hidden posture;
+3. relied-upon #99 paths are normal-play reachable;
+4. all-Delegate staff package is legal;
+5. liaison costs one intervention and never delegates;
+6. standing direction materially changes advice/consequence;
+7. reroute/Lattice targets/liaison are mechanically distinct;
+8. C5 consultation-vs-tempo and attribution-use-vs-preserve are elastic;
+9. C5 state/signals are issue-order independent;
+10. no contradictory same-signal values;
+11. visible/quiet reinforcement have different adversary consequences;
+12. no dead state/observation kept for symmetry;
+13. recovery remains real/costly through C5;
+14. no player-safe course is an accidental dominated trap;
+15. every terminal state has at least one response and no displayed final pair is dominated;
+16. terminal/source/commitment costs are authoritative and disclosed when knowable;
+17. V1/replay/version/safe-projection boundaries remain isolated;
+18. machine evidence never substitutes for human fun.
 
 # Remaining human-owned unknowns
 
-No further design review can settle honestly:
+No further design review can honestly settle:
 
 - whether two interventions feels right;
 - whether six windows is right pacing;
@@ -142,17 +163,8 @@ Those remain the `#107 → formative smoke → browser → formal human gate` pr
 
 # Review stop rule
 
-Do not keep changing a mechanically coherent uncertain choice merely because an agent can imagine another balance.
+Do not keep changing a mechanically coherent uncertain choice merely because another balance can be imagined.
 
-Once contracts are:
-
-- internally consistent;
-- replay-safe;
-- non-omniscient;
-- free of known player-safe dominated traps/dead state;
-- recovery-capable;
-- protected by #107 elasticity/dominance/fairness/dead-state diagnostics;
-
-further balance changes require actual reachable-state lab results or human evidence.
+Once contracts are internally consistent, replay-safe, non-omniscient, free of known player-safe dominated traps/dead state, recovery-capable and protected by #107 diagnostics, further balance changes require actual implemented reachable-state laboratory evidence or human evidence.
 
 A green design review still does not pass #110.
