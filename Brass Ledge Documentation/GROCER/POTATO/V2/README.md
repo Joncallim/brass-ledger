@@ -26,6 +26,7 @@ contract. Read these notes in numeric order before V2 implementation.
 - [[30-ARCHITECTURE-CONTRACT]] — information and compatibility boundaries.
 - [[31-HEADLESS-DESIGN-LAB]] — #107 counterfactual, dominance, recovery and fake-choice diagnostics.
 - [[32-POST-GATE-GAME-ARCHITECTURE]] — provisional long-form direction; explicitly non-authoritative before the human gate.
+- [[33-HEADLESS-SIX-CYCLE-EXECUTION]] — #104 complete headless run/replay/transcript contract.
 - [[40-EVALUATION-CONTRACT]] — machine versus human proof.
 - [[50-EXECUTION-PLAN]] — dependency-ordered issue graph.
 - [[60-DECISION-LOG]] and [[70-TRADEOFF-REGISTER]] — settled choices and limits.
