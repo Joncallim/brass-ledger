@@ -28,6 +28,14 @@ vulnerable to poor warning; reserve supports one serious surge; partner is
 cooperative but consultation-sensitive; and staging-area coverage is poor. HQ
 does not know current Ravellan intent.
 
+The opening routine Beacon watch is publicly/detectably thin enough that, if it
+is left at the ordinary-watch course in Cycle 1, content emits the authored
+Ravellan observation `beacon_coverage_signal = weak` for next-cycle use. Reinforced
+watch instead emits `beacon_coverage_signal = credible`. This is an explicit
+observable posture, not inference from a missing action. It ensures Ravellan's
+weakness-exploitation branches are reachable only from authored player-created
+conditions while preserving the rule that missing observations mean unknown.
+
 ## Standing orders and delegation
 
 At opening, the Chief of Staff asks:
@@ -91,7 +99,7 @@ intervention, and creates a consultation obligation.
 
 | Cycle | Situation / agenda | Canonical courses and required tension |
 | --- | --- | --- |
-| 1 — Ownership | Increased patrols/messages; partner asks intentions. Owners: Operations Beacon watch, Political consultation, Intelligence Lattice. | Intervene to reinforce Beacon watch (less exposure/warning, readiness cost/detectable signal); formal consultation agreement (cooperation/promise); protect first Lattice advance (another priority loses attention). Three credible protections, two interventions; delegation handles the rest. Reveal achievement plus deliberately exposed pressure. |
+| 1 — Ownership | Increased patrols/messages; partner asks intentions. Owners: Operations Beacon watch, Political consultation, Intelligence Lattice. | Intervene to reinforce Beacon watch (less exposure/warning, readiness cost/detectable `credible` coverage signal); ordinary watch leaves the authored detectable `weak` coverage signal; formal consultation agreement (cooperation/promise); protect first Lattice advance (another priority loses attention). Three credible protections, two interventions; delegation handles the rest. Reveal achievement plus deliberately exposed pressure. |
 | 2 — Consequence | Ravellan shadows commercial traffic; all hidden branches can cause it. Owners: Operations shipping, Political attribution, Intelligence Lattice continuation. | Shipping: quiet escort (less disruption, weak deterrence), visible patrol surge (denial, reserve strain/signal/partner concern), reroute-monitor (reserve/observation, civilian disruption/passivity). Attribution: silence, joint non-attributive warning, public accusation (promise breach if unilateral). Lattice needs second advance. Delegated shipping must create a visible cost. |
 | 3 — Doubt | Evidence supports both preparation and feint. Intelligence seeks verification; Operations warns waiting loses warning time. Owners: Operations reserve, Intelligence collection focus, Political reassurance, Intelligence final Lattice. | Forward reserve preparation (response time / strain/signal); hold reserve (endurance / warning risk); focus collection (information vs coverage); reassure partner; protect third Lattice. At least three credible intervention candidates, only two tokens. |
 | 4 — Payoff | Ravellan reduces visible patrols ambiguously: deterrence, feint end, hidden preparation, or wait. | Mature Lattice tasks one named unresolved question; result begins cycle 5. Without it, partner liaison is costly/narrow. Exploit lull: recover reserve, prepare Beacon quietly, or press visible advantage. Earlier philosophy must visibly shape recommendation. |
