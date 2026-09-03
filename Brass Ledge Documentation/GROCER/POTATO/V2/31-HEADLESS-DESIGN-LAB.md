@@ -7,424 +7,335 @@ status: active
 
 Backlink: [[README]]
 
-This document is the implementation authority for **#107 — V2 headless strategy/balance laboratory**. It defines machine diagnostics that can falsify broken structure before human play. It must never claim that the game is fun.
+This is the implementation authority for #107. It exists to falsify broken structure before browser/human time is spent. It **cannot** certify fun.
 
-## Product purpose
+[[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] and [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] supply the final composed-system invariants the lab must exercise.
 
-The laboratory answers questions such as:
+## Machine/human boundary
 
-- Is one strategy obviously dominant?
-- Do important choices actually change anything?
-- Is information worth acquiring?
-- Can an early mistake still be recovered from?
-- Does every viable run end with the same final answer?
-- Does hidden starting state create unavoidable punishment?
+The lab may answer:
 
-It does **not** answer whether the experience is exciting, emotionally satisfying or voluntarily replayable. Those remain human-only evidence under [[40-EVALUATION-CONTRACT]].
+- Is a seed unfair or impossible?
+- Is one strategy/choice dominated?
+- Does an apparent choice actually change downstream mechanics?
+- Is information/capability/recovery useful?
+- Does Ravellan react only to authorised observations?
+- Do final routes differ across histories?
 
-## Pareto dimensions and exact ordering
+It may not answer:
 
-The laboratory never creates one scalar victory score. Terminal outcomes are compared as a four-dimensional ordinal vector.
+- Was play exciting?
+- Did the player feel ownership/regret/vindication?
+- Would a real player voluntarily continue/replay?
 
-### Beacon security
+Those remain human-only under [[40-EVALUATION-CONTRACT]].
 
-`held > lost`
+## Deterministic policy cohort
 
-### Partner consent/access
-
-`cooperative > uneasy > conditional > withdrawn`
-
-Use the final authoritative partner state after terminal-route effects/recovery.
-
-### Reserve readiness
-
-`usable > strained > brittle`
-
-### Commitment integrity
-
-Derive a diagnostic-only ordinal from explicit history:
-
-- `intact` — no breached consultation promise or liaison obligation, no active unresolved obligation at terminal, and no political concession used to repair access;
-- `compromised` — no explicit breach, but an obligation remains active/outstanding or political concession is active;
-- `broken` — consultation promise or liaison obligation is `breached`.
-
-`intact > compromised > broken`
-
-This diagnostic does not replace the concrete records or terminal classification.
-
-A terminal classification such as Strategic/Costly Success is reported alongside the vector but is not converted into a scalar score.
-
-## Cross-seed dominance relation
-
-For the same seed/standing-intent fixture set, policy A dominates policy B only if:
-
-- for **every** compared run/seed, A is at least as good as B on all four dimensions;
-- and at least one dimension on at least one run is strictly better;
-- and there is no compared run where B is better on any dimension.
-
-Do not average dimensions across seeds or assign weights.
-
-## Deterministic lab actors
-
-Named lab policies are deliberately simple probes. They operate only through the legal player/headless API and are **not** models of optimal human play.
-
-### Standing-intent exhaustive fixtures
-
-For pure behavior diagnostics (`delegate-all`, `intervene-all-where-legal`, `random-valid`), run against all **81** legal opening standing-intent combinations (`3 × 3 × 3 × 3`) unless a focused test deliberately scopes a smaller equivalent fixture set.
-
-Dominance comparisons between these policies use the same seed and same opening intent.
-
-This prevents a hidden choice of “neutral” intent from biasing the result.
+Use exactly these non-human diagnostic probes:
 
 ### `delegate-all`
 
-- submit `delegate` for every ordinary agenda issue;
-- never choose Defer unless Delegate is not legal under a future explicit contract (not expected in Kestrel);
-- take no optional liaison action;
-- if Lattice Task Collection is available as a separate zero-intervention action, do **not** task it;
-- at Cycle 6, Delegate the terminal recommendation rather than selecting an alternate final course.
-
-Purpose: test whether standing direction + staff autopilot can dominate personal command.
+Accept every authoritative staff recommendation and optional safe default action. Never intervene merely to spend tokens.
 
 ### `intervene-all-where-legal`
 
-For each cycle:
-
-1. iterate agenda issues in canonical authored issue order;
-2. for each issue whose recommendation has at least one legal alternate order, intervene until the two-token budget is exhausted;
-3. choose the alternate with the lexicographically smallest stable `orderId` among legal alternatives after excluding the recommendation; this lexical rule is **lab-only**, never staff/game content logic;
-4. if a separate Lattice Task Collection action is available, choose the lexicographically smallest eligible target ID because it costs no normal intervention;
-5. do not use Defer unless no authored order alternative exists and Defer is the only non-Delegate stress action.
-
-Purpose: detect whether “always spend personal attention” is structurally superior. The particular alternate choice is intentionally mechanical, not strategic.
-
-### `random-valid`
-
-For each decision, select uniformly from the complete legal player dispositions/orders using a deterministic lab PRNG seeded from:
-
-`{campaignSeed, standingIntent, cycle, issueId, "random-valid"}`
-
-For Task Collection, select uniformly from legal eligible target IDs using the same deterministic derivation.
-
-The PRNG state is lab-only and not written into canonical campaign state beyond normal chosen player actions.
-
-Purpose: broaden reachability/sanity coverage, not estimate human behavior.
-
-## Named strategic probe policies
-
-These use fixed opening intents matching the strategy being probed. When a preferred course is already the staff recommendation, submit Delegate rather than wasting an intervention to select the same order. When it is not recommended, intervene if budget remains.
-
-If more than two preferred interventions exist, apply the policy's listed issue priority for that cycle; lower-priority preferences remain delegated.
-
-### `intelligence-first`
-
-Opening intent:
-
-- main priority: `ravellan-understanding`;
-- protected boundary: `civilian-shipping`;
-- tolerated cost: `political-friction`;
-- default style: `quiet-preparation`.
-
-Preferred choices:
-
-- C1: `protect-lattice-c1`;
-- C2: `protect-lattice-c2`; prefer `quiet-escort` over disruptive reroute where a shipping override is needed;
-- C3 priority: `protect-lattice-c3`, then `focus-staging-collection`;
-- C4: if Lattice operational, Task Collection target preference `landing-force-staging > auxiliary-tasking > political-operational-sync`; if Lattice unavailable, prefer `request-partner-liaison`;
-- C5: if another Task Collection is legal, prefer a different still-eligible target in order `auxiliary-tasking > political-operational-sync > landing-force-staging`; prefer `use-attribution` when credible and partner-safe;
-- C6 final alternate preference: `hold-and-expose > quiet-denial > joint-visible-denial > emergency-mobilisation` among legal courses.
-
-This policy deliberately spends early command attention on information/institutional capability and may accept physical/political costs.
-
-### `coalition-first`
-
-Opening intent:
-
-- main priority: `partner-cooperation`;
-- protected boundary: `partner-consultation`;
-- tolerated cost: `weaker-deterrence`;
-- default style: `partner-consultation`.
-
-Preferred choices:
-
-- C1: `formal-consultation-agreement`;
-- C2 priority: `joint-non-attributive-warning`, then `quiet-escort` where changing the shipping recommendation protects partner alignment;
-- C3: `reassure-partner` when the issue exists;
-- C4: do not request partner liaison merely because it is coalition-themed; use it only if Lattice is absent **and** HQ remains `unclear` under the ordinary staff recommendation path, after higher-priority partner-preservation choices;
-- C5 priority: `honour-consultation`, then `use-attribution` when jointly/partner-safe, then a Beacon course that does not cross partner consultation if one is legal;
-- C6 final alternate preference: `hold-and-expose > joint-visible-denial > quiet-denial > emergency-mobilisation` among legal courses.
-
-Purpose: prove that preserving political authority changes later mechanics rather than functioning as decorative role-play.
-
-### `deterrence-first`
-
-Opening intent:
-
-- main priority: `beacon-security`;
-- protected boundary: `civilian-shipping`;
-- tolerated cost: `reserve-strain`;
-- default style: `visible-deterrence`.
-
-Preferred choices:
-
-- C1: `reinforce-watch`;
-- C2: `visible-patrol-surge`;
-- C3: `forward-reserve-preparation`;
-- C4: `press-visible-advantage`;
-- C5 priority: `visible-reinforce-beacon`, then `keep-reserve-forward`;
-- C6 final alternate preference: `joint-visible-denial > emergency-mobilisation > quiet-denial > hold-and-expose` among legal courses.
-
-Purpose: probe the high-readiness/high-signal route and ensure it can succeed without becoming universally optimal.
+Attempt to spend the maximum normal intervention budget using a fixed authored preference order among non-recommended legal alternatives. When a preferred alternate would make the **complete** command set impossible, move to the next preference. Never repair an invalid final set silently.
 
 ### `recovery-first`
 
-Opening intent:
+Prioritise authored recovery when a promised deteriorating dimension is threatened: reserve consolidation, partner repair/concession, Beacon recovery/preparation, then other actions. Use stable tie order.
 
-- main priority: `partner-cooperation`;
-- protected boundary: `reserve-readiness`;
-- tolerated cost: `weaker-deterrence`;
-- default style: `quiet-preparation`.
+### `deterrence-first`
 
-Preferred choices:
+Prefer visible/physical Beacon denial and forward readiness where legal, then recovery/other choices.
 
-- C1: prefer `ordinary-watch` if staff would otherwise spend reserve; prefer formal consultation when an intervention is not required or remains affordable;
-- C2: `quiet-escort` and `joint-non-attributive-warning` where they require overrides;
-- C3 priority: `hold-reserve`, then `reassure-partner` when material;
-- C4: `recover-reserve`;
-- C5 priority: `emergency-consolidation` if reserve is strained/brittle, then `honour-consultation` or `political-concession` only where needed to preserve access;
-- C6 final alternate preference: `hold-and-expose > quiet-denial > joint-visible-denial > emergency-mobilisation` among legal courses.
+### `intelligence-first`
 
-Purpose: test costly recovery and whether preserving endurance can remain viable without simply refusing every risk.
+Set the opening understanding priority; protect scheduled Lattice; prefer legitimate information-producing courses/Task Collection; choose a fixed target preference that the target-elasticity diagnostic later varies independently.
 
-## Oracle frontier — not a gameplay policy
+### `coalition-first`
 
-Do **not** implement an “oracle agent” that chooses one supposedly correct move through a hidden scalar objective.
+Set partner-oriented opening direction; preserve consultation/commitments/authority and prefer joint/coherent action when legal.
 
-The oracle is a separate test-only **frontier/feasibility diagnostic**.
+### `random-valid`
 
-For a verified state/seed, it may read hidden world truth and exhaustively explore legal player continuations through the normal authoritative simulator. It returns:
+Enumerate the bounded **complete legal command sets** for the current authoritative agenda through the normal validator, then choose deterministically/uniformly from those sets using persisted lab seed input. Do not sample issue dispositions independently and then repair an illegal package.
 
-- whether any non-defeat terminal continuation exists;
-- the set of non-dominated terminal Pareto vectors reachable with hidden truth;
-- representative canonical action sequences for each distinct frontier vector using stable lexical action-sequence ordering solely to make diagnostics reproducible;
-- the earliest decision at which hidden-truth knowledge changes the reachable frontier, where applicable.
+### Intent matrix
 
-It must never:
+For generic policies that are not defined by one fixed opening philosophy, exercise the full 3×3×3×3 = **81 standing-intent combinations** where computationally practical. Report when a policy intentionally fixes one intent rather than pretending all 81 were tested.
 
-- write an action into a real player/staff path;
-- define the recommended strategy;
-- feed staff advice;
-- become a balance target requiring normal policies to match it;
-- collapse its frontier to one weighted “best” outcome.
+## Oracle frontier, not oracle gameplay policy
 
-Purpose: diagnose doomed seeds and the value/fairness of hidden information.
+The test-only oracle may inspect hidden truth only to explore what terminal outcomes are **feasible** from a verified state/seed.
 
-## Viability gate
+It must enumerate legal counterfactual continuations and return the non-dominated terminal Pareto frontier / information-gap diagnostics. It does not emit a canonical “best player move”, does not define recommendation policy, and never enters normal staff/player code.
 
-A Kestrel authored seed/history set is structurally viable only if all are true:
+## Outcome axes
 
-1. no seed forces a hard loss before Cycle 6 without a meaningful earlier legal countermeasure/recovery;
-2. materially different non-oracle strategies can reach Cycle 6;
-3. at least two terminal outcome profiles are non-dominated across the viable authored seed set;
-4. a costly recovery route remains available through Cycle 5 as promised by the canonical contracts;
-5. oracle-frontier analysis does not show that avoiding unavoidable defeat required hidden truth unavailable through any legitimate evidence/action path.
+Use exact non-scalar Pareto axes:
 
-## Diagnostic 1 — policy dominance
+- Beacon security;
+- partner consent/access;
+- reserve readiness;
+- commitment integrity.
 
-Run the exact Pareto relation above.
+Earned intelligence is diagnostic, not a success axis.
+
+Do not convert these to a weighted score.
+
+## Diagnostic 1 — seed viability / oracle fairness
+
+A viable Kestrel seed/history set requires:
+
+- no forced hard loss before C6 without meaningful earlier legal counterplay;
+- materially different non-oracle strategies reach C6;
+- at least two non-dominated terminal profiles across viable seeds;
+- costly recovery remains reachable through C5 where promised;
+- oracle frontier does not show that avoiding unavoidable loss required hidden truth unavailable to legitimate HQ information.
+
+Flag the earliest avoidable decision/countermeasure for any doomed branch.
+
+## Diagnostic 2 — policy dominance
+
+Across the same viable seed set, policy A dominates B only if A is at least as good on every terminal Pareto axis and strictly better on at least one under the same comparison relation.
 
 Flag especially:
 
-- `delegate-all` dominating every other behavior under all equivalent intent fixtures;
-- `intervene-all-where-legal` dominating delegate behavior across equivalent intent fixtures;
-- one of recovery/deterrence/intelligence/coalition-first dominating the others across every viable seed.
+- delegate-all dominating every other non-oracle policy;
+- intervene-all dominating every other;
+- intelligence-, coalition-, deterrence- or recovery-first dominating the other strategic families across all viable seeds.
 
-A flagged dominance is a design warning requiring review; never fix it by randomisation or rubber-banding.
+Do not “fix” dominance by randomising the opponent.
 
-## Diagnostic 2 — Decision Elasticity
+## Diagnostic 3 — Decision Elasticity
 
-For every authored major decision point, branch from the **same verified pre-decision state** and execute each legal alternative while holding all earlier history and deterministic inputs constant.
+At each authored consequential decision, branch from the same verified pre-state and execute every legal alternative while holding earlier history/deterministic inputs fixed.
 
-A choice has mechanical elasticity if at least one alternative changes one or more of:
+A choice is mechanically elastic if an alternative changes at least one later:
 
-- persistent Kestrel record state;
-- later HQ evidence/assessment;
-- later agenda membership;
-- later staff recommendation/dissent;
-- legal action/capability/terminal-route availability;
-- Ravellan authorised observation/policy path;
+- concrete persistent record;
+- HQ evidence/assessment;
+- agenda membership;
+- staff recommendation/dissent;
+- legal action/capability/final-route set;
+- authorised Ravellan observation/policy path;
 - terminal classification/Pareto vector.
 
-If alternatives differ only in prose while all of these remain equal, flag **inelastic / potentially fake choice**.
+If alternatives differ only in prose across the remaining slice, flag **inelastic / fake choice**.
 
-Report decision ID/cycle, alternatives, first downstream divergence, later reconvergence and terminal effect if any.
+Report first divergence, later reconvergence and terminal effect.
 
-## Diagnostic 3 — intervention/delegation value
+## Diagnostic 4 — player-safe local course dominance
 
-Across equivalent seed/intent fixtures record:
+Elasticity is not enough: a course can change state yet still be an objectively bad trap.
+
+For each important player-safe pre-state, group hidden seeds/world histories that produce the **same legitimate player information and legal course set**. Compare two courses across every compatible hidden reality using:
+
+- terminal Pareto outcome where reachable;
+- later legal action/recovery space;
+- information value (specific evidence/action-space effect), not raw evidence count.
+
+Flag course A as **player-safe dominated by B** only when B is no worse across every compatible hidden reality on the relevant outcome/action-space relation, strictly better in at least one, and A provides no compensating information/capability/recovery option.
+
+This must **not** flag a legitimate risky choice that wins in some compatible hidden realities and loses in others. Uncertainty-dependent value is intended strategy, not a defect.
+
+Use this diagnostic specifically on:
+
+- C2 quiet / visible / reroute shipping courses;
+- C2 silence / joint warning / accusation;
+- C4 recover / quiet prepare / visible press;
+- C5 quiet / visible / hold Beacon;
+- C5 honour / unilateral / concession authority packages where comparable;
+- C5 hold vs use one-shot attribution;
+- all legal C6 routes within the same terminal player-safe state.
+
+## Diagnostic 5 — intervention/delegation value
+
+Across viable seeds report:
 
 - intervention opportunities;
 - interventions used;
-- whether each override changes later strategic state under Decision Elasticity;
-- whether delegating has a real authored trade-off.
+- whether each intervention changes later strategic state;
+- real cost/trade-off of delegated staff action.
 
-Flag if spending both interventions is weakly better in every comparable state, never intervening is weakly better everywhere, or a large fraction of authored overrides are mechanically inelastic.
+Flag if always spending both interventions or never intervening is weakly better across every comparable state, or if many intervention alternatives are inelastic.
 
-## Diagnostic 4 — strategy separation
+## Diagnostic 6 — strategy separation
 
-Compare intelligence-first, coalition-first, deterrence-first and recovery-first trajectories.
+Intelligence-, coalition-, deterrence- and recovery-first must produce materially different trajectories on at least some viable seeds.
 
-Flag two as insufficiently separated when across all viable seeds they produce the same:
+Compare:
 
 - Lattice/liaison reachability;
-- consultation/promise/partner trajectory;
-- material persistent-state history;
-- terminal route set;
-- terminal Pareto vector/classification.
+- partner/promise/authority trajectory;
+- Beacon preparation/exposure;
+- reserve trajectory;
+- evidence/attribution timing;
+- Ravellan observation/policy path;
+- final legal-route sets and Pareto/classification.
 
-At least one viable seed must expose a meaningful mechanical distinction between each intended strategic family and another family.
+Flag two strategic families that remain mechanically identical across all viable seeds.
 
-Coalition-first specifically fails if preserving consultation/partner authority never changes later legal options, Ravellan observations, terminal routes or partner/commitment outcomes.
+## Diagnostic 7 — information value
 
-## Diagnostic 5 — information value
+Compare otherwise equivalent histories with/without legitimately acquired evidence.
 
-Compare otherwise equivalent branches with/without legitimately acquired evidence.
-
-Information is mechanically relevant when it changes at least one of:
+Information is relevant when it changes at least one:
 
 - HQ assessment;
 - recommendation/dissent;
-- attribution/Hold-and-Expose availability;
-- another later legal/credible command path;
-- terminal vector/classification through a belief-dependent decision.
+- attribution/route availability;
+- later rational/legal command path;
+- terminal outcome through a belief-dependent decision.
 
-Flag if Lattice evidence never changes an actionable state, liaison and Lattice are always equivalent, or oracle-frontier analysis shows hidden truth is essential while legitimate information cannot affect the necessary decision.
+Do not require information always to improve outcomes; better information may make a costly pivot rational.
 
-Information need not always improve outcome.
+Flag if legitimate information never matters while oracle information is required to avoid defeat.
 
-## Diagnostic 6 — capability relevance / target elasticity
+## Diagnostic 8 — capability / target relevance
 
-Lattice passes only if maturity changes legal action/information space and creates at least one later mechanically elastic decision unavailable without it.
+Lattice passes only if maturity changes legal information/action space and creates at least one later elastic decision unavailable without it.
 
-Also prove at least one viable non-Lattice history reaches a non-defeat terminal outcome.
+Also prove at least one viable non-Lattice non-defeat history.
 
-For each reachable identical pre-task state with ≥2 eligible Lattice targets, branch every target. Flag a target as potentially cosmetic if it never changes later evidence, assessment, attribution, recommendation, route availability or terminal result relative to another target across the complete reachable target-choice fixture set.
+For the three Lattice targets, branch from identical pre-task state. At least two reachable target choices must produce different later evidence/assessment/attribution/recommendation/route effects. Random result variance is not an acceptable fix for equivalent targets.
 
-Do not add random target outcomes to hide an inelastic target.
+Reroute monitoring and liaison remain narrower alternatives, not disguised copies of Lattice.
 
-## Diagnostic 7 — recovery reachability
+## Diagnostic 9 — recovery reachability
 
-From every reachable non-terminal state at the end of Cycles 1–5, check promised counterplay:
+From every reachable non-terminal state after C1–C5, inspect promised recovery/counterplay:
 
-- reserve strain/brittleness → emergency consolidation where still pre-terminal;
-- partner deterioration → reassurance/consultation or political concession where authored;
-- Beacon exposure → reinforcement/preparation where reachable;
-- missed Lattice → liaison counterplay.
+- reserve strain/brittleness → consolidation while temporally useful;
+- partner deterioration/withdrawal → consultation/concession according to the objective the player chooses to preserve;
+- Beacon weakness → preparation/reinforcement;
+- missed Lattice → narrower liaison;
+- information weakness → remaining focused/Lattice/liaison route where temporally available.
 
-Flag forced pre-terminal loss without earlier avoidable decision chain, legal-but-mechanically-useless recovery, or costless dominant recovery.
+Flag a recovery option that exists in legality/UI but cannot change the threatened downstream state, or one that is costless and therefore trivially dominant.
 
-## Diagnostic 8 — route sameness
+## Diagnostic 10 — route sameness / terminal dominance
 
-For every viable Cycle-6 history record legal final courses and each terminal vector/classification.
+For every viable C6 player-safe state, record legal final courses and post-route outcomes.
 
-It is acceptable for one course to be best in one history.
+Flag if:
 
-Flag if the same course is at least as good as every alternative across **all** viable histories/seeds, or if all histories expose the same legal route set/relative ordering.
+- the same final course is at least as good across every viable history;
+- all histories expose the same route set/order;
+- pressure-receding ever forces Emergency Mobilisation;
+- successful Emergency can become clean Strategic Success merely by starting with usable reserve;
+- final route costs do not appear in post-route reserve/partner/Pareto state;
+- using attribution in C5 fails to remove C6 Hold And Expose;
+- Hold And Expose never has a state where preserving the one-shot opportunity is worthwhile.
 
-## Diagnostic 9 — intent relevance
+## Diagnostic 11 — intent relevance
 
-For equivalent seed/world conditions vary one standing-intent field at a time while holding the other three fixed.
+Holding seed/world constant, vary one standing-intent field at a time. Every answer option must affect at least one reachable recommendation/reason or delegated consequence in the slice.
 
-Each of the 12 answer choices must participate in at least one reachable case where the field changes:
+At least one reachable case must create a real trade between two intent fields rather than free additive benefits.
 
-- recommendation/reason;
-- or a downstream delegated action/consequence.
+## Diagnostic 12 — adversary responsiveness / signal reachability / isolation
 
-At least one case must place two intent fields in a real trade-off.
+Using #99 + [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]]:
 
-Flag a choice that never affects reachable game state/advice.
+- vary an authorised observation and prove policy changes where matrix says it can;
+- vary private coalition/HQ state with observations fixed and prove Ravellan unchanged;
+- prove CF-1/T-1 weak-withheld-fractured opportunity chain is reachable through normal play;
+- prove GP-1 coherent-discovery-credible denial chain is reachable through normal play;
+- prove C6 strong-denial exception is reachable through normal C5 visible/joint or attribution signals;
+- prove same-cycle identical signal candidates coalesce and contradictory values cannot arise from a legal package;
+- prove visible C5 reinforcement is mechanically distinct from quiet reinforcement through its discovery/deterrence path.
 
-## Diagnostic 10 — adversary responsiveness/fairness
+No dynamic rebalancing follows a warning.
 
-Using #99:
+## Diagnostic 13 — composed-command integrity
 
-- vary an authorised Ravellan observation with private coalition state fixed and confirm policy changes where matrix says it should;
-- vary private coalition/HQ state with observations fixed and confirm Ravellan does not change;
-- confirm all three opening postures create meaningfully different policy/terminal opportunities under at least some player histories;
-- use oracle frontier to flag a hidden opening that produces avoidable-looking defeat with no legitimate clue/counterplay.
+Using [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] prove:
 
-Do not dynamically rebalance Ravellan.
+- all-Delegate staff package is legal in every reachable state;
+- lab actors construct complete legal command sets;
+- liaison never delegates and costs one intervention;
+- C2 coordinated/uncoordinated effects differ correctly;
+- C5 consultation-vs-tempo rules are enforced with/without rapid formal channel;
+- withdrawn + honour remains legal without forced concession;
+- partner authority and reserve/exposure outcome are invariant to issue-array order;
+- two qualifying C5 reserve orders count one deployment event;
+- one-shot attribution hold/use is elastic.
 
-## Diagnostic 11 — snowball / trivial success
+## Diagnostic 14 — snowball / trivial late game
 
-Flag a branch when early advantage makes all later windows strategically empty, e.g.:
+Flag branches where early success causes later windows to lose meaningful trade-offs, e.g. all recommendations agree, interventions become inelastic, recovery irrelevant and final routes collapse to the same result.
 
-- recommendations uniformly agree;
-- all interventions become inelastic;
-- no recovery is ever relevant;
-- all final routes collapse to the same vector/classification.
+Do not add rubber-banding as the automatic fix.
 
-Do not inject difficulty as the fix.
-
-## Diagnostic 12 — agenda collision
+## Diagnostic 15 — agenda collision
 
 Report per cycle:
 
-- number of consequential agenda issues;
-- legal personal-intervention alternatives;
+- issue count;
+- credible personal-intervention alternatives;
 - intervention budget;
-- count of mechanically elastic alternatives.
+- number of mechanically elastic alternatives.
 
-Cycle 3 and Cycle 5 must each expose >2 credible/elastic intervention candidates in the canonical authored histories promised by [[21-KESTREL-SIX-CYCLE-CANON]].
+C3 and C5 must each expose more than two credible intervention candidates in the canonical promised histories. Flag collision manufactured by fake/inelastic choices.
 
-Flag collision created only by fake/inelastic options.
+## Counterfactual integrity
 
-## Counterfactual execution integrity
+Counterfactual branches:
 
-Counterfactual branches are lab simulations, never canonical player history.
+- clone a verified canonical state/revision;
+- use normal authoritative sim transitions;
+- never mutate/write back source run;
+- remain deterministic;
+- are marked diagnostic, never canonical replay/player truth.
 
-They must clone a verified state/revision, use normal authoritative transitions, remain deterministic, never mutate the source run, and be clearly separated from canonical replay evidence/player debrief.
+## Report
 
-## Laboratory report
-
-Produce deterministic machine-readable output plus concise human summary containing:
+Produce deterministic machine-readable output plus concise human summary with:
 
 - seed/intent/policy matrix;
-- terminal Pareto vectors/classifications;
-- dominated-policy findings;
+- terminal Pareto/classification;
+- policy and local-course dominance findings;
 - Decision Elasticity;
+- strategy separation;
 - intent relevance;
-- information/Lattice/target relevance;
+- information/capability/target relevance;
 - recovery failures;
 - route sameness;
-- adversary fairness/responsiveness;
-- oracle-frontier feasibility/information findings;
-- strategy separation including coalition-first;
-- snowball/triviality warnings;
-- agenda-collision statistics.
+- adversary fairness/signal reachability;
+- composed-command failures;
+- snowball warnings;
+- agenda collision stats.
 
 No “fun score”.
 
-## Required #107 self-tests
+## Required lab self-tests
 
-The lab itself must detect deliberately broken fixtures for:
+Construct fixtures that deliberately contain:
 
-- always-delegate dominance;
-- always-intervene dominance;
-- an inelastic fake choice;
+- delegate-all dominance;
+- intervene-all dominance;
+- inelastic choice;
+- player-safe dominated trap course;
+- risky but non-dominated hidden-state-dependent course (must **not** be falsely flagged);
 - missing recovery;
 - mandatory Lattice;
-- two cosmetic-equivalent Lattice targets;
-- information that never changes action space;
-- a universal final route;
-- irrelevant intent choice;
-- coalition strategy mechanically indistinguishable from another policy;
-- adversary reading private state;
-- doomed hidden-truth seed revealed by oracle frontier;
-- snowball/trivial late game.
+- equivalent Lattice targets;
+- worthless information;
+- irrelevant intent answer;
+- coalition-strategy sameness;
+- adversary/private-state leak;
+- collection/posture leak;
+- doomed hidden-state seed;
+- invalid all-Delegate package;
+- issue-order-dependent state;
+- universal final route;
+- trivial snowball.
 
-Then run the diagnostics against canonical Kestrel without treating a green report as human-fun proof.
+Then run the diagnostics on canonical Kestrel. Green structural diagnostics remain only permission to spend human/UI time, never human-fun proof.
 
 ## Rejection conditions
 
-Reject #107 if it creates a scalar balance/fun score, implements a hidden-truth gameplay agent, trains an ML/LLM policy, feeds oracle/frontier data into staff/player paths, modifies gameplay dynamically to make diagnostics pass, treats counterfactual branches as canonical history, or claims automated evidence satisfies the human gate.
+Reject #107 if it emits a scalar balance/fun score, trains a gameplay agent, treats oracle frontier as recommendation truth, samples invalid issue combinations then silently repairs them, feeds diagnostic data into live gameplay, changes the opponent dynamically to pass metrics, or claims machine evidence passes #110.
