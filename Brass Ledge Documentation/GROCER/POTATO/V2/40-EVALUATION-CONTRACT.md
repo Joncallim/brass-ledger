@@ -7,17 +7,39 @@ status: active
 
 Backlink: [[README]]
 
+This document separates what machines may prove from what only real players can establish.
+
 ## Machine-provable contract
 
-The implementation must prove deterministic replay; V1 compatibility; save/import
-rejection for mismatched rulesets; server stale-write protection; world-truth
-isolation; reasoned recommendation structure; strategy/action reachability; no
-legal always-intervene or always-delegate dominance across authored seeds/intents;
-Lattice changing information/action space; adversary response to observable
-signals rather than score; multiple final-crisis solutions across viable history;
-and a costly recovery path before terminal crisis.
+The complete Kestrel implementation must prove, through normal authoritative transitions/replay:
 
-The headless laboratory uses stable deterministic behavior probes:
+- deterministic execution/replay and V1 compatibility;
+- ruleset/content identity and prototype-format rejection boundaries;
+- authoritative revision/stale-write protection;
+- hidden world/adversary isolation from staff/player paths;
+- posture-blind directed collection under the authorised target facts;
+- deterministic evidence reduction / belief-safe natural-language projection;
+- explainable staff recommendation with real standing-intent relevance;
+- commander-only actions cannot become free delegated recommendations;
+- complete all-Delegate staff package is always legal;
+- complete command-set cross-issue effects are order-independent;
+- Ravellan receives only closed authored public observations and the policy rows claimed by the slice are reachable through normal play;
+- concrete persistent consequences and costly recovery remain reachable through C5 where promised;
+- Lattice changes legal information/action space but is not mandatory for every viable non-defeat history;
+- individual consequential choices are mechanically elastic;
+- no legal course is a **player-safe dominated trap** across every hidden reality compatible with the same legitimate player information, unless the product intentionally records/accepts that finding before human testing;
+- legitimate risky choices that can be better/worse under different compatible hidden realities are not falsely rejected as dominated;
+- C5 consultation-vs-tempo and attribution-use-vs-preserve decisions are mechanically real;
+- final courses apply real post-route reserve/partner/attribution effects;
+- no universal final answer across viable histories;
+- no forced hard loss before C6 without meaningful earlier counterplay;
+- no structural success snowball that removes late-game trade-offs across all viable histories.
+
+[[31-HEADLESS-DESIGN-LAB]] owns the exact diagnostics/fixtures. [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] and [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] supply the composed-system invariants.
+
+## Deterministic policy probes
+
+The headless lab uses the bounded probes defined in 31:
 
 - delegate-all;
 - intervene-all-where-legal;
@@ -25,82 +47,144 @@ The headless laboratory uses stable deterministic behavior probes:
 - deterrence-first;
 - intelligence-first;
 - coalition-first;
-- random-valid.
+- random-valid over **complete legal command sets**;
+- test-only oracle frontier for hidden-truth feasibility, never gameplay advice.
 
-Exact policy behavior and standing-intent fixtures are frozen in
-[[31-HEADLESS-DESIGN-LAB]]. These are diagnostic probes, not gameplay AI.
+Generic probes exercise the 81 standing-intent combinations where defined/practical. A policy with a deliberately fixed strategy reports that fact instead of pretending it tested all intents.
 
-### Oracle frontier
+## Pareto comparison
 
-Hidden truth is available only to the test-only **oracle-frontier diagnostic**.
-It exhaustively explores legal continuations from a verified state and returns
-non-dominated reachable terminal Pareto vectors / feasibility information. It
-must not choose a gameplay action, define one “best” strategy, feed staff/player
-paths, or become a target normal policies are expected to match.
-
-The oracle frontier exists only to diagnose:
-
-- a doomed/unfair seed;
-- whether hidden information is required to avoid defeat;
-- the maximum legal opportunity set available if truth were known.
-
-It never enters canonical player history.
-
-## Laboratory comparisons
-
-The laboratory reports seed viability, policy dominance, Decision Elasticity,
-intent relevance, early collapse/snowball, strategy separation, capability/target
-relevance, final-choice sameness, adversary responsiveness and whether information
-changes action quality.
-
-Comparison is laboratory-only Pareto comparison across:
+Laboratory outcome comparison uses only:
 
 - Beacon security;
 - partner consent/access;
 - reserve readiness;
 - commitment integrity.
 
-The exact ordinal relations and cross-seed dominance rule are frozen in
-[[31-HEADLESS-DESIGN-LAB]].
+Earned intelligence is diagnostic rather than a success axis.
 
-Earned intelligence is diagnostic-only, not a success axis. Capability relevance
-requires changed legal information/action space and a mechanically elastic later
-choice; it cannot pass through an invisible numeric bonus.
+A run/policy/course comparison is not converted to a weighted score.
 
-This is not a player score, staff utility or adversary input.
+A policy dominates another over the same viable comparison set only when it is at least as good on every axis and strictly better on at least one.
 
-Prototype structural viability requires:
+The local-course-dominance diagnostic is stricter about information fairness: it groups hidden worlds that are indistinguishable to the player and rejects a course only when another is no worse across **all** compatible hidden realities and the course offers no compensating information/capability/recovery value.
 
-- no forced hard loss before the final crisis without meaningful earlier legal counterplay;
-- materially different non-oracle strategies reaching Cycle 6;
-- at least two non-dominated terminal profiles across authored viable seeds;
-- a costly recovery path through Cycle 5;
-- no oracle-frontier evidence that hidden truth unavailable through legitimate information was required to escape otherwise unavoidable defeat.
+## Oracle frontier
 
-A green laboratory report does not establish fun.
+The oracle can inspect hidden truth only in isolated laboratory exploration.
+
+It returns feasible/non-dominated terminal outcomes and information-gap/fairness evidence. It does **not**:
+
+- emit a “correct player action”;
+- define staff advice;
+- create a scalar optimum;
+- enter normal headless/browser/player code.
+
+An oracle frontier can prove a seed unfair (e.g. only hidden truth could avoid unavoidable defeat) but cannot prove a human strategy fun/correct.
+
+## Machine viability gate before UI/human time
+
+Before the formative smoke / main browser tranche, #107 should find no unresolved blocking structural defect such as:
+
+- doomed hidden-state seed;
+- invalid all-Delegate package;
+- player-safe dominated trap option;
+- large mechanically fake choice;
+- mandatory Lattice with no viable fallback;
+- information that never changes action/action-space;
+- unreachable promised recovery;
+- strategy families that are mechanically identical;
+- opponent policy rows only reachable through synthetic observations;
+- issue-order-dependent results;
+- universal terminal course;
+- late-game trivialisation across viable histories.
+
+A warning can trigger a design issue; it must never trigger dynamic difficulty/rubber-banding at runtime.
 
 ## Human-only contract
 
-Fresh players must describe what they caused, name a next-turn plan, understand
-why a consequence followed, report a meaningful regret/vindication or surprise,
-and voluntarily want another turn or a different strategy. Facilitators record
-verbatim evidence; an AI cannot infer it from telemetry.
+Machines cannot establish:
 
-The formative smoke uses three fresh players. If at least two cannot explain
-major consequences, cannot form a next-cycle plan, or show no voluntary desire
-to continue, stop and redesign before the formal gate.
+- ownership felt by a real player;
+- causal comprehension under actual reading/interaction conditions;
+- forward strategy formed spontaneously;
+- tension/regret/vindication/surprise/payoff;
+- voluntary continuation/replay desire;
+- whether two interventions / six cycles / prose density feel right.
 
-The formal gate uses eight fresh players:
+Fresh-player evidence only.
 
-- at least 6/8 want another turn/run;
-- at least 6/8 identify a significant personal cause;
-- at least 6/8 state an unprompted forward strategy;
-- at least 5/8 report meaningful regret, vindication, tension, surprise, or payoff;
-- at least 6/8 use ownership language.
+## Formative smoke
 
-A repeated severe qualitative failure overrides counts.
+After #104 and #107, before the main #105/#106 browser tranche:
 
-**No AI agent may self-certify a human fun gate.** A green build, an oracle-frontier
-finding, a synthetic playthrough or a passing browser E2E is never a human-fun
-pass. Failed human hypotheses route to a focused issue rather than polish or
-retrospective reinterpretation.
+- 3 fresh players;
+- complete replay-valid plain-text slice;
+- uninterrupted/non-leading;
+- no hidden truth or strategy coaching.
+
+If at least **2/3**:
+
+- cannot explain a major consequence they caused/conditioned;
+- cannot form a next-command plan;
+- or show no voluntary desire to continue while another command remains,
+
+stop and open focused remediation before main browser implementation.
+
+This is **non-gating**. It can falsify the loop but cannot pass #110.
+
+If evidence clearly shows the mechanic is understood and only presentation is failing, a focused UI/presentation remediation may proceed; do not assume “more polish” by default.
+
+## Formal human gate
+
+After authoritative browser E2E and the approved harness, use 8 fresh players.
+
+Pass thresholds:
+
+- ≥6/8 voluntarily want another turn/run;
+- ≥6/8 identify a significant personal cause;
+- ≥6/8 state an unprompted forward strategy;
+- ≥5/8 report meaningful regret, vindication, tension, surprise or payoff;
+- ≥6/8 use ownership language.
+
+A repeated severe qualitative failure overrides numeric counts, e.g. players repeatedly describe the game as approving staff suggestions rather than commanding, cannot distinguish consequences, or treat decisions as arbitrary guessing.
+
+Prompted politeness/interest does not substitute for voluntary continuation/replay behavior.
+
+## Evidence protocol
+
+Use [[35-HUMAN-PLAYTEST-HARNESS]] and [[80-HUMAN-PLAYTESTS]]. Keep separate:
+
+- observed behavior;
+- spontaneous statements;
+- prompted interview answers;
+- actual optional replay uptake.
+
+Do not backfill a passing interpretation from telemetry or agent summaries.
+
+## Explicit non-substitution rule
+
+**No AI agent may self-certify the human fun gate.**
+
+The following cannot pass #110:
+
+- green build/CI;
+- perfect replay determinism;
+- #107 clean lab report;
+- oracle frontier;
+- browser E2E;
+- synthetic/LLM playtest;
+- agent claim that the design “should be fun”.
+
+Failed human hypotheses route to focused remediation, not retrospective reinterpretation of thresholds.
+
+## Required implementation evidence before #110
+
+The final package presented to the human product owner should distinguish:
+
+- machine structural evidence (#107);
+- browser authority/information evidence (#108);
+- raw/anonymised human evidence (#109/80);
+- unresolved qualitative risks.
+
+Only the human product owner decides `PASS`, focused `FAIL`, or `INCONCLUSIVE` under #110.
