@@ -31,6 +31,7 @@ contract. Read these notes in numeric order before V2 implementation.
 - [[35-HUMAN-PLAYTEST-HARNESS]] — #109 non-leading human-study protocol and coding contract.
 - [[36-KESTREL-AGENDA-COURSE-MATRIX]] — stable issue/order IDs, intent tags and chief tie-breaks for #98/#103.
 - [[37-RAVELLAN-WORLD-EFFECT-MATRIX]] — #103 mapping from hidden adversary decisions to bounded world/player manifestations.
+- [[38-PLAYER-SAFE-PROJECTION-CONTRACT]] — strict #105/#106/#108 server-to-player information boundary and terminal truth gating.
 - [[40-EVALUATION-CONTRACT]] — machine versus human proof.
 - [[50-EXECUTION-PLAN]] — dependency-ordered issue graph.
 - [[60-DECISION-LOG]] and [[70-TRADEOFF-REGISTER]] — settled choices and limits.
