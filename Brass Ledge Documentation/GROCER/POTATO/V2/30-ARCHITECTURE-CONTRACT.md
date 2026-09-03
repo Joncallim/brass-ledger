@@ -7,181 +7,179 @@ status: active
 
 Backlink: [[README]]
 
-## Boundaries
+## Ownership boundaries
 
-`packages/shared` owns serialisable Zod contracts and pure derived readout types.
-`packages/content` owns authored Kestrel data and validation. `packages/sim` owns
-deterministic transitions, recommendation derivation, adversary policy, belief
-update, consequence progression, terminal resolution and replay validation.
-`packages/headless` owns non-browser campaign/laboratory execution. `apps/server`
-owns session mutation, expectedRevision checks, save persistence, scenario
-resolution and strict player-safe projection delivery. `apps/web` renders only
-the safe projection and submits player authority; it never receives raw V2 state.
+`packages/shared` owns serialisable strict contracts/Zod schemas and pure derived readout types.
 
-World truth, HQ belief, campaign/institution state, and presentation may be
-represented with nested contracts but must have separate types/fields and
-explicit transition/derivation functions.
+`packages/content` owns authored Kestrel data/metadata and validation.
 
-World truth is persisted/replayable and may be read only by world/external/
-consequence/explicit observation functions that are authorised to inspect it.
+`packages/sim` owns all authoritative game rules and deterministic derivation, including:
 
-Adversary policy may read only cycle, its own persisted posture/preparation, and
-its separate persisted `AdversaryObservation` projection; identity and seed are
-initialisation-only under [[22-RAVELLAN-EXECUTABLE-POLICY]].
+- Ravellan policy;
+- world/action manifestation;
+- HQ evidence/assessment;
+- recommendations/dissent;
+- final delegated-order derivation;
+- complete command-package legality/composition;
+- consequences/capability transitions;
+- coalition→Ravellan observation projection;
+- terminal route legality/resolution;
+- replay validation.
 
-HQ evidence/assessment follows [[23-HQ-BELIEF-AND-EVIDENCE]] and is the only
-intelligence input to recommendations/player-visible intelligence. Directed
-collection may inspect only the specific world/action-history facts authorised
-by [[26-LATTICE-COLLECTION-MATRIX]], then produces ordinary HQ evidence.
+`packages/headless` owns non-browser orchestration only.
 
-Presentation must never derive hidden facts locally. The browser/server boundary
-is [[38-PLAYER-SAFE-PROJECTION-CONTRACT]].
+`apps/server` owns authoritative session mutation transport, `expectedRevision`, persistence, scenario resolution and strict safe-projection delivery. It calls sim; it does not reimplement package/game rules.
 
-## Replay and compatibility
+`apps/web` renders only strict safe projections and submits player authority. It never receives raw V2 state and never becomes final authority for recommendation/package legality.
 
-V2 is a versioned ruleset, not an in-place reinterpretation of V1 campaigns.
-V1 schemas, sessions, import/export and replay remain supported under their
-existing versions. V1 sessions are never silently migrated to V2.
+## State / information separation
 
-V2 replay rebuilds from canonical initial state plus the complete authoritative
-ordered action/system ledger, verifies every persisted pre/post transition and
-compares final state.
+World truth, HQ belief, campaign/institution state and presentation must have separate types/fields and explicit transition/derivation functions.
 
-Its canonical digest is a full SHA-256 of stable key-sorted JSON tagged `v2`,
-covering ruleset/content identity, action sequence, pre-state, post-state and
-final state. V2 identity contains immutable canonical content digest plus explicit
-ruleset version; import rejects a live-registry mismatch before replay. Seeded
-selection is allowed only where a canonical contract explicitly authorises it.
+World truth is persisted/replayable and may be read only by world/external/consequence/explicit observation functions authorised to inspect it.
 
-The required V2 digest envelope remains:
+Normal adversary policy may read only:
+
+- cycle;
+- its own persisted posture/preparation;
+- persisted `AdversaryObservation` projection.
+
+Identity/seed are initialisation-only under [[22-RAVELLAN-EXECUTABLE-POLICY]].
+
+HQ evidence/assessment follows [[23-HQ-BELIEF-AND-EVIDENCE]] and is the only intelligence input to recommendation/player-visible intelligence.
+
+Directed collection may inspect only target-authorised world/action-history facts in [[23]] / [[26]], then creates ordinary HQ evidence. Hidden posture alone never changes sensor result.
+
+Exact coalition→Ravellan observation projection belongs to [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
+
+Presentation never derives hidden facts locally. [[38-PLAYER-SAFE-PROJECTION-CONTRACT]] is the normal-player boundary.
+
+## Complete command-package authority
+
+A player submits one atomic command package containing dispositions/authorised player choices. That does **not** mean the client owns the final order set.
+
+`packages/sim` must:
+
+1. resolve authoritative recommendations/delegated final orders;
+2. combine player interventions/defer/task/liaison choices;
+3. construct the complete final-order set;
+4. validate cross-issue compatibility under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]];
+5. resolve order-independent package effects/signals;
+6. reject invalid packages without silently repairing another issue.
+
+Web may use safe requirement/conflict refs to prevent/explain an invalid draft, but server/sim independently validates. Headless policy output is held to the same contract.
+
+The untouched all-Delegate package being legal is a content/recommendation invariant, not a client workaround.
+
+## Replay / compatibility
+
+V2 is a versioned ruleset, never an in-place reinterpretation of V1.
+
+V1 schemas/sessions/import/export/replay remain supported under existing versions and are never silently migrated to V2.
+
+V2 replay rebuilds from canonical initial state plus the complete ordered authoritative player/system ledger, recomputes/verifies every persisted transition and compares final state.
+
+Canonical digest is full SHA-256 of stable key-sorted JSON tagged `v2`, covering ruleset/content identity, action/system sequence, pre/post states and final state.
+
+V2 identity contains immutable canonical content digest + explicit ruleset version; import rejects live-registry mismatch before replay.
+
+Seeded selection is legal only where a canonical contract explicitly authorises it.
+
+Required digest envelope remains:
 
 `{ tag, rulesetVersion, contentDigest, initialState, action, preState, postState }`
 
-The final-session digest uses the same envelope with the complete ordered ledger
-and reconstructed final state.
+Final-session digest uses the same principle with complete ordered ledger + reconstructed final state.
 
 ## Prototype format-version rule
 
-Pre-gate V2 formats are intentionally disposable prototype formats.
+Pre-gate V2 formats are disposable prototypes.
 
-Whenever an implementation issue changes any persisted V2 state shape, ledger
-entry discriminator/shape, replay transition semantics, or canonical persisted
-identity contract, it must:
+Whenever implementation changes persisted V2 state shape, ledger discriminator/shape, replay transition semantics or canonical persisted identity:
 
-1. inspect the current live `v2CurrentRulesetVersion`;
-2. advance to the next repository-consistent prototype minor version rather than silently accepting the old shape;
-3. add paired parsing/import/replay tests proving the previous prototype payload is not silently reinterpreted as the new format;
-4. add no migration between prototype formats unless a separate explicit product/engineering decision authorises one;
-5. leave V1 parsing/replay behavior unchanged.
+1. inspect actual current `v2CurrentRulesetVersion`;
+2. advance to next repository-consistent prototype minor version;
+3. prove previous prototype payload is not silently reinterpreted;
+4. add no migration unless separately authorised;
+5. leave V1 behavior unchanged.
 
-Do not freeze a future numeric version in planning docs because #99/#100 etc. may
-land sequentially. The implementer chooses the next monotonic prototype version
-from the actual committed repository state.
+Do not pre-freeze numeric future versions in planning docs.
 
-This rule resolves the recurring “does this schema change require a version
-boundary?” question: **yes, if canonical persisted/replay semantics changed.**
+## Authoritative mutation invariant
 
-## Authoritative mutation / ledger invariant
+Every authoritative persisted mutation follows exactly one pattern:
 
-Every authoritative persisted state mutation must satisfy one of exactly two
-patterns:
+### A. Replay-verifiable transition
 
-### A. Replay-verifiable ledger transition
-
-The mutation is represented by an explicit canonical ledger entry whose trusted
-replay recomputes/validates the transition and state hashes/revision.
+Explicit canonical ledger/system evidence whose trusted replay recomputes/validates transition, state, revision and hashes.
 
 ### B. Pure derived readout
 
-The value is not persisted as authoritative state at all; it is deterministically
-derived from already-verified canonical state/content whenever needed.
+Not persisted as authoritative state; deterministically derived from already-verified state/content.
 
-There is no third pattern where persisted state changes “between” ledger entries
-without replay evidence.
+There is no third “persist between ledger entries and trust the save” pattern.
 
-Saved client/browser data is never a substitute for a trusted transition.
+Saved client/browser data never substitutes for trusted transition evidence.
 
 ## Downstream ledger integration after #99
 
-#99 owns the first-class Ravellan transition and the current canonical
-intent/Ravellan/command ordering proof. #100 onward will introduce additional
-HQ-belief/consequence/capability state.
+#99 owns first-class Ravellan transition and the current committed intent/Ravellan/command ordering once it closes.
 
-Do **not** pre-emptively widen `ravellan-decision` to own unrelated HQ or
-consequence state merely to preserve its current adjacency to `command-set`.
+#100 onward adds belief/consequence/capability state. Do not widen `ravellan-decision` to own unrelated state.
 
-After #99 is committed/closed, the next implementation issue that needs a new
-persisted pre-command state transition must inspect the actual committed #99
-replay validator and choose the smallest explicit replay-safe integration:
+After #99 closes, each downstream persisted transition inspects the actual committed replay validator and chooses the smallest replay-safe integration:
 
-- add a narrowly named deterministic system ledger entry if a new authoritative
-  state mutation genuinely occurs between existing entries; or
-- keep the value purely derived if persistence is unnecessary.
+- narrow named system ledger entry where authoritative state genuinely changes; or
+- pure derivation where persistence is unnecessary.
 
-Any new entry requires:
+Any new persisted entry requires:
 
-- strict schema discriminator;
+- strict discriminator/schema;
 - exact cycle/order validation;
 - replay recomputation/tamper rejection;
 - hash/revision coverage;
-- prototype version bump under the rule above;
+- prototype version bump;
 - V1 isolation.
 
-A future issue must not silently change #99 ordering tests to make a new state
-mutation pass. If the committed #99 structure cannot accommodate the required
-canonical gameplay order without a material redesign, raise
-`BLOCKED: PRODUCT DECISION REQUIRED` / architecture escalation with the concrete
-conflict before coding around it.
+Do not silently weaken #99 ordering tests to fit new state. If the committed structure cannot support required canonical lifecycle without material redesign, raise `BLOCKED: PRODUCT DECISION REQUIRED` with the concrete conflict.
 
-This is the one downstream integration detail intentionally conditioned on the
-final #99 implementation rather than guessed while #99 is still uncommitted.
+This remains intentionally conditioned on final **committed** #99 rather than guessed against in-progress implementation.
 
 ## Server mutation
 
-Server mutation remains authoritative and revision-protected. One submitted
-cycle command set is one atomic player-authority mutation even if deterministic
-system transitions have separate canonical ledger entries around it.
+Server mutation is authoritative/revision protected. One submitted cycle command package is one atomic **player-authority** mutation even where deterministic system transitions are separate ledger entries before/after it.
 
-Headless and server call the same sim transitions. The web client may not send
-arbitrary derived recommendations or mutate a whole session.
+Headless/server call the same sim transitions. Neither client nor API may send arbitrary derived recommendations/state patches.
 
 ## Player-safe projection
 
-[[38-PLAYER-SAFE-PROJECTION-CONTRACT]] owns the strict V2 player DTO boundary.
-Server endpoints return dedicated safe projections, never raw world truth, truth
-provenance, future preparation, adversary observations/action IDs, oracle data,
-private ledger fields or full session state.
+[[38-PLAYER-SAFE-PROJECTION-CONTRACT]] owns strict safe DTOs.
 
-Agenda membership, legal orders, task targets, reasons and reveal derive only
-from HQ belief plus public campaign state/content. Holding those legitimate
-inputs constant while changing hidden truth must produce deep-equal player-safe
-projection.
+Normal endpoints never return raw world truth, truth provenance, future preparation, adversary observations/action IDs, oracle data, private ledger fields or full session state.
 
-Terminal truth is exposed only through the explicit terminal-complete debrief
-projection; even then the server creates dedicated debrief-safe fields rather
-than serialising raw hidden state.
+Agenda/legal orders/task targets/reasons/reveal derive from legitimate HQ/public state. Holding those inputs constant while changing hidden truth must produce deep-equal safe semantics.
+
+Terminal truth is exposed only through terminal-complete debrief-safe DTOs, never raw hidden state.
 
 ## Recommendation integrity
 
-Recommendation input is limited to HQ belief, standing intent, chief worldview,
-known commitments, institutional state, visible issue/course metadata and public
-campaign state.
+Recommendation input is limited to HQ belief, standing intent, chief worldview, known commitments/institutional/public state and visible course metadata.
 
-[[24-STAFF-RECOMMENDATION-POLICY]] owns precedence. [[36-KESTREL-AGENDA-COURSE-MATRIX]]
-owns Kestrel metadata/tie-break content.
+[[24-STAFF-RECOMMENDATION-POLICY]] owns algorithm; [[36-KESTREL-AGENDA-COURSE-MATRIX]] owns Kestrel metadata.
 
-Output is recommended order/disposition semantics plus ordered discrete reason/
-concern/dissent references. It contains no omniscient/global score.
+Recommendation output has discrete reasons/concerns/dissent, no omniscient/global score.
 
-Tests hold belief/public inputs constant while changing world truth and prove
-equal recommendations. Different chief views may disagree from the same belief.
+Changing hidden world truth alone with legitimate inputs held constant cannot change advice.
 
-## Reuse and non-reuse
+## Reuse / non-reuse
 
-Reuse deterministic session/replay primitives, registry resolution, action-ledger
-integrity, expectedRevision, headless runner, save tombstones and accessible
-presentation patterns.
+Reuse deterministic session/replay primitives, registry/content identity, action-ledger integrity, revision protection, headless runner, save tombstones and accessible presentation patterns.
 
-Do not reuse the mandatory memo packet, mandatory Chiefs stage, old scenario
-assumptions, UI-owned game rules, V1 predicted-events presentation or generic
-plugin frameworks as V2 semantics.
+Do not reuse as V2 semantics:
+
+- mandatory memo packet;
+- mandatory Chiefs stage;
+- old scenario assumptions;
+- UI-owned rules;
+- V1 predicted-event preview;
+- generic plugin/lifecycle/opponent framework built speculatively.
