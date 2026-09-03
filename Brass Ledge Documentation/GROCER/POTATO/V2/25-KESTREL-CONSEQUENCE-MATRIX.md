@@ -150,7 +150,7 @@ For this slice, count only these authored coalition orders as a **significant vi
 - Cycle-5 `visible-reinforce-beacon`;
 - Cycle-5 `keep-reserve-forward` when the order continues/renews a visibly forward reserve posture.
 
-Cycle-1 reinforced watch and Cycle-2 quiet escort may strain the reserve but do **not** count toward this visible-deployment counter.
+Cycle-1 reinforced watch, Cycle-2 quiet escort and Cycle-4 quiet preparation may consume/strain readiness but do **not** count toward this specifically visible-deployment counter.
 
 When the second significant visible deployment occurs in canonical history, emit `reserve_exhaustion_signal = suspected` for Ravellan at the normal next-cycle timing. Later qualifying deployments may refresh that authored signal; they do not create a numeric exhaustion score.
 
@@ -198,11 +198,11 @@ If the Cycle-1 advance is not protected, record deterministic missed-schedule st
 
 Player-caused:
 
-- if Cycle-1 reinforced watch already worsened reserve, worsen `reserve-condition` one again; otherwise no persistent reserve step;
+- do not change `reserve-condition` in the prototype;
 - emit `visible_denial_signal = withheld` because the coalition deliberately avoids a demonstrative response;
-- visible shipping delay remains as a consequence beat.
+- visible shipping delay remains as the known cost/consequence beat.
 
-This compound rule makes quiet escort cheap from a fresh reserve but costly after the commander already spent readiness on the opening watch.
+Its trade-off is limited disruption plus weaker deterrence, not hidden extra reserve attrition.
 
 ### Visible patrol surge
 
@@ -221,7 +221,9 @@ Player-caused:
 - worsen `partner-consent` one if the civilian disruption is not jointly accepted;
 - emit `visible_denial_signal = withheld` because the public posture avoids direct contest;
 - do not worsen reserve;
-- show civilian/shipping disruption as the visible cost.
+- show larger civilian/shipping disruption as the visible cost.
+
+The prototype does not grant a separate intelligence bonus merely because the order name includes “monitor”; any future information effect must be explicitly authored in [[23-HQ-BELIEF-AND-EVIDENCE]].
 
 ## Cycle 2 — attribution / politics
 
@@ -323,8 +325,11 @@ Player-caused:
 
 - `beacon-preparation: routine → prepared`;
 - improve `beacon-exposure` one;
+- worsen `reserve-condition` one;
 - emit `beacon_coverage_signal = credible` where the strengthened coverage is detectable;
-- do not emit visible denial by default.
+- do not emit `visible_denial_signal = demonstrated` by default.
+
+This is a real investment of readiness, not a free simultaneous improvement to preparation and exposure.
 
 ### Press visible advantage
 
@@ -503,6 +508,8 @@ At minimum prove:
 - every record starts in the canonical opening state;
 - every authored transition above is deterministic and provenance-tagged;
 - Cycle-1 ordinary/reinforced watch emits exactly weak/credible coverage respectively;
+- quiet escort does not secretly consume reserve while visible surge does;
+- Cycle-4 quiet preparation consumes reserve while improving Beacon preparation/exposure;
 - significant visible reserve deployment count uses only the frozen order list and emits exhaustion suspicion at the second qualifying history point;
 - promise is never created implicitly and breach never erases promise history;
 - normal reassurance cannot repair withdrawn partner consent;
@@ -516,4 +523,4 @@ At minimum prove:
 
 ## Rejection conditions
 
-Reject #101 if it introduces a universal consequence score, morality/trust meter, generic lifecycle framework, implicit promise, silent recovery from withdrawn consent, unavoidable pre-terminal death spiral, hidden-truth-derived attribution, or UI-owned state transition.
+Reject #101 if it introduces a universal consequence score, morality/trust meter, generic lifecycle framework, implicit promise, silent recovery from withdrawn consent, hidden quiet-escort reserve tax, cost-free quiet preparation, unavoidable pre-terminal death spiral, hidden-truth-derived attribution, or UI-owned state transition.
