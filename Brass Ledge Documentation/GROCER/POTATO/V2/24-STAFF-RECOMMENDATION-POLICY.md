@@ -75,75 +75,96 @@ Do not hide an otherwise legal but costly course merely because staff dislikes i
 
 If the issue has no legal course, content validation must fail; recommendation code must not invent one.
 
-## Step 2 — professional acceptability
+## Professional worldview is advisory, not command precedence
 
-The responsible chief applies a small authored Kestrel worldview to the legal set. This is a **filter/reason step**, not a score.
+The responsible chief has a small authored Kestrel worldview, but it must **not silently filter legal courses before the commander’s standing direction is applied**.
 
 Professional worldview principles for the prototype:
 
 ### Intelligence lead
 
-Prefers courses that preserve legitimate uncertainty, improve/act on evidence, and avoid unsupported attribution. It may still recommend acting under uncertainty when the commander's priority/boundary makes waiting professionally unacceptable.
+Values legitimate evidence, preserving uncertainty where it is real, and avoiding unsupported attribution.
 
 ### Operations lead
 
-Prefers courses that preserve credible ability to deny a real threat and avoid creating an unrecoverable readiness problem. It does not know whether the threat is real beyond HQ belief.
+Values credible ability to deny a real threat and avoiding unrecoverable readiness collapse.
 
 ### Political lead
 
-Prefers courses that preserve partner consent and explicit commitments while maintaining enough coalition freedom to respond. It may recommend breaking a promise only when the authored issue leaves a more important command objective otherwise exposed; the breach must be stated explicitly.
+Values partner consent and explicit commitments while preserving enough coalition freedom to respond.
 
-A worldview may reject a course as professionally unacceptable only through an authored predicate attached to that issue/course. Do not create a generic hidden utility model.
+These worldviews do three things only:
 
-If professional filtering would remove every legal course, restore the full legal set and mark the issue as a professional conflict: staff must still recommend one course while explaining that every available option violates a professional concern.
+1. supply belief/professional concern reason references;
+2. provide the final deterministic tie-break after command direction and commitments have been applied;
+3. generate authored dissent from other chiefs.
 
-## Step 3 — standing-direction precedence
+They do not override the commander's protected boundary or main priority through a hidden “professional acceptability” filter.
 
-Apply the commander’s four opening directions lexicographically to the remaining candidate set.
+An order may be **legally/applicably unavailable** because belief/capability prerequisites fail under Step 1. That is different from a chief merely disliking it.
 
-### 3A. Protected boundary
+## Step 2 — standing-direction precedence
+
+Apply the commander’s four opening directions lexicographically to the legal/applicable candidate set.
+
+### 2A. Protected boundary
 
 If at least one candidate does **not** cross the commander’s protected boundary, remove candidates that do cross it.
 
 If every candidate crosses the boundary, keep all candidates and attach a visible reason that no viable course fully protects the stated boundary.
 
-### 3B. Main priority
+### 2B. Main priority
 
 If at least one remaining candidate explicitly supports the commander’s main priority, retain those candidates.
 
 If none explicitly support it, retain the current set and do not fabricate support.
 
-### 3C. Default style
+### 2C. Default style
 
 If at least one remaining candidate matches the commander’s default style, retain those candidates.
 
 `neutral` does not count as a style match; it remains only if no candidate matches the declared style.
 
-### 3D. Tolerated temporary cost
+### 2D. Tolerated temporary cost
 
 If more than one candidate remains and at least one incurs the commander’s declared tolerable cost rather than another declared course cost, prefer that candidate set.
 
 This does **not** make the tolerated cost free or good. The recommendation must say what is being spent.
 
-## Step 4 — commitment resolution
+## Step 3 — commitment resolution
 
 Known explicit commitments are never silently ignored.
 
 After standing-direction filtering:
 
-- if one remaining candidate honours an active commitment and another breaches it, the responsible chief prefers honour **unless** the honouring course fails an already-applied protected-boundary or main-priority condition that the breaching course satisfies;
+- if one remaining candidate honours an active commitment and another breaches it, the responsible chief prefers honour;
+- if standing-direction filtering has already removed the honouring course because it could not protect the commander’s boundary/main priority while another course could, the breach course may remain and be recommended;
 - when a breach is recommended, the recommendation must carry a commitment-breach reason reference and ordinary-language warning;
 - a promise/obligation is not a legal prohibition unless its own authored contract says so.
 
+This preserves the commander's earlier lexicographic direction while ensuring promises are never treated as invisible.
+
 This rule must not be reimplemented as a trust/morality score.
 
-## Step 5 — responsible-chief tie-break
+## Step 4 — responsible-chief tie-break
 
 If more than one candidate still remains, apply the responsible chief’s issue-specific authored preference order among those remaining courses.
 
-This is the final tie-break and must be visible as a professional reason when material.
+This is the only place the lead chief’s professional preference selects between otherwise command-equivalent courses. It must be visible as a professional reason when material.
 
 If content omits the required preference order for a reachable tie, validation fails. Engine code may not choose array order, lexical order, randomness or seed as an implicit recommendation tie-break.
+
+## Professional concerns that do not win
+
+A chief may still attach an authored concern to the selected course even when command direction makes another course preferable by that chief's professional instincts.
+
+Example:
+
+> **Operations recommends holding the reserve** because your protected boundary is reserve readiness.
+>
+> **Operations concern:** if the warning is genuine, waiting reduces response time.
+
+The concern is not a secret alternative score. It explains the cost of following the commander's direction.
 
 ## Recommendation result
 
@@ -179,7 +200,7 @@ Exact IDs are content/contract-owned and must remain stable for replay/readout t
 
 Dissent is not a second vote and does not change the lead recommendation automatically.
 
-A dissenting chief evaluates the **same HQ belief and known state** through an authored issue-specific concern predicate. A dissent record contains:
+A dissenting chief evaluates the **same HQ belief and known state** through an authored issue-specific concern/preference predicate. A dissent record contains:
 
 - dissenting officer;
 - preferred authored order where applicable;
@@ -222,12 +243,13 @@ The authoritative command contract still persists an explicit `delegate` disposi
 At minimum prove:
 
 - same HQ belief/intent/commitment/capability plus different hidden Ravellan truth → identical recommendation;
+- chief worldview alone cannot remove a legal course before standing direction is applied;
 - protected-boundary filtering wins when a viable non-crossing candidate exists;
 - all-candidates-cross preserves choices and emits `no-clean-option` rather than inventing safety;
 - main-priority filtering follows the protected-boundary step;
 - default style only breaks remaining choices;
 - tolerated cost is a later preference and remains visible as a cost;
-- active commitment is honoured by default when standing-direction constraints do not require breach;
+- active commitment is honoured by default among the command-equivalent surviving candidates;
 - breach can be recommended only through an authored reachable case and emits an explicit breach reason;
 - responsible-chief authored tie-break resolves a reachable final tie deterministically;
 - missing tie-break content for a reachable tie is rejected;
@@ -237,4 +259,4 @@ At minimum prove:
 
 ## Rejection conditions
 
-Reject #98 if it introduces a weighted utility function, hidden option ranking, LLM-generated recommendation, world-truth access, random/seed tie-break, automatic player intervention, or a generic rule engine broader than the concrete Kestrel need.
+Reject #98 if it introduces a weighted utility function, hidden option ranking, LLM-generated recommendation, world-truth access, professional pre-filter that silently overrides standing direction, random/seed tie-break, automatic player intervention, or a generic rule engine broader than the concrete Kestrel need.
