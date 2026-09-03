@@ -13,7 +13,7 @@ This document is the implementation authority for the **issue IDs, order IDs, st
 
 ## Metadata vocabulary
 
-Use only the already-authorised Kestrel tags:
+Use only the already-authorised Kestrel tags.
 
 ### `supports`
 
@@ -174,11 +174,11 @@ No Defer disposition.
 
 ### `reroute-and-monitor`
 
-- supports: `ravellan-understanding`;
+- supports: none;
 - crossesBoundary: `civilian-shipping`;
 - style: `quiet-preparation`;
 - costs: `political-friction`, `weaker-deterrence`;
-- direct effect: civilian disruption, preserves reserve, creates observation opportunity through the authored monitoring content.
+- direct effect: larger civilian disruption while preserving reserve. The prototype grants no directional intelligence benefit from the “monitor” wording unless [[23-HQ-BELIEF-AND-EVIDENCE]] explicitly adds one later.
 
 ### Operations tie-break
 
@@ -367,6 +367,8 @@ Tie-break:
 Standing `ravellan-understanding` priority may select protection first.
 
 ## Cycle 4 — `c4-exploit-lull`
+
+The stable ID remains for compatibility with the authored slice, but player copy should describe the actual **pressure-pattern change** from [[37-RAVELLAN-WORLD-EFFECT-MATRIX]] rather than assume every history contains a literal lull.
 
 Responsible officer: `operations`.
 
@@ -648,8 +650,9 @@ At minimum prove:
 
 - every stable issue/order ID above is reachable only in its authored cycle/state;
 - standing red line → priority → style → tolerated-cost can deterministically change recommendations using these tags;
-- every one of the 12 opening intent options (3+3+3+3 field choices, considered field-by-field) affects at least one reachable recommendation/reason or downstream delegated consequence somewhere in Kestrel;
+- every one of the 12 opening intent answer choices, considered field-by-field, affects at least one reachable recommendation/reason or downstream delegated consequence somewhere in Kestrel;
 - Lattice protection is delegated automatically only when standing direction selects it; otherwise Intelligence's tie-break leaves it unprotected unless the commander intervenes;
+- `reroute-and-monitor` receives no hidden intelligence-support tag/effect absent explicit evidence content;
 - Cycle-3 mandatory chief disagreement uses the same `unclear + conflicted` HQ belief;
 - Cycle-5 recommendation changes when HQ belief changes but not when hidden Ravellan truth alone changes;
 - all reachable final ties have the authored tie-break above;
@@ -659,4 +662,4 @@ At minimum prove:
 
 ## Rejection conditions
 
-Reject Kestrel content if a content author invents a new course/tag to force balance, lets chief preference pre-filter standing intent, resolves a tie through array order/randomness, creates ceremonial agenda issues with no consequential choice, or reads hidden Ravellan state to choose staff advice.
+Reject Kestrel content if a content author invents a new course/tag to force balance, lets chief preference pre-filter standing intent, assigns strategic support without a real downstream mechanic, resolves a tie through array order/randomness, creates ceremonial agenda issues with no consequential choice, or reads hidden Ravellan state to choose staff advice.
