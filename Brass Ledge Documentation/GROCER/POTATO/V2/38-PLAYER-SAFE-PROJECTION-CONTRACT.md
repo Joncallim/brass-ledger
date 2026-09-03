@@ -7,263 +7,239 @@ status: active
 
 Backlink: [[README]]
 
-This document is the implementation authority for the V2 server-to-normal-player information boundary used by #104/#105/#106/#108. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] supplies additional safe cross-issue/terminal semantics.
+This is the implementation authority for the V2 server-to-normal-player information boundary used by #104/#105/#106/#108. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] supplies cross-issue authority semantics; [[27-KESTREL-TERMINAL-MATRIX]] owns final route legality.
 
 ## Product rule
 
 Hidden information should be impossible to leak accidentally because the normal player DTO simply does not contain it.
 
-Never send a raw V2 session/state to the browser/headless player adapter and rely on presentation code to ignore private fields.
+Never send raw V2 session/state to browser/headless player adapter and rely on presentation to ignore private fields.
 
-The safe projection derives only from:
+Safe projection derives only from:
 
-- HQ belief/evidence already legitimate for the player;
+- legitimate HQ belief/evidence;
 - public/known campaign records;
-- player-owned standing direction/known commitments/capability;
-- current authoritative agenda/recommendations;
-- legitimately observable current world/crisis effects.
+- standing direction/known commitments/capability;
+- authoritative agenda/recommendations;
+- legitimately observable world/crisis effects.
 
-## Forbidden in normal player DTOs
+# Forbidden normal-player fields
 
-No direct or nested:
+No direct/nested:
 
 - hidden Ravellan posture;
 - hidden seizure-preparation enum;
-- raw `AdversaryObservation` records;
-- Ravellan normal/terminal action IDs or policy-row IDs;
+- raw `AdversaryObservation`;
+- raw Ravellan action/policy-row IDs;
 - raw collection selector inputs/action history;
 - hidden truth provenance;
-- private action/system ledger entries;
-- pre/post state hashes/digests not needed for safe mutation;
+- private player/system ledger entries;
+- pre/post hashes/digests not required for mutation;
 - oracle/counterfactual state;
-- future event/action branches or predicted terminal result;
-- player score/win probability;
-- numeric intelligence probability/confidence;
-- raw simulation state fields merely because they are serialisable.
+- future branches/predicted terminal result;
+- score/win probability;
+- numeric intelligence confidence;
+- raw sim fields merely because serialisable.
 
-`revision`, safe issue/order/action IDs and player-safe state enums are allowed where required for authoritative interaction.
+Allowed safe authority metadata includes revision, safe issue/order IDs, public state enums and explicit personal-attention requirement.
 
-## Strict discriminated modes
+# Strict modes
 
-Use strict unknown-key-rejecting schemas equivalent to:
+Use strict unknown-key-rejecting discriminated schemas equivalent to:
 
-- `opening-intent`;
-- `command-room`;
-- `consequence-reveal`;
-- `terminal-debrief`.
+- opening-intent;
+- command-room;
+- consequence-reveal;
+- terminal-debrief.
 
-Do not use one giant nullable raw-state DTO.
+No giant nullable raw-state DTO.
 
-## Opening intent
+# Opening intent
 
-May contain:
+May include player-safe scenario identity/title, revision, four question/answer IDs/copy and known opening situation. Never seeded Ravellan state.
 
-- player-safe scenario identity/title;
-- revision;
-- the four ordinary-language standing-direction question/answer IDs;
-- brief known opening situation.
+# Command Room projection
 
-Must exclude seeded Ravellan state.
-
-## Command Room projection
-
-### Header
-
-Expose:
+## Header
 
 - cycle;
 - revision;
-- safe situation/change refs/text;
-- prototype personal-attention limit;
+- safe situation/change;
+- personal-attention limit/usage semantics;
 - known deadlines/commitment/capability notices.
 
-### Standing direction
+## Standing direction
 
-Expose player-safe IDs/copy for the four chosen directions. Normal copy must not require implementation field labels.
+Stable safe IDs/copy for chosen directions; normal copy does not require implementation field labels.
 
-### Intelligence
+## Intelligence
 
-Expose:
+- natural-language judgement;
+- selected safe evidence summaries;
+- unresolved gaps;
+- legal named collection targets.
 
-- player-facing `ravellan-intent` judgement ref/text;
-- selected active evidence summaries;
-- unresolved gap/contradiction refs;
-- currently legal named collection targets.
+Do not expose internal diagnostic enum/source truth/target result branches unless explicitly needed by a later safe detail surface (not required by Kestrel).
 
-Prefer render-ready semantic refs rather than internal direction/picture/diagnostic enums. Never expose hidden source truth or target-result branches.
+## Public state
 
-### Public Kestrel state
+Safe summaries for:
 
-Expose belief/public summaries for:
-
-- Beacon vulnerability;
-- known Beacon denial preparation;
-- reserve condition;
+- Beacon vulnerability/preparation;
+- reserve;
 - partner consent;
-- consultation promise;
-- **Cycle-5 partner authority** (`pending`, `none`, `joint`, `unilateral`, `concession`) in ordinary player language once relevant;
+- consultation promise/channel;
+- C5 partner authority (`pending|none|joint|unilateral|concession`) once relevant;
 - political concession;
 - liaison obligation;
-- Lattice progress/operational/unreachable status;
+- Lattice progress/operational/unreachable;
 - attribution opportunity when legitimately known.
 
-These may use dedicated safe enums/copy distinct from private simulation types.
+## Safe terminal crisis family
 
-### Observable terminal crisis family
-
-At Cycle 6 expose only the safe family from [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]]:
+At C6 expose only:
 
 - `seizure-underway`;
 - `threshold-confrontation`;
 - `pressure-receding`.
 
-Do **not** expose raw #99 `attempt_seizure`, `threshold_challenge` or `abort_and_pressure` IDs in the normal player/recommendation DTO. The safe family communicates the overt current event while preserving prior hidden history until debrief.
+Never raw #99 terminal action IDs.
 
-### Agenda issue
+## Agenda issue / order alternative
 
-For each issue expose only:
+For each issue expose:
 
-- stable issue ID/title/why-now;
-- responsible officer safe identity;
-- staff intended/recommended order ID/copy;
-- 2–4 decisive reason refs/text;
+- issue ID/title/why-now;
+- responsible officer;
+- intended/recommended order ID/copy;
+- decisive reasons;
 - visible concern/dissent;
-- authored alternatives/copy;
+- legal alternatives/copy;
 - Defer availability;
-- `requiresIntervention` / personal-attention cost where authored;
-- known immediate cost/commitment copy;
-- safe cross-issue **requirement/conflict refs** necessary to construct a legal complete atomic command set under 39.
+- **`requiresIntervention` / personal-attention cost as an authoritative safe semantic on each course where applicable**;
+- known immediate/commitment/source cost copy;
+- safe cross-issue requirement/conflict refs needed to construct a legal complete package.
 
-Requirement/conflict refs may state things like “this visible action needs a partner-authority choice that permits it.” They may not explain hidden Ravellan state or future outcomes.
+The UI must not infer exceptional authority from an order name or prose.
 
-Do not expose hidden applicability predicates, course scores or private reasoning.
+### Exact Kestrel commander-only projection
 
-### Task / liaison
+When legal, these three alternatives must project `requiresIntervention = true` and one normal personal-attention cost:
 
-Expose only currently legal safe actions and known costs:
+- C2 `public-accusation`;
+- C4 `request-partner-liaison`;
+- C5 `use-attribution`.
 
-- eligible Lattice target IDs/copy;
-- liaison fallback when legal, explicitly marked as consuming one personal intervention and creating the known obligation.
+They must never appear as the `recommendedOrderId` / staff intended course.
 
-Never expose what hidden condition would produce each collection result.
+Their safe known-cost descriptors must include, as applicable:
 
-## Consequence Reveal projection
+- C2 accusation: unsupported/unilateral public accusation, partner/commitment risk;
+- liaison: creates explicit liaison obligation;
+- C5 attribution use: spends one-shot credible opportunity, exposes/compromises protected source, and requires compatible immediate authority.
 
-May contain:
+These are direct known costs/authority requirements, not predicted hidden outcomes.
 
-- cycle resolved;
-- revision;
-- ordered 1–5 material belief-safe consequence beats;
-- safe cause/attribution text/ref;
+No other Kestrel course projects `requiresIntervention = true`.
+
+## Task Collection
+
+Expose eligible Lattice target IDs/copy as separate zero-normal-intervention action. Never hidden result table/selector facts.
+
+# Consequence projection
+
+May include:
+
+- cycle resolved/revision;
+- 1–5 material safe beats;
+- safe cause/attribution;
 - player/history callbacks;
-- updated public state summaries including partner authority where relevant;
-- unresolved pressure/uncertainty;
-- safe progression label/action.
+- updated public state/authority summaries;
+- unresolved pressure;
+- safe progression action.
 
-Private truth provenance is consumed during derivation and discarded before DTO serialization.
+Private truth provenance is used during derivation then discarded.
 
-After Cycle 6, final reserve/partner/attribution summaries must reflect the **post-route authoritative state** from 39, not merely the pre-route campaign state.
+Terminal consequence projection must show post-route reserve/partner/attribution/source-cost state, not pre-route campaign state.
 
-## Terminal debrief
+# Terminal debrief
 
-Only a terminal-complete, replay-valid session may receive terminal truth.
+Only terminal-complete replay-valid session receives terminal truth.
 
-Use two explicit sections:
+Two explicit sections:
 
 ### `whatHqBelieved`
 
-Reconstruct the major assessment/evidence legitimately available at decisive windows.
+Major assessment/evidence available at decisive windows.
 
 ### `whatActuallyHappened`
 
-Dedicated debrief-safe truth fields may now explain:
+Dedicated debrief-safe truth may explain opening posture, transitions, preparation progression, genuine/deceptive signals, final policy reason and final route interaction.
 
-- opening Ravellan posture;
-- posture transitions;
-- preparation progression;
-- genuine/deceptive signals;
-- final policy reason;
-- how the campaign-built state/final route produced the outcome.
+Never serialize raw private session/world even here.
 
-Do not serialize raw private session/world objects even here.
+# Derivation / hidden-truth non-interference
 
-## Safe derivation boundary
+Use pure narrow projection functions. Normal browser/headless player path receives parsed strict safe DTOs only; no debug truth flag.
 
-Prefer pure, narrow functions conceptually equivalent to:
+Paired sessions with different hidden truth but same legitimate HQ/public/standing/capability/observable inputs must project deep-equal normal semantics.
 
-- opening projection;
-- command-room projection;
-- consequence projection;
-- terminal-debrief projection.
+If hidden truth changes a legitimate observable fact first, safe DTO may then differ through that fact.
 
-The server/headless normal-player path receives parsed strict safe DTOs only.
+Collection selectors obey the stricter posture-blind rules from `23`/`26`/`39`.
 
-No `debug=true` player endpoint may append raw truth/state.
+# Mutation boundary
 
-## Hidden-truth non-interference
-
-For command/reveal modes, paired sessions with different hidden posture/preparation but identical legitimate HQ/public/standing/capability/observable inputs must project deep-equal safe semantics.
-
-If hidden truth first changes a legitimately observable manifestation/evidence, safe projection may then differ through that public state. Tests must not demand blindness to facts actually observed.
-
-Collection isolation is stricter: target selectors themselves obey the posture-blind rules in 39.
-
-## Terminal truth gating
-
-Requesting terminal-debrief truth before terminal completion fails closed. Browser tab visibility is not a security boundary.
-
-## Mutation boundary
-
-Player may submit only authorised player authority:
+Player may submit only:
 
 - opening standing choices;
-- issue dispositions/selected intervention orders;
-- legal task/liaison target ID;
+- issue dispositions / intervention order IDs;
+- legal Task Collection target;
 - final terminal course;
 - `expectedRevision`.
 
-Player may not submit recommendation reasons, delegated final order output, consequence patches, HQ assessment, Ravellan state/action, partner-authority result, terminal outcome or arbitrary state.
+It may not submit recommendation, delegated final order, consequence patches, HQ belief, Ravellan state/action, partner-authority result or terminal outcome.
 
-Server/sim recomputes all derived/system results.
+`requiresIntervention` is read-only server-derived authority metadata; client cannot downgrade it or submit a commander-only order as Delegate.
 
-## Cross-issue draft semantics
+# Cross-issue package refs
 
-The safe DTO may contain requirement/conflict refs, but the browser does not own the rule.
+DTO may expose safe refs such as:
 
-Under 39:
+- this course requires personal intervention;
+- this visible action needs compatible partner authority;
+- public attribution spends source/opportunity;
+- this draft combination conflicts with current authority choice.
 
-- the untouched all-Delegate staff package is always legal;
-- a player's changed draft may become incompatible;
-- UI may prevent submission/explain the conflict;
-- it must never silently change another issue to repair the draft;
-- server remains final validator.
+No hidden truth/predicted outcome.
 
-## Readout/replay stability
+All-Delegate package is legal by construction; changed draft may become incompatible. UI may explain/prevent but never silently repair; server validates.
 
-Prefer stable semantic refs in authoritative/readout state and render prose outside canonical hashes where repository conventions allow.
+# Readout/replay stability
 
-A replay-valid canonical state must reproduce equivalent safe semantics under the same content version.
+Prefer stable semantic refs rather than locale strings in canonical hashes. Replay-valid state reprojects equivalent safe semantics under same content version.
 
-## Required tests
+# Required tests
 
 At minimum prove:
 
-- strict schemas reject unknown/private fields;
-- raw V2 session/state cannot parse as a player DTO;
-- opening projection excludes seeded Ravellan state;
-- paired hidden-truth command/reveal projections are equal when legitimate inputs equal;
-- no raw adversary action/observation/policy row/private ledger/hash/probability/future branch leaks;
-- target DTOs expose choices/costs but no hidden result matrix;
-- liaison is visibly one personal intervention and never looks delegated;
-- C5 partner-authority safe state/requirements are available without raw private state;
-- Cycle-6 projection exposes only safe crisis family;
-- invalid cross-issue draft can be explained without leaking hidden truth;
+- strict schemas reject private/unknown fields;
+- raw V2 session/state cannot parse as player DTO;
+- opening excludes seeded Ravellan state;
+- paired hidden-truth normal projections equal when legitimate inputs equal;
+- no raw adversary action/observation/row/ledger/hash/probability/future branch leaks;
+- **exactly three Kestrel courses project `requiresIntervention = true`: accusation, liaison, attribution use**;
+- none of those three can appear as staff recommendation;
+- browser mutation cannot submit any of them as Delegate;
+- known cost descriptors for each are present without hidden-outcome leakage;
+- Task Collection exposes target choices but zero normal intervention and no hidden result branch;
+- C5 partner-authority/requirement state safe;
+- C6 only safe crisis family/pruned route set;
 - non-terminal debrief request fails closed;
-- terminal debrief contains only explicit debrief-safe truth fields;
-- terminal consequence state reflects post-route state;
-- client cannot submit system/derived fields as authority;
-- V1 DTO/API contracts remain unchanged.
+- terminal truth only explicit debrief-safe fields;
+- terminal consequence state is post-route;
+- V1 DTO/API unchanged.
 
 ## Rejection conditions
 
-Reject V2 integration if it serialises raw session/state and redacts in React, exposes private state in unused JSON, permits a player debug truth flag, exposes raw #99 terminal action IDs, includes predicted outcomes, or lets client-submitted derived state become authority.
+Reject V2 projection if it serialises raw session/state then redacts in React, exposes private state in unused JSON, permits player debug truth, makes UI infer commander-only authority from labels, omits the one-token requirement for any exceptional course, allows client to submit exceptional course as Delegate, exposes raw #99 terminal IDs/predicted outcomes or lets client-supplied derived state become authority.
