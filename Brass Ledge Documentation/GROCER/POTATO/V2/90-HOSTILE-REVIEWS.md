@@ -7,42 +7,79 @@ status: active
 
 Backlink: [[README]]
 
-Eight independent attack angles were completed during bootstrap. They found no
-reason to implement gameplay before the listed product decisions are made.
+## Bootstrap attack set
+
+Eight independent attack angles were completed during the original V2 bootstrap.
 
 | Angle | Material finding | Remediation / status |
 | --- | --- | --- |
-| Game-design/fun | Delegation could be a ceremonial click; interventions might not collide; anticipation was aspirational. | B1/B2 require lead advice, bounded agenda collision, and each nonterminal reveal to expose a future pressure and influence point. |
-| Strategy depth | Intent could be ceremonial; non-dominance had no relation. | Require causal use of intent fields; laboratory uses test-only Pareto axes and keeps intelligence diagnostic-only; B1/B4 remain human-owned. |
-| Adversary/fairness | World-truth-readable adversary contradicted observation-only fairness. | Gameplay/architecture isolate `AdversaryObservation`; B2 must author policy and signal matrix. |
-| Narrative/persistence | Consequences lacked transitions, promises could be implicit, recovery was non-executable. | B2 requires record, branch, promise, and recovery matrices before content implementation. |
-| Information/uncertainty | Provenance and endpoint shape could leak posture; confidence was open. | B3 now fixes authored evidence with natural-language judgement, player-safe projection, and visible attribution; numeric or band UI is forbidden. |
-| Replay/state integrity | Ledger payload, digest, content identity, and command atomicity were underspecified. | Added V2 atomic command set, digest, immutable identity, and rejection requirements. |
-| AI-agent ambiguity | Agents could invent timing, severity, predicates, and confidence thresholds. | B1–B5 and the authored matrix resolve those choices; implementation must not add mechanics. |
-| Scope/YAGNI | Generic lifecycle/recommendation systems were premature singleton abstractions. | Start with concrete discriminated Kestrel records/authored rules; generalise only after two uses. |
+| Game-design/fun | Delegation could be a ceremonial click; interventions might not collide; anticipation was aspirational. | Lead advice, bounded collision, implicit delegation and consequence-to-next-pressure contracts now make this mechanically testable; human proof still pending. |
+| Strategy depth | Intent could be ceremonial; non-dominance had no relation. | Require causal intent use plus Pareto/Decision-Elasticity/strategy-separation diagnostics. |
+| Adversary/fairness | World-truth-readable adversary contradicted observation-only fairness. | `AdversaryObservation` boundary and #99 authored policy. |
+| Narrative/persistence | Consequences lacked transitions, promises could be implicit, recovery was non-executable. | Concrete Kestrel records, explicit promises/obligations and authored recovery matrices. |
+| Information/uncertainty | Provenance/endpoint could leak posture; confidence was open. | Authored evidence, natural-language judgement and strict player-safe projection. |
+| Replay/state integrity | Ledger payload, digest, content identity and atomicity were underspecified. | V2 canonical replay/digest/action contracts and prototype version boundaries. |
+| AI-agent ambiguity | Agents could invent timing, severity, predicates and confidence thresholds. | Numbered Kestrel authority documents freeze implementation decisions. |
+| Scope/YAGNI | Generic lifecycle/recommendation systems were premature singleton abstractions. | Concrete Kestrel types first; generalise only after another real use. |
 
-## Downstream specification hostile re-review — 2026-09-03
+## First downstream composed-system review — 2026-09-03
 
-After adding the detailed #100–#107/#104 contracts, the design was re-attacked as one composed system rather than reviewing each document independently.
+After the detailed #100–#108 contracts were authored, they were attacked as one game rather than as isolated files.
 
-| Attack | Finding | Correction / current status |
+| Attack | Finding | Correction |
 | --- | --- | --- |
-| Commander ownership | The first recommendation draft let the lead chief's “professional acceptability” remove courses before standing intent was applied, allowing staff to silently override the commander's red line/priority. | Fixed in [[24-STAFF-RECOMMENDATION-POLICY]]: chief worldview supplies concerns/final tie-break/dissent only; legal/applicable courses receive red line → priority → style → tolerated-cost precedence first. |
-| Adversary branch reachability | Ravellan's `coercive_feint → genuine_preparation` CF-1 branch required weak coverage + withheld denial + fractured unity, but weak opening Beacon coverage was not explicitly authored as an observation. The policy could therefore be correct but unreachable for the wrong reason. | [[21-KESTREL-SIX-CYCLE-CANON]] now states ordinary Cycle-1 Beacon watch emits the detectable `beacon_coverage_signal = weak`; reinforced watch emits `credible`. Missing observations still mean unknown. This permits a concrete neglect + restraint + fracture chain to create a real Ravellan opportunity. |
-| Strategy coverage | The lab promised coalition-led play as a viable route but had no deterministic coalition-preserving probe policy, so automated strategy-separation tests could miss a decorative partner system. | Added `coalition-first` to [[31-HEADLESS-DESIGN-LAB]] and [[40-EVALUATION-CONTRACT]], with a direct failure condition if preserving consultation/partner authority never changes later mechanics. |
-| Fake choice | Existing policy/terminal diagnostics could show different outcomes while individual mid-run alternatives still reconverged without any strategic effect. | Added counterfactual **Decision Elasticity**: branch from the same verified pre-state and flag alternatives that never change persistent state, belief, later agenda/recommendation, action space, Ravellan path or terminal profile. |
-| Final rock-paper-scissors | A hidden posture could have become a secret answer key for Cycle 6. | [[27-KESTREL-TERMINAL-MATRIX]] makes final route legality/outcome depend on campaign-built preparation, warning, exposure, reserve, partner authority and commitments. Hidden opening posture is not a player-facing final-course predicate. |
-| Lattice dominance | Three mandatory protected advances risk making Lattice the obvious required build. | [[26-LATTICE-COLLECTION-MATRIX]] preserves a narrower intervention-costly liaison fallback; the lab must prove at least one viable non-Lattice non-defeat route and flag mandatory Lattice. |
-| Death spiral | Persistent partner/reserve/exposure records could reduce options until an early mistake became a boring inevitable loss. | [[25-KESTREL-CONSEQUENCE-MATRIX]] freezes emergency consolidation, political recovery and liaison counterplay; [[31-HEADLESS-DESIGN-LAB]] checks recovery reachability from every reachable non-terminal state. |
-| Success snowball | Strong early play could remove later tension. | Lab now flags late-game trivialisation when interventions become inelastic, recommendations uniformly agree and routes collapse. No rubber-banding is permitted as a fix. |
-| Clerical UI regression | Even V2 could become “read recommendation → click Delegate” repeatedly. | [[28-COMMAND-ROOM-INTERACTION-CONTRACT]] defaults every issue locally to Delegate; the player interacts mainly with exceptions while the authoritative submitted command set remains explicit. |
-| Consequence overload | A rich simulation could recreate the V1 reading burden through a large after-action ledger. | [[29-CONSEQUENCE-REVEAL-CONTRACT]] prioritises 1–5 material beats around change, belief-safe cause, persistent callback, unresolved pressure and next influence point; full detail remains secondary. |
-| Headless divergence | A separate test/CLI loop could silently reimplement rules and produce false confidence before UI work. | [[33-HEADLESS-SIX-CYCLE-EXECUTION]] requires the same authoritative sim transitions, strict player-safe provider contract and trusted replay closure for every successful run. |
-| Premature full-game scope | Planning future chief memories, Command Bets, longer campaigns and institutional builds could leak into the bounded slice. | [[32-POST-GATE-GAME-ARCHITECTURE]] is explicitly `provisional` and non-authoritative until the human gate and an explicit post-gate decision. |
+| Commander ownership | Chief “professional acceptability” could remove courses before standing intent. | [[24-STAFF-RECOMMENDATION-POLICY]] now makes worldview advisory/tie-break/dissent only; command direction has precedence. |
+| Adversary branch reachability | CF-1 needed weak coverage but opening ordinary watch did not explicitly emit it. | Ordinary C1 watch now emits authored detectable weak coverage; reinforced watch emits credible. |
+| Strategy coverage | Coalition-led play had no deterministic probe policy. | Added `coalition-first` to [[31-HEADLESS-DESIGN-LAB]]. |
+| Fake choice | Policy outcomes could differ while individual options were still cosmetic. | Added counterfactual Decision Elasticity. |
+| Final rock-paper-scissors | Hidden posture could become a secret final answer key. | Terminal route predicates depend on built campaign state, not prior hidden posture. |
+| Lattice dominance | Three scheduled advances risked making Lattice mandatory. | Narrower one-token liaison counterplay plus mandatory non-Lattice viability test. |
+| Death spiral | Persistent deterioration could remove all decisions. | Costly reserve/partner/Beacon/Lattice recovery routes plus reachability diagnostics. |
+| Success snowball | Early success could make the end trivial. | Lab flags late windows with inelastic interventions/uniform routes; no rubber-banding fix allowed. |
+| Clerical UI regression | V2 could still be “click Delegate repeatedly.” | Command Room defaults locally to Delegate; player acts on exceptions. |
+| Consequence overload | Rich state could recreate V1 reading burden. | 1–5 material causal beats, deeper history secondary. |
+| Headless divergence | CLI/test path could reimplement game rules. | #104 must use the same authoritative transitions and trusted replay. |
+| Premature full-game scope | Post-gate ideas could leak into Kestrel. | [[32-POST-GATE-GAME-ARCHITECTURE]] remains explicitly provisional. |
+
+## Second composed-system review — 2026-09-03
+
+A further hostile pass tested the *composition* of intelligence, recommendation, simultaneous orders and terminal resolution. These defects are resolved by [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
+
+| Attack | Material defect found | Amendment |
+| --- | --- | --- |
+| Intelligence oracle leakage | Focused/Lattice result tables used hidden Ravellan `posture` to decide what a sensor saw. The prose hid the enum but the result still depended directly on secret intent. | Target result selectors are posture-blind and may read only explicitly authorised physical preparation/action-history facts. Same authorised facts + different posture must produce identical evidence. |
+| Binding promise trivialisation | Political's C1 final tie-break almost always selected formal consultation, making a supposedly consequential promise the universal delegated baseline. | Final tie now prefers informal liaison unless standing partner priority/style selects the commitment. |
+| Promise without benefit | If formal consultation only created liability, informal liaison could dominate it. | Active formal consultation now supplies the established channel required for a C2 joint-warning + visible-surge coordinated package. |
+| Fallback cost bypass | `request-partner-liaison` costs one intervention, but recommendation tags could make it the delegated order and therefore free. | Add one bounded `requiresIntervention` authority flag; liaison is the sole Kestrel use and is never staff-recommended. |
+| Baseline partner sensitivity missing | C2 public accusation could avoid partner damage simply because the player never made the optional formal promise. | C2 accusation is explicitly unilateral and always worsens partner; active promise adds breach rather than creating the baseline cost. |
+| Simultaneous-order race | C5 partner consultation and visible actions could resolve differently depending on issue/array application order. Reinforcement/recovery endpoint clamping could also be order-dependent. | Effects derive from the complete atomic command set; C5 has explicit partner-authority result; ordinal deltas aggregate then clamp once. |
+| Relationship/authority conflation | `partner-consent = cooperative` automatically implied joint military authority, so consultation could become cosmetic. | Add concrete `partner-authority = pending/joint/unilateral/concession`; terminal joint action requires authority, not sentiment alone. |
+| Reserve observation double-count | Two qualifying C5 orders could count as two Ravellan “deployments” in one cycle. | Exhaustion signal counts qualifying deployment cycles, max one event per cycle. |
+| False seizure warning | Generic credible attribution—including strong coercion evidence—qualified as `usableWarning`. | Warning is preparation-specific HQ assessment only. |
+| Forced irrational finale | If Ravellan backed down while Beacon was unprepared and political/intelligence routes were unavailable, Emergency Mobilisation could be the only legal final button. | Quiet Denial is always the restrained fallback for threshold/abort; against seizure it still requires prepared denial. |
+| Terminal costs only in prose | Joint/Emergency courses often did not change reserve/partner state, so “heavy response” could equal a clean Strategic Success. | Final courses apply authoritative post-route reserve/partner/attribution effects; successful Emergency always carries `emergency-surge` severe cost. |
+| Information route mechanically cosmetic | Hold And Expose could equal Quiet Denial whenever both were legal. | Hold And Expose now uses the credible opportunity and can improve partner consent; it remains physically unsafe against a seizure without prior denial preparation. |
+| Terminal hidden-ID coupling | Cycle-6 staff ownership referred directly to #99 terminal action IDs. | Derive a safe observable crisis family (`seizure-underway`, `threshold-confrontation`, `pressure-receding`) for staff/player paths. |
+| Verification sequencing | UI work was scheduled before the machine lab despite #107 existing to falsify the game cheaply. | #107 and the 3-player formative smoke now occur immediately after complete #104 headless execution, before #105/#106. |
+
+## Re-review invariants after 39
+
+Future implementation/review must actively attempt to falsify:
+
+- collection posture-blindness;
+- complete-command-set order independence;
+- liaison intervention cost;
+- C2 coordinated vs unilateral escalation distinction;
+- explicit C5 partner authority;
+- post-route terminal state changes;
+- non-seizure quiet fallback;
+- no universal final course;
+- no pre-terminal hidden truth in recommendation/player DTOs;
+- V1/replay/version isolation.
 
 ## Remaining genuinely human-owned unknowns
 
-The expanded specification intentionally does **not** claim to resolve:
+The expanded specification intentionally does **not** resolve through design review:
 
 - whether two interventions feels right;
 - whether six command windows is the right pacing;
@@ -51,7 +88,7 @@ The expanded specification intentionally does **not** claim to resolve:
 - whether the amount/tone of required prose is enjoyable;
 - whether players experience regret, vindication, tension, surprise and voluntary replay desire.
 
-These must remain human evidence. If the human gate fails, the design should be revised from observed failure rather than protected because the machine contracts are internally coherent.
+These remain human evidence under [[35-HUMAN-PLAYTEST-HARNESS]] / [[40-EVALUATION-CONTRACT]]. A coherent machine contract is not a fun result.
 
 ## Required re-review
 
