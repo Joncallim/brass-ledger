@@ -7,7 +7,7 @@ status: active
 
 Backlink: [[README]]
 
-This is the implementation authority for Kestrel Cycle-6 route legality, physical resolution, terminal state effects and classification. It uses only verified canonical state and the **safe observable crisis family**, never hidden opening posture as a player answer key.
+This is the implementation authority for Kestrel Cycle-6 route legality, physical resolution, terminal state effects and classification. It uses verified canonical state and the **safe observable crisis family**, never hidden opening posture as a player answer key.
 
 [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns cross-system timing/authority details.
 
@@ -15,7 +15,7 @@ This is the implementation authority for Kestrel Cycle-6 route legality, physica
 
 Terminal resolution may use:
 
-- safe crisis family derived from #99 terminal behavior;
+- safe crisis family;
 - Beacon exposure/preparation;
 - reserve condition;
 - HQ assessment/evidence;
@@ -32,7 +32,7 @@ Terminal resolution may use:
 
 `usableWarning = HQ assessment direction == preparation`
 
-Both preparation+weak and preparation+coherent qualify. Generic credible coercion attribution does not.
+Both preparation+weak and preparation+coherent qualify. Generic coercion attribution does not.
 
 `partnerAccess = partner-consent != withdrawn`
 
@@ -40,22 +40,31 @@ Both preparation+weak and preparation+coherent qualify. Generic credible coercio
 
 `unspentAttribution = attribution-opportunity == credible`
 
-### Safe crisis family
+Safe crisis family:
 
 - #99 `attempt_seizure` → `seizure-underway`
 - `threshold_challenge` → `threshold-confrontation`
 - `abort_and_pressure` → `pressure-receding`
 
-Prior hidden posture/preparation stays private until debrief.
+Prior hidden posture/preparation remains private until debrief.
 
-### Quiet adequacy
+### Known physical adequacy predicates
 
-For route-pruning/known trade-offs:
+These exist to avoid displaying a route that the **player-known current state** makes deterministically unable to do what the route claims.
 
-- `quietCleanSeizure = preparedDenial AND controlledExposure AND usableWarning`
-- `quietCredibleThreshold = preparedDenial OR controlledExposure`
+`quietCleanSeizure = preparedDenial AND controlledExposure AND usableWarning`
 
-These are player-known predicates.
+`quietCanHoldSeizure = preparedDenial AND (quietCleanSeizure OR reserve-condition == usable)`
+
+The second clause is the authored late-reaction fallback.
+
+`jointCanHoldSeizure = preparedDenial OR controlledExposure`
+
+`emergencyCanHoldSeizure = reserve in {usable, strained} OR (reserve == brittle AND preparedDenial)`
+
+`quietCredibleThreshold = preparedDenial OR controlledExposure`
+
+All are derived only from player-known state.
 
 ## Final course IDs
 
@@ -66,47 +75,50 @@ Exactly:
 - `emergency-mobilisation`
 - `hold-and-expose`
 
-The legal subset depends on known terminal state so the UI does not offer an option that is strictly worse for every outcome already knowable at that point.
+The displayed legal subset is pruned so it does not include a route already known to be physically futile or strictly worse across the current player-known state.
 
-## Route legality
+# Route legality
 
-### Quiet Denial
+## Quiet Denial
 
-- `seizure-underway`: legal only if `preparedDenial`.
-- `threshold-confrontation`: always legal.
-- `pressure-receding`: always legal.
+### `seizure-underway`
 
-### Joint Visible Denial
+Legal only if:
+
+`quietCanHoldSeizure`
+
+A prepared plan that the known current reserve/warning/exposure state cannot execute successfully is not displayed as a fake “quiet solution.”
+
+### `threshold-confrontation`
+
+Always legal.
+
+### `pressure-receding`
+
+Always legal.
+
+## Joint Visible Denial
 
 Base requirements:
 
-- crisis is `seizure-underway` OR `threshold-confrontation`;
+- crisis is seizure or threshold;
 - `jointAuthority`;
 - pre-route reserve != `brittle`.
 
-Additionally omit it when all are true:
+For seizure additionally require:
 
-- Quiet is already the clean/credible known response for that crisis;
-- partner consent is already `cooperative`.
+`jointCanHoldSeizure`
 
-Concretely:
+A visible joint response that the known physical state cannot hold Beacon with is not displayed as a viable denial course.
 
-- seizure: if `quietCleanSeizure && partner-consent == cooperative`, Joint is not legal;
-- threshold: if `quietCredibleThreshold && partner-consent == cooperative`, Joint is not legal.
+Additionally omit Joint when a player-known Quiet route already achieves the same physical/political purpose without spending final reserve:
 
-Reason: in those player-known states Joint would spend reserve without improving physical or political position.
+- seizure: if `quietCleanSeizure && partner-consent == cooperative`;
+- threshold: if `quietCredibleThreshold && partner-consent == cooperative`.
 
-It is **never legal** for `pressure-receding`.
+Never legal for pressure receding.
 
-### Emergency Mobilisation
-
-Legal only for:
-
-`seizure-underway`
-
-It is the brute-force comeback against an actual seizure, not a knowingly irrational response to a visible threshold challenge/backdown.
-
-### Hold And Expose
+## Hold And Expose
 
 Base:
 
@@ -118,53 +130,80 @@ Against seizure additionally require:
 - `preparedDenial`;
 - `controlledExposure`.
 
-Against threshold it is legal when at least one is true:
+Against threshold legal when at least one:
 
 - partner consent != cooperative;
 - `quietCredibleThreshold` is false.
 
-Against pressure receding it is legal only when:
+Against pressure receding legal only when:
 
 - partner consent != cooperative.
 
-Against seizure, omit Hold And Expose when `quietCleanSeizure` AND partner consent is cooperative; Quiet is then a clean player-known answer and public source exposure would buy no terminal benefit.
+Against seizure omit when `quietCleanSeizure && partner-consent == cooperative`; source exposure would buy no terminal benefit over a clean Quiet response.
 
-These applicability rules preserve Hold And Expose when it trades source exposure for political recovery / reduced late-reaction cost, but remove it when it would be pure self-harm.
+## Emergency Mobilisation
 
-## Resolution order
+Emergency is a **fallback**, not a permanent fourth button.
 
-1. validate route against the player-known route predicates above;
-2. use pre-route state for physical feasibility;
-3. derive Beacon held/lost;
-4. apply terminal route state/cost effects;
-5. derive post-route access/severe cost;
-6. derive Pareto vector/classification;
-7. persist/replay;
-8. only then expose terminal truth debrief.
+It is considered only for:
 
-## Quiet Denial
+`seizure-underway`
 
-### Seizure
+Let `quietLegal`, `jointLegal` and `holdLegal` mean the route predicates above for the current state.
 
-Clean hold if:
+Emergency is legal only when:
+
+- `quietLegal == false`;
+- `jointLegal == false`;
+- and either `emergencyCanHoldSeizure == true` **or** `holdLegal == false`.
+
+Meaning:
+
+- if a known-valid Quiet plan already holds Beacon, Emergency is strictly worse and is pruned;
+- if a known-valid Joint plan already holds Beacon, Emergency is strictly worse and is pruned;
+- if Emergency itself is known unable to hold Beacon but Hold And Expose can, Emergency is pruned;
+- if no better viable course exists, Emergency remains the last-ditch fallback, including a doomed best-effort state caused by earlier campaign failure.
+
+This preserves painful comeback without padding the finale with a known inferior mobilisation button.
+
+# Resolution order
+
+1. derive/prune routes from player-known state;
+2. validate selected route;
+3. use pre-route state for physical feasibility;
+4. derive Beacon held/lost;
+5. apply terminal route state/cost effects;
+6. derive post-route access/severe cost;
+7. derive Pareto vector/classification;
+8. persist/replay;
+9. only then expose terminal truth debrief.
+
+# Quiet Denial
+
+## Seizure
+
+Route legality guarantees one of two authored hold paths.
+
+### Clean hold
+
+If:
 
 - prepared denial;
 - controlled exposure;
-- usable warning.
+- usable warning;
 
-If clean conditions fail but pre-route state has:
+Beacon held with no automatic terminal reserve cost.
 
-- prepared denial;
-- reserve `usable`;
+### Late reaction
 
-then a late reaction still holds Beacon:
+Otherwise legality requires prepared denial + pre-route reserve usable.
+
+Beacon held, then:
 
 - reserve worsens one;
-- severe flag `late-reaction`.
+- severe `late-reaction`.
 
-Otherwise Beacon lost.
-
-### Threshold confrontation
+## Threshold
 
 Beacon held.
 
@@ -172,42 +211,43 @@ If `quietCredibleThreshold`:
 
 - no partner movement.
 
-If neither prepared denial nor controlled exposure:
+Otherwise:
 
-- partner consent worsens one step.
+- partner consent worsens one.
 
-Meaning: refusing to overreact is still physically safe, but a visibly weak/underprepared coalition can lose political confidence under sustained threshold pressure.
+Meaning: restraint is physically safe, but visibly weak/underprepared coalition posture can lose political confidence under sustained pressure.
 
-### Pressure receding
+## Pressure receding
 
 Beacon held; no automatic reserve/partner movement.
 
-This is the clean “accept de-escalation / maintain restrained posture” route.
+This is clean restrained acceptance of de-escalation.
 
-## Joint Visible Denial
+# Joint Visible Denial
+
+Route legality guarantees physical adequacy for seizure.
 
 Physical:
 
-- seizure → Beacon held if `preparedDenial OR controlledExposure`;
+- seizure → Beacon held;
 - threshold → Beacon held.
 
 Effects:
 
 - reserve worsens one;
-- partner consent improves one step when below cooperative and not withdrawn;
-- access remains because joint authority is required.
+- partner consent improves one when below cooperative and not withdrawn;
+- access remains because joint authority required.
 
-This makes the route trade force readiness for coalition reassurance/visible denial where that benefit is actually needed.
+This trades final readiness for coalition reassurance / visible denial where that value is actually needed.
 
-## Emergency Mobilisation
+# Emergency Mobilisation
 
-Only available against seizure.
+Only displayed as seizure fallback under the route rule above.
 
-Physical from pre-route state:
+Physical:
 
-- reserve usable/strained → Beacon held;
-- reserve brittle + prepared denial → Beacon held;
-- reserve brittle without prepared denial → Beacon lost.
+- if `emergencyCanHoldSeizure` → Beacon held;
+- otherwise → Beacon lost (this occurs only when no other legal route can hold, leaving a last-ditch best effort).
 
 If Beacon held:
 
@@ -215,19 +255,19 @@ If Beacon held:
 - severe `emergency-surge`;
 - if no joint authority and partner not withdrawn, partner worsens one.
 
-This is the last-ditch comeback, never a clean Strategic Success substitute.
+Emergency is never clean Strategic Success.
 
-## Hold And Expose
+# Hold And Expose
 
 Selecting it consumes:
 
 `attribution-opportunity: credible → used`
 
-It also records severe-cost history:
+and records severe:
 
 `attribution-source-exposed`
 
-The Kestrel credible attribution opportunity is source-sensitive: making the case publicly burns/protectively compromises that source. This is a concrete cost, not an intelligence-resource meter.
+The credible case is source-sensitive; public exposure burns/compromises the protected source. This known cost must be disclosed before selection.
 
 Effects:
 
@@ -235,22 +275,20 @@ Effects:
 
 Physical:
 
-- seizure → Beacon held because route legality already requires prepared denial + controlled exposure;
-- threshold/pressure receding → Beacon held.
+- seizure → Beacon held because legality already requires prepared denial + controlled exposure;
+- threshold / pressure receding → Beacon held.
 
-The route therefore exchanges a protected source for political/exposure payoff and is not a free upgrade over Quiet Denial.
+# C5 attribution use
 
-## C5 attribution use and source exposure
+C5 public `use-attribution` spends the same source-sensitive opportunity:
 
-Public C5 `use-attribution` uses the **same** source-sensitive opportunity:
+- `credible → used`;
+- severe `attribution-source-exposed`;
+- authored immediate partner/discovery effects.
 
-- credible → used;
-- record `attribution-source-exposed` severe-cost history;
-- apply its authored immediate partner/discovery effects.
+Later evidence may change HQ belief but never regenerates another credible Kestrel attribution opportunity.
 
-Later evidence may change HQ belief but does not regenerate another credible opportunity in Kestrel.
-
-## Severe cost
+# Severe cost
 
 After route effects, severe cost is true if any authored severe condition applies, including:
 
@@ -261,27 +299,27 @@ After route effects, severe cost is true if any authored severe condition applie
 - `attribution-source-exposed`;
 - `late-reaction`;
 - `emergency-surge`;
-- authored overreaction below;
-- any other explicit severe commitment history frozen in #101.
+- authored overreaction;
+- other explicit severe commitment history frozen in #101.
 
-### Overreaction
+## Overreaction
 
-After the route-pruning above:
+After route pruning:
 
 - Joint Visible against threshold is overreaction only when post-route reserve is brittle OR authority required political concession.
 
-Joint/Emergency are unavailable against pressure receding, so no separate backdown-overreaction trap remains.
+Joint/Emergency are absent for pressure receding.
 
 No numeric score.
 
-## Terminal classification
+# Terminal classification
 
 1. **Operational Defeat** — Beacon lost.
-2. **Political Defeat** — Beacon held but final partner consent/access = withdrawn.
+2. **Political Defeat** — Beacon held but final partner access withdrawn.
 3. **Costly Success** — Beacon held + access survives + severe cost.
 4. **Strategic Success** — Beacon held + access survives + no severe cost.
 
-## Pareto vector
+# Pareto vector
 
 Report post-route:
 
@@ -290,52 +328,55 @@ Report post-route:
 - reserve readiness;
 - commitment integrity.
 
-Also report terminal classification/severe-cost flags separately. The local-course dominance diagnostic may consider both Pareto relation and classification/severe-cost state; it must not treat a source-compromising route as a free Pareto improvement merely because source integrity is not one of the four main axes.
+Also report classification/severe flags separately. #107 local dominance considers both so source/emergency/late-reaction costs are not invisible merely because they are not extra global axes.
 
-## Design intent by crisis
+# Design intent by crisis
 
-### Seizure underway
+## Seizure underway
 
-The game asks whether the campaign built enough physical denial, coalition authority or emergency reserve to survive a real move. Routes that are known-inferior to a clean Quiet response are pruned.
+The final decision exposes only plans that are genuinely capable under known state, plus Emergency as last-ditch fallback when prepared/joint plans are unavailable. Hold And Expose remains a real trade only where source exposure buys political value or preserves reserve relative to the remaining military fallback.
 
-### Threshold confrontation
+## Threshold confrontation
 
-The choice is between:
+Player may:
 
-- absorb pressure quietly if the coalition looks credible;
-- visibly reassure/deny jointly by spending reserve;
-- use preserved evidence to recover/strengthen the political position at source cost.
+- absorb pressure quietly;
+- where it adds coalition value, visibly deny jointly at reserve cost;
+- use preserved evidence to improve political position at source cost.
 
-Emergency is not offered because the player can see there is no seizure to emergency-mobilise against.
+Emergency is absent because no seizure is underway.
 
-### Pressure receding
+## Pressure receding
 
-The player may:
+Player may:
 
 - accept de-escalation quietly;
-- if the partner position is damaged and credible evidence is still unspent, expose Ravellan at source cost to recover political ground.
+- if partner position is damaged and evidence remains unspent, expose Ravellan at source cost.
 
-The game does not offer obviously self-harming mobilisation/show-of-force buttons after the opponent is visibly backing down.
+No mobilisation/show-of-force padding.
 
-## Required tests
+# Required tests
 
-At minimum:
+At minimum prove:
 
 - route legality uses only safe player-known state;
 - raw prior posture/preparation never affects route set;
-- Quiet legal rules and threshold partner-cost condition;
-- Joint unavailable after pressure receding and pruned when clean Quiet + cooperative partner makes it player-safe dominated;
+- no displayed seizure Quiet route is known unable to hold Beacon;
+- no displayed seizure Joint route is known unable to hold Beacon;
+- Emergency pruned whenever legal Quiet or legal Joint already provides known physical denial;
+- Emergency pruned when it cannot hold but legal Hold And Expose can;
+- Emergency remains available as last-ditch route when no better viable route exists, including a doomed best-effort state;
+- threshold/pressure pruning exactly;
 - Joint improves degraded partner but spends reserve;
-- Emergency available only against seizure and follows physical/cost rules;
-- Hold requires unspent credible attribution, appropriate crisis/state predicate, and source exposure severe cost;
-- C5 use attribution records the same source exposure and removes Hold And Expose;
-- no route ending in brittle reserve escapes severe cost;
-- all four classifications reachable in fixtures;
-- across viable reachable terminal states, each displayed legal course is non-dominated under #107's player-safe relation or triggers a design blocker;
+- Hold requires unspent credible attribution, crisis/state predicate and source-exposure severe cost;
+- C5 use attribution records same source cost and removes Hold;
+- final brittle reserve always severe;
+- all four classifications reachable in authored fixtures;
+- every displayed legal course is non-dominated under #107 or creates blocking design finding;
 - no final course universal;
 - terminal truth gated;
 - V1 unchanged.
 
-## Rejection conditions
+# Rejection conditions
 
-Reject implementation if it offers Emergency/Joint after a known backdown, exposes a known-inferior visible route when a clean Quiet response and cooperative partner make it strictly worse, treats public attribution as source-free, permits Hold after C5 use, treats coercion evidence as warning, infers joint authority from sentiment, classifies pre-route state, or matches routes to hidden opening posture.
+Reject terminal implementation if it displays a route the player-known state makes deterministically futile when another viable route exists, keeps Emergency alongside a known-valid Quiet/Joint response, offers mobilisation after backdown, treats attribution as source-free, permits Hold after C5 use, treats coercion evidence as seizure warning, infers joint authority from sentiment, classifies pre-route state or matches route to hidden opening posture.
