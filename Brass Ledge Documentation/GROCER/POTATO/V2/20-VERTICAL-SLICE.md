@@ -7,30 +7,28 @@ status: active
 
 Backlink: [[README]]
 
-## Canonical B2 authority
+## Canonical detailed authority
 
-[[21-KESTREL-SIX-CYCLE-CANON]] is the complete canonical six-cycle design. It
-supersedes earlier provisional Kestrel wording in this note where they differ.
-It freezes the known/hidden information boundary, named issue owners, legal
-courses, Lattice timing, visible Ravellan signals, consequence records, recovery,
-terminal predicates, and terminal truth reveal. Agents must not fill gaps with
-new mechanics.
+This file is the concise slice summary. Detailed implementation authority lives in:
 
-[[22-RAVELLAN-EXECUTABLE-POLICY]] supplies the complete executable posture,
-observation, precedence, preparation, and terminal-behaviour matrix for #99.
+- [[21-KESTREL-SIX-CYCLE-CANON]] — six-cycle product design;
+- [[22-RAVELLAN-EXECUTABLE-POLICY]] — hidden adversary policy;
+- [[23-HQ-BELIEF-AND-EVIDENCE]] — evidence/assessment;
+- [[25-KESTREL-CONSEQUENCE-MATRIX]] — persistent state/recovery;
+- [[26-LATTICE-COLLECTION-MATRIX]] — institutional capability;
+- [[27-KESTREL-TERMINAL-MATRIX]] — final route/outcome predicates;
+- [[36-KESTREL-AGENDA-COURSE-MATRIX]] — stable issue/order metadata and chief tie-breaks;
+- [[37-RAVELLAN-WORLD-EFFECT-MATRIX]] — bounded player/world manifestation of hidden adversary actions.
+
+Those files supersede earlier/provisional shorthand here where they differ. Agents must not fill gaps with new mechanics.
 
 ## Setting and fixed authority
 
-The slice is **Kestrel Strait**, a fictional coalition headquarters facing the
-Ravellan Maritime Command. Ravellan seeks a limited seizure of the Beacon
-Channel relay before coalition reinforcement becomes politically feasible.
-Its doctrine is probe, conceal preparation, exploit a visible weak boundary,
-and stop short of open war when denied. Its hidden posture is one of
-`testing`, `genuine_preparation`, or `coercive_feint`; it can probe shipping, seed a
-deception narrative, prepare the seizure, or pause to consolidate. Those are
-the only prototype action families.
+The slice is **Kestrel Strait**, a fictional coalition headquarters facing the Ravellan Maritime Command. Ravellan seeks to make coalition control of the Beacon Channel relay untenable before coalition reinforcement becomes politically feasible, through physical seizure or political access collapse.
 
-The player selects one standing intent at cycle 1:
+Ravellan's hidden posture is exactly `testing`, `genuine_preparation`, or `coercive_feint`. Its normal hidden action families are exactly `probe_shipping`, `seed_deception`, `prepare_beacon_seizure`, and `pause_consolidate`; Cycle 6 uses the separate terminal behaviors frozen in #99 policy.
+
+The player selects one standing direction at Cycle 1 through four ordinary-language questions:
 
 | Opening question | Answers |
 | --- | --- |
@@ -39,69 +37,64 @@ The player selects one standing intent at cycle 1:
 | If something has to get worse for a while, what can you live with? | We can afford to look less aggressive / We can take some political heat / We can lean harder on the reserves for a while |
 | If you do not hear from me, how should headquarters normally behave? | Prepare quietly / Show strength early / Consult our partner first |
 
-The player has two interventions each cycle. Every agenda item has a staff
-recommendation and at most two authored intervention orders; defer appears only
-where listed below.
+The prototype has two personal interventions per cycle. Staff runs every issue by default; interventions change authored staff courses rather than unlocking routine action.
 
-## Canonical authored cycle matrix
+## Canonical authored cycle summary
 
-| Cycle | Situation and required command issue | Required consequence / branch |
+| Cycle | Situation and required command pressure | Required consequence / branch |
 | --- | --- | --- |
-| 1 Ownership | Set the four standing directions without an intervention. Operations owns Beacon watch: ordinary watch or reinforce watch (lower exposure/better warning; readiness cost/detectable signal). Political owns informal liaison or formal consultation agreement (cooperation plus an explicit promise). Intelligence owns defer/protect Lattice advance one. | Three credible protections and two interventions. The unprotected priority becomes a visible exposure, missing promise, or missing investment; reveal both achievement and exposure. |
-| 2 Consequence | All hidden situations can shadow shipping. Operations: quiet escort (less disruption, weak deterrence), visible patrol surge (denial, reserve strain/signal/partner concern), or reroute-monitor (reserve/observation, civilian disruption/passivity). Political: silence, joint non-attributive warning, or public accusation (unilateral accusation breaches a promise). Intelligence requests Lattice advance two. | Delegated shipping is never neutral: it creates shipping delay, partner unease, reserve use, or a visible signal. |
-| 3 Doubt | Conflicting evidence: Intelligence seeks verification while Operations warns waiting loses warning. Operations chooses forward reserve preparation or hold; Intelligence may focus collection at another coverage cost; Political reassures partner; Intelligence requests final Lattice protection. | At least three credible intervention candidates, only two tokens. The Intelligence/Operations disagreement comes from the same HQ belief; hidden posture never leaks. Missing advance three prevents Lattice maturity. |
-| 4 Payoff | Ravellan's patrol lull is ambiguous. Exploit it by recovering reserve, quietly preparing Beacon, or pressing visible advantage. | Mature Lattice tasks one named unresolved question; authored evidence arrives at cycle 5. Without it, partner liaison is narrower, costs an intervention, and creates an obligation. |
-| 5 Pain | Belief-qualified Beacon warning, partner deadline, and reserve strain collide. Beacon: quiet reinforce/visible reinforce/hold. Partner: honour consultation/act then inform/political concession. Reserve: keep forward/emergency consolidation. Attribution exists only with legitimate evidence. | More than two attractive interventions. A promise, exposure, readiness, or political risk remains unresolved. Concession and consolidation remain costly recovery routes. |
-| 6 Reckoning | Ravellan selects limited seizure, threshold challenge/major feint, or abort from its hidden situation/history and observable coalition behaviour. Final courses: Quiet Denial, Joint Visible Denial, Emergency Mobilisation, Hold and Expose. | Availability and sensible use depend on preparation, intelligence, partner health, promise, exposure, and reserve. No route is universal. |
+| 1 — Ownership | Set standing direction. Operations owns Beacon watch; Political owns consultation; Intelligence owns the first Lattice decision. Ordinary Beacon watch is detectably weak; reinforced watch is detectably credible. | Three consequential protections/commitments are available. Staff follows standing intent; the commander can override only two issues. Protecting more things is not free: reinforcement spends reserve, formal consultation creates a real promise, and sustained Lattice protection commits future command attention. Reveal what was gained and what cost/exposure was accepted. |
+| 2 — Consequence | The Cycle-1 shipping probe persists into a shipping-response issue while the new hidden Ravellan action changes only the bounded world overlay. Political public posture and second Lattice decision also matter. | Quiet escort accepts delay/weaker deterrence; visible patrol spends reserve and signals denial; reroute accepts larger civilian disruption while preserving reserve. Public accusation can create political/commitment damage. Delegation is never a neutral ceremonial click. |
+| 3 — Doubt | HQ receives the same authored conflicting evidence bundle across hidden openings. Intelligence wants verification while Operations fears losing warning time. Reserve, focused collection, partner reassurance where relevant, and final Lattice protection collide. | Canonical live-Lattice histories expose at least three credible personal-intervention candidates for two tokens. Same HQ belief can produce chief disagreement; hidden posture never leaks. |
+| 4 — Payoff | Ravellan's visible **pressure pattern changes ambiguously** according to its actual hidden action: lull, thinning/plateau, contradictory posture, or continued pressure. None reveals intent. | Mature Lattice unlocks one named Task Collection outside the normal intervention budget; without it, partner liaison is narrower and costs an intervention/obligation. The commander chooses whether to recover reserve, prepare Beacon quietly at readiness cost, or press visible advantage. |
+| 5 — Pain | Belief-qualified warning, partner authority deadline and reserve condition collide; attribution appears only with legitimate evidence. | More than two attractive interventions. Promise/exposure/readiness/political risk cannot all be made painless. Emergency consolidation and political concession remain costly recovery paths. |
+| 6 — Reckoning | Ravellan's current terminal crisis family is observable; prior posture/preparation history remains hidden until debrief. | Quiet Denial, Joint Visible Denial, Emergency Mobilisation and Hold And Expose are legal only per the terminal matrix. Outcome depends on campaign-built preparation, warning, exposure, reserve, partner authority and commitments—not secret-posture matching. |
 
-## Persistent families and chief conflicts
+## Persistent Kestrel state
 
-- **Exposure:** neglected Beacon coverage, shipping vulnerability, or thin reserve;
-  worsens an adversary opportunity but can be reduced by costly mobilisation.
-- **Promise:** partner consultation/visibility commitment; honour improves consent,
-  breach buys tempo but reduces cooperation.
-- **Preparation:** patrol readiness or quiet collection preparation; created by
-  actions and decays/changes only under authored rules.
-- **Investment:** Lattice Cell; three protected advances unlock task collection.
-- **Opportunity:** a time-limited credible attribution or coalition window.
+The prototype uses concrete records, not a universal consequence meter:
 
-The intelligence chief values credible attribution and Lattice; the operations
-chief values visible denial and reserve readiness; the political chief values
-partner consent. Cycle 3 must produce an intelligence/operations disagreement;
-cycle 5 must produce a political/operations commitment collision.
+- Beacon exposure;
+- Beacon preparation;
+- reserve condition;
+- partner consent;
+- explicit consultation promise;
+- political concession;
+- liaison obligation;
+- Lattice investment;
+- belief-derived attribution opportunity;
+- hidden Ravellan preparation owned by #99.
 
-## Frozen recovery and final-route predicates
+## Chief conflicts
 
-Emergency consolidation is legal through cycle 5: it improves reserve endurance
-but immediately worsens Beacon security. Political concession is legal through
-cycle 5: it buys immediate partner support but limits later coalition freedom.
-Liaison creates a consultation obligation. These are costly recovery routes, so
-no authored seed may force hard loss before the final crisis.
+Intelligence values legitimate evidence and preserving uncertainty where real. Operations values credible denial and avoids unrecoverable readiness collapse. Political values partner consent and explicit commitments while preserving freedom to respond.
 
-Quiet Denial is strong with prepared Beacon forces, warning, and a sound threat
-read, but weak without warning/preparation. Joint Visible Denial is strong with
-healthy consent, honoured consultation, and usable reserve; damaged partnership
-may make it weak or unavailable. Emergency Mobilisation is the brute-force
-route: it can save Beacon after mistakes, but a brittle reserve makes it costly
-or only partially effective. Hold and Expose is strong against feint/coercion or
-testing when credible evidence and partner diplomacy exist; it is dangerous
-against genuine movement with poor physical preparation. In a coercive feint, an
-obvious coalition military collapse may create an opportunistic seizure.
+Cycle 3 must support Intelligence/Operations disagreement from the same HQ belief. Cycle 5 must support Political/Operations conflict around commitment versus tempo/readiness. Chief preference never reads hidden Ravellan truth or silently overrides standing command direction.
 
-At cycle 5, attribution can strengthen partner unity or deter Ravellan, but can
-sacrifice sources and embarrass the coalition if assessment is wrong; Lattice
-makes legitimate attribution easier, never guaranteed. At cycle 6, even an
-abort leaves a command problem—exploit, expose, or quietly accept de-escalation.
-The terminal debrief states HQ's major assessment at each decision, Ravellan's
-initial posture and transitions, which signals were genuine/deceptive, and why
-its final action followed; it never exposes weights or probabilities.
+## Frozen recovery and final-route principles
 
-## Deliberately open, not implementable without decision
+Through Cycle 5:
 
-The final numerical intervention budget, campaign length beyond six cycles, and
-final prose are experimental. Intelligence uses authored evidence internally and
-natural-language judgement externally; numeric or player-facing confidence bands
-are not an open design option.
-The slice freezes only their bounded prototype behaviour. Any issue needing a
-specific threshold or alternate mechanic must raise `BLOCKED: PRODUCT DECISION
-REQUIRED` and update [[60-DECISION-LOG]].
+- emergency consolidation can recover reserve by worsening immediate Beacon exposure;
+- political concession can recover immediate partner access, including from withdrawal, at severe terminal cost;
+- missing Lattice retains narrower liaison counterplay;
+- earlier preparation can preserve a painful comeback even with a brittle reserve.
+
+No authored seed may force a hard loss before the final crisis without meaningful earlier counterplay.
+
+No final course is universal. The terminal classification is one of Strategic Success, Costly Success, Political Defeat, or Operational Defeat under [[27-KESTREL-TERMINAL-MATRIX]].
+
+The terminal debrief separately presents **what HQ believed at the time** and **what was actually happening**. It never exposes numeric weights/probabilities because none exist.
+
+## Deliberately open until human evidence
+
+The following remain experimental rather than mechanically frozen for the long-form game:
+
+- final intervention budget beyond this prototype;
+- campaign length beyond six cycles;
+- ideal prose density;
+- whether implicit delegation is fully understood/owned by real players;
+- whether Lattice feels worth protecting rather than merely being mechanically relevant;
+- any post-gate Command Windows, Command Bets, chief-memory or wider-build mechanics in [[32-POST-GATE-GAME-ARCHITECTURE]].
+
+Any implementation need outside the active contracts must raise `BLOCKED: PRODUCT DECISION REQUIRED` rather than inventing a new game rule.
