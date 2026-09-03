@@ -27,10 +27,12 @@ contract. Read these notes in numeric order before V2 implementation.
 - [[31-HEADLESS-DESIGN-LAB]] — #107 counterfactual, dominance, recovery and fake-choice diagnostics.
 - [[32-POST-GATE-GAME-ARCHITECTURE]] — provisional long-form direction; explicitly non-authoritative before the human gate.
 - [[33-HEADLESS-SIX-CYCLE-EXECUTION]] — #104 complete headless run/replay/transcript contract.
+- [[34-BROWSER-E2E-CONTRACT]] — #108 authoritative-browser/E2E hostile verification contract.
+- [[35-HUMAN-PLAYTEST-HARNESS]] — #109 non-leading human-study protocol and coding contract.
 - [[40-EVALUATION-CONTRACT]] — machine versus human proof.
 - [[50-EXECUTION-PLAN]] — dependency-ordered issue graph.
 - [[60-DECISION-LOG]] and [[70-TRADEOFF-REGISTER]] — settled choices and limits.
-- [[80-HUMAN-PLAYTESTS]] — non-synthetic evaluation protocol.
+- [[80-HUMAN-PLAYTESTS]] — anonymised human evidence registry; protocol authority is [[35-HUMAN-PLAYTEST-HARNESS]].
 - [[90-HOSTILE-REVIEWS]] — review evidence and implementation blockers.
 
 ## Frozen scope
