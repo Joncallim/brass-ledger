@@ -7,277 +7,214 @@ status: active
 
 Backlink: [[README]]
 
-This is the player-facing authority for **#105 — command by exception without recreating an approval workflow**. It introduces no simulation rules; it presents the safe authoritative state from [[38-PLAYER-SAFE-PROJECTION-CONTRACT]].
+This is the player-facing authority for **#105 — command by exception without recreating approval paperwork**. It presents only [[38-PLAYER-SAFE-PROJECTION-CONTRACT]] data; sim owns all rules.
 
 ## Start gate
 
-Do not begin the main browser tranche until:
+`#104 complete → #107 complete → 3-player formative smoke does not trigger stop/redesign → #105/#106`
 
-`#104 complete → #107 complete → 3-player formative smoke does not trigger stop/redesign`
+## Player questions
 
-under [[50-EXECUTION-PLAN]] / [[35-HUMAN-PLAYTEST-HARNESS]].
-
-## Product rule
-
-The player should answer five questions quickly:
+The Command Room should make it easy to answer:
 
 1. What changed?
-2. What will my headquarters do if I leave it alone?
+2. What will HQ do if I leave it alone?
 3. Why?
-4. Where is the disagreement/cost?
+4. What costs/disagreement/requirement matter?
 5. Which one or two things do I personally change?
 
 No mandatory Briefing → Memos → Chiefs → Final Review chain.
 
-## One command surface
+# One command surface
 
-Each cycle uses one primary Command Room containing:
+Show:
 
-- compact situation/change;
+- situation/change;
 - standing direction;
 - personal-attention budget;
-- ordered consequential agenda;
-- responsible officer + intended order;
-- 2–4 decisive reasons;
-- known direct cost/commitment;
-- visible dissent;
-- authored alternatives;
-- safe cross-issue requirement/conflict notices;
+- consequential agenda;
+- intended staff course + 2–4 reasons;
+- known costs/commitments;
+- dissent;
+- legal alternatives;
+- safe cross-issue requirements/conflicts;
 - one `Issue Orders` action.
 
-History/detail may be secondary disclosure, never mandatory paperwork.
+Full history/detail stays secondary.
 
-## Implicit delegation
+# Implicit delegation
 
-Every issue opens locally as:
+Every issue begins locally `delegate`.
 
-`delegate`
+Untouched issue submits Delegate; server/sim derives actual delegated order. Browser never sends delegated final order as authority.
 
-The player need not click Approve/Delegate.
+The untouched all-Delegate package must be legal. If not, recommendation/content is defective.
 
-Conceptually:
+# Commander controls
 
-> **Operations intends: Hold the reserve.**
->
-> [why]
->
-> **Change this order**
+`Change this order` reveals authored legal alternatives.
 
-If untouched, browser submits `delegate`; server/sim derives the actual delegated order from authoritative recommendation.
+A normal alternate changes disposition to `intervene` and consumes one normal token. Returning to Delegate returns token.
 
-The untouched all-Delegate package must be legal in every reachable state. If not, that is a content/recommendation defect — never something React repairs.
+At 2/2:
 
-## Issue anatomy
+- other choices remain inspectable;
+- third normal intervention cannot submit;
+- player must explicitly undo/change an earlier intervention;
+- never silently replace one.
 
-Order content as:
+Task Collection remains separate zero-normal-intervention action once Lattice operational.
+
+## Commander-only exceptional actions
+
+Exactly three Kestrel courses are explicitly marked `requiresIntervention` and must **never** appear as staff intended action:
+
+### C2 `public-accusation`
+
+- always one normal intervention;
+- unsupported/unilateral under current weak/ambiguous evidence;
+- player sees partner/commitment risk and Intelligence concern before selection;
+- “show strength” standing style cannot auto-select it.
+
+### C4 `request-partner-liaison`
+
+- always one normal intervention;
+- player sees real liaison obligation before selection;
+- never a free delegated intelligence fallback.
+
+### C5 `use-attribution`
+
+- always one normal intervention;
+- player sees one-shot loss + source exposure + authority requirement before selection;
+- partner-oriented standing intent cannot auto-burn the source;
+- staff intended action for this issue is Hold.
+
+The safe DTO should expose `requiresIntervention`/equivalent semantic authority so UI does not infer this list from labels.
+
+# Issue anatomy
+
+Order:
 
 1. human issue title / why now;
 2. responsible officer + intended course;
 3. decisive reasons;
-4. known immediate/future commitment cost that the commander can legitimately know;
+4. known immediate/future cost/commitment/authority requirement;
 5. dissent/concern;
 6. commander controls.
 
-Do not dump matched tags/rules or expose implementation labels.
+No raw rule IDs/tags.
 
-## Commander controls / authority
+# C5 package constraints
 
-`Change this order` reveals legal authored alternatives.
+UI may explain safe constraints but is not authority.
 
-Selecting a normal alternate:
+Required visible semantics:
 
-- changes disposition to `intervene`;
-- consumes one normal personal-attention token.
+- active C1 formal channel + Honour can authorise immediate sensitive action;
+- without rapid channel, Honour remains legal but too slow for same-cycle visible reinforcement/public attribution;
+- Act Then Inform buys unilateral tempo at breach/political cost;
+- concession buys immediate coordinated authority at severe cost;
+- withdrawn partner may Honour without restoring access;
+- selecting commander-only public attribution additionally consumes one intervention.
 
-Returning to Delegate returns the token.
+Invalid draft cannot submit. UI never silently changes another issue. Server independently validates.
 
-If Defer exists in some future/legal issue, expose it only where authoritative content allows it; do not invent it merely for UI symmetry.
+# Attribution known-cost disclosure
 
-### Commander-only liaison
+Before C5 `use-attribution` selection show:
 
-`request-partner-liaison` is `requiresIntervention = true` under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
-
-It must:
-
-- never appear as staff intended/delegated course;
-- clearly consume one normal intervention;
-- show the known liaison obligation before selection.
-
-Task Collection remains separate and costs no normal intervention once Lattice is operational.
-
-## Personal-attention budget
-
-Show plainly, e.g.:
-
-> **Personal attention: 1 of 2 used**
-
-Do not theme it as energy/action points/mana.
-
-At 2/2:
-
-- other alternatives remain inspectable;
-- third normal intervention cannot submit;
-- selecting another requires explicitly undoing/changing an earlier intervention;
-- never silently replace an earlier choice.
-
-## Cross-issue package constraints
-
-Some C5 choices are only meaningful/compatible as part of a complete package. The safe DTO may expose requirement/conflict refs; browser may explain/prevent an invalid draft, but **does not own the rule**.
-
-Required behavior:
-
-- untouched staff package is legal;
-- changed draft may become incompatible;
-- explain the conflict in player-safe language;
-- do not silently change another issue;
-- server remains final validator.
-
-### C5 partner authority / tempo
-
-Player must be able to understand before submission:
-
-- active C1 formal consultation channel + `honour-consultation` can authorise an immediate partner-sensitive C5 action;
-- without that rapid channel, honouring remains legal but is too slow for same-cycle visible reinforcement/public attribution;
-- `act-then-inform` buys immediate unilateral tempo at breach/political cost;
-- political concession buys immediate coordinated authority at severe cost;
-- withdrawn partner may still honour commitments without being forced into concession, but that does not restore access.
-
-Do not show hidden outcome predictions; these are known authority/timing constraints.
-
-## Attribution must disclose the one-shot/source trade
-
-When C5 `use-attribution` is legal, show **before selection** that:
-
-- the current credible attribution opportunity is one-shot;
+- credible case is one-shot;
 - public use spends it (`credible → used`);
-- Hold And Expose will therefore not be available at C6 unless another explicitly authorised future rule existed (none does in Kestrel);
-- public attribution exposes/compromises the protected source and is a known severe cost.
+- C6 Hold And Expose will no longer be available;
+- protected source will be exposed/compromised (known severe cost);
+- one normal intervention is consumed;
+- immediate authority must be compatible.
 
-This is not an omniscient preview. It is the immediate known cost of publishing the evidence.
+These are known direct costs, not hidden future outcome prediction.
 
-Do not hide this until the consequence screen.
+# Standing direction / situation / intelligence
 
-## Standing direction
+Show standing direction in ordinary language only.
 
-Show compact ordinary-language direction, e.g.:
+Lead with what changed. Use safe HQ judgement/gaps, public Beacon/reserve/partner/commitment/capability/authority state and safe C6 crisis family.
 
-> Keep Beacon secure · Do not burn the reserve without asking · Political heat is acceptable · Prepare quietly by default
+Never show raw hidden state/signal/action IDs, future branch/probability or V1 predicted events.
 
-No normal-player `mainPriority` / `redLine` implementation jargon. Intent is immutable during Kestrel.
+# Command summary / submission
 
-## Situation / intelligence / public state
-
-Lead with what changed since the last command.
-
-Use only [[38-PLAYER-SAFE-PROJECTION-CONTRACT]]:
-
-- safe world manifestation;
-- HQ judgement/reasons/gaps;
-- public Beacon/reserve/partner/commitment/capability state;
-- safe Cycle-6 crisis family;
-- no raw hidden state/signal/action IDs.
-
-## Known-cost boundary
-
-May show:
-
-- direct reserve/exposure/civilian cost;
-- explicit promise/obligation creation/breach;
-- authority/timing requirement;
-- one-shot/source cost;
-- belief-safe chief concern.
-
-May not show:
-
-- hidden Ravellan response;
-- exact future event;
-- predicted terminal classification;
-- probability;
-- best-choice badge/global score;
-- V1 `predictedEvents` on V2.
-
-## Command summary / Issue Orders
-
-Adjacent to one `Issue Orders` action, summarise:
+Adjacent to `Issue Orders`, summarise:
 
 > **You are personally changing:** …
 >
 > **Staff will handle:** …
 
-Do not make this a second mandatory review screen.
-
-Submission sends:
+Submission sends only player authority:
 
 - cycle;
-- `expectedRevision`;
-- one disposition per authoritative agenda issue;
-- selected legal Task Collection / commander-only liaison action where applicable.
+- expected revision;
+- one disposition per issue;
+- chosen intervention order IDs (including commander-only ones);
+- legal Task Collection selection where applicable.
 
-Browser never sends delegated final order output, partner-authority result, consequences or state patches as authority.
+Never send recommendation, partner-authority result, consequences or state patches as authority.
 
-## Rejection / stale reconciliation
+# Rejection / stale state
 
-For invalid cross-issue package:
+Invalid package:
 
 - explain safe conflict;
 - keep draft editable;
-- never auto-repair another issue.
+- no silent repair.
 
-For stale revision:
+Stale revision:
 
-- do not retry silently;
+- no silent retry;
 - refresh authoritative projection;
 - show changed issue/recommendation/reason;
-- preserve only choices that still map safely; otherwise require review.
+- preserve only safely remappable choices.
 
-## Consequence transition
+# Consequence transition
 
-Successful orders always flow through [[29-CONSEQUENCE-REVEAL-CONTRACT]] before the next Command Room. Do not skip the causal payoff.
+After successful orders always show [[29-CONSEQUENCE-REVEAL-CONTRACT]] before next Command Room.
 
-## Cycle 1
+# Cycle 1 / Cycle 6
 
-Opening four-question standing-intent declaration is one concise command surface, not settings. It costs no intervention.
+C1 intent is one concise opening command surface and costs no intervention.
 
-## Cycle 6
+C6 displays only [[27-KESTREL-TERMINAL-MATRIX]] routes for safe overt crisis family. Do not pad with pruned futile/dominated buttons.
 
-Display only routes legal under [[27-KESTREL-TERMINAL-MATRIX]] for the safe overt crisis family.
+# Accessibility / density
 
-The player sees known campaign state and immediate route costs. Do not show pruned player-safe dominated routes merely to increase button count.
+Keyboard-operable labelled issue groups, associated reasons/dissent, announced budget/errors, predictable focus, no colour-only meaning.
 
-Prior hidden Ravellan history remains hidden until terminal debrief.
-
-## Accessibility / density
-
-Primary flow must be keyboard-operable with semantic labelled issue groups, associated recommendation/dissent, announced budget/errors, predictable focus and no colour-only meaning.
-
-Default required reading remains:
+Required reading stays shallow:
 
 1. what changed;
 2. intended action;
 3. decisive reasons;
-4. disagreement/known cost/requirement;
+4. known cost/disagreement/requirement;
 5. exception controls.
 
-Keep full history/evidence/doctrine/diagnostics out of the required path.
+# Required #105 tests
 
-## Required #105 tests
+Prove:
 
-At minimum prove:
-
-- all issues default Delegate and untouched package is server-legal;
-- browser never supplies delegated final order as authority;
-- intervention/undo/two-token limit deterministic;
-- liaison never delegates and consumes one token;
-- Task Collection does not consume normal token;
-- safe C5 cross-issue conflicts displayed; invalid draft cannot submit; no silent repair;
-- withdrawn + honour remains selectable without forced concession;
-- one-shot attribution + source-exposure cost shown before use;
-- safe Cycle-6 crisis family + pruned legal route set only;
-- no raw hidden state/action/signal/predicted outcome;
-- stale draft cannot commit silently;
-- keyboard/accessibility flow;
-- V1 client semantics unchanged.
+- implicit Delegate + legal all-Delegate package;
+- browser never supplies delegated final order;
+- normal intervention/undo/two-token limit;
+- **exactly** C2 accusation, C4 liaison and C5 attribution use are commander-only, never staff intended, always cost one intervention;
+- visible style cannot auto-accuse;
+- partner intent cannot auto-use attribution;
+- Task Collection costs no normal token;
+- safe C5 conflicts/requirements displayed; invalid draft blocked with no repair;
+- withdrawn + Honour remains selectable;
+- one-shot/source/intervention cost shown before attribution use;
+- safe C6 crisis family + pruned route set;
+- no hidden/predicted data;
+- stale draft cannot silently commit;
+- keyboard/accessibility;
+- V1 unchanged.
 
 ## Rejection conditions
 
-Reject #105 if it recreates approval paperwork, requires Delegate clicks, computes recommendation/package legality in React as authority, hides a known one-shot/source/commitment cost, silently repairs incompatible orders, displays pruned trap routes, exposes hidden truth, auto-submits orders, or spends scope on pre-gate polish unrelated to the plain-text fun hypothesis.
+Reject #105 if it recreates approval workflow, lets React compute authoritative rules, lets any commander-only course Delegate, auto-accuses from standing style, auto-burns source from standing priority, hides known exceptional-action costs, silently repairs packages, displays pruned terminal traps, exposes hidden truth or spends pre-gate scope on unrelated polish.
