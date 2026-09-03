@@ -7,520 +7,499 @@ status: active
 
 Backlink: [[README]]
 
-This document is the implementation authority for **#101 — persistent exposure / promise / investment prototype**. It freezes only the concrete Kestrel records and transitions needed by the six-cycle experiment. It is not permission to build a generic consequence framework.
+This is the implementation authority for **#101 — concrete Kestrel persistent state, provenance, order consequences and recovery**. It is intentionally not a generic consequence engine.
 
-## Product purpose
+[[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns complete-command-set interactions, C5 partner authority/tempo and terminal route effects. [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] owns Ravellan-observation emission; do not duplicate that logic here.
 
-A consequence must let the player understand:
+## Product rule
 
-> “This changed because of what I did, what Ravellan did, or what happened externally — and now I have a different problem.”
+Persistent state exists so the player can understand:
 
-Persistent state exists to create ownership, recovery and later callbacks. It must not become a collection of abstract meters.
+> something changed because of my order / headquarters direction / Ravellan / the external situation, and now I have a different problem.
+
+Do not collapse these records into a universal success/trust/readiness score.
 
 ## Provenance
 
-Every consequence transition carries one of:
+Every material transition records one of:
 
-- `player-caused` — a final coalition order directly created the change;
-- `player-conditioned` — an adversary/external event occurred, but prior coalition history changed its severity or available response;
-- `adversary-caused` — Ravellan directly created the change;
-- `external` — neither side directly caused the event.
+- `player-caused` — final coalition order directly created it;
+- `player-conditioned` — external/adversary event occurred, but prior player state changed severity/response;
+- `adversary-caused` — Ravellan directly caused it;
+- `external` — neither side directly caused it.
 
-Presentation may reveal only belief-safe attribution. Truth provenance remains authoritative/replayable but is not automatically player-visible.
+Truth provenance is replayable but player-facing causal text remains belief-safe until terminal debrief.
 
-## Concrete Kestrel records
+## Concrete records
 
 ### `beacon-exposure`
-
-States:
 
 `contained → thin → open`
 
 Opening: `thin`.
 
-Exposure is current vulnerability. Improve/worsen one step where authored below and clamp at endpoints.
+- contained: quick opportunistic move materially harder;
+- thin: defensible with warning/preparation but exploitable;
+- open: serious exploitable gap.
+
+Improve/worsen one step when authored; clamp endpoints.
 
 ### `beacon-preparation`
 
-States:
-
-- `routine`
-- `prepared`
+`routine | prepared`
 
 Opening: `routine`.
 
-Preparation is whether HQ has done the work needed to execute a credible denial plan. It is intentionally separate from current exposure.
+Separate from exposure: vulnerability now versus whether HQ has done the work for credible denial.
 
 ### `reserve-condition`
-
-States:
 
 `usable → strained → brittle`
 
 Opening: `usable`.
 
-Worsen/recover one step where authored below; clamp at endpoints. `brittle` is not an automatic loss, but makes brute-force terminal action weak unless prior preparation exists.
+Worsen/recover one step; clamp endpoints. Brittle is not automatic defeat.
 
 ### `partner-consent`
-
-States:
 
 `cooperative → uneasy → conditional → withdrawn`
 
 Opening: `cooperative`.
 
-Routine reassurance/consultation can improve `uneasy` or `conditional` one step but cannot repair `withdrawn`.
-
-The **only Kestrel recovery from `withdrawn`** is the explicit Cycle-5 `political-concession`, which restores immediate consent to `conditional` at a severe terminal cost. This is the authored anti-death-spiral political recovery path; it does not erase how the relationship collapsed.
+Ordinary worsen/improve is one step unless an explicit recovery sets a floor/state. Withdrawal is serious but not irreversible: C5 political concession can restore it to `conditional` at severe cost.
 
 ### `consultation-promise`
 
-States:
-
-- `none`
-- `active`
-- `honoured`
-- `breached`
+`none | active | honoured | breached`
 
 Opening: `none`.
 
-Only the explicit formal-consultation course creates the promise. `honoured`/`breached` are terminal history states for the slice.
+Only C1 formal consultation creates `active`. No implicit promise.
+
+`honoured`/`breached` are terminal for the six-cycle promise record.
+
+### `partner-authority`
+
+`pending | none | joint | unilateral | concession`
+
+Opening: `pending`.
+
+Resolved by the C5 partner-authority issue under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
+
+This records permission/coordination, not relationship sentiment.
 
 ### `political-concession`
 
-States:
-
-- `none`
-- `active`
+`none | active`
 
 Opening: `none`.
 
-The concession can recover immediate partner access, including from `withdrawn`, but always remains a terminal severe cost and constraint.
+C5 costly recovery. It can restore immediate access/authority but remains severe terminal cost.
 
 ### `liaison-obligation`
 
-States:
-
-- `none`
-- `active`
-- `fulfilled`
-- `breached`
+`none | active | fulfilled | breached`
 
 Opening: `none`.
 
-Created only by the non-Lattice emergency liaison path.
+Created only by the commander-only C4 partner-liaison fallback.
 
 ### `lattice-investment`
 
-States:
+`0 | 1 | 2 | 3-operational`
 
-`0 → 1 → 2 → 3-operational`
+Opening `0` plus explicit deterministic missed-schedule evidence/flag sufficient to prove maturity unreachable after a missed required C1/C2/C3 advance.
 
-Opening: `0`.
-
-Only the scheduled Cycle-1/2/3 protected advances progress it. Missing any scheduled advance permanently prevents maturity during Kestrel.
+No catch-up.
 
 ### `attribution-opportunity`
 
-States:
+`none | tentative | credible | used | expired`
 
-- `none`
-- `tentative`
-- `credible`
-- `used`
-- `expired`
+Opening `none`.
 
-Opening: `none`.
+Derived only from legitimate HQ evidence under [[23-HQ-BELIEF-AND-EVIDENCE]]. Hidden world truth cannot advance it.
 
-Derived only from legitimate HQ evidence; hidden Ravellan truth alone can never advance it.
+`credible` means **unspent** opportunity. Under 39, once `used` in C5/C6 it cannot become credible again during Kestrel even if later evidence arrives.
 
-## Transition helpers
+## Helper semantics
 
-“Improve one” / “worsen one” means exactly one step on the record above and clamps at the endpoint.
+For ordinal records, “improve one” / “worsen one” move exactly one step and clamp.
 
-Repeated attempted strain/pressure still records a causal transition/effect even if the state is already clamped, because authoritative history can matter for consequence explanation and Ravellan observation emission.
+C5 is special: simultaneous Beacon/reserve signed steps are composed from the complete final-order set, summed, then clamped once under 39. Never sequentially clamp issue effects.
 
-## Significant visible reserve deployment
-
-For this slice, count only these authored coalition orders as a **significant visible reserve deployment**:
-
-- Cycle-2 `visible-patrol-surge`;
-- Cycle-3 `forward-reserve-preparation` when authored as publicly detectable;
-- Cycle-4 `press-visible-advantage`;
-- Cycle-5 `visible-reinforce-beacon`;
-- Cycle-5 `keep-reserve-forward` when the order continues/renews a visibly forward reserve posture.
-
-Cycle-1 reinforced watch, Cycle-2 quiet escort and Cycle-4 quiet preparation may consume/strain readiness but do **not** count toward this specifically visible-deployment counter.
-
-When the second significant visible deployment occurs in canonical history, emit `reserve_exhaustion_signal = suspected` for Ravellan at the normal next-cycle timing. Later qualifying deployments may refresh that authored signal; they do not create a numeric exhaustion score.
+Repeated causal effects remain separate history even if net/clamped state does not move.
 
 ## Cycle 1
 
-### Ordinary Beacon watch
-
-- no direct persistent-state improvement;
-- `beacon-exposure` remains `thin` at opening;
-- emit the explicit authored `beacon_coverage_signal = weak` for Ravellan next cycle, per [[21-KESTREL-SIX-CYCLE-CANON]].
-
-This is an observed thin posture, not inference from missing data.
-
-### Reinforce Beacon watch
+### `reinforce-watch`
 
 Player-caused:
 
-- improve `beacon-exposure` one (`thin → contained` at opening);
-- worsen `reserve-condition` one;
-- emit `beacon_coverage_signal = credible`.
+- Beacon exposure improve one (`thin → contained` opening);
+- reserve worsen one.
 
-Do not emit `visible_denial_signal = demonstrated`; reinforced watch is detectable coverage, not the canonical public deterrence surge.
+Ravellan signals come from 37A.
 
-### Informal partner liaison
+### `ordinary-watch`
 
-No promise; no automatic partner-state change.
+No persistent improvement. Opening exposure remains thin.
 
-### Formal consultation agreement
-
-Player-caused:
-
-- `consultation-promise: none → active`;
-- improve partner one step only if it had somehow already deteriorated below cooperative;
-- emit `coalition_unity_signal = coherent` only where the authored consultation is publicly/detectably joint. A private conversation alone does not emit it.
-
-### Protect Lattice 1
-
-`0 → 1`.
-
-If the Cycle-1 advance is not protected, record deterministic missed-schedule state and make Kestrel maturity unreachable.
-
-## Cycle 2 — shipping pressure
-
-### Quiet escort
+### `formal-consultation-agreement`
 
 Player-caused:
 
-- do not change `reserve-condition` in the prototype;
-- emit `visible_denial_signal = withheld` because the coalition deliberately avoids a demonstrative response;
-- visible shipping delay remains as the known cost/consequence beat.
+- consultation promise `none → active`;
+- partner may improve one if below cooperative (normally no movement at opening).
 
-Its trade-off is limited disruption plus weaker deterrence, not hidden extra reserve attrition.
+It also creates the pre-arranged channel represented by the active promise and used in C2/C5 composition under 39.
 
-### Visible patrol surge
+### `informal-liaison`
 
-Player-caused:
+No promise/authority record.
 
-- worsen `reserve-condition` one;
-- worsen `partner-consent` one if the surge lacks active/joint consultation authority;
-- emit `visible_denial_signal = demonstrated`;
-- emit `beacon_coverage_signal = credible` where the patrol covers Beacon approaches;
-- count one significant visible reserve deployment and emit exhaustion suspicion if this reaches the second such deployment.
+### `protect-lattice-c1`
 
-### Reroute and monitor
+Lattice `0 → 1`.
 
-Player-caused:
+Missing it marks Kestrel maturity unreachable.
 
-- worsen `partner-consent` one if the civilian disruption is not jointly accepted;
-- emit `visible_denial_signal = withheld` because the public posture avoids direct contest;
-- do not worsen reserve;
-- show larger civilian/shipping disruption as the visible cost.
+## Cycle 2 shipping
 
-The prototype does not grant a separate intelligence bonus merely because the order name includes “monitor”; any future information effect must be explicitly authored in [[23-HQ-BELIEF-AND-EVIDENCE]].
+### `quiet-escort`
 
-## Cycle 2 — attribution / politics
+No persistent reserve/partner penalty by default.
 
-### Silence
+Visible beat:
 
-No persistent transition.
+- some shipping delay remains;
+- weaker visible deterrence is a course cost, not a persistent meter.
 
-### Joint non-attributive warning
+### `visible-patrol-surge`
 
 Player-caused:
 
-- improve `partner-consent` one if currently `uneasy` or `conditional`, capped at cooperative;
-- cannot repair withdrawn;
-- emit `coalition_unity_signal = coherent` where visibly joint;
-- do not consume attribution opportunity because no specific accusation is made.
+- reserve worsen one;
+- if the complete C2 package is **not** coordinated under 39, partner worsen one;
+- if coordinated through active formal channel + joint warning, do not worsen partner.
 
-### Public accusation
+### `reroute-and-monitor`
 
-A specific accusation is legal only according to the authored agenda/belief rules.
+Player-caused:
 
-If unilateral while `consultation-promise = active`:
+- partner worsen one if the disruption is not already jointly coordinated/accepted;
+- reserve unchanged.
 
-- `active → breached`;
-- worsen `partner-consent` one;
-- emit `coalition_unity_signal = fractured` where the breach becomes detectably consequential.
+Visible beat: larger civilian shipping disruption.
 
-If jointly authorised, do not breach the promise.
+Information payoff is the queued C3 indicator in [[23-HQ-BELIEF-AND-EVIDENCE]], not a generic intel stat.
 
-If specific enough to reveal that HQ may have identified Ravellan activity, emit `ravellan_discovery_signal = suspected`.
+## Cycle 2 public posture
 
-Choosing to accuse never creates `credible` attribution by itself.
+### `remain-silent`
 
-### Protect Lattice 2
+No persistent state transition.
 
-Legal only if the scheduled Cycle-1 advance succeeded:
+### `joint-non-attributive-warning`
+
+Player-caused:
+
+- improve partner one step if uneasy/conditional;
+- cannot restore withdrawn by itself.
+
+### `public-accusation`
+
+This Kestrel order is always unilateral.
+
+Player-caused:
+
+- partner worsen one regardless whether formal promise existed;
+- if consultation promise active: `active → breached`.
+
+It does **not** create a credible attribution opportunity merely because the player accused publicly.
+
+## Cycle 2 Lattice
+
+Protect on schedule only if C1 protected:
 
 `1 → 2`.
 
-Otherwise maturity remains unreachable.
+Otherwise maturity unreachable.
 
 ## Cycle 3
 
-### Forward reserve preparation
+### `forward-reserve-preparation`
 
 Player-caused:
 
-- `beacon-preparation: routine → prepared`;
-- worsen `reserve-condition` one;
-- emit `beacon_coverage_signal = credible` where publicly/detectably forward;
-- count as a significant visible reserve deployment only where that forward movement is visible, refreshing/emitting exhaustion suspicion at the canonical threshold.
+- Beacon preparation `routine → prepared`;
+- reserve worsen one.
 
-It does not automatically emit `visible_denial_signal = demonstrated`; content must distinguish quiet forward positioning from demonstrative action.
+### `hold-reserve`
 
-### Hold reserve
+No persistent movement.
 
-No direct persistent transition and no inferred adversary observation from silence.
-
-### Focus existing collection
+### `focus-staging-collection`
 
 Player-caused:
 
-- queue the fixed `staging-area-focus` result under [[23-HQ-BELIEF-AND-EVIDENCE]] for Cycle 4;
-- worsen `beacon-exposure` one because current coverage is diverted to collection.
+- Beacon exposure worsen one;
+- queue C4 focused staging evidence under [[23-HQ-BELIEF-AND-EVIDENCE]].
 
-This is a normal intervention, not Lattice Task Collection.
+### `maintain-current-coverage`
 
-### Reassure partner
+No focused evidence; no exposure worsening from collection diversion.
+
+### `reassure-partner`
 
 Player-caused:
 
-- improve `partner-consent` one if `uneasy` or `conditional`;
-- cannot repair `withdrawn`;
-- cannot erase a breached promise;
-- may emit `coalition_unity_signal = coherent` where the reassurance becomes visibly joint/coherent.
+- improve partner one if uneasy/conditional;
+- cannot restore withdrawn;
+- cannot erase a breached promise.
 
-### Protect Lattice 3
+### `protect-lattice-c3`
 
-Legal only after scheduled advances 1 and 2:
+If advances 1–2 succeeded:
 
 `2 → 3-operational`.
 
-Otherwise Lattice remains non-operational.
+Otherwise maturity remains unreachable.
 
 ## Cycle 4
 
-### Recover reserve
+### `recover-reserve`
 
 Player-caused:
 
-- improve `reserve-condition` one;
-- worsen `beacon-exposure` one;
-- emit `beacon_coverage_signal = weak` if the pullback is detectably thinning Beacon coverage.
+- reserve improve one;
+- Beacon exposure worsen one.
 
-This is canonical costly recovery: endurance is bought with immediate security.
+Canonical costly recovery: endurance is bought with immediate security.
 
-### Prepare Beacon quietly
-
-Player-caused:
-
-- `beacon-preparation: routine → prepared`;
-- improve `beacon-exposure` one;
-- worsen `reserve-condition` one;
-- emit `beacon_coverage_signal = credible` where the strengthened coverage is detectable;
-- do not emit `visible_denial_signal = demonstrated` by default.
-
-This is a real investment of readiness, not a free simultaneous improvement to preparation and exposure.
-
-### Press visible advantage
+### `prepare-beacon-quietly`
 
 Player-caused:
 
-- worsen `reserve-condition` one;
-- emit `visible_denial_signal = demonstrated`;
-- emit `beacon_coverage_signal = credible`;
-- worsen `partner-consent` one if not covered by consultation/joint authority;
-- count significant visible reserve deployment and apply exhaustion-signal threshold.
+- Beacon preparation `routine → prepared`;
+- Beacon exposure improve one;
+- reserve worsen one.
+
+This is not a free upgrade. Its targeted detectability/adversary discovery effect is in 37A.
+
+### `press-visible-advantage`
+
+Player-caused:
+
+- reserve worsen one;
+- partner worsen one if the action is uncoordinated under known public/commitment state.
 
 ### Lattice Task Collection
 
-No generic stat transition. Queue exactly one legal target under [[26-LATTICE-COLLECTION-MATRIX]].
+No generic persistent bonus. Queue target result under [[26-LATTICE-COLLECTION-MATRIX]].
 
-### Emergency partner liaison
+### `request-partner-liaison`
 
-Player-caused:
+Commander-only intervention under 39:
 
-- `liaison-obligation: none → active`;
-- consumes one normal commander intervention;
-- queues the narrower `auxiliary-tasking` result under [[26-LATTICE-COLLECTION-MATRIX]].
+- liaison obligation `none → active`;
+- queues narrower C5 evidence.
 
-No generic intelligence/partner bonus.
+It never executes through Delegate.
 
-## Cycle 5 — Beacon posture
+## Cycle 5 — atomic composition
 
-### Quiet reinforce Beacon
+C5 final orders are resolved as a complete package under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
 
-Player-caused:
+### Beacon posture signed effects
 
-- improve `beacon-exposure` one;
-- `beacon-preparation: routine → prepared`;
-- worsen `reserve-condition` one if the authored order materially commits reserve forces;
-- emit `beacon_coverage_signal = credible` where detectable;
-- do not emit visible denial by default.
+#### `quiet-reinforce-beacon`
 
-### Visible reinforce Beacon
+- Beacon exposure improve +1;
+- Beacon preparation → `prepared`;
+- reserve worsen -1 when material reserve commitment is required by the authored state.
 
-Player-caused:
+#### `visible-reinforce-beacon`
 
-- improve `beacon-exposure` one;
-- `beacon-preparation: routine → prepared`;
-- worsen `reserve-condition` one;
-- emit `visible_denial_signal = demonstrated`;
-- emit `beacon_coverage_signal = credible`;
-- if not legitimately covered by partner consultation, worsen partner one and breach an active consultation promise where applicable;
-- count significant visible reserve deployment and apply exhaustion-signal threshold.
+- Beacon exposure +1;
+- Beacon preparation → `prepared`;
+- reserve -1.
 
-### Hold current Beacon posture
+Partner effect comes from the authority package, not an independent per-order decrement.
 
-No direct improvement; existing exposure/preparation remain.
+#### `hold-beacon-posture`
 
-## Cycle 5 — partner / commitments
+No direct state movement.
 
-### Honour consultation
+### Reserve decision signed effects
 
-If promise is active:
+#### `keep-reserve-forward`
 
-- `consultation-promise: active → honoured`;
-- improve partner one if not withdrawn;
-- emit `coalition_unity_signal = coherent` where the joint position is detectable.
+- reserve -1;
+- Beacon preparation → `prepared` if not already.
 
-If no formal promise exists, the authored consultation can still improve `uneasy`/`conditional` one but creates no retrospective promise history.
+#### `emergency-consolidation`
 
-It cannot repair withdrawn.
+- reserve +1;
+- Beacon exposure -1.
 
-### Act then inform
+### Order-independent aggregation
 
-If promise is active:
+For Beacon exposure and reserve:
 
-- `active → breached`;
-- worsen partner one;
-- emit `coalition_unity_signal = fractured` where detectably consequential.
+- sum all signed C5 deltas from the complete final-order set;
+- clamp once from pre-command state;
+- preserve every individual causal effect record.
 
-The associated order buys only its explicit authored operational freedom; there is no generic tempo resource.
+Therefore quiet reinforcement + consolidation can net exposure zero regardless agenda ordering while still creating Beacon preparation and using scarce command attention.
 
-### Political concession
+## Cycle 5 partner authority
 
-Player-caused:
+Resolve under 39.
 
-- `political-concession: none → active`;
-- if partner is `withdrawn`, set to `conditional`;
-- if partner is `conditional`, `uneasy`, or `cooperative`, leave the stronger/current state unchanged rather than degrading it to conditional;
-- fulfil `liaison-obligation` only when the authored concession/consultation explicitly satisfies that obligation.
+### `honour-consultation`
 
-This is the only Kestrel route that can restore immediate partner access from `withdrawn`. The concession remains a severe terminal cost.
+Always player-legal.
 
-## Cycle 5 — reserve
+Non-withdrawn partner:
 
-### Keep reserve forward
+- partner-authority → `joint` for C6;
+- active promise → `honoured`;
+- active liaison obligation → `fulfilled`;
+- improve partner one step.
 
-Player-caused:
+Withdrawn partner:
 
-- worsen `reserve-condition` one;
-- `beacon-preparation: routine → prepared` if not already prepared;
-- emit `beacon_coverage_signal = credible` where detectable;
-- count/refresh significant visible reserve deployment where this order visibly keeps/renews the forward posture.
+- partner-authority → `none`;
+- honour/fulfil active commitment where applicable;
+- partner remains withdrawn.
 
-### Emergency consolidation
+Same-cycle sensitive-action compatibility depends on whether the active C1 formal channel still provides rapid consultation under 39.
 
-Player-caused:
+### `political-concession`
 
-- improve `reserve-condition` one;
-- worsen `beacon-exposure` one;
-- emit `beacon_coverage_signal = weak` if the drawdown is detectable.
+Where legal:
 
-This remains legal through Cycle 5 and is the canonical reserve anti-death-spiral recovery.
+- partner-authority → `concession`;
+- concession `none → active`;
+- withdrawn partner → `conditional`;
+- honour an active unbreached consultation promise;
+- fulfil active liaison obligation where applicable.
 
-## Cycle 5 — attribution
+Severe terminal cost remains.
 
-### Use credible attribution opportunity
+### `act-then-inform`
 
-Legal only when `attribution-opportunity = credible`.
+Only valid with at least one same-cycle partner-sensitive action.
 
-Player-caused:
+- partner-authority → `unilateral`;
+- active promise → `breached`;
+- active liaison obligation → `breached`;
+- partner worsen exactly **one step total for the unilateral package**.
 
-- `credible → used`;
-- improve partner one if partner is not withdrawn and the attribution is jointly/politically usable;
-- emit `ravellan_discovery_signal = suspected`;
-- emit `coalition_unity_signal = coherent` where jointly backed.
+Do not worsen once per sensitive action.
 
-Any source sacrifice is an explicit authored terminal/debrief cost only if later content specifies it; do not invent an intelligence-resource meter.
+Partner-sensitive actions are exactly visible Beacon reinforcement and C5 attribution use.
 
-## Attribution opportunity derivation
+## Cycle 5 attribution
 
-Derive after HQ belief updates from [[23-HQ-BELIEF-AND-EVIDENCE]]:
+### `hold-attribution`
 
-- no active directional evidence → `none`;
-- active directional indicator, but no uncontradicted corroborating evidence → `tentative`;
-- at least one active relevant `corroborating` item and no active material opposite-direction evidence → `credible`;
-- after use → `used`;
-- if the qualifying evidence expires/supersedes before use → recompute to the weaker reachable state or `expired` when a previously credible window closes.
+No immediate persistent transition. Preserve `attribution-opportunity = credible` for possible C6 Hold And Expose.
 
-World truth alone cannot advance the opportunity.
+### `use-attribution`
+
+Legal only at `credible` and with a compatible authority package.
+
+- attribution `credible → used`;
+- improve partner one step if partner not withdrawn and use is coordinated/politically usable;
+- if unilateral, the package-level authority rule owns the one political deterioration rather than adding another per-order decrement.
+
+`used` is terminal for Kestrel; later evidence does not regenerate the opportunity.
+
+The discovery/unity observations are owned by 37A.
+
+## Attribution derivation
+
+From active HQ evidence:
+
+- no directional evidence → `none`;
+- relevant directional indicator → `tentative`;
+- relevant corroborating evidence + no active material directional contradiction → `credible`;
+- C5/C6 use → `used`;
+- pre-use evidence expiry can weaken/expire according to HQ-belief state.
+
+Do not infer from hidden truth.
 
 ## Liaison obligation
 
-Cycle-4 liaison creates `active`.
+C4 liaison creates `active`.
 
-It becomes `fulfilled` if the player later honours the specific partner consultation/obligation through an authored compatible consultation or concession course.
+It becomes:
 
-It becomes `breached` if an explicitly incompatible unilateral course occurs first.
+- `fulfilled` through authored consultation/concession satisfying the obligation;
+- `breached` through an explicitly incompatible unilateral package;
+- if still active at terminal, outstanding commitment cost, not automatic breach.
 
-If still `active` at terminal resolution, treat it as an outstanding commitment cost, not an automatic breach.
+## Severe-cost historical flags
 
-## Terminal severe-cost flags
+Before final route effects, severe-cost history includes at minimum:
 
-[[27-KESTREL-TERMINAL-MATRIX]] treats the campaign as carrying a severe self-cost when one or more of these authoritative histories is true:
+- consultation promise breached;
+- political concession active;
+- liaison obligation breached;
+- other explicit authored commitment failure.
 
-- reserve ends `brittle`;
-- consultation promise is `breached`;
-- political concession is `active`;
-- liaison obligation is `breached`;
-- immediate partner access survives only through the costly concession/breach history specified by terminal rules;
-- the final route creates the authored `overreaction` condition;
-- terminal physical denial succeeds only through an explicitly costly fallback caused by earlier warning/exposure failure.
+Reserve brittleness is evaluated on **post-terminal-route** reserve state under [[27-KESTREL-TERMINAL-MATRIX]].
 
-Do not sum these into a player score.
+Terminal-specific severe flags (`late-reaction`, `emergency-surge`, overreaction) are also owned by 27/39.
+
+No numeric cost score.
 
 ## Recovery invariant
 
-Before Cycle 6, deteriorating dimensions retain the authored painful response where applicable:
+Before C6, the promised costly counterplay includes:
 
-- reserve strain/brittleness → emergency consolidation;
-- partner deterioration short of withdrawal → reassurance/consultation; withdrawal → Cycle-5 political concession;
-- Beacon exposure → reachable quiet/visible preparation/reinforcement;
-- missed Lattice → narrower partner liaison counterplay.
+- reserve deterioration → C4 recovery / C5 emergency consolidation;
+- Beacon weakness → C3/C4/C5 preparation/reinforcement paths;
+- partner deterioration → reassurance while recoverable, C5 consultation/authority choices, concession for hard recovery;
+- partner withdrawal → C5 concession can restore access at severe cost, while honouring consultation remains a legal choice to preserve integrity without recovery;
+- missed Lattice → C4 commander-only liaison fallback;
+- information weakness → remaining focused/Lattice/liaison options when temporally useful.
 
-Recovery changes the current problem and preserves history; it does not erase mistakes.
+A recovery option must actually change the threatened downstream state and must not be free.
+
+## Ravellan observations
+
+Do not infer/employ them in this file. Exact coalition→Ravellan signals, same-cycle coalescing and reserve-deployment counting are exclusively [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
+
+## Replay / authority
+
+Every persisted state mutation must be replay-verifiable or purely derived under [[30-ARCHITECTURE-CONTRACT]].
+
+New persisted partner-authority / consequence state requires the next prototype format version from the actual committed predecessor. No silent reinterpretation/migration. V1 remains isolated.
 
 ## Required #101 tests
 
-At minimum prove:
+At minimum:
 
-- every record starts in the canonical opening state;
-- every authored transition above is deterministic and provenance-tagged;
-- Cycle-1 ordinary/reinforced watch emits exactly weak/credible coverage respectively;
-- quiet escort does not secretly consume reserve while visible surge does;
-- Cycle-4 quiet preparation consumes reserve while improving Beacon preparation/exposure;
-- significant visible reserve deployment count uses only the frozen order list and emits exhaustion suspicion at the second qualifying history point;
-- promise is never created implicitly and breach never erases promise history;
-- normal reassurance cannot repair withdrawn partner consent;
-- political concession is the only Kestrel recovery from withdrawn → conditional and remains a severe cost;
-- reserve recovery improves one step while worsening Beacon exposure;
-- Lattice cannot catch up after a missed scheduled advance;
-- attribution credibility is derived only from HQ evidence, never hidden truth;
-- external/adversary-caused events can be player-conditioned without being mislabeled player-caused;
-- every reachable non-terminal deteriorating state retains the authored counterplay promised above unless it resulted from an explicit accumulated avoidable chain being tested as the Cycle-6 reckoning;
-- V1 campaign state remains unchanged.
+- exact opening record states;
+- every order transition above;
+- provenance correctness;
+- C2 coordinated surge avoids partner penalty; uncoordinated surge does not;
+- C2 accusation worsens partner without promise and additionally breaches active promise;
+- reroute creates civilian/political cost but no reserve penalty; its intelligence result lives in HQ evidence;
+- C4 quiet preparation costs reserve;
+- liaison cannot delegate and creates obligation;
+- C5 partner authority/tempo state and package-level political effect;
+- C5 signed reserve/exposure effects invariant to issue order;
+- withdrawn + honour legal without forced concession; concession restores access at severe cost;
+- C5 use attribution consumes opportunity permanently; hold preserves it;
+- attribution derives only from HQ evidence;
+- every promised recovery path changes the threatened state at real cost;
+- trusted replay/tamper rejection covers every persisted record;
+- V1 unchanged.
 
 ## Rejection conditions
 
-Reject #101 if it introduces a universal consequence score, morality/trust meter, generic lifecycle framework, implicit promise, silent recovery from withdrawn consent, hidden quiet-escort reserve tax, cost-free quiet preparation, unavoidable pre-terminal death spiral, hidden-truth-derived attribution, or UI-owned state transition.
+Reject #101 if it introduces universal meters/trust score, implicit promises, generic lifecycle plugin framework, sequential C5 clamping, per-order double political penalties, free recovery, hidden-truth attribution, liaison through Delegate, regenerating one-shot attribution after use or V1 state changes.
