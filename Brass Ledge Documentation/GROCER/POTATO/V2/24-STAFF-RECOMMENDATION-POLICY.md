@@ -7,7 +7,7 @@ status: active
 
 Backlink: [[README]]
 
-This is the implementation authority for **#98 — deterministic belief-safe staff recommendation and dissent**. [[36-KESTREL-AGENDA-COURSE-MATRIX]] supplies Kestrel course metadata/ties. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns the bounded C5 package-composition step.
+This is the implementation authority for **#98 — deterministic belief-safe staff recommendation and dissent**. [[36-KESTREL-AGENDA-COURSE-MATRIX]] supplies Kestrel metadata/ties. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns bounded complete-package composition.
 
 ## Product purpose
 
@@ -15,263 +15,207 @@ Delegation should mean:
 
 > my headquarters is acting according to the direction I gave it, through professional officers who can disagree.
 
-It must not mean:
+It must not mean hidden scoring chooses for the player or that staff can spend exceptional commander authority by accident.
 
-> a hidden AI score picked the best move for me.
+Every issue has one responsible officer, authored legal courses, one deterministic staff recommendation and optional visible dissent from another chief using the same HQ/public state.
 
-Every issue has one responsible officer, authored legal courses, one deterministic staff recommendation and optional visible dissent from another chief using the same HQ belief/public state.
-
-Delegate executes the recommendation. Intervene selects a different legal authored course. Defer exists only where authored.
+Delegate executes recommendation. Intervene selects a different player-legal authored course. Defer exists only where authored.
 
 ## Information boundary
 
 Recommendation may read only:
 
-- current visible/authored issue and course metadata;
-- HQ belief/evidence safe state;
+- current authored issue/course metadata;
+- HQ belief/evidence;
 - standing command direction;
 - known commitments/obligations;
-- known institutional capability;
-- public campaign state needed by the issue;
-- responsible/dissenting chief's authored professional worldview;
-- safe observable terminal crisis family at C6.
+- known institutional/public campaign state;
+- responsible/dissenting chief worldview;
+- safe overt terminal crisis family.
 
-It may not read:
+Never read hidden Ravellan posture/preparation, raw adversary observations/action IDs/rows, future outcomes/input, oracle data, player score or hidden utility.
 
-- hidden Ravellan posture/preparation;
-- raw adversary observations/action IDs/policy rows;
-- future outcomes;
-- oracle/counterfactual data;
-- player score/win probability;
-- hidden utility/option score;
-- future player input.
+Changing hidden truth alone with all legitimate inputs fixed must leave recommendation/dissent deep-equal.
 
-Changing hidden truth alone while all legitimate recommendation inputs remain fixed must leave recommendation/dissent deep-equal.
+# Course authority
 
-## Course metadata
+Kestrel course metadata includes:
 
-Kestrel courses use the bounded fields in [[36-KESTREL-AGENDA-COURSE-MATRIX]]:
-
-- `supports`
-- `crossesBoundary`
-- `style`
-- `costs`
-- explicit belief/capability/commitment/public-state prerequisites;
-- explicit commitment effect where relevant;
+- `supports`;
+- `crossesBoundary`;
+- `style`;
+- `costs`;
+- explicit prerequisites/commitment effect;
 - professional concern/tie metadata;
 - `requiresIntervention` where authorised.
 
-Tags are semantic filters/reasons, never numbers.
+## Commander-only Kestrel courses
 
-## Step 0 — legal player course set
+Exactly these three order IDs are `requiresIntervention = true`:
 
-Start from authored courses legal for the issue/current public state.
+1. `public-accusation` — unsupported unilateral public attribution under the weak/ambiguous C2 picture;
+2. `request-partner-liaison` — emergency non-Lattice fallback that consumes one normal intervention and creates an obligation;
+3. `use-attribution` — public C5 use of the one-shot credible case that exposes/compromises the protected source.
 
-A course can be player-legal even if staff may not recommend it.
+These courses:
 
-If no player-legal course exists, content is invalid; engine does not invent one.
+- remain player-legal when their normal prerequisites hold;
+- are excluded from the staff recommendation candidate set regardless of priority/style/tolerated cost;
+- can never execute through Delegate;
+- consume one normal personal intervention when chosen;
+- must display their known immediate/authority cost before selection.
+
+This is a bounded authority rule, not a professional-quality filter. No other Kestrel course becomes commander-only without explicit product decision.
+
+# Recommendation algorithm
+
+## Step 0 — legal player set
+
+Start from every authored player-legal course for current issue/state.
+
+If none exists, content is invalid.
 
 ## Step 1 — recommendation-applicable set
 
-From the legal player set, exclude only explicit **authority/applicability** constraints—not chief preferences.
+Remove only explicit authority/applicability constraints:
 
-Examples:
+- prerequisite/capability/belief/public-state failure;
+- `requiresIntervention = true`;
+- bounded C5 package applicability under [[39]].
 
-- course prerequisite not met;
-- attribution issue absent/route unavailable without legitimate evidence;
-- capability-specific action before capability exists;
-- `requiresIntervention = true` course, which is commander-only;
-- C5 package-composition applicability frozen in [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
+Do not remove a course merely because a chief dislikes it.
 
-This is not a professional quality filter.
+If the player has legal courses but staff set is empty without an explicitly authored package-level reason, content is invalid.
 
-Kestrel's `request-partner-liaison` remains player-legal but is excluded here because it always costs personal intervention.
+## Step 2 — protected boundary
 
-If this set becomes empty while player-legal courses exist, content/composition is invalid unless 39 explicitly defines a package-level derivation that selects candidates after other issue recommendations.
+If at least one candidate does not cross the commander's protected boundary, remove those that do.
 
-## Step 2 — standing protected boundary
-
-Apply the commander's protected boundary first.
-
-If at least one candidate does not cross the declared boundary, remove candidates that do.
-
-If every candidate crosses it:
-
-- keep all;
-- emit `no-clean-option` / equivalent reason;
-- never fabricate a safe option.
+If every candidate crosses it, keep all and emit `no-clean-option`/equivalent reason.
 
 ## Step 3 — main priority
 
-If at least one remaining candidate explicitly supports the main priority, keep those.
-
-If none support it, keep current set and do not fabricate support.
+If at least one candidate supports the main priority, retain those. Otherwise keep current set.
 
 ## Step 4 — default style
 
-If at least one remaining candidate matches the commander's default style, keep those.
+If at least one remaining candidate matches declared style, retain those. `neutral` is not a style match.
 
-`neutral` is not a style match; it remains only when no declared-style match exists.
+A commander-only course does not re-enter merely because it is the only course matching a style.
 
-## Step 5 — tolerated temporary cost
+Example: `public-accusation` cannot become staff recommendation just because the standing default is visible deterrence.
 
-If several candidates remain and at least one incurs the commander's declared tolerable cost rather than another authored course cost, prefer that candidate set.
+## Step 5 — tolerated cost
 
-The cost is still shown. “Tolerable” does not mean free/beneficial.
+If multiple candidates remain and some incur the declared tolerated cost rather than another authored course cost, prefer that set. Tolerable never means free.
 
 ## Step 6 — commitment handling
 
-Known explicit commitments are never silently ignored.
+Among surviving recommendation-applicable courses, honour active commitment over breach unless a higher already-applied command distinction removed the honouring course.
 
-After standing-direction filtering:
+Any recommended breach carries explicit warning. A promise is not hard prohibition unless its contract says so.
 
-- where one candidate honours an active commitment and another breaches it, prefer honour unless a higher already-applied command-direction distinction removed that course;
-- any recommended breach carries an explicit breach reason/warning;
-- a promise/obligation is not a hard prohibition unless its contract says so.
+## Step 7 — responsible-chief tie
 
-C5 partner-authority/tempo interactions use the complete-package rules in 39 rather than independently pretending consultation has or lacks time.
+Use issue-specific authored tie from [[36]]. Chief worldview can provide concerns/final tie/dissent but never pre-filter standing direction.
 
-## Step 7 — responsible-chief professional tie-break
+Missing reachable tie is content validation failure. Never use array/lexical/random/seed ordering.
 
-If >1 candidate remains, apply the responsible chief's issue-specific authored preference among the remaining set from [[36-KESTREL-AGENDA-COURSE-MATRIX]].
+# Key political baselines
 
-Chief worldview can:
+To preserve command-by-exception:
 
-- provide professional concerns;
-- explain why a tie is broken;
-- produce dissent.
+- C1 Political final tie: `informal-liaison > formal-consultation-agreement`;
+- C2 public posture final tie among recommendation-applicable courses: `remain-silent > joint-non-attributive-warning` (`public-accusation` is commander-only);
+- C3 reassurance final tie: `routine-contact > reassure-partner`.
 
-It cannot silently remove a course **before** command direction is applied.
+Partner-oriented priority/style can select the positive political action before the tie. Under other philosophies, the commander spends an intervention if they want the additional political benefit.
 
-If a reachable final tie lacks an authored preference, content validation fails. Do not use array order, lexical order, seed or randomness.
+This prevents beneficial political actions from becoming universal free staff improvements while preserving strategic identity.
 
-## C5 package composition
+# C5 package composition
 
-C5 contains interacting issues. A set of independently valid recommendations is not sufficient if their combination is illegal.
+C5 interacting issues cannot be recommended independently and then assumed compatible.
 
-Use the bounded composition in [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]]:
+Use [[39]]:
 
-1. derive non-authority intended orders in the frozen order;
-2. calculate whether the intended package needs immediate partner authority;
-3. apply the attribution recommendation-applicability rule (use attribution is staff-applicable only with legitimate evidence + active rapid consultation channel + non-withdrawn partner; otherwise Hold is staff baseline);
-4. derive partner-authority recommendation with its rapid-channel/withdrawal/package constraints;
-5. validate the complete **all-Delegate staff package**.
+1. derive non-authority staff intended orders;
+2. determine whether intended package needs immediate partner authority;
+3. C5 attribution staff baseline is always **`hold-attribution`** when issue exists because `use-attribution` is commander-only;
+4. derive partner-authority recommendation from rapid-channel/withdrawal/intended-package constraints;
+5. validate complete all-Delegate package.
 
 Invariant:
 
-> the all-Delegate staff package must always be a legal complete command set.
+> the all-Delegate staff package is always a legal complete command set.
 
-If not, it is a content/recommendation defect; UI may not repair it silently.
+If not, recommendation/content is defective; browser/headless may not repair it.
 
-This is one bounded Kestrel composition step, not a generic multi-issue optimiser.
-
-## Professional worldview
-
-Worldview produces explainable perspective, never hidden score.
+# Professional worldviews
 
 ### Intelligence
 
-Values legitimate evidence, protects against unsupported attribution and recognises uncertainty. Can still recommend acting under uncertainty when command direction requires it.
+Values legitimate evidence and avoiding unsupported attribution. Recognises uncertainty and can dissent when action outruns evidence.
 
 ### Operations
 
-Values credible ability to deny a threat and avoiding unrecoverable readiness collapse. Knows only HQ belief, not actual hidden threat.
+Values credible denial and avoiding unrecoverable readiness collapse using HQ belief only.
 
 ### Political
 
-Values partner consent/authority and explicit commitments while preserving enough freedom to respond. Can recommend breach only through authored package/state logic with explicit warning.
+Values partner consent/authority/commitments while preserving freedom to respond. Exceptional public attribution remains commander-only even if Political sees benefits.
 
-## Recommendation result
+# Recommendation result
 
-Authoritative result contains only stable structured semantics such as:
+Stable structured semantics only:
 
 - issue ID;
 - responsible officer;
 - recommended order ID;
 - ordered decisive reason refs;
-- visible concern refs;
-- optional dissent records.
+- concern refs;
+- optional dissent.
 
-No global score.
+No score.
 
-Normally expose 2–4 decisive reasons, not every matching tag.
+Normally render 2–4 decisive reasons, not every matched tag.
 
-Reason families may include:
+Reason families may include boundary, priority, style, tolerated cost, belief, commitment, capability, authority and professional concern.
 
-- `protect-boundary:*`
-- `no-clean-option:*`
-- `support-priority:*`
-- `follow-style:*`
-- `accept-tolerated-cost:*`
-- `belief:*`
-- `commitment-honour:*`
-- `commitment-breach:*`
-- `capability:*`
-- `authority:*`
-- `professional:*`
+# Dissent
 
-Presentation renders ordinary prose; player does not see rule IDs.
+Dissent evaluates the same HQ/public known state. It is advisory, not a second vote, and cannot read hidden truth.
 
-## Dissent
+Kestrel must support:
 
-Dissent is advisory, not a second vote.
+- C3 Intelligence/Operations disagreement from same `unclear + conflicted` belief;
+- C5 Political/Operations conflict around authority/tempo/readiness/commitment.
 
-A dissenting chief evaluates the **same HQ belief/public known state** through an authored concern/preference.
+# Implicit delegation
 
-Dissent record:
+Command Room may initialise every issue locally to Delegate, but sim still owns recommendation and delegated final order.
 
-- dissenting officer;
-- preferred legal order where applicable;
-- reason refs;
-- no hidden truth/score.
+Because commander-only courses are excluded from recommendation and all-Delegate package is legal, doing nothing never silently spends those exceptional authorities.
 
-Kestrel requirements:
+# Required #98 tests
 
-- C3 supports Intelligence/Operations disagreement from the same `unclear + conflicted` belief;
-- C5 supports Political/Operations conflict around authority/tempo/readiness/commitment.
-
-Changing hidden Ravellan truth alone cannot create/remove dissent.
-
-## Implicit delegation
-
-This engine still outputs an explicit recommendation and the ledger still persists explicit `delegate` disposition.
-
-The Command Room may initialise every issue locally to Delegate so the commander interacts mainly with exceptions. The browser cannot choose or recompute the recommended delegated final order.
-
-The all-Delegate package legality invariant makes this UI model safe.
-
-## Examples
-
-Operations may recommend holding reserve because the commander protected readiness and the HQ picture remains uncertain, while another chief warns that response time is being lost.
-
-Political may recommend honouring consultation because a promise/channel exists, while Operations warns that immediate visible action cannot wait unless the rapid channel already supports it.
-
-These explanations refer to known state, not hidden truth.
-
-## Required #98 tests
-
-At minimum:
+At minimum prove:
 
 - hidden truth changes with same legitimate inputs → equal recommendation/dissent;
-- commander-only legal course remains visible to player but cannot become recommendation;
-- protected boundary precedence;
-- all-candidates-cross preserves candidates + no-clean-option reason;
-- priority after boundary;
-- style only after priority;
-- tolerated cost only as later preference;
-- commitment honour/default and explicit breach warning;
-- authored chief tie determinism;
-- missing reachable tie rejected;
-- chief dissent from same belief;
-- C1 formal consultation not universal baseline; partner direction can select it;
-- Lattice protection follows standing understanding direction or intervention rather than universal staff default;
-- liaison is never delegated;
-- C5 attribution staff applicability depends on rapid formal channel/public state, never hidden truth;
-- every reachable C5 all-Delegate staff package is complete/legal;
-- safe C6 crisis family controls terminal staff ownership/tie, raw #99 action IDs absent;
-- no numeric/global utility field exists;
-- V1 advice unchanged.
+- each commander-only course remains player-legal when prerequisites hold but can never become recommendation under any of 81 standing-intent combinations;
+- selecting each commander-only course consumes exactly one normal intervention;
+- C2 visible-deterrence style never auto-selects `public-accusation`;
+- C5 partner priority/style never auto-selects `use-attribution`;
+- protected-boundary/priority/style/tolerated-cost/commitment/tie precedence;
+- all-candidates-cross emits no-clean-option rather than fake safety;
+- C1 formal consultation, C2 joint warning and C3 reassurance follow standing partner direction or intervention rather than universal default;
+- Lattice protection follows understanding direction/intervention;
+- every C5 all-Delegate staff package legal;
+- C5 attribution recommendation always Hold when issue exists;
+- safe C6 crisis family controls terminal staff tie, never raw #99 ID;
+- no numeric/global utility;
+- V1 unchanged.
 
 ## Rejection conditions
 
-Reject #98 if it adds weighted utility, chief pre-filtering ahead of command direction, hidden-world access, random/seed/array tie-breaking, commander-only alternatives as free delegated actions, invalid all-Delegate staff packages, LLM-generated live recommendations or a generic rule engine beyond the concrete Kestrel need.
+Reject #98 if it adds weighted utility, chief pre-filtering before command direction, hidden-world access, random/array tie-breaking, allows any commander-only course through Delegate, lets visible style auto-accuse, lets partner intent auto-burn source, creates invalid all-Delegate packages, generates live recommendations with LLMs or generalises beyond bounded Kestrel need.
