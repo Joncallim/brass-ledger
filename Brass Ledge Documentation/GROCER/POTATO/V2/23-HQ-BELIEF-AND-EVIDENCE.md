@@ -117,7 +117,7 @@ Evidence ID: `opening-pressure-ambiguous`
 
 Initial assessment therefore remains `unclear + weak`.
 
-### Cycle 2 shipping probe
+### Cycle 2 shipping pressure
 
 Evidence ID: `shipping-probe-ambiguous`
 
@@ -128,7 +128,7 @@ Evidence ID: `shipping-probe-ambiguous`
 - active for Cycles 2–3; expires before the Cycle-4 belief update;
 - player-safe meaning: the shipping pressure is compatible with both coercive testing and cover for something more serious.
 
-This evidence is produced by the authored Cycle-2 situation, not by inspecting hidden Ravellan posture.
+The Cycle-1 probe pressure persists into the Cycle-2 shipping issue regardless of the newly selected hidden Cycle-2 action; [[37-RAVELLAN-WORLD-EFFECT-MATRIX]] owns that effect projection.
 
 ### Cycle 3 conflicting bundle — mandatory
 
@@ -158,20 +158,21 @@ Both observations are legitimately true/observable under all three opening Ravel
 
 `unclear + conflicted`
 
-This is the same HQ belief that drives the mandatory Intelligence/Operations disagreement. Hidden posture does not choose which chief is “correct”.
+This is the same HQ belief that drives the mandatory Intelligence/Operations disagreement. Hidden posture/current Ravellan action does not choose which chief is “correct”.
 
-### Cycle 4 lull
+### Cycle 4 pressure-pattern change
 
-Evidence ID: `patrol-lull-ambiguous`
+Evidence ID: `cycle4-pressure-pattern-ambiguous`
 
 - implication: `ambiguous`;
 - diagnostic class: `indicator`;
-- source group: `visible-patrol-pattern`;
+- source group: `visible-pressure-pattern`;
 - observed Cycle 4;
-- active through Cycle 5; expires before terminal debrief/current-assessment reconstruction unless retained in history;
-- player-safe meaning: visible patrol pressure has reduced, but the lull is consistent with deterrence, consolidation, an ending feint, or activity moving out of sight.
+- active through Cycle 5; expires before the Cycle-6 current-assessment reduction;
+- player-safe meaning is selected from the authorised manifestation of the actual Ravellan action under [[37-RAVELLAN-WORLD-EFFECT-MATRIX]]: lull, thinning/plateau, contradictory posture, or continuing pressure;
+- every variant remains ambiguous and must not expose the hidden action ID.
 
-It does not choose a direction.
+It does not choose a direction. The same evidence ID keeps the HQ reducer stable while player-facing situation text truthfully reflects the observable pressure pattern.
 
 ## Cycle-3 focused-collection action
 
@@ -253,7 +254,7 @@ Canonical lifecycle semantics:
 - `shipping-probe-ambiguous`: expires before C4;
 - `staging-logistics-anomaly`: active C3–C4, expires before C5 unless superseded;
 - `combat-elements-dispersed`: active C3–C4, expires before C5 unless superseded;
-- `patrol-lull-ambiguous`: active C4–C5, expires before C6 current-assessment reduction;
+- `cycle4-pressure-pattern-ambiguous`: active C4–C5, expires before C6;
 - `focused-staging-buildup` / `focused-staging-empty`: active through terminal;
 - `focused-staging-inconclusive`: active C4–C5, expires before C6;
 - Lattice/liaison results: active through terminal unless the result matrix explicitly supersedes them.
@@ -355,9 +356,10 @@ At minimum prove:
 
 - paired hidden-world states with identical authorised evidence produce identical HQ assessment and player-safe intelligence projection;
 - C1 and C2 ordinary evidence remain `unclear + weak`;
-- the mandatory C3 bundle produces `unclear + conflicted` identically across hidden Ravellan openings;
+- the mandatory C3 bundle produces `unclear + conflicted` identically across hidden Ravellan openings/current actions;
 - C3 focused collection produces the exact C4 result/supersession branches above;
 - absent directed collection allows stale C3 conflict to expire before C5 rather than persisting forever;
+- every legal Cycle-4 Ravellan action produces the same ambiguous evidence ID while the visible summary varies only through authorised action manifestation;
 - no active directional evidence → `unclear + weak`;
 - one preparation indicator → `preparation + weak`;
 - one coercion indicator → `coercion + weak`;
@@ -368,9 +370,9 @@ At minimum prove:
 - superseded/expired evidence no longer affects current assessment but remains in replay history;
 - deterministic reason selection follows the stable rules above without becoming assessment scoring;
 - directed collection enters through the same evidence path rather than setting hidden truth or recommendation directly;
-- player-facing projection contains no percentage, numeric probability, confidence band/label, hidden posture/preparation ID or truth provenance;
+- player-facing projection contains no percentage, numeric probability, confidence band/label, hidden posture/preparation/action ID or truth provenance;
 - V1 information/state/replay contracts remain unchanged.
 
 ## Rejection conditions
 
-Reject #100 if it introduces Bayesian probability, a generic intelligence score, player-facing confidence labels, hidden-truth-derived prose, UI-owned assessment logic, permanent stale evidence, or a general multi-claim intelligence framework not required by Kestrel.
+Reject #100 if it introduces Bayesian probability, a generic intelligence score, player-facing confidence labels, hidden-truth-derived prose, raw Ravellan-action leakage, UI-owned assessment logic, permanent stale evidence, or a general multi-claim intelligence framework not required by Kestrel.
