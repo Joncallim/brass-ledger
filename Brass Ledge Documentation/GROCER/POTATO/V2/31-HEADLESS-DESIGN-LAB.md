@@ -37,12 +37,13 @@ Retain the canonical test policies:
 - `recovery-first`;
 - `deterrence-first`;
 - `intelligence-first`;
+- `coalition-first` — protect consultation/partner authority and prefer joint/coherent action when legally available;
 - `random-valid` using persisted deterministic seed input;
 - `oracle` — test-only, may see hidden truth and is never used in staff/player execution.
 
 Policies must operate only through legal public/headless command APIs except the oracle's explicit diagnostic truth access.
 
-No ML agent or LLM policy is required.
+The named strategies are deliberately simple probes, not claims about optimal human play. No ML agent or LLM policy is required.
 
 ## Outcome dimensions
 
@@ -77,7 +78,7 @@ Flag especially:
 
 - `delegate-all` dominating every other non-oracle policy;
 - `intervene-all-where-legal` dominating every other non-oracle policy;
-- one of recovery/deterrence/intelligence-first dominating the others across every viable seed.
+- one of recovery/deterrence/intelligence/coalition-first dominating the others across every viable seed.
 
 A flagged dominance is a design warning requiring review; it is not automatically fixed by randomisation.
 
@@ -129,18 +130,21 @@ Do not invent a fixed numeric fun threshold. Report exact counts/branches for hu
 The authored strategic families should produce recognisably different state trajectories:
 
 - intelligence-first;
-- coalition/diplomacy-preserving behavior where represented by the policy cohort/content;
+- coalition-first / diplomacy-preserving behavior;
 - deterrence/reserve-backed behavior;
 - recovery-first.
 
 Flag two strategy policies as **insufficiently separated** when, across all viable seeds, they produce the same:
 
 - Lattice/liaison reachability;
+- consultation/promise/partner trajectory;
 - material persistent-record trajectories;
 - terminal route availability set;
 - terminal Pareto profile/classification.
 
 A strategy need not win differently on every seed, but at least one viable seed should expose a meaningful mechanical distinction.
+
+`coalition-first` specifically fails its purpose if preserving consultation/partner authority never changes a later legal option, Ravellan observation, terminal route or partner/commitment outcome relative to another non-oracle strategy.
 
 ## Diagnostic 5 — information value
 
@@ -276,6 +280,7 @@ Produce a deterministic machine-readable report plus concise human-readable summ
 - recovery failures;
 - route sameness;
 - adversary fairness/responsiveness;
+- strategy-separation findings including coalition-first;
 - snowball/triviality warnings;
 - agenda collision statistics.
 
@@ -293,6 +298,7 @@ At minimum prove the lab itself detects fixture cases deliberately constructed w
 - information that never changes action space;
 - a universal final route;
 - irrelevant intent field;
+- a coalition strategy that is mechanically indistinguishable from another policy;
 - adversary reading private state;
 - doomed hidden-truth seed;
 - snowball/trivial late game.
