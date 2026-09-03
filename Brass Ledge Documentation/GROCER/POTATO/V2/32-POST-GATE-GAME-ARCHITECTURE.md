@@ -7,9 +7,9 @@ status: provisional
 
 Backlink: [[README]]
 
-This document is **not implementation authority before the V2 human fun gate passes**. It records the current best long-form product direction so the Kestrel prototype tests toward a coherent game rather than an undefined future.
+This document is **not implementation authority before the V2 human fun gate passes**. It records the current best long-form direction so Kestrel tests toward a coherent game rather than an undefined future.
 
-Nothing in this file may expand pre-gate implementation scope. Where it conflicts with active prototype contracts, the active numbered contracts win.
+Nothing here may expand pre-gate scope. Active prototype contracts win every conflict.
 
 ## Long-form product thesis
 
@@ -21,29 +21,92 @@ The enduring player thought remains:
 
 > “I caused this. I have a plan for what to do about it. I need to see what happens next.”
 
+## Inherited invariants from Kestrel
+
+If the human gate passes, future design should still preserve the principles Kestrel had to make explicit.
+
+### Command windows must contain real command
+
+Do not open a player interaction merely because time advanced or a storylet fired.
+
+A Command Window should exist only when at least one meaningful commander-level exception exists, such as:
+
+- protected boundary at risk;
+- irreconcilable consequential staff disagreement;
+- irreversible commitment;
+- material recovery/acceptance-of-risk decision;
+- new qualitative capability/action;
+- multiple pressures whose simultaneous resolution creates a real trade-off.
+
+If staff can safely handle everything under standing direction, advance without ceremony.
+
+### Complete command packages remain authoritative
+
+Future multi-issue windows must be resolved from the complete validated final-order set where decisions interact. Do not let UI order, issue-array order or sequential clamping create different worlds from the same intended command package.
+
+The untouched all-Delegate staff package should remain legal by construction unless a future design explicitly and visibly changes the command model.
+
+### Sensors observe facts, not hidden strategic labels
+
+Future intelligence/collection systems may observe specific world facts/action history authorised by the sensor. They must not read a hidden opponent “intent/posture” enum merely to decide what the sensor discovers.
+
+A sensor may confidently mislead when the observable facts genuinely support the wrong inference. That is uncertainty; an intent oracle is not.
+
+### Opponents react only to legitimate observations
+
+No score-reading, private-intent reading, rubber-banding or drama compensation. If the opponent changes because of the commander, the game must have an authored detectable signal chain.
+
+### Commitments need benefit and constraint
+
+A promise is not an interesting choice if it is pure downside; nor if its later obligation is cosmetic. Binding commitments should buy concrete coordination, access, tempo, information or authority while meaningfully limiting future freedom.
+
+### Qualitative builds cannot be free bypasses
+
+An institutional initiative should change legal actions/information/authority, but must also have an explicit opportunity cost, capacity constraint, obligation, exposure or foregone alternative.
+
+Do not let a future capability quietly bypass scarce commander attention with no earlier or ongoing trade.
+
+### Player-safe choice quality remains a machine gate
+
+Before human testing, future labs should continue detecting:
+
+- mechanically inelastic choices;
+- player-safe dominated traps;
+- universal strategies/final routes;
+- impossible recovery;
+- hidden-state unfairness;
+- fake strategy/build differentiation;
+- default staff packages that are internally invalid.
+
+Do not remove legitimate risky choices merely because their value depends on hidden reality. The target is **uncertainty with plausible upside**, not certainty.
+
+### Replay/state integrity remains part of game truth
+
+Every authoritative persisted mutation is either replay-verifiable or purely derived. No future narrative/capability/storylet subsystem gets an exception because it is “just content.”
+
 ## Event-driven Command Windows
 
 If Kestrel validates command-by-exception, future scenarios should not assume equal calendar turns.
 
-Time should advance until something genuinely deserves commander attention.
+Time advances until something genuinely deserves commander attention.
 
-A future **Command Window** may be triggered when:
+Possible triggers:
 
-- a protected boundary may be crossed;
+- protected boundary may be crossed;
 - chiefs cannot reconcile a consequential disagreement;
-- an irreversible commitment is available;
-- a persistent consequence matures;
-- an external/adversary action materially changes the situation;
-- a capability creates a new strategic opportunity;
+- irreversible commitment becomes available;
+- persistent consequence matures;
+- external/adversary action materially changes the situation;
+- capability creates a new strategic opportunity;
 - two otherwise manageable pressures collide.
 
-If nothing important requires command, the headquarters should work and time should advance.
+A trigger alone is insufficient if it produces no meaningful player exception. In that case staff handles it and time continues.
 
 This is a post-gate hypothesis, not a Kestrel rule change.
 
 ## Command Bets — provisional evolution of accepted risk
 
-A future signature mechanic should be tested if Kestrel shows that players understand causal history but still struggle to articulate what risk they intentionally accepted.
+Test only if Kestrel shows players understand causal history but struggle to articulate what risk they intentionally accepted.
 
 When the commander deliberately leaves a meaningful exposure unresolved, record the authored assumption they are betting on.
 
@@ -55,21 +118,26 @@ Examples:
 
 > Current shipping pressure is coercion rather than cover for a seizure.
 
-Later the game can resolve the bet as:
+Later resolve as:
 
 - held;
 - failed;
 - still unresolved.
 
-This should remain a concrete authored proposition, never a risk meter or wager currency.
+A Command Bet must:
 
-Do **not** implement Command Bets before human evidence shows they would clarify rather than add ceremony.
+- be a concrete authored proposition;
+- follow from an actual choice/exposure rather than require a separate ceremonial confirmation click where avoidable;
+- never become a risk meter, wager currency or hidden scoring bonus;
+- never reveal hidden truth at the moment it is recorded.
+
+Do not implement before human evidence shows it clarifies ownership rather than adds paperwork.
 
 ## Chiefs as persistent people, not trust meters
 
 If Kestrel's dissent is engaging, future chiefs should gain discrete memories rather than numeric relationship scores.
 
-Possible memory records:
+Possible memories:
 
 - `backed-on-beacon`;
 - `overruled-on-reserve`;
@@ -79,9 +147,11 @@ Possible memory records:
 - `recovery-promise-broken`;
 - `publicly-undercut`.
 
-Memories may alter later authored behavior, willingness to escalate dissent, or what a chief chooses to raise.
+Memories may alter authored later behavior, willingness to escalate dissent or what a chief chooses to raise.
 
-The goal is recognisable personality and history:
+They must not become hidden approval points that determine whether a chief tells the truth. A chief may disagree, remember and change behavior while still operating from the same legitimate information boundary.
+
+Goal:
 
 > “Of course Briggs wants this.”
 
@@ -89,49 +159,60 @@ and occasionally:
 
 > “Interesting. Even Briggs thinks we should wait.”
 
-Do not build chief-chatbot/freeform conversation as the core system.
+Do not make free-form chief chat the core mechanic.
 
 ## Institutional strategy / builds
 
-If Lattice proves that qualitative capability unlocks create strategic identity, future scenarios should offer a small set of competing institutional initiatives rather than a generic technology tree.
-
-Candidate examples:
+If Lattice proves qualitative capability unlocks create strategic identity, future scenarios may offer a small set of competing institutional initiatives rather than a generic technology tree.
 
 ### Intelligence fusion cell
 
-Unlock: task a named uncertainty outside normal personal-intervention economy.
+Potential unlock: task a named uncertainty outside normal personal-attention economy.
+
+Must require earlier investment and remain bounded by what its sensors can actually observe.
 
 ### Contingency planning group
 
-Potential unlock: prepare one conditional order that can execute when an explicit authored trigger occurs.
+Potential unlock: author one conditional order that executes when an explicit observable trigger occurs.
+
+Guardrails:
+
+- commander chooses trigger/action in advance;
+- trigger is based on legitimate observable state, not hidden truth;
+- execution is replayable and creates real history/cost;
+- it cannot become generic “automation chooses the best response.”
 
 ### Coalition liaison team
 
 Potential unlock: resolve one consultation-sensitive issue through joint staff channels rather than personal intervention.
 
+It must have bounded capacity/opportunity cost/commitment so it does not simply delete the political-attention mechanic.
+
 ### Sustainment surge group
 
-Potential unlock: convert a lull into deeper recovery without abandoning one entire operational posture.
+Potential unlock: deeper recovery during a lull without abandoning one entire posture.
 
-The player should only be able to meaningfully develop a subset during one campaign.
+It must still spend something meaningful — industrial capacity, future availability, political priority or another authored constraint — rather than becoming free recovery.
 
-Every initiative must change legal actions/information/decision structure, not merely improve numbers.
+The player should only meaningfully develop a subset during one campaign.
 
-Do not implement any initiative beyond Lattice before the human gate and a second scenario design justify it.
+Every initiative changes legal action/information/authority; none may be merely a numeric buff.
+
+Do not implement any initiative beyond Lattice before the human gate and a second scenario justify it.
 
 ## Standing-direction adaptation
 
-Kestrel keeps opening intent immutable to test whether strategy identity matters.
+Kestrel keeps intent immutable to test whether strategy identity matters.
 
 If that succeeds, a longer campaign may permit **limited adaptation at an act boundary**, e.g. revise one standing direction after major evidence/strategic change.
 
-Changing direction should itself become part of history; chiefs/external actors may notice the shift.
+Changing direction should itself be visible history; chiefs/external actors may notice the shift.
 
-Do not allow per-turn optimisation of standing intent.
+Do not allow per-window re-optimisation of standing intent.
 
 ## Full campaign shape
 
-Do not return automatically to a fixed 12-month structure.
+Do not automatically return to fixed 12-month turns.
 
 Provisional target:
 
@@ -151,7 +232,7 @@ Accumulate promises, exposures, institutional identity, chief history and irreve
 
 Previously separate pressures collide. Recovery remains possible but expensive. Terminal crisis tests the campaign built.
 
-The acts are pacing/design structure, not necessarily explicit level labels in UI.
+Acts are pacing/design structure, not necessarily explicit level labels.
 
 ## State-triggered storylets, not drama rubber-banding
 
@@ -159,18 +240,26 @@ Future narrative variation should be authored from actual persistent state/histo
 
 Examples:
 
-- repeated reserve use → sustainment warning/storylet;
+- repeated reserve use → sustainment warning;
 - consultation promise honoured repeatedly → partner offers broader authority;
-- intelligence warning overruled then vindicated → chief behaves differently in later dispute;
+- intelligence warning overruled then vindicated → chief later escalates dissent;
 - repeated civilian disruption → domestic/political pressure.
 
-Eligibility derives from state/history, not from the player “doing too well” or “needing excitement”.
+Storylet eligibility must derive from verified state/history and obey the same information/provenance boundary as ordinary mechanics.
 
-No adaptive difficulty/drama director should spawn crises merely to balance performance.
+A storylet should normally either:
+
+- create a meaningful command decision;
+- materially change state/pressure;
+- or be a short consequence/character beat attached to an existing transition.
+
+Do not open a separate Command Window for flavour-only content.
+
+No adaptive difficulty/drama director spawns crises because the player is doing too well or needs excitement.
 
 ## Future scenario package
 
-After at least a second concrete scenario exists, evaluate whether the following truly form a reusable authored scenario contract:
+After at least a second concrete scenario exists, evaluate whether these truly form a reusable authored scenario contract:
 
 - strategic objective;
 - opposing actors/objectives;
@@ -183,13 +272,15 @@ After at least a second concrete scenario exists, evaluate whether the following
 - pressure processes;
 - state-triggered storylets;
 - costly recovery options;
-- terminal crisis families.
+- terminal crisis families;
+- explicit cross-system composition rules where issues interact;
+- player-safe projection / debrief boundary.
 
 Do not generalise from Kestrel alone. A second scenario is the minimum evidence for extracting shared semantics.
 
-## Future emotional pacing requirement
+## Future emotional pacing
 
-Long scenarios should deliberately create variation in emotional function, not simply rising numeric pressure:
+Long scenarios should vary emotional function, not merely raise numbers:
 
 - ownership;
 - consequence;
@@ -200,49 +291,49 @@ Long scenarios should deliberately create variation in emotional function, not s
 - recovery;
 - reckoning.
 
-Do not mechanically force one emotion per turn. Use this as content-review vocabulary.
+Do not mechanically force one emotion per window. Use these as review vocabulary.
 
-## Future anti-snowball principle
+## Anti-snowball
 
-Success should create **new options and commitments**, not simply easier numbers.
+Success creates **new options and commitments**, not simply easier numbers.
 
 Examples:
 
-- strong partner relationship → access to a joint operation that creates a consultation commitment;
-- strong intelligence → credible attribution opportunity that may burn a source or create political stakes;
-- strong readiness → credible visible-deterrence option that also reveals posture to the opponent.
+- strong partner relationship → joint operation plus consultation constraint;
+- strong intelligence → attribution opportunity whose public use may burn a source;
+- strong readiness → visible deterrence that reveals posture to opponent.
 
-A successful campaign should expand the strategic space rather than turn later windows off.
+A successful campaign should expand strategic space rather than switch the game off.
 
-## Future anti-death-spiral principle
+## Anti-death-spiral
 
-Until the final convergence, serious deterioration should usually produce different painful choices rather than fewer choices.
+Until final convergence, serious deterioration should usually produce different painful choices rather than fewer choices.
 
 Recovery:
 
-- must cost something immediately;
-- must not erase history;
-- should often create a different exposure.
+- costs something immediately;
+- does not erase history;
+- often creates another exposure.
 
-Kestrel's emergency consolidation and political concession are the prototype examples.
+Kestrel's emergency consolidation and political concession are prototypes.
 
-## Product questions deliberately left to human evidence
+## Questions left to human evidence
 
-Do not freeze these from design preference alone:
+Do not freeze from design preference alone:
 
-- whether two interventions is the correct budget;
+- whether two interventions is correct;
 - whether six windows is too short/long;
 - ideal full-campaign window count;
-- number of chiefs a player can comfortably understand;
+- number of chiefs a player can comfortably model;
 - ideal prose density;
-- how often surprise/external events should occur;
+- surprise/external-event frequency;
 - whether standing intent should become revisable;
-- how many institutional initiatives belong in one campaign;
+- number of institutional initiatives per campaign;
 - whether Command Bets clarify agency or add paperwork;
-- how much chief memory materially improves attachment/strategy.
+- how much chief memory improves attachment/strategy.
 
 ## Gate relationship
 
-This document may guide what designers observe during Kestrel testing, but it must not alter the pass criteria in [[40-EVALUATION-CONTRACT]].
+This document may guide observation during Kestrel but cannot alter [[40-EVALUATION-CONTRACT]].
 
-If Kestrel fails the human fun gate, revisit this architecture from the evidence rather than assuming the long-form vision merely needs more content/polish.
+If Kestrel fails the human gate, revisit this architecture from evidence rather than assuming the long-form vision merely needs more content/polish.
