@@ -7,41 +7,44 @@ status: active
 
 Backlink: [[README]]
 
-This document separates machine-provable structure from human-only product evidence.
+This separates machine-provable structure from human-only product evidence.
 
 ## Machine-provable contract
 
-The complete Kestrel implementation must prove through normal authoritative transitions/replay:
+The complete Kestrel implementation must prove:
 
-- deterministic execution/replay and V1 compatibility;
-- ruleset/content identity and prototype-format rejection boundaries;
+- deterministic execution/replay + V1 compatibility;
+- ruleset/content/prototype-format boundaries;
 - revision/stale-write protection;
-- hidden world/adversary isolation from staff/player paths;
-- posture-blind directed collection using only target-authorised facts;
-- deterministic evidence reduction + belief-safe natural-language projection;
+- hidden-world/adversary isolation;
+- posture-blind collection;
+- deterministic evidence reduction / safe projection;
 - explainable recommendation with real standing-intent relevance;
-- commander-only actions cannot become free delegated recommendations;
-- untouched all-Delegate staff package is always legal;
-- complete command-set cross-issue effects are order-independent;
-- Ravellan receives only closed authored public observations and claimed policy rows are reachable through normal play;
-- concrete persistent consequences and costly recovery remain reachable through C5 where promised;
-- Lattice changes legal information/action space but is not mandatory for every viable non-defeat history;
-- consequential choices are mechanically elastic;
-- no legal course is an **unintentional player-safe dominated trap** across every hidden reality compatible with the same legitimate player information;
-- legitimate risky choices whose value changes across compatible hidden realities are not falsely rejected;
+- commander-only actions never become free delegated recommendations;
+- all-Delegate staff package always legal;
+- complete-package effects order-independent;
+- Ravellan gets only closed authored observations and relied-upon policy paths are normal-play reachable;
+- concrete consequences + costly recovery through C5;
+- Lattice changes action/information space without becoming mandatory;
+- consequential choices mechanically elastic;
+- no unintentional player-safe dominated trap;
+- legitimate hidden-state-dependent risk not falsely rejected;
+- local dominance accounts for **scarce intervention opportunity cost** as well as downstream outcomes;
 - C5 consultation-vs-tempo and attribution-use-vs-preserve are real;
-- public attribution/source exposure is a disclosed, authoritative severe cost rather than hidden prose;
-- final route legality prunes known player-safe dominated terminal responses using only overt crisis/known state;
-- final routes apply real post-route reserve/partner/attribution effects before reporting/classification;
-- no universal final answer across viable histories;
-- no forced hard loss before C6 without meaningful earlier counterplay;
-- no structural success snowball that removes late trade-offs across all viable histories.
+- public attribution/source exposure is disclosed authoritative severe cost;
+- final route legality prunes known futile/dominated responses from overt crisis/known state;
+- final routes apply real post-route effects before reporting/classification;
+- every player-known terminal state has at least one response and canonical terminal matrix has no displayed pairwise-dominated route pair;
+- no universal final answer;
+- no forced hard loss before C6 without earlier counterplay;
+- no structural success snowball eliminating late trade-offs;
+- no dead persisted observation/state merely for symmetry.
 
-[[31-HEADLESS-DESIGN-LAB]] owns exact diagnostics/fixtures. [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] owns reverse observations. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns genuine cross-issue composition.
+[[31-HEADLESS-DESIGN-LAB]] owns exact diagnostics/fixtures. [[27-KESTREL-TERMINAL-MATRIX]] owns terminal legality. [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] owns reverse observations. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns genuine cross-issue composition.
 
-## Deterministic lab probes
+## Lab probes
 
-Use the bounded probes in 31:
+Use bounded deterministic probes:
 
 - delegate-all;
 - intervene-all-where-legal;
@@ -49,106 +52,116 @@ Use the bounded probes in 31:
 - deterrence-first;
 - intelligence-first;
 - coalition-first;
-- random-valid over **complete legal command sets**;
-- test-only oracle frontier for hidden-truth feasibility, never gameplay advice.
+- random-valid over complete legal packages;
+- test-only oracle frontier, never gameplay advice.
 
-Generic probes exercise the 81 standing-intent combinations where specified. Fixed-strategy probes report their fixed intent rather than pretending exhaustive intent coverage.
+Generic probes exercise 81 standing-intent combinations where specified; fixed strategies report fixed intent honestly.
 
 ## Global Pareto comparison
 
-Whole-run policy comparison uses four ordinal dimensions only:
+Whole-run policy comparison uses:
 
 - Beacon security;
 - partner consent/access;
 - reserve readiness;
 - commitment integrity.
 
-Earned intelligence is diagnostic, not a success axis. Never collapse dimensions to one score.
+Never collapse to one score. Classification/severe flags are reported alongside the vector.
 
-Policy A dominates B over the same viable comparison set only if A is no worse on every axis for every paired run and strictly better somewhere, with no paired run where B is better on an axis.
+Policy A globally dominates B only if A is no worse on every main axis for every paired run and strictly better somewhere, with no paired run where B is better.
 
-Terminal classification/severe-cost details are still reported alongside the vector; they are not converted into another weighted dimension.
+## Player-safe local package dominance
 
-## Player-safe local course dominance
+Question:
 
-Local choice review asks a different question: **is this button an objective trap from the player's legitimate information state?**
+> Is this **player-reachable package/choice** an objective trap from the player's legitimate information state?
 
-For one player-safe decision state, group all hidden world states compatible with the same HQ/public/known information.
+For one player-safe decision state:
 
-Course A may be flagged dominated by B only when across **every** compatible hidden state:
+1. group every hidden reality compatible with the same legitimate HQ/public information;
+2. compare complete legal command packages that differ at the focal choice while keeping the rest equivalent where possible;
+3. preserve whether the focal choice is the delegated recommendation or requires a personal intervention;
+4. include intervention tokens consumed, remaining same-cycle personal attention and the other interventions consequently foreclosed/retained;
+5. simulate all compatible hidden realities.
 
-- B is no worse on the four downstream Pareto dimensions; and
-- B is no worse in terminal classification where the branch reaches terminal; and
-- B does not incur a stricter explicit severe-cost set while A avoids it; and
+A may be flagged dominated by B only when across **every** compatible hidden state:
+
+- B is no worse on downstream Pareto dimensions;
+- B is no worse in terminal classification;
+- B does not incur a stricter explicit severe-cost set;
+- B is no worse in current intervention/action-space opportunity cost;
 - A has no compensating information/capability/recovery/action-space value unavailable from B;
-- with at least one strict advantage for B somewhere.
+- and B is strictly better somewhere.
 
-This prevents source exposure, emergency-surge, concession/breach and other explicit severe costs from becoming invisible to the trap diagnostic merely because they are intentionally not fifth/sixth player scores.
+This means:
 
-A risky course that wins in one compatible hidden reality and loses in another is **not** dominated merely because an oracle would avoid it in hindsight.
+- a beneficial joint warning/reassurance that costs one scarce intervention does not automatically dominate the delegated silent/routine baseline;
+- if partner-oriented standing intent makes that same course the staff recommendation, the comparison legitimately changes because the intervention cost disappears;
+- source exposure, emergency-surge, concession/breach and late-reaction cannot become invisible simply because they are not extra global score axes;
+- a risky course that wins in one compatible hidden reality and loses in another is not dominated by hindsight/oracle reasoning.
 
 ## Oracle frontier
 
-Hidden truth is available only to isolated test-only exhaustive frontier exploration.
+Hidden truth is available only to isolated exhaustive test exploration. It returns feasibility/non-dominated frontier and fairness evidence, never canonical action or staff advice.
 
-It returns feasible/non-dominated terminal outcomes and information-gap/fairness evidence. It never emits a canonical player action, staff advice or scalar optimum.
-
-Oracle evidence may prove a seed unfair if only unavailable hidden truth avoids otherwise unavoidable defeat; it cannot prove a human strategy correct/fun.
+It may prove a seed unfair if unavailable hidden truth is required to avoid otherwise unavoidable defeat; it cannot prove a strategy fun/correct.
 
 ## Machine viability gate before human/UI time
 
-Before the formative smoke / main browser tranche, #107 should have no unresolved blocking structural defect such as:
+Before smoke/UI, #107 should have no unresolved blocker such as:
 
 - doomed hidden-state seed;
 - invalid all-Delegate package;
 - player-safe dominated trap;
-- mechanically fake major choice;
+- false-positive “dominance” that ignores intervention cost;
+- fake major choice;
 - mandatory/cosmetic Lattice;
-- information that never changes action/action-space;
-- unreachable promised recovery;
-- mechanically identical intended strategy families;
-- opponent policy row reachable only through synthetic observation;
+- worthless information;
+- unreachable recovery;
+- identical strategy families;
+- synthetic-only adversary path;
 - issue-order-dependent result;
-- contradictory same-effective-point adversary signal;
-- universal/known-inferior terminal route exposure;
-- late-game trivialisation across viable histories.
+- contradictory signal;
+- dead observation;
+- empty terminal route set;
+- displayed dominated terminal pair;
+- universal final route;
+- late-game trivialisation.
 
-Warnings route design review; never runtime rubber-banding.
+Never runtime-rubber-band to make the lab pass.
 
 ## Human-only contract
 
 Machines cannot establish:
 
 - felt ownership;
-- causal comprehension under actual reading/interaction;
+- causal comprehension under real reading/interaction;
 - spontaneous forward strategy;
 - tension/regret/vindication/surprise/payoff;
 - voluntary continuation/replay desire;
 - whether two interventions/six cycles/prose density feel right;
-- whether known authority/source trade-offs are understandable without over-explanation.
+- whether authority/source/tempo trade-offs are understandable without over-explanation.
 
 Fresh-player evidence only.
 
 ## Formative smoke
 
-After **#104 and #107**, before main #105/#106 browser work:
+After #104 + #107 and before main browser tranche:
 
 - 3 fresh players;
 - complete replay-valid plain-text slice;
 - uninterrupted/non-leading;
 - no hidden truth/strategy coaching.
 
-If at least 2/3 cannot explain a major consequence, cannot form next-command plan, or show no voluntary desire to continue while another command remains, stop and remediate.
+If ≥2/3 cannot explain a major consequence, cannot form next-command plan or show no voluntary desire to continue while another command remains, stop/remediate.
 
-A repeated severe pattern (paperwork, unknowable punishment, obvious trap, incomprehensible package rule) may also stop the browser path even if it does not fit the shorthand neatly.
+Repeated severe pattern such as paperwork, unknowable punishment, obvious trap or incomprehensible package rule can also stop the tranche.
 
-This smoke is non-gating: it can falsify but never pass #110.
+Smoke falsifies; it cannot pass #110.
 
 ## Formal human gate
 
-After authoritative browser E2E + approved harness, use 8 fresh players.
-
-Thresholds:
+After authoritative browser E2E + approved harness, use 8 fresh players:
 
 - ≥6/8 voluntarily want another turn/run;
 - ≥6/8 identify significant personal cause;
@@ -156,39 +169,35 @@ Thresholds:
 - ≥5/8 report meaningful regret/vindication/tension/surprise/payoff;
 - ≥6/8 use ownership language.
 
-Repeated severe qualitative failure overrides counts.
-
-Prompted politeness is not voluntary engagement.
+Repeated severe qualitative failure overrides counts. Prompted politeness is not voluntary engagement.
 
 ## Evidence protocol
 
 Use [[35-HUMAN-PLAYTEST-HARNESS]] / [[80-HUMAN-PLAYTESTS]]. Keep observed behavior, spontaneous statements, prompted answers and actual replay uptake separate.
 
-Do not backfill a pass from telemetry or agent summaries.
-
-## Explicit non-substitution rule
+## Non-substitution
 
 **No AI agent may self-certify the human fun gate.**
 
-None of these can pass #110:
+None of these pass #110:
 
 - green build/CI;
 - deterministic replay;
 - clean #107 lab;
 - oracle frontier;
 - browser E2E;
-- synthetic/LLM playtest;
-- agent claim that design should be fun.
+- synthetic/LLM play;
+- agent assertion that design should be fun.
 
-Failed human hypotheses route to focused remediation, not threshold reinterpretation.
+Failed human hypotheses route focused remediation, not threshold reinterpretation.
 
 ## Evidence package before #110
 
 Present separately:
 
-- machine structural evidence (#107);
-- browser authority/information evidence (#108);
-- raw/anonymised human evidence (#109/80);
+- #107 machine structural evidence;
+- #108 browser authority/information evidence;
+- #109/80 raw anonymised human evidence;
 - unresolved qualitative risks.
 
-Only human product owner decides `PASS`, focused `FAIL`, or `INCONCLUSIVE` under #110.
+Only human product owner decides PASS / focused FAIL / INCONCLUSIVE under #110.
