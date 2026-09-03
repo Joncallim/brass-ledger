@@ -11,7 +11,7 @@ This owns only mechanics requiring multiple Kestrel issues/subsystems to be eval
 
 # 1. Collection isolation
 
-Holding all target-authorised observable facts constant while changing hidden Ravellan posture alone must leave reroute/focused/Lattice/liaison result identical.
+Holding all target-authorised observable facts constant while changing hidden Ravellan posture alone leaves reroute/focused/Lattice/liaison result identical.
 
 # 2. Commander-only legal alternatives
 
@@ -23,9 +23,7 @@ Exactly:
 
 are `requiresIntervention = true`.
 
-Each remains player-legal under prerequisites, never recommendation-applicable, never Delegate, costs one normal intervention and exposes known authority/cost before selection.
-
-No other Kestrel course gets this flag without explicit decision.
+Each remains player-legal under prerequisites, never recommendation-applicable/Delegate, costs one normal intervention and exposes known authority/cost before selection.
 
 # 3. Atomic command-package invariant
 
@@ -39,25 +37,17 @@ UI/headless may explain/prevent incompatible player drafts but never silently al
 
 ## Coordinated visible surge
 
-Partner penalty is avoided only when complete package contains:
-
-- active C1 formal consultation channel;
-- `joint-non-attributive-warning`;
-- `visible-patrol-surge`.
-
-Joint warning alone is not blanket operational permission.
+Partner penalty avoided only when complete package contains active C1 formal channel + joint warning + visible patrol surge. Joint warning alone is not blanket permission.
 
 ## Public accusation
 
-Always unilateral and commander-only.
+Always unilateral/commander-only. When selected:
 
-When selected by intervention:
-
-- partner worsens one even without promise;
+- partner worsens one;
 - active promise breaches;
-- 37A emits fractured unity + discovery.
+- 37A emits fracture + discovery.
 
-Standing priority/style never auto-accuses.
+No standing priority/style auto-accuses.
 
 # 5. C5 authority / tempo primitives
 
@@ -89,15 +79,15 @@ If withdrawn:
 - commitments may be honoured/fulfilled;
 - no partner recovery/joint authority.
 
-For **same-cycle** sensitive action, Honour is package-compatible only when rapid channel is active and partner accessible.
+For same-cycle sensitive action, Honour is package-compatible only with rapid channel + accessible partner.
 
 ## Political concession
 
-When authored prerequisites make it legal:
+When legal:
 
 - authority → concession;
 - concession active;
-- withdrawn partner → conditional;
+- withdrawn → conditional;
 - active unbreached promise honoured;
 - applicable liaison obligation fulfilled;
 - immediate sensitive-action authority;
@@ -105,7 +95,7 @@ When authored prerequisites make it legal:
 
 ## Act then inform
 
-Player-legal only when package contains at least one sensitive action.
+Player-legal only when package contains ≥1 sensitive action.
 
 When selected:
 
@@ -114,150 +104,150 @@ When selected:
 - partner worsens one step total for package;
 - immediate freedom for sensitive action.
 
+The **complete package** crosses the `partner-consultation` protected boundary when `partner-authority = unilateral`. It does not cross that boundary when authority is `joint` or `concession`.
+
 # 6. Deterministic C5 staff package composition
 
-Because C5 issues interact, staff recommendation is composed in a fixed two-stage process rather than treating issue-local recommendations as independent.
+Because C5 issues interact, staff recommendation is composed in two stages rather than assuming issue-local recommendations are independent.
 
 ## Stage A — non-authority staff intent
 
-1. Derive preliminary `c5-beacon-posture` recommendation using normal [[24-STAFF-RECOMMENDATION-POLICY]] / [[36-KESTREL-AGENDA-COURSE-MATRIX]].
+1. Derive preliminary Beacon recommendation with normal `24/36` logic, treating `visible-reinforce-beacon` as an action that **requires immediate authority**; do not decide its partner-consultation boundary crossing until authority composition.
 2. Derive reserve recommendation normally.
-3. If attribution issue exists, staff attribution recommendation is always `hold-attribution` because `use-attribution` is commander-only.
-4. Therefore the only staff-intended action that can require immediate partner authority is preliminary `visible-reinforce-beacon`.
+3. Attribution staff recommendation is always `hold-attribution` if issue exists.
+4. Thus the only staff-intended action that may require immediate authority is preliminary visible reinforcement.
 
-## Stage B — authority compatibility
+All direct non-package boundary tags (e.g. reserve-readiness) still apply normally during Stage A.
 
-### If staff Beacon intent is **not** visible reinforcement
+## Stage B — authority compatibility and complete-package red line
 
-No immediate sensitive action exists in the all-Delegate package.
+### If Beacon intent is not visible
 
-For authority recommendation:
+No immediate sensitive action exists.
 
-- `act-then-inform` is recommendation-inapplicable because it has no sensitive action to enable;
-- run the normal recommendation algorithm over the remaining legal authority courses (`honour-consultation`, and `political-concession` where its authored recovery prerequisites hold).
+- `act-then-inform` is recommendation-inapplicable;
+- run normal recommendation over remaining legal authority courses (Honour, plus Concession where recovery prerequisites hold).
 
-### If staff Beacon intent **is** visible reinforcement
+### If Beacon intent is visible
 
-Construct the set of authority courses capable of supporting that intended action **in the same cycle**:
+Construct immediate-authority-capable courses:
 
-- `honour-consultation` only if rapid channel active and partner accessible;
-- `political-concession` if legal;
-- `act-then-inform` because a sensitive action is now present.
+- Honour only with rapid channel + accessible partner;
+- Concession if legal;
+- Act Then Inform.
 
-Run the **normal standing-direction/commitment/chief recommendation algorithm** over this immediate-authority-compatible set.
+Now apply the commander's **protected boundary at complete-package level** before the rest of the authority recommendation:
 
-This has important consequences:
+- if protected boundary is `partner-consultation` and at least one complete immediate-authority package (`Honour` or `Concession`) avoids crossing it, remove `Act Then Inform` from the recommendation candidate set;
+- if protected boundary is `partner-consultation` and the only immediate-authority course is unilateral Act, do **not** invoke `no-clean-option` while a non-sensitive Beacon package exists that protects the boundary. Instead fall back to the non-sensitive Beacon recomputation below;
+- for other protected boundaries, use the already-applied direct course metadata plus normal authority-course boundary semantics.
 
-- staff may recommend Honour when prior channel makes it genuinely fast enough;
-- staff may recommend Concession or Act when the commander's direction/prior history makes that the surviving authored course;
-- if Act is selected, explicit `commitment-breach` / `requires-authority` reasons must be present. It is not a hidden compatibility repair;
-- no special package score exists.
+This is the cross-system equivalent of the ordinary red-line rule: “all candidates cross” is only true after considering other viable **complete packages**, not merely the authority sub-issue.
 
-### If no immediate-authority-compatible course is legal
+After this package-level boundary step, run the normal remaining recommendation precedence (priority → style → tolerated cost → commitment → chief tie) over the surviving immediate-authority courses.
 
-Only then mark `visible-reinforce-beacon` **recommendation-inapplicable for the staff package** while keeping it player-legal.
+Consequences:
 
-Recompute the Beacon recommendation over `quiet-reinforce-beacon` / `hold-beacon-posture` using the normal recommendation algorithm, then derive authority as the non-sensitive case above.
+- rapid channel can make Honour the safe fast authority;
+- partner-protected command may choose Concession over unilateral breach when Concession is legal;
+- aggressive/Beacon-oriented command may legitimately produce Act when partner consultation is not the protected boundary and normal precedence selects it;
+- any recommended Act must include explicit `commitment-breach` / `requires-authority` reason refs. It is a visible consequence of standing direction, not hidden form repair.
 
-This is a feasibility fallback, not a preference score.
+### Non-sensitive Beacon fallback
+
+Use fallback when:
+
+- no immediate-authority course is legal; or
+- package-level protected-boundary rule above rejects the only immediate-authority option.
+
+Then:
+
+1. keep visible reinforcement **player-legal** but mark it recommendation-inapplicable for the staff package;
+2. recompute Beacon recommendation over quiet reinforcement / hold using normal recommendation algorithm;
+3. derive authority using the non-sensitive case;
+4. surface a safe reason that staff cannot execute its preliminary visible course without crossing the protected boundary / lacking compatible immediate authority.
+
+No package score/randomness.
 
 ## Validation
 
-The resulting all-Delegate package must be legal. Failure is a recommendation/content defect.
+Resulting all-Delegate package must be legal. Failure is recommendation/content defect.
 
-The composed staff projection must expose decisive cross-issue reasons where material, e.g.:
+The composed recommendation projection must expose decisive cross-issue reasons where material so the player can understand whether:
 
-- visible reinforcement requires immediate partner authority;
-- rapid channel makes Honour sufficient;
-- without a compatible authority route, staff has fallen back to a non-sensitive Beacon course;
-- Act is recommended despite an active promise because the staff-visible command package requires immediate action and higher command direction removed/failed the honouring route.
-
-This is where the player should be able to think “my headquarters is doing this because of the direction I gave it,” not “the engine repaired a form.”
+- rapid channel enabled Honour;
+- Concession is being used to preserve consultation while buying tempo;
+- aggressive standing direction led to an explicit unilateral breach;
+- staff fell back from visible reinforcement because the complete package could not protect the commander's red line.
 
 # 7. Player-modified C5 package
 
-After staff projection, player may intervene on any non-commander-only alternate or select a commander-only action subject to two-token budget and package legality.
+After staff projection, player may intervene subject to budget/legality.
 
-Changing Beacon from quiet/hold to visible may create a new immediate-authority requirement. The browser explains it but never auto-changes authority.
+Changing Beacon to visible can create immediate-authority requirement. UI explains but never changes authority automatically.
 
-Changing authority to Act/Concession may make a visible action legal.
+Changing authority to Act/Concession can make visible action legal.
 
 # 8. Player-selected attribution use
 
-`use-attribution` legal only when:
+Legal only when:
 
-- opportunity = unspent `credible`;
-- player spends one normal intervention;
-- complete package supplies immediate authority via:
-  - Honour + active rapid channel + accessible partner; or
-  - political concession; or
-  - act-then-inform.
+- opportunity unspent `credible`;
+- player spends one intervention;
+- complete package supplies immediate authority via Honour+rapid channel+accessible partner, Concession, or Act.
 
-On use:
+If commander's protected boundary is partner consultation, an Act+Use package remains player-legal only under normal player intervention semantics (the player is explicitly overriding the standing boundary through personal action where the command contract permits that), but it can never be the delegated staff package.
 
-- credible→used;
-- severe source exposure;
-- immediate authored partner/discovery effects;
-- C6 Hold removed;
-- no regeneration.
-
-If intervention budget or authority incompatible, final package rejects; UI explains but does not repair.
+On use: credible→used; severe source exposure; immediate effects; C6 Hold removed; no regeneration.
 
 # 9. C5 ordinal aggregation
 
-For Beacon exposure/reserve:
-
-- derive all signed package effects;
-- sum;
-- clamp once;
-- preserve individual causal records.
+For Beacon exposure/reserve derive all signed effects, sum, clamp once, preserve causal records.
 
 # 10. Coalition→Ravellan observations
 
-Owned only by [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]]. Derive from complete validated package with non-contradictory coalescing and no dead C5 exhaustion signal.
+Owned only by 37A; derive from complete validated package, coalesce non-contradictorily, no dead C5 exhaustion.
 
 # 11. Safe requirement refs
 
-[[38-PLAYER-SAFE-PROJECTION-CONTRACT]] may expose:
+38 may expose:
 
-- requires personal intervention;
-- requires immediate authority;
+- personal intervention required;
+- immediate authority required;
 - rapid channel satisfies authority;
+- package would cross protected partner-consultation boundary;
 - public attribution spends source/opportunity;
-- current draft conflicts with authority choice;
-- staff fell back from a sensitive course because no compatible immediate authority route exists.
+- staff fell back because no compatible authority package could protect the boundary.
 
 No hidden truth/predicted outcome.
 
 # 12. Terminal handoff
 
-[[27-KESTREL-TERMINAL-MATRIX]] solely owns C6 route legality/pruning/resolution/effects/classification.
+27 solely owns C6.
 
 # 13. Required composed proofs
 
 Prove:
 
-- exact three commander-only never recommended under any intent;
-- C2 accusation never auto-delegates;
-- C5 attribution baseline always Hold;
-- all-Delegate C5 package legal every reachable state;
-- non-sensitive staff package excludes Act as recommendation-applicable;
-- visible staff intent with rapid channel can pair with Honour;
-- visible staff intent without rapid channel deterministically recomputes authority over Concession/Act where legal;
-- any staff-recommended Act carries explicit breach/authority reasons and follows normal command-direction precedence rather than hidden repair;
-- if no immediate authority course legal, staff Beacon recommendation deterministically falls back to quiet/hold while visible remains player-legal;
-- changing player draft to visible can require a second authority intervention and is never auto-repaired;
-- withdrawn + Honour legal without forced concession;
-- player-selected attribution requires one intervention + compatible authority;
-- C5 state invariant to issue order;
-- Hold/Use attribution elastic/source-sensitive;
-- reverse signals deterministic/non-contradictory/dead-state-free;
-- policies enumerate complete legal packages.
+- exact three commander-only never recommended;
+- all-Delegate package legal every reachable C5 state;
+- non-sensitive package excludes Act;
+- visible + rapid channel can use Honour;
+- visible + no rapid + legal Concession can preserve partner boundary through Concession when normal precedence selects it;
+- partner-consultation protected boundary prevents staff auto-Act when a non-sensitive package can preserve the boundary;
+- without partner protected boundary, aggressive standing direction can legitimately recommend Act and emits explicit breach/authority reasons;
+- no legal immediate authority → deterministic quiet/hold fallback while visible remains player-legal;
+- player visible draft can require second authority intervention and is never auto-repaired;
+- withdrawn + Honour legal;
+- player attribution requires token + compatible authority;
+- C5 state issue-order invariant;
+- reverse signals deterministic/non-contradictory/dead-free;
+- policies enumerate complete packages.
 
-# 14. Replay/version integration
+# 14. Replay/version
 
-Any persisted coordination state follows [[30-ARCHITECTURE-CONTRACT]]: replay-verifiable or derived, tamper/hash/revision proof, next prototype version when persisted semantics change, no invented migration, V1 isolation. Ledger insertion waits for final committed #99 structure.
+Any persisted coordination follows 30: replay-verifiable or derived; tamper/hash/revision; next prototype version; no invented migration; V1 isolation. Exact ledger insertion waits for final committed #99.
 
 ## Rejection conditions
 
-Reject if collection reads hidden posture, commander-only course delegates, package legality is achieved through hidden/random repair, staff Act recommendation lacks explicit command/breach reasons, visible intent creates invalid all-Delegate package, player draft is silently modified, consultation-vs-tempo/source trade disappears, C5 state resolves sequentially/order-dependently, dead/contradictory observations return or terminal rules are duplicated outside 27.
+Reject if collection reads hidden posture, commander-only course delegates, all-Delegate legality achieved through hidden/random repair, complete-package protected boundary is evaluated only on the authority sub-issue, staff Act hides breach reasons, player draft silently modified, C5 state order-dependent, dead/contradictory observations return or terminal rules duplicated outside 27.
