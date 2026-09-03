@@ -7,258 +7,254 @@ status: active
 
 Backlink: [[README]]
 
-This document owns **only mechanics that genuinely require more than one Kestrel subsystem/issue to be evaluated together**. The base contracts `23`–`27` and `36` have been normalised to the final semantics; do not use 39 as a patch for ordinary single-subsystem behavior.
+This owns only mechanics that genuinely require multiple Kestrel issues/subsystems to be evaluated together. Base contracts `23`–`27`, `36`, `37/37A`, `38` own their own subsystem behavior.
 
-It does **not** change #99's Ravellan policy.
+It does not change #99.
 
-## 1. Collection isolation across hidden state
+# 1. Collection isolation
 
-[[23-HQ-BELIEF-AND-EVIDENCE]] and [[26-LATTICE-COLLECTION-MATRIX]] own exact result tables.
+Holding every fact a named collection rule is authorised to observe constant while changing hidden Ravellan posture alone must produce identical evidence.
 
-Cross-system invariant:
+Applies to reroute monitoring, focused collection, Lattice targets and liaison.
 
-> Holding all facts a named collection rule is authorised to observe constant while changing hidden Ravellan posture alone must produce identical evidence.
+No collection result directly sets recommendation or hidden state.
 
-Applies to:
+# 2. Commander-only legal alternatives
 
-- C2 reroute monitoring;
-- C3 focused staging collection;
-- all three Lattice targets;
-- partner liaison.
+Exactly three Kestrel courses are `requiresIntervention = true`:
 
-No collection result may directly set a recommendation or hidden state.
+- `public-accusation`;
+- `request-partner-liaison`;
+- `use-attribution`.
 
-## 2. Commander-only legal alternatives
+Each:
 
-Kestrel uses one `requiresIntervention` course:
-
-`request-partner-liaison`
-
-It remains a legal player alternative but:
-
+- remains player-legal when normal prerequisites hold;
 - never enters staff recommendation candidates;
-- can never execute through Delegate;
-- always consumes one normal intervention;
-- creates the explicit liaison obligation rather than hiding its cost in a tolerated-cost tag.
+- never executes through Delegate;
+- consumes one normal personal intervention;
+- must expose known immediate/authority cost before player selection.
 
-## 3. Atomic command-set invariant
+Specific reasons:
 
-Where issues interact, derive their result from the **complete validated final-order set**.
+- public accusation is an unsupported unilateral public attribution under weak/ambiguous C2 evidence;
+- liaison is emergency non-Lattice fallback with a real obligation;
+- public attribution use spends the one-shot credible opportunity and exposes/compromises the protected source.
 
-Do not sequentially mutate cross-issue state and let agenda/object/array order change the campaign.
+No other Kestrel course receives this flag without explicit product decision.
+
+# 3. Atomic command-package invariant
+
+Where issues interact, derive result from the **complete validated final-order set**.
+
+Never let issue/object/array order change the campaign.
 
 Critical invariant:
 
-> **The untouched all-Delegate staff package must always be a legal complete command set.**
+> the untouched all-Delegate staff package is always a legal complete command set.
 
-If issue-level intended actions interact, recommendation composition must construct a legal headquarters package before it is shown as the default.
+UI/headless may explain/prevent incompatible player drafts but never silently alter another issue to repair them. Sim remains final validator.
 
-UI/headless may explain incompatibility and prevent submission of an invalid player-modified draft, but may never silently change another issue to repair it.
+# 4. C2 consultation / escalation
 
-## 4. C2 consultation / escalation composition
+## Coordinated visible surge
 
-### Coordinated visible surge
-
-Treat C2 visible patrol surge as coordinated for partner effects only when the complete package contains:
+Visible patrol surge avoids its authored partner penalty only when complete package contains:
 
 - active C1 consultation promise/channel;
 - `joint-non-attributive-warning`;
 - `visible-patrol-surge`.
 
-Then:
+Reserve/physical/signal effects still apply. Joint warning alone is not blanket operational permission.
 
-- no partner-consent worsening from the surge;
-- reserve/physical/signal effects still occur;
-- coherent public signal comes from the joint warning under [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
+## Public accusation
 
-Joint warning without the established channel is not blanket operational authority.
+`public-accusation` is always unilateral **and commander-only**.
 
-### Public accusation
+When the player spends an intervention to select it:
 
-C2 public accusation is always unilateral in Kestrel:
-
-- partner worsens one even if no formal promise existed;
+- partner worsens one even without prior promise;
 - active consultation promise breaches;
-- public fractured/discovery signals follow 37A.
+- fractured/discovery signals follow 37A.
 
-## 5. C5 partner authority / tempo
+No standing priority/style can cause staff to auto-accuse.
+
+# 5. C5 partner authority / tempo
 
 Concrete record:
 
 `partner-authority = pending | none | joint | unilateral | concession`
 
-Opening: `pending`.
-
-Pre-command:
+Opening: pending.
 
 `rapidConsultationChannel = consultation-promise == active`
 
-Only the still-active C1 formal channel gives fast enough coordination for a same-cycle C5 sensitive action.
+Only still-active C1 formal channel coordinates fast enough for a same-cycle C5 sensitive action through Honour.
 
-### `honour-consultation`
+## `honour-consultation`
 
 Always player-legal.
 
 If partner not withdrawn:
 
-- authority → `joint` for C6;
+- authority → joint for C6;
 - active promise → honoured;
 - active liaison obligation → fulfilled;
 - partner improves one.
 
 If partner withdrawn:
 
-- authority → `none`;
-- honour/fulfil active commitments where applicable;
-- no partner recovery or joint authority.
+- authority → none;
+- honour/fulfil commitments where applicable;
+- no partner recovery/joint authority.
 
-Same-cycle partner-sensitive C5 action is compatible with honour only when `rapidConsultationChannel` is true and partner is not withdrawn. Without the channel, consultation is too slow for the immediate action window even though joint authority can exist by C6.
+Immediate partner-sensitive C5 action is compatible with Honour only when rapid channel is active and partner not withdrawn.
 
-### `political-concession`
+## `political-concession`
 
 Where legal:
 
-- authority → `concession`;
+- authority → concession;
 - concession record active;
 - withdrawn partner → conditional;
-- active unbreached consultation promise is honoured;
-- liaison obligation fulfilled where satisfied;
-- immediate same-cycle partner-sensitive authority;
-- severe terminal concession cost remains.
+- active unbreached promise honoured;
+- applicable liaison obligation fulfilled;
+- immediate partner-sensitive authority;
+- severe concession history remains.
 
-### `act-then-inform`
+## `act-then-inform`
 
-Legal only if the same complete command set contains at least one partner-sensitive action.
+Legal only if same package contains at least one partner-sensitive action.
 
 When valid:
 
-- authority → `unilateral`;
+- authority → unilateral;
 - active promise/liaison obligation → breached;
-- partner worsens **one step total for the unilateral package**, not once per sensitive order;
-- immediate freedom for the sensitive action.
+- partner worsens one step total for package;
+- immediate freedom for sensitive action.
 
 Partner-sensitive C5 actions are exactly:
 
 - `visible-reinforce-beacon`;
-- `use-attribution`.
+- player-selected `use-attribution`.
 
-`keep-reserve-forward` is deliberately not partner-sensitive in Kestrel.
+`keep-reserve-forward` is not partner-sensitive.
 
-## 6. C5 staff package composition
+# 6. C5 staff package composition
 
-Per-issue recommendations are composed in this bounded order:
+Because `use-attribution` is commander-only, staff composition is simpler and safer.
 
-1. derive Beacon and reserve intended orders through normal recommendation rules;
-2. derive attribution intent: `use-attribution` is staff-recommendation-applicable only when legitimate credible evidence exists **and** rapid consultation channel is active with non-withdrawn partner; otherwise Hold is staff baseline (player may still personally construct unilateral/concession use);
-3. set `staffPackageNeedsImmediatePartnerAuthority` when intended package contains visible reinforcement or use attribution;
-4. derive partner-authority intent:
-   - act-then-inform candidate only when immediate authority is needed;
-   - honour candidate for an immediate-authority package only when partner non-withdrawn + rapid channel;
-   - if no immediate authority is needed, honour remains candidate even without rapid channel and even after withdrawal so staff never forces concession just to make a package legal;
-   - concession remains candidate only under its authored public-state prerequisites;
-5. validate the complete all-Delegate package.
+Compose all-Delegate package in this order:
 
-Failure of Step 5 is a content/recommendation defect, not a UI problem.
+1. derive Beacon intended order;
+2. derive reserve intended order;
+3. if C5 attribution issue exists, staff intended order is **always `hold-attribution`**;
+4. therefore staff package does not need immediate partner authority because of attribution;
+5. determine whether staff's Beacon intended order is `visible-reinforce-beacon` and therefore requires immediate partner authority;
+6. derive partner-authority recommendation:
+   - if immediate authority needed and partner non-withdrawn + rapid channel → Honour can support it;
+   - if immediate authority needed and rapid channel absent → recommendation composition must select a compatible non-sensitive Beacon baseline or another legal authority course according to 36/known state, never silently auto-breach solely to make the package legal;
+   - if no immediate authority needed → Honour remains candidate even without rapid channel and after withdrawal; concession only under authored recovery prerequisites;
+7. validate complete all-Delegate package.
 
-This is one Kestrel-specific composition step, not a generic multi-issue optimiser.
+Step 7 failure is recommendation/content defect, never UI problem.
 
-## 7. C5 ordinal state aggregation
+A player may then intervene to choose public attribution, visible reinforcement, unilateral authority, concession or another alternate subject to the complete-package validator and two-token budget.
 
-For `beacon-exposure` and `reserve-condition`:
+# 7. C5 player-selected attribution use
 
-- derive every C5 signed step effect from the complete final-order set;
-- sum them;
-- clamp **once** from pre-command state;
-- preserve individual causal effect records even if net movement is zero.
+`use-attribution` is legal only when:
 
-Improve = `+1`; worsen = `-1`.
+- attribution opportunity is unspent `credible`;
+- player spends one normal intervention;
+- complete package supplies compatible immediate authority:
+  - Honour + active rapid channel + non-withdrawn partner; or
+  - political concession; or
+  - act-then-inform.
 
-Example: quiet reinforcement exposure +1 plus emergency consolidation exposure -1 → net zero regardless issue ordering while Beacon preparation may still become prepared.
-
-## 8. C5 attribution timing / source cost
-
-`attribution-opportunity = credible` means an **unspent** source-sensitive public attribution opportunity.
-
-C5 `use-attribution`:
+On use:
 
 - `credible → used`;
-- records severe history `attribution-source-exposed`;
-- applies immediate partner/discovery effects;
-- removes C6 Hold And Expose.
+- severe `attribution-source-exposed`;
+- immediate authored partner/discovery effects;
+- C6 Hold And Expose removed;
+- no regeneration later in Kestrel.
 
-Later evidence may still change HQ belief but cannot regenerate another credible opportunity during Kestrel.
+If the player lacks intervention budget or compatible authority, use is unavailable in the final package; UI explains requirement but never repairs another issue automatically.
 
-The player-safe action description must state the known consequence that public use spends the final attribution opportunity / exposes the protected source. It must not reveal hidden future branches.
+# 8. C5 ordinal state aggregation
 
-## 9. Coalition→Ravellan observations
+For Beacon exposure/reserve:
 
-Exact per-cycle/package emissions are owned solely by [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
+- derive every signed step from complete package;
+- sum;
+- clamp once from pre-command state;
+- preserve individual causal records even if net zero.
 
-Cross-system requirements:
+Improve +1, worsen -1.
 
-- derive the signal set from the complete validated package;
-- max one non-contradictory value per signal ID/effective point;
-- same-value candidates coalesce using stable source refs;
-- significant reserve deployment counts max once per cycle;
-- legal package must never create contradictory same-ID values.
+# 9. Coalition→Ravellan observations
 
-Do not duplicate/independently infer Ravellan signals in consequence/content/UI code.
+Owned solely by [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
 
-## 10. Safe player composition refs
+Requirements:
 
-[[38-PLAYER-SAFE-PROJECTION-CONTRACT]] may expose bounded public requirement/conflict refs needed to construct a legal package, e.g.:
+- derive from complete validated package;
+- max one non-contradictory value per signal/effective point;
+- same-value candidates coalesce with stable source refs;
+- no dead C5 reserve-exhaustion observation;
+- never independently infer signals in consequence/content/UI.
 
-- “this visible action needs an authority choice that permits it”;
-- “using this attribution spends the final public-attribution opportunity.”
+# 10. Safe player requirement refs
 
-These refs contain no hidden truth or predicted outcome.
+[[38-PLAYER-SAFE-PROJECTION-CONTRACT]] may expose bounded refs such as:
 
-## 11. Terminal authority handoff
+- this course requires personal intervention;
+- this visible action needs immediate authority;
+- public attribution spends the one-shot opportunity/source;
+- this combination conflicts with the current authority choice.
 
-[[27-KESTREL-TERMINAL-MATRIX]] is now the self-contained authority for:
+No hidden truth/predicted outcome.
 
-- safe crisis-family route legality;
-- pruning player-safe dominated final routes;
-- physical resolution;
-- Quiet threshold political cost;
-- Joint partner/reserve effect;
-- Emergency seizure-only comeback;
-- Hold And Expose source exposure / one-shot requirement;
-- post-route severe cost / Pareto / classification.
+# 11. Terminal handoff
 
-39 does not duplicate those route predicates.
+[[27-KESTREL-TERMINAL-MATRIX]] solely owns C6 route legality/pruning, physical resolution, route state effects, source cost and classification.
 
-It only supplies the C5 state (`partner-authority`, one-shot attribution history) consumed by 27.
+39 supplies only C5 state/history consumed by 27.
 
-## 12. Lab / E2E composed-system proofs
+# 12. Required composed-system proofs
 
-#107/#108 must prove:
+#98/#101/#102/#103/#104/#107/#108 as applicable must prove:
 
+- exactly the three commander-only courses are never recommendations under any standing intent;
+- selecting each consumes one normal intervention;
+- C2 accusation cannot auto-delegate;
+- C5 attribution staff baseline always Hold;
+- player-selected C5 attribution requires both intervention budget and compatible immediate authority;
 - collection posture isolation;
-- liaison never delegates and costs one intervention;
-- C2 coordinated/uncoordinated package difference;
+- C2 coordinated/uncoordinated surge difference;
 - all-Delegate package legal every reachable C5 state;
-- with no rapid formal channel, honour + immediate sensitive action is incompatible while act/concession can buy tempo;
-- with active channel, honour + sensitive action is compatible;
-- withdrawn + honour remains legal without forced concession;
-- C5 state is invariant to issue-array order;
-- attribution Hold/Use is elastic and source-sensitive;
-- coalition→Ravellan signal set is deterministic/non-contradictory/order-independent;
-- lab policies enumerate/construct **complete legal command sets**, not issue-wise random choices repaired later.
+- no rapid channel → Honour incompatible with immediate sensitive action, while act/concession can buy tempo;
+- rapid channel → Honour + sensitive action compatible;
+- withdrawn + honour legal without forced concession;
+- C5 state invariant to issue order;
+- attribution Hold/Use elastic/source-sensitive;
+- reverse signals deterministic/non-contradictory/dead-state-free;
+- lab policies enumerate complete legal packages rather than issue-wise choices repaired later.
 
-## 13. Replay/version integration
+# 13. Replay/version integration
 
-Any new persisted state/coordination evidence follows [[30-ARCHITECTURE-CONTRACT]]:
+Any new persisted coordination state follows [[30-ARCHITECTURE-CONTRACT]]:
 
-- explicit replay-verifiable transition or pure derivation;
+- replay-verifiable transition or pure derivation;
 - trusted recomputation/tamper rejection;
 - hash/revision coverage;
-- next prototype format version when persisted/replay semantics change;
-- no migration invented;
+- next prototype version where persisted semantics change;
+- no invented migration;
 - V1 isolation.
 
-Exact ledger insertion point remains conditioned on the final **committed** #99 replay implementation; downstream code must inspect it rather than guessing around the still-open #99 work.
+Exact downstream ledger insertion still waits for final committed #99 replay implementation.
 
 ## Rejection conditions
 
-Reject implementation if it reads hidden posture in collection, makes liaison free via Delegate, permits an invalid all-Delegate package, erases consultation-vs-tempo or attribution-use-vs-preserve trade-offs, applies C5 state sequentially/order-dependently, emits contradictory adversary observations, silently repairs player drafts or reimplements terminal rules outside 27.
+Reject implementation if it reads hidden posture in collection, allows any commander-only course through Delegate, auto-accuses from visible style, auto-burns attribution source from partner intent, permits invalid all-Delegate package, erases consultation-vs-tempo or Hold-vs-Use trade, applies C5 state sequentially/order-dependently, emits contradictory/dead observations, silently repairs player draft or reimplements terminal rules outside 27.
