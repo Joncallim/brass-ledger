@@ -7,65 +7,79 @@ status: active
 
 Backlink: [[README]]
 
-[[35-HUMAN-PLAYTEST-HARNESS]] is the protocol authority for participant
-freshness, facilitation, spontaneous-versus-prompted evidence, coding, replay
-uptake, formative-stop logic, and severe qualitative overrides. This file is the
-anonymised evidence registry only. [[40-EVALUATION-CONTRACT]] owns the numeric
-human-gate thresholds.
+[[35-HUMAN-PLAYTEST-HARNESS]] is the protocol authority. This file stores **anonymised human evidence only**. [[40-EVALUATION-CONTRACT]] owns fixed formal thresholds.
 
-Do not populate this registry with synthetic/agent play or infer a passing human
-finding from telemetry.
+Do not populate with synthetic/agent play, telemetry-inferred emotion or machine “fun” conclusions.
 
 ## Study register
 
-| Tester | Stage | Prior experience | Run/seed | Standing direction / major strategy | Terminal outcome | Actual continuation / replay uptake | Finding / follow-up |
+| Tester | Stage | Prior experience | Run/seed | Standing direction / strategy | Terminal outcome | Actual continuation / replay uptake | Major finding / follow-up |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | | | | | | | | |
 
-## Per-participant evidence template
-
-Create one anonymised section per participant using this structure. Do not store
-unnecessary personal identifiers.
+## Per-participant template
 
 ### Tester `<anonymous-id>`
 
-- **Study stage:** formative smoke / formal gate
+- **Study stage:** formative / formal
 - **Prior strategy-game experience:** none / occasional / experienced / other coarse category
 - **Run/seed ID:**
 - **Standing direction:**
 - **Major interventions / delegated strategy:**
-- **Promises / obligations created or breached:**
-- **Lattice / liaison / recovery use:**
-- **Terminal outcome:**
+- **Promises / authority / concession choices:**
+- **Lattice / liaison / reroute-monitor / recovery use:**
+- **Attribution held/used; did participant notice one-shot/source cost before choosing?:**
+- **Terminal route/outcome:**
 - **Facilitator help required:** controls / rules / none; describe without teaching strategy
 
 #### Spontaneous causal / ownership evidence
 
-Record verbatim or near-verbatim statements made without prompting and the cycle/context.
+Record verbatim/near-verbatim with cycle/context.
 
 - 
 
 #### Spontaneous forward-plan evidence
 
-Record statements/behavior showing what the participant intended to do next before the post-run interview.
+Record plan/behavior expressed before post-run prompting.
 
 - 
 
-#### Observed confusion / disengagement
+#### Observed decision behavior
 
-Record what happened and where. Do not infer emotion solely from telemetry.
+Record where relevant:
+
+- whether staff reasons/dissent were read;
+- whether implicit delegation was understood;
+- whether promises/partner-authority timing were noticed;
+- whether cross-issue package requirements caused confusion;
+- whether source/one-shot attribution cost was noticed before selection;
+- whether participant identified an option as fake/obvious trap;
+- whether they voluntarily inspected history/evidence;
+- abandonment/early stop.
+
+- 
+
+#### Confusion / disengagement / fairness concerns
+
+Record concrete evidence, especially:
+
+- “I couldn't have known/done anything”;
+- hidden-state outcome felt arbitrary;
+- package rule felt like unexplained form validation;
+- route/choice appeared pointless or strictly worse;
+- important known cost discovered only after choice.
 
 - 
 
 #### Regret / vindication / tension / surprise / payoff
 
-Record evidence tied to an actual decision/state. Separate usability frustration from strategic frustration.
+Tie evidence to actual state/decision. Separate strategic frustration from usability confusion.
 
 - 
 
 #### Prompted post-run responses
 
-Keep these explicitly separate from spontaneous evidence. Follow the question order in [[35-HUMAN-PLAYTEST-HARNESS]].
+Keep separate from spontaneous evidence. Follow [[35-HUMAN-PLAYTEST-HARNESS]] order.
 
 - **What happened in your campaign?**
 - **What did you personally cause or set in motion?**
@@ -76,13 +90,14 @@ Keep these explicitly separate from spontaneous evidence. Follow the question or
 - **What would you do differently on replay?**
 - **What felt like paperwork / click-through?**
 - **Where was the game confusing or under-informative?**
+- **Did any option feel like an obvious trap/fake choice? Why?**
 
 #### Continuation / replay evidence
 
-- **Verbal prompted interest:**
+- **Prompted verbal interest:**
 - **Spontaneous desire to continue:**
 - **Actual optional replay started:** yes / no
-- **If replay started, what did the participant explicitly intend to change?**
+- **If replay started, what did participant intend to change?:**
 
 #### Coding against gate dimensions
 
@@ -92,41 +107,50 @@ Keep these explicitly separate from spontaneous evidence. Follow the question or
 - **Ownership language:** yes / no / unclear
 - **Voluntary another turn/run desire:** yes / no / unclear
 - **Material misconception:** none / describe
+- **Fairness/trap-choice concern:** none / describe
+- **Implicit-delegation comprehension:** clear / partial / unclear
+- **Package/authority comprehension:** clear / partial / unclear / not encountered
+- **Known source/one-shot cost comprehension:** clear / partial / unclear / not encountered
 
 #### Qualitative finding / remediation hypothesis
 
-Record the observed failure/success pattern before proposing a fix. Do not default to more tutorial/copy if the underlying mechanic is what failed.
+Record observed pattern first, then possible fix. Do not default to tutorial/copy when mechanic itself failed.
 
 - 
 
-## Formative smoke decision record
+## Formative smoke record
 
-After exactly the authorised three fresh formative participants, record:
+Run only after #104 **and #107**.
 
-- number unable to explain major causal consequences;
-- number unable to form a next-cycle plan;
-- number showing no voluntary desire to continue while another command remained;
-- repeated qualitative pattern, if any;
+After exactly three fresh formative participants record:
+
+- unable to explain major causal consequences: `/3`;
+- unable to form next-cycle plan: `/3`;
+- no voluntary desire to continue while another command remained: `/3`;
+- repeated paperwork/hidden-unfairness/trap/package-comprehension pattern, if any;
 - human decision: `continue` or `stop-and-redesign`.
 
-This is not a pass of #110.
+This is never a #110 pass.
 
-## Formal gate decision record
+## Formal gate record
 
-After the eight fresh formal participants, record the raw counts required by
-[[40-EVALUATION-CONTRACT]] before writing a conclusion:
+After eight fresh formal participants, record raw counts before conclusion:
 
 - want another turn/run: `/8`;
 - identify significant personal cause: `/8`;
 - unprompted forward strategy: `/8`;
 - meaningful regret/vindication/tension/surprise/payoff: `/8`;
 - ownership language: `/8`;
-- actual optional replay uptake: `/8` (contextual evidence; not a separate fixed threshold).
+- actual optional replay uptake: `/8` (context only; no separate fixed threshold).
 
-Then record any repeated severe qualitative failure and whether facilitation/data
-quality contaminated any sessions.
+Also record:
 
-Only the human product owner may record the final #110 decision:
+- repeated severe qualitative defect(s);
+- fairness/trap-choice patterns;
+- implicit-delegation/package/known-cost comprehension patterns;
+- contaminated sessions/data-quality limitations.
+
+Only the human product owner records final #110 decision:
 
 - `PASS — authorise post-gate product phase`;
 - `FAIL — focused mechanical remediation`;
