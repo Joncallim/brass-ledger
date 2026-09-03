@@ -7,317 +7,302 @@ status: active
 
 Backlink: [[README]]
 
-This document is the implementation/protocol authority for **#109 — V2 human playtest harness** and complements [[80-HUMAN-PLAYTESTS]], which stores evidence/results. It does not permit an AI agent to certify the human fun gate.
+This is the protocol authority for **#109 — collecting non-leading human evidence**. [[80-HUMAN-PLAYTESTS]] stores anonymised results. No AI/CI/synthetic run may pass #110.
 
 ## Purpose
 
-The harness should reveal whether players actually experience:
+Human testing answers what machine proof cannot:
 
-- causal ownership;
-- a forward strategy;
-- meaningful uncertainty;
-- regret, vindication, tension, surprise or payoff;
-- voluntary desire to continue/replay.
+- did players feel causal ownership;
+- did they form a forward strategy;
+- did uncertainty feel meaningful rather than arbitrary;
+- did painful trade-offs create regret/vindication/tension/surprise/payoff;
+- did they voluntarily want the next command or another run;
+- did command-by-exception feel like command rather than approving staff paperwork.
 
-It must avoid coaching players into the behaviors being measured.
+## Study sequence
 
-## Two study stages
+### Stage A — 3-player formative smoke
 
-### Stage A — formative smoke
+Run only after:
 
-Participants: **3 fresh players**.
+`#104 complete replay-valid headless slice → #107 structural lab complete`
 
-Timing: after #104 produces a complete trusted-replay-valid plain-text/headless Kestrel slice. Browser UI is not required.
+Browser UI is not required.
 
-Purpose: cheaply falsify major loop/causality problems before UI effort.
+Purpose: cheaply falsify the **remaining experiential** hypothesis after obvious structural defects have already been screened by #107.
 
-This stage is explicitly non-gating.
+This stage is non-gating.
 
-Stop/redesign before formal testing if at least 2 of 3:
+If #107 still has unresolved blocking findings, do not spend fresh-player time to rediscover them.
 
-- cannot explain major consequences in terms of decisions/history;
+Stop/redesign before the main browser tranche when at least 2/3 participants:
+
+- cannot explain major consequences from their decisions/history;
 - cannot form a next-cycle plan;
-- or show no voluntary desire to continue the run when another command remains.
+- or show no voluntary desire to continue while another command remains.
 
-The smoke may reveal implementation/design problems; it cannot pass #110.
+Also stop for a repeated severe qualitative defect even if the 2/3 shorthand is not neatly met, e.g. all players independently experience the game as approval paperwork or an important outcome as unknowable punishment.
 
-### Stage B — formal V2 gate study
+A green smoke cannot pass #110.
 
-Participants: **8 fresh players**.
+### Stage B — 8-player formal gate study
 
-Timing: after #108 authoritative browser E2E and #109 harness readiness.
+Run only after:
 
-Pass thresholds remain those in [[40-EVALUATION-CONTRACT]]:
+- #105/#106 completed following the formative continuation decision;
+- #108 authoritative browser E2E complete;
+- #109 protocol QA complete.
+
+Fixed thresholds from [[40-EVALUATION-CONTRACT]]:
 
 - ≥6/8 voluntarily want another turn/run;
-- ≥6/8 identify something significant they personally caused;
-- ≥6/8 state a forward strategy without prompting;
+- ≥6/8 identify a significant personal cause;
+- ≥6/8 state an unprompted forward strategy;
 - ≥5/8 report meaningful regret, vindication, tension, surprise or payoff;
-- ≥6/8 use ownership language about the campaign.
+- ≥6/8 use ownership language.
 
-A repeated severe qualitative failure overrides numerical passage.
+Repeated severe qualitative failure overrides counts.
 
-No AI, CI job, telemetry score or synthetic play may mark this gate passed.
+## Fresh participant rule
 
-## Participant freshness
+Formal participants must not have:
 
-A “fresh player” for the gate must not have:
+- read V2 canonical design docs;
+- implemented/reviewed V2 mechanics;
+- been told hidden Ravellan policy/starting state;
+- been coached on intended strategic families;
+- seen enough prior participant play to know important branches.
 
-- read the V2 design/canonical docs;
-- implemented/reviewed Brass Ledger V2 mechanics;
-- been coached on Ravellan's hidden policy;
-- been told the intended optimal strategies;
-- seen a previous participant run in enough detail to know key branches.
+Record only coarse relevant strategy/management-game experience. Do not use project contributors in the formal eight.
 
-Record prior experience with strategy/management games for interpretation, but do not exclude experienced players automatically.
+## Minimal facilitator setup
 
-Do not use project contributors for the formal 8-player threshold sample.
+Equivalent to:
 
-## Session setup
-
-Before play, facilitator may state only the minimal fiction/control context needed to begin, equivalent to:
-
-> You are the commander of a coalition headquarters responsible for Beacon Channel. Your staff will recommend what it intends to do. You can personally change a limited number of things. Play the situation as you think best.
+> You are commanding a coalition headquarters responsible for Beacon Channel. Your staff will tell you what it intends to do. You can personally change a limited number of things. Play the situation as you think best.
 
 Do not explain:
 
-- hidden Ravellan postures;
-- the three intended strategy families;
-- which capability is “good”;
-- how terminal routes counter Ravellan;
-- what behaviors count toward the study pass criteria.
+- hidden postures/policy rows;
+- intended “builds”/optimal strategies;
+- which Lattice target is best;
+- how final routes map to hidden history;
+- what study behaviors count as a pass.
 
-Use normal in-product/headless explanations only. If the game itself cannot communicate a required concept, record that failure rather than rescuing it with facilitator teaching.
+If the product cannot explain a required mechanic, record that failure instead of rescuing it with facilitator teaching.
 
-## Facilitation rule: uninterrupted primary run
+## Uninterrupted primary run
 
-During the primary run:
+During play:
 
-- do not suggest a choice;
-- do not explain why one order is better;
+- do not suggest orders;
+- do not interpret uncertainty for the player;
+- do not say they are playing correctly/incorrectly;
 - do not reveal hidden truth;
-- do not reassure the player that they are playing “correctly”;
-- do not ask leading reflective questions after each cycle;
-- do not interrupt merely to collect data that can be observed silently.
+- do not ask reflective/leading questions each cycle;
+- observe silently where possible.
 
-If the participant asks a rules/control question, answer only what the normal product/field manual would legitimately state. Record that they needed facilitator help.
+Rules/control questions may be answered only to the extent normal product documentation should answer them. Record help requests.
 
-If they ask a strategic question (“What should I do?”), reply neutrally that the choice is theirs; do not interpret the situation for them.
+Strategic question (“what should I do?”): state neutrally that the choice is theirs.
 
 ## Evidence channels
 
-Separate evidence into three categories.
+Keep three categories separate.
 
 ### A. Spontaneous during-play evidence
 
-Record verbatim or near-verbatim statements/behavior such as:
+Record verbatim/near-verbatim with cycle/issue context:
 
-- “I did that because…”
-- “That happened because I…”
-- “Next I need to…”
-- “I knew I shouldn't have…”
-- “I think Ravellan is…”
-- “I want to see what happens if…”
-- visible disengagement/confusion;
-- voluntary attempts to inspect history/reasons;
-- hesitation when interventions collide.
+- causal language (`I did that because…`, `that happened because…`);
+- forward plan (`next I need to…`);
+- opponent hypothesis;
+- regret/vindication;
+- desire to see what happens;
+- confusion/disengagement;
+- voluntary history/reason inspection;
+- hesitation when scarce interventions/package requirements collide.
 
-Timestamp by cycle/issue, not wall-clock identity data unless needed operationally.
-
-Spontaneous evidence is stronger than prompted interview answers for ownership/forward-plan criteria.
+Spontaneous evidence is stronger than prompted answers for ownership/forward-plan coding.
 
 ### B. Observed behavior
 
 Record:
 
 - cycle reached/completed;
+- standing direction;
 - major interventions/delegations;
-- whether participant reads staff reasons/dissent;
-- whether they notice/remember explicit promises;
-- whether they use Lattice/liaison when available;
-- whether they use a recovery action;
-- whether they abandon/stop early and when;
-- whether they attempt another run when actually available.
+- whether staff reasons/dissent are read;
+- whether promises/authority requirements are noticed;
+- whether known one-shot/source cost is noticed before attribution use;
+- whether Lattice/liaison/recovery paths are used;
+- whether a player attempts an invalid cross-issue package and understands the explanation;
+- whether they abandon/stop early;
+- actual continuation/replay uptake.
 
-Do not infer emotion solely from click telemetry.
+Do not infer emotion from click telemetry alone.
 
-### C. Post-run prompted interview
+### C. Post-run interview
 
-Prompted responses are useful context but remain labeled as prompted.
+Keep prompted responses labelled separately.
 
-Do not merge them into spontaneous evidence.
+Ask, in order:
 
-## Post-run interview order
+1. What happened in your campaign?
+2. What do you think you personally caused or set in motion?
+3. What were you trying to do by the end?
+4. Which uncertainty mattered most?
+5. Was there a decision you regretted or felt vindicated about? Why?
+6. Did the final confrontation feel connected to earlier choices? Why/why not?
+7. What would you do differently on replay?
+8. What felt like paperwork rather than a real decision?
+9. Where did the game confuse you or fail to give enough information?
+10. Did any option feel like an obvious trap or a fake choice? Why?
 
-Ask these open questions in this order, without supplying examples unless the participant genuinely cannot understand the question.
+Do not make “Was it fun?” the primary metric; an optional general enjoyment question may come last.
 
-1. **What happened in your campaign?**
-2. **What do you think you personally caused or set in motion?**
-3. **What were you trying to do by the end?**
-4. **Which uncertainty mattered most to your decisions?**
-5. **Was there a decision you regretted or felt vindicated about? Why?**
-6. **Did the final confrontation feel connected to what you had done earlier? Why or why not?**
-7. **What would you do differently if you played again?**
-8. **What felt like paperwork or something you were clicking through rather than deciding?**
-9. **Where did the game confuse you or fail to give you enough information?**
+## Voluntary continuation / replay
 
-Do not ask “Was it fun?” as the primary metric. A yes/no answer is too easy to please the facilitator with and does not replace behavior/evidence.
+For unfinished play, observe whether the participant naturally advances when the next control is available. Do not manufacture a timed “continue?” prompt.
 
-A general enjoyment question may be asked last for qualitative context.
+After completion, expose a real Play Again/new-run option and state neutrally once that it is available. Record:
 
-## Voluntary continuation/replay evidence
+- spontaneous desire;
+- prompted verbal interest separately;
+- actual uncoached replay uptake separately.
 
-Do not count a participant saying “sure, I guess” after being strongly asked whether they would replay as equivalent to spontaneous replay desire.
+A polite “sure” is not equivalent to actual replay desire.
 
-For an unfinished run with another command available:
+## Coding
 
-- observe whether they voluntarily continue when the normal progression control is available;
-- do not artificially end the session at a fixed minute solely to manufacture a “continue?” response.
+### Ownership
 
-After a completed run:
+Count when the participant treats campaign state as belonging to their decisions/strategy, e.g. “my reserve problem,” “I broke the promise,” “I kept prioritising intelligence.” Exact phrasing not required.
 
-- make a genuine `Play Again`/new-run option available;
-- neutrally state once that another run is available if they want it, without selling alternative branches;
-- record actual replay uptake separately from verbal/promoted interest.
+Do not count generic “the game made X low” without causal understanding.
 
-Actual uncoached replay uptake is strong evidence but is not required from every passing participant.
+### Causal understanding
 
-## Ownership-language coding
+Count when they correctly connect at least one material later state/event to earlier intervention/delegated standing direction/commitment without being told.
 
-A participant counts toward the ownership criterion when their spontaneous or post-run language clearly treats the campaign as the result of their strategy/history, e.g.:
+Record misconceptions especially if they believe:
 
-- “my reserve problem”;
-- “I kept prioritising intelligence”;
-- “I broke the promise”;
-- “I left Beacon too exposed”;
-- “my plan was to keep the partner on side.”
+- Ravellan reads private intent/orders directly;
+- staff advice is omniscient/correct-answer UI;
+- promises/authority are cosmetic;
+- Lattice is a passive stat buff;
+- reroute/monitor has no reason to exist or produces magic intel;
+- final route availability is arbitrary;
+- terminal debrief truth was knowable earlier.
 
-Do not require these exact words.
+### Forward plan
 
-Do not count generic statements like “the game made the reserve low” if the participant cannot connect it to their decisions.
+Must be spontaneous before post-run interview: recover reserve, preserve partner authority, protect/target information, accept an exposure for another objective, prepare quietly, etc.
 
-## Causal-understanding coding
+“Click next” is not strategy.
 
-A participant demonstrates causal understanding when they can correctly connect at least one material later state/event to an earlier order/delegated policy/commitment without being told the answer.
+### Emotion/payoff
 
-Minor factual mistakes do not automatically fail the player if the important causal model is intact.
+Count only when tied to game state/decision: regret, vindication, tension, surprise, relief, capability payoff, understandable frustration at a self-created problem.
 
-Record material misconceptions, especially:
+Confusion/UX frustration is coded separately, not romanticised as strategic tension.
 
-- believing Ravellan reads private choices directly;
-- believing staff recommendations are omniscient/correct answers;
-- thinking promises/partner state are cosmetic;
-- thinking Lattice is a passive stat buff;
-- being unable to distinguish what HQ believed from actual hidden truth in the terminal debrief.
+## Fairness / trap-choice coding
 
-Repeated misconceptions across participants are design findings even if numerical thresholds pass.
+Pay special attention to two distinct failures.
 
-## Forward-plan coding
+### Unfair hidden-state punishment
 
-A participant counts when, before being asked in the post-run interview, they articulate or behaviorally demonstrate a future strategic intention such as:
+If a participant says an outcome was impossible to anticipate, inspect whether they had a legitimate clue/countermeasure or explicitly accepted the risk.
 
-- recover reserve next;
-- preserve partner consent for joint action;
-- protect Lattice to answer the staging question;
-- accept Beacon exposure temporarily for another priority;
-- prepare quietly because they suspect a real move.
+Repeated “there was nothing I could have known/done” is severe even if machine fairness tests passed.
 
-A simple “I'll click the next thing” is not a forward strategy.
+### Obvious trap/fake option
 
-Post-run answer to “what would you do differently?” is useful replay evidence but does not retroactively satisfy the unprompted forward-plan criterion.
+If participants repeatedly identify a legal option as pointless/self-harm, capture why.
 
-## Emotion/payoff coding
+Machine #107 should already have removed mechanically inelastic/player-safe dominated choices. If humans still perceive a route as a trap, determine whether:
 
-Count meaningful affect only when tied to game state/decision, including:
+- the value is poorly communicated;
+- the machine fixture missed a reachable dominance case;
+- or the risky upside exists mechanically but is not legible enough to make the choice meaningful.
 
-- regret;
-- vindication;
-- surprise;
-- tension;
-- relief;
-- satisfaction at a capability/payoff;
-- frustration at a self-created problem that the player understands.
-
-Generic positive politeness (“nice game”) does not count.
-
-Negative emotion can still be productive if it is about a meaningful trade-off; frustration caused by confusing UI/rules is a usability failure and should be coded separately.
+Do not dismiss the finding because the option technically changes state.
 
 ## Severe qualitative override
 
-Even if numerical thresholds are met, the product owner should fail/route remediation when a serious pattern repeats, especially:
+Fail/route remediation despite numeric thresholds when a serious pattern repeats, especially:
 
-- game is primarily experienced as approving staff recommendations/paperwork;
-- players cannot see how prior choices affect the final crisis;
+- gameplay is mostly approving staff recommendations;
+- players cannot connect prior choices to the final crisis;
 - hidden-state outcomes feel arbitrary/unfair;
-- one strategy is perceived as obviously correct and others as traps;
-- consequences are understood only after facilitator explanation;
-- participants continue only because they feel obligated to finish a study;
-- information/recommendation text is too dense to read voluntarily.
+- a strategy/course is experienced as an obvious trap;
+- cross-issue constraints feel like unexplained invalid-form errors rather than strategy;
+- source/commitment costs are discovered only after selection despite being knowable;
+- consequences make sense only after facilitator explanation;
+- participants continue mainly from study obligation;
+- required information/recommendation prose is too dense to read voluntarily.
 
-Document the repeated evidence verbatim before applying an override.
+Document verbatim evidence before applying the override.
 
-## Anonymised evidence record
+## Anonymised record
 
-For each participant record:
+Per participant record only what is needed:
 
 - anonymous tester ID;
-- study stage;
-- relevant prior strategy-game experience (coarse category only);
+- stage;
+- coarse prior strategy-game experience;
 - run/seed ID;
 - standing direction;
-- major intervention/commitment/capability choices;
+- major intervention/commitment/capability/authority choices;
 - terminal outcome;
-- spontaneous causal statements;
-- spontaneous forward-plan statements;
-- observed disengagement/confusion/help requests;
-- regret/vindication/tension/surprise/payoff evidence;
-- prompted interview answers;
+- spontaneous causal/plan statements;
+- confusion/help/trap-choice observations;
+- emotion/payoff evidence;
+- prompted answers;
 - actual continuation/replay uptake;
-- coded pass dimensions;
-- notable qualitative finding/follow-up.
+- coded dimensions;
+- qualitative finding/follow-up.
 
-Do not store unnecessary personal identifiers.
+No unnecessary personal identifiers.
 
-## Formative-smoke decision
+## Formative decision
 
-After 3 participants, classify only:
+After three participants:
 
-- **continue to implementation/formal preparation**;
-- **stop and redesign the loop/causality**.
+- `CONTINUE — underlying loop not falsified by smoke`;
+- or `STOP — focused redesign/remediation before browser tranche`.
 
-Do not call the formative smoke a pass of the V2 fun gate.
+If ≥2/3 hit a stop criterion, stop. Do not default to tutorial/copy polish unless evidence clearly shows mechanics are sound and presentation alone is failing.
 
-If ≥2/3 hit a stop criterion, open focused remediation issues tied to actual observed failure. Do not default to tutorial/copy/polish unless evidence shows the mechanics are understood and only presentation is failing.
+The smoke never counts as formal pass evidence for #110.
 
-## Formal-gate decision
+## Formal decision
 
-After 8 fresh participants, the human product owner reviews:
+After eight fresh formal participants, the human product owner reviews fixed thresholds, severe patterns, actual replay behavior and evidence quality.
 
-- numeric thresholds from [[40-EVALUATION-CONTRACT]];
-- severe qualitative patterns;
-- actual replay/continuation behavior;
-- evidence quality and any facilitation contamination.
-
-Possible decisions:
+Possible result:
 
 - `PASS — authorise post-gate product phase`;
 - `FAIL — focused mechanical remediation`;
 - `FAIL — interaction/information remediation`;
-- `INCONCLUSIVE — study contamination/data-quality problem; rerun affected sessions`.
+- `INCONCLUSIVE — contaminated/insufficient study; rerun affected sessions`.
 
-No AI agent closes #110 on the user's behalf.
+No assistant/agent closes #110 as passed for the product owner.
 
-## Protocol QA for #109
+## Protocol QA
 
-Before using the harness formally:
+Before formal use:
 
-- another reviewer checks every facilitator instruction for leading language;
-- verify spontaneous and prompted fields are separate;
-- verify the template captures actual replay uptake separately from prompted interest;
-- verify no field asks facilitator to infer hidden internal emotion from telemetry;
-- verify the product itself, not facilitator script, teaches controls/concepts required for play;
-- run documentation validation.
+- independent reviewer checks facilitator language for leading cues;
+- spontaneous vs prompted fields are distinct;
+- actual replay uptake separate from verbal interest;
+- no telemetry-to-emotion inference;
+- normal product, not facilitator, teaches necessary controls/rules;
+- #107 has completed before Stage A;
+- documentation validation passes.
 
 ## Rejection conditions
 
-Reject #109 if it uses synthetic participants, lets facilitators coach strategy, counts prompted politeness as spontaneous replay desire, merges prompted/spontaneous evidence, stores unnecessary personal data, treats telemetry as emotion, or changes the numerical gate after seeing results merely to obtain a pass.
+Reject #109 if it runs Stage A before #107, uses synthetic/project contributors as formal participants, coaches strategy, merges prompted/spontaneous evidence, counts politeness as replay desire, stores unnecessary personal data, treats telemetry as emotion, rescues incomprehensible mechanics through facilitation, or changes the fixed gate after seeing results merely to get a pass.
