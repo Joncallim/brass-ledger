@@ -7,55 +7,60 @@ status: active
 
 Backlink: [[README]]
 
-This document is the implementation authority for **#100 — headquarters belief / intelligence projection**. It is Kestrel-only prototype design. It must not become a generic intelligence framework before a second concrete scenario proves reuse.
+This is the implementation authority for **#100 — HQ belief / intelligence projection**. It defines the bounded Kestrel evidence model, exact ordinary evidence timeline, Cycle-2 reroute monitoring clue, Cycle-3 focused collection, assessment reduction, lifecycle and player-safe Intelligence-Chief judgement.
+
+[[26-LATTICE-COLLECTION-MATRIX]] owns Lattice/liaison directed results. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns cross-system composition and repeats the strict posture-blind collection invariant.
 
 ## Product purpose
 
-Intelligence should create a strategic question, not a probability-management minigame. The player should be able to understand four things in ordinary language:
+Intelligence should create strategic uncertainty, not a probability-management minigame.
 
-1. **What does Intelligence currently think?**
-2. **Why does it think that?**
-3. **What remains weak or contradictory?**
-4. **What could the commander do to learn more?**
+The player should understand:
 
-The player never sees numeric probability, percentage confidence, confidence bars, High/Medium/Low labels, or the hidden Ravellan posture/preparation state.
+1. what Intelligence currently thinks;
+2. why;
+3. what remains weak/contradictory;
+4. what can still be investigated.
+
+The player never sees numeric probability, confidence percentage/bar, High/Medium/Low confidence, hidden Ravellan posture/preparation or oracle truth.
 
 ## Information boundary
 
-Keep four concepts distinct:
+Keep distinct:
 
-- **World truth:** actual Ravellan posture, preparation and external facts. Hidden except where an authored observation legitimately reveals evidence.
-- **Authorised observation:** an engine/content-produced fact HQ is legally allowed to learn.
-- **HQ evidence:** the persisted interpreted evidence item produced from an authorised observation or collection result.
-- **HQ assessment:** a deterministic summary of active HQ evidence. It is the only intelligence state used by recommendation/player projections.
+- **World truth** — actual hidden state/history.
+- **Authorised observation** — a fact a specific Kestrel observation/collection rule is allowed to inspect.
+- **HQ evidence** — persisted interpreted evidence produced from an authorised observation.
+- **HQ assessment** — deterministic reduction of active HQ evidence.
+- **Player judgement** — natural-language projection of the assessment/evidence.
 
-Changing world truth while holding authorised observations/evidence constant must leave HQ assessment and every player-facing intelligence projection deep-equal.
+Changing hidden truth while holding all authorised observations/evidence fixed must leave HQ assessment and player projection deep-equal.
 
-A collection rule may inspect the specific world facts it is authored to observe in order to produce an authorised evidence result. The resulting HQ evidence—not hidden world state—is what downstream staff/player paths receive.
+For directed collection, the stronger rule applies:
 
-## Primary Kestrel assessment
+> changing Ravellan hidden posture alone while holding the specific target-authorised physical/action-history facts fixed must leave the result deep-equal.
 
-The prototype has one primary intelligence claim:
+A sensor does not receive a secret intent label merely because the engine has one.
+
+## One primary Kestrel claim
+
+Stable claim ID:
 
 `ravellan-intent`
 
-Its internal assessment has two dimensions.
+### Internal direction
 
-### Direction
+- `preparation`
+- `coercion`
+- `unclear`
 
-- `preparation` — current evidence points toward real Beacon-related operational preparation.
-- `coercion` — current evidence points toward pressure/feint rather than an imminent prepared seizure.
-- `unclear` — HQ cannot responsibly favour either interpretation.
+### Internal picture state
 
-### Picture state
+- `weak`
+- `conflicted`
+- `coherent`
 
-- `weak` — the current view rests on limited or weakly diagnostic evidence.
-- `conflicted` — active evidence points materially in both directions.
-- `coherent` — specifically corroborating evidence supports one direction without a material active contradiction.
-
-These identifiers are implementation-only. They are not player-facing labels.
-
-Legal combinations are:
+Legal combinations:
 
 - `unclear + weak`
 - `unclear + conflicted`
@@ -64,315 +69,332 @@ Legal combinations are:
 - `coercion + weak`
 - `coercion + coherent`
 
-Do not create `preparation + conflicted` or `coercion + conflicted`; when material active evidence supports both interpretations, direction is `unclear`.
+When active directional evidence exists on both sides, direction is always `unclear` and picture is `conflicted`; do not create a “preparation but conflicted” score-like state.
 
-## Evidence contract
+These identifiers are implementation-only.
 
-Each persisted Kestrel evidence item contains only the minimum required fields:
+## Evidence shape
+
+Each evidence item contains only bounded serialisable fields equivalent to:
 
 - stable `evidenceId`;
-- claim ID (`ravellan-intent` for the prototype);
-- implication: `preparation`, `coercion`, or `ambiguous`;
-- diagnostic class: `indicator` or `corroborating`;
-- source group/reference;
+- claim ID;
+- implication: `preparation | coercion | ambiguous`;
+- diagnostic class: `indicator | corroborating`;
+- source group/ref;
 - observed cycle;
-- active/superseded/expired lifecycle state or equivalent explicit lifecycle evidence;
-- visible summary reference used by the Intelligence Chief projection.
+- lifecycle: active/superseded/expired or equivalent deterministic evidence;
+- player-safe summary ref.
 
-`indicator` means the observation is legitimately suggestive but is not sufficient by itself to make the picture coherent. `corroborating` means the authored observation is specifically diagnostic enough to support a coherent view if the opposing interpretation has no active evidence.
+`indicator` = legitimately suggestive but insufficient by itself for a coherent directional picture.
 
-These are internal evidence semantics, not UI confidence labels.
+`corroborating` = independently/specially diagnostic enough to make one direction coherent if there is no active contradictory directional evidence.
 
-Evidence IDs and their implication/diagnostic class are authored content. The engine may not infer diagnostic weight from prose, source name, quantity of events, or hidden Ravellan state.
+No numeric weight/count/likelihood exists.
 
-## Deterministic assessment reduction
+## Assessment reduction
 
-Derive the current `ravellan-intent` assessment from active evidence only.
+Use active evidence only:
 
-1. If no active non-ambiguous evidence exists: `unclear + weak`.
-2. If active evidence supports both `preparation` and `coercion`: `unclear + conflicted`.
-3. If evidence supports only `preparation`:
-   - if at least one active authored `corroborating` preparation item exists: `preparation + coherent`;
-   - otherwise: `preparation + weak`.
-4. If evidence supports only `coercion`:
-   - if at least one active authored `corroborating` coercion item exists: `coercion + coherent`;
-   - otherwise: `coercion + weak`.
-5. `ambiguous` evidence never chooses a direction. It may remain visible as a reason that the picture is incomplete, but it does not override contradictory directional evidence.
+1. no active non-ambiguous directional evidence → `unclear + weak`;
+2. active preparation **and** coercion evidence → `unclear + conflicted`;
+3. preparation only:
+   - any preparation corroborating item → `preparation + coherent`;
+   - otherwise → `preparation + weak`;
+4. coercion only:
+   - any coercion corroborating item → `coercion + coherent`;
+   - otherwise → `coercion + weak`.
 
-Do not sum weights, count votes, calculate odds, or normalise evidence into a score.
+Ambiguous evidence never chooses direction.
 
-## Canonical ordinary Kestrel evidence timeline
+Do not sum votes or let evidence quantity overpower contradiction.
 
-The six-cycle slice has a small fixed ordinary evidence catalogue. These items exist so #100 has executable content and Cycle 3 reliably creates genuine doubt without reading hidden posture.
+## Ordinary evidence timeline
 
-### Cycle 1 opening
+### Cycle 1 — opening pressure
 
-Evidence ID: `opening-pressure-ambiguous`
-
-- implication: `ambiguous`;
-- diagnostic class: `indicator`;
-- source group: `opening-situation`;
-- active for Cycles 1–2; expires before the Cycle-3 belief update;
-- player-safe meaning: patrol activity and messaging have increased, but the pattern does not distinguish coercion from preparation.
-
-Initial assessment therefore remains `unclear + weak`.
-
-### Cycle 2 shipping pressure
-
-Evidence ID: `shipping-probe-ambiguous`
+`opening-pressure-ambiguous`
 
 - implication: `ambiguous`;
-- diagnostic class: `indicator`;
-- source group: `shipping-pressure`;
-- observed at Cycle 2;
-- active for Cycles 2–3; expires before the Cycle-4 belief update;
-- player-safe meaning: the shipping pressure is compatible with both coercive testing and cover for something more serious.
+- class: `indicator`;
+- source: `opening-maritime-pressure`;
+- observed/active C1–C2;
+- expires before C3;
+- meaning: increased patrol/auxiliary activity is compatible with coercion, testing or cover for preparation.
 
-The Cycle-1 probe pressure persists into the Cycle-2 shipping issue regardless of the newly selected hidden Cycle-2 action; [[37-RAVELLAN-WORLD-EFFECT-MATRIX]] owns that effect projection.
+Assessment: `unclear + weak`.
 
-### Cycle 3 conflicting bundle — mandatory
+### Cycle 2 — continuing shipping pressure
 
-Two directional evidence items become available together before the Cycle-3 command.
+`shipping-probe-ambiguous`
+
+- implication: `ambiguous`;
+- class: `indicator`;
+- source: `shipping-pressure`;
+- active C2–C3;
+- expires before C4;
+- meaning: continuing shipping pressure remains compatible with both coercion and cover for something more serious.
+
+Assessment remains `unclear + weak` absent other authorised evidence.
+
+### Cycle 2 `reroute-and-monitor` queued result
+
+This player order deliberately accepts greater civilian/political disruption to preserve reserve and create a monitoring opportunity. Its evidence arrives at the **C3 belief update**.
+
+It reads only:
+
+- seizure-preparation state immediately after the C2 Ravellan decision;
+- verified C2 normal Ravellan action.
+
+Result:
+
+#### `reroute-auxiliary-integrated`
+
+Condition:
+
+- preparation `developing|ready`;
+- C2 action `probe_shipping`.
+
+Evidence:
+
+- implication `preparation`;
+- class `indicator`;
+- source `reroute-auxiliary-monitoring`;
+- active C3–C5; expires before C6 unless superseded;
+- meaning: the monitored shipping-pressure vessels show tasking consistent with a wider preparation pattern.
+
+#### `reroute-auxiliary-coercive`
+
+Condition:
+
+- preparation `none`;
+- C2 action `probe_shipping|seed_deception`.
+
+Evidence:
+
+- implication `coercion`;
+- class `indicator`;
+- same lifecycle;
+- meaning: monitoring points to a coercive/pressure tasking chain rather than a physical seizure-force sequence.
+
+#### `reroute-auxiliary-unclear`
+
+Otherwise:
+
+- implication `ambiguous`;
+- class `indicator`;
+- same lifecycle;
+- meaning: monitoring improves the picture but does not establish how shipping pressure relates to wider operations.
+
+The reroute clue does **not** remove the mandatory C3 conflict below. Its value is persistence: after the generic conflict expires, a weak directional clue may remain unless newer same-question collection supersedes it.
+
+A later Lattice/liaison result answering `auxiliary-tasking` supersedes the active reroute clue for that same question.
+
+### Cycle 3 — mandatory conflicting bundle
+
+Two directional indicators become active together **under all hidden opening situations/current actions** before the C3 command:
 
 #### `staging-logistics-anomaly`
 
-- implication: `preparation`;
-- diagnostic class: `indicator`;
-- source group: `regional-logistics`;
-- observed Cycle 3;
-- active during Cycles 3–4;
-- expires before Cycle 5 unless explicitly superseded earlier;
-- player-safe meaning: logistics activity near known staging areas has risen above the recent baseline.
+- implication `preparation`;
+- class `indicator`;
+- source `regional-logistics`;
+- active C3–C4;
+- expires before C5 unless superseded;
+- meaning: logistics activity near staging areas is above recent baseline.
 
 #### `combat-elements-dispersed`
 
-- implication: `coercion`;
-- diagnostic class: `indicator`;
-- source group: `force-disposition`;
-- observed Cycle 3;
-- active during Cycles 3–4;
-- expires before Cycle 5 unless explicitly superseded earlier;
-- player-safe meaning: major combat elements required for a rapid seizure remain visibly dispersed.
+- implication `coercion`;
+- class `indicator`;
+- source `force-disposition`;
+- active C3–C4;
+- expires before C5 unless superseded;
+- meaning: major elements needed for a rapid seizure remain visibly dispersed.
 
-Both observations are legitimately true/observable under all three opening Ravellan situations at this point in the authored slice. Their meaning differs depending on what is actually happening, but HQ does not know that. They deliberately produce:
+These deliberately force:
 
 `unclear + conflicted`
 
-This is the same HQ belief that drives the mandatory Intelligence/Operations disagreement. Hidden posture/current Ravellan action does not choose which chief is “correct”.
+Even if the C2 reroute clue is directional, active evidence exists on both sides, so C3 remains conflicted.
 
-### Cycle 4 pressure-pattern change
+This is the shared belief that drives the required Intelligence/Operations disagreement. Hidden truth never decides which chief is “really correct” in the recommendation path.
 
-Evidence ID: `cycle4-pressure-pattern-ambiguous`
+### Cycle 4 — pressure pattern
 
-- implication: `ambiguous`;
-- diagnostic class: `indicator`;
-- source group: `visible-pressure-pattern`;
-- observed Cycle 4;
-- active through Cycle 5; expires before the Cycle-6 current-assessment reduction;
-- player-safe meaning is selected from the authorised manifestation of the actual Ravellan action under [[37-RAVELLAN-WORLD-EFFECT-MATRIX]]: lull, thinning/plateau, contradictory posture, or continuing pressure;
-- every variant remains ambiguous and must not expose the hidden action ID.
+`cycle4-pressure-pattern-ambiguous`
 
-It does not choose a direction. The same evidence ID keeps the HQ reducer stable while player-facing situation text truthfully reflects the observable pressure pattern.
+- implication `ambiguous`;
+- class `indicator`;
+- source `visible-pressure-pattern`;
+- active C4–C5;
+- expires before C6;
+- action-specific player-safe text comes from [[37-RAVELLAN-WORLD-EFFECT-MATRIX]] but all variants remain ambiguous.
 
-## Cycle-3 focused-collection action
+It never chooses direction.
 
-The ordinary Cycle-3 Intelligence intervention from [[25-KESTREL-CONSEQUENCE-MATRIX]] is **not Lattice**. It diverts existing collection at an immediate Beacon-coverage cost and targets exactly one fixed question:
+## Cycle-3 focused staging collection
+
+Stable target:
 
 `staging-area-focus`
 
-The result arrives at the Cycle-4 belief update.
+The order diverts existing collection and carries its Beacon-coverage consequence elsewhere. Result arrives C4.
 
-### If seizure preparation is `developing` or `ready` at resolution
+It reads **seizure preparation only**, because it is observing physical concentration.
 
-Evidence ID: `focused-staging-buildup`
+### Preparation `developing|ready`
 
-- implication: `preparation`;
-- diagnostic class: `indicator`;
-- source group: `focused-staging-collection`;
-- observed Cycle 4;
-- active through Cycle 6;
-- supersedes `combat-elements-dispersed` because the newer focused observation shows relevant elements beginning to concentrate;
-- summary: focused collection now shows movement consistent with staging activity rather than the earlier dispersed picture.
+`focused-staging-buildup`
 
-Resulting assessment is normally `preparation + weak` unless another active coercion item remains.
+- implication `preparation`;
+- class `indicator`;
+- source `focused-staging-collection`;
+- active C4 through terminal;
+- supersedes `combat-elements-dispersed`;
+- meaning: focused collection now shows movement consistent with seizure-force staging.
 
-### If preparation is `none` and current Ravellan posture is `coercive_feint`
+### Preparation `none`
 
-Evidence ID: `focused-staging-empty`
+`focused-staging-empty`
 
-- implication: `coercion`;
-- diagnostic class: `indicator`;
-- source group: `focused-staging-collection`;
-- observed Cycle 4;
-- active through Cycle 6;
-- supersedes `staging-logistics-anomaly` because the focused collection establishes that the anomaly is not accompanied by seizure-force staging;
-- summary: focused collection finds no concentration of the force package needed for a rapid Beacon seizure.
+- implication `coercion`;
+- class `indicator`;
+- source `focused-staging-collection`;
+- active C4 through terminal;
+- supersedes `staging-logistics-anomaly`;
+- meaning: the anomaly is not accompanied by concentration of the force package needed for a rapid seizure.
 
-Resulting assessment is normally `coercion + weak` unless another active preparation item remains.
+There is **no posture/testing branch**. A testing opponent with no physical concentration can legitimately look coercive through this sensor. That is fair imperfect inference.
 
-### Otherwise — testing / unresolved world
+## Cycle 5 without newer directed information
 
-Evidence ID: `focused-staging-inconclusive`
+The mandatory C3 pair expires before the C5 update.
 
-- implication: `ambiguous`;
-- diagnostic class: `indicator`;
-- source group: `focused-staging-collection`;
-- observed Cycle 4;
-- active through Cycle 5;
-- supersedes nothing;
-- summary: focused collection improves coverage but still cannot establish whether a seizure force is forming.
+Possible C5 assessments therefore depend on what the commander actually invested in:
 
-The original Cycle-3 conflict therefore remains active through Cycle 4.
+- no lasting directional clue → `unclear + weak`;
+- active C2 reroute clue → preparation/coercion + weak;
+- active focused C4 result → preparation/coercion + weak;
+- newer Lattice/liaison evidence → assessment under the same reducer;
+- contradictory persistent directed evidence → `unclear + conflicted`.
 
-The result rule is a legitimate world-to-observation function. Player/staff paths receive only the resulting evidence item.
+Information is useful but not mandatory for all viable military/coalition routes.
 
-## Cycle-5 information state without directed collection
+## Lattice / liaison evidence
 
-The mandatory Cycle-3 directional conflict expires before the Cycle-5 belief update unless a focused-collection result superseded/refined it.
+[[26-LATTICE-COLLECTION-MATRIX]] owns the exact target/result catalogue, aligned with posture-blind observation rules.
 
-Therefore a player who does not invest in/focus collection may reach Cycle 5 with `unclear + weak`. This is intentional: uncertainty can persist because the commander chose not to spend scarce attention/institutional investment on resolving it.
+Rules shared here:
 
-Kestrel must still retain viable military/coalition recovery routes without a clear intelligence answer. Information is valuable, not mandatory for all success.
+- results enter this ordinary evidence schema;
+- result never directly sets assessment/recommendation;
+- same-question newer evidence may supersede older reroute/liaison/Lattice evidence when explicitly authored;
+- different questions remain independently active;
+- contradictory active evidence remains conflict;
+- directional Lattice/liaison results remain active through terminal unless explicitly superseded;
+- ambiguous results never choose direction.
 
-## Directed evidence from Lattice / liaison
+## Attribution opportunity derivation
 
-[[26-LATTICE-COLLECTION-MATRIX]] owns the Cycle-5/6 directed-result catalogue. Those results use this same evidence schema and reduction function.
+Attribution is belief-safe and separate from warning.
 
-Unless that matrix states otherwise:
+- no legitimate directional evidence → `none`;
+- at least one relevant directional indicator → `tentative`;
+- at least one relevant corroborating item and **no active material directional contradiction** → `credible`;
+- player uses credible opportunity in C5/C6 → `used`;
+- evidence disappears before use → weaken/expire according to authoritative state.
 
-- Lattice/liaison directional results remain active through terminal resolution;
-- ambiguous directed results remain active as visible unresolved gaps but never choose direction;
-- a directed result does not automatically delete older contradictory evidence; only its explicit supersession rule may do so.
+Under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]], `used` is terminal for Kestrel's one-shot attribution opportunity: later evidence does not regenerate another `credible` opportunity in this slice.
 
-## Evidence lifecycle rules
+A credible **coercion** assessment can support attribution but does not become `usableWarning`; terminal warning remains preparation-specific.
 
-No generic probabilistic decay exists.
+## Evidence lifecycle summary
 
-Canonical lifecycle semantics:
+- opening ambiguous: through C2, expires pre-C3;
+- shipping ambiguous: through C3, expires pre-C4;
+- C3 conflict pair: through C4, expires pre-C5 unless superseded;
+- C2 reroute clue: C3–C5, expires pre-C6 unless superseded;
+- C4 pressure-pattern ambiguous: C4–C5, expires pre-C6;
+- focused staging directional result: through terminal;
+- directed Lattice/liaison directional result: through terminal unless explicitly superseded;
+- ambiguous directed results: according to authored result lifecycle, never directional.
 
-- `opening-pressure-ambiguous`: expires before C3;
-- `shipping-probe-ambiguous`: expires before C4;
-- `staging-logistics-anomaly`: active C3–C4, expires before C5 unless superseded;
-- `combat-elements-dispersed`: active C3–C4, expires before C5 unless superseded;
-- `cycle4-pressure-pattern-ambiguous`: active C4–C5, expires before C6;
-- `focused-staging-buildup` / `focused-staging-empty`: active through terminal;
-- `focused-staging-inconclusive`: active C4–C5, expires before C6;
-- Lattice/liaison results: active through terminal unless the result matrix explicitly supersedes them.
+Expired/superseded evidence stays in replay/history but is inactive in reduction.
 
-Expired/superseded evidence remains in replay/history but is inactive in current assessment reduction.
+## Stable reason selection
 
-Contradictory active evidence is allowed and must produce `unclear + conflicted` rather than silently deleting the inconvenient item.
+No hidden reason score.
 
-## Deterministic projection reason selection
+### Conflicted
 
-The Intelligence Chief projection must be stable without a hidden reason score.
+Show newest active preparation evidence + newest active coercion evidence. Same-cycle display tie uses stable evidence ID only for presentation order.
 
-### `unclear + conflicted`
+### Directional
 
-Show:
+Show newest supporting directional evidence; if same observed cycle, show corroborating before indicator. Optionally show newest material ambiguous gap.
 
-- newest active preparation evidence;
-- newest active coercion evidence;
-- if observed in the same cycle, stable `evidenceId` order resolves display order only.
+### Unclear weak
 
-### `preparation` or `coercion`
+Show newest ambiguous item or authored unresolved-coverage statement.
 
-Show:
+## Player-facing judgement
 
-- newest active evidence supporting the direction;
-- if a corroborating and indicator item have the same observation cycle, show the corroborating item first;
-- optionally one newest active ambiguous/gap item where it materially explains why the picture is still weak/incomplete.
+Canonical meanings:
 
-### `unclear + weak`
+- preparation + weak: “I think they’re preparing something real, but our intelligence is weak.”
+- preparation + coherent: “This looks like preparation. The reporting is starting to line up.”
+- coercion + weak: “My read is that they’re trying to make us react. I don’t trust the picture yet.”
+- coercion + coherent: “This increasingly looks like coercion rather than preparation.”
+- unclear + conflicted: “There are signs both ways. I can’t call it.”
+- unclear + weak: “We don’t have enough yet to say what the pressure is covering.”
 
-Show the newest active ambiguous item if one exists; otherwise show the authored unresolved-coverage statement.
+Final prose is content-owned but preserves those meanings and exposes no internal confidence label/enum.
 
-This ordering controls explanation, not assessment weight.
+Projection should answer:
 
-## Player-facing Intelligence Chief judgement
-
-Projection is authored natural language keyed from the internal assessment plus the selected active evidence/remainder references.
-
-Canonical Kestrel tone examples:
-
-- `preparation + weak`: **“I think they’re preparing something real, but our intelligence is weak.”**
-- `preparation + coherent`: **“This looks like preparation. The reporting is starting to line up.”**
-- `coercion + weak`: **“My read is that they’re trying to make us react. I don’t trust the picture yet.”**
-- `coercion + coherent`: **“This increasingly looks like coercion rather than preparation.”**
-- `unclear + conflicted`: **“There are signs both ways. I can’t call it.”**
-- `unclear + weak`: **“We don’t have enough yet to say what the pressure is covering.”**
-
-Exact final prose remains content-owned, but it must preserve the meaning above and never expose the internal identifiers.
-
-Every projected assessment must expose, in ordinary language:
-
-- the current judgement;
-- one or more belief-safe reasons from active evidence;
-- the most important unresolved gap or contradiction when one exists;
-- an available collection target when the scenario provides one.
-
-Do not expose hidden truth provenance as a reason.
-
-## Ordinary observations versus directed collection
-
-Normal world/activity observations create only the authored evidence above. Task Collection and partner liaison use the same evidence contract; they do not have a privileged truth-reveal path.
-
-A collection result may be strongly diagnostic because the content authors it as `corroborating`, but it still enters HQ belief as evidence and is then reduced through the same assessment function.
-
-No collection result may directly set:
-
-- Ravellan posture;
-- Ravellan preparation state;
-- a player-facing probability;
-- the final recommendation.
-
-## Kestrel unresolved collection questions
-
-The prototype recognises exactly these named questions for later #102 content:
-
-- `landing-force-staging` — are units required for a Beacon seizure actually concentrating?
-- `auxiliary-tasking` — are the vessels pressuring shipping operating as part of a military plan or primarily coercive pressure?
-- `political-operational-sync` — are Ravellan political messages and operational activity aligned to a common timeline?
-
-#100 must support these stable target IDs but does **not** implement Lattice availability or target-result content; #102 owns that.
+- current judgement;
+- belief-safe evidence reasons;
+- important unresolved gap/contradiction;
+- legal named collection question when available.
 
 ## Timing
 
-HQ belief is updated in the canonical cycle position after world/adversary advancement and consequence progression, using only observations legally available at that point.
+HQ belief updates only at the canonical lifecycle position.
 
-A Cycle-N player action cannot retroactively change the Intelligence Chief judgement shown before that action. New evidence created by an order, focused collection, Task Collection, liaison or later observation becomes usable only at the authored next update point.
+A player action cannot retroactively change the assessment already shown before it. Queued order/collection results become usable at their authored later update.
 
-## Replay/state integrity
+## Replay / authority
 
-HQ evidence and current assessment are authoritative persisted V2 state or deterministic persisted-state derivatives according to the repository’s established V2 pattern. Replay must reconstruct the same assessment from the same verified evidence history.
+HQ evidence is authoritative persisted state or is reconstructed through explicit replay-verifiable transitions according to [[30-ARCHITECTURE-CONTRACT]].
 
-If assessment is persisted for convenience, trusted replay must recompute and reject a mismatched saved assessment. Never trust a client-supplied assessment.
+If assessment is persisted as a convenience, replay recomputes it from verified evidence and rejects mismatch.
 
-Changing evidence activity, implication, diagnostic class, observation cycle, supersession or source reference in a way that changes the recomputed assessment must be replay-detectable.
+Never trust client-submitted evidence/assessment.
+
+Any persisted-state change requires the repository's next prototype format boundary; no silent reinterpretation/migration.
 
 ## Required #100 tests
 
 At minimum prove:
 
-- paired hidden-world states with identical authorised evidence produce identical HQ assessment and player-safe intelligence projection;
-- C1 and C2 ordinary evidence remain `unclear + weak`;
-- the mandatory C3 bundle produces `unclear + conflicted` identically across hidden Ravellan openings/current actions;
-- C3 focused collection produces the exact C4 result/supersession branches above;
-- absent directed collection allows stale C3 conflict to expire before C5 rather than persisting forever;
-- every legal Cycle-4 Ravellan action produces the same ambiguous evidence ID while the visible summary varies only through authorised action manifestation;
-- no active directional evidence → `unclear + weak`;
-- one preparation indicator → `preparation + weak`;
-- one coercion indicator → `coercion + weak`;
-- corroborating preparation without contrary evidence → `preparation + coherent`;
-- corroborating coercion without contrary evidence → `coercion + coherent`;
-- active evidence in both directions → `unclear + conflicted` even if one side is corroborating;
-- ambiguous evidence alone never chooses a direction;
-- superseded/expired evidence no longer affects current assessment but remains in replay history;
-- deterministic reason selection follows the stable rules above without becoming assessment scoring;
-- directed collection enters through the same evidence path rather than setting hidden truth or recommendation directly;
-- player-facing projection contains no percentage, numeric probability, confidence band/label, hidden posture/preparation/action ID or truth provenance;
-- V1 information/state/replay contracts remain unchanged.
+- identical authorised evidence + different hidden truth → identical assessment/projection;
+- no directional evidence → unclear weak;
+- one directional indicator → directional weak;
+- one corroborating directional result without contradiction → directional coherent;
+- evidence on both sides → unclear conflicted even if one is corroborating;
+- ambiguous alone never chooses direction;
+- exact C1/C2/C3/C4 lifecycle;
+- C3 mandatory conflict holds across all hidden openings/current actions;
+- reroute result branches use only preparation + C2 action, persist C3–C5 and never remove mandatory C3 conflict;
+- focused staging uses only preparation; posture-only variation is irrelevant;
+- superseded/expired evidence remains history but not active reduction;
+- directed results enter the same reducer;
+- C5 use attribution makes opportunity `used` and later evidence does not regenerate it during Kestrel;
+- credible coercion attribution does not count as seizure warning;
+- normal player projection contains no percentage/band/hidden posture/preparation/action/truth provenance;
+- V1 state/replay unchanged.
 
 ## Rejection conditions
 
-Reject #100 if it introduces Bayesian probability, a generic intelligence score, player-facing confidence labels, hidden-truth-derived prose, raw Ravellan-action leakage, UI-owned assessment logic, permanent stale evidence, or a general multi-claim intelligence framework not required by Kestrel.
+Reject #100 if it introduces Bayesian probability, generic intelligence score, player confidence labels, posture-dependent sensor results, hidden-truth-derived prose, direct assessment setting from collection, UI-owned intelligence logic or a generic multi-claim framework not required by Kestrel.
