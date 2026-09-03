@@ -7,194 +7,244 @@ status: active
 
 Backlink: [[README]]
 
-This document is the implementation authority for **#108 — V2 browser E2E vertical slice**. It verifies that the browser preserves the already-authoritative V2 game rather than creating a second set of rules.
+This is the implementation authority for **#108 — proving the browser preserves the authoritative Kestrel game through the real web → server → sim → replay path**. It verifies mechanics/information integrity, never fun.
 
-## Purpose
+## Start gate
 
-Browser E2E proves:
+Do not begin #108 until:
 
-- the complete player path works through the real server/sim contracts;
-- implicit delegation still produces explicit authoritative command evidence;
-- stale revisions fail safely;
-- hidden truth remains hidden;
-- Kestrel can reach and display terminal outcomes/debrief correctly;
-- V1 remains available.
-
-It cannot prove that the game is fun.
+- #105 Command Room complete;
+- #106 Consequence Reveal complete;
+- their earlier #104/#107/formative-smoke continuation gates have been satisfied.
 
 ## Test environment
 
-Use the real built web application against the real V2 server/API boundary with deterministic test content/seed fixtures.
+Use the real built web application and production V2 API/DTO path with deterministic fixtures.
 
-Test-only fixtures may create known hidden starting states for hostile non-interference assertions, but:
+Test setup may seed known hidden state outside the player route for hostile assertions, but production player endpoints must never gain a hidden/debug truth mode.
 
-- the browser must not receive a special hidden-state endpoint;
-- production DTO/API code must remain the path under test;
-- test setup state is injected before the user-facing request path, not through browser-accessible mutation authority.
+Assertions must inspect semantic DTO/DOM state, not screenshots alone.
 
-## Required full-run golden path
+## Full-run golden path
 
-Provide at least one complete six-cycle browser run from opening intent through terminal debrief that:
+At least one complete browser run must:
 
-1. declares the immutable four-question standing direction;
-2. submits Cycle-1 command with at least one issue left at implicit Delegate;
-3. exercises an authored personal intervention;
-4. creates and later honours or breaches a real commitment;
-5. exercises the Lattice or liaison information path;
-6. reaches Cycle 5 with more than two credible intervention candidates;
-7. submits a legal Cycle-6 final course;
-8. displays terminal classification;
-9. displays “What HQ believed” before/alongside the separate completed-run hidden-truth debrief;
-10. exports/reads a session that passes trusted replay.
+1. declare immutable standing direction;
+2. leave at least one issue untouched at implicit Delegate;
+3. use personal intervention;
+4. create and later test a real commitment/authority choice;
+5. exercise Lattice or commander-only liaison;
+6. reach the authored Cycle-5 collision;
+7. choose a legal final course from the **pruned player-safe route set**;
+8. show post-route terminal state/classification;
+9. show `What HQ believed` and only then terminal truth debrief;
+10. export/read a session that passes trusted replay.
 
-The golden path should not be treated as the one correct strategy. Additional hostile routes below exercise alternatives.
+The route is a coverage fixture, not the intended strategy.
 
-## Implicit delegation proof
-
-In at least one cycle:
-
-- do not click/interact with one or more issue controls;
-- confirm UI presents staff intended action/reasons;
-- click `Issue Orders`;
-- inspect the authoritative server/session result and prove an explicit `delegate` disposition exists for the untouched issue;
-- prove the browser did not send the delegated final order ID as authority;
-- prove sim/server resolved the actual delegated order.
-
-Reject a UI that requires an approve/delegate click for every issue.
-
-## Intervention-budget behavior
-
-E2E must prove:
-
-- selecting one intervention updates visible personal-attention usage;
-- selecting a second reaches the limit;
-- a third cannot be submitted;
-- reverting an earlier intervention to Delegate frees the token;
-- no earlier intervention is silently replaced;
-- legal Defer remains distinct from intervention.
-
-The server remains the ultimate validator even if client affordances prevent illegal drafts.
-
-## Stale-revision hostile route
-
-Create a real stale-write condition between browser draft and submission.
+## Implicit delegation / complete-package authority
 
 Prove:
 
-- server rejects with the established stale-revision contract;
-- browser does not retry silently;
-- browser refreshes/reconciles authoritative state;
-- changed issue/recommendation/reason is made visible to the player;
-- no outdated order is committed;
-- draft choices are retained only when they still map safely to unchanged authoritative issue/order IDs; otherwise the player must re-review that issue.
+- untouched issues submit explicit `delegate` dispositions;
+- browser does not send delegated final order IDs as authority;
+- server/sim derives delegated orders;
+- untouched all-Delegate staff package is legal in representative states including C5;
+- if the player creates an incompatible cross-issue draft, browser explains the safe conflict/requirement and cannot submit it;
+- browser never silently changes another issue to repair legality;
+- server independently rejects an incompatible package if client-side prevention is bypassed.
 
-## Hidden-truth non-interference route
-
-Create paired V2 test sessions with:
-
-- different hidden Ravellan posture/preparation/world truth;
-- identical player-public campaign state;
-- identical HQ belief/evidence;
-- identical known commitments/capability/agenda inputs.
-
-Through the normal API/browser projection, prove deep-equivalent player-facing:
-
-- situation summary where hidden truth is not legitimately observable;
-- Intelligence Chief assessment/reasons;
-- agenda membership;
-- staff recommendation/reasons/dissent;
-- legal orders;
-- consequence projection before any truth-revealing event.
-
-Do not compare only screenshots. Assert DTO/semantic DOM content so a hidden-field leak cannot hide off-screen.
-
-## Ravellan observation boundary route
-
-Execute two otherwise equivalent player command histories where one authored public action emits a Ravellan observation and the other does not.
+## Intervention economy
 
 Prove:
 
-- the current-cycle UI does not show a same-cycle clairvoyant Ravellan reaction;
-- the following cycle may legitimately diverge according to #99 policy;
-- the browser never receives raw `AdversaryObservation` records.
+- personal-attention usage updates correctly for first/second override;
+- third normal intervention cannot submit;
+- undo to Delegate returns token;
+- no prior override silently replaced;
+- `request-partner-liaison` always consumes one normal intervention and can never appear as delegated staff intent;
+- Task Collection does not consume the two normal tokens.
 
-## Intelligence/Lattice route
+## Stale revision
 
-Exercise:
+Create a real stale draft.
 
-- Lattice maturity through all three scheduled advances;
-- Cycle-4 named Task Collection;
+Prove:
+
+- server rejects;
+- browser never retries/commits silently;
+- authoritative projection refreshes;
+- changed issue/recommendation/reason is visible;
+- only safely remappable draft choices survive; changed/incompatible choices require review.
+
+## Hidden-truth / safe DTO attack
+
+Paired sessions with different hidden Ravellan truth but identical legitimate public/HQ inputs must produce deep-equal normal player semantics.
+
+Assert absence of:
+
+- hidden posture/preparation;
+- raw Ravellan action/policy-row IDs;
+- raw `AdversaryObservation`;
+- raw private ledger/state/hash fields;
+- collection selector inputs;
+- oracle/counterfactual state;
+- probabilities/future branches.
+
+Cycle 6 receives only safe crisis family:
+
+- `seizure-underway`;
+- `threshold-confrontation`;
+- `pressure-receding`.
+
+## Coalition → Ravellan signal timing/composition
+
+Exercise authored histories from [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
+
+Prove:
+
+- coalition action in Cycle N never causes a same-cycle Ravellan reaction;
+- next cycle may diverge according to #99;
+- C1 weak/credible watch signals differ;
+- C2 quiet/visible/public posture signals compose deterministically;
+- C3 reassurance produces coherent unity where authored;
+- C4 targeted quiet preparation can produce discovery suspicion;
+- C5 visible reinforcement can produce targeted discovery;
+- multiple C5 orders never emit contradictory same-ID `beacon_coverage_signal` values at one effective point;
+- C5 qualifying reserve orders count as one deployment **cycle** for exhaustion observation;
+- raw signal records never appear in browser JSON.
+
+## Intelligence / reroute / Lattice / liaison
+
+### Reroute clue
+
+Exercise `reroute-and-monitor` and prove:
+
+- known civilian/political disruption appears;
+- no generic intel/stat bonus appears;
+- C3 queued auxiliary-tasking **indicator** arrives through the ordinary HQ evidence path;
+- it can remain after generic C3 conflict expires;
+- hidden posture is not exposed as selector truth.
+
+### Lattice
+
+Prove:
+
+- exact scheduled maturity path;
+- Cycle-4 Task Collection target choice;
 - no immediate assessment change on task submission;
-- next-cycle authored evidence/result;
-- updated natural-language HQ assessment through #100;
-- no numeric confidence/percentage/band;
-- no hidden posture/preparation value;
-- no normal-intervention token spent by Task Collection.
+- next-update result enters ordinary HQ evidence;
+- target results are invariant to posture-only changes when target-authorised preparation/action facts are fixed;
+- no numeric confidence/hidden result branch in DTO;
+- target choice is mechanically distinct in at least targeted integration fixtures.
 
-Also exercise a non-Lattice fixture/history proving liaison:
+### Liaison
 
-- costs one normal intervention;
-- returns narrower evidence;
-- creates the liaison obligation;
-- does not produce a corroborating result.
+Non-Lattice fixture must prove:
 
-## Commitment/recovery route
+- one normal intervention consumed;
+- narrower indicator evidence only;
+- real liaison obligation created;
+- cannot Delegate;
+- no hidden/posture shortcut.
 
-E2E must exercise at least one explicit promise/obligation and a costly recovery path.
+## C2 partner coordination
 
-Example hostile path:
+Through normal APIs prove:
 
-- create consultation promise;
-- take an authored unilateral course that breaches it;
-- verify consequence reveal names the breach and partner change;
-- later use political concession where legal;
-- verify immediate access can recover while concession remains a terminal severe cost.
+- active C1 formal consultation channel + C2 joint warning + visible patrol surge → coordinated surge; no authored partner penalty;
+- same visible surge without the established channel is uncoordinated and worsens partner;
+- C2 `public-accusation` worsens partner even without a formal promise;
+- with active promise, accusation additionally breaches it;
+- these political/public actions produce only the authorised later Ravellan signals.
 
-Also exercise reserve recovery:
+## C5 package/tempo/authority
 
-- create reserve strain;
-- use emergency consolidation;
-- verify reserve improves while Beacon exposure worsens.
+Exercise representative C5 packages.
 
-The UI must not present recovery as free restoration.
+Prove:
 
-## Consequence-reveal information safety
+- `partner-authority` starts pending and resolves deterministically;
+- active rapid formal channel + honour consultation can authorise immediate partner-sensitive action;
+- without rapid channel, honour consultation remains legal and creates later joint authority but cannot accompany immediate visible reinforcement/public attribution;
+- `act-then-inform` buys same-cycle unilateral tempo only with at least one sensitive action and carries package-level political damage/breach;
+- political concession buys immediate coordinated authority at severe cost;
+- withdrawn + honour remains legal without forced concession and does not restore access;
+- C5 reserve/exposure signed effects are invariant to issue/order sequencing;
+- no per-order double political penalty occurs.
 
-For a non-terminal cycle, assert that reveal contains the canonical five-part semantics where applicable:
+## One-shot attribution / source cost
+
+When `attribution-opportunity = credible`:
+
+- UI must disclose **before selection** that public use spends the one-shot opportunity and exposes/compromises the protected source;
+- `hold-attribution` preserves `credible` for possible final Hold And Expose;
+- C5 `use-attribution` → `used`, applies authorised immediate effects, cannot regenerate later, and removes C6 Hold And Expose;
+- known source-exposure cost appears in consequence/terminal state rather than hidden classification only;
+- no future hidden outcome is previewed.
+
+## Consequence reveal safety
+
+Non-terminal reveal must preserve:
 
 - observed change;
 - belief-safe cause;
-- persistent callback;
+- persistent/history callback;
 - unresolved pressure;
 - future influence point.
 
-Prove no hidden truth, oracle result, exact future event or “right choice” language appears.
+Exercise delegated callbacks, personal interventions, promise/authority changes, reroute clue, Lattice maturity, and net C5 package effects.
 
-## Cycle-6 route/outcome route
+Do not expose hidden truth, oracle alternatives, exact future events or “right answer” language.
 
-Use deterministic fixtures to cover all four final course families across E2E runs or targeted terminal setup tests:
+## Cycle-6 route pruning / outcomes
 
-- Quiet Denial;
-- Joint Visible Denial;
-- Emergency Mobilisation;
-- Hold And Expose.
+Use deterministic targeted terminal histories through normal authoritative APIs.
 
-Prove legal availability comes from public/known campaign state and matches [[27-KESTREL-TERMINAL-MATRIX]].
+Prove route set exactly matches [[27-KESTREL-TERMINAL-MATRIX]]:
 
-At minimum cover terminal UI for:
+### `pressure-receding`
+
+- Quiet Denial always available;
+- Hold And Expose only with unspent credible attribution + partner access;
+- Joint Visible Denial absent;
+- Emergency Mobilisation absent.
+
+### `threshold-confrontation`
+
+- Quiet Denial available;
+- Hold And Expose where credible/access exists;
+- Joint Visible Denial only where it supplies authorised visible/partner value under 27;
+- Emergency Mobilisation absent.
+
+### `seizure-underway`
+
+- Emergency Mobilisation always legal as comeback;
+- Quiet Denial only with prepared denial;
+- Joint Visible Denial only with joint/concession authority + pre-route reserve not brittle;
+- Hold And Expose only with unspent credible attribution + partner access.
+
+Across fixtures cover all four course families where legal/useful and all outcome classes:
 
 - Strategic Success;
 - Costly Success;
 - Political Defeat;
 - Operational Defeat.
 
-A single golden browser run need not produce every outcome; use deterministic targeted terminal histories while preserving normal authoritative API execution.
+Final route must mutate authoritative post-route state before classification/Pareto reporting:
 
-## Terminal truth-reveal boundary
+- Joint spends reserve;
+- Emergency spends reserve, carries emergency-surge when it holds Beacon and may harm uncoordinated partner;
+- Hold And Expose consumes attribution, improves partner where possible and creates source-exposure severe cost;
+- late Quiet seizure reaction can create late-reaction cost.
 
-Before final resolution, hidden Ravellan opening posture/preparation must not appear.
+Routes pruned as player-safe dominated must never appear as phantom UI alternatives.
 
-After terminal completion, the debrief may show:
+## Terminal truth gating
+
+Before terminal completion, no prior hidden posture/preparation/policy history.
+
+After a replay-valid terminal session, debrief may expose explicit debrief-safe truth:
 
 - opening posture;
 - posture transitions;
@@ -202,58 +252,40 @@ After terminal completion, the debrief may show:
 - genuine/deceptive signals;
 - policy reasoning.
 
-Assert this truth data is only included/rendered for a terminal-complete session through the authorised debrief projection.
+Never serialize raw private state even post-run.
 
-## Replay/export closure
+## Replay/export
 
-At least the full golden browser run must:
+Golden run and representative hostile C2/C5/terminal runs must pass trusted replay as appropriate.
 
-- end with canonical final digest;
-- export/read through supported V2 path;
-- pass trusted replay with live canonical content;
-- preserve exact ordered intent/Ravellan/command/system evidence.
+Verify ordered player/system evidence, state hashes/revisions, content identity and post-route state. Browser-local/tampered state never becomes authority.
 
-Tampered saved/browser-local state must not become authoritative.
+## Accessibility / V1
 
-## V1 coexistence
+At least one full command/reveal cycle runs keyboard-only with semantic labels/status/error handling.
 
-Retain a focused V1 browser E2E/smoke proving:
+Retain focused V1 E2E proving V1 client flow still works under its own semantics; V1 need not adopt V2 UX.
 
-- V1 scenario still opens;
-- V1 normal command flow still uses its existing semantics;
-- V2 routes/DTO assumptions do not silently replace V1 behavior.
+## Closure proof
 
-Do not require V1 to adopt V2 interaction design.
-
-## Accessibility in E2E
-
-Exercise primary flow using keyboard only for at least one cycle:
-
-- navigate issue groups;
-- reveal/select intervention;
-- undo to Delegate;
-- reach and activate `Issue Orders`;
-- read/focus consequence reveal and advance.
-
-Assert semantic labels/status/error regions rather than relying only on screenshots.
-
-## Required #108 proof set
-
-#108 does not close until the suite demonstrates:
+#108 remains open until it proves:
 
 - complete six-cycle authoritative browser run;
-- implicit-delegation authority boundary;
-- intervention budget/undo;
-- stale-write rejection/reconciliation;
-- paired hidden-truth non-interference;
-- Ravellan next-cycle observation timing;
-- Lattice and liaison paths;
-- promise breach + recovery;
-- terminal route/outcome/debrief boundaries;
-- trusted replay of browser-produced session;
-- keyboard primary flow;
+- implicit delegation + complete-package authority;
+- intervention budget / liaison authority;
+- stale-write safety;
+- strict hidden-truth DTO boundary;
+- next-cycle adversary signal timing + contradiction-free composition;
+- reroute clue, Lattice and liaison paths;
+- C2 coordination/accusation;
+- C5 tempo/authority/order-independence;
+- one-shot attribution/source cost;
+- pruned terminal route sets + post-route effects;
+- all four terminal outcome classes;
+- trusted replay;
+- keyboard primary path;
 - V1 coexistence.
 
 ## Rejection conditions
 
-Reject #108 if tests mock away the authoritative server/sim boundary, assert only screenshots while missing hidden DTO leakage, auto-repair stale writes, treat a golden route as proof of balance/fun, bypass trusted replay, or allow test-only hidden-state endpoints into the production browser contract.
+Reject #108 if it mocks away authoritative server/sim logic, asserts screenshots only, auto-repairs stale/invalid packages, exposes hidden selector data, displays pruned trap routes, treats E2E as fun proof, bypasses replay, or lets test-only hidden-state access enter production player routes.
