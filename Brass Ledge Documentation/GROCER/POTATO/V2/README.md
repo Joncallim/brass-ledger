@@ -14,10 +14,11 @@ This is the canonical authority for the bounded V2 experiment. It supersedes the
 - [[20-VERTICAL-SLICE]] — concise frozen slice summary.
 - [[21-KESTREL-SIX-CYCLE-CANON]] — canonical six-cycle product design.
 - [[22-RAVELLAN-EXECUTABLE-POLICY]] — deterministic Kestrel-only adversary policy.
-- [[23-HQ-BELIEF-AND-EVIDENCE]] — #100 evidence, assessment and player-safe intelligence.
+- [[23-HQ-BELIEF-AND-EVIDENCE]] — #100 tradecraft/gameplay semantics: evidence, assessment, warning, public-case basis and Intel-Chief brief.
+- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] — **exact #100 pure-derived code/replay/history/content-identity architecture against committed #99**.
 - [[24-STAFF-RECOMMENDATION-POLICY]] — #98 recommendation/dissent algorithm.
 - [[25-KESTREL-CONSEQUENCE-MATRIX]] — #101 concrete persistent records/transitions/recovery.
-- [[26-LATTICE-COLLECTION-MATRIX]] — #102 capability and directed collection.
+- [[26-LATTICE-COLLECTION-MATRIX]] — #102 capability and differentiated directed collection.
 - [[27-KESTREL-TERMINAL-MATRIX]] — **final Cycle-6 route legality, post-route effects and terminal classification authority**.
 - [[28-COMMAND-ROOM-INTERACTION-CONTRACT]] — #105 command-by-exception interaction.
 - [[29-CONSEQUENCE-REVEAL-CONTRACT]] — #106 causal reveal.
@@ -31,7 +32,7 @@ This is the canonical authority for the bounded V2 experiment. It supersedes the
 - [[37-RAVELLAN-WORLD-EFFECT-MATRIX]] — Ravellan hidden action → bounded world/player manifestation.
 - [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] — coalition public action/package → exact #99 adversary observations and playable policy-row reachability.
 - [[38-PLAYER-SAFE-PROJECTION-CONTRACT]] — strict normal-player DTO/truth gating.
-- [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] — **cross-system-only authority** for complete C2/C5 command-package interaction, partner authority/tempo, recommendation applicability and other mechanics that genuinely span subsystem boundaries. The base subsystem contracts have been normalised; do not use 39 as a reason to ignore them.
+- [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] — **cross-system-only authority** for complete C2/C5 command-package interaction, partner authority/tempo, recommendation applicability and mechanics that genuinely span subsystems.
 - [[40-EVALUATION-CONTRACT]] — machine versus human proof.
 - [[50-EXECUTION-PLAN]] — dependency/gate order.
 - [[60-DECISION-LOG]] and [[70-TRADEOFF-REGISTER]] — settled choices and reversible limits.
@@ -42,18 +43,21 @@ This is the canonical authority for the bounded V2 experiment. It supersedes the
 
 Use the narrowest contract that owns the question:
 
-- subsystem behavior → its numbered base contract (`22`–`27`, `36`, `37/37A`, `38`);
-- interaction between otherwise-correct subsystem/issue decisions → `39`;
-- ordering/persistence/version boundaries → `10` / `30`;
-- sequencing/gates → `50`;
-- human pass/fail → `35` / `40` / `80`, with #110 human-owned.
+- Ravellan policy → [[22-RAVELLAN-EXECUTABLE-POLICY]];
+- HQ intelligence product semantics → [[23-HQ-BELIEF-AND-EVIDENCE]];
+- #100 code/history/replay seam → [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]];
+- other subsystem behavior → its numbered base contract;
+- interaction between otherwise-correct subsystem/issue decisions → [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]];
+- ordering/persistence/version boundaries → [[10-GAMEPLAY-CONTRACT]] / [[30-ARCHITECTURE-CONTRACT]];
+- sequencing/gates → [[50-EXECUTION-PLAN]];
+- human pass/fail → [[35-HUMAN-PLAYTEST-HARNESS]] / [[40-EVALUATION-CONTRACT]] / [[80-HUMAN-PLAYTESTS]], with #110 human-owned.
 
-If a future implementation reveals a real contradiction not covered by this map, stop with `BLOCKED: PRODUCT DECISION REQUIRED` rather than inventing another implicit precedence layer.
+If implementation reveals a real contradiction not covered by this map, stop with `BLOCKED: PRODUCT DECISION REQUIRED` rather than inventing another implicit precedence layer.
 
 ## Frozen scope
 
 Only the six-cycle plain-text vertical slice is in scope. No extra scenario, graphics, doctrine depth, tutorial expansion, meta progression, broad rewrite or speculative generalisation may be added before the human gate.
 
-`32-POST-GATE-GAME-ARCHITECTURE` records hypotheses only. It cannot expand implementation scope before #110 and explicit human product-owner authorisation.
+[[32-POST-GATE-GAME-ARCHITECTURE]] records hypotheses only. It cannot expand implementation scope before #110 and explicit human product-owner authorisation.
 
-`37A` and `39` are not scope expansion: they close ambiguity discovered when the already-approved Kestrel systems were reviewed as one game.
+[[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] and [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] close ambiguity in already-approved Kestrel systems; they do not authorise new product breadth.
