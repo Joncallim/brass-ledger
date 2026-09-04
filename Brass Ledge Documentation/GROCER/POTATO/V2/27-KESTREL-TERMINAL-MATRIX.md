@@ -9,7 +9,7 @@ Backlink: [[README]]
 
 This is the implementation authority for Kestrel Cycle-6 route legality, physical resolution, terminal state effects and classification. It uses verified canonical state and the **safe observable crisis family**, never hidden opening posture as a player answer key.
 
-[[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns cross-system timing/authority details.
+[[23-HQ-BELIEF-AND-EVIDENCE]] owns HQ assessment versus tactical-warning semantics. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns cross-system timing/authority details.
 
 ## Inputs
 
@@ -18,7 +18,8 @@ Terminal resolution may use:
 - safe crisis family;
 - Beacon exposure/preparation;
 - reserve condition;
-- HQ assessment/evidence;
+- HQ **derived tactical-warning state**;
+- HQ assessment/evidence only where a separately authorised predicate needs it;
 - unspent attribution opportunity;
 - partner consent / C5 partner authority;
 - explicit commitments/concession/liaison history;
@@ -30,7 +31,11 @@ Terminal resolution may use:
 
 `preparedDenial = beacon-preparation == prepared`
 
-`usableWarning = HQ assessment direction == preparation`
+`usableWarning = deriveV2HqBelief(...).warning == usable`
+
+**Do not derive `usableWarning` from `HQ assessment.direction == preparation`.**
+
+A commander can correctly assess preparation without having a timely physical warning signpost. Conversely, a physical warning signpost can be usable even while the wider intent assessment remains conflicted.
 
 `partnerAccess = partner-consent != withdrawn`
 
@@ -287,11 +292,13 @@ Classification/severe flags are reported separately and considered by #107 local
 
 Only routes with a real known role remain:
 
-- clean Quiet if the prepared plan works;
-- late Quiet only when a legal Joint route does not strictly dominate it;
+- clean Quiet if the prepared plan works **and HQ has actual usable warning**;
+- late Quiet when the physical plan exists but warning/positioning is insufficient, only if Joint does not strictly dominate it;
 - Joint where authority/physical state make visible coalition denial useful;
 - Hold And Expose where burning the source trades against reserve/political state;
 - Emergency only as fallback after the better prepared/joint paths are absent.
+
+This makes collection quality matter without turning the final choice into “guess hidden posture.”
 
 ## Threshold confrontation
 
@@ -307,6 +314,9 @@ At minimum prove:
 
 - legality uses only safe player-known state;
 - raw prior posture/preparation never affects route set;
+- `usableWarning` comes from the separate #100 warning reducer, not assessment direction;
+- `preparation + coherent` with warning `none` does **not** qualify as clean Quiet warning;
+- `unclear + conflicted` with a valid physical warning-role item **can** have warning `usable`;
 - no displayed Quiet/Joint seizure route is known unable to hold Beacon;
 - late-reaction Quiet pruned whenever `jointBaseSeizure` makes Joint strictly dominate it;
 - clean Quiet remains alongside Joint when degraded partner creates a reserve-vs-politics trade;
@@ -326,4 +336,4 @@ At minimum prove:
 
 # Rejection conditions
 
-Reject terminal implementation if it displays a route player-known state makes futile when another viable route exists, shows late-reaction Quiet beside a strictly superior legal Joint route, keeps Emergency beside known-valid Quiet/Joint, offers mobilisation after backdown, treats attribution as source-free, permits Hold after C5 use, treats coercion evidence as warning, infers joint authority from sentiment, classifies pre-route state or matches route to hidden opening posture.
+Reject terminal implementation if it displays a route player-known state makes futile when another viable route exists, derives tactical warning from broad preparation assessment, shows late-reaction Quiet beside a strictly superior legal Joint route, keeps Emergency beside known-valid Quiet/Joint, offers mobilisation after backdown, treats attribution as source-free, permits Hold after C5 use, infers joint authority from sentiment, classifies pre-route state or matches route to hidden opening posture.
