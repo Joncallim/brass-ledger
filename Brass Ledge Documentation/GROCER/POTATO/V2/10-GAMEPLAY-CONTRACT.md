@@ -7,60 +7,65 @@ status: active
 
 Backlink: [[README]]
 
-## Authority
+# Authority
 
-The deterministic simulation owns every state transition.
+The deterministic simulation owns every state transition and derived gameplay rule.
 
-Content authors bounded Kestrel issues/orders/evidence/world manifestations/signals/consequence rules. Presentation shows strict player-safe derivations and submits only player authority; it never scores, chooses or resolves game rules locally.
+Content authors bounded Kestrel issues, courses, evidence definitions, producer mappings, world manifestations, signals and consequence rules. Presentation renders strict player-safe projections and submits only player authority.
 
-## Canonical command-cycle semantics
+# Canonical command-cycle semantics
 
-For each cycle, conceptually:
+Conceptually, each cycle:
 
-1. advance elapsed/external world conditions;
-2. resolve the authorised Ravellan decision from only its own persisted state + typed active adversary observations;
-3. advance existing persistent consequences according to authored lifecycle;
-4. produce/update HQ evidence from only authorised observations/queued collection results;
-5. deterministically reduce HQ assessment;
-6. build the agenda from belief/public commitments/capability/current pressure;
-7. derive belief-safe responsible-officer recommendations/dissent from standing direction and known state;
-8. player leaves issues delegated or intervenes/defers/selects an authored task/terminal course;
-9. validate the **complete atomic player command set**, including cross-issue requirements;
-10. resolve final orders and direct consequence/capability/commitment effects from the complete set;
-11. project the resulting public/detectable coalition behavior into the exact Ravellan observation set for next-cycle use;
-12. produce belief-safe consequence beats;
-13. persist/replay every authoritative mutation/evidence transition under the V2 ledger/version contract;
-14. advance to the next cycle / terminal debrief as appropriate.
+1. advance authorised external/world conditions;
+2. resolve Ravellan from its persisted state + typed active adversary observations only;
+3. resolve any due replay-verifiable consequence/capability transitions;
+4. derive all HQ evidence occurrences due at the current pre-command information cut;
+5. independently reduce intent assessment, tactical warning and public-case basis;
+6. build agenda from legitimate HQ/public/commitment/capability state;
+7. derive responsible-officer recommendation/reasons/dissent from standing direction and known state;
+8. present the implicit-delegation command surface;
+9. accept player interventions/defer/task/final-course authority;
+10. validate and resolve the complete atomic command package;
+11. resolve persisted consequence/capability/commitment/source-use effects;
+12. project exact public coalition behaviour into Ravellan observations for next-cycle use;
+13. derive belief-safe consequence beats;
+14. persist/replay every authoritative mutation and reconstruct pure readouts on demand;
+15. advance to the next cycle or terminal debrief.
 
-The conceptual gameplay order does not require one ledger entry per numbered sentence. [[30-ARCHITECTURE-CONTRACT]] owns the engineering rule: every persisted authoritative mutation must be either an explicit replay-verifiable transition or a pure derivation, never unlogged state drift.
+The conceptual order does not require one ledger entry per sentence.
 
-#99 owns the first-class `ravellan-decision` transition and its final committed ordering. #100 onward must integrate against that actual committed replay path rather than guessing an insertion point while #99 is open.
+Every persisted authoritative mutation follows one of two patterns from [[30-ARCHITECTURE-CONTRACT]]:
 
-## Information boundary
+- explicit replay-verifiable transition; or
+- not persisted because it is a pure deterministic readout.
 
-World truth, Ravellan state/observations, HQ belief and presentation are distinct.
+#99 owns `ravellan-decision`. #100 HQ intelligence is pure derived state and creates no evidence ledger entry/revision/version change.
 
-- Ravellan policy reads only cycle + its own posture/preparation + active authored `AdversaryObservation` records.
-- HQ collection/assessment reads only the world/action facts each observation rule is specifically authorised to inspect.
-- Recommendation reads HQ belief + standing intent + known commitments/capability/public issue state.
-- Normal player DTO reads only HQ belief/public known state/current observable crisis.
+# Information boundary
 
-Changing hidden truth alone with all legitimate observable inputs fixed must not change staff/player output.
+World truth, Ravellan state/observations, HQ-derived intelligence, campaign state and presentation use separate types.
 
-Directed collection is stricter: hidden Ravellan posture alone cannot change a sensor result when its authorised physical/action-history inputs are unchanged.
+- Ravellan policy reads only cycle + its posture/preparation + active authored adversary observations.
+- HQ observation extractors read only the exact world/history facts each named producer is authorised to inspect.
+- HQ evidence reducers never read arbitrary hidden state or narrative prose.
+- Recommendation reads only the specific #100 products an issue is authorised to use plus standing direction and known campaign state.
+- Normal player DTO contains only bounded HQ/public/current-crisis semantics.
 
-## Standing direction / recommendation
+Changing hidden truth alone while all legitimate evidence/public inputs remain fixed must not change normal staff/player output.
 
-Opening questions remain:
+# Standing direction and recommendation
 
-- what matters most;
-- what staff must not spend without asking;
-- which temporary cost is tolerable;
-- how HQ normally behaves.
+Opening standing direction remains:
+
+- main effort;
+- protected boundary;
+- acceptable secondary risk;
+- posture preference.
 
 Recommendation precedence:
 
-1. player-legal / recommendation-applicable set;
+1. player-legal/recommendation-applicable set;
 2. protected boundary;
 3. main priority;
 4. default style;
@@ -68,107 +73,133 @@ Recommendation precedence:
 6. known commitment;
 7. authored responsible-chief tie.
 
-Chief worldview creates professional tie/concern/dissent but does not pre-filter the commander's direction.
+Chief worldview creates professional preference/concern/dissent but never pre-filters the commander’s direction.
 
-There is no hidden score.
+No hidden score.
 
-## Command semantics
+# Command semantics
 
-For each ordinary agenda issue:
+For each ordinary issue:
 
-- **Delegate** executes the responsible officer's authoritative recommendation;
-- **Intervene** selects a different legal authored course and consumes personal intervention where normal;
-- **Defer** exists only where explicitly authored.
+- **Delegate** executes the authoritative staff recommendation;
+- **Intervene** selects a different legal authored course and consumes personal attention where normal;
+- **Defer** exists only where authored.
 
-The Command Room may default issues locally to Delegate so the player interacts primarily with exceptions, but the submitted command set remains explicit.
+Issues begin locally delegated. The player mainly changes exceptions. The complete submitted command remains explicit and server/sim-authoritative.
 
-The all-Delegate staff package must itself always be a legal complete command set.
+The untouched all-Delegate package must be legal.
 
-Kestrel's partner-liaison fallback is the one explicit commander-only `requiresIntervention` course; it cannot be delegated.
+Exactly three Kestrel courses are commander-only `requiresIntervention = true`:
 
-## Atomic cross-issue composition
+1. C2 `public-accusation`;
+2. C4 `request-partner-liaison`;
+3. C5 `use-attribution`.
+
+They can never be staff recommendations or Delegate.
+
+# Atomic package composition
 
 One cycle command is one atomic player-authority mutation.
 
-Where issues interact, e.g. C2 coordination or C5 partner authority/visible action/recovery:
+For C2/C5 interacting issues:
 
 - validate the complete set;
 - derive cross-issue semantics from the complete set;
-- do not let issue/array order alter state;
-- do not silently repair another player choice.
+- never let issue/array order change state;
+- never silently repair another player choice.
 
 Exact Kestrel composition is [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
 
-## Intelligence
+# Intelligence
 
-One Kestrel claim: `ravellan-intent`.
+One bounded claim:
 
-Internal authored evidence reduces deterministically to natural-language judgement; no player percentage/confidence bar/High-Medium-Low label.
+`ravellan-intent`
 
-Named collection changes specific evidence, not a generic intelligence score.
+HQ derives three independent products:
 
-C2 reroute monitoring, C3 focused collection, Lattice targets and liaison all use posture-blind target rules in [[23-HQ-BELIEF-AND-EVIDENCE]] / [[26-LATTICE-COLLECTION-MATRIX]].
+- intent assessment;
+- tactical warning;
+- public-case basis.
 
-## Adversary fairness
+Evidence uses categorical indicator/diagnostic semantics, explicit contrary evidence, source/method limitations, role-specific currency and persistent supersession. It never becomes a confidence score.
 
-Ravellan pursues its own authored objective from hidden state and the closed public observation vocabulary.
+Assessment, warning and public-case relevance may expire at different times. Stale reports remain historical.
 
-Exact coalition→Ravellan signal emissions are [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
+Named collection changes exact evidence occurrences, not a generic intelligence stat.
 
-No player score, win probability, private order, HQ belief, oracle data, future input or rubber-banding.
+Exact semantics/state space/catalog are [[23-HQ-BELIEF-AND-EVIDENCE]], [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]], [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] and [[23C-HQ-BELIEF-EVIDENCE-CATALOG]].
 
-A player-caused weak/strong signal chain can change Ravellan behavior, but missing signals are never inferred as their opposite.
+# Lattice
 
-## Persistent consequence / recovery
+If matured, Lattice automatically tasks one unused named target in C4 and another different target in C5 according to standing priority unless the player retargets.
 
-Kestrel uses concrete records for Beacon exposure/preparation, reserve, partner consent/authority, promises/obligations, Lattice and attribution opportunity.
+Task Collection costs zero normal intervention.
 
-Before C6, serious deterioration retains the authored costly counterplay promised by the slice. Recovery is never free and may worsen another dimension.
+No zero-cost no-task or same-target retask exists in Kestrel. C6 adds no normal world transition that could make such a retask informative.
 
-## Attribution
+# Adversary fairness
 
-Credible attribution is one source-sensitive opportunity in Kestrel.
+Ravellan pursues its authored objective from hidden state and the closed observation vocabulary in [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
 
-- C5 public use spends it (`credible → used`), exposes/compromises the protected source as a known severe cost and removes C6 Hold And Expose;
-- preserving it keeps the final political route available.
+No player score, HQ belief, private order, oracle data, future input or rubber-banding.
 
-Generic credible coercion attribution is not seizure warning; `usableWarning` is preparation-direction HQ belief only.
+Missing signal is unknown, not its opposite.
 
-## Terminal crisis
+# Persistent consequences and recovery
 
-The player sees only the safe overt crisis family:
+Kestrel uses concrete records for Beacon exposure/preparation, reserve, partner consent/authority, promises/obligations, Lattice and irreversible attribution source use.
+
+Before C6, serious deterioration retains authored costly counterplay. Recovery may worsen another dimension.
+
+# Attribution
+
+Current attribution availability is derived from:
+
+- current corroborated #100 public-case basis; and
+- persisted source-use disposition.
+
+#100 does not persist a mutable none/tentative/credible mirror.
+
+Using the source at C5/C6 persists the exact claim direction and supporting evidence basis, exposes/compromises the protected source and prevents later reuse. Holding it leaves the C6 opportunity to be re-derived from C6 information.
+
+A coercion claim is not seizure warning. Claim direction never substitutes for physical route adequacy.
+
+# Terminal crisis
+
+The player sees only:
 
 - seizure underway;
 - threshold confrontation;
 - pressure receding.
 
-Final route legality/effects are [[27-KESTREL-TERMINAL-MATRIX]]. Routes known to be player-safe dominated in the current terminal state are not shown as fake alternatives.
+Final route legality/effects are [[27-KESTREL-TERMINAL-MATRIX]]. Known player-safe dominated routes are omitted.
 
-Final routes mutate authoritative post-route reserve/partner/attribution/source-cost state before Pareto/classification.
+C6 HQ intelligence is explicitly the last pre-manifestation picture. The R6 action/row never becomes evidence.
 
-Terminal debrief then separates:
+Final routes mutate authoritative post-route state before classification.
 
-- what HQ believed at the time;
+Terminal debrief separates:
+
+- what HQ believed at the time, reconstructed exactly;
 - what actually happened in hidden Ravellan history.
 
-No numeric hidden weights exist to reveal.
+# Replay and compatibility
 
-## Replay / compatibility
+V2 replay reconstructs from canonical initial state + complete ordered authoritative player/system transitions and verifies state, revision, hashes/digests and deterministic re-execution.
 
-V2 replay reconstructs from canonical initial state + the complete ordered authoritative ledger/system transitions and verifies pre/post state, revision, hashes/digests and deterministic recomputation.
+Derived #100 intelligence is recomputed from trusted history/content identity rather than saved as another truth.
 
-The ledger is not limited to player actions: #99's Ravellan decision and any later persisted system transition are first-class authoritative evidence where required.
+Missing, duplicated, forged, reordered or unlogged authoritative mutations invalidate replay.
 
-Missing, duplicated, forged, reordered or unlogged authoritative transitions invalidate replay.
-
-Persisted-format changes increment the prototype version under [[30-ARCHITECTURE-CONTRACT]]; no silent reinterpretation/migration.
+Persisted-format changes increment the prototype version; no silent reinterpretation/migration.
 
 V1 save/replay/client semantics remain isolated.
 
-## Human-fun boundary
+# Human-fun boundary
 
-Machine tests may prove determinism, information fairness, reachability, recovery, elasticity and absence of obvious dominated traps.
+Machines may prove determinism, state-space closure, information fairness, recovery, elasticity and absence of obvious dominated traps.
 
-They cannot prove ownership, tension, regret/vindication, comprehension or voluntary continuation/replay.
+They cannot prove ownership, tension, comprehension or desire to continue/replay.
 
-#107 structural lab + 3-player formative smoke precede the main browser tranche. #110 remains an 8-player human-only decision.
+#107 structural lab + 3-player formative smoke precede the main browser tranche. #110 remains human-only.
