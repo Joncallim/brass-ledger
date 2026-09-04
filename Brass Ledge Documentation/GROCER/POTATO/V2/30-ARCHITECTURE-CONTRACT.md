@@ -17,7 +17,7 @@ Backlink: [[README]]
 
 - Ravellan policy;
 - world/action manifestation;
-- HQ evidence/assessment;
+- HQ evidence/assessment/warning/public-case derivation;
 - recommendations/dissent;
 - final delegated-order derivation;
 - complete command-package legality/composition;
@@ -30,11 +30,11 @@ Backlink: [[README]]
 
 `apps/server` owns authoritative session mutation transport, `expectedRevision`, persistence, scenario resolution and strict safe-projection delivery. It calls sim; it does not reimplement package/game rules.
 
-`apps/web` renders only strict safe projections and submits player authority. It never receives raw V2 state and never becomes final authority for recommendation/package legality.
+`apps/web` renders only strict safe projections and submits player authority. It never receives raw V2 state and never becomes final authority for recommendation/package legality/intelligence analysis.
 
 ## State / information separation
 
-World truth, HQ belief, campaign/institution state and presentation must have separate types/fields and explicit transition/derivation functions.
+World truth, HQ-derived intelligence, campaign/institution state and presentation must have separate types and explicit transition/derivation functions.
 
 World truth is persisted/replayable and may be read only by world/external/consequence/explicit observation functions authorised to inspect it.
 
@@ -46,9 +46,11 @@ Normal adversary policy may read only:
 
 Identity/seed are initialisation-only under [[22-RAVELLAN-EXECUTABLE-POLICY]].
 
-HQ evidence/assessment follows [[23-HQ-BELIEF-AND-EVIDENCE]] and is the only intelligence input to recommendation/player-visible intelligence.
+HQ intelligence follows [[23-HQ-BELIEF-AND-EVIDENCE]] / [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]].
 
-Directed collection may inspect only target-authorised world/action-history facts in [[23]] / [[26]], then creates ordinary HQ evidence. Hidden posture alone never changes sensor result.
+For #100 specifically, HQ evidence, intent assessment, warning and public-case basis are **pure derived readouts**, not persisted campaign state.
+
+Directed collection may inspect only target-authorised world/action-history facts in [[23-HQ-BELIEF-AND-EVIDENCE]] and [[26-LATTICE-COLLECTION-MATRIX]], then creates ordinary derived HQ evidence. Hidden posture alone never changes sensor result.
 
 Exact coalition→Ravellan observation projection belongs to [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
 
@@ -103,7 +105,7 @@ Whenever implementation changes persisted V2 state shape, ledger discriminator/s
 4. add no migration unless separately authorised;
 5. leave V1 behavior unchanged.
 
-Do not pre-freeze numeric future versions in planning docs.
+Do not pre-freeze numeric future versions in planning docs except where an already-committed version is being explicitly preserved.
 
 ## Authoritative mutation invariant
 
@@ -115,19 +117,55 @@ Explicit canonical ledger/system evidence whose trusted replay recomputes/valida
 
 ### B. Pure derived readout
 
-Not persisted as authoritative state; deterministically derived from already-verified state/content.
+Not persisted as authoritative state; deterministically derived from already-verified state/content/history.
 
 There is no third “persist between ledger entries and trust the save” pattern.
 
 Saved client/browser data never substitutes for trusted transition evidence.
 
-## Downstream ledger integration after #99
+## #99 committed lifecycle
 
-#99 owns first-class Ravellan transition and the current committed intent/Ravellan/command ordering once it closes.
+Committed #99 owns:
 
-#100 onward adds belief/consequence/capability state. Do not widen `ravellan-decision` to own unrelated state.
+- first-class Ravellan state;
+- `ravellan-decision` ledger entries;
+- canonical `intent-declaration → ravellan-decision → command-set` mutation relationship;
+- trusted replay recomputation;
+- current V2 persisted version `0.4.0-prototype`.
 
-After #99 closes, each downstream persisted transition inspects the actual committed replay validator and chooses the smallest replay-safe integration:
+`command-set` advances `state.cycle` by one.
+
+No downstream issue may weaken #99 replay/order validation merely to make new state easier to store.
+
+## #100 integration — resolved
+
+#100 uses **Pattern B only**.
+
+Canonical live flow becomes:
+
+```text
+ravellan-decision CN
+→ derive HQ intelligence/readout from verified state + ledger history
+→ build agenda/recommendations/player projection
+→ command-set CN
+```
+
+The bracketed intelligence step:
+
+- creates no ledger entry;
+- increments no revision;
+- mutates no state;
+- performs no evidence-expiry write;
+- does not change `v2CurrentRulesetVersion`;
+- is reproduced on demand for replay-safe history/debrief/projection.
+
+Immediately after `command-set CN` advances the state to N+1, the next-cycle HQ brief is **not ready** until `ravellan-decision C(N+1)` exists. [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns the phase guard.
+
+#100 is therefore **not** an example for later issues that genuinely persist consequences/capabilities. #101 onward must independently decide whether each new value is Pattern A or B.
+
+## Future persisted integration
+
+For #101 onward, any genuinely persisted transition must inspect the actual current replay validator and choose the smallest replay-safe integration:
 
 - narrow named system ledger entry where authoritative state genuinely changes; or
 - pure derivation where persistence is unnecessary.
@@ -141,15 +179,33 @@ Any new persisted entry requires:
 - prototype version bump;
 - V1 isolation.
 
-Do not silently weaken #99 ordering tests to fit new state. If the committed structure cannot support required canonical lifecycle without material redesign, raise `BLOCKED: PRODUCT DECISION REQUIRED` with the concrete conflict.
+Do not widen `ravellan-decision` to own unrelated state.
 
-This remains intentionally conditioned on final **committed** #99 rather than guessed against in-progress implementation.
+If the committed lifecycle cannot support a required mutation without material redesign, raise `BLOCKED: PRODUCT DECISION REQUIRED` with the concrete conflict before coding around it.
+
+## Derived-history trust boundary
+
+A derived rule may read authoritative historical ledger evidence only after that history is trusted.
+
+Normal imported-save route:
+
+```text
+raw payload
+→ identity/content validation
+→ trusted replay validation
+→ canonical V2Session
+→ derived intelligence/recommendation/projection
+```
+
+Never derive player-facing HQ intelligence directly from unverified imported ledger fields.
+
+Where a derived collection selector needs hidden historical facts, its function signature must expose **only the exact authorised facts**. Example #100 selectors in [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] may read C2 action/preparation or C4 preparation, but not hidden posture.
 
 ## Server mutation
 
 Server mutation is authoritative/revision protected. One submitted cycle command package is one atomic **player-authority** mutation even where deterministic system transitions are separate ledger entries before/after it.
 
-Headless/server call the same sim transitions. Neither client nor API may send arbitrary derived recommendations/state patches.
+Headless/server call the same sim transitions/derivations. Neither client nor API may send arbitrary derived recommendations, evidence, assessment, warning or state patches.
 
 ## Player-safe projection
 
@@ -159,11 +215,13 @@ Normal endpoints never return raw world truth, truth provenance, future preparat
 
 Agenda/legal orders/task targets/reasons/reveal derive from legitimate HQ/public state. Holding those inputs constant while changing hidden truth must produce deep-equal safe semantics.
 
+For #100, the normal player receives a bounded Intelligence-Chief brief derived in sim, not raw evidence-selector facts/internal assessment enums.
+
 Terminal truth is exposed only through terminal-complete debrief-safe DTOs, never raw hidden state.
 
 ## Recommendation integrity
 
-Recommendation input is limited to HQ belief, standing intent, chief worldview, known commitments/institutional/public state and visible course metadata.
+Recommendation input is limited to derived HQ assessment/warning where authorised, standing intent, chief worldview, known commitments/institutional/public state and visible course metadata.
 
 [[24-STAFF-RECOMMENDATION-POLICY]] owns algorithm; [[36-KESTREL-AGENDA-COURSE-MATRIX]] owns Kestrel metadata.
 
@@ -182,4 +240,4 @@ Do not reuse as V2 semantics:
 - old scenario assumptions;
 - UI-owned rules;
 - V1 predicted-event preview;
-- generic plugin/lifecycle/opponent framework built speculatively.
+- generic plugin/lifecycle/opponent/intelligence framework built speculatively.
