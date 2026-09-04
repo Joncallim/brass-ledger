@@ -9,191 +9,204 @@ Backlink: [[README]]
 
 This is the player-facing authority for **#106 — explaining authoritative consequences without turning the game into a ledger report or leaking hidden truth**.
 
-## Start gate
+[[23-HQ-BELIEF-AND-EVIDENCE]] / [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] own historical HQ intelligence reconstruction.
 
-Do not begin the main browser reveal tranche until #104/#107 and the 3-player formative-smoke continuation gate permit the browser path under [[50-EXECUTION-PLAN]].
+# Start gate
 
-## Product rule
+Do not begin main browser reveal tranche until #104/#107 + 3-player smoke permit browser path under [[50-EXECUTION-PLAN]].
 
-The reveal should make the player understand:
+# Product rule
 
-> something changed because of my personal order, the headquarters direction I set, Ravellan/external pressure, or a risk I deliberately accepted — and now I have a new problem.
+Reveal should make the player understand:
+
+> something changed because of my order, the headquarters direction I set, Ravellan/external pressure, an information gap, or a risk I accepted — and now I have a different problem.
 
 It is a causal bridge, not a mini victory screen.
 
-## Material beat structure
+# Material beat structure
 
-Each material non-terminal beat answers, in order:
+Each material non-terminal beat answers:
 
-1. **What happened?** — observable change.
-2. **What do we know about why?** — belief-safe cause only.
-3. **What from the past matters now?** — persistent/history callback.
-4. **What remains unresolved?** — uncertainty/deadline/exposure/commitment.
-5. **What can I influence next?** — known future influence point, never hidden forecast.
+1. **What happened?**
+2. **What do we know about why?**
+3. **What from the past matters now?**
+4. **What remains unresolved?**
+5. **What can I influence next?**
 
-Default reveal contains **1–5 material beats**.
+Default 1–5 beats.
 
-Prioritise semantically:
+Priority:
 
-1. material effect of personal intervention;
-2. matured promise/obligation/capability/history;
+1. material personal intervention effect;
+2. matured promise/obligation/capability/information payoff;
 3. adversary/external change altering next command;
 4. major delegated-HQ consequence;
-5. secondary accounting detail.
+5. secondary accounting.
 
 No numeric importance score.
 
-## Causality language
+# Causality language
 
-Internal provenance remains authoritative under [[25-KESTREL-CONSEQUENCE-MATRIX]], but player wording uses only visible/legitimate causality.
+Internal provenance follows [[25-KESTREL-CONSEQUENCE-MATRIX]], but normal wording remains belief-safe.
 
-### Player-caused
+## Player-caused
 
 > Your visible reinforcement strained the reserve.
 
-### Delegated / standing-direction owned
+## Delegated / standing-direction owned
 
 > Operations kept the escort quiet under your standing direction. Shipping continued with delay while the reserve stayed out of the visible confrontation.
 
-Do not pretend the player personally selected the staff order.
+Do not pretend the player clicked the delegated staff order.
 
-### Player-conditioned
+## Player-conditioned
 
 > Ravellan created the pressure. Because Beacon coverage had been thinned, the headquarters now has less margin to respond.
 
-Do not claim the player caused Ravellan's hidden choice unless the causal relation is legitimately known.
+## Adversary/external
 
-### Adversary/external
+State observable event where known; keep purpose uncertain where not legitimately known.
 
-State the external event where known; keep purpose uncertain where not known.
+# Atomic package narration
 
-## Atomic-package consequence narration
+C2/C5 interactions resolve from complete package under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
 
-C2/C5 interactions are resolved from the complete authoritative command package under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
-
-The reveal must narrate the **actual net state and package causality**, not sequentially narrate stale intermediate states that never existed authoritatively.
+Narrate actual net authoritative state, not sequential intermediate states that never existed.
 
 Examples:
 
-- coordinated C2 visible surge: reserve strained, partner penalty avoided because established channel + joint warning covered the operation;
-- C5 visible reinforcement + emergency consolidation: show that the two decisions offset Beacon-exposure movement while preparation was completed and reserve net state followed the aggregate signed delta;
-- C5 unilateral package: partner worsens one step total for the package, not once per sensitive order.
+- coordinated C2 surge: reserve strained; partner penalty avoided because channel + joint warning covered operation;
+- C5 reinforcement + consolidation: net exposure may cancel while Beacon preparation still completes and reserve follows aggregate delta;
+- unilateral C5 package: partner worsens one step total, not once per sensitive order.
 
-Individual order contributions may be shown as causal detail, but their presentation must not imply issue-array execution order changed the result.
+Individual contributions may be explained without implying array execution order.
 
-## Commitment / partner authority callbacks
+# Commitment / authority callbacks
 
-Promises/obligations are explicit when created/tested.
+Show creation/test of:
 
-Show:
-
-- formal consultation promise/channel creation;
+- formal consultation promise/channel;
 - honour/breach;
-- liaison obligation creation/fulfilment/breach;
-- C5 partner-authority result (`joint`, `unilateral`, `concession`, `none`) in player language;
-- political concession recovery without pretending prior relationship damage vanished.
+- liaison obligation/fulfilment/breach;
+- C5 authority result in player language;
+- political concession recovery without pretending earlier damage vanished.
 
-If partner was already withdrawn and the commander honours consultation, say clearly that commitment integrity was preserved **without restoring access**.
+Withdrawn + Honour should explicitly say integrity preserved without restoring access.
 
-## Information callbacks
+# Intelligence callbacks
 
-### Reroute
+Information payoff is causal history, not a stat gain.
 
-If `reroute-and-monitor` was chosen, later C3 reveal/intelligence should connect the arriving auxiliary-tasking indicator to the deliberate shipping reroute/monitoring decision. Do not call it a generic intelligence bonus.
+## Reroute
 
-### Lattice
+When C3 reroute evidence arrives, connect it to the earlier deliberate reroute/monitor decision and its civilian/political cost.
+
+## Focused collection
+
+When C4 focused staging result arrives, distinguish:
+
+- **what the wider assessment now says**;
+- whether the result created **usable tactical warning**.
+
+A preparation indicator that creates direct warning must not be narrated as “we now know Ravellan intends to attack.”
+
+Example preserved meaning:
+
+> Focused collection now shows movement worth acting on. Intelligence still cannot fully settle what Ravellan intends to do with it.
+
+where the wider assessment remains conflicted/weak.
+
+## Lattice
 
 When operational:
 
 > **Lattice Cell is operational.** You can now task one unresolved intelligence question without spending normal personal attention.
 
-Capability payoff outranks routine accounting detail.
+Later target result should explain the **kind** of information gained—physical warning, tasking diagnosis, or sustained operational sequence—rather than “intelligence improved.”
 
-### Liaison
+## Liaison
 
-Show narrower evidence + explicit obligation + intervention cost history; never imply equivalent capability to Lattice.
+Show narrower evidence + obligation + personal-attention history; never imply equivalence to Lattice.
 
-## Attribution is one-shot and source-sensitive
+## Assessment changes
 
-The Command Room must already have disclosed the cost before selection. The reveal confirms what happened.
+Where #100 derived assessment materially changes between cycles, reveal may use the bounded change ref (narrowed/strengthened/conflicted/reopened/etc.) as a bridge to the next command.
+
+Do not show internal enum, confidence score or imply change always means improvement.
+
+# Attribution is one-shot/source-sensitive
+
+Command Room discloses cost before choice. Reveal confirms actual effect.
 
 If C5 public attribution used:
 
-- `credible → used`;
-- show immediate political/discovery effect actually produced;
-- show that the final Hold And Expose opportunity has been spent;
-- show that the protected source was exposed/compromised — a known severe cost;
-- do not regenerate the opportunity from later evidence.
+- credible→used;
+- show actual immediate public/political/discovery effect;
+- final Hold And Expose spent;
+- protected source exposed/compromised;
+- later evidence never regenerates opportunity.
 
-If attribution was held, preserve the unresolved opportunity as a future influence point without promising it will be the correct C6 route.
+If held, preserve unresolved opportunity without promising it is correct C6 route.
 
-## Ravellan signals / reactions
+# Ravellan reactions
 
-The reveal may describe **observable next-cycle Ravellan behavior** when it actually occurs, but never expose raw coalition→Ravellan signal IDs or say “this set GP-1/CF-1.”
+Reveal may describe observable later Ravellan behavior when it actually occurs, never raw signal/policy IDs.
 
-For example:
+Only say a coalition action “appears to have changed Ravellan's immediate posture” where HQ can legitimately observe resulting behavior; never reveal hidden policy mechanic early.
 
-> The visible reinforcement appears to have changed Ravellan's immediate posture.
+# No hidden forecast
 
-only where HQ can legitimately observe the resulting behavior; do not reveal hidden policy mechanics before debrief.
+May show current observable state, known direct costs/commitments, HQ belief-safe causal interpretation, current warning/gap where relevant, unresolved pressure and legal influence point.
 
-## No hidden forecast
+May not show hidden posture/preparation/action/policy row, exact future event, win probability, oracle result, right/wrong verdict, or pruned ghost route.
 
-May show:
+# Progression
 
-- current observed state;
-- known direct costs/commitments;
-- HQ belief-safe causal interpretation;
-- unresolved pressure and legal influence point.
+Use anticipation-oriented safe action where authored:
 
-May not show:
+- Advance while collection runs;
+- Advance to partner deadline;
+- Advance to final confrontation;
+- otherwise Advance.
 
-- hidden posture/preparation/action/policy row;
-- exact future event;
-- win probability;
-- oracle/counterfactual result;
-- “right/wrong” verdict;
-- pruned route as a ghost option.
+No hidden-event encoding. Avoid `Next Turn` clerical framing.
 
-## Progression
+# Cycle 6 / terminal reveal
 
-After material beats, use one safe anticipation-oriented action where authored, e.g.:
-
-- `Advance while collection runs`;
-- `Advance to the partner deadline`;
-- `Advance to the final confrontation`;
-- otherwise `Advance`.
-
-Do not encode hidden future event in the label.
-
-Avoid `Next Turn` as the default clerical framing.
-
-## Cycle 6 / terminal reveal
-
-First show the actual post-route authoritative outcome from [[27-KESTREL-TERMINAL-MATRIX]]:
+First show actual post-route outcome from [[27-KESTREL-TERMINAL-MATRIX]]:
 
 - Strategic Success;
 - Costly Success;
 - Political Defeat;
 - Operational Defeat.
 
-The public final state shown must be **post-route**, including:
+Public final state is post-route, including reserve, partner/authority, attribution/source, late-reaction/emergency-surge/concession/commitment severe history where player-legitimate.
 
-- final reserve after Joint/Emergency/late Quiet effects;
-- final partner state/authority impact;
-- final attribution state;
-- source exposure where Hold And Expose/public attribution used;
-- `late-reaction`, `emergency-surge`, overreaction or concession/commitment severe-cost history where player-legitimate.
+Then two clearly separated debrief layers.
 
-Do not let a route's cost exist only as hidden classification logic.
+## What HQ believed at the time
 
-Then present two separated debrief layers.
+Reconstruct from [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] the **actual historical player-safe intelligence state at decisive cycles**, not a terminal-truth reinterpretation.
 
-### What HQ believed
+For each selected decisive window, retain:
 
-Reconstruct major assessment/evidence available at the time of decisive commands.
+- player-safe judgement;
+- max bounded basis/contrary facts;
+- key gap/watch-for;
+- whether tactical warning was none/usable in player language;
+- assessment-change ref where material.
 
-### What was actually happening
+This layer must be reconstructible exactly from trusted session history + the canonical content model.
+
+It must preserve distinctions such as:
+
+- HQ assessed preparation but had no usable warning;
+- HQ had usable physical warning while the broader picture was conflicted;
+- HQ had a strong estimate but no legitimate public case.
+
+Do **not** rewrite a past judgement to “they were really preparing” merely because terminal truth proves that later.
+
+## What was actually happening
 
 Only now reveal explicit debrief-safe hidden truth:
 
@@ -201,45 +214,47 @@ Only now reveal explicit debrief-safe hidden truth:
 - posture transitions;
 - preparation progression;
 - genuine/deceptive signals;
-- why final Ravellan behavior followed the authored policy;
-- how coalition state/final course interacted with it.
+- why final behavior followed authored policy;
+- how coalition state/final route interacted with it.
+
+The contrast between these two layers is part of the payoff.
 
 Do not present one “correct strategy” or oracle-perfect counterfactual.
 
-A few open replay questions are acceptable, but do not compute alternate outcomes for the normal debrief.
-
-## Density / accessibility
+# Density / accessibility
 
 Default ordering:
 
 1. outcome/change headline;
 2. 1–5 material beats;
-3. unresolved pressure;
+3. unresolved pressure/current intel change where material;
 4. progression action.
 
-Full history remains secondary.
+Full history secondary.
 
-Use semantic headings/textual uncertainty, predictable focus and non-colour-only cause/status distinctions.
+Use semantic headings, textual uncertainty, predictable focus and non-colour-only meaning.
 
-## Required #106 tests
+# Required #106 tests
 
 At minimum prove:
 
-- player-caused vs player-conditioned vs adversary/external wording remains distinct;
-- delegated callback attributes HQ/standing direction accurately;
-- C2 coordinated surge / unilateral accusation narrate correct partner causality;
-- C5 simultaneous signed effects show authoritative net state independent of issue order;
-- unilateral package does not double-count partner deterioration;
-- promise/channel/liaison/partner-authority transitions are explicit;
-- reroute clue, Lattice payoff and liaison evidence are connected to prior choices;
-- public attribution use confirms spent one-shot/source exposure already disclosed before choice;
-- held attribution remains an unresolved future option without forecasting correctness;
-- no raw Ravellan signal/action/posture/truth before terminal debrief;
-- default beats capped at five without dropping underlying authoritative history;
-- terminal reveal uses post-route reserve/partner/attribution/source-cost state;
-- pruned final routes never appear as phantom alternatives;
-- V1 After Action remains semantically unchanged.
+- provenance language distinctions;
+- delegated callbacks attribute HQ/standing direction correctly;
+- C2/C5 package causality exact/order-independent;
+- promises/liaison/authority transitions explicit;
+- reroute/focused/Lattice/liaison results connect to prior decisions without becoming +intel language;
+- focused warning result can be narrated separately from wider intent assessment;
+- assessment-change ref does not imply numeric progress;
+- attribution use confirms one-shot/source cost already disclosed;
+- no raw Ravellan truth before terminal debrief;
+- default beats <=5;
+- terminal uses post-route state;
+- `whatHqBelieved` historical briefs deep-equal the safe briefs derivable at those original cycles;
+- terminal truth cannot retroactively alter historical assessment/warning;
+- debrief can show preparation-assessment/no-warning and conflicted-assessment/usable-warning histories where fixtures create them;
+- pruned routes absent;
+- V1 After Action unchanged.
 
-## Rejection conditions
+# Rejection conditions
 
-Reject #106 if it becomes an accounting dashboard, narrates invalid intermediate C5 state, double-counts package penalties, hides important commitment/source costs, attributes hidden opponent choices directly to the player without evidence, leaks truth early, declares decisions right/wrong, skips consequence payoff, or adds cinematic scope before the fun hypothesis passes.
+Reject #106 if it becomes accounting dashboard, narrates invalid intermediate C5 state, double-counts package penalties, collapses assessment into warning, retells historical HQ analysis using terminal truth, hides commitment/source cost, attributes hidden opponent choice directly to player without evidence, leaks truth early, declares decisions right/wrong, skips consequence payoff or adds cinematic scope before fun hypothesis passes.
