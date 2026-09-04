@@ -7,7 +7,7 @@ status: active
 
 Backlink: [[README]]
 
-This is the implementation authority for Kestrel issue/order IDs, intent metadata, applicability/authority flags and chief ties. [[24-STAFF-RECOMMENDATION-POLICY]] owns recommendation; [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns package interaction; [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] owns adversary observations.
+This is the implementation authority for Kestrel issue/order IDs, intent metadata, applicability/authority flags and chief ties. [[23-HQ-BELIEF-AND-EVIDENCE]] owns assessment/warning semantics; [[24-STAFF-RECOMMENDATION-POLICY]] owns recommendation; [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns package interaction; [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] owns adversary observations.
 
 # Metadata
 
@@ -36,13 +36,15 @@ Tags are reasons/filters, never scores.
 
 ## Commander-only courses
 
-Exactly these are `requiresIntervention = true`:
+Exactly:
 
 - C2 `public-accusation`;
 - C4 `request-partner-liaison`;
-- C5 `use-attribution`.
+- C5 `use-attribution`
 
-They remain player-legal when prerequisites hold but never enter recommendation candidates and always consume one normal intervention.
+are `requiresIntervention = true`.
+
+They remain player-legal when prerequisites hold, never enter staff recommendation candidates and always consume one normal intervention.
 
 # Global validation
 
@@ -123,7 +125,7 @@ Tie: quiet > visible > reroute.
 
 Recommendation tie among staff-applicable courses: silent > joint warning.
 
-Partner priority/style may select joint warning. Visible-deterrence style can **never** auto-select accusation because accusation is commander-only. Intelligence concern on accusation: evidence does not justify confident attribution.
+Partner priority/style may select joint warning. Visible-deterrence style can never auto-select accusation. Intelligence concern: current evidence does not justify confident public attribution.
 
 ## `c2-lattice-investment` — Intelligence
 
@@ -146,7 +148,7 @@ Tie: leave > protect.
 `hold-reserve`
 - quiet; weaker-deterrence.
 
-At mandatory conflicted belief: forward > hold. Reserve red line can select hold first; Intelligence dissents on uncertainty.
+At mandatory conflicted assessment: forward > hold as Operations' professional tie. Reserve red line can select hold before the tie; Intelligence dissents on uncertainty.
 
 ## `c3-focused-collection` — Intelligence
 
@@ -235,9 +237,26 @@ Operational Lattice Task Collection remains separate zero-normal-intervention ac
 `hold-beacon-posture`
 - quiet; weaker-deterrence.
 
-Tie by HQ belief:
-- preparation → quiet > visible > hold;
-- unclear/coercion → hold > quiet > visible.
+### Professional tie from HQ intelligence
+
+Apply only after standing-direction/commitment/package filters.
+
+1. **If #100 tactical warning is `usable`:**
+   `quiet-reinforce-beacon > visible-reinforce-beacon > hold-beacon-posture`.
+2. Else if intent assessment direction is `preparation`:
+   `quiet-reinforce-beacon > visible-reinforce-beacon > hold-beacon-posture`.
+3. Else (`unclear` or `coercion`, warning none):
+   `hold-beacon-posture > quiet-reinforce-beacon > visible-reinforce-beacon`.
+
+Rationale:
+
+- a direct physical warning signpost is operationally actionable even when the wider estimative picture is conflicted;
+- a broader preparation assessment without physical warning still justifies preparatory bias, but does **not** gain the terminal clean-warning benefit;
+- absent either warning or a preparation assessment, Operations preserves escalation/readiness by professional default.
+
+Tactical warning is therefore not cosmetic. It can change staff advice while remaining separate from broad intent assessment.
+
+A protected reserve boundary may still remove reinforcement before this tie. In that case staff should surface a `no-clean-option`/warning concern rather than silently overriding the commander's standing red line.
 
 ## `c5-reserve-decision` — Operations
 
@@ -254,25 +273,27 @@ Tie: brittle → consolidate > keep; otherwise keep > consolidate. Effects compo
 
 ## `c5-attribution` — Political
 
-Exists only while `attribution-opportunity = credible`.
+Exists only while persisted #101 `attribution-opportunity = credible`.
 
 `hold-attribution`
 - quiet; declined immediate-pressure cost;
 - preserves source/opportunity/C6 Hold route;
-- **always staff recommendation**, because the alternate is commander-only.
+- **always staff recommendation**, because alternate is commander-only.
 
 `use-attribution`
 - `requiresIntervention = true`;
 - supports partner when politically usable; never supports understanding;
 - partner-sensitive; partner style when coordinated else visible;
-- political friction if unilateral + severe known `attribution-source-exposed` whenever used;
+- political friction if unilateral + severe `attribution-source-exposed` whenever used;
 - credible→used, immediate effects, removes C6 Hold.
+
+#100 internal public-case basis is not a direct recommendation input here. Only #101's legitimate persisted opportunity exposes this issue/course.
 
 Player-safe copy must disclose one-shot + source cost before selection.
 
 ## `c5-partner-authority` — Political
 
-Exact package/recommendation semantics in 39.
+Exact package/recommendation semantics in [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
 
 `honour-consultation`
 - supports partner; partner style;
@@ -313,32 +334,34 @@ Owner: seizure Operations; threshold/receding Political.
 `hold-and-expose`
 - supports partner, not understanding;
 - partner style; weaker-deterrence against seizure + source severe;
-- unspent evidence/access/physical predicates; consumes opportunity.
+- requires persisted unspent attribution opportunity/access/physical predicates; consumes opportunity.
 
 Chief tie considers only pruned legal set.
 
-# Required metadata/recommendation tests
+# Required metadata / recommendation tests
 
 Prove:
 
 - stable issue/order reachability;
-- all 12 opening intent answers affect a reachable recommendation/reason or delegated consequence;
+- all 12 opening intent answers affect reachable recommendation/reason or delegated consequence;
 - real standing-intent conflicts;
 - formal consultation, C2 joint warning, C3 reassurance and Lattice protection delegate only when standing direction selects them, otherwise routine baseline/intervention;
-- **exactly** `public-accusation`, `request-partner-liaison`, `use-attribution` are commander-only under every standing intent;
-- selecting each commander-only course consumes one normal intervention;
-- visible style never auto-accuses;
-- partner intent never auto-burns attribution source;
+- exactly accusation/liaison/attribution-use are commander-only under every standing intent;
+- visible style never auto-accuses; partner intent never auto-burns source;
 - reroute support matches actual clue;
-- C3 chief disagreement uses same conflicted belief;
-- C5 all-Delegate package legal; attribution staff baseline Hold;
+- C3 chief disagreement uses same conflicted assessment;
+- **C5 usable warning + conflicted assessment chooses the warning-sensitive Operations tie rather than the unclear/coercion tie**;
+- preparation assessment + warning none still uses preparation tie but does not gain terminal warning benefit;
+- reserve red line can override warning-sensitive professional tie only through normal precedence and emits warning/no-clean concern;
+- C5 all-Delegate package legal; attribution baseline Hold;
 - no dead C5 exhaustion metadata;
 - attribution metadata exposes one-shot/source cost;
+- internal #100 public-case basis does not directly unlock attribution course;
 - dynamic tags use player-known state only;
 - issue omission avoids ceremonial work;
-- C6 tie uses only 27-pruned routes;
+- C6 tie uses only 27-pruned routes and separate warning product;
 - V1 unchanged.
 
-## Rejection conditions
+# Rejection conditions
 
-Reject metadata if support lacks real mechanic, a beneficial political action is universal free baseline rather than command-directed, any of the three commander-only courses can Delegate, visible style auto-accuses, partner intent auto-burns source, dead signal metadata returns, tie uses array/randomness, ceremonial issue is added or advice reads hidden Ravellan truth.
+Reject metadata if support lacks real mechanic, a beneficial political action is universal free baseline rather than command-directed, commander-only course can Delegate, warning is ignored by C5 Operations or inferred from assessment, visible style auto-accuses, partner intent auto-burns source, #100 internal public-case basis bypasses #101 attribution state, dead signal metadata returns, tie uses array/randomness, ceremonial issue is added or advice reads hidden Ravellan truth.
