@@ -7,9 +7,19 @@ status: active
 
 Backlink: [[README]]
 
-This is the exact machine/content authority for the `kestrel-hq-belief-v1` evidence vocabulary. [[23-HQ-BELIEF-AND-EVIDENCE]] owns product meaning, [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns code/replay seams, and [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] owns generated coverage counts.
+This is the exact content authority for the Kestrel intelligence vocabulary.
 
-An implementation agent may choose local TypeScript names but may not change any ID, producer predicate, evidence semantic, lifetime, source-independence group, supersession rule, or decision-significant copy below.
+- [[23-HQ-BELIEF-AND-EVIDENCE]] owns product meaning.
+- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns code/replay seams.
+- [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] owns generated coverage.
+- [[26-LATTICE-COLLECTION-MATRIX]] owns #102 task persistence and player target flow.
+
+There are two identity domains:
+
+1. `kestrel-hq-belief-v1` — owned/implemented by #100: evidence meanings, role relevance, ordinary/reroute/focused production, reducers and player copy.
+2. `kestrel-collection-v1` — owned/implemented by #102: Lattice/liaison target selection, result timing and raw-fact → predeclared definition mapping.
+
+#100 predeclares the Lattice/liaison evidence **definitions** so #102 cannot redefine their meaning. #100 does not implement live task production.
 
 # 1. Closed identifiers
 
@@ -17,12 +27,14 @@ An implementation agent may choose local TypeScript names but may not change any
 
 - `ravellan-intent`
 
-## Questions
+## Question IDs
 
 - `ravellan-intent-general`
 - `landing-force-staging`
 - `auxiliary-tasking`
-- `political-operational-sync`
+- `operational-sequence`
+
+The former ID `political-operational-sync` is invalid. The authorised source observes operational action sequence, not political messaging.
 
 ## Producer kinds
 
@@ -37,65 +49,69 @@ An implementation agent may choose local TypeScript names but may not change any
 - `explicit-only`
 - `replace-older-same-question`
 
-## Public-case corroboration groups
+## Corroboration groups
 
-Only source-sensitive evidence has a corroboration group.
+Public credibility uses explicit independence groups, not arbitrary source labels:
 
 - `physical-staging`
 - `auxiliary-tasking`
 - `operational-sequence`
 - `partner-liaison`
 
-Different `sourceGroupId` values do not automatically prove independence. Public credibility uses different `corroborationGroupId` values. Focused staging and Lattice landing both belong to `physical-staging`; in normal history the newer landing report also supersedes the older focused report.
+Focused staging and Lattice landing share `physical-staging`; they do not independently corroborate each other, and the newer landing occurrence replaces the older focused occurrence.
 
-# 2. Exact 19 definitions
+# 2. Exact 19 evidence definitions
 
-`warning` means `warningRole = usable`; otherwise `none`.
+Role notation:
 
-`public` means `publicCaseRole = source-sensitive`; otherwise `none`.
+- `A` — assessment relevance;
+- `W` — tactical-warning relevance;
+- `P` — public-case relevance;
+- `—` — role unavailable;
+- `R–C6` — actual result cycle through C6.
 
-| # | Definition ID | Question | Implication | Class | Producer | Source group | Corroboration group | Lifetime | Supersession | Warning | Public |
+| # | Definition ID | Question | Implication | Class | Producer | Source group | Corroboration group | A | W | P | Supersession |
 | ---: | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `opening-pressure-ambiguous` | general | ambiguous | indicator | ordinary | `routine-opening-pressure` | — | fixed C1–C2 | explicit only | no | no |
-| 2 | `shipping-probe-ambiguous` | general | ambiguous | indicator | ordinary | `routine-maritime-pressure` | — | fixed C2–C3 | explicit only | no | no |
-| 3 | `staging-logistics-anomaly` | general | preparation | indicator | ordinary | `routine-regional-logistics` | — | fixed C3–C4 | explicit only | no | no |
-| 4 | `combat-elements-dispersed` | general | coercion | indicator | ordinary | `routine-force-disposition` | — | fixed C3–C4 | explicit only | no | no |
-| 5 | `cycle4-pressure-pattern-ambiguous` | general | ambiguous | indicator | ordinary | `routine-visible-pattern` | — | fixed C4–C5 | explicit only | no | no |
-| 6 | `reroute-auxiliary-coercive` | auxiliary | coercion | indicator | reroute | `reroute-auxiliary-monitoring` | — | fixed C3–C5 | replace same question | no | no |
-| 7 | `reroute-auxiliary-unclear` | auxiliary | ambiguous | indicator | reroute | `reroute-auxiliary-monitoring` | — | fixed C3–C5 | replace same question | no | no |
-| 8 | `focused-staging-buildup` | landing | preparation | indicator | focused | `focused-staging-collection` | `physical-staging` | fixed C4–C6 | replace same question; explicitly supersedes #4 | yes | yes |
-| 9 | `focused-staging-empty` | landing | coercion | indicator | focused | `focused-staging-collection` | `physical-staging` | fixed C4–C5 | replace same question; explicitly supersedes #3 | no | yes |
-| 10 | `lattice-landing-concentration` | landing | preparation | diagnostic | lattice | `lattice-landing-collection` | `physical-staging` | result cycle–C6 | replace same question | yes | yes |
-| 11 | `lattice-landing-dispersed` | landing | coercion | indicator | lattice | `lattice-landing-collection` | `physical-staging` | result cycle–C6 | replace same question | no | yes |
-| 12 | `lattice-auxiliary-coercive` | auxiliary | coercion | diagnostic | lattice | `lattice-auxiliary-collection` | `auxiliary-tasking` | result cycle–C6 | replace same question | no | yes |
-| 13 | `lattice-auxiliary-mixed` | auxiliary | ambiguous | indicator | lattice | `lattice-auxiliary-collection` | — | result cycle–C6 | replace same question | no | no |
-| 14 | `lattice-sync-preparation-sequence` | sequence | preparation | diagnostic | lattice | `lattice-sequence-analysis` | `operational-sequence` | result cycle–C6 | explicit only | no | yes |
-| 15 | `lattice-sync-preparation-signal` | sequence | preparation | indicator | lattice | `lattice-sequence-analysis` | `operational-sequence` | result cycle–C6 | explicit only | no | yes |
-| 16 | `lattice-sync-coercive-sequence` | sequence | coercion | indicator | lattice | `lattice-sequence-analysis` | `operational-sequence` | result cycle–C6 | explicit only | no | yes |
-| 17 | `lattice-sync-partial` | sequence | ambiguous | indicator | lattice | `lattice-sequence-analysis` | — | result cycle–C6 | explicit only | no | no |
-| 18 | `liaison-auxiliary-coercive-links` | auxiliary | coercion | indicator | liaison | `partner-liaison-reporting` | `partner-liaison` | fixed C5–C6 | replace same question | no | yes |
-| 19 | `liaison-auxiliary-unclear` | auxiliary | ambiguous | indicator | liaison | `partner-liaison-reporting` | — | fixed C5–C6 | replace same question | no | no |
+| 1 | `opening-pressure-ambiguous` | general | ambiguous | indicator | ordinary | `routine-opening-pressure` | — | C1–C2 | — | — | explicit only |
+| 2 | `shipping-probe-ambiguous` | general | ambiguous | indicator | ordinary | `routine-maritime-pressure` | — | C2–C3 | — | — | explicit only |
+| 3 | `staging-logistics-anomaly` | general | preparation | indicator | ordinary | `routine-regional-logistics` | — | C3–C4 | — | — | explicit only |
+| 4 | `combat-elements-dispersed` | general | coercion | indicator | ordinary | `routine-force-disposition` | — | C3–C4 | — | — | explicit only |
+| 5 | `cycle4-pressure-pattern-ambiguous` | general | ambiguous | indicator | ordinary | `routine-visible-pattern` | — | C4–C5 | — | — | explicit only |
+| 6 | `reroute-auxiliary-coercive` | auxiliary | coercion | indicator | reroute | `reroute-auxiliary-monitoring` | — | C3–C5 | — | — | replace same question |
+| 7 | `reroute-auxiliary-unclear` | auxiliary | ambiguous | indicator | reroute | `reroute-auxiliary-monitoring` | — | C3–C5 | — | — | replace same question |
+| 8 | `focused-staging-buildup` | landing | preparation | indicator | focused | `focused-staging-collection` | `physical-staging` | C4–C6 | **C4–C5** | C4–C6 | replace same question; explicitly supersedes #4 |
+| 9 | `focused-staging-empty` | landing | coercion | indicator | focused | `focused-staging-collection` | `physical-staging` | **C4–C5** | — | C4–C6 | replace same question; explicitly supersedes #3 |
+| 10 | `lattice-landing-concentration` | landing | preparation | diagnostic | lattice | `lattice-landing-collection` | `physical-staging` | R–C6 | R–C6 | R–C6 | replace same question |
+| 11 | `lattice-landing-dispersed` | landing | coercion | indicator | lattice | `lattice-landing-collection` | `physical-staging` | R–C6 | — | R–C6 | replace same question |
+| 12 | `lattice-auxiliary-coercive` | auxiliary | coercion | diagnostic | lattice | `lattice-auxiliary-collection` | `auxiliary-tasking` | R–C6 | — | R–C6 | replace same question |
+| 13 | `lattice-auxiliary-mixed` | auxiliary | ambiguous | indicator | lattice | `lattice-auxiliary-collection` | — | R–C6 | — | — | replace same question |
+| 14 | `lattice-sync-preparation-sequence` | sequence | preparation | diagnostic | lattice | `lattice-sequence-analysis` | `operational-sequence` | R–C6 | — | R–C6 | explicit only |
+| 15 | `lattice-sync-preparation-signal` | sequence | preparation | indicator | lattice | `lattice-sequence-analysis` | `operational-sequence` | R–C6 | — | R–C6 | explicit only |
+| 16 | `lattice-sync-coercive-sequence` | sequence | coercion | indicator | lattice | `lattice-sequence-analysis` | `operational-sequence` | R–C6 | — | R–C6 | explicit only |
+| 17 | `lattice-sync-partial` | sequence | ambiguous | indicator | lattice | `lattice-sequence-analysis` | — | R–C6 | — | — | explicit only |
+| 18 | `liaison-auxiliary-coercive-links` | auxiliary | coercion | indicator | liaison | `partner-liaison-reporting` | `partner-liaison` | C5–C6 | — | C5–C6 | replace same question |
+| 19 | `liaison-auxiliary-unclear` | auxiliary | ambiguous | indicator | liaison | `partner-liaison-reporting` | — | C5–C6 | — | — | replace same question |
 
-Canonical internal question aliases used by the model are:
+Canonical aliases in this table:
 
-- `general` → `ravellan-intent-general`;
-- `landing` → `landing-force-staging`;
-- `auxiliary` → `auxiliary-tasking`;
-- `sequence` → `political-operational-sync`.
+- general → `ravellan-intent-general`;
+- landing → `landing-force-staging`;
+- auxiliary → `auxiliary-tasking`;
+- sequence → `operational-sequence`.
 
-# 3. Removed definitions
+# 3. Removed/invalid definitions
 
-The following IDs are invalid and content validation must reject them:
+Reject:
 
 - `reroute-auxiliary-integrated`;
 - `lattice-auxiliary-integrated`;
 - `liaison-auxiliary-military-links`.
 
-They are impossible under committed #99 result-time combinations. Do not keep them as speculative future branches.
+The exact #99 temporal state space cannot produce the required preparation + active shipping-probe combination at those result cuts.
 
-# 4. Ordinary schedule
+# 4. #100 ordinary schedule
 
-The model contains exactly:
+Exactly:
 
 ```text
 C1 → opening-pressure-ambiguous
@@ -106,115 +122,117 @@ C5 → none
 C6 → none
 ```
 
-Schedule lists are canonical lexical order. Directed definitions never instantiate from this schedule.
+Schedule lists use lexical definition-ID order. Directed definitions never instantiate from this schedule.
 
-# 5. Producer mappings
+# 5. #100 producer mappings
 
-## C2 `reroute-and-monitor` → C3 report
+## C2 `reroute-and-monitor` → C3
 
-Inputs are verified C2 normal action and C2 post-decision preparation only.
+Inputs: verified C2 normal action + C2 post-decision preparation only.
 
-| C2 post-preparation | C2 action | Source fact | Definition |
+| Post-preparation | C2 action | Source fact | Definition |
 | --- | --- | --- | --- |
 | none | `probe_shipping` | `coercive-tasking` | `reroute-auxiliary-coercive` |
 | none | `seed_deception` | `coercive-tasking` | `reroute-auxiliary-coercive` |
-| none | `prepare_beacon_seizure` | `unclear` | `reroute-auxiliary-unclear` |
-| developing | any legal C2 normal action | `unclear` | `reroute-auxiliary-unclear` |
-| ready | any legal C2 normal action | `unclear` | `reroute-auxiliary-unclear` |
+| every other legal C2 combination | — | `unclear` | `reroute-auxiliary-unclear` |
 
-`pause_consolidate` is illegal in C2 and fails producer validation rather than mapping.
+`pause_consolidate` is illegal in C2 and fails validation rather than mapping.
 
-## C3 focused staging → C4 report
+## C3 focused staging → C4
 
-Input is verified C4 post-decision preparation only.
+Input: verified C4 post-decision preparation only.
 
-| C4 post-preparation | Source fact | Definition |
+| Preparation | Source fact | Definition |
 | --- | --- | --- |
 | none | `no-concentration-observed` | `focused-staging-empty` |
 | developing | `concentration-observed` | `focused-staging-buildup` |
 | ready | `concentration-observed` | `focused-staging-buildup` |
 
-## Lattice landing result
+# 6. Future #102 collection-producer overlay
 
-Input is result-cycle post-decision preparation only.
+The following mappings are frozen design inputs for `kestrel-collection-v1`, not #100 production code.
 
-| Preparation | Source fact | Definition |
+## Lattice landing
+
+| Result-cut preparation | Definition |
+| --- | --- |
+| none | `lattice-landing-dispersed` |
+| developing/ready | `lattice-landing-concentration` |
+
+## Lattice auxiliary
+
+| Result-cut preparation | Latest normal action | Definition |
 | --- | --- | --- |
-| none | `no-concentration-observed` | `lattice-landing-dispersed` |
-| developing | `concentration-observed` | `lattice-landing-concentration` |
-| ready | `concentration-observed` | `lattice-landing-concentration` |
+| none | `probe_shipping` or `seed_deception` | `lattice-auxiliary-coercive` |
+| every other combination | any | `lattice-auxiliary-mixed` |
 
-## Lattice auxiliary result
+## Lattice operational sequence
 
-Inputs are result-time preparation and the latest normal Ravellan action available to the authorised collection interval.
+Input: latest two verified **normal** Ravellan actions C4/C5. The R6 terminal action is excluded.
 
-| Preparation | Latest normal action | Source fact | Definition |
-| --- | --- | --- | --- |
-| none | `probe_shipping` | `coercive-tasking` | `lattice-auxiliary-coercive` |
-| none | `seed_deception` | `coercive-tasking` | `lattice-auxiliary-coercive` |
-| any | every other legal normal action | `mixed` | `lattice-auxiliary-mixed` |
-| developing/ready | any legal normal action | `mixed` | `lattice-auxiliary-mixed` |
-
-The order of the last two rows is semantic rather than executable precedence: the only coercive branch is exactly `none + probe/deception`; all other combinations are mixed.
-
-## Lattice operational-sequence result
-
-Inputs are the two latest verified **normal** Ravellan actions at result time. The terminal C6 action is never included.
-
-| Recent normal actions | Definition |
+| Action pattern | Definition |
 | --- | --- |
 | two `prepare_beacon_seizure` | `lattice-sync-preparation-sequence` |
 | exactly one `prepare_beacon_seizure` | `lattice-sync-preparation-signal` |
-| no prepare and at least one `probe_shipping` or `seed_deception` | `lattice-sync-coercive-sequence` |
+| no prepare + at least one `probe_shipping` or `seed_deception` | `lattice-sync-coercive-sequence` |
 | otherwise | `lattice-sync-partial` |
 
-## C4 partner liaison → C5 report
+## C4 liaison → C5
 
-Uses the same authorised result-time facts as auxiliary tasking but produces indicator-strength liaison definitions.
-
-| Preparation | Latest normal action | Definition |
+| C5 preparation | C5 normal action | Definition |
 | --- | --- | --- |
 | none | `probe_shipping` or `seed_deception` | `liaison-auxiliary-coercive-links` |
-| every other combination | `liaison-auxiliary-unclear` |
+| every other combination | any | `liaison-auxiliary-unclear` |
 
-# 6. Result timing
+# 7. #102 target timing and default order
 
-Exactly:
+Future #102 owns this in `kestrel-collection-v1`:
 
-- C2 reroute order → C3 occurrence;
-- C3 focused order → C4 occurrence;
-- C4 Lattice target → C5 occurrence;
-- C5 different unused Lattice target → C6 occurrence;
-- C4 liaison → C5 occurrence.
+- operational Lattice tasks exactly one unused target in C4 and one different unused target in C5;
+- C4 task → C5 occurrence;
+- C5 task → C6 occurrence using latest-normal/pre-manifestation facts;
+- no same-target retask;
+- no zero-cost no-task while unused targets remain;
+- ordinary focused staging does not consume the stronger Lattice landing target.
 
-C6 adds no new normal action/preparation transition for a repeated target. Same-target C5 retasking is invalid.
+Stable target IDs:
 
-# 7. Supersession
+- `landing-force-staging`
+- `auxiliary-tasking`
+- `operational-sequence`
 
-Supersession is determined from the full occurrence history observed by the query cycle and is persistent.
+Default target order by main priority:
+
+| Main priority | First → second → third |
+| --- | --- |
+| `beacon-security` | landing → sequence → auxiliary |
+| `partner-cooperation` | sequence → auxiliary → landing |
+| `ravellan-understanding` | auxiliary → sequence → landing |
+
+The player may retarget to another unused target at zero normal intervention cost. Leaving the selection untouched executes the HQ default.
+
+# 8. Supersession
+
+Supersession is computed from all occurrences observed by the query cycle, before role-current filtering.
 
 ## Same-question replacement
 
-A newer occurrence with `replace-older-same-question` replaces every older occurrence of the same question, including a different definition ID.
+A later occurrence with `replace-older-same-question` replaces every older occurrence of the same question.
 
 This covers:
 
 - Lattice landing replacing focused staging;
-- liaison or Lattice auxiliary replacing C2 reroute;
-- Lattice auxiliary replacing liaison if a future authorised path ever permits both.
+- liaison/Lattice auxiliary replacing C2 reroute;
+- a future valid later same-question occurrence replacing an earlier one.
 
 ## Explicit asymmetric replacement
 
-- `focused-staging-buildup` explicitly supersedes `combat-elements-dispersed`.
-- `focused-staging-empty` explicitly supersedes `staging-logistics-anomaly`.
+- `focused-staging-buildup` supersedes `combat-elements-dispersed`.
+- `focused-staging-empty` supersedes `staging-logistics-anomaly`.
 
-A superseded occurrence never resurrects merely because the superseding occurrence later becomes stale or is itself superseded.
+Replacement is persistent. Older evidence never resurrects after the replacement becomes stale or is itself replaced.
 
-# 8. Source and limitation copy
-
-All decision-significant English strings below are part of the prototype model digest.
-
-## Source-context refs
+# 9. Source-context copy
 
 | Ref | Exact copy |
 | --- | --- |
@@ -230,7 +248,7 @@ All decision-significant English strings below are part of the prototype model d
 | `intel.source.lattice-sequence` | Lattice operational-sequence analysis |
 | `intel.source.partner-liaison` | Partner liaison reporting |
 
-## Limitation refs
+# 10. Limitation copy
 
 | Ref | Exact copy |
 | --- | --- |
@@ -240,20 +258,23 @@ All decision-significant English strings below are part of the prototype model d
 | `intel.limit.routine-coverage` | Routine coverage is incomplete and may miss movement outside observed sectors. |
 | `intel.limit.pattern-ambiguous` | A change in visible pressure can mean deterrence, concealment, consolidation, or continued coercion. |
 | `intel.limit.reroute-tasking-only` | The reroute monitoring characterises the pressure vessels; it does not observe the seizure force directly. |
-| `intel.limit.focused-positive-intent` | The movement is actionable warning, but it does not settle Ravellan's wider political intent. |
+| `intel.limit.focused-positive-intent` | The movement is actionable now, but the report does not settle Ravellan’s wider intent. |
+| `intel.limit.focused-positive-warning` | Without a refreshed physical look, this warning will be too old to support a clean C6 reaction. |
 | `intel.limit.focused-negative-currency` | This negative observation is time-sensitive; preparation may begin after the collection window. |
 | `intel.limit.landing-positive-timing` | Concentration strongly supports preparation but does not reveal the exact execution time. |
 | `intel.limit.landing-negative-pivot` | No concentration now does not rule out a later pivot. |
 | `intel.limit.auxiliary-current-tasking` | This diagnoses the current tasking chain, not every future Ravellan option. |
 | `intel.limit.auxiliary-mixed` | Available tasking links do not distinguish coercion from broader preparation. |
-| `intel.limit.sequence-window` | A sustained sequence supports preparation but gives no direct timing warning. |
+| `intel.limit.sequence-window` | A sustained operational sequence supports preparation but gives no direct execution warning. |
 | `intel.limit.sequence-single` | One preparation milestone does not establish a sustained sequence. |
 | `intel.limit.sequence-negative` | Recent pressure without a new milestone does not prove earlier preparation is absent. |
 | `intel.limit.sequence-partial` | The recent operational sequence is incomplete or mixed. |
 | `intel.limit.liaison-narrow` | Partner reporting is narrower and is not independently diagnostic. |
 | `intel.limit.liaison-unclear` | Partner reporting does not resolve the tasking chain. |
 
-# 9. Evidence summary refs
+`focused-staging-buildup` carries both focused-positive limitation refs: one about intent and one about warning currency. The definition schema may use a non-empty ordered `limitationRefs` array rather than one scalar field.
+
+# 11. Evidence summary copy
 
 | Definition | Summary ref | Exact copy |
 | --- | --- | --- |
@@ -261,7 +282,7 @@ All decision-significant English strings below are part of the prototype model d
 | `shipping-probe-ambiguous` | `intel.evidence.shipping-pressure` | Pressure vessels continue to shadow and interfere with commercial traffic. |
 | `staging-logistics-anomaly` | `intel.evidence.logistics-anomaly` | Logistics activity near known staging areas is above the routine baseline. |
 | `combat-elements-dispersed` | `intel.evidence.combat-dispersed` | Within routine coverage, the major combat elements expected for a rapid seizure still appear dispersed. |
-| `cycle4-pressure-pattern-ambiguous` | `intel.evidence.pressure-pattern` | Ravellan's visible pressure pattern has changed, but the change does not establish why. |
+| `cycle4-pressure-pattern-ambiguous` | `intel.evidence.pressure-pattern` | Ravellan’s visible pressure pattern has changed, but the change does not establish why. |
 | `reroute-auxiliary-coercive` | `intel.evidence.reroute-coercive` | Monitoring created by the reroute points to a coercive tasking pattern among the pressure vessels. |
 | `reroute-auxiliary-unclear` | `intel.evidence.reroute-unclear` | Monitoring created by the reroute does not resolve how the pressure vessels are being tasked. |
 | `focused-staging-buildup` | `intel.evidence.focused-buildup` | Focused collection shows movement consistent with a seizure force concentrating near staging areas. |
@@ -277,9 +298,9 @@ All decision-significant English strings below are part of the prototype model d
 | `liaison-auxiliary-coercive-links` | `intel.evidence.liaison-coercive` | Partner reporting points to coercive tasking among the pressure vessels. |
 | `liaison-auxiliary-unclear` | `intel.evidence.liaison-unclear` | Partner reporting does not resolve how the pressure vessels are being tasked. |
 
-# 10. Per-definition source and limitation mapping
+# 12. Definition → source/limitation refs
 
-| Definition(s) | Source-context ref | Limitation ref |
+| Definition(s) | Source ref | Limitation refs |
 | --- | --- | --- |
 | `opening-pressure-ambiguous` | `intel.source.routine-opening` | `intel.limit.pressure-ambiguous` |
 | `shipping-probe-ambiguous` | `intel.source.routine-maritime` | `intel.limit.surface-only` |
@@ -287,7 +308,7 @@ All decision-significant English strings below are part of the prototype model d
 | `combat-elements-dispersed` | `intel.source.routine-disposition` | `intel.limit.routine-coverage` |
 | `cycle4-pressure-pattern-ambiguous` | `intel.source.visible-pattern` | `intel.limit.pattern-ambiguous` |
 | both reroute definitions | `intel.source.reroute-monitoring` | `intel.limit.reroute-tasking-only` |
-| `focused-staging-buildup` | `intel.source.focused-staging` | `intel.limit.focused-positive-intent` |
+| `focused-staging-buildup` | `intel.source.focused-staging` | `intel.limit.focused-positive-intent`, `intel.limit.focused-positive-warning` |
 | `focused-staging-empty` | `intel.source.focused-staging` | `intel.limit.focused-negative-currency` |
 | `lattice-landing-concentration` | `intel.source.lattice-landing` | `intel.limit.landing-positive-timing` |
 | `lattice-landing-dispersed` | `intel.source.lattice-landing` | `intel.limit.landing-negative-pivot` |
@@ -300,45 +321,58 @@ All decision-significant English strings below are part of the prototype model d
 | `liaison-auxiliary-coercive-links` | `intel.source.partner-liaison` | `intel.limit.liaison-narrow` |
 | `liaison-auxiliary-unclear` | `intel.source.partner-liaison` | `intel.limit.liaison-unclear` |
 
-# 11. Judgement refs
+# 13. Judgement copy
 
 | Assessment | Ref | Exact copy |
 | --- | --- | --- |
-| unclear / weak | `intel.judgement.unclear-weak` | We do not have enough to tell whether the pressure is the operation or cover for one. |
-| unclear / conflicted | `intel.judgement.unclear-conflicted` | The reporting points in both directions. I cannot responsibly call Ravellan's intent. |
-| preparation / weak | `intel.judgement.preparation-weak` | My read is that Ravellan is preparing a real move, but the wider picture remains thin or contested. |
-| preparation / coherent | `intel.judgement.preparation-coherent` | This now looks like real preparation. The reporting is starting to hold together. |
-| coercion / weak | `intel.judgement.coercion-weak` | My read is that the pressure itself is the operation, but that remains a thin or contested judgement. |
-| coercion / coherent | `intel.judgement.coercion-coherent` | This increasingly looks like coercion rather than cover for an immediate seizure. |
+| unclear/weak | `intel.judgement.unclear-weak` | We do not have enough to tell whether the pressure is the operation or cover for one. |
+| unclear/conflicted | `intel.judgement.unclear-conflicted` | The reporting points in both directions. I cannot responsibly call Ravellan’s intent. |
+| preparation/weak | `intel.judgement.preparation-weak` | My read is that Ravellan is preparing a real move, but the wider picture remains thin or contested. |
+| preparation/coherent | `intel.judgement.preparation-coherent` | This now looks like real preparation. The reporting is starting to hold together. |
+| coercion/weak | `intel.judgement.coercion-weak` | My read is that the pressure itself is the operation, but that remains a thin or contested judgement. |
+| coercion/coherent | `intel.judgement.coercion-coherent` | This increasingly looks like coercion rather than cover for an immediate seizure. |
 
-# 12. Warning and public-claim refs
+# 14. Warning/public-claim copy
 
 | Ref | Exact copy |
 | --- | --- |
-| `intel.warning.usable` | We have direct movement worth acting on, even though the wider intent picture may still be incomplete. |
-| `intel.warning.lost` | We no longer have a current physical warning sign we can rely on. |
+| `intel.warning.usable` | We have current physical movement worth acting on. |
+| `intel.warning.none-late` | We do not have current direct warning of execution. |
+| `intel.warning.gained` | New reporting gives us direct warning worth acting on. |
+| `intel.warning.refreshed` | A newer physical observation refreshes the warning picture. |
+| `intel.warning.lost-stale` | The earlier physical warning is now too old to support a clean reaction. |
+| `intel.warning.lost-superseded` | A newer observation no longer supports the earlier direct warning. |
+| `intel.warning.lost-mixed` | New reporting and the age of the earlier warning leave us without a current direct warning. |
 | `intel.public-claim.preparation` | We can substantiate a seizure-preparation case. |
 | `intel.public-claim.coercion` | We can substantiate a coercive or deceptive pressure case. |
 
-`intel.warning.lost` is required for total reducer/change handling but is unreachable in canonical Kestrel under the current producer envelope.
+At C5/C6 exactly one of `intel.warning.usable` or `intel.warning.none-late` is shown.
 
-# 13. Gap and watch-for refs
+# 15. Fifteen basis-pattern/warning briefing mappings
 
-| Assessment | Warning | Gap ref / exact copy | Watch ref / exact copy |
+Each row has one key-gap ref/copy and one watch-for ref/copy.
+
+| Basis pattern | Warning | Gap ref — exact copy | Watch ref — exact copy |
 | --- | --- | --- | --- |
-| unclear / weak | none | `intel.gap.unclear-weak` — We cannot connect the visible pressure to a real seizure force. | `intel.watch.unclear-weak` — Watch for physical concentration or military tasking. |
-| unclear / conflicted | none | `intel.gap.conflicted-none` — We cannot reconcile the logistics activity with the apparently dispersed force elements. | `intel.watch.conflicted-none` — Watch for independent direct observation of force movement or tasking. |
-| unclear / conflicted | usable | `intel.gap.conflicted-warning` — We can see movement worth acting on, but not what wider campaign it belongs to. | `intel.watch.conflicted-warning` — Watch for sequence corroboration or contrary coercive tasking. |
-| preparation / weak | none | `intel.gap.preparation-weak-none` — We do not yet have a clean physical picture of an executable force package. | `intel.watch.preparation-weak-none` — Watch for direct concentration or a corroborating preparation sequence. |
-| preparation / weak | usable | `intel.gap.preparation-weak-warning` — We need to know whether the physical warning belongs to sustained preparation. | `intel.watch.preparation-weak-warning` — Watch for tasking or sequence corroboration and movement toward execution. |
-| preparation / coherent | none | `intel.gap.preparation-coherent-none` — We still lack direct timing and execution warning. | `intel.watch.preparation-coherent-none` — Watch for landing-force concentration or movement toward execution. |
-| preparation / coherent | usable | `intel.gap.preparation-coherent-warning` — The remaining uncertainty is when Ravellan will cross into execution. | `intel.watch.preparation-coherent-warning` — Watch for movement from staging into execution. |
-| coercion / weak | none | `intel.gap.coercion-weak` — We do not know how quickly the pressure could pivot into preparation. | `intel.watch.coercion-weak` — Watch for new force concentration or preparation milestones. |
-| coercion / coherent | none | `intel.gap.coercion-coherent` — We need to know whether the coercive campaign is changing character. | `intel.watch.coercion-coherent` — Watch for new preparation signposts or physical concentration. |
+| `no-direction` | none | `intel.gap.no-direction` — We cannot connect the visible pressure to a real force package. | `intel.watch.no-direction` — Watch for physical concentration or military tasking. |
+| `indicator-preparation` | none | `intel.gap.indicator-preparation-none` — Suggestive activity has not yet formed an executable preparation picture. | `intel.watch.indicator-preparation-none` — Watch for direct concentration or a sustained preparation sequence. |
+| `indicator-preparation` | usable | `intel.gap.indicator-preparation-warning` — We can act on the movement, but one physical indicator does not settle the wider campaign. | `intel.watch.indicator-preparation-warning` — Watch for sequence or tasking corroboration and movement toward execution. |
+| `indicator-coercion` | none | `intel.gap.indicator-coercion` — We do not know how quickly the pressure could pivot into real preparation. | `intel.watch.indicator-coercion` — Watch for force concentration or preparation milestones. |
+| `indicator-conflict` | none | `intel.gap.indicator-conflict-none` — The suggestive reports point in opposite directions. | `intel.watch.indicator-conflict-none` — Watch for an independent observation that discriminates between them. |
+| `indicator-conflict` | usable | `intel.gap.indicator-conflict-warning` — The movement is actionable, but another indicator still supports coercion. | `intel.watch.indicator-conflict-warning` — Watch for preparation sequence corroboration or clearer coercive tasking. |
+| `diagnostic-preparation-clear` | none | `intel.gap.diagnostic-preparation-clear-none` — The preparation judgement is strong, but we still lack current execution warning. | `intel.watch.diagnostic-preparation-clear-none` — Watch for current landing-force movement toward execution. |
+| `diagnostic-preparation-clear` | usable | `intel.gap.diagnostic-preparation-clear-warning` — The remaining uncertainty is when Ravellan will cross into execution. | `intel.watch.diagnostic-preparation-clear-warning` — Watch for movement from staging into execution. |
+| `diagnostic-preparation-qualified` | none | `intel.gap.diagnostic-preparation-qualified-none` — Strong preparation evidence remains qualified by a surviving coercion indicator and no current direct warning. | `intel.watch.diagnostic-preparation-qualified-none` — Watch for a fresh physical sign or evidence that resolves the coercive indicator. |
+| `diagnostic-preparation-qualified` | usable | `intel.gap.diagnostic-preparation-qualified-warning` — Direct warning exists, but a surviving coercion indicator still qualifies the wider preparation judgement. | `intel.watch.diagnostic-preparation-qualified-warning` — Watch whether the movement enters execution or the pressure remains separately coercive. |
+| `diagnostic-coercion-clear` | none | `intel.gap.diagnostic-coercion-clear` — We need to know whether the coercive campaign is changing character. | `intel.watch.diagnostic-coercion-clear` — Watch for new preparation signposts or physical concentration. |
+| `diagnostic-coercion-qualified` | none | `intel.gap.diagnostic-coercion-qualified-none` — Strong coercion evidence remains qualified by a preparation indicator. | `intel.watch.diagnostic-coercion-qualified-none` — Watch whether the physical indicator develops into an executable force package. |
+| `diagnostic-coercion-qualified` | usable | `intel.gap.diagnostic-coercion-qualified-warning` — Coercion remains the best wider judgement, but the physical warning is still actionable. | `intel.watch.diagnostic-coercion-qualified-warning` — Watch for movement into execution while testing whether the pressure chain remains coercive. |
+| `diagnostic-conflict` | none | `intel.gap.diagnostic-conflict-none` — Strong evidence supports both explanations; we lack the decisive discriminator. | `intel.watch.diagnostic-conflict-none` — Watch for a fresh observation that invalidates one diagnostic line. |
+| `diagnostic-conflict` | usable | `intel.gap.diagnostic-conflict-warning` — Strong evidence supports both explanations, but the physical warning still requires action. | `intel.watch.diagnostic-conflict-warning` — Watch for execution while seeking the discriminator between the two strong cases. |
 
-No other assessment/warning pair has player copy.
+All 15 mappings are required even though canonical producers currently reach 11.
 
-# 14. Assessment-change and cause refs
+# 16. Assessment/evidence-change copy
 
 Assessment-change refs:
 
@@ -354,67 +388,63 @@ Assessment-change refs:
 | reopened | `intel.change.reopened` | The previous directional judgement is no longer supportable. |
 | reversed | `intel.change.reversed` | The best current judgement has reversed. |
 
-Evidence-change cause refs:
+Evidence-cause refs:
 
 | Cause | Ref | Exact copy |
 | --- | --- | --- |
 | none | `intel.change-cause.none` | No material evidence change drove this update. |
 | new-evidence | `intel.change-cause.new-evidence` | New reporting changed the picture. |
-| staleness | `intel.change-cause.staleness` | Earlier reporting is now too old to carry the same weight. |
+| staleness | `intel.change-cause.staleness` | Earlier reporting is now too old for the same operational use. |
 | supersession | `intel.change-cause.supersession` | A newer observation replaced an older answer to the same question. |
-| mixed | `intel.change-cause.mixed` | New reporting and the aging or replacement of earlier reporting changed the picture. |
+| mixed | `intel.change-cause.mixed` | New reporting and the age or replacement of earlier reporting changed the picture. |
 
-Normal presentation may suppress `initial`, `unchanged`, or `none` lines when they add no decision value. It may not suppress warning acquisition, public-action-space change, or a material staleness/supersession explanation merely because the intent assessment string stayed unchanged.
+Normal presentation may suppress initial/unchanged/none when they add no decision value. It may not suppress warning acquisition/loss, an actionable public-case change, or a player-tasked result merely because the assessment sentence stayed unchanged.
 
-# 15. Lattice default target order
+# 17. Model validation
 
-When Lattice is operational, HQ must preselect exactly one unused target each C4/C5. The player may retarget without spending a normal intervention. There is no `collect nothing` option while any unused target exists.
+`kestrel-hq-belief-v1` rejects unless it proves:
 
-Priority order by standing main priority:
+- exact 19 definition IDs;
+- exact four question IDs/five producer kinds;
+- no invalid old sequence ID or integrated-auxiliary ID;
+- exact ordinary/reroute/focused mappings;
+- diagnostic implies directional;
+- warning role/relevance implies preparation;
+- public role/relevance implies directional + corroboration group;
+- role windows exact, including focused buildup warning C4–C5 and focused empty assessment C4–C5;
+- all source/context/limitation/summary refs resolve;
+- focused buildup has both required limitation refs;
+- supersession IDs valid, unique and acyclic;
+- exact 15 basis-pattern/warning mappings;
+- exact copy refs resolve once;
+- semantic maps canonicalised without changing authored target-order arrays.
 
-| Main priority | First choice → second → third |
-| --- | --- |
-| `beacon-security` | landing → sequence → auxiliary |
-| `partner-cooperation` | sequence → auxiliary → landing |
-| `ravellan-understanding` | auxiliary → sequence → landing |
+`kestrel-collection-v1` later rejects unless it proves:
 
-Remove targets already used. Do not remove landing because focused staging already produced a report; Lattice landing is diagnostically stronger. Final target choice remains explicit in the persisted #102 task transition.
+- exact three target IDs;
+- exact target/result mappings and timing;
+- no target repeated;
+- no no-task while unused targets remain;
+- focused collection does not consume landing;
+- default orders contain each target exactly once;
+- every result definition exists in the #100 model.
 
-# 16. Model validation
+# 18. Digest boundary
 
-Reject a model that does not prove all of the following:
+The #100 semantic digest includes:
 
-- exact 19 definition IDs, no more or fewer;
-- exact four question IDs and five producer kinds;
-- exact ordinary schedule;
-- exact producer mappings;
-- no removed integrated-auxiliary ID;
-- every directional definition has source context and limitation refs;
-- every source-sensitive definition has a corroboration group;
-- no ambiguous definition is diagnostic, warning-bearing, or public-case eligible;
-- warning-bearing definition implies preparation;
-- fixed observed cycle is not after current-through cycle;
-- `focused-staging-empty` current through C5, not C6;
-- same-question and explicit supersession graph is acyclic;
-- all semantic arrays are canonical order;
-- every ref resolves to exactly one exact copy string;
-- exact nine assessment/warning gap/watch mappings;
-- no directionless credible public-case copy;
-- Lattice default orders contain all three targets exactly once;
-- no same-target C4/C5 schedule is legal.
+- all 19 evidence definitions and three role relevance rules;
+- ordinary/reroute/focused mappings;
+- reducer semantic ID;
+- source/corroboration/supersession metadata;
+- all exact decision-significant copy.
 
-# 17. Digest boundary
+The future #102 producer digest includes:
 
-The semantic digest covers this entire canonical model:
+- target IDs;
+- target timing/one-shot/no-task rules;
+- target and liaison producer mappings;
+- default target orders;
+- references to exact #100 definition IDs.
 
-- IDs;
-- definitions;
-- question/producer/source/corroboration metadata;
-- lifetimes;
-- mappings;
-- supersession;
-- reducer semantics ID;
-- exact decision-significant English copy;
-- Lattice default target order insofar as it affects the target recommendation surface.
-
-Reordering an unordered semantic collection canonicalises to the same digest; changing any semantic value changes the digest.
+#103 binds both into final Kestrel content identity. Reordering unordered maps canonicalises; changing any semantic value changes the relevant digest.
