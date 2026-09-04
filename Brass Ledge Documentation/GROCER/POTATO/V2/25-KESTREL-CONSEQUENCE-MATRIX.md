@@ -7,46 +7,32 @@ status: active
 
 Backlink: [[README]]
 
-This is the implementation authority for **#101 — concrete Kestrel persistent state, provenance, order consequences and recovery**. It is intentionally not a generic consequence engine.
+This is the implementation authority for **#101 — concrete Kestrel persistent state, consequence provenance and costly recovery**. It is not a generic consequence engine.
 
-- [[23-HQ-BELIEF-AND-EVIDENCE]] owns the pure-derived current intelligence/public-case basis.
-- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns verified-prefix timing.
-- [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns complete-package interactions and C5 partner authority/tempo.
-- [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] owns Ravellan-observation emission.
+- [[23-HQ-BELIEF-AND-EVIDENCE]] owns current derived assessment/warning/public case.
+- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns trusted information cuts.
+- [[23C-HQ-BELIEF-EVIDENCE-CATALOG]] owns corroboration semantics.
+- [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns C2/C5 atomic interactions.
+- [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] owns adversary-observation emission.
 - [[27-KESTREL-TERMINAL-MATRIX]] owns terminal route effects.
 
-# Product rule
+# 1. Product rule
 
-Persistent state exists so the player can understand:
+Persistent state should let the player understand:
 
-> something changed because of my order, headquarters direction, Ravellan, or an external condition, and now I have a different problem.
+> Something changed because of my order, the standing direction I set, Ravellan, or an external condition, and now I have a different problem.
 
-Do not collapse the records below into a universal score.
+Do not collapse these records into one score.
 
-# Provenance
-
-Every material transition records one of:
-
-- `player-caused`;
-- `player-conditioned`;
-- `adversary-caused`;
-- `external`.
-
-Truth provenance is replayable. Player-facing causality remains belief-safe until terminal debrief.
-
-# Concrete persistent records
+# 2. Exact persistent state
 
 ## Beacon exposure
 
-`contained → thin → open`
+`contained | thin | open`
 
 Opening: `thin`.
 
-- contained — opportunistic move materially harder;
-- thin — defensible with warning/preparation but exploitable;
-- open — serious exploitable gap.
-
-Improve/worsen one step where authored; clamp endpoints.
+Ordered best→worst: contained, thin, open. Improve/worsen moves one step and clamps.
 
 ## Beacon preparation
 
@@ -54,23 +40,23 @@ Improve/worsen one step where authored; clamp endpoints.
 
 Opening: `routine`.
 
-Separate from exposure: exposure is present vulnerability; preparation records whether HQ has done the work required to execute a denial plan.
+Separate from exposure: exposure is current vulnerability; preparation records whether HQ has built an executable denial plan.
 
 ## Reserve condition
 
-`usable → strained → brittle`
+`usable | strained | brittle`
 
 Opening: `usable`.
 
-Worsen/recover one step; clamp endpoints. Brittle is not automatic defeat.
+Ordered best→worst. Worsen/recover one step and clamp. Brittle is not automatic defeat.
 
 ## Partner consent
 
-`cooperative → uneasy → conditional → withdrawn`
+`cooperative | uneasy | conditional | withdrawn`
 
 Opening: `cooperative`.
 
-Ordinary improvement/deterioration moves one step unless an explicit recovery sets a state/floor. C5 political concession may restore a withdrawn partner to conditional at severe cost.
+Ordered best→worst. Improve/worsen one step and clamp unless an explicit recovery sets a state/floor.
 
 ## Consultation promise
 
@@ -78,7 +64,22 @@ Ordinary improvement/deterioration moves one step unless an explicit recovery se
 
 Opening: `none`.
 
-Only C1 formal consultation creates active. No implicit promise. Honoured/breached are terminal for Kestrel.
+C1 formal consultation creates `active` and means exactly:
+
+> Consult the partner before a major visible military escalation or public attribution.
+
+The rapid consultation channel exists iff the **pre-package** promise state is `active`.
+
+The promise is breached by:
+
+- C2 uncoordinated `visible-patrol-surge`;
+- C2 `public-accusation`;
+- C4 `press-visible-advantage`;
+- C5 `act-then-inform` when the package contains a partner-sensitive action.
+
+The promise is not breached merely by civilian rerouting, quiet preparation, quiet reinforcement, reserve posture or withholding attribution, though those may have other political costs.
+
+`honoured` and `breached` are terminal for Kestrel. A breached promise no longer supplies a rapid channel.
 
 ## Partner authority
 
@@ -86,7 +87,7 @@ Only C1 formal consultation creates active. No implicit promise. Honoured/breach
 
 Opening: `pending`.
 
-Resolved by the C5 authority issue. It records permission/coordination, not relationship sentiment.
+Resolved at C5. It records operational permission/coordination, not relationship sentiment.
 
 ## Political concession
 
@@ -102,19 +103,37 @@ C5 costly recovery. It may restore access/authority but remains a severe termina
 
 Opening: `none`.
 
-Created only by commander-only C4 partner-liaison fallback.
+Created only by commander-only C4 liaison. An `active` obligation at terminal is outstanding, not silently fulfilled or automatically breached.
 
 ## Lattice investment
 
-`0 | 1 | 2 | 3-operational`
+Use the exact discriminated state:
 
-Opening: `0`, plus the smallest deterministic missed-schedule state required to prove maturity is unreachable after a missed C1/C2/C3 advance. No catch-up.
+```ts
+{ state: "on-track"; protectedThroughCycle: 0 | 1 | 2 }
+| { state: "operational" }
+| { state: "unreachable"; missedAtCycle: 1 | 2 | 3 }
+```
+
+Opening:
+
+```ts
+{ state: "on-track", protectedThroughCycle: 0 }
+```
+
+Transitions:
+
+- protect C1 from on-track/0 → on-track/1;
+- protect C2 from on-track/1 → on-track/2;
+- protect C3 from on-track/2 → operational;
+- leave the scheduled protection in C1/C2/C3 → unreachable with that exact `missedAtCycle`;
+- no catch-up, rewind, partial benefit or further investment issue after unreachable/operational.
+
+#102 later adds task/used-target state under a new persisted prototype format. #101 does not pre-add opaque future task fields.
 
 ## Attribution source use
 
-Persist only irreversible source-use history, never a mutable mirror of #100's current read model.
-
-Use a discriminated record equivalent to:
+Persist only irreversible use:
 
 ```ts
 { state: "unspent" }
@@ -122,27 +141,27 @@ Use a discriminated record equivalent to:
     state: "used"
     usedAtCycle: 5 | 6
     direction: "preparation" | "coercion"
-    supportingEvidenceInstanceIds: string[]
-    supportingSourceGroups: string[]
+    supportingEvidenceInstanceIds: readonly [string, string]
+    supportingCorroborationGroupIds: readonly [string, string]
   }
 ```
 
 Opening: `{ state: "unspent" }`.
 
-The used record freezes:
+The two corroboration-group IDs are distinct and correspond positionally to the two stored evidence IDs.
+
+The used record freezes exactly:
 
 - when the source was exposed;
 - which public claim was made;
-- the exact current #100 evidence basis relied on at use time;
-- the independent source groups exposed.
+- the deterministic two-item #100 public-case basis used;
+- the independent corroboration groups exposed.
 
-All arrays are canonical/deterministic and come from the current verified #100 public-case basis. Later evidence or terminal truth can never rewrite this record.
+Later evidence or terminal truth can never rewrite it.
 
-There is no persisted `none`, `tentative`, `credible` or `expired` attribution-opportunity state.
+There is no persisted `none/tentative/credible/expired` opportunity mirror.
 
-# Derived current attribution availability
-
-Current availability is a pure read model:
+# 3. Derived current attribution availability
 
 ```ts
 if (sourceUse.state === "used") {
@@ -151,126 +170,151 @@ if (sourceUse.state === "used") {
 return currentHqBelief.publicCaseBasis
 ```
 
-Therefore availability may currently be:
+C5 attribution issue and C6 Hold And Expose require:
 
-- none/null;
-- tentative/preparation;
-- tentative/coercion;
-- tentative/null;
-- credible-source-sensitive/preparation;
-- credible-source-sensitive/coercion;
-- unavailable because the source was already used.
+- source unspent;
+- current basis `credible-source-sensitive`;
+- exact direction and two-item corroborated support;
+- any additional package/terminal predicates.
+
+Holding in C5 persists nothing and freezes no case for C6.
+
+Assessment direction or tactical warning alone never creates availability. Hidden truth never creates or chooses the claim.
+
+# 4. Consequence provenance
+
+Do not add a free-form mutable consequence log.
+
+Every authoritative transition resolver returns deterministic **derived consequence facts** alongside its persisted post-state. They are reproducible from trusted ledger entries and canonical content.
+
+Equivalent fact:
+
+```ts
+type V2ConsequenceFact = Readonly<{
+  cycle: 1|2|3|4|5|6
+  ruleId: string
+  provenance: "player-caused" | "player-conditioned" | "adversary-caused" | "external"
+  sourceOrderIds: readonly string[]
+  stateField: string
+  beforeRef: string
+  afterRef: string
+  contributionRef?: string
+}>
+```
 
 Rules:
 
-- C5 attribution issue exists only when source is unspent and current basis is credible-source-sensitive;
-- C6 Hold And Expose can exist only under the same current credible/unspent condition plus terminal predicates;
-- an unspent case may strengthen, weaken, disappear or change direction as legitimate evidence changes;
-- holding in C5 does not freeze the C5 case for C6;
-- using in C5/C6 freezes the actual claim and supporting evidence permanently;
-- a strong assessment or tactical warning alone never creates public attribution availability;
-- hidden Ravellan truth never creates or chooses a public claim.
+- no player-written prose or arbitrary patch;
+- canonical rule/order IDs only;
+- C5 aggregate contributions remain individually explainable even when net state does not move;
+- reveal/debrief may reconstruct facts by replaying the same transition, not by trusting saved client data;
+- facts are not another persisted authoritative state unless a later explicit decision proves reconstruction insufficient.
 
-This removes an unnecessary pre-command synchronization transition and avoids storing a second mutable truth beside #100.
+# 5. Ordinal and atomic arithmetic
 
-# Helper semantics
+Ordinary improve/worsen moves one step and clamps.
 
-For ordinal records, improve/worsen one moves exactly one step and clamps.
+For C2 partner and C5 reserve/exposure, derive signed contributions from the **complete final-order set**, sum, then clamp once from pre-command state. Never sequentially apply issue-array order.
 
-C5 is special: simultaneous Beacon/reserve signed effects are composed from the complete final-order set, summed, then clamped once under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]]. Never sequentially clamp issue effects.
+Retain one derived consequence fact per contribution plus the net result.
 
-Repeated causal contributions remain separately explainable even when net/clamped state does not move.
+# 6. Cycle 1
 
-# Cycle 1
+## Beacon watch
 
-## `reinforce-watch`
+### `reinforce-watch`
 
-Player-caused:
-
-- Beacon exposure improves one (`thin → contained` opening);
+- exposure improves one;
 - reserve worsens one.
 
-Ravellan signals come from 37A.
+### `ordinary-watch`
 
-## `ordinary-watch`
+No persistent state movement.
 
-No persistent improvement. Opening exposure remains thin.
+## Partner consultation
 
-## `formal-consultation-agreement`
+### `formal-consultation-agreement`
 
-Player-caused:
+- promise `none → active`;
+- partner improves one only if somehow below cooperative;
+- establishes rapid channel while promise remains active.
 
-- consultation promise `none → active`;
-- partner improves one only if somehow below cooperative.
+### `informal-liaison`
 
-Creates the rapid formal channel used in later C2/C5 composition.
+No promise/channel state.
 
-## `informal-liaison`
+## Lattice
 
-No promise/authority state.
+Use exact investment transitions in section 2.
 
-## `protect-lattice-c1`
+# 7. Cycle 2 — atomic partner composition
 
-Lattice `0 → 1`. Missing it marks Kestrel maturity unreachable.
+First determine whether visible surge is coordinated:
 
-# Cycle 2 — shipping
+```text
+coordinatedVisibleSurge =
+  pre-command consultationPromise == active
+  AND package contains joint-non-attributive-warning
+  AND package contains visible-patrol-surge
+```
 
-## `quiet-escort`
+Partner signed contributions:
 
-No persistent reserve/partner penalty by default. Some delay and weaker visible deterrence are immediate course costs, not universal meters.
+| Course | Contribution |
+| --- | ---: |
+| `quiet-escort` | 0 |
+| coordinated `visible-patrol-surge` | 0 |
+| uncoordinated `visible-patrol-surge` | -1 |
+| `reroute-and-monitor` | -1 |
+| `remain-silent` | 0 |
+| `joint-non-attributive-warning` | +1 |
+| `public-accusation` | -1 |
 
-## `visible-patrol-surge`
+Sum and clamp once.
 
-Player-caused:
+Consequences/examples:
+
+- formal channel + joint warning + visible surge → visible penalty neutralised and joint warning may improve partner one;
+- no channel + joint warning + visible surge → +1 and -1 net to zero, while the uncoordinated surge breaches an active promise if one existed;
+- reroute + joint warning → net zero but both disruption and reassurance remain causally visible;
+- reroute + accusation → two-step deterioration where room exists.
+
+## Shipping physical/reserve effects
+
+### `quiet-escort`
+
+- no reserve movement;
+- limited shipping delay is immediate course cost, not a permanent meter.
+
+### `visible-patrol-surge`
 
 - reserve worsens one;
-- if the complete C2 package is not coordinated, partner worsens one;
-- active formal channel + joint warning coordinates it and avoids that partner deterioration.
+- emits reserve-deployment event and visible denial/coverage under 37A.
 
-## `reroute-and-monitor`
+### `reroute-and-monitor`
 
-Player-caused:
+- reserve unchanged;
+- larger civilian disruption;
+- triggers derived C3 #100 evidence under its own contract.
 
-- partner worsens one when disruption is not jointly coordinated/accepted;
-- reserve unchanged.
+## Promise effects
 
-Visible beat: larger civilian disruption. Information payoff is bounded #100 evidence, not an intelligence stat.
+- uncoordinated visible surge breaches active promise;
+- accusation breaches active promise;
+- coordinated visible surge leaves promise active;
+- reroute/joint warning/silence/quiet escort do not themselves resolve/breach it.
 
-# Cycle 2 — public posture
+Public accusation does not create/use the protected attribution source.
 
-## `remain-silent`
+## Lattice
 
-No persistent transition.
+Protect/leave exact schedule transition.
 
-## `joint-non-attributive-warning`
-
-Player-caused:
-
-- improve partner one if uneasy/conditional;
-- cannot restore withdrawn by itself.
-
-## `public-accusation`
-
-Always unilateral and commander-only.
-
-Player-caused:
-
-- partner worsens one regardless of whether a formal promise exists;
-- active consultation promise becomes breached.
-
-It does not manufacture a public case or mark the attribution source used: this is an unsupported accusation made without the later source-sensitive opportunity.
-
-# Cycle 2 — Lattice
-
-Protect on schedule only after C1 protection: `1 → 2`; otherwise maturity becomes unreachable.
-
-# Cycle 3
+# 8. Cycle 3
 
 ## `forward-reserve-preparation`
 
-Player-caused:
-
-- Beacon preparation becomes prepared;
+- Beacon preparation → prepared;
 - reserve worsens one.
 
 ## `hold-reserve`
@@ -279,178 +323,137 @@ No persistent movement.
 
 ## `focus-staging-collection`
 
-Player-caused:
-
-- Beacon exposure worsens one;
-- queues the C4 focused-staging evidence occurrence under #100.
+- exposure worsens one;
+- triggers C4 focused #100 occurrence;
+- does not change Lattice used-target state or consume `landing-force-staging`.
 
 ## `maintain-current-coverage`
 
-No focused occurrence and no collection-diversion exposure cost.
+No focused occurrence/exposure cost.
 
 ## `reassure-partner`
 
-Player-caused:
+- partner improves one if uneasy/conditional;
+- cannot restore withdrawn or erase breached promise.
 
-- improve partner one if uneasy/conditional;
-- cannot restore withdrawn;
-- cannot erase a breached promise.
+## Lattice
 
-## `protect-lattice-c3`
+Protect/leave exact schedule transition.
 
-If advances 1–2 succeeded: `2 → 3-operational`; otherwise maturity remains unreachable.
-
-# Cycle 4
+# 9. Cycle 4
 
 ## `recover-reserve`
 
-Player-caused:
-
 - reserve improves one;
-- Beacon exposure worsens one.
-
-Endurance is bought with immediate security.
+- exposure worsens one.
 
 ## `prepare-beacon-quietly`
 
-Player-caused:
-
-- Beacon preparation becomes prepared;
-- Beacon exposure improves one;
+- Beacon preparation → prepared;
+- exposure improves one;
 - reserve worsens one.
-
-Targeted detectability/discovery is owned by 37A.
 
 ## `press-visible-advantage`
 
-Player-caused:
-
 - reserve worsens one;
-- partner worsens one if uncoordinated under known commitment/public state.
+- partner worsens one;
+- active consultation promise → breached;
+- visible/coverage/discovery signals under 37A.
+
+There is no hidden automatic consultation course in C4. The political cost is exact, not “where applicable.”
 
 ## Lattice Task Collection
 
-No generic persistent bonus. Persist/replay task authority as required by #102; the resulting evidence occurrence remains pure derived readout.
+#101 persists no task result or generic bonus. #102 later owns task authority. The resulting evidence remains derived.
 
 ## `request-partner-liaison`
 
-Commander-only:
-
 - liaison obligation `none → active`;
-- queues the narrower C5 evidence occurrence.
+- triggers one C5 derived auxiliary occurrence;
+- never Delegate.
 
-Never Delegate.
+# 10. Cycle 5 — complete atomic package
 
-# Cycle 5 — atomic composition
+Use [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
 
-Resolve the complete final-order package under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
+## Beacon/reserve signed effects
 
-## Beacon posture signed effects
+| Course | Exposure delta | Reserve delta | Other |
+| --- | ---: | ---: | --- |
+| `quiet-reinforce-beacon` | +1 | -1 when material commitment required | preparation → prepared |
+| `visible-reinforce-beacon` | +1 | -1 | preparation → prepared; partner-sensitive |
+| `hold-beacon-posture` | 0 | 0 | — |
+| `keep-reserve-forward` | 0 | -1 | preparation → prepared |
+| `emergency-consolidation` | -1 | +1 | — |
 
-### `quiet-reinforce-beacon`
+`+1` means improve, `-1` worsen for the relevant ordered state.
 
-- exposure +1 improvement;
-- Beacon preparation becomes prepared;
-- reserve -1 when material commitment is required.
+Sum reserve/exposure contributions then clamp once. Setting preparation to prepared is idempotent.
 
-### `visible-reinforce-beacon`
+## Partner authority
 
-- exposure +1;
-- Beacon preparation becomes prepared;
-- reserve -1.
+### `honour-consultation`
 
-Partner effect comes from the authority package, not an independent decrement.
+If partner accessible:
 
-### `hold-beacon-posture`
-
-No direct state movement.
-
-## Reserve signed effects
-
-### `keep-reserve-forward`
-
-- reserve -1;
-- Beacon preparation becomes prepared if needed.
-
-### `emergency-consolidation`
-
-- reserve +1;
-- Beacon exposure -1.
-
-## Aggregation
-
-For exposure/reserve:
-
-- sum all signed C5 deltas from the complete final-order set;
-- clamp once from pre-command state;
-- preserve individual causal records.
-
-Issue-array order never changes result.
-
-# Cycle 5 — partner authority
-
-## `honour-consultation`
-
-Always player-legal.
-
-Non-withdrawn partner:
-
-- partner authority becomes joint for C6;
-- active promise becomes honoured;
-- active liaison obligation becomes fulfilled;
+- authority → joint for C6;
+- active promise → honoured;
+- active liaison obligation → fulfilled;
 - partner improves one.
 
-Withdrawn partner:
+If withdrawn:
 
-- partner authority becomes none;
-- applicable promises/obligations may be honoured/fulfilled;
+- authority → none;
+- active promise/liaison may still become honoured/fulfilled;
 - partner remains withdrawn.
 
-Same-cycle sensitive-action compatibility requires the active rapid formal channel under 39.
+Same-cycle sensitive action through Honour requires pre-package active rapid channel + accessible partner.
 
-## `political-concession`
+### `political-concession`
 
 Where legal:
 
-- authority becomes concession;
-- political concession becomes active;
-- withdrawn partner becomes conditional;
-- active unbreached promise becomes honoured;
-- active liaison obligation becomes fulfilled.
+- authority → concession;
+- concession → active;
+- withdrawn partner → conditional;
+- active promise → honoured;
+- active liaison → fulfilled;
+- immediate sensitive authority;
+- severe concession.
 
-Severe terminal cost remains.
+### `act-then-inform`
 
-## `act-then-inform`
+Legal only with at least one partner-sensitive action:
 
-Legal only with at least one same-cycle partner-sensitive action.
+- authority → unilateral;
+- active promise → breached;
+- active liaison → breached;
+- partner worsens exactly one step total for the unilateral package;
+- immediate sensitive authority.
 
-- authority becomes unilateral;
-- active promise becomes breached;
-- active liaison obligation becomes breached;
-- partner worsens exactly one step total for the unilateral package.
+Partner-sensitive C5 actions:
 
-Partner-sensitive C5 actions are visible Beacon reinforcement and source-sensitive public attribution use.
+- `visible-reinforce-beacon`;
+- `use-attribution`.
 
-# Cycle 5 — attribution
+# 11. Cycle 5 attribution
 
-Derive current availability after all evidence due at C5 has been incorporated and before agenda construction.
+Derive availability after all C5-due evidence and before agenda construction.
 
 ## `hold-attribution`
 
-Legal only when a credible current case makes the issue exist.
-
-No persistent source-use transition. Source remains unspent. The current case is not frozen for C6.
+No persistent source-use transition. Current case is not frozen.
 
 ## `use-attribution`
 
 Legal only when:
 
-- source use is unspent;
-- current #100 public-case basis is credible-source-sensitive with direction and corroborating support;
-- player spends one intervention;
-- complete package provides compatible immediate authority.
+- source unspent;
+- current #100 basis is credible-source-sensitive;
+- player spends one normal intervention;
+- complete package provides immediate authority.
 
-Persist:
+Persist exactly:
 
 ```ts
 {
@@ -458,139 +461,157 @@ Persist:
   usedAtCycle: 5,
   direction: currentBasis.direction,
   supportingEvidenceInstanceIds: currentBasis.supportingEvidenceInstanceIds,
-  supportingSourceGroups: currentBasis.supportingSourceGroups,
+  supportingCorroborationGroupIds: currentBasis.supportingCorroborationGroupIds,
 }
 ```
 
-Common effects:
+Validate two IDs, two distinct groups and correspondence with the current basis.
 
-- protected source is exposed/compromised as severe cost;
-- improve partner one if partner remains accessible and the use is coordinated/politically usable;
-- unilateral package owns the one partner deterioration instead;
-- 37A owns the discovery observation.
+Effects:
 
-Player-facing copy/causal history states the exact preparation or coercion claim made. Later evidence/terminal truth cannot relabel it.
+- severe source exposure;
+- improve partner one only where coordinated/politically usable and partner accessible;
+- unilateral package uses its one package-level deterioration instead;
+- discovery observation under 37A.
 
-# Cycle 6 attribution handoff
+Claim copy states preparation or coercion exactly. Later evidence/truth cannot relabel it.
 
-[[27-KESTREL-TERMINAL-MATRIX]] receives:
+# 12. Cycle 6 attribution handoff
 
-- current derived #100 public-case basis;
-- persistent source-use state;
-- known physical/partner campaign state.
+[[27-KESTREL-TERMINAL-MATRIX]] receives current final #100 public case + source-use record + known physical/partner state.
 
-Hold And Expose, where legal, consumes the current case and persists the same used record with `usedAtCycle: 6`.
+Hold And Expose, where legal, persists the same structure with `usedAtCycle: 6`.
 
-Claim direction controls truthful copy and debrief history. It does not create warning, preparation, partner authority or physical route adequacy.
+Claim direction controls truthful copy/history only. It never creates warning, preparation, authority or physical adequacy.
 
-If #107 proves a direction-specific Hold route is player-safe dominated in a complete state, #27 may prune that exact state. Do not globally treat one claim direction as a physical capability.
-
-# Liaison obligation
+# 13. Liaison obligation
 
 C4 liaison creates active.
 
-It becomes:
+At C5:
 
-- fulfilled through an authored consultation/concession that satisfies it;
-- breached through explicitly incompatible unilateral action;
-- outstanding rather than automatically breached if still active at terminal.
+- Honour/Concession can fulfil it;
+- Act Then Inform breaches it;
+- if still active at terminal, it is outstanding rather than silently resolved.
 
-# Severe-cost history
+# 14. Severe-cost history
 
-Before terminal-route effects, severe-cost history includes at minimum:
+Before terminal-route effects include where present:
 
-- consultation promise breached;
-- political concession active;
-- liaison obligation breached;
-- source use/exposure if used at C5;
+- promise breached;
+- concession active;
+- liaison breached;
+- source used/exposed at C5;
 - other explicit authored commitment failure.
 
-Reserve brittleness is evaluated on post-terminal-route state under 27. Terminal-only severe flags such as late reaction, emergency surge and overreaction are owned by 27/39.
+Reserve brittleness is evaluated after the terminal route. Terminal-only late reaction, emergency surge and overreaction belong to 27.
 
 No numeric cost score.
 
-# Recovery invariant
+# 15. Recovery invariant
 
-Before C6, promised costly counterplay includes:
+Before C6, costly counterplay includes:
 
-- reserve deterioration → C4 recovery / C5 emergency consolidation;
+- reserve deterioration → C4 recovery / C5 consolidation;
 - Beacon weakness → C3/C4/C5 preparation/reinforcement;
-- partner deterioration → reassurance, C5 consultation/authority, concession;
+- partner deterioration → reassurance, C5 authority choices, concession;
 - withdrawal → concession may restore conditional access at severe cost while Honour remains integrity-only;
-- missed Lattice → commander-only liaison fallback;
-- information weakness → remaining focused/Lattice/liaison options when temporally useful.
+- missed Lattice → commander-only liaison;
+- information weakness → remaining focused/Lattice/liaison routes where temporally useful.
 
-A recovery option must change the threatened downstream state and must not be free.
+A recovery must change the threatened downstream state and cannot be free.
 
-# Ravellan observations
+# 16. Ravellan observations
 
-Do not infer them here. Exact emissions belong only to [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
+Do not infer observations here. Exact emissions belong only to [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
 
-Both preparation-case and coercion-case public use may emit `ravellan_discovery_signal = suspected` because the public act reveals protected collection. The signal does not mean both public claims say the same thing.
+Both claim directions may emit discovery because public use exposes protected collection; that does not make their claims identical.
 
-# Replay / authority
+# 17. Replay integration
 
-Every persisted mutation is replay-verifiable under [[30-ARCHITECTURE-CONTRACT]].
+#101 changes persisted V2 state. Inspect the actual predecessor version, advance exactly once, reject earlier prototype payloads without migration, and preserve V1.
 
-The source-use state is a genuine irreversible campaign mutation and belongs in the appropriate #101 command/terminal transition. Current public-case availability remains pure #100 readout and creates no synchronization ledger entry.
+Extend the existing `command-set` authoritative resolver to apply player-caused C1–C5 consequence state and reverse observations atomically from final orders. Do not add a second generic “consequence update” entry for changes wholly determined by the command set.
 
-Any new persisted #101 state/ledger semantics follow the next actual prototype version, with no silent migration and V1 isolation.
+Any external/system mutation not determined by a command set must use its own narrow replay-verifiable transition. Do not widen `ravellan-decision`.
 
-# Required #101 tests
+Trusted replay recomputes:
 
-## Opening and consequences
+- state transitions;
+- C2/C5 aggregate arithmetic;
+- promise/authority/liaison states;
+- source-use exact basis;
+- Ravellan observations;
+- hashes/revisions.
 
-- exact opening records;
-- every order transition above;
-- provenance correctness;
-- ordinal clamping and C5 aggregate-once behavior;
-- C2 coordinated/uncoordinated surge;
-- C2 accusation partner/promise effects without source use;
-- reroute cost separated from derived evidence;
-- C4 quiet-prep reserve cost;
-- liaison commander-only + obligation;
-- withdrawn + Honour legal; concession costly recovery.
+Derived consequence facts are recomputed, not trusted saved payload.
 
-## Attribution read-model separation
+# 18. Required tests
 
-- session persists source-use only, never none/tentative/credible mirror;
-- no pre-command attribution synchronization ledger transition;
-- current availability derives from #100 basis + source-use state;
-- holding at C5 freezes no stale case for C6;
-- a C5 case may legitimately disappear/change direction at C6 if held;
-- strong assessment or warning alone cannot create availability;
-- hidden truth with equal #100 basis leaves availability equal.
+## State schemas
 
-## Attribution use
+- exact opening state;
+- exact Lattice on-track/operational/unreachable transitions;
+- impossible progress/missed combinations rejected;
+- promise/authority/liaison/source-use discriminated states exact;
+- source-use exactly two distinct corroboration groups.
 
-- credible basis requires direction, exact support occurrence IDs and independent source groups;
-- C5 Use writes usedAtCycle 5 and the exact basis;
-- C6 Hold And Expose writes usedAtCycle 6 and the exact current basis;
-- used record is immutable and makes all later availability unavailable;
-- source-use/action replay tampering rejected;
-- player-safe copy identifies the claim actually used;
-- claim direction never substitutes for physical adequacy.
+## C1–C4 transitions
 
-## Recovery/compatibility
+- every order above;
+- C2 partner signed matrix and clamp-once order independence;
+- visible surge coordination and promise breach exact;
+- reroute+warning and reroute+accusation examples;
+- C4 press always political cost and active-promise breach;
+- focused collection never consumes Lattice landing;
+- provenance facts deterministic.
 
+## C5
+
+- aggregate reserve/exposure once;
+- preparation idempotent;
+- partner authority/tempo exact;
+- withdrawn+Honour legal;
+- Concession costly recovery;
+- Act one package-level partner deterioration;
+- issue-order invariance.
+
+## Attribution
+
+- no persisted current-case mirror/synchronisation transition;
+- availability derives from #100 + source use;
+- one-source/directionless case cannot be used;
+- Hold freezes no case;
+- C5/C6 Use stores exact `usedAtCycle`, direction, two evidence IDs and two distinct corroboration groups;
+- used record immutable/unavailable later;
+- claim direction never changes physical adequacy;
+- client cannot submit basis.
+
+## Replay/recovery/compatibility
+
+- all persistent fields covered by state hashes/replay;
+- tampered arithmetic/promise/Lattice/source basis/observation rejected;
 - every promised recovery changes threatened state at real cost;
-- all persisted records covered by hashes/replay;
+- no dead C5 exhaustion observation;
 - V1 unchanged.
 
-# Rejection conditions
+# 19. Rejection conditions
 
 Reject #101 if it introduces:
 
-- a mutable persisted mirror of #100 public-case availability;
-- a pre-command synchronization transition solely to copy a derived read model;
-- universal meters/trust scores;
-- implicit promises;
-- sequential C5 clamping or double political penalties;
+- a mutable persisted public-case mirror;
+- a pre-command synchronisation transition solely to copy derived state;
+- an unspecified/opaque Lattice missed state;
+- an implicit or undefined consultation promise scope;
+- non-atomic C2/C5 arithmetic;
+- “political cost where applicable” without an executable condition;
+- generic trust/morality scores;
 - free recovery;
 - hidden-truth attribution;
-- a directionless or unsupported used claim;
-- later rewriting/regeneration of source use;
-- claim direction as physical warning/preparedness;
+- directionless/one-source used claim;
+- generic source groups instead of exact corroboration groups;
+- later source regeneration/relabeling;
+- claim direction as physical warning;
 - liaison through Delegate;
-- V1 state changes;
-- a generic lifecycle/plugin framework before another scenario proves reuse.
+- generic consequence/lifecycle framework before another scenario proves reuse;
+- V1 changes.
