@@ -7,333 +7,293 @@ status: active
 
 Backlink: [[README]]
 
-This document is the implementation authority for how the hidden Ravellan decision from [[22-RAVELLAN-EXECUTABLE-POLICY]] becomes **world effects, player-observable situation changes and HQ-authorised evidence** in Kestrel. It belongs to #103 content/world integration; it does not change #99's policy selection.
+This document is the implementation authority for how hidden Ravellan decisions from [[22-RAVELLAN-EXECUTABLE-POLICY]] become **bounded world effects and player-observable situation changes** in Kestrel. It belongs to #103 content/world integration and does not change #99 policy.
 
-## Product purpose
+[[23-HQ-BELIEF-AND-EVIDENCE]] / [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] own HQ intelligence derivation. This file may name the ordinary evidence IDs associated with fixed manifestations, but it does **not** authorise narrative prose or hidden action IDs to become extra analytic evidence.
 
-Ravellan must feel like an actor whose choices change the situation, but the implementation may not turn an action ID into arbitrary authored drama.
+# Product purpose
 
-Each normal Ravellan action therefore has a bounded effect projection.
+Ravellan must feel like an actor whose choices change the situation without turning a hidden action ID into arbitrary drama or an intelligence oracle.
 
-The player sees observable manifestations, not the hidden action ID.
+The player sees observable manifestations, not hidden action IDs. The same visible manifestation can be compatible with more than one hidden action.
 
-The same visible manifestation may be compatible with more than one hidden action. This preserves uncertainty.
+# World manifestation vs intelligence observation
 
-## Timing
+These are separate paths:
 
-For Cycles 1–5:
+```text
+hidden Ravellan decision
+→ bounded world manifestation
+→ safe situation prose
+```
 
-1. the authoritative `ravellan-decision` for Cycle N selects the hidden normal action;
-2. that action immediately creates the authored **Cycle-N world effect projection** below;
-3. HQ may observe only the listed public/observable manifestation/evidence at the normal Cycle-N belief update;
-4. no extra hidden-state-derived effect may be invented by UI/content;
-5. coalition orders later in Cycle N may create Ravellan observations usable by Ravellan at Cycle N+1, per #99. That reverse observation path is separate from the HQ observation path here.
+and, only where authorised:
 
-Cycle 6 instead uses the terminal behavior projection at the end of this file.
+```text
+trusted hidden history
+→ #100/#102 observation extractor
+→ bounded source fact
+→ HQ evidence
+→ analysis
+```
 
-## Normal action — `probe_shipping`
+**Never parse situation prose back into evidence.**
 
-### World effect
+The world writer does not decide assessment, warning or public-case strength. The intelligence extractor does not receive arbitrary prose and infer hidden meaning.
 
-Ravellan applies visible ambiguous pressure to commercial movement near Beacon Channel.
+# Timing
 
-It may include shadowing, inspections, auxiliary/coastguard interference and close presence without crossing into an overt attack.
+Cycles 1–5:
 
-### Player-observable manifestation
+1. authoritative `ravellan-decision` selects hidden normal action;
+2. action creates the bounded same-cycle manifestation below;
+3. safe situation projection may describe only authorised observable facts;
+4. ordinary fixed evidence is generated only where [[23-HQ-BELIEF-AND-EVIDENCE]] says it exists;
+5. directed evidence requires an explicit observation extractor from [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] or [[26-LATTICE-COLLECTION-MATRIX]];
+6. coalition orders later in cycle may create Ravellan observations for N+1 under [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]].
 
-Use a cycle-appropriate authored summary from this fixed meaning:
+Cycle 6 uses terminal manifestation below.
 
-- pressure on commercial traffic is continuing or intensifying;
-- Ravellan remains below the threshold of obvious war;
-- the manifestation does not establish whether the pressure is an end in itself or cover for preparation.
+# Normal action — `probe_shipping`
 
-### HQ evidence
+## World effect
 
-The action may create only **ambiguous** ordinary evidence unless a separate directed collection rule legitimately observes more.
+Visible ambiguous pressure on commercial movement: shadowing, inspections, auxiliary/coastguard interference, close presence below overt attack.
 
-- in Cycle 1, its visible pressure is represented by `opening-pressure-ambiguous` under [[23-HQ-BELIEF-AND-EVIDENCE]];
-- in Cycle 2, the continuing pressure is represented by `shipping-probe-ambiguous`;
-- in later cycles, it contributes to the cycle's general pressure-pattern summary but does not create a new directional evidence item by itself.
+## Safe manifestation
 
-### Persistent-state effect
+- pressure continues/intensifies;
+- Ravellan remains below obvious-war threshold;
+- manifestation does not establish whether pressure is the operation or cover for preparation.
 
-No generic coalition meter changes merely because the hidden action occurred.
+## HQ evidence boundary
 
-Specific shipping delay/disruption is resolved in Cycle 2 through the authored shipping-response issue; later probe manifestations are consequence/situation beats unless another canonical matrix explicitly assigns a persistent transition.
+Only the fixed ordinary evidence from [[23-HQ-BELIEF-AND-EVIDENCE]]:
 
-Do not worsen partner consent, reserve, or Beacon exposure automatically from the action ID.
+- C1 `opening-pressure-ambiguous`;
+- C2 `shipping-probe-ambiguous`;
+- later cycle pressure summaries remain ambiguous unless directed collection observes more.
 
-## Normal action — `seed_deception`
+No automatic directional evidence from action ID.
 
-### World effect
+## Persistent effect
 
-Ravellan deliberately creates a misleading or internally inconsistent visible picture through exercises, movement, messaging or tasking patterns.
+No generic coalition meter. Specific C2 shipping consequences arise from the authored coalition response, not hidden action damage.
 
-### Player-observable manifestation
+# Normal action — `seed_deception`
 
-The player may see contradictory/erratic visible indicators, but not the fact that they were deliberately planted.
+## World effect
 
-Use ordinary language such as:
+Misleading/internally inconsistent visible pattern through exercises, movement, messaging or tasking.
 
-> Ravellan's visible pattern has become less consistent: some activity suggests preparation while other formations remain dispersed.
+## Safe manifestation
 
-Do not label it “deception” before terminal truth reveal.
+Player may see contradictory/erratic cues, never the label “deception” before debrief.
 
-### HQ evidence
+## HQ evidence boundary
 
-For the ordinary six-cycle path, `seed_deception` does **not** directly add a directional evidence item before Cycle 5. It contributes only an ambiguous manifestation and may explain why the fixed Cycle-3 conflicting bundle is genuinely observable.
+No automatic directional evidence.
 
-The canonical Cycle-3 evidence remains exactly:
+The fixed C3 pair remains:
 
 - `staging-logistics-anomaly` — preparation indicator;
 - `combat-elements-dispersed` — coercion indicator.
 
-This bundle is presented identically across hidden opening situations; `seed_deception` is one possible world reason those observations coexist, not a hidden selector of the HQ result.
+Important: those are **authored bounded observations**, not a direct decode of `seed_deception` or hidden preparation. `combat-elements-dispersed` means what routine coverage sees, not omniscient global truth.
 
-Directed collection may later cut through or expose parts of the deception through [[23-HQ-BELIEF-AND-EVIDENCE]] / [[26-LATTICE-COLLECTION-MATRIX]].
+Directed collection may later supersede/challenge those observations through authorised source-fact extractors.
 
-### Persistent-state effect
+## Persistent effect
 
-None beyond the policy/history itself.
+None beyond hidden policy/history. No confusion/deception meter.
 
-Do not create a generic confusion/deception meter.
+# Normal action — `prepare_beacon_seizure`
 
-## Normal action — `prepare_beacon_seizure`
+## World effect
 
-### World effect
+Advance hidden preparation exactly as #99 owns:
 
-Advance the hidden seizure-preparation state exactly as #99 owns:
+`none → developing → ready → ready`.
 
-`none → developing → ready → ready`
+## Safe manifestation
 
-No additional preparation step exists outside that canonical transition.
+Ordinary observation does not reveal preparation action. Overt pressure can plateau/thin/continue while important activity occurs outside obvious confrontation.
 
-### Player-observable manifestation
+## HQ evidence boundary
 
-Ordinary HQ observation does **not** automatically reveal the preparation action.
+The action itself creates **no automatic preparation evidence or tactical warning**.
 
-Visible pressure may plateau, thin, or continue as existing patrol/auxiliary activity while the important preparation happens away from the obvious confrontation.
+Preparation evidence/warning can arise only from explicitly frozen observation paths:
 
-This is why directed collection can be valuable.
+- fixed C3 bounded signposts;
+- C3 focused collection result at C4;
+- later Lattice Task Collection;
+- liaison where authorised;
+- another future explicit evidence rule.
 
-### HQ evidence
+Never translate the action to “Intelligence detects preparation.”
 
-The hidden action itself creates no automatic directional HQ evidence item.
+## Persistent effect
 
-Any preparation-related HQ evidence must come from:
+Only hidden Ravellan preparation/posture history changes here.
 
-- the fixed Cycle-3 observable bundle;
-- Cycle-3 focused collection;
-- Lattice Task Collection;
-- partner liaison where authorised;
-- another explicit evidence rule frozen in the canonical docs.
+# Normal action — `pause_consolidate`
 
-Do not translate `prepare_beacon_seizure` directly into “Intelligence detects preparation.”
+## World effect
 
-### Persistent-state effect
+Reduce immediate visible pressure and consolidate/wait.
 
-Only Ravellan's hidden preparation/posture history changes here. Coalition persistent records do not change automatically.
+## Safe manifestation
 
-## Normal action — `pause_consolidate`
+Patrol/harassment eases or pulls farther away. This does not tell the player whether deterrence worked, a feint is ending, preparation moved out of sight, or Ravellan is waiting.
 
-### World effect
+## HQ evidence boundary
 
-Ravellan reduces immediate visible pressure and consolidates/waits rather than directly escalating.
+Ambiguous only. No automatic coercion or “crisis over” conclusion.
 
-### Player-observable manifestation
+## Persistent effect
 
-Visible patrol/harassment intensity eases or pulls farther away from the focal confrontation.
+No automatic coalition reserve/partner recovery.
 
-The player does not know whether this means:
+# Cycle-specific pressure projection
 
-- deterrence worked;
-- a feint is ending;
-- Ravellan is consolidating;
-- activity is moving out of sight;
-- the opponent is waiting for coalition fatigue.
+## C1
 
-### HQ evidence
+#99 forces `probe_shipping`.
 
-The pressure reduction is **ambiguous**. It never directly proves coercion or abandonment of preparation.
+Safe situation:
 
-It feeds the canonical Cycle-4 pressure-pattern evidence below where relevant.
+- increased maritime pressure;
+- partner asks coalition intent;
+- HQ cannot distinguish preparation/coercion/testing.
 
-### Persistent-state effect
+## C2
 
-None to coalition persistent records merely from the pause.
+C1 shipping pressure persists into the shipping-response issue regardless of new C2 action.
 
-Do not automatically recover coalition reserve or partner state because Ravellan pauses.
+Overlay:
 
-## Cycle-specific visible pressure projection
+- probe → pressure continues/intensifies;
+- deception → pressure continues + contradictory exercise/messaging cues;
+- prepare → prior pressure persists while some new activity shifts away from obvious lane;
+- pause illegal.
 
-The fixed Kestrel emotional/agenda structure remains, but the exact situation wording must reflect the hidden action's legitimate manifestation rather than asserting a lull that did not occur.
+All support the same C2 agenda without pretending the hidden world actions are identical.
 
-### Cycle 1
+## C3
 
-Ravellan is always `probe_shipping` under #99.
+Fixed two-item conflicting evidence appears before command regardless hidden action.
 
-Player situation:
+Action may affect **situation wording only**:
 
-- increased maritime pressure/patrol activity;
-- partner asks what coalition intends;
-- HQ cannot distinguish testing/coercion/preparation.
+- probe → active pressure;
+- deception → more contradictory visible pattern;
+- prepare → overt pressure steady while elsewhere unclear;
+- pause → visible pressure eases.
 
-This is the authored opening probe.
+The situation wording may not add/remove a side of the fixed C3 analytic conflict.
 
-### Cycle 2
+## C4
 
-Cycle-1 shipping pressure persists long enough to create the canonical shipping-response issue regardless of the newly selected Cycle-2 hidden action.
+Action-specific safe manifestation:
 
-Overlay the new Cycle-2 action:
+- pause → visible lull;
+- prepare → obvious shipping pressure thins/plateaus while other activity is harder to read;
+- deception → contradictory/erratic posture;
+- probe → pressure continues.
 
-- `probe_shipping` → shipping pressure intensifies/continues;
-- `seed_deception` → shipping pressure continues while visible exercise/messaging cues become contradictory;
-- `prepare_beacon_seizure` → shipping pressure continues from the prior probe while some new Ravellan effort shifts away from the obvious lane; no hidden preparation is revealed.
-
-`pause_consolidate` is illegal in Cycle 2.
-
-Therefore all three legal hidden actions still support the same canonical shipping-response agenda without pretending they are the same world action.
-
-### Cycle 3
-
-The canonical two-item conflicting evidence bundle is shown before command.
-
-The current Ravellan action may affect the visible pressure wording but may not add/remove one side of that mandatory conflict:
-
-- `probe_shipping` → pressure remains active;
-- `seed_deception` → public/visible pattern becomes more contradictory;
-- `prepare_beacon_seizure` → overt pressure may remain steady while activity elsewhere is unclear;
-- `pause_consolidate` → visible pressure eases.
-
-All remain compatible with the same `unclear + conflicted` HQ assessment before any Cycle-3 focused collection result exists.
-
-### Cycle 4 — pressure-pattern change
-
-Replace any unconditional “Ravellan patrol lull” assumption with an **ambiguous pressure-pattern change** keyed to the actual action:
-
-- `pause_consolidate` → visible patrol/harassment lull;
-- `prepare_beacon_seizure` → obvious shipping pressure thins/plateaus while activity elsewhere becomes harder to read;
-- `seed_deception` → visible posture becomes contradictory/erratic rather than clearly escalating;
-- `probe_shipping` → pressure continues but does not by itself answer whether something else is being prepared.
-
-All four create the same ordinary evidence ID:
+All map to exactly one ordinary analytic evidence ID:
 
 `cycle4-pressure-pattern-ambiguous`
 
-- implication: `ambiguous`;
-- diagnostic class: `indicator`;
-- source group: `visible-pressure-pattern`;
-- observed Cycle 4;
-- active through Cycle 5, expires before Cycle 6 current-assessment reduction;
-- summary text is action-specific as above but must not reveal the hidden action ID.
+The **evidence semantics/summary ref remain generic**: visible pressure pattern changed/continued but does not establish intent.
 
-The Cycle-4 commander issue remains the same strategic choice: use the ambiguous window to recover, prepare quietly, or press visibly. The wording should be “How do we use/respond to this change in pressure?” rather than assuming a universal lull.
+Action-specific situation prose is allowed for atmosphere/world legibility but is **not** passed to the analytic reducer. A test must prove changing only the safe C4 situation variant leaves ordinary C4 evidence/assessment identical.
 
-### Cycle 5
+## C5
 
-The fixed collision remains:
+Fixed collision remains: Beacon warning/uncertainty, authority deadline, reserve state, possible legitimate attribution opportunity.
 
-- Beacon warning/uncertainty has reached a decision point;
-- partner authority deadline matters;
-- reserve state may be strained/brittle;
-- attribution may be available from legitimate evidence.
+Action changes safe situation overlay only:
 
-Current Ravellan action changes only the observable situation overlay:
+- probe → overt pressure high;
+- deception → public/operational picture contradictory;
+- prepare → overt activity need not rise with hidden preparation;
+- pause → visible pressure eases without proving crisis ended.
 
-- `probe_shipping` → overt pressure remains high;
-- `seed_deception` → public/operational picture remains contradictory;
-- `prepare_beacon_seizure` → overt activity may not rise proportionally to the hidden preparation;
-- `pause_consolidate` → visible pressure eases, which is not proof the crisis is over.
+HQ assessment/warning/public-case basis comes from #100 evidence history, not hidden action label or prose parsing.
 
-The player's HQ assessment is determined by the active evidence catalogue, including focused/Lattice/liaison results, not by this hidden action label.
+# C2 shipping-pressure consequence
 
-## Shipping-pressure consequence in Cycle 2
+Ravellan's C1 probe creates external pressure; coalition C2 response conditions severity.
 
-Ravellan's persistent Cycle-1 probe creates a real external/adversary pressure. The coalition's Cycle-2 response conditions the visible severity.
+## Quiet escort
 
-The consequence reveal may classify:
+Pressure continues, disruption limited, some delay remains.
 
-### Quiet escort
+## Visible patrol surge
 
-- Ravellan-caused pressure continues;
-- coalition response keeps disruption limited but does not eliminate delay;
-- show “shipping delay” as a non-persistent consequence beat.
+Pressure contested, disruption limited, coalition pays authored reserve/partner/signal costs.
 
-### Visible patrol surge
+## Reroute and monitor
 
-- Ravellan-caused pressure is directly contested;
-- immediate shipping disruption is limited;
-- coalition pays reserve/partner/observation costs from [[25-KESTREL-CONSEQUENCE-MATRIX]].
+Ravellan caused pressure; coalition deliberately accepts larger civilian disruption to preserve reserve/create monitoring opportunity. Causal beat should distinguish external cause from player-conditioned severity.
 
-### Reroute and monitor
+No permanent shipping meter.
 
-- Ravellan created the pressure;
-- coalition deliberately accepts larger civilian disruption to preserve reserve/create observation opportunity;
-- label the large disruption `player-conditioned` or `player-caused` according to the exact beat: Ravellan caused the pressure, coalition caused the reroute severity.
+# Action-history access for intelligence collection
 
-Do not introduce a permanent shipping meter for the prototype.
+Raw verified Ravellan action history is **not** general HQ input.
 
-## Action-history access for collection
+Only target-authorised observation extractors may consume it:
 
-[[26-LATTICE-COLLECTION-MATRIX]] may inspect the recent **verified Ravellan action history** only where a named collection target explicitly authorises it, e.g. `political-operational-sync` or `auxiliary-tasking`.
+- #100 C2 reroute extractor consumes exactly C2 action + C2 post-decision preparation;
+- #102 auxiliary/sync extractors consume only their frozen action/preparation slices.
 
-Normal HQ belief/recommendation/UI code may not receive raw action history merely because collection content can inspect it.
+Those extractors return bounded source facts/evidence. Recommendation/UI never receives raw action history.
 
-This is a world-to-authorised-evidence boundary, not a widening of player information.
+# C6 terminal manifestation
 
-## Cycle 6 terminal projection
+## `attempt_seizure`
 
-#99 selects one terminal behavior.
+Overt fact: limited move against Beacon underway. Player may know current attack without learning prior hidden posture/preparation history.
 
-### `attempt_seizure`
+## `threshold_challenge`
 
-Player-observable fact:
+Overt high-pressure confrontation without observable prepared seizure force. Prior hidden path remains unknown.
 
-A limited Ravellan move against Beacon is now underway. This is an overt world event; the player does not need hidden-intelligence permission to know an attack has begun.
+## `abort_and_pressure`
 
-Do not reveal the prior posture/preparation history until the post-run truth debrief.
+Immediate military confrontation recedes while political/strategic pressure continues. Still yields a terminal command choice, not automatic victory.
 
-### `threshold_challenge`
+# Replay / content proof
 
-Player-observable fact:
+Persist/reconstruct enough authoritative world history to prove:
 
-Ravellan creates a high-pressure confrontation/threshold event without the observable force package of a prepared seizure.
+- each hidden decision has only its frozen manifestation;
+- same action/cycle/history → same world/safe effect;
+- safe projection never includes hidden action ID as explanation pre-debrief;
+- ordinary evidence matches [[23-HQ-BELIEF-AND-EVIDENCE]] exactly;
+- changing action-specific C4 situation prose variant cannot change generic C4 evidence/assessment;
+- C2 shipping issue remains reachable for every legal C2 action because C1 pressure persists;
+- hidden prepare action alone creates no automatic assessment/warning/public case;
+- no persistent coalition state changes merely because a narrative writer wants extra drama.
 
-The player knows the current crisis family but not whether earlier activity was a feint, aborted preparation, or testing that escalated.
+# Required #103 tests
 
-### `abort_and_pressure`
+At minimum:
 
-Player-observable fact:
+- all four normal action projections in legal cycles stay within bounded effect set;
+- C1 probe opening exact;
+- all C2 actions preserve shipping-response agenda with correct overlay;
+- C3 HQ fixed conflict unchanged by hidden action absent directed collection;
+- C3 routine disposition evidence is bounded/non-omniscient;
+- all C4 action-specific situation variants map to the exact same generic analytic evidence semantics;
+- **safe situation prose never becomes an intelligence input**;
+- hidden prepare action alone creates no automatic prep evidence/warning;
+- terminal current crisis observable while prior hidden history stays gated;
+- V1 content unchanged.
 
-The immediate military confrontation recedes; Ravellan preserves political/strategic pressure rather than attempting the seizure.
+# Rejection conditions
 
-The player still receives a terminal command problem—how to exploit/expose/accept the de-escalation—rather than an automatic victory banner.
-
-## Replay / content proof
-
-Persist or deterministically reconstruct enough world-effect evidence to prove:
-
-- each Ravellan decision uses only its frozen manifestation rule;
-- same action/cycle/history produces same world/public effect;
-- the UI never receives the hidden action ID as explanation before terminal debrief;
-- ordinary HQ evidence created here matches [[23-HQ-BELIEF-AND-EVIDENCE]] exactly;
-- Cycle-4 situation summary varies correctly without changing the canonical agenda arbitrarily;
-- Cycle-2 shipping issue remains reachable for every legal Cycle-2 hidden action because the Cycle-1 probe pressure persists;
-- no persistent coalition state changes solely because a world-effect writer thought an action “should hurt more”.
-
-## Required #103 tests
-
-At minimum prove:
-
-- all four normal action projections in every legal cycle produce only the authorised effect set;
-- Cycle-1 probe manifests as the opening pressure;
-- every legal Cycle-2 action retains the shipping-response agenda with the correct overlay;
-- Cycle-3 HQ belief remains the canonical fixed conflict regardless of hidden action absent directed collection;
-- Cycle-4 action-specific situation summaries all map to `cycle4-pressure-pattern-ambiguous` and never expose the action ID;
-- hidden preparation action alone creates no automatic HQ preparation evidence;
-- terminal behavior is observable in Cycle 6 while prior hidden history remains hidden until debrief;
-- action-effect projection never changes V1 content.
-
-## Rejection conditions
-
-Reject #103 content if it invents per-action damage/meters, reveals `prepare_beacon_seizure` directly to HQ, uses the UI to interpret hidden action IDs, spawns unplanned agenda items merely for drama, or lets the same action have arbitrary designer-chosen effects in different runs without an authored cycle/history rule above.
+Reject #103 if it invents per-action damage/meters, reveals `prepare_beacon_seizure` directly to HQ, lets UI/analysis interpret hidden action IDs, parses narrative situation prose into directional evidence, treats routine C3 observation as global truth, spawns unplanned agenda items for drama, or gives the same action arbitrary effects without an authored cycle/history rule.
