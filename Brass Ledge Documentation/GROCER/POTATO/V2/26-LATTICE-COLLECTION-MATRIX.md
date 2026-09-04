@@ -9,339 +9,260 @@ Backlink: [[README]]
 
 This is the implementation authority for **#102 — Lattice Cell and Kestrel directed collection**.
 
-- [[23-HQ-BELIEF-AND-EVIDENCE]] owns evidence meanings and reducers.
-- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns static definitions, runtime occurrences, verified history and the #102 evidence seam.
-- [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] owns the exhaustive proof that repeat same-target collection and three integrated-auxiliary branches were dead/fake under the six-cycle state space.
-- [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns command/package interactions.
+- [[23-HQ-BELIEF-AND-EVIDENCE]] owns assessment/warning/public-case meaning.
+- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns evidence occurrence/reducer integration.
+- [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] owns exhaustive target-history evidence.
+- [[23C-HQ-BELIEF-EVIDENCE-CATALOG]] owns exact predeclared evidence definitions/copy.
+- [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns cross-issue command interaction.
 
-# Product purpose
+Lattice is one concrete institutional capability, not a generic technology tree.
 
-Lattice gives the commander a new verb:
+# 1. Product purpose
 
-> protect this institution now, then later choose which uncertainty matters without spending normal personal attention.
+Protecting Lattice through three early windows gives the headquarters a new verb:
 
-No intelligence points, probability bonus, reroll or hidden score.
+> **Ask one specific operational question without spending normal personal attention.**
 
-# Investment schedule
+It does not add intelligence points, probabilities, rerolls or a passive bonus.
+
+Operational Lattice answers exactly two of three questions before the final response. The commander chooses which uncertainty remains unresolved.
+
+# 2. Investment schedule
 
 Exactly:
 
-- C1: 0 → 1;
-- C2: 1 → 2;
-- C3: 2 → `3-operational`.
+- C1 `0 → 1`;
+- C2 `1 → 2`;
+- C3 `2 → operational`.
 
 All advances must occur on schedule. Missing one makes Kestrel maturity unreachable. No catch-up, partial bonus, acceleration or refund.
 
 Operational from C4.
 
-# Task Collection
+# 3. Command-by-exception task flow
 
-Action family:
+When Lattice is operational:
 
-`task-collection`
+- C4 contains one Task Collection target;
+- C5 contains one different unused target;
+- Task Collection consumes zero normal interventions;
+- HQ preselects one unused target from standing main priority;
+- the player may retarget to another unused target without spending normal intervention;
+- leaving the target untouched executes the HQ selection;
+- there is no `collect nothing` course while an unused target exists;
+- there is no C6 task.
 
-Rules:
+This is implicit delegation applied to the new capability. A free no-op would be a dominated ceremonial button.
 
-- legal only in C4/C5;
-- zero normal intervention cost;
-- at most one target in a cycle;
-- each target ID may be selected at most once in the Kestrel run;
-- result arrives at the next canonical pre-command intelligence point;
-- C4 task → C5 result;
-- C5 task → C6 last pre-manifestation result;
-- no C6 task;
-- result becomes a canonical #100 runtime evidence occurrence;
-- result never directly sets assessment, warning, public case or recommendation;
-- result never mutates hidden Ravellan state.
+# 4. Exact target IDs and defaults
 
-An operational Lattice can therefore answer at most **two of the three questions** before terminal response. This is the intended information opportunity cost.
-
-# Why same-target retasking is prohibited
-
-The exhaustive producer envelope in [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] tested the same target in C4 and C5 across all 257 unique #100-relevant hidden-history projections.
-
-Every retask returned the same definition as the first task:
-
-- landing remained concentration or dispersed;
-- auxiliary remained coercive or mixed;
-- sequence/sync remained in the same one of four branches.
-
-No retask changed a downstream assessment, warning, public case, recommendation input or route input. It was therefore a fake choice, not meaningful “maintain contact” gameplay.
-
-A future longer scenario may author time-varying retasking, but Kestrel does not.
-
-# Target eligibility
-
-A target is eligible when:
-
-- Lattice is operational;
-- current cycle is C4 or C5;
-- no other Lattice target has been selected this cycle;
-- target has not already been selected in this run.
-
-Additional landing rule:
-
-- if current evidence includes `focused-staging-buildup`, `landing-force-staging` is ineligible for the remaining Kestrel horizon;
-- if current evidence includes `focused-staging-empty`, landing remains eligible because #99 preparation may advance later.
-
-The positive focused result is conclusive for this bounded horizon because Ravellan preparation never regresses and another landing observation cannot change before terminal response.
-
-No other target is removed merely because the overall assessment is coherent. A different unused question may still add warning, corroboration, contradiction or public-case value.
-
-# Static definitions versus task result occurrences
-
-The canonical `kestrel-hq-belief-v1` model already defines the semantic meaning of every Lattice/liaison result.
-
-#102 owns:
-
-- task authority/history;
-- target selected;
-- exact source-fact producer mapping;
-- resulting canonical occurrence.
-
-It does not redefine:
-
-- implication;
-- diagnosticity;
-- sourceGroup/context/limitation;
-- warning/public-case role;
-- lifetime;
-- supersession policy.
-
-A result occurrence is pure derived state from replay-valid task history + authorised Ravellan history. Persist task/capability truth as required; do not persist a duplicate HQ evidence/assessment history or a caller-authored result semantic payload.
-
-# C6 result cut
-
-For a C5 task:
-
-1. #99 selects hidden terminal behaviour;
-2. the task resolves against the authorised result-time facts below before overt manifestation;
-3. #100 derives the final pre-manifestation snapshot;
-4. current source-use/public-case availability is derived;
-5. safe terminal crisis manifests;
-6. player responds.
-
-The result is last-moment warning/analysis, not a report arriving after the terminal action has already physically completed.
-
-# Named targets
-
-Exactly:
+Stable target IDs:
 
 - `landing-force-staging`
 - `auxiliary-tasking`
-- `political-operational-sync`
+- `operational-sequence`
 
-No free text.
+The invalid former ID `political-operational-sync` must not survive in code/content. The sensor observes operational sequence, not political messaging.
 
-# Target 1 — landing-force-staging
+Remove already-used targets and choose the first remaining target:
 
-Question:
+| Main priority | First → second → third |
+| --- | --- |
+| `beacon-security` | landing → sequence → auxiliary |
+| `partner-cooperation` | sequence → auxiliary → landing |
+| `ravellan-understanding` | auxiliary → sequence → landing |
 
-> Are units required for a Beacon seizure actually concentrating?
+Default ordering expresses standing direction, not a hidden optimum. #107 still tests target dominance.
 
-Primary value: **physical indications-and-warning**.
+# 5. Why same-target retasking is illegal
 
-Authorised raw input:
+The exhaustive model evaluated C4→C5 and C5→C6 observations across all 257 #100-relevant private histories.
 
-- Ravellan preparation at result time only.
+C6 adds neither a normal Ravellan action nor preparation progression. A C5 repeat would therefore inspect the same facts as the first result:
 
-No posture or action input.
+- landing — same C5/C6 preparation;
+- auxiliary — same latest normal C5 action/preparation;
+- sequence — same latest two normal actions C4/C5.
 
-## Preparation developing/ready
+Every repeat returned the same evidence definition and changed no assessment, warning, public case, recommendation input or route input. It is a fake choice.
 
-Definition:
+Each target may be tasked at most once in Kestrel.
 
-`lattice-landing-concentration`
+# 6. Focused staging does not consume landing
 
-Semantics:
+C3 focused staging and Lattice landing answer the same broad physical question at different analytical strengths:
 
-- preparation diagnostic;
-- sourceGroup `lattice-landing`;
-- warning usable;
-- public-case source-sensitive;
-- lifetime through terminal;
-- replace older same-question;
-- meaning: landing elements associated with seizure exercises are concentrating.
+- `focused-staging-buildup` — preparation indicator + warning current C4–C5;
+- `lattice-landing-concentration` — diagnostic preparation + warning current through C6.
 
-## Preparation none
+Lattice landing replaces the older focused report and upgrades assessment.
 
-Definition:
+Across all 138 focused-positive private histories, landing changes the C5 assessment:
 
-`lattice-landing-dispersed`
+- 118 preparation/weak → preparation/coherent;
+- 20 unclear/conflicted → preparation/weak.
 
-Semantics:
+Therefore focused collection never marks the Lattice landing target used or ineligible.
 
-- coercion indicator;
-- same sourceGroup/question/lifetime/replacement;
-- warning none;
-- public-case source-sensitive;
-- meaning: the force package required for rapid seizure remains dispersed.
+# 7. Task/result timing
 
-Negative result remains an indicator because absence now does not prove Ravellan cannot pivot later.
+## C4 target
 
-## Supersession
+```text
+persist C4 task
+→ C5 Ravellan normal decision/world cut exists
+→ derive authorised source fact
+→ instantiate C5 evidence occurrence
+→ derive C5 HQ products
+```
 
-A Lattice landing occurrence replaces prior focused-staging evidence for the same landing question. Supersession is persistent; earlier evidence does not resurrect later.
+## C5 target
 
-# Target 2 — auxiliary-tasking
+```text
+persist C5 task
+→ no later normal Ravellan transition occurs
+→ use C5/latest-normal pre-manifestation facts
+→ instantiate C6 evidence occurrence
+→ derive C6 pre-manifestation HQ products
+→ show safe overt crisis
+```
 
-Question:
+C5→C6 result never reads R6 terminal action or policy row.
 
-> Does current shipping pressure look like a coercive/deceptive tasking chain, or is the connection still unclear?
+# 8. Evidence semantics and collection producer model
 
-Primary value: strongest Kestrel route to **diagnostic coercion**.
+All result evidence meanings are already predeclared in `kestrel-hq-belief-v1` by [[23C-HQ-BELIEF-EVIDENCE-CATALOG]].
 
-Authorised result-time inputs:
+#102 owns a separate resolved content model:
 
-- Ravellan preparation after the latest normal Ravellan decision available at the result point;
-- latest verified normal Ravellan action available at that point.
+`kestrel-collection-v1`
 
-Exact result-time facts:
+It contains/digests:
 
-- C4 task → inspect C5 post-decision preparation + C5 normal action;
-- C5 task → inspect the same final normal-action/preparation cut available before C6 manifestation; C6 terminal selection does not create a new normal action or preparation step.
+- exact target IDs;
+- mandatory C4/C5 task rules;
+- one-shot target rule;
+- default target ordering;
+- result timing;
+- authorised raw-fact domains;
+- raw fact → source fact → existing #100 definition-ID mappings;
+- liaison fallback mapping;
+- exact applicability rules.
 
-No posture.
+#102 may not redefine evidence implication, diagnosticity, role relevance, source/corroboration group, supersession or copy.
 
-## Preparation none + latest action probe/deception
+#103 includes both the #100 belief-model digest and #102 collection-model digest in final Kestrel content identity.
 
-Definition:
+# 9. Observation boundary
 
-`lattice-auxiliary-coercive`
+Every collection result follows:
 
-Semantics:
+```text
+verified task/history
+→ target-authorised hidden-fact extractor
+→ bounded source fact
+→ existing #100 definition ID
+→ runtime occurrence
+→ #100 role reducers
+```
 
-- coercion diagnostic;
-- sourceGroup `lattice-auxiliary`;
-- warning none;
-- public-case source-sensitive;
-- lifetime through terminal;
-- replace older same-question.
+Hidden posture is never input. Holding authorised facts fixed while changing posture produces deep-equal occurrence semantics.
 
-The target combines observed coercive/deceptive tasking with absence of the physical preparation state it is authorised to inspect.
-
-## Every other authorised input
-
-Definition:
-
-`lattice-auxiliary-mixed`
-
-Semantics:
-
-- ambiguous indicator;
-- same question/sourceGroup/lifetime/replacement;
-- warning none;
-- public case none.
-
-There is no preparation/integrated branch. Under the actual #99 action/preparation state space, the old required combination was unreachable at every authorised result point. Preparation-oriented intelligence belongs to landing or sequence collection.
-
-## Supersession
-
-The Lattice auxiliary occurrence replaces older same-question reroute/liaison evidence. It does not affect landing or sequence evidence.
-
-# Target 3 — political-operational-sync
+# 10. Landing-force staging
 
 Question:
 
-> Do the two most recent normal Ravellan actions form a sustained preparation sequence, or only continued pressure?
+> **Are the units needed for a Beacon seizure actually concentrating?**
 
-Primary value: preparation-sequence analysis and public-case corroboration, not tactical warning.
+Primary value: physical indications and warning.
 
 Authorised input:
 
-- exactly the two most recent verified **normal** Ravellan actions at result time.
+- result-cut Ravellan preparation only.
 
-For both C4-task/C5-result and C5-task/C6-result, those actions are C4 and C5. C6 terminal behaviour is not treated as another normal action.
+No posture/action input.
 
-No posture or preparation input.
+| Preparation | Definition | Effect |
+| --- | --- | --- |
+| none | `lattice-landing-dispersed` | coercion indicator; no warning |
+| developing/ready | `lattice-landing-concentration` | preparation diagnostic; usable warning |
 
-## Two prepare actions
+Both directional results are source-sensitive and current from result cycle through C6.
 
-`lattice-sync-preparation-sequence`
+The result replaces prior focused-staging evidence but not unrelated questions.
 
-- preparation diagnostic;
-- sourceGroup `lattice-sequence`;
-- warning none;
-- public-case source-sensitive;
-- lifetime through terminal.
+# 11. Auxiliary tasking
 
-## Exactly one prepare action
+Question:
 
-`lattice-sync-preparation-signal`
+> **Are the vessels pressuring shipping part of a coercive tasking chain, or is the wider connection still unclear?**
 
-- preparation indicator;
-- same sourceGroup/lifetime;
-- warning none;
-- public-case source-sensitive.
+Primary value: strongest diagnostic coercion path.
 
-## No prepare + at least one probe/deception
+Authorised inputs:
 
-`lattice-sync-coercive-sequence`
+- result-cut preparation;
+- latest normal Ravellan action.
 
-- coercion indicator only;
-- same sourceGroup/lifetime;
-- warning none;
-- public-case source-sensitive.
+| Condition | Definition | Effect |
+| --- | --- | --- |
+| preparation none + action probe/deception | `lattice-auxiliary-coercive` | coercion diagnostic; no warning |
+| every other combination | `lattice-auxiliary-mixed` | ambiguous indicator |
 
-Do not mark diagnostic. The two-action window cannot prove preparation was not created earlier.
+The result replaces older reroute/liaison auxiliary evidence.
 
-## Otherwise
+There is no preparation/integrated branch: it is unreachable under committed #99.
 
-`lattice-sync-partial`
+# 12. Operational sequence
 
-- ambiguous indicator;
-- same question/sourceGroup/lifetime;
-- warning none;
-- public case none.
+Question:
 
-# Target differentiation
+> **Do Ravellan’s latest operational milestones form a sustained preparation sequence?**
+
+Primary value: preparation-pattern/public-case evidence without tactical warning.
+
+Authorised input:
+
+- exactly the latest two verified **normal** Ravellan actions C4/C5.
+
+| Pattern | Definition | Effect |
+| --- | --- | --- |
+| two prepare actions | `lattice-sync-preparation-sequence` | preparation diagnostic; no warning |
+| exactly one prepare | `lattice-sync-preparation-signal` | preparation indicator; no warning |
+| no prepare + at least one probe/deception | `lattice-sync-coercive-sequence` | coercion indicator; no warning |
+| otherwise | `lattice-sync-partial` | ambiguous indicator |
+
+The coercion branch remains an indicator because the two-action window cannot prove older preparation absent.
+
+# 13. Target differentiation
 
 Intended triangle:
 
-- **landing** — strongest physical warning;
-- **auxiliary** — strongest diagnostic coercion;
-- **sequence** — strongest sustained preparation/public-case path without physical warning.
+- landing — strongest physical warning + diagnostic preparation;
+- auxiliary — strongest diagnostic coercion;
+- sequence — diagnostic preparation/public-case path without warning.
 
-Representative contrasts:
+Representative identical-prestate contrasts:
 
-- physical preparation + two recent prepare actions:
+- preparation exists + one recent prepare:
   - landing → diagnostic preparation + warning;
-  - sequence → diagnostic preparation without warning;
+  - sequence → preparation indicator;
   - auxiliary → mixed;
 - no preparation + coercive latest action:
   - auxiliary → diagnostic coercion;
   - landing → coercion indicator;
   - sequence → at most coercion indicator;
-- one recent prepare:
-  - sequence → preparation indicator;
-  - landing may create warning if physical preparation exists;
-- a target result may match another target's final assessment label, yet differ through warning, sourceGroup corroboration, public-case basis or later action space.
+- two recent prepares:
+  - landing → diagnostic preparation + warning;
+  - sequence → diagnostic preparation without warning.
 
-#107 must branch all co-eligible targets from identical player-safe pre-task state and reject:
+#107 must reject a globally dominated target/target order or prose-only differentiation. Do not hide equivalence with randomness.
 
-- prose/evidence-count-only differentiation;
-- a globally dominated target;
-- a target whose advertised information role never changes a later decision/input;
-- a positive focused landing target still offered despite guaranteed redundant result.
+# 14. Partner-liaison fallback
 
-# Public-case corroboration
+If Lattice is unavailable in C4, expose:
 
-One diagnostic Lattice report alone can create a coherent internal estimate but only a tentative public case.
-
-Credible public case additionally needs independent current support from another sourceGroup and no current opposite directional evidence.
-
-Examples:
-
-- focused landing indicator + sequence diagnostic → credible preparation case;
-- landing diagnostic + sequence supporting preparation evidence → credible preparation case;
-- focused/landing dispersed indicator + auxiliary diagnostic → credible coercion case;
-- auxiliary diagnostic alone → coherent coercion estimate but tentative public case.
-
-# Emergency partner-liaison fallback
-
-If Lattice is unavailable in C4, expose exactly:
-
-`request-partner-liaison`.
+`request-partner-liaison`
 
 Rules:
 
@@ -349,149 +270,126 @@ Rules:
 - costs one normal intervention;
 - creates liaison obligation;
 - one C5 result;
-- no reusable capability;
 - auxiliary question only;
 - never diagnostic;
-- never warning.
+- never warning;
+- no reusable capability.
 
-Authorised inputs are the same C5 preparation/action cut as auxiliary-tasking.
+Mapping:
 
-## Preparation none + action probe/deception
+- C5 preparation none + C5 probe/deception → `liaison-auxiliary-coercive-links`;
+- every other combination → `liaison-auxiliary-unclear`.
 
-`liaison-auxiliary-coercive-links`
+The result replaces older C2 reroute auxiliary evidence.
 
-- coercion indicator;
-- sourceGroup `partner-liaison`;
-- source-sensitive public-case role;
-- fixed current C5–C6;
-- replace older same-question.
+There is no preparation/military-links branch under #99.
 
-## Otherwise
+# 15. Public-case/source-use interaction
 
-`liaison-auxiliary-unclear`
+Lattice never directly creates persisted attribution state.
 
-- ambiguous indicator;
-- no public-case role;
-- same lifetime/replacement.
+At a pre-command point:
 
-There is no preparation/military-links branch; it was unreachable under exact result-time facts.
+```text
+all due occurrences instantiate
+→ #100 derives current assessment/warning/public case
+→ #101 combines public case with unspent/used source state
+→ agenda or terminal route derives
+```
 
-# Reroute relationship
+A C4 target can affect C5 attribution availability. A C5 target can affect C6 Hold And Expose availability.
 
-C2 reroute uses the same auxiliary question at lower strength:
+Once source use is persisted `used`, later evidence cannot regenerate or relabel the claim.
 
-- no preparation + C2 probe/deception → coercion indicator;
-- otherwise unclear.
+# 16. #102 persistence/replay architecture
 
-Liaison or Lattice auxiliary replaces the older reroute answer rather than stacking another vote.
+Before coding, inspect the then-current replay lifecycle and introduce the smallest replay-verifiable state/transition for:
 
-# Persistence and replay
+- Lattice progress and missed maturity;
+- operational status;
+- target IDs already used;
+- selected target and task cycle;
+- due-result queue/authoritative origin;
+- liaison request/obligation where applicable.
 
-#102 may persist/replay:
+Reject/tamper-test:
 
-- scheduled Lattice advances/missed reachability;
-- operational state;
-- target IDs already selected;
-- current selected target/cycle;
-- liaison request/obligation;
-- exact player authority required to reconstruct task history.
+- operational Lattice with no target while unused targets exist;
+- repeated target;
+- more than one target per cycle;
+- C6 target;
+- result before due cycle;
+- result definition inconsistent with authorised facts;
+- tampered task/result origin;
+- duplicate occurrence;
+- result attempting to override #100 definition semantics.
 
-Collection result evidence remains pure derived occurrence from trusted task + Ravellan history and the exact content model.
+#100 evidence/products remain derived and are not duplicated in persisted state.
 
-Any new persisted capability/task shape follows [[30-ARCHITECTURE-CONTRACT]] version/replay rules. Do not widen `ravellan-decision` or persist a duplicate #100 belief/result snapshot.
+# 17. Required #102 tests
 
-# Content identity
+## Investment/task flow
 
-#100 model owns the 19 evidence definitions.
+- exact C1→C3 maturation;
+- every missed advance blocks maturity;
+- exactly one C4 target and one different C5 target;
+- no no-task or same-target path;
+- all six ordered target schedules;
+- default target order exact for all three priorities;
+- leaving target untouched executes HQ selection;
+- retargeting costs zero normal interventions.
 
-#102 must separately identity-cover decision-significant producer semantics:
+## Timing/information safety
 
-- target IDs;
-- one-shot rule;
-- positive-focused landing ineligibility;
-- task/result timing;
-- authorised raw facts;
-- raw-fact→source-fact mapping;
-- source-fact→predeclared definition mapping;
-- liaison mapping;
-- eligibility rules.
+- C4 task→C5 result;
+- C5 task→C6 pre-manifestation result;
+- no R6 action/row input;
+- posture-only variation with authorised facts fixed gives equal result;
+- exact `kestrel-collection-v1` mappings;
+- no integrated auxiliary branch.
 
-#103 includes both #100 definition digest and #102 producer digest in final Kestrel content identity.
+## Focused/Lattice relationship
 
-# Required tests
+- focus never consumes landing;
+- landing replaces focus same-question evidence;
+- positive focus warning can expire before C6;
+- landing refreshes warning through C6;
+- generated 138/138 assessment-upgrade invariant.
 
-## Investment/action economy
+## Reducer/public-case composition
 
-- exact C1→C3 maturity;
-- missed advance makes maturity unreachable;
-- C4/C5 only;
-- one target/cycle;
-- each target at most once;
-- operational Lattice can answer at most two of three;
-- zero normal intervention;
-- no C6 task.
+- occurrences exactly match predeclared #100 definitions;
+- landing/auxiliary/sequence differ through assessment/warning/public case;
+- unrelated questions can contradict;
+- same-question older evidence never stacks/resurrects;
+- public credibility requires diagnostic + independent corroboration;
+- source use never regenerates after `used`.
 
-## Eligibility
+## Viability/dominance
 
-- positive focused buildup removes landing target for remaining horizon;
-- focused empty leaves landing eligible;
-- used target never reappears;
-- overall coherent assessment does not automatically hide another unused question.
-
-## Result timing
-
-- C4 task → C5 result;
-- C5 task → C6 pre-manifestation result;
-- C6 terminal action is not a normal-action input;
-- C5 task can alter final warning/public-case state before route legality.
-
-## Result branches
-
-- all two landing branches;
-- all two auxiliary branches;
-- all four sequence branches;
-- all two liaison branches;
-- removed integrated definitions are rejected/unreachable;
-- posture-only variation with authorised facts fixed leaves result equal.
-
-## Evidence integration
-
-- every result instantiates its exact predeclared #100 definition;
-- runtime cannot override definition semantics;
-- no result directly sets assessment/warning/public case;
-- same-question replacement persistent/no resurrection;
-- unrelated questions remain independent;
-- public corroboration sourceGroups exact.
-
-## Choice value
-
-- at least two co-eligible targets diverge somewhere from identical player-safe pre-task state;
-- no target globally dominated across all co-eligible states;
-- no fake repeat-target option;
-- viable non-Lattice non-defeat path;
-- liaison remains narrower/costlier than Lattice;
-- information can change a later recommendation/route without being mandatory.
+- at least one non-Lattice non-defeat route remains;
+- no target or ordered target sequence globally dominated in every co-eligible state;
+- default order is not treated as proof of optimality.
 
 ## Replay/compatibility
 
-- task/capability authority replay/tamper protection;
-- result pure reconstruction after replay;
-- content/producer digest binding;
+- every capability/task mutation replays/recomputes and rejects tampering/order changes;
+- proper prototype version handling if persisted V2 shape changes;
 - V1 unchanged.
 
-# Rejection conditions
+# 18. Rejection conditions
 
 Reject #102 if it:
 
-- permits same-target retasking in Kestrel;
-- retains integrated auxiliary/military-links branches;
-- offers landing after a positive focused buildup;
-- turns collection into points/probabilities/rerolls;
-- reads hidden posture;
-- treats C6 terminal action as a normal-action selector input;
-- lets sequence negative evidence become diagnostic coercion;
-- makes targets equivalent or hides equivalence with randomness;
-- lets liaison delegate or become diagnostic/warning;
-- redefines #100 evidence semantics;
-- persists duplicate belief/result state;
-- generalises a collection plugin framework before another scenario proves reuse.
+- adds intelligence points/probabilities;
+- permits no-task or same-target retask;
+- lets focused collection consume landing;
+- retains the misleading old sequence target ID;
+- reads hidden posture or R6 action;
+- invents integrated auxiliary preparation evidence;
+- changes predeclared #100 evidence meaning;
+- lets same-question reports stack as votes;
+- makes liaison free/delegated/diagnostic/warning-capable;
+- persists duplicate HQ belief;
+- masks target equivalence with randomness;
+- generalises a technology/collection plugin framework before a second scenario proves reuse.
