@@ -9,131 +9,180 @@ Backlink: [[README]]
 
 This is the exact implementation/replay authority for **#100** against committed #99.
 
-- [[23-HQ-BELIEF-AND-EVIDENCE]] owns player/tradecraft semantics.
-- [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] owns generated state-space counts and mutation vectors.
-- [[23C-HQ-BELIEF-EVIDENCE-CATALOG]] owns exact IDs, mappings, lifetimes, copy and target defaults.
-- [[26-LATTICE-COLLECTION-MATRIX]] owns future #102 task persistence/production.
+- [[23-HQ-BELIEF-AND-EVIDENCE]] owns product/tradecraft semantics.
+- [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] owns exhaustive algebraic/temporal/equivalence coverage.
+- [[23C-HQ-BELIEF-EVIDENCE-CATALOG]] owns exact evidence definitions, #100 producer mappings and copy.
+- [[23D-HQ-BELIEF-STATE-SPACE-VECTORS.json]] owns machine-readable golden counts/hashes.
+- [[26-LATTICE-COLLECTION-MATRIX]] owns future #102 task persistence and collection-producer semantics.
 - [[30-ARCHITECTURE-CONTRACT]] owns repository/replay boundaries.
 
-# 1. Architecture decision — pure read model
+# 1. Frozen architecture — pure read model
 
 #100 is pure derived state.
 
-Do not:
+Do **not**:
 
-- add HQ evidence, assessment, warning or public-case state to persisted `V2Session`;
-- add an `hq-belief-update` ledger discriminator;
+- add evidence, assessment, warning or public-case state to persisted `V2Session`;
+- add an `hq-belief-update` ledger entry;
 - increment revision for analysis;
-- write expiry/supersession mutations;
-- bump the persisted V2 ruleset version.
+- persist staleness or supersession;
+- bump the persisted V2 ruleset version;
+- persist a mutable `none/tentative/credible` attribution mirror.
 
-All products reconstruct deterministically from trusted replay-valid V2 history plus the exact resolved `kestrel-hq-belief-v1` model.
+All #100 products reconstruct from:
+
+- a trusted replay-valid V2 history prefix; and
+- an explicitly supplied, digest-verified `kestrel-hq-belief-v1` model bundle.
 
 Persisted V2 format remains:
 
 `0.4.0-prototype`
 
-# 2. Canonical phase and information cut
+# 2. Scope boundary between #100 and #102
 
-Keep #99 ordering:
+#100 production code owns:
+
+- all 19 static evidence definitions;
+- ordinary C1–C4 evidence;
+- C2 reroute → C3 evidence;
+- C3 focused staging → C4 evidence;
+- occurrence construction/identity;
+- role-specific currency and supersession;
+- assessment, warning and public-case reducers;
+- deltas and bounded brief derivation;
+- historical/current/history APIs.
+
+#100 production code does **not** own:
+
+- Lattice progress or task persistence;
+- C4/C5 target selection;
+- target default recommendation;
+- target result extraction from live task history;
+- liaison persistence/obligation;
+- a new task ledger discriminator.
+
+The #100 content model predeclares the semantic meanings of future Lattice/liaison evidence so #102 cannot redefine them. A **test-only reference envelope** may instantiate those definitions from the frozen #102 design to verify the state-space vectors. That test oracle is not a production #102 implementation.
+
+#102 later owns a separate, digest-covered `kestrel-collection-v1` producer model that references the predeclared #100 definition IDs. #103 binds both digests into final Kestrel content identity.
+
+# 3. Canonical phase and historical cut
+
+Keep #99 mutation order:
 
 ```text
 intent-declaration
 → ravellan-decision C1
 → derive HQ intelligence
-→ agenda / recommendation / player projection
+→ agenda / recommendation / projection
 → command-set C1
 
 ravellan-decision CN
 → derive HQ intelligence
-→ agenda / recommendation / player projection
+→ agenda / recommendation / projection
 → command-set CN
 ```
 
-`command-set` still advances `state.cycle`.
+After command N advances state to N+1, current N+1 intelligence is not ready until `ravellan-decision N+1` exists.
 
-After Cn command advances state to Cn+1, Cn+1 current projection is not ready until `ravellan-decision Cn+1` exists. Fail closed with a dedicated error equivalent to:
+Fail closed with an error equivalent to:
 
 `v2_hq_belief_not_ready`
 
-For a historical cycle Q, the analytical cut contains:
+For historical cycle Q, include exactly:
 
-- intent declaration;
+- opening intent;
 - Ravellan decisions through Q;
-- command sets through Q−1 only;
-- every evidence result due at/before Q;
-- no command Q or future decision as an analytical input.
+- command sets through Q−1;
+- evidence results due at/before Q;
+- no command Q;
+- no future ledger entry/current terminal state as an analytical input.
 
-Future ledger entries may exist in a final session but are excluded from the Q cut.
+Changing command Q or any later entry cannot change the Q snapshot.
 
-# 3. C6 pre-manifestation cut
+# 4. C6 pre-manifestation cut
 
-C6 is exact:
+C6 order is:
 
 ```text
-persist/replay hidden R6 decision
-→ resolve any C5 task result from its authorised C5/latest-normal facts
-→ derive C6 pre-manifestation HQ snapshot and current public case
-→ project the safe overt crisis family from R6
+replay/persist hidden R6 decision
+→ resolve any C5 task result from authorised latest-normal facts
+→ derive the C6 pre-manifestation HQ snapshot and current public case
+→ project the safe overt crisis family
 → derive terminal routes
 ```
 
-The R6 action, matched row and terminal safe copy are never evidence and never create tactical warning.
+The R6 action, policy row and terminal copy are never evidence and never grant warning.
 
-A C5 task result may be reported at C6, but its source facts come from the latest normal-world cut frozen by C5; it cannot inspect `attempt_seizure`, `threshold_challenge`, `abort_and_pressure`, or the R6 policy row.
+A C5 task result may arrive at C6, but its source facts remain the C5/latest-normal cut because #99 performs no new normal action/preparation step at C6.
 
-The C6 player surface labels the snapshot as:
+Player-facing C6 label:
 
 > **What Intelligence knew immediately before the confrontation became overt.**
 
-It must not imply analysts are still debating whether a seizure exists after the player can visibly see one.
-
-# 4. Trust boundary
+# 5. Trust boundary
 
 Normal projection accepts only:
 
-- an authoritative in-memory session produced through sim-owned transitions; or
-- the canonical `V2Session` returned by `validateV2ReplaySkeleton(...)` using trusted live identity and agenda content.
+- authoritative live history produced by sim-owned transitions; or
+- the canonical `V2Session` returned by trusted `validateV2ReplaySkeleton(...)` with trusted identity/agenda content.
 
-Imported flow:
+Import flow:
 
 ```text
 raw save
 → trusted live identity/content resolution
-→ validateV2ReplaySkeleton(...)
-→ canonical V2Session
-→ resolve exact belief-model bundle
-→ derive HQ intelligence
-→ safe projection
+→ trusted replay validation
+→ canonical session
+→ exact model-bundle resolution
+→ HQ derivation
+→ safe player projection
 ```
 
-Never derive player intelligence directly from unverified imported ledger fields.
+Never derive normal player intelligence directly from unverified imported ledger fields.
 
-#100 does not expose a server/browser route before #103 binds Kestrel content identity. Internal pure functions still validate session/model scenario and semantic IDs.
+Before #103 binds the belief-model digest into Kestrel content identity, #100 exposes no production server/browser Kestrel session endpoint. Its pure APIs and tests still validate scenario/model/semantic IDs.
 
-# 5. Exact file placement
+# 6. Exact file placement
 
-## Shared
+## Shared canonical JSON
 
 Create:
 
 `packages/shared/src/canonical-json.ts`
 
-and export it from `packages/shared/src/index.ts`.
+Export it from `packages/shared/src/index.ts`.
 
-The function is pure/browser-safe and reproduces the existing recursive key-sorted JSON semantics used by #99 for schema-parsed JSON values. Arrays preserve authored order; object keys sort lexically. No Node crypto dependency enters shared.
+It is pure/browser-safe and implements the existing #99 recursive key-sorted JSON semantics for schema-parsed JSON values:
+
+- object keys lexical;
+- array order preserved;
+- finite numbers only;
+- `-0` normalised to `0`;
+- unsupported/undefined values rejected or handled exactly as current #99 canonicalisation.
+
+Keep #99’s public `canonicalV2Json` name in sim, but delegate it to the shared implementation. Golden tests must prove all existing #99 hashes/digests remain byte-for-byte unchanged.
+
+## Shared V2 derived types
 
 Modify:
 
 `packages/shared/src/v2.ts`
 
-with strict **derived-only** #100 schemas/types. Do not nest them in V2 persisted state/action-ledger schemas.
+Add strict **derived-only** types/schemas for:
 
-## Existing sim canonicalization
+- direction, diagnosticity and basis pattern;
+- static evidence definition;
+- runtime evidence occurrence;
+- role-specific relevance;
+- assessment and representative evidence refs;
+- warning with basis occurrence;
+- public-case basis;
+- complete evidence/product delta;
+- bounded safe Intelligence-Chief brief;
+- `V2HqBeliefModelDefinition`;
+- resolved model bundle.
 
-Keep #99’s private `canonicalV2Json` API, but make it delegate to the shared canonical JSON function. Golden tests must prove every existing #99 state/session hash remains byte-for-byte unchanged.
-
-This gives content and sim one serializer without changing persisted semantics.
+Do not nest any #100 type in persisted bootstrap/session/action-ledger schemas.
 
 ## Content
 
@@ -141,19 +190,23 @@ Create:
 
 `packages/content/src/v2-kestrel-hq-belief.ts`
 
-and export it from `packages/content/src/index.ts`.
+Export from `packages/content/src/index.ts`.
 
 It owns:
 
-- exact `kestrelHqBeliefModel`;
-- schema validation/canonicalisation;
-- exact copy registry;
+- exact 19 evidence definitions;
+- ordinary schedule;
+- reroute/focused trigger IDs and producer mappings;
+- exact source/limitation/evidence/judgement/gap/watch/change/warning/public-claim copy;
+- strict validation/canonicalisation;
 - deterministic semantic digest;
-- exact producer tables from [[23C-HQ-BELIEF-EVIDENCE-CATALOG]].
+- immutable resolved model bundle.
+
+It does **not** own live #102 task persistence or target production.
 
 Do not register Kestrel in the V1 scenario registry during #100.
 
-Content uses shared canonical JSON plus local Node SHA-256. It must not add a production dependency on sim merely to reuse hashing.
+Content uses shared canonical JSON plus local Node SHA-256; it must not add a production dependency on sim.
 
 ## Sim
 
@@ -161,105 +214,73 @@ Create:
 
 `packages/sim/src/v2-hq-belief.ts`
 
-and export it from `packages/sim/src/index.ts`.
+Export from `packages/sim/src/index.ts`.
 
-Do not put the subsystem into the already-large `packages/sim/src/v2.ts`.
+Do not put the subsystem into the existing large `v2.ts`.
 
-Production sim must not import `@brass-ledger/content`; the resolved model bundle is passed explicitly.
+Production sim must not import `@brass-ledger/content`; the resolved model is an explicit argument.
 
-# 6. Shared model bundle
+# 7. Core types
 
-Use a strict resolved bundle equivalent to:
-
-```ts
-type V2ResolvedHqBeliefModel = Readonly<{
-  definition: V2HqBeliefModelDefinition
-  semanticDigest: string
-}>
-```
-
-The content resolver:
-
-1. strict-parses the raw model;
-2. canonicalises every unordered semantic collection;
-3. computes SHA-256 of shared canonical JSON;
-4. returns the parsed definition plus digest.
-
-Sim recomputes the digest on entry and rejects a mismatched bundle. It also requires:
-
-- `modelId = "kestrel-hq-belief-v1"`;
-- `scenarioId = "kestrel-strait"`;
-- `reducerSemanticsId = "kestrel-binary-hypothesis-v1"`;
-- `session.identity.scenarioId === model.scenarioId`.
-
-Unknown/mismatched model fails closed.
-
-#103 later binds this exact semantic digest into Kestrel’s canonical `contentDigest`. Until then, #100 is not a normal player-facing session endpoint.
-
-# 7. Canonical model representation
-
-Prefer object maps keyed by closed stable IDs rather than semantically unordered arrays.
-
-Equivalent structure:
+Equivalent semantics:
 
 ```ts
-type V2HqBeliefModelDefinition = {
-  modelId: "kestrel-hq-belief-v1"
-  scenarioId: "kestrel-strait"
-  reducerSemanticsId: "kestrel-binary-hypothesis-v1"
+type V2HqDirection = "preparation" | "coercion"
+type V2HqEvidenceImplication = V2HqDirection | "ambiguous"
+type V2HqEvidenceDiagnosticity = "indicator" | "diagnostic"
 
-  evidenceDefinitionsById: Record<V2HqEvidenceDefinitionId, V2HqEvidenceDefinition>
-  ordinaryEvidenceDefinitionIdsByCycle: Record<"1"|"2"|"3"|"4"|"5"|"6", readonly V2HqEvidenceDefinitionId[]>
+type V2HqBasisPattern =
+  | "no-direction"
+  | "indicator-preparation"
+  | "indicator-coercion"
+  | "indicator-conflict"
+  | "diagnostic-preparation-clear"
+  | "diagnostic-preparation-qualified"
+  | "diagnostic-coercion-clear"
+  | "diagnostic-coercion-qualified"
+  | "diagnostic-conflict"
 
-  triggerOrderIds: {
-    rerouteAndMonitor: "reroute-and-monitor"
-    focusStagingCollection: "focus-staging-collection"
-  }
+type V2HqAssessment =
+  | { direction: "unclear"; picture: "weak" | "conflicted"; basisPattern: V2HqBasisPattern }
+  | { direction: V2HqDirection; picture: "weak" | "coherent"; basisPattern: V2HqBasisPattern }
 
-  producerMappings: {
-    reroute: ...
-    focusedStaging: ...
-    latticeLanding: ...
-    latticeAuxiliary: ...
-    latticeSequence: ...
-    liaisonAuxiliary: ...
-  }
-
-  latticeDefaultTargetOrderByMainPriority: {
-    beaconSecurity: ["landing-force-staging", "political-operational-sync", "auxiliary-tasking"]
-    partnerCooperation: ["political-operational-sync", "auxiliary-tasking", "landing-force-staging"]
-    ravellanUnderstanding: ["auxiliary-tasking", "political-operational-sync", "landing-force-staging"]
-  }
-
-  copy: {
-    sourceContextByRef: ...
-    limitationByRef: ...
-    evidenceSummaryByRef: ...
-    judgementByRef: ...
-    gapByRef: ...
-    watchForByRef: ...
-    assessmentChangeByRef: ...
-    evidenceChangeCauseByRef: ...
-    warningByRef: ...
-    publicClaimByRef: ...
-  }
-}
+type V2HqWarning =
+  | { state: "none"; basisEvidenceInstanceId: null }
+  | { state: "usable"; basisEvidenceInstanceId: string }
 ```
 
-Exact content is [[23C-HQ-BELIEF-EVIDENCE-CATALOG]].
+Basis pattern is internal analytical provenance, not a player confidence label.
 
-Canonicalisation rules:
+# 8. Role-specific relevance
 
-- definition/object keys lexical;
-- `supersedesDefinitionIds` lexical;
-- ordinary schedule lexical;
-- public support evidence/group IDs in deterministic reducer order;
-- authored target recommendation arrays remain ordered because order is semantic;
-- duplicate/set-equivalent entries reject rather than silently deduplicate.
+Use a strict role relevance equivalent to:
 
-# 8. Static evidence definition
+```ts
+type V2HqRelevanceRule =
+  | { kind: "none" }
+  | { kind: "fixed"; observedCycle: 1|2|3|4|5; currentThroughCycle: 1|2|3|4|5|6 }
+  | { kind: "result-through-terminal" }
+```
 
-Strict shape equivalent to:
+Each evidence definition carries:
+
+- `assessmentRelevance`;
+- `warningRelevance`;
+- `publicCaseRelevance`.
+
+Validation:
+
+- warning relevance exists only on preparation evidence with warning role;
+- warning relevance never outlives assessment relevance;
+- public relevance exists only on source-sensitive directional evidence;
+- dynamic result rules instantiate only at authorised C5/C6 result points;
+- stale evidence remains historical.
+
+Exact role windows are [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] and [[23C-HQ-BELIEF-EVIDENCE-CATALOG]].
+
+# 9. Static evidence definition
+
+Equivalent strict shape:
 
 ```ts
 type V2HqEvidenceDefinition = Readonly<{
@@ -269,7 +290,7 @@ type V2HqEvidenceDefinition = Readonly<{
     | "ravellan-intent-general"
     | "landing-force-staging"
     | "auxiliary-tasking"
-    | "political-operational-sync"
+    | "operational-sequence"
   producerKind: "ordinary" | "reroute" | "focused" | "lattice" | "liaison"
   implication: "preparation" | "coercion" | "ambiguous"
   diagnosticity: "indicator" | "diagnostic"
@@ -285,49 +306,44 @@ type V2HqEvidenceDefinition = Readonly<{
   summaryRef: string
   warningRole: "none" | "usable"
   publicCaseRole: "none" | "source-sensitive"
-  lifetimeRule:
-    | { kind: "fixed"; observedCycle: 1|2|3|4|5; currentThroughCycle: 1|2|3|4|5|6 }
-    | { kind: "result-through-terminal" }
+  assessmentRelevance: V2HqRelevanceRule
+  warningRelevance: V2HqRelevanceRule
+  publicCaseRelevance: V2HqRelevanceRule
   supersessionPolicy: "explicit-only" | "replace-older-same-question"
   supersedesDefinitionIds: readonly V2HqEvidenceDefinitionId[]
 }>
 ```
 
-Validation invariants come from [[23C-HQ-BELIEF-EVIDENCE-CATALOG]].
+The third target ID is `operational-sequence`. Do not retain the misleading former ID `political-operational-sync`; the authorised source contains no political messaging.
 
-# 9. Runtime evidence occurrence and authoritative origin
+# 10. Runtime occurrence and origin
 
-Runtime evidence is derived, never persisted by #100.
+Runtime evidence is derived, not persisted by #100.
 
-Use an internal strict origin equivalent to:
+Use strict origins equivalent to:
 
 ```ts
-type V2HqEvidenceOrigin =
-  | {
-      kind: "ordinary"
-      slotId: string
-      cycle: 1|2|3|4
-    }
-  | {
-      kind: "derived"
-      producer: "reroute" | "focused" | "lattice" | "liaison"
-      triggerEntry: V2CanonicalLedgerEntryRef
-      observationEntry: V2CanonicalLedgerEntryRef
-      producerSlotId: string
-    }
-
-type V2CanonicalLedgerEntryRef = {
-  kind: "command-set" | "ravellan-decision" | "task-collection"
+type V2CanonicalLedgerEntryRef = Readonly<{
+  kind: "command-set" | "ravellan-decision"
   cycle: 1|2|3|4|5|6
   preRevision: number
   postRevision: number
   postStateHash: string
-}
+}>
+
+type V2HqEvidenceOrigin =
+  | { kind: "ordinary"; cycle: 1|2|3|4; slotId: string }
+  | {
+      kind: "reroute" | "focused"
+      triggerEntry: V2CanonicalLedgerEntryRef
+      observationEntry: V2CanonicalLedgerEntryRef
+      producerSlotId: string
+    }
 ```
 
-`task-collection` is a future #102 origin kind, not a #100 ledger change.
+#102 later adds its own strict task/liaison origins; #100 must not invent a task ledger kind.
 
-Runtime occurrence equivalent to:
+Runtime occurrence equivalent:
 
 ```ts
 type V2HqEvidence = Readonly<{
@@ -335,13 +351,15 @@ type V2HqEvidence = Readonly<{
   definitionId: V2HqEvidenceDefinitionId
   origin: V2HqEvidenceOrigin
   observedCycle: 1|2|3|4|5|6
-  currentThroughCycle: 1|2|3|4|5|6
+  assessmentCurrentThroughCycle: 1|2|3|4|5|6 | null
+  warningCurrentThroughCycle: 1|2|3|4|5|6 | null
+  publicCaseCurrentThroughCycle: 1|2|3|4|5|6 | null
 
-  // copied from canonical definition, never caller-authored
+  // copied from the canonical definition only
   claimId: "ravellan-intent"
   questionId: string
-  implication: "preparation" | "coercion" | "ambiguous"
-  diagnosticity: "indicator" | "diagnostic"
+  implication: V2HqEvidenceImplication
+  diagnosticity: V2HqEvidenceDiagnosticity
   sourceGroupId: string
   corroborationGroupId: string | null
   sourceContextRef: string
@@ -352,7 +370,7 @@ type V2HqEvidence = Readonly<{
 }>
 ```
 
-`instanceId` is SHA-256 of shared canonical JSON for:
+Instance ID is SHA-256 of shared canonical JSON for:
 
 ```text
 {
@@ -364,38 +382,58 @@ type V2HqEvidence = Readonly<{
 }
 ```
 
-No player/free-form string controls identity. Reject duplicate instance IDs, one ID with differing semantics, or more than one directed occurrence for the same question/result cycle.
+No player/free-form string controls identity. Normal DTOs never expose origin refs/revisions/hashes.
 
-Normal DTOs never expose origin refs, revisions or hashes.
-
-# 10. Occurrence instantiation
+# 11. Occurrence constructor
 
 One sim-owned helper equivalent to:
 
 ```ts
-instantiateV2HqEvidence({
-  resolvedModel,
-  definitionId,
-  observedCycle,
-  origin,
-}): V2HqEvidence
+instantiateV2HqEvidence({ resolvedModel, definitionId, observedCycle, origin })
 ```
 
 It:
 
-1. resolves the canonical definition;
+1. resolves the exact definition;
 2. validates producer kind against origin;
 3. validates fixed/result timing;
-4. derives current-through cycle;
+4. derives all three role-current-through values;
 5. copies every semantic field from the definition;
-6. computes the instance ID;
-7. rejects any caller attempt to provide/override semantic fields.
+6. computes instance ID;
+7. rejects caller-supplied semantic overrides.
 
-A fixed definition only instantiates at its authored cycle. A result-through-terminal definition instantiates only through an authorised producer at C5 or C6 as catalogued.
+Reject duplicate instance IDs, one ID with differing semantics, or multiple directed occurrences for the same question/result cycle.
 
-# 11. Trusted history index
+# 12. Model representation and identity
 
-Build one bounded index from a trusted session:
+Use closed object maps keyed by stable IDs for unordered collections.
+
+`V2HqBeliefModelDefinition` contains at minimum:
+
+- `modelId = kestrel-hq-belief-v1`;
+- `scenarioId = kestrel-strait`;
+- `reducerSemanticsId = kestrel-binary-hypothesis-v1`;
+- evidence definitions by ID;
+- ordinary schedule by cycle;
+- reroute/focused trigger IDs;
+- #100 raw-fact → source-fact → definition mappings;
+- exact copy registries;
+- all 15 basis-pattern/warning presentation mappings.
+
+The content resolver:
+
+1. strict-parses raw model data;
+2. canonicalises unordered semantic collections;
+3. computes SHA-256 over shared canonical JSON;
+4. returns `{ definition, semanticDigest }`.
+
+Sim recomputes the digest and rejects mismatch. It also rejects unsupported scenario/model/reducer IDs.
+
+All decision-significant English copy is included in the prototype digest because wording affects player decisions and no localization architecture exists yet.
+
+# 13. Trusted history index
+
+Build one bounded canonical index:
 
 ```ts
 type V2VerifiedCycleHistory = {
@@ -405,207 +443,265 @@ type V2VerifiedCycleHistory = {
 }
 ```
 
-Still fail on duplicate/missing/out-of-order prerequisites rather than guessing.
+Fail on missing, duplicate or out-of-order prerequisites.
 
-When HQ analysis cares what the coalition actually ordered, use authoritative:
+When intelligence cares what HQ actually ordered, use `command-set.finalOrders`, never raw client dispositions.
 
-`command-set.finalOrders`
+# 14. Authorised #100 observation extractors
 
-never client dispositions.
+Raw hidden Ravellan state appears only inside these two extractors.
 
-# 12. Observation boundary
+## C2 reroute → C3
 
-Exact dependency direction:
+Only when authoritative C2 final orders contain the model’s reroute trigger.
+
+Inputs only:
+
+- C2 normal Ravellan action;
+- C2 post-decision preparation.
+
+No posture, row, seed, intent, current/future state or terminal action.
+
+Output source fact and definition mapping are exact in [[23C-HQ-BELIEF-EVIDENCE-CATALOG]].
+
+## C3 focused staging → C4
+
+Only when C3 final orders contain the focused trigger.
+
+Input only:
+
+- C4 post-decision preparation.
+
+No posture, C4 action/row, tasking-time state, C5/C6 state or terminal action.
+
+Output mapping is exact in [[23C-HQ-BELIEF-EVIDENCE-CATALOG]].
+
+Dependency direction is always:
 
 ```text
 verified hidden history
-→ authorised observation extractor
-→ bounded source fact
-→ catalog mapping to definition ID
-→ occurrence instantiation
-→ reducers
+→ authorised source-fact extractor
+→ catalogued definition ID
+→ occurrence constructor
+→ role reducers
 → safe brief
 ```
 
-Raw hidden Ravellan state appears only inside authorised extractors.
-
-## C2 reroute extractor
-
-Only if C2 `finalOrders` contains the model’s reroute trigger.
-
-Raw inputs only:
-
-- verified C2 normal Ravellan action;
-- verified C2 post-decision preparation.
-
-No posture, policy row, seed, standing intent, current/future state or terminal behavior.
-
-## C4 focused-staging extractor
-
-Only if C3 `finalOrders` contains the model’s focused trigger.
-
-Raw input only:
-
-- verified C4 post-decision preparation.
-
-No posture, C4 action, policy row, C3 tasking-time state, C5/C6 state or future input.
-
-Exact mappings are [[23C-HQ-BELIEF-EVIDENCE-CATALOG]].
-
-# 13. Ordinary evidence
+# 15. Ordinary evidence
 
 Ordinary evidence has no hidden-state parameter.
 
-Instantiate only the exact definition IDs in the model schedule for cycles at/before the query cut.
+Instantiate only exact scheduled definition IDs for cycles at/before the query cut.
 
-`combat-elements-dispersed` is bounded routine coverage, not hidden global truth.
+`combat-elements-dispersed` is bounded routine coverage, not omniscient hidden truth.
 
 Action-specific C4 situation prose never feeds evidence selection or reduction.
 
-# 14. Current relevance and persistent supersession
+# 16. Currentness and persistent supersession
 
-An occurrence is current at Q iff:
+For each role, occurrence A is current at Q iff:
 
-- `observedCycle <= Q <= currentThroughCycle`; and
-- it is not superseded by any later occurrence observed by Q.
+- it has that role’s non-null current-through value;
+- `A.observedCycle <= Q <= roleCurrentThrough`; and
+- A has not been superseded by a later occurrence observed by Q.
 
-Stale and superseded items remain in `evidenceHistory`.
+Compute supersession from **all** occurrences observed by Q before role-current filtering.
 
-Supersession is persistent:
+A is superseded when later B:
 
-- a newer `replace-older-same-question` occurrence suppresses every older occurrence with the same question ID;
-- explicit `supersedesDefinitionIds` also apply;
-- an older item never resurrects when the newer item becomes stale or is itself superseded.
+- uses `replace-older-same-question` and shares A’s question; or
+- explicitly lists A’s definition ID.
 
-The algorithm computes supersession from the complete occurrence history observed by Q before filtering current relevance.
+Supersession is permanent. A never resurrects when B becomes stale or is itself replaced.
 
-# 15. Exact reducers
+Stale/superseded occurrences remain in historical evidence.
 
-Use [[23-HQ-BELIEF-AND-EVIDENCE]] and [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]].
+# 17. Reducers
 
 ## Intent
 
-Exact semantic ID:
+Use assessment-current occurrences only and the exact 16-row table in [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]].
 
-`kestrel-binary-hypothesis-v1`
-
-The 16-row categorical truth table is mandatory. Evidence count never decides direction.
+Return assessment plus basis pattern and deterministic representative support/contrary occurrence IDs.
 
 ## Warning
 
-`usable` iff a current, non-superseded preparation occurrence has `warningRole = usable`.
+Use warning-current occurrences only.
+
+`usable` iff current non-superseded preparation evidence has warning role. Select deterministic basis occurrence by:
+
+1. newest observed cycle;
+2. diagnostic before indicator;
+3. definition ID;
+4. instance ID.
 
 ## Public case
 
-Return a strict discriminated result:
+Use public-current eligible occurrences, while opposite-direction blockers include any opposite occurrence current for **assessment or public-case use**.
 
-```ts
-type V2HqPublicCaseBasis =
-  | { state: "none"; direction: null; supportingEvidenceInstanceIds: []; supportingCorroborationGroupIds: [] }
-  | { state: "tentative"; direction: "preparation" | "coercion" | null; supportingEvidenceInstanceIds: readonly string[]; supportingCorroborationGroupIds: readonly string[] }
-  | {
-      state: "credible-source-sensitive"
-      direction: "preparation" | "coercion"
-      supportingEvidenceInstanceIds: readonly [string, string]
-      supportingCorroborationGroupIds: readonly [string, string]
-    }
-```
+Credible direction D requires:
 
-Credible requires exactly:
+- one eligible diagnostic D;
+- no current opposite direction;
+- one additional eligible D occurrence from another corroboration group.
 
-- one current source-sensitive diagnostic;
-- no current opposite directional occurrence of any class;
-- one additional current same-direction source-sensitive occurrence from a different corroboration group.
+Return exactly two deterministic support IDs/groups:
 
-Selection is deterministic:
+1. primary diagnostic — newest, definition ID, instance ID;
+2. corroborator from another group — diagnostic before indicator, newest, definition ID, instance ID.
 
-1. primary diagnostic — newest, then definition ID, then instance ID;
-2. corroborator from another group — diagnostic before indicator, then newest, definition ID, instance ID.
+One source is tentative. Two indicators are tentative. Directionless credible is invalid.
 
-Directionless credible is schema-invalid.
+# 18. Complete snapshot and delta
 
-# 16. Snapshot and total delta
-
-Snapshot equivalent to:
+Equivalent snapshot:
 
 ```ts
 type V2HqBeliefSnapshot = Readonly<{
   cycle: 1|2|3|4|5|6
   evidenceHistory: readonly V2HqEvidence[]
-  currentEvidence: readonly V2HqEvidence[]
+  assessmentCurrentEvidenceInstanceIds: readonly string[]
+  warningCurrentEvidenceInstanceIds: readonly string[]
+  publicCaseCurrentEvidenceInstanceIds: readonly string[]
   assessment: V2HqAssessment
-  warning: "none" | "usable"
+  warning: V2HqWarning
   publicCaseBasis: V2HqPublicCaseBasis
   delta: V2HqBeliefDelta
   brief: V2HqIntelligenceBrief
 }>
 ```
 
-Delta is exactly the total structure in [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]], including:
+Delta is total:
 
-- assessment change;
-- warning change;
-- public-case state/direction changes;
-- evidence cause;
-- added/stale/superseded instance IDs.
+```ts
+type V2HqBeliefDelta = Readonly<{
+  assessmentChange:
+    | "initial" | "unchanged" | "narrowed" | "strengthened"
+    | "weakened" | "conflicted" | "cleared-conflict"
+    | "reopened" | "reversed"
 
-Cause derivation:
+  warningChange:
+    | "initial" | "unchanged" | "gained" | "refreshed"
+    | "lost-stale" | "lost-superseded" | "lost-mixed"
 
-- only newly observed material occurrences → `new-evidence`;
-- only previous-current items becoming stale → `staleness`;
-- only replacement/supersession → `supersession`;
-- more than one cause class → `mixed`;
-- no material current-product/evidence-set change → `none`.
+  publicCaseStateChange:
+    | "initial" | "unchanged" | "opened" | "strengthened"
+    | "weakened" | "closed"
 
-A required update cannot disappear merely because the assessment string remained unchanged while warning/public action space changed.
+  publicCaseDirectionChange:
+    | "initial" | "unchanged" | "established" | "clarified"
+    | "became-conflicted" | "reversed" | "cleared"
 
-# 17. Assessment-change mapping
+  evidenceChangeCause:
+    | "none" | "new-evidence" | "staleness" | "supersession" | "mixed"
 
-Use the exact nine-category, 36-pair mapping in [[23-HQ-BELIEF-AND-EVIDENCE]]. No catch-all/default branch.
+  addedInstanceIds: readonly string[]
+  becameAssessmentStaleInstanceIds: readonly string[]
+  becameWarningStaleInstanceIds: readonly string[]
+  becamePublicCaseStaleInstanceIds: readonly string[]
+  newlySupersededInstanceIds: readonly string[]
+}>
+```
 
-Initial snapshot uses `initial`; identical subsequent assessment uses `unchanged` even if another product changed. The total delta still reports that other change.
+## Assessment change
 
-# 18. Deterministic brief selection
+Use the exact total 36-pair mapping in [[23-HQ-BELIEF-AND-EVIDENCE]]. No fallback.
 
-Normal brief is bounded:
+## Warning change
 
-- one judgement ref;
-- at most two supporting evidence entries;
-- at most one contrary entry;
-- exactly one gap ref;
-- at most one watch-for ref;
-- at most one material change line;
-- at most one warning line;
-- no internal public-case enum; later #101 may expose a safe claim label.
+- none→usable: gained;
+- usable→none due only to warning relevance aging: lost-stale;
+- usable→none due only to replacement: lost-superseded;
+- usable→none with both: lost-mixed;
+- usable→usable with a different basis instance: refreshed;
+- otherwise unchanged.
 
-## Supporting evidence order
+## Public-case state change
+
+- no previous snapshot: initial;
+- same state: unchanged;
+- none→non-none: opened;
+- non-none→none: closed;
+- tentative→credible: strengthened;
+- credible→tentative: weakened.
+
+## Public-case direction change
+
+Apply in order:
+
+1. no previous snapshot → initial;
+2. same direction, including null → unchanged;
+3. previous none/null → current directional → established;
+4. previous tentative/null → current directional → clarified;
+5. previous directional → current none/null → cleared;
+6. previous directional → current tentative/null → became-conflicted;
+7. opposite non-null directions → reversed.
+
+The schema makes all remaining pairs impossible.
+
+## Evidence cause
+
+- only independent new current occurrence(s): new-evidence;
+- a new occurrence replacing an older answer, with no independent staleness: supersession;
+- only role currentness aging: staleness;
+- more than one material cause class: mixed;
+- no material evidence/product change: none.
+
+A superseding occurrence is not automatically `mixed` merely because it is also new.
+
+# 19. Deterministic brief
+
+The normal brief contains:
+
+- one judgement;
+- at most two basis facts;
+- at most one contrary fact;
+- exactly one key gap;
+- at most one watch-for;
+- at most one material update line;
+- a separate warning-status line;
+- later, a safe public-claim label only when #101 exposes an unspent credible case.
+
+Every displayed fact includes concise source-context and limitation copy.
+
+## Evidence ranking
 
 Directional assessment:
 
-1. supporting diagnostics before supporting indicators;
-2. warning-bearing before non-warning within the same class;
-3. newest observed cycle;
+1. supporting diagnostic before indicator;
+2. warning-bearing before non-warning within class;
+3. newest;
 4. definition ID;
 5. instance ID.
 
-Select the first, then prefer a second from a different question ID where available before taking another from the same question.
+Select first, then prefer a second from another question when available.
 
-Conflicted assessment:
+The highest-ranked opposite-direction occurrence is mandatory contrary evidence whenever one exists.
 
-- select one preparation representative and one coercion representative using the same rank;
-- keep deterministic direction display order `preparation`, then `coercion`.
+Conflicted assessment selects one preparation and one coercion representative using the same rank. If warning is usable, the warning-bearing preparation occurrence must be the preparation representative.
 
-Unclear/weak:
+Unclear/weak uses the newest ambiguous occurrence or authored gap.
 
-- select the newest ambiguous occurrence if present; otherwise rely on the gap copy.
+## Presentation mapping
 
-If a diagnostic direction survives opposite indicators, the highest-ranked opposite indicator is mandatory contrary evidence.
+Gap/watch copy is keyed by `basisPattern + warning`, not assessment alone. All 15 algebraically legal mappings must exist; impossible content combinations fail validation.
 
-Normal safe entries include summary, source-context and limitation refs; they exclude occurrence origins/hashes and internal diagnosticity labels.
+At C5/C6, warning status is explicit in ordinary language whether usable or absent. The player never infers warning-none from a missing component.
 
-# 19. Public API responsibilities
+## Update-line priority
 
-Exact exported names may follow repository convention, but responsibilities are:
+1. player-tasked/liaison report arrival;
+2. warning gained/refreshed/lost;
+3. public action-space change;
+4. assessment direction/picture change;
+5. material staleness/supersession;
+6. other displayed-basis change.
+
+Task arrival may use the update line while the separate warning/public-claim lines communicate simultaneous product changes.
+
+# 20. Public APIs
+
+Responsibilities equivalent to:
 
 ```ts
 deriveV2HqBeliefAtCycle(
@@ -625,92 +721,137 @@ deriveV2HqBeliefHistory(
 ): readonly V2HqBeliefSnapshot[]
 ```
 
-Keep lower reducers and occurrence/model validation directly unit-testable.
+Exact names may follow repository convention. Keep lower model validation, occurrence construction and reducers directly testable.
 
-# 20. Future #102 seam
+# 21. Future replay-provider seam
 
-#100 predeclares all #102 evidence definitions but does not persist tasks or manufacture their occurrences.
+Committed #99’s trusted agenda provider currently receives only state. Once #98 recommendations depend on #100 history, replay must not hand the provider the unverified full saved session.
 
-#102 may supply only occurrences that:
+#98 must evolve the in-memory provider to receive a sim-created verified projection context containing:
 
-- reference an exact catalogued Lattice/liaison definition;
-- carry a valid closed target/question ID;
-- have a replay-verifiable task/command origin;
-- use the exact result cycle and producer mapping;
-- preserve catalog semantics;
-- use each Lattice target at most once in Kestrel;
-- do not expose a zero-cost no-task option while unused targets remain.
+- trusted identity;
+- initial state;
+- current replay state/revision;
+- the already re-executed ledger prefix only.
 
-A merely schema-valid arbitrary evidence object is rejected.
+At command cycle Q, the prefix includes Q’s verified Ravellan decision and prior commands, but not the unverified command Q or any future entry.
 
-# 21. Content identity
+This future API evolution changes no persisted schema/version and does not alter #99 transition semantics. #100 need not modify the provider now.
 
-The semantic digest covers the entire exact catalog/model, including decision-significant English copy and Lattice default target ordering.
+# 22. Test-only state-space oracle
 
-#103 must include this digest in Kestrel’s final `contentDigest` before any normal player-facing Kestrel session is supported.
+Create a test-only reference module or fixture generator outside production exports that independently reimplements the design envelope.
 
-Changing reducer semantics, evidence metadata, current relevance, producer mapping, source/corroboration grouping, supersession, copy, target defaults or state-space envelope requires a new model semantic identity/digest.
+It may use the frozen future #102 producer tables solely to reproduce [[23D-HQ-BELIEF-STATE-SPACE-VECTORS.json]]. It must not:
 
-# 22. Exact implementation order
+- persist tasks;
+- enter server/headless runtime;
+- become the production reducer or producer implementation;
+- be imported by shipping sim code.
 
-1. shared canonical JSON serializer + golden #99 equivalence tests;
-2. shared #100 enums/discriminated types;
+Tests compare generated canonical arrays/counts/hashes to 23D. They must fail if someone replaces the generator with copied fixture output.
+
+# 23. Exact implementation order
+
+1. shared canonical JSON + #99 golden equivalence tests;
+2. shared derived enums/discriminated schemas, including basis pattern and role relevance;
 3. strict definition/occurrence/origin/model/bundle schemas;
 4. content model from [[23C-HQ-BELIEF-EVIDENCE-CATALOG]];
-5. canonicalisation, model validation and semantic digest tests;
-6. dedicated sim HQ-belief module + export;
-7. model-bundle/scenario/semantic guards;
-8. trusted history index and exact cycle cut;
-9. occurrence-origin/ref builders and instantiation helper;
+5. content validation/canonicalisation/semantic-digest tests;
+6. dedicated sim HQ-belief module/export;
+7. model/scenario/digest guards;
+8. trusted history index and historical cycle cut;
+9. origin/ref builders and occurrence constructor;
 10. ordinary producer;
-11. reroute and focused authorised extractors/mappers;
-12. persistent supersession/current-relevance algorithm;
-13. 16-row intent, warning and corroborated public-case reducers;
-14. 36-pair assessment-change reducer + total product/evidence delta;
-15. deterministic bounded brief selection;
-16. historical/current/history APIs;
-17. exact generated state-space test from [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]];
-18. hidden-information/equivalence/import/content-identity mutation tests;
-19. fresh tradecraft review;
-20. fresh replay/architecture review;
-21. remediate all valid blockers and relevant integrity findings;
-22. full repository gates;
-23. commit/push/update/close #100;
-24. stop before #98.
+11. reroute/focused authorised extractors and mappings;
+12. persistent supersession and three role-current sets;
+13. 16-row assessment/basis-pattern reducer;
+14. warning reducer;
+15. corroborated public-case reducer;
+16. total assessment/warning/public/evidence delta;
+17. deterministic bounded brief and 15 presentation mappings;
+18. current/history APIs;
+19. test-only independent state-space generator + 23D comparison;
+20. hidden-information/import/content-identity mutation tests;
+21. fresh intelligence/tradecraft review;
+22. fresh replay/architecture review;
+23. remediate all valid blocking/integrity findings;
+24. full repository gates;
+25. commit/push/update/close #100;
+26. stop before #101.
 
-# 23. Required generated proof
+# 24. Required #100 proof
 
-The implementation must reproduce every count/vector in [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]], not a subset.
+## Pure/replay boundary
 
-Also prove:
-
-- shared canonical serializer leaves all existing #99 hashes/digests unchanged;
-- production sim has no content dependency;
-- content has no sim dependency;
-- model bundle digest mismatch rejected;
-- current query before current Ravellan decision rejected;
-- unsupported scenario/model/reducer rejected;
+- repeated derivation deep-equal;
+- state/revision/all #99 hashes unchanged;
+- no #100 ledger/version mutation;
 - unverified import cannot reach normal projection;
 - replay-validated session can project;
-- repeated derivation deep-equal and leaves state/hash/revision unchanged;
-- origin hashes never enter normal DTO;
-- V1 unchanged.
+- current query before current Ravellan decision fails;
+- command Q/future entries do not alter historical Q.
 
-# 24. Independent reviews
+## Model/content identity
+
+- exact 19 definitions;
+- all refs resolve exactly once;
+- digest deterministic;
+- any semantic mapping/relevance/reducer/copy change changes digest;
+- bundle mismatch rejected;
+- shared canonical JSON matches every pre-existing #99 golden hash;
+- sim has no production content dependency; content has no sim dependency.
+
+## Evidence architecture
+
+- ordinary/reroute/focused outputs exact;
+- raw hidden facts confined to authorised extractors;
+- posture/R6 action/world prose cannot affect evidence;
+- occurrence origin collision/semantic override rejected;
+- role-specific currency exact;
+- stale evidence retained;
+- persistent supersession/no resurrection exact.
+
+## Reducer/brief totality
+
+- all 16 assessment rows;
+- all 10 algebraic assessment/warning pairs;
+- all 15 basis-pattern/warning mappings;
+- all 36 assessment-change pairs;
+- total warning/public/evidence delta functions;
+- one-source/directionless credible rejected;
+- contrary evidence mandatory when diagnostic direction is qualified;
+- C5/C6 explicit warning-none/usable copy.
+
+## Generated architecture vectors
+
+- test-only oracle reproduces every count/hash in 23D;
+- all 19 definitions reached in the design envelope;
+- zero same-target retask value;
+- focused landing upgrade 138/138;
+- warning loss/refresh vectors exact.
+
+## Compatibility
+
+- existing #99 replay/order/tamper tests green;
+- V1 schemas/import/replay/client unchanged.
+
+# 25. Independent reviews
 
 ## Intelligence/tradecraft reviewer
 
 Attack:
 
 - source/method ambiguity;
-- stale evidence silently forgotten;
-- diagnosticity behaving like vote count;
-- material contrary evidence hidden;
-- warning conflated with estimate;
+- single universal evidence lifetime;
+- stale reporting silently forgotten;
+- diagnostic evidence acting as vote count;
+- contrary evidence hidden;
+- assessment/warning/public-case conflation;
 - one-source public accusation;
-- fake Lattice choice/default;
-- result timing and terminal hindsight;
-- dense dossier/confidence-meter presentation.
+- misleading target semantics;
+- C6 hindsight leakage;
+- dossier/confidence-meter presentation.
 
 ## Replay/architecture reviewer
 
@@ -718,34 +859,28 @@ Attack:
 
 - persisted #100 creep;
 - derivation mutation;
-- unverified import use;
-- cycle-cut/future-entry leakage;
-- terminal-action leakage;
-- duplicate canonical serializers;
+- unverified import or future-entry leakage;
+- production implementation of #102 inside #100;
 - model-bundle/content-identity mismatch;
+- duplicate canonical-JSON drift;
 - occurrence-origin collision/forgery;
 - temporary supersession/resurrection;
 - current-state-for-history bugs;
 - sim/content dependency inversion;
 - #99 hash/order regression;
 - V1 contamination;
-- generic-framework creep.
+- generic framework creep.
 
-All P0/P1 findings are mandatory. Also remediate P2 findings involving hidden information, replay/content identity, deterministic ambiguity, model coverage or player-facing misrepresentation.
+All P0/P1 findings are mandatory. Also remediate P2 findings involving hidden information, replay/content identity, model coverage, deterministic ambiguity or player-facing misrepresentation.
 
-# 25. Closure rule
+# 26. Closure rule
 
 #100 closes only when:
 
-- all three canonical contracts `23`, `23A`, `23B`, and exact catalog `23C` are implemented;
-- generated counts/state vectors match;
-- no omitted/dead definition remains;
-- no fake same-target/no-task option exists;
-- assessment, warning and public case are separate and total;
-- public credibility is corroborated and freezes an exact support basis when used;
-- history/currency/supersession/C6 cuts are correct;
-- no persisted V2 shape/version changed;
-- both independent reviews are clear after remediation;
-- full gates pass;
+- [[23-HQ-BELIEF-AND-EVIDENCE]], this file, [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]], [[23C-HQ-BELIEF-EVIDENCE-CATALOG]] and 23D agree;
+- production scope stops before #102 task persistence;
+- all required proof and both independent reviews pass after remediation;
+- no persisted V2 shape/version changes;
+- full repository gates pass;
 - implementation commit is pushed and issue evidence recorded;
-- no #98 implementation began in the same run.
+- no #101 implementation starts in the same run.
