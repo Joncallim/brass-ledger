@@ -9,7 +9,7 @@ Backlink: [[README]]
 
 This is the exact implementation/replay authority for **#100** against the committed #99 architecture.
 
-[[23-HQ-BELIEF-AND-EVIDENCE]] owns intelligence semantics. [[30-ARCHITECTURE-CONTRACT]] owns repository boundaries. This document freezes how an implementation agent should wire those semantics into the current code without inventing another lifecycle.
+[[23-HQ-BELIEF-AND-EVIDENCE]] owns intelligence semantics. [[30-ARCHITECTURE-CONTRACT]] owns repository boundaries. This document freezes code seams, history inputs, phase guards, identity and tests so implementation does not invent another lifecycle.
 
 # Architectural decision
 
@@ -20,105 +20,106 @@ Do not add:
 - `hqBelief` to `V2Session.state`;
 - persisted evidence arrays;
 - persisted assessment/warning/public-case fields;
-- an `hq-belief-update` ledger discriminator;
-- another revision per intelligence update;
-- a V2 prototype-version bump.
+- `hq-belief-update` ledger entries;
+- intelligence-driven revisions;
+- a #100 V2 persisted-schema version bump.
 
-All #100 products are deterministically reconstructed from already-authoritative history.
+All #100 products reconstruct deterministically from trusted V2 history + canonical Kestrel intelligence-model content.
 
-This is Pattern B (“pure derived readout”) from [[30-ARCHITECTURE-CONTRACT]].
+This is Pattern B in [[30-ARCHITECTURE-CONTRACT]].
 
-# Why this is correct for Kestrel
+# Why pure derivation fits Kestrel
 
-The committed #99 lifecycle already persists every hidden fact #100 legitimately needs:
+Committed #99 already persists/replays every hidden historical fact #100 legitimately needs:
 
-- cycle and standing intent in authoritative state;
-- one replay-verifiable `ravellan-decision` per cycle;
+- cycle + standing intent;
+- one `ravellan-decision` per executed cycle;
 - Ravellan action + preparation transition in that entry;
-- complete canonical `command-set` entries;
-- final resolved order IDs for both Delegate and Intervene;
-- full state snapshots/hashes/revisions;
-- trusted replay against live content identity.
+- canonical `command-set` entries;
+- authoritative `finalOrders` for Delegate and Intervene;
+- state snapshots/hashes/revisions;
+- content identity and trusted replay.
 
-Kestrel has only six cycles. Evidence lifetimes/supersession are deterministic and tiny. Reconstructing belief from six cycles of verified history is cheaper, safer and easier to audit than storing another mutable projection.
+Kestrel has only six cycles and a tiny deterministic evidence catalogue. Persisting a second mutable “belief truth” would duplicate information and create another tamper/version surface.
 
-# Canonical live ordering after #99
+# Canonical live ordering
 
-Current authoritative mutation order remains:
+Keep #99 mutation ordering unchanged:
 
 ```text
 opening:
 intent-declaration
 → ravellan-decision C1
-→ [derive HQ belief/readout — NO ledger mutation]
+→ derive HQ intelligence/readout (no mutation)
+→ build agenda/recommendations
 → command-set C1
 
 C2–C5:
 ravellan-decision CN
-→ [derive HQ belief/readout — NO ledger mutation]
+→ derive HQ intelligence/readout (no mutation)
+→ build agenda/recommendations
 → command-set CN
 
 C6:
 ravellan-decision C6
-→ [derive HQ belief/readout — NO ledger mutation]
-→ later terminal-response work owned downstream
+→ derive HQ intelligence/readout (no mutation)
+→ downstream terminal-response work
 ```
 
-`command-set` continues to advance `state.cycle` by one.
+`command-set` continues to advance `state.cycle`.
 
-Therefore, immediately after C2 command resolution the state is C3 but the **C3 intelligence brief is not ready** until the C3 `ravellan-decision` has been appended.
+Immediately after C2 command resolution, state may say C3 while no C3 Ravellan decision exists. **C3 intelligence is not ready yet.**
 
-Do not show a new command agenda/brief in that intermediate state.
+# Phase guard
 
-# Required phase guard
-
-`deriveV2CurrentHqBelief(session)` must fail closed unless:
+`deriveV2CurrentHqBelief(session)` fails closed unless:
 
 - standing intent exists;
 - `state.cycle` is 1–6;
-- the authoritative ledger contains exactly one `ravellan-decision` for `state.cycle`;
-- no invalid duplicate/reordered history is accepted.
+- exactly one authoritative `ravellan-decision` exists for `state.cycle`;
+- the supplied session is already authoritative/trusted.
 
-Recommended error code/name:
+Use a dedicated derived-readout error equivalent to:
 
 `v2_hq_belief_not_ready`
 
-Do not define readiness as “the latest ledger entry is Ravellan” because future system entries may legitimately sit between Ravellan and the command room. Define readiness semantically from verified cycle history.
+Do not define readiness as “last ledger entry is Ravellan”; future legitimate system entries may sit between Ravellan and Command Room. Define it semantically from cycle history.
 
 # Trust boundary
 
-Normal player belief projection may be called only on:
+Normal belief projection accepts only:
 
-- an authoritative live in-memory V2 session produced by normal sim/server transitions; or
-- a session returned by trusted V2 replay validation.
+- authoritative live in-memory V2 session from normal sim/server flow; or
+- `V2Session` returned by trusted V2 replay validation.
 
-Do not expose a route that accepts arbitrary raw imported JSON and directly derives intelligence from it.
+Never expose an API that derives player intelligence directly from arbitrary imported JSON.
 
 # Package ownership
 
 ## `packages/shared`
 
-Own strict serialisable **derived** contracts only.
+Own strict serialisable **derived types only**.
 
-Add types/schemas equivalent to:
+Add equivalents of:
 
 ```ts
 V2HqEvidenceImplication = "preparation" | "coercion" | "ambiguous"
 V2HqEvidenceDiagnosticity = "indicator" | "diagnostic"
 V2HqWarningState = "none" | "usable"
-V2HqPublicCaseBasis = "none" | "tentative" | "credible-source-sensitive"
+V2HqPublicCaseBasisState = "none" | "tentative" | "credible-source-sensitive"
 V2HqAssessmentChange =
   | "initial"
   | "unchanged"
   | "narrowed"
   | "strengthened"
-  | "more-uncertain"
+  | "weakened"
+  | "conflicted"
+  | "cleared-conflict"
+  | "reopened"
   | "reversed"
 ```
 
-Derived evidence/readout schemas may be exported from shared, but they are **not nested into `v2BootstrapStateSchema` or any ledger-entry state snapshot**.
-
-Add a strict internal/readout shape equivalent to:
+Derived evidence shape equivalent to:
 
 ```ts
 V2HqEvidence = {
@@ -136,7 +137,7 @@ V2HqEvidence = {
 }
 ```
 
-and:
+Derived assessment/snapshot equivalent to:
 
 ```ts
 V2HqAssessment = {
@@ -151,389 +152,488 @@ V2HqBeliefSnapshot = {
   assessment: V2HqAssessment
   warning: V2HqWarningState
   publicCaseBasis: {
-    state: V2HqPublicCaseBasis
+    state: V2HqPublicCaseBasisState
     direction: "preparation" | "coercion" | null
   }
   assessmentChange: V2HqAssessmentChange
 }
 ```
 
-Player-safe presentation refs are a separate strict derived DTO. Do not put hidden selector facts into it.
+These schemas/types are never nested into `v2BootstrapStateSchema`, `v2SessionSchema` or ledger state snapshots.
 
 ## `packages/content`
 
-Own the bounded Kestrel evidence catalogue and player-safe copy refs:
+Own a bounded canonical serialisable definition equivalent to:
 
-- metadata for each evidence ID;
-- summary refs;
-- key-gap refs;
-- watch-for refs;
-- canonical judgement text refs/meanings.
+```ts
+kestrelHqBeliefModel = {
+  modelId: "kestrel-hq-belief-v1",
+  evidenceDefinitions: ...,
+  judgementRefs: ...,
+  gapWatchForRefs: ...,
+  assessmentChangeRefs: ...
+}
+```
 
-Do not put hidden selection logic in content prose/templates.
+Content owns:
+
+- evidence IDs + static roles/lifecycles/supersession metadata;
+- player-safe evidence summaries;
+- judgement refs;
+- exact key-gap/watch-for mapping refs;
+- assessment-change refs.
+
+Do not put hidden selector logic into copy/templates.
 
 ## `packages/sim`
 
 Own:
 
-- verified-history extraction;
-- evidence-ID selection from explicitly authorised facts;
+- trusted history extraction;
+- narrow hidden-fact selectors;
+- ordinary evidence generation;
 - lifecycle/supersession;
-- intent reducer;
+- assessment reducer;
 - warning reducer;
 - public-case reducer;
-- assessment-change classification;
+- exact assessment-change mapping;
 - bounded reason/gap/watch-for selection.
 
-No browser/server code reproduces these rules.
+Browser/server never reproduce these rules.
 
-# Exact public sim API
+# Public sim API
 
 Implement names equivalent in responsibility to:
 
 ```ts
-deriveV2HqBeliefAtCycle(
-  session: V2Session,
-  cycle: number,
-): V2HqBeliefSnapshot
+deriveV2HqBeliefAtCycle(session: V2Session, cycle: number): V2HqBeliefSnapshot
 ```
 
-Historical readout. Requires the queried cycle's authoritative Ravellan decision to exist.
+Historical pre-command snapshot. Queried cycle must have its authoritative Ravellan decision.
 
 ```ts
-deriveV2CurrentHqBelief(
-  session: V2Session,
-): V2HqBeliefSnapshot
+deriveV2CurrentHqBelief(session: V2Session): V2HqBeliefSnapshot
 ```
 
-Convenience wrapper around `state.cycle` with the phase guard above.
+Wrapper for current `state.cycle` + phase guard.
 
 ```ts
-deriveV2HqBeliefHistory(
-  session: V2Session,
-): readonly V2HqBeliefSnapshot[]
+deriveV2HqBeliefHistory(session: V2Session): readonly V2HqBeliefSnapshot[]
 ```
 
-Returns every cycle for which the authoritative Ravellan pre-command point exists. Used later for debrief/history and tests.
+Every cycle whose authoritative Ravellan pre-command point exists.
 
-Keep lower-level reducers separately testable:
+Keep lower reducers directly testable:
 
 ```ts
 deriveV2HqAssessment(activeEvidence)
 deriveV2HqWarning(activeEvidence)
 deriveV2HqPublicCaseBasis(activeEvidence)
+deriveV2HqAssessmentChange(previous, current)
 ```
 
-Exact exported names may follow repository conventions; responsibilities and boundaries are frozen.
+Exact exported names may follow repository convention; responsibilities are frozen.
 
-# Verified-history extraction
+# Trusted history helpers
 
-Do not use client command intent as evidence of what actually happened. Use the persisted authoritative results.
+Build one bounded historical index internally rather than repeatedly scanning with slightly different logic.
 
-## Final-order lookup
+Conceptually:
 
-For any player choice used by intelligence derivation, inspect:
+```ts
+V2VerifiedCycleHistory = {
+  ravellanByCycle: Map<number, V2RavellanDecisionLedgerEntry>
+  commandByCycle: Map<number, V2CommandSetLedgerEntry>
+}
+```
+
+Construction assumptions:
+
+- input session has already passed trusted replay validation;
+- still assert at most one entry of each relevant kind per cycle while building the helper;
+- do not accept missing historical prerequisites for a selector.
+
+# Authoritative player-order lookup
+
+When intelligence cares what the coalition actually ordered, inspect:
 
 `command-set.finalOrders`
 
 not raw `commandSet.dispositions`.
 
-Reason:
+Delegate and Intervene both therefore resolve to the authoritative executed order ID.
 
-- Delegate persists the actual authoritative recommended order in `finalOrders`;
-- Intervene persists the chosen order there too;
-- belief should care what HQ actually ordered, not how the UI arrived at it.
+Add helper responsibility equivalent to:
 
-# Exact #100 hidden-fact selectors
+```ts
+findExecutedOrder(history, cycle, issueId): string | null
+```
 
-These are the **only** #100 selectors permitted to read hidden Ravellan execution facts.
+Missing required issue/order in a cycle that should contain it is a content/history error; do not silently treat it as “not selected”.
 
-Their signatures should be narrow enough that hidden posture is not representable.
+# Only authorised #100 hidden-fact selectors
+
+These are the **only** #100 functions permitted to consume hidden Ravellan execution facts.
+
+Their parameter types must make posture/policy row impossible to pass accidentally.
 
 ## C2 reroute monitoring
 
-Internal selector responsibility equivalent to:
+Equivalent signature:
 
 ```ts
-selectRerouteEvidence({
-  preparationAfterC2Decision,
-  c2Action,
-})
+selectRerouteEvidence(input: {
+  preparationAfterC2Decision: "none" | "developing" | "ready"
+  c2Action: V2RavellanNormalAction
+}): EvidenceId
 ```
 
-Inputs come from the verified **C2 `ravellan-decision` entry**:
+Only invoke if C2 authoritative final order includes `reroute-and-monitor`.
 
-- `entry.decision.action` (must be normal C2 action);
-- `entry.postState.ravellan.preparation`.
+Inputs come from verified **C2 ravellan-decision**:
 
-Do not use:
+- `decision.action`;
+- `postState.ravellan.preparation`.
 
+Forbidden:
+
+- posture;
+- policy-row ID;
 - C3/current preparation;
-- hidden posture;
-- policy-row ID;
-- future action;
-- player standing intent.
+- future action/history;
+- standing intent.
 
-Only invoke if C2 authoritative `finalOrders` contains `reroute-and-monitor`.
+This freezes observation time: C2 monitoring characterises the C2 pressure system.
 
-This freezes the time-of-observation rule: the monitoring opportunity characterises the C2 pressure system, not whatever Ravellan becomes later.
+## C3 focused staging result
 
-## C3 focused staging collection
-
-Internal selector responsibility equivalent to:
+Equivalent signature:
 
 ```ts
-selectFocusedStagingEvidence({
-  preparationAtC4ResultTime,
-})
+selectFocusedStagingEvidence(input: {
+  preparationAtC4ResultTime: "none" | "developing" | "ready"
+}): EvidenceId
 ```
 
-Only invoke if C3 authoritative `finalOrders` contains `focus-staging-collection`.
+Only invoke if C3 final order includes `focus-staging-collection`.
 
-Result-time input comes from the verified **C4 `ravellan-decision.postState.ravellan.preparation`**.
+Input comes from verified **C4 ravellan-decision post-state preparation**.
 
-Do not use:
+Forbidden:
 
-- C3 preparation at tasking time;
-- hidden posture;
+- C3 tasking-time preparation;
 - C4 action ID;
+- posture;
 - policy-row ID;
-- future history.
+- C5/future history.
 
-This is a deliberate collection mechanic: the commander tasks a sensor in C3; the sensor observes physical concentration at the C4 result point.
+This is deliberate tasking/result timing: the commander chooses collection in C3; the sensor observes physical concentration at C4 result time.
 
 # Ordinary evidence generation
 
-No ordinary evidence selector needs hidden posture or preparation.
+Ordinary evidence needs no hidden selector.
 
-Generate from queried cycle/content only:
+Generate from query cycle + canonical content only:
 
-- C1 `opening-pressure-ambiguous`;
-- C2 `shipping-probe-ambiguous`;
-- C3 fixed `staging-logistics-anomaly` + `combat-elements-dispersed`;
-- C4 `cycle4-pressure-pattern-ambiguous`.
+- C1 opening ambiguous;
+- C2 shipping ambiguous;
+- C3 fixed logistics anomaly + bounded routine-force-disposition report;
+- C4 generic pressure-pattern ambiguous.
 
-[[37-RAVELLAN-WORLD-EFFECT-MATRIX]] may vary the **safe situation prose** by hidden action through an authorised world-effect projection, but all C4 variants map to the same ordinary ambiguous evidence semantics.
+The C3 force-disposition report is **routine-coverage reporting**, not global truth. Do not derive it from `ravellan.preparation`.
 
-Do not feed action-specific prose back into the analytic reducer as hidden extra evidence.
+[[37-RAVELLAN-WORLD-EFFECT-MATRIX]] may vary safe situation prose according to authorised observable manifestation. Do not parse that prose back into analytic evidence.
 
-# Evidence history algorithm
+# Evidence-history algorithm
 
 For `deriveV2HqBeliefAtCycle(session, Q)`:
 
-1. validate `Q` in 1–6;
-2. require an authoritative Ravellan decision for Q;
-3. create all ordinary evidence observed on/before Q;
-4. if Q >= 3 and C2 final order was reroute, derive exactly one C3 reroute evidence item from the C2 selector;
-5. if Q >= 4 and C3 final order was focused staging, derive exactly one C4 focused evidence item from the C4 selector;
-6. later #102 may add its explicitly authorised directed evidence to the same history;
-7. compute each item's status at Q from observed/active-through/supersedes rules;
-8. active evidence = active + not superseded;
-9. reduce assessment;
-10. reduce warning;
-11. reduce public-case basis;
-12. derive previous-cycle snapshot where available and classify assessment change;
-13. derive bounded player-safe brief refs.
+1. validate Q ∈ 1..6;
+2. require authoritative Ravellan decision Q;
+3. build verified cycle-history index;
+4. instantiate ordinary evidence observed on/before Q from canonical content;
+5. if Q >= 3 and C2 executed reroute, derive exactly one C3 reroute evidence item using C2 selector;
+6. if Q >= 4 and C3 executed focused staging, derive exactly one C4 focused evidence item using C4 selector;
+7. #102 later adds only its authorised Lattice/liaison evidence through an extension hook/API, not by editing reducer semantics;
+8. calculate supersession at Q;
+9. filter active evidence by observed/active-through + supersession;
+10. derive intent assessment;
+11. derive tactical warning;
+12. derive public-case basis;
+13. derive previous available cycle snapshot and exact assessment change;
+14. select bounded safe brief refs.
 
-Do not mutate session or evidence records while doing this.
+No step mutates session or evidence definitions.
 
-# Supersession algorithm
+# #102 extension seam
 
-Supersession is explicit by evidence ID.
+Do not hard-code future Lattice logic into #100.
 
-At queried cycle Q, evidence A is superseded iff there exists evidence B such that:
+Provide a narrow optional derived-evidence extension seam equivalent to one of:
 
-- B.observedCycle <= Q; and
-- `B.supersedes` contains A.evidenceId.
+```ts
+deriveV2HqBeliefAtCycle(session, cycle, { additionalEvidenceProvider })
+```
 
-Do not supersede merely because two reports share a source group or question theme.
+or a sim-owned function composition where #102 appends verified derived evidence before reducers.
 
-This prevents accidental erasure of legitimate contradiction across different collection questions.
+Requirements:
 
-# Assessment-change algorithm
+- base #100 behavior has no #102 dependency;
+- additional evidence must parse against `V2HqEvidence`;
+- extension cannot alter ordinary evidence, reducers or hidden selector permissions;
+- #102 owns task/result persistence and verified history; #100 owns reduction.
 
-Given previous P and current C:
+If repository style makes a public provider callback awkward, keep the seam internal and expose a composed #102 function later. Do not create a generic plugin framework.
+
+# Supersession
+
+Evidence A is superseded at Q iff evidence B exists with:
+
+- `B.observedCycle <= Q`; and
+- `B.supersedes` contains `A.evidenceId`.
+
+Do not infer supersession from same source group or similar wording.
+
+Validate content:
+
+- no evidence supersedes itself;
+- every superseded ID exists;
+- no duplicate evidence IDs;
+- no cyclic supersession graph;
+- `observedCycle <= activeThroughCycle`.
+
+# Exact assessment-change mapping
+
+Legal assessment states are exactly six. Use the following total algorithm:
 
 1. no previous snapshot → `initial`;
-2. exact direction + picture equal → `unchanged`;
-3. P.direction = unclear and C.direction directional → `narrowed`;
-4. same directional direction with P.picture weak and C.picture coherent → `strengthened`;
-5. preparation ↔ coercion direction flip → `reversed`;
-6. directional → unclear/conflicted, or same-direction coherent → weak → `more-uncertain`;
-7. otherwise use the closest of the above; do not add a generic progress score.
+2. exact previous/current equality → `unchanged`;
+3. directional preparation ↔ coercion flip → `reversed`;
+4. same directional direction weak → coherent → `strengthened`;
+5. same directional direction coherent → weak → `weakened`;
+6. current `unclear + conflicted` → `conflicted`;
+7. previous `unclear + conflicted`, current `unclear + weak` → `cleared-conflict`;
+8. previous any unclear, current directional → `narrowed`;
+9. previous directional, current `unclear + weak` → `reopened`.
 
-The implementation must make every legal pair deterministic. Add a table-driven unit test over the six legal assessment states.
+This covers all possible pairs after equality. No default/closest/array-order fallback.
 
-# Player-safe brief derivation
+Add a table-driven 36-pair exhaustiveness test.
 
-Implement one pure function from the belief snapshot + bounded content refs.
+# Key-gap/watch-for selection
 
-Maximum default payload:
+Do not derive prose generically.
 
-- one judgement ref;
-- max two basis evidence refs;
-- max one contrary evidence ref;
-- exactly one key-gap ref;
-- zero/one watch-for ref;
-- zero/one assessment-change ref;
-- safe warning statement only when operationally material.
+Use the exact assessment+warning matrix in [[23-HQ-BELIEF-AND-EVIDENCE]].
 
-Do not send the entire evidence history to the normal browser DTO by default. Optional later detail may be derived separately.
+Validation must prove:
 
-# Phase / current-state edge cases
+- every reachable assessment/warning pair maps exactly once;
+- no unreachable pair is authored accidentally;
+- safe refs exist in content.
 
-## After command advances the cycle, before next Ravellan decision
+# Player-safe brief function
+
+Implement one pure function returning refs bounded to:
+
+- 1 judgement;
+- <=2 basis evidence summaries;
+- <=1 contrary evidence summary;
+- exactly 1 key gap;
+- <=1 watch-for;
+- <=1 assessment-change ref when changed;
+- <=1 safe warning ref where material.
+
+No full evidence history in normal Command Room DTO.
+
+# Phase edge cases
+
+## Command advances cycle before next Ravellan decision
 
 Example:
 
-- C2 command finishes;
-- state.cycle becomes 3;
-- no C3 Ravellan entry exists yet.
+- C2 command commits;
+- `state.cycle = 3`;
+- C3 Ravellan decision not yet present.
 
-`deriveV2CurrentHqBelief` must reject `v2_hq_belief_not_ready`.
+Current belief query → `v2_hq_belief_not_ready`.
 
-Do **not** silently return the C2 brief under a C3 header.
+Never return C2 analysis with C3 label.
 
-## Historical queries
+## Historical readout
 
-A completed later session may query C2/C3/C4 snapshots from the historical ledger. Later Ravellan state must not contaminate historical selectors.
-
-This is why reroute uses the C2 Ravellan entry and focused collection uses the C4 entry rather than `session.state.ravellan` indiscriminately.
+Later session can query prior cycles. Historical selectors use historical entries, never current Ravellan state.
 
 # Imported-session safety
 
-Server/import flow:
+Required route:
 
 ```text
 raw save
-→ parse identity boundary
-→ trusted V2 replay validation
+→ identity/content validation
+→ trusted V2 replay
 → canonical V2Session
-→ derive HQ belief/player projection
+→ derive HQ intelligence
+→ derive player projection
 ```
 
-Never:
+Forbidden:
 
 ```text
 raw save
-→ derive belief from unverified ledger
+→ inspect saved ledger directly for player intelligence
 ```
 
-Belief derivation does not duplicate replay hash/revision validation. It relies on the authoritative live/replayed session contract.
+# Content identity
+
+#100 does not change persisted V2 schema/ruleset version, but its derived semantics must remain identity-safe.
+
+`packages/content` must export a deterministic serialisable `kestrelHqBeliefModel` with stable `modelId = "kestrel-hq-belief-v1"` (or exact equivalent).
+
+Add a deterministic model-definition digest test:
+
+- stable definition → stable digest;
+- changing evidence implication/diagnosticity/lifecycle/supersession/warning/public-case role or decision-significant safe semantic ref changes digest.
+
+#100 must **not** register Kestrel in the existing V1 scenario registry merely to satisfy this test.
+
+When #103 creates Kestrel's actual canonical V2 content identity, `contentDigest` must incorporate this model definition/digest. Record that as a #103 acceptance dependency.
 
 # Versioning
 
-#100 adds derived types/functions/content only.
+Persisted format remains:
 
-Therefore:
+`0.4.0-prototype`
 
-- keep `v2CurrentRulesetVersion = 0.4.0-prototype`;
+For #100:
+
 - `v2BootstrapStateSchema` unchanged;
 - `v2ActionLedgerEntrySchema` unchanged;
-- no old V2 save rejection solely because #100 code exists;
-- no migration.
+- replay transition semantics unchanged;
+- no migration;
+- no ruleset-version bump.
 
-A later issue that persists new campaign truth must independently follow the prototype-version rule.
+A later persisted-state issue follows normal prototype-version rule independently.
 
-# Implementation order for an agent
+# Agent implementation order
 
-Follow this order to minimise rework:
+Follow exactly this order unless repository compilation forces a trivial reorder:
 
-1. add shared derived schemas/types **without changing session state**;
-2. add Kestrel evidence catalogue/content refs;
-3. implement pure evidence lifecycle + reducers with table tests;
-4. implement verified historical ledger helpers;
-5. implement C2 reroute selector with narrow signature/tests;
-6. implement C3 focused selector with narrow signature/tests;
-7. implement `deriveV2HqBeliefAtCycle`;
-8. implement current/history wrappers + phase guard;
-9. implement player-safe Intelligence-Chief brief derivation;
-10. add hidden-posture/non-interference tests;
-11. add replay/import integration tests proving projection occurs only after trusted replay;
-12. run full V1/V2 gates.
+1. add shared derived schemas/types only;
+2. add canonical `kestrelHqBeliefModel` definition + content validation/digest test;
+3. implement evidence content validation (IDs, lifecycles, supersession DAG, safe refs);
+4. implement pure reducers + reducer tests;
+5. implement exact 36-pair assessment-change reducer;
+6. implement verified history index/final-order helper;
+7. implement C2 reroute selector with narrow signature/tests;
+8. implement C3 focused selector with narrow signature/tests;
+9. implement ordinary evidence generator;
+10. implement evidence-history/lifecycle/supersession;
+11. implement `deriveV2HqBeliefAtCycle`;
+12. implement current/history wrappers + phase guard;
+13. implement bounded Intelligence-Chief brief derivation;
+14. add hidden-posture/non-interference + historical-time tests;
+15. add replay/import trust-boundary tests;
+16. run independent tradecraft review;
+17. run independent replay/architecture review;
+18. remediate valid findings;
+19. run full repository gates;
+20. commit/push/close #100 and stop before #98.
 
-Do not start #98 in the same implementation run.
+Do not combine #98 recommendation implementation into this change.
 
 # Required hostile tests
 
-Beyond [[23-HQ-BELIEF-AND-EVIDENCE]] tests, prove:
-
 ## Purity
 
-- repeated derivation from identical session is deep-equal;
-- session canonical JSON/hash/revision unchanged after derivation;
-- evidence expiry does not mutate the session;
-- no #100 ledger entry appears.
+- same trusted session → deep-equal snapshot repeatedly;
+- session canonical JSON/hash/revision unchanged;
+- expiry/supersession creates no state mutation;
+- no #100 ledger entry;
+- no ruleset-version change.
 
 ## Historical correctness
 
-- later posture/preparation changes cannot rewrite earlier belief history;
-- reroute C3 result uses historical C2 preparation/action, not C3/current state;
-- focused C4 result uses C4 result-time preparation, not C3 tasking-time state or C5 state;
-- Delegate and Intervene both resolve via `finalOrders` correctly.
+- later posture/preparation changes never rewrite earlier belief history;
+- reroute C3 result uses C2 historical action/preparation;
+- focused C4 result uses C4 result-time preparation;
+- Delegate/Intervene both resolve through `finalOrders`;
+- action-specific C4 situation prose cannot change generic C4 evidence semantics.
 
-## Narrow-selector isolation
+## Narrow selector isolation
 
-- selector parameter types contain no posture;
-- holding authorised selector inputs fixed while posture/policy-row/seed differ → same result;
-- ordinary evidence generation has no hidden-state input.
+- selector parameter types contain no posture/policy row;
+- fixed authorised selector inputs + varied posture/seed/policy row → same result;
+- ordinary evidence generation has no hidden-state parameter.
 
 ## Phase safety
 
-- current belief before current-cycle Ravellan decision fails closed;
-- historical cycle without its required Ravellan entry fails closed;
-- duplicate/malformed history cannot be accepted through trusted replay then projected.
+- current query before current-cycle Ravellan decision fails closed;
+- historical query before required Ravellan entry fails closed;
+- malformed/duplicate history cannot pass trusted replay then project.
 
-## Compatibility
+## Tradecraft separation
 
-- existing #99 replay vectors remain valid;
-- ruleset version remains `0.4.0-prototype`;
-- V1 tests unchanged;
-- no raw hidden fields in normal safe readout.
+- coherent preparation without warning-role evidence → warning none;
+- conflicted intent with active physical warning-role evidence → warning usable;
+- public-case basis never aliases warning;
+- routine C3 disposition report remains fixed/bounded rather than hidden-preparation-derived;
+- contradiction remains visible until expiry/explicit supersession.
 
-# Independent post-implementation reviews
+## Content/replay identity
 
-Before #100 closes, run two fresh read-only reviews.
+- belief model definition digest deterministic;
+- semantic change changes definition digest;
+- #103 dependency records inclusion in Kestrel content digest;
+- existing #99 persisted session schemas/replay vectors remain structurally valid;
+- V1 unchanged.
+
+# Independent reviews before closure
 
 ## Intelligence/tradecraft review
 
-Attack:
+Fresh read-only reviewer attacks:
 
 - hidden-posture oracle leakage;
-- warning accidentally inferred from broad assessment;
-- public case conflated with internal judgement;
+- tactical warning inferred from broad judgment;
+- public-case basis conflated with internal estimate;
 - contradiction averaged away;
-- collection results that answer more than the named sensor/question permits;
-- stale reporting that never expires;
-- player brief that hides what does not fit or becomes a confidence meter in prose.
+- routine coverage treated as omniscient;
+- collection target answers more than its sensor permits;
+- stale evidence never expiring;
+- missing “what would change my mind?” content;
+- brief becoming a disguised confidence meter or dossier.
 
 ## Replay/architecture review
 
-Attack:
+Fresh read-only reviewer attacks:
 
-- any new persisted #100 state;
-- hidden mutation during derivation;
-- deriving from unverified imported ledgers;
-- using current state where historical entry is required;
-- client/browser-owned analytic logic;
-- accidental `0.5.0` bump despite no persisted change;
+- persisted #100 state/ledger creep;
+- mutation during derivation;
+- derivation from unverified imported history;
+- current state used where historical entry required;
+- content semantic drift under same digest;
+- browser/server-owned analytic rules;
+- accidental prototype version bump;
 - #99 ordering/replay regression;
-- V1 contamination.
+- V1 contamination;
+- premature generic plugin/intelligence architecture.
 
-Remediate valid findings before closure.
+All valid P0/P1 findings are mandatory. Also remediate P2 findings involving hidden-information leakage, replay identity, deterministic ambiguity, or player-facing misrepresentation.
 
 # Closure rule
 
 #100 closes only when:
 
-- product tests from [[23-HQ-BELIEF-AND-EVIDENCE]] are green;
-- exact execution/purity/history tests above are green;
-- warning/public-case/assessment are demonstrably separate;
+- [[23-HQ-BELIEF-AND-EVIDENCE]] product tests are green;
+- exact architecture/purity/history/content-identity tests above are green;
+- assessment, warning and public-case basis are demonstrably separate;
 - no hidden-posture selector exists;
-- current/historical projection is deterministic;
-- no persisted schema/ledger/version change occurred;
+- current/historical projection deterministic;
+- no persisted schema/ledger/ruleset-version change occurred;
 - both independent reviews have no unresolved blocker;
 - repository gates pass;
-- implementation commit is pushed;
-- issue #100 records evidence and closes;
-- implementation stops before #98.
+- implementation commit pushed;
+- #100 records evidence and closes;
+- no #98 implementation started in the same run.
