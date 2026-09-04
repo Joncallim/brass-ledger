@@ -7,79 +7,75 @@ status: active
 
 Backlink: [[README]]
 
-This is the executable state-space authority for **#100**. [[23-HQ-BELIEF-AND-EVIDENCE]] owns product/tradecraft meaning, [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns code/replay seams, and [[23C-HQ-BELIEF-EVIDENCE-CATALOG]] owns exact evidence metadata.
+This is the single exhaustive state-space authority for **#100**.
 
-The earlier prose-only reviews were insufficient. This audit treats the design as three separate state spaces that must all close:
+- [[23-HQ-BELIEF-AND-EVIDENCE]] owns product/tradecraft meaning.
+- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns implementation/replay seams.
+- [[23C-HQ-BELIEF-EVIDENCE-CATALOG]] owns exact evidence definitions, producer mappings and copy.
+- [[26-LATTICE-COLLECTION-MATRIX]] owns future #102 task persistence and collection production.
 
-1. **Combinatorial state** — every categorical reducer input/output.
-2. **Temporal history** — every authorised producer schedule across C1–C6.
-3. **Player-information equivalence** — different hidden histories that must project identically when legitimate information is identical.
+This audit exists because prose examples and a few fixtures cannot prove totality. It separately closes:
 
-Passing one never substitutes for the other two.
+1. **Reducer algebra** — every categorical input combination, including states canonical Kestrel producers cannot currently reach.
+2. **Temporal producer envelope** — every #99 hidden history and authorised evidence schedule through C6.
+3. **Player-information equivalence** — different private histories that must project identically when legitimate evidence/public state is identical.
+
+Passing one layer never substitutes for another.
 
 # 1. Independent reference model
 
-The audit uses an independent reference model that reimplements rather than calls:
+The architecture reference model independently reimplements rather than calling:
 
-- the committed #99 Ravellan policy;
+- committed #99 posture/action/preparation policy;
 - #99 observation timing, replacement and expiry;
-- the coalition-to-Ravellan emission rules in [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]];
-- the #100 evidence producers, currency, supersession and reducers.
+- [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]];
+- the exact #100/#102 producer semantics in [[23C-HQ-BELIEF-EVIDENCE-CATALOG]] and [[26-LATTICE-COLLECTION-MATRIX]];
+- role-specific currency, persistent supersession and the three #100 reducers.
 
-The implementation test must reproduce the invariants below from normal authoritative transitions. Hard-coding the expected snapshots/counts without generating the histories is rejected.
+Production #100 does **not** implement #102 task persistence merely to recreate this audit. Verification is staged:
 
-# 2. Raw command/adversary envelope
+- #100 proves reducer totality, all 19 definition semantics, its ordinary/reroute/focused producers, historical cuts and a test-only reference envelope;
+- #102 proves the same envelope through real replay-valid Lattice/liaison task transitions;
+- #107 proves the subset reachable through fully legal complete Kestrel command packages and tests dominance/fun-structure questions.
 
-The producer envelope deliberately over-approximates later package legality so #100 does not omit a history merely because #98/#101/#103 are not implemented yet.
+Hard-coding the counts below without independently generating histories is not proof.
 
-It enumerates:
+# 2. Raw adversary/command envelope
+
+The broad envelope intentionally over-approximates later package legality:
 
 - 3 opening Ravellan postures;
-- 4 C1 signal packages (`2 watch × 2 partner`);
+- 4 C1 public signal packages (`2 watch × 2 partner`);
 - 9 C2 packages (`3 shipping × 3 public posture`);
 - 4 C3 packages (`2 reserve × 2 partner`);
 - 3 C4 operational courses;
-- 48 C5 packages (`3 Beacon × 2 reserve × 4 authority × 2 attribution-use flags`).
+- 48 C5 public packages (`3 Beacon × 2 reserve × 4 authority × 2 attribution-use flags`).
 
-Exact raw count:
+Exact raw histories:
 
 `3 × 4 × 9 × 4 × 3 × 48 = 62,208`
 
-Each history executes the exact #99 C1–C6 policy rather than choosing Ravellan actions freely.
+Every history executes the exact #99 policy; Ravellan actions are not freely sampled.
 
-# 3. Trusted-history projection key
+These collapse to **257** distinct #100-relevant trusted-history projections when keyed by:
 
-The 62,208 histories collapse to **257** distinct #100-relevant trusted-history projections when keyed by:
+- all six Ravellan decisions, including action, row, pre/post posture and pre/post preparation; and
+- exact C2 shipping course, because `reroute-and-monitor` is an evidence trigger.
 
-- all six Ravellan decisions, including action, matched policy row, pre/post posture and pre/post preparation; and
-- the exact C2 shipping course.
+The 257 are not “all game states”; they are the private/history equivalence classes relevant to intelligence production.
 
-C2 shipping remains in the key because `reroute-and-monitor` is a legitimate evidence trigger even when two other shipping courses generate no directed report.
+# 3. Producer schedules
 
-Do not describe 257 as all game states. It is only the trusted hidden/history projection relevant to #100 producers.
+For each of 257 projections enumerate:
 
-# 4. Corrected producer schedule
-
-For each of the 257 projections enumerate:
-
-- C3 focused staging not ordered / ordered;
+- C3 focused staging absent/present;
 - Lattice unavailable without liaison;
 - Lattice unavailable with C4 commander-only liaison; or
-- Lattice operational with one target in C4 and a **different unused** target in C5.
+- operational Lattice with one target in C4 and one **different** target in C5.
 
-Operational Lattice does not expose a zero-cost `collect nothing` choice while unresolved targets exist. HQ preselects one target from standing direction; the player may retarget without spending a normal intervention. This preserves command-by-exception without offering a dominated no-op.
+Operational Lattice has no zero-cost `collect nothing` course while unused targets remain. HQ preselects one target from standing priority and the player may retarget at zero normal intervention.
 
-Each Lattice target is one-shot in the six-cycle prototype. C6 adds neither a normal Ravellan action nor a preparation transition, so repeating the same C4 target in C5 produces the identical authorised result for every one of the 257 projections:
-
-- landing sees the same C5/C6 preparation state;
-- auxiliary sees the same latest normal C5 action and preparation state;
-- sequence sees the same latest two normal actions C4/C5.
-
-Same-target retasking is therefore a mechanically fake choice in Kestrel and is rejected.
-
-All three unused targets remain eligible after ordinary focused collection. A positive `focused-staging-buildup` is only a preparation **indicator** with usable warning; Lattice landing replaces it with **diagnostic** preparation evidence. The independent model found **138/138** focused-positive projections where that upgrade changes the C5 intent assessment. Focused collection never consumes the Lattice landing target.
-
-Exactly six ordered Lattice schedules exist:
+The six ordered two-target schedules are:
 
 - landing → auxiliary;
 - landing → sequence;
@@ -88,447 +84,321 @@ Exactly six ordered Lattice schedules exist:
 - sequence → landing;
 - sequence → auxiliary.
 
-Exact schedule count:
+Exact producer schedules:
 
-`257 × 2 focused states × (2 non-Lattice modes + 6 Lattice schedules) = 4,112`
+`257 × 2 × (2 + 6) = 4,112`
 
-# 5. Evidence-currency correction
+Each target is one-shot in Kestrel. C6 creates no normal Ravellan action or preparation transition, so same-target C5 retasking produces the same authorised source fact as the C4→C5 result in all 257 private projections. It is mechanically fake and illegal.
 
-Positive and negative physical observations do not have identical current relevance.
+C3 focused staging never consumes the Lattice landing target. A focused-positive result is only an indicator plus warning; Lattice landing is diagnostic. Across all **138** focused-positive private projections:
 
-- `focused-staging-buildup`, observed C4, remains current through C6 because #99 preparation never regresses.
-- `focused-staging-empty`, observed C4, remains current through C5 only. It is retained historically but is stale for the C6 estimate because C5 could have begun preparation after the report.
+- 118 change `preparation / weak → preparation / coherent` at C5;
+- 20 change `unclear / conflicted → preparation / weak` at C5.
 
-This is time-bounded analytic relevance, not deletion. If aging changes the assessment or public case, safe delta copy must explain that the older report is now too old to lean on.
+Thus the landing upgrade changes assessment in **138/138** cases.
 
-# 6. Verified state-space results
+# 4. Exact evidence vocabulary
 
-The corrected independent model yields:
+The producer envelope reaches all **19** definitions in [[23C-HQ-BELIEF-EVIDENCE-CATALOG]].
 
-- **19** reachable evidence definitions;
-- **156** distinct semantic evidence histories;
-- **47** complete six-cycle product trajectories;
-- **15** distinct composite product states;
-- maximum **9** evidence occurrences in one history;
-- maximum **4** current, non-superseded occurrences at one cycle;
-- zero canonical warning-loss transitions;
-- all nine assessment-change categories reachable.
-
-Per-cycle composite-state counts:
-
-| Cycle | Distinct states |
-| --- | ---: |
-| C1 | 1 |
-| C2 | 1 |
-| C3 | 1 |
-| C4 | 4 |
-| C5 | 13 |
-| C6 | 10 |
-
-A semantic history is keyed by evidence definition, observed cycle and canonical producer slot. Authoritative hashes/revisions are deliberately normalised out; varying a valid origin hash must not change analytical meaning.
-
-# 7. Complete per-cycle composite states
-
-State tuple:
-
-`intent direction / picture / warning / public-case state / public-case direction`
-
-## C1
-
-- `unclear / weak / none / none / null`
-
-## C2
-
-- `unclear / weak / none / none / null`
-
-## C3
-
-- `unclear / conflicted / none / none / null`
-
-## C4
-
-- `coercion / weak / none / tentative / coercion`
-- `preparation / weak / usable / tentative / preparation`
-- `unclear / conflicted / none / none / null`
-- `unclear / conflicted / usable / tentative / preparation`
-
-## C5
-
-- `coercion / coherent / none / credible-source-sensitive / coercion`
-- `coercion / coherent / none / tentative / coercion`
-- `coercion / weak / none / none / null`
-- `coercion / weak / none / tentative / coercion`
-- `preparation / coherent / none / tentative / preparation`
-- `preparation / coherent / usable / credible-source-sensitive / preparation`
-- `preparation / coherent / usable / tentative / preparation`
-- `preparation / weak / none / tentative / preparation`
-- `preparation / weak / usable / tentative / preparation`
-- `unclear / conflicted / none / tentative / preparation`
-- `unclear / conflicted / usable / tentative / null`
-- `unclear / conflicted / usable / tentative / preparation`
-- `unclear / weak / none / none / null`
-
-## C6
-
-- `coercion / coherent / none / credible-source-sensitive / coercion`
-- `coercion / weak / none / tentative / coercion`
-- `preparation / coherent / none / tentative / preparation`
-- `preparation / coherent / usable / credible-source-sensitive / preparation`
-- `preparation / coherent / usable / tentative / preparation`
-- `preparation / weak / none / tentative / preparation`
-- `preparation / weak / usable / tentative / null`
-- `preparation / weak / usable / tentative / preparation`
-- `unclear / conflicted / usable / tentative / null`
-- `unclear / weak / none / none / null`
-
-Implementation may narrow the envelope through fully legal package composition, but it may not create a new composite state without an explicit product amendment and model-identity change.
-
-# 8. Exact 19-definition vocabulary
-
-The canonical set is:
-
-## Ordinary
-
-1. `opening-pressure-ambiguous`
-2. `shipping-probe-ambiguous`
-3. `staging-logistics-anomaly`
-4. `combat-elements-dispersed`
-5. `cycle4-pressure-pattern-ambiguous`
-
-## C2 reroute
-
-6. `reroute-auxiliary-coercive`
-7. `reroute-auxiliary-unclear`
-
-## C3 focused staging
-
-8. `focused-staging-buildup`
-9. `focused-staging-empty`
-
-## Lattice landing
-
-10. `lattice-landing-concentration`
-11. `lattice-landing-dispersed`
-
-## Lattice auxiliary
-
-12. `lattice-auxiliary-coercive`
-13. `lattice-auxiliary-mixed`
-
-## Lattice operational sequence
-
-14. `lattice-sync-preparation-sequence`
-15. `lattice-sync-preparation-signal`
-16. `lattice-sync-coercive-sequence`
-17. `lattice-sync-partial`
-
-## Partner liaison
-
-18. `liaison-auxiliary-coercive-links`
-19. `liaison-auxiliary-unclear`
-
-All 19 are reached in the producer envelope.
-
-Removed dead definitions:
+The following former branches are invalid/dead:
 
 - `reroute-auxiliary-integrated`;
 - `lattice-auxiliary-integrated`;
 - `liaison-auxiliary-military-links`.
 
-At every authorised auxiliary result cut, `preparation = developing|ready` cannot coexist with the required `probe_shipping` action under the committed #99 policy. The valid output is coercive or inconclusive/mixed, never an invented integrated branch.
+At every authorised auxiliary result cut, `preparation = developing|ready` cannot coexist with the required `probe_shipping` branch under committed #99. Keep no speculative dead content.
 
-# 9. Complete categorical reducer
+# 5. Reducer algebra
 
-For current non-superseded evidence define:
+For assessment-current, non-superseded evidence define booleans:
 
 - `Pdiag` — preparation diagnostic exists;
 - `Cdiag` — coercion diagnostic exists;
 - `Pind` — preparation indicator exists;
 - `Cind` — coercion indicator exists.
 
-All 16 combinations are table-tested against `kestrel-binary-hypothesis-v1`.
+All **16** combinations are mandatory:
 
-| Pdiag | Cdiag | Pind | Cind | Assessment |
-| ---: | ---: | ---: | ---: | --- |
-| 0 | 0 | 0 | 0 | `unclear / weak` |
-| 0 | 0 | 0 | 1 | `coercion / weak` |
-| 0 | 0 | 1 | 0 | `preparation / weak` |
-| 0 | 0 | 1 | 1 | `unclear / conflicted` |
-| 0 | 1 | 0 | 0 | `coercion / coherent` |
-| 0 | 1 | 0 | 1 | `coercion / coherent` |
-| 0 | 1 | 1 | 0 | `coercion / weak` |
-| 0 | 1 | 1 | 1 | `coercion / weak` |
-| 1 | 0 | 0 | 0 | `preparation / coherent` |
-| 1 | 0 | 0 | 1 | `preparation / weak` |
-| 1 | 0 | 1 | 0 | `preparation / coherent` |
-| 1 | 0 | 1 | 1 | `preparation / weak` |
-| 1 | 1 | 0 | 0 | `unclear / conflicted` |
-| 1 | 1 | 0 | 1 | `unclear / conflicted` |
-| 1 | 1 | 1 | 0 | `unclear / conflicted` |
-| 1 | 1 | 1 | 1 | `unclear / conflicted` |
+| Pdiag | Cdiag | Pind | Cind | Assessment | Basis pattern |
+| ---: | ---: | ---: | ---: | --- | --- |
+| 0 | 0 | 0 | 0 | `unclear / weak` | `no-direction` |
+| 0 | 0 | 0 | 1 | `coercion / weak` | `indicator-coercion` |
+| 0 | 0 | 1 | 0 | `preparation / weak` | `indicator-preparation` |
+| 0 | 0 | 1 | 1 | `unclear / conflicted` | `indicator-conflict` |
+| 0 | 1 | 0 | 0 | `coercion / coherent` | `diagnostic-coercion-clear` |
+| 0 | 1 | 0 | 1 | `coercion / coherent` | `diagnostic-coercion-clear` |
+| 0 | 1 | 1 | 0 | `coercion / weak` | `diagnostic-coercion-qualified` |
+| 0 | 1 | 1 | 1 | `coercion / weak` | `diagnostic-coercion-qualified` |
+| 1 | 0 | 0 | 0 | `preparation / coherent` | `diagnostic-preparation-clear` |
+| 1 | 0 | 0 | 1 | `preparation / weak` | `diagnostic-preparation-qualified` |
+| 1 | 0 | 1 | 0 | `preparation / coherent` | `diagnostic-preparation-clear` |
+| 1 | 0 | 1 | 1 | `preparation / weak` | `diagnostic-preparation-qualified` |
+| 1 | 1 | 0 | 0 | `unclear / conflicted` | `diagnostic-conflict` |
+| 1 | 1 | 0 | 1 | `unclear / conflicted` | `diagnostic-conflict` |
+| 1 | 1 | 1 | 0 | `unclear / conflicted` | `diagnostic-conflict` |
+| 1 | 1 | 1 | 1 | `unclear / conflicted` | `diagnostic-conflict` |
 
-Evidence count never determines direction. A diagnostic direction survives lower-grade opposite indicators, but they prevent `coherent` and the most material opposite indicator must appear in the bounded brief.
+Evidence count never decides direction. A diagnostic direction survives lower-grade contrary indicators, but becomes `weak` and must show material contrary evidence.
 
-Mutation tests must reject both:
+Mutation tests reject both majority voting and “any contrary indicator always means unclear.”
 
-- majority-vote reduction; and
-- “any contrary indicator automatically means unclear.”
+# 6. Algebraic versus producer-reachable warning states
 
-# 10. Assessment/warning closure
+The reducer/brief layer must be total for **10 algebraically legal** assessment/warning pairs:
 
-The exact reachable pairs are:
+- unclear/weak + none;
+- unclear/conflicted + none or usable;
+- preparation/weak + none or usable;
+- preparation/coherent + none or usable;
+- coercion/weak + none or usable;
+- coercion/coherent + none.
 
-1. `unclear / weak / none`
-2. `unclear / conflicted / none`
-3. `unclear / conflicted / usable`
-4. `preparation / weak / none`
-5. `preparation / weak / usable`
-6. `preparation / coherent / none`
-7. `preparation / coherent / usable`
-8. `coercion / weak / none`
-9. `coercion / coherent / none`
+`coercion / weak + usable` is algebraically legitimate: a coercion diagnostic may coexist with a preparation warning indicator.
 
-`coercion/* + usable` is reducer-logically constructible but canonical-content unreachable: usable warning requires a preparation-positive physical observation, while canonical coercion diagnostic production requires the authorised preparation fact to be `none`, and #99 preparation never regresses.
+Canonical Kestrel producers currently reach **9/10**. They do not reach coercion/weak + usable because coercion diagnostic production requires the authorised preparation fact to be `none`, while warning-bearing preparation evidence and #99 preparation monotonicity prevent that combination in authored histories.
 
-Warning delta is total over `initial | unchanged | acquired | lost`. Canonical histories contain zero `lost`; the total function still exists so a future semantic change cannot fall through an unhandled case.
+Do not conflate “currently unreachable” with “invalid reducer input.” The brief remains total rather than crashing or suppressing a warning.
 
-# 11. Public-case state and corroboration
+# 7. Basis-pattern presentation state
 
-Possible basis states:
+Assessment label alone does not explain the analytical basis. `preparation / weak`, for example, may mean indicator-only preparation or diagnostic preparation qualified by a coercion indicator.
 
-- `none / null`;
-- `tentative / preparation`;
-- `tentative / coercion`;
-- `tentative / null` when eligible directions conflict;
-- `credible-source-sensitive / preparation`;
-- `credible-source-sensitive / coercion`.
+The internal snapshot therefore carries exactly nine basis patterns:
 
-Credible requires:
+- `no-direction`;
+- `indicator-preparation`;
+- `indicator-coercion`;
+- `indicator-conflict`;
+- `diagnostic-preparation-clear`;
+- `diagnostic-preparation-qualified`;
+- `diagnostic-coercion-clear`;
+- `diagnostic-coercion-qualified`;
+- `diagnostic-conflict`.
 
-1. one current source-sensitive diagnostic occurrence;
-2. no current opposite directional evidence of any class;
-3. one additional current same-direction source-sensitive occurrence from a different corroboration group.
+Combined with valid warning overlays, the brief layer has **15 algebraically legal** presentation states. Canonical Kestrel producers reach **11/15**; the four absent states are both warning variants of diagnostic conflict and both warning variants of diagnostic-coercion-qualified.
 
-The reducer returns exactly two ordered supporting occurrence IDs/groups:
+[[23C-HQ-BELIEF-EVIDENCE-CATALOG]] must author all 15 so the reducer is total. Basis pattern is internal provenance, not a player confidence label.
+
+# 8. Role-specific evidence currency
+
+One universal “active-through” cycle is incorrect. Assessment, tactical warning and a public case answer different questions.
+
+Each definition therefore has separate:
+
+- `assessmentRelevance`;
+- `warningRelevance`;
+- `publicCaseRelevance`.
+
+Canonical families:
+
+| Family | Assessment | Warning | Public case |
+| --- | --- | --- | --- |
+| C1 opening pressure | C1–C2 | none | none |
+| C2 shipping pressure | C2–C3 | none | none |
+| C3 routine signposts | C3–C4 | none | none |
+| C4 generic pressure pattern | C4–C5 | none | none |
+| C2 reroute result | C3–C5 | none | none |
+| focused buildup, observed C4 | C4–C6 | **C4–C5** | C4–C6 |
+| focused empty, observed C4 | **C4–C5** | none | C4–C6 |
+| C4 Lattice result, observed C5 | C5–C6 | C5–C6 if warning-bearing | C5–C6 if eligible |
+| C5 Lattice result, observed C6 | C6 | C6 if warning-bearing | C6 if eligible |
+| liaison result, observed C5 | C5–C6 | none | C5–C6 if eligible |
+
+Consequences:
+
+- an old focused buildup can still support an estimate/public case at C6 but no longer supplies clean tactical warning unless Lattice refreshed the physical picture;
+- a focused-empty observation becomes assessment-stale at C6 because C5 could have begun preparation, while its historical/public relevance may remain;
+- stale/superseded evidence remains reconstructible and never disappears from history.
+
+# 9. Warning transition closure
+
+Warning delta is total over:
+
+- `initial`;
+- `unchanged`;
+- `gained`;
+- `refreshed`;
+- `lost-stale`;
+- `lost-superseded`;
+- `lost-mixed`.
+
+Across all 4,112 schedules:
+
+- warning gained: **1,656** adjacent transitions;
+- warning refreshed by a newer landing observation: **552**;
+- warning lost through staleness: **552**;
+- warning lost through supersession/mixed causes: **0**;
+- 24/156 semantic histories and 11/50 headline trajectories contain warning loss.
+
+The former “zero warning-loss” invariant was wrong. At C5/C6, safe presentation must explicitly state either that current direct warning exists or that it does not; absence of a UI box is not sufficient.
+
+# 10. Public-case reducer
+
+Public attribution is stricter than internal assessment.
+
+A credible case in direction D requires:
+
+1. one public-current, source-sensitive diagnostic occurrence supporting D;
+2. one additional public-current same-direction source-sensitive occurrence from a different `corroborationGroupId`;
+3. no opposite-direction occurrence current for either assessment or public-case use.
+
+The reducer returns exactly two deterministic support occurrences/groups:
 
 - primary diagnostic: newest, then stable definition/instance ID;
-- corroborator from a different group: diagnostic before indicator, then newest, then stable IDs.
+- corroborator from another group: diagnostic before indicator, then newest, then stable IDs.
 
-One diagnostic source alone is tentative. Two indicators without a diagnostic are tentative. Any current opposite directional evidence blocks credibility even where the internal assessment remains directional.
+One diagnostic source is tentative, not credible. Two indicators are tentative. Directionless credible is invalid. Different `sourceGroupId` strings are not enough; independence uses explicit corroboration groups.
 
-Reachable corroboration patterns include:
+# 11. Persistent supersession
 
-- preparation sequence diagnostic + focused buildup;
-- landing diagnostic + sequence preparation evidence;
-- auxiliary coercion diagnostic + focused empty;
-- auxiliary coercion diagnostic + landing dispersed;
-- auxiliary coercion diagnostic + sequence coercion indicator.
+For query Q, occurrence A is superseded if a later-observed B by Q:
 
-# 12. Assessment and product deltas
-
-All nine assessment-change categories occur in canonical trajectories:
-
-- initial;
-- unchanged;
-- narrowed;
-- strengthened;
-- weakened;
-- conflicted;
-- cleared-conflict;
-- reopened;
-- reversed.
-
-The reducer must still table-test all 36 legal previous/current assessment pairs because totality and producer reachability are different obligations.
-
-Assessment change alone is insufficient. A snapshot delta is compositionally total:
-
-```ts
-type V2HqBeliefDelta = {
-  assessmentChange: V2HqAssessmentChange
-  warningChange: "initial" | "unchanged" | "acquired" | "lost"
-  publicCaseStateChange:
-    | "initial" | "unchanged" | "opened" | "strengthened"
-    | "weakened" | "closed"
-  publicCaseDirectionChange:
-    | "initial" | "unchanged" | "established" | "clarified"
-    | "became-conflicted" | "reversed" | "cleared"
-  evidenceChangeCause:
-    | "none" | "new-evidence" | "staleness" | "supersession" | "mixed"
-  addedInstanceIds: string[]
-  becameStaleInstanceIds: string[]
-  supersededInstanceIds: string[]
-}
-```
-
-A required update cannot disappear merely because `assessmentChange` is unchanged while warning is acquired or public-case action space changes.
-
-# 13. Source-use state
-
-#100 does not persist a mutable opportunity mirror.
-
-Current availability is:
-
-```text
-current credible-source-sensitive basis
-+ source-use state unspent
-→ public attribution available
-```
-
-#101 persists only irreversible use:
-
-```ts
-{ state: "unspent" }
-| {
-    state: "used"
-    usedCycle: 5 | 6
-    direction: "preparation" | "coercion"
-    supportingEvidenceInstanceIds: [string, string]
-    supportingCorroborationGroupIds: [string, string]
-  }
-```
-
-Use freezes the exact claim and minimal supporting basis. Later evidence may change HQ analysis but cannot regenerate or rewrite a used source.
-
-# 14. Supersession is persistent
-
-At query cycle Q, A is superseded when any later-observed B by Q:
-
-- uses `replace-older-same-question` and shares A’s question ID; or
+- uses `replace-older-same-question` and shares A’s question; or
 - explicitly lists A’s definition ID.
 
-Once superseded, A never re-enters a later current reducer merely because B becomes stale or is itself superseded. The full chain remains historical.
+Supersession is historical and permanent. A never returns merely because B becomes stale or is superseded by C.
 
-Required hostile chain:
+Required chain:
 
 ```text
 routine A
-→ focused B supersedes A
-→ Lattice C supersedes B
+→ focused B replaces A
+→ Lattice C replaces B
 ```
 
-At the final query, A and B remain historical but neither becomes current again.
+A and B remain historical but neither re-enters current reduction.
 
-# 15. Runtime occurrence identity
+# 12. Exact generated results
 
-State-space counts use semantic producer slots. Runtime occurrence identity must bind to authoritative origins without exposing them to the player.
+With the role-specific currency and corroborated public-case rule above, the independent model yields:
 
-Each origin is a strict discriminated canonical object:
+- **156** distinct semantic evidence histories;
+- **50** distinct headline product trajectories (`assessment × warning × public-case state/direction`);
+- **53** distinct basis-pattern product trajectories;
+- **18** distinct headline composite states across C1–C6;
+- **20** distinct basis-pattern composite states;
+- maximum evidence history size **9**;
+- maximum occurrences current for any role **4**;
+- maximum assessment-current **4**;
+- maximum public-current **3**;
+- maximum warning-current **1**.
 
-- ordinary cycle slot; or
-- derived producer slot carrying the authoritative command/task entry hash and the result-observation/Ravellan entry hash required by that producer.
+Per-cycle counts:
 
-No free-form or player-authored source string participates in authority.
+| Cycle | Headline states | Basis-pattern states |
+| --- | ---: | ---: |
+| C1 | 1 | 1 |
+| C2 | 1 | 1 |
+| C3 | 1 | 1 |
+| C4 | 4 | 4 |
+| C5 | 13 | 15 |
+| C6 | 11 | 11 |
 
-`instanceId` is the canonical SHA-256 of:
+All six assessment states and all nine assessment-change categories occur in canonical producer trajectories.
 
-```text
-tag + belief-model semantic digest + definitionId + observedCycle + canonical origin object
-```
+The architecture golden vectors are stored in `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json`. Implementation must generate and compare them; it must not replace the generator with the fixture.
 
-Reject duplicate instance IDs, one ID with different semantics, or two directed occurrences for the same question/result cycle.
+# 13. C6 relationship to terminal truth
 
-# 16. Historical cutoff and C6 information cut
-
-Historical cycle Q uses:
-
-- Ravellan decisions through Q;
-- command sets through Q−1 only;
-- evidence results due at/before Q;
-- no command Q or future entry.
-
-C6 order is exact:
+The exact C6 sequence is:
 
 ```text
 persist/replay hidden R6 decision
-→ resolve C5 task result from authorised pre-manifestation facts
-→ derive final pre-manifestation HQ snapshot/public case
+→ resolve C5 task result from authorised latest-normal/pre-manifestation facts
+→ derive C6 HQ snapshot/current public case
 → project safe overt crisis family
 → derive terminal routes
 ```
 
-The R6 action/policy row is never intelligence evidence and never grants warning.
+R6 action/row is never evidence and never grants warning.
 
-On the C6 player surface, label this as **the intelligence picture immediately before the confrontation became overt**, not as if HQ is still debating whether a visible seizure exists.
+In the producer envelope, distinct C6 headline-state counts by hidden terminal action are:
 
-# 17. Terminal-action/product relationship
+- `attempt_seizure`: 9;
+- `threshold_challenge`: 11;
+- `abort_and_pressure`: 4.
 
-The producer envelope yields:
+A credible coercion case plus `attempt_seizure` is not reachable in canonical Kestrel, although terminal code remains direction-safe. Do not invent it as a required normal-play fixture.
 
-- `abort_and_pressure` — 3 C6 product states; any credible case is coercion-direction;
-- `attempt_seizure` — 9 C6 product states; any credible case is preparation-direction;
-- `threshold_challenge` — all 10 C6 product states; credible cases may be preparation or coercion direction.
+The C6 player surface labels the assessment as the intelligence picture immediately before the confrontation became overt.
 
-Therefore a normal-play `credible coercion case + seizure underway` fixture is impossible in canonical Kestrel. Generic terminal code may remain direction-safe, but #107 must not claim this impossible pair as a required reachable history.
+# 14. Player-information equivalence
 
-# 18. Player-information equivalence
+Normal safe semantics include only:
 
-Normal safe equivalence includes:
+- current assessment and basis-pattern-derived copy;
+- current warning status/basis-safe summary;
+- current public claim when actionably credible and source unspent;
+- bounded evidence summaries/source contexts/limitations;
+- adjacent evidence/product delta required to explain change;
+- known public campaign state.
 
-- current assessment;
-- warning;
-- public-case state/direction/minimal supporting basis where actionable;
-- selected bounded evidence summaries/context/limitations;
-- adjacent product/evidence delta required to explain change.
+They exclude hidden posture/preparation/action/row, seed, raw source facts and authoritative origin hashes.
 
-It excludes hidden posture/preparation/action/policy row, raw source facts, seed and authoritative origin hashes.
+Different hidden histories with the same legitimate occurrences/public state must project deep-equal normal semantics.
 
-Different hidden histories with the same legitimate evidence occurrences and public state must produce deep-equal safe projections.
+Terminal debrief retains the complete historical occurrence ledger and every historical safe snapshot beside, never rewritten by, terminal truth.
 
-Terminal debrief retains the complete derived historical occurrence ledger and every historical safe snapshot. Terminal truth may sit beside it but never rewrite it.
+# 15. Verification ownership
 
-# 19. Mandatory generated tests
+## #100 production tests
 
-The implementation must independently reproduce:
+Must prove:
 
-- 62,208 raw histories;
-- 257 trusted-history projections;
-- 4,112 producer schedules;
-- 156 semantic evidence histories;
-- 47 product trajectories;
-- 15 composite product states;
-- per-cycle counts `1,1,1,4,13,10`;
-- all 19 definitions;
-- maximum history/current sizes `9/4`;
-- all six assessment states;
-- all nine assessment/warning pairs;
-- all nine assessment-change categories;
-- zero canonical warning-loss transitions;
-- zero same-target retask value;
-- 138/138 focused-positive histories where Lattice landing changes C5 assessment;
-- no R6 action/action copy entering evidence;
-- no directionless credible public case;
-- no credible case without exactly two independent corroboration groups.
+- all 16 reducer rows;
+- all 10 algebraic assessment/warning pairs;
+- all 15 algebraic basis-pattern/warning mappings;
+- exact 19 definitions and validation;
+- ordinary/reroute/focused producer correctness;
+- role-specific currency and warning-loss semantics;
+- historical cut/future non-interference;
+- pure derivation/model digest/information boundary;
+- test-only independent oracle reproduces the vectors without adding production #102 task logic.
 
-Mutation/self-tests must fail when deliberately introducing:
+## #102 production tests
 
-- majority-vote direction;
-- any-contrary-indicator automatic veto;
-- hidden posture as producer input;
-- routine C3 report derived from preparation;
+Must prove real replay-valid task histories reproduce the six ordered target schedules, definition outputs, warning refresh/loss behavior and no same-target/no-task path.
+
+## #107 full-game tests
+
+Must reconcile the legal complete-package graph against this over-approximation and then test target/policy dominance, fairness, recovery and human-facing decision value.
+
+# 16. Required mutation failures
+
+The reference/implementation suite must detect deliberate introduction of:
+
+- majority-vote reduction;
+- “any contrary indicator means unclear” reduction;
+- hidden posture or R6 action as evidence input;
+- routine C3 reporting derived from hidden preparation;
 - C4 prose parsed into evidence;
-- current-state lookup for historical collection;
-- focused positive wrongly disabling Lattice landing;
-- focused negative remaining current through C6;
-- zero-cost Lattice no-task;
-- repeated same-target task;
-- repeated same-question occurrence stacking as votes;
+- historical producer reading current/future state;
+- one universal evidence lifetime;
+- missing warning-loss handling;
+- focused-positive disabling Lattice landing;
+- focused-empty assessment retained at C6;
+- same-target retasking;
+- zero-cost no-task;
+- repeated same-question reports stacking as votes;
 - an integrated auxiliary branch;
-- public credibility from one source;
-- directionless credible case;
-- stale evidence deleted from history;
-- temporary rather than persistent supersession;
-- unstructured/colliding occurrence origins;
+- one-source or directionless credible public case;
+- source/corroboration groups conflated;
+- stale evidence deleted;
+- temporary supersession/resurrection;
+- ambiguous/free-form occurrence identity;
 - semantic-model mutation under unchanged digest;
-- C6 terminal action treated as evidence or warning.
+- terminal action or narrative prose becoming evidence.
 
-# 20. Separation from #107
+# 17. Review stop rule
 
-This audit closes #100 evidence/product state space only. It does not prove:
+This audit closes the authored #100 reducer/producer envelope, not game fun.
 
-- all complete command packages are legal;
-- each target/order is non-dominated in final outcomes;
-- information makes the game enjoyable;
-- the two-intervention budget is right;
-- humans understand the brief.
+Further architecture change is justified only by:
 
-Those remain #107 and human smoke gates. Exact state-space closure is necessary, never sufficient.
+- failure of the independent generated vectors;
+- a concrete contradiction with another canonical subsystem;
+- #102/#107 implemented reachability or dominance evidence;
+- or fresh-player evidence.
+
+An alternative mechanic being imaginable is not itself a defect.
