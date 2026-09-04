@@ -9,7 +9,7 @@ Backlink: [[README]]
 
 This is the implementation authority for #107. It falsifies broken structure before browser/human time is spent. It cannot certify fun.
 
-[[23-HQ-BELIEF-AND-EVIDENCE]], [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]], [[26-LATTICE-COLLECTION-MATRIX]], [[27-KESTREL-TERMINAL-MATRIX]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] and [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] supply final composed invariants.
+[[23-HQ-BELIEF-AND-EVIDENCE]], [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]], [[25-KESTREL-CONSEQUENCE-MATRIX]], [[26-LATTICE-COLLECTION-MATRIX]], [[27-KESTREL-TERMINAL-MATRIX]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] and [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] supply final composed invariants.
 
 # Machine / human boundary
 
@@ -21,10 +21,9 @@ The lab may determine:
 - intervention/delegation value;
 - strategy/intent separation;
 - assessment/warning/public-case orthogonality;
-- public-case **claim-direction correctness**;
+- public-case claim-direction correctness;
 - evidence currency/supersession integrity;
-- information/capability/target relevance;
-- retask-vs-broaden collection value;
+- information/capability/target/retask relevance;
 - recovery reachability;
 - adversary signal reachability/isolation;
 - complete-package consistency;
@@ -36,21 +35,19 @@ It may not determine felt ownership, tension, regret, real-reading comprehension
 
 # Deterministic policy cohort
 
-- `delegate-all` — accept staff recommendation everywhere.
-- `intervene-all-where-legal` — maximum interventions through fixed authored preference order, always complete/legal.
-- `recovery-first` — prefer authored recovery.
-- `deterrence-first` — prefer visible/physical denial and readiness.
-- `intelligence-first` — understanding-oriented intent, scheduled Lattice and legitimate information-producing courses.
-- `coalition-first` — partner-oriented intent/commitment preservation.
-- `random-valid` — enumerate complete legal packages and choose deterministically/uniformly; never sample issue choices then repair.
+- delegate-all;
+- intervene-all-where-legal;
+- recovery-first;
+- deterrence-first;
+- intelligence-first;
+- coalition-first;
+- random-valid over complete legal packages.
 
-Generic policies exercise 81 standing-intent combinations where practical; fixed-strategy probes report fixed intent honestly.
+Generic policies exercise the 81 standing-intent combinations where specified/practical. Fixed strategies report fixed intent honestly.
 
 # Oracle frontier
 
-Test-only hidden-truth exploration may enumerate feasible legal continuations/non-dominated terminal frontier.
-
-It never defines canonical best move, staff advice or scalar optimum and never enters live gameplay.
+Test-only hidden-truth exploration may enumerate feasible continuations and non-dominated terminal frontier. It never defines canonical best move, staff advice or scalar optimum and never enters live gameplay.
 
 # Outcome relation
 
@@ -63,123 +60,64 @@ Primary Pareto axes:
 
 Retain terminal classification + explicit severe flags separately. No weighted score.
 
-For within-cycle comparison also retain intervention/action-space opportunity cost:
-
-- normal interventions consumed;
-- remaining budget;
-- other same-cycle options foreclosed/preserved.
+For local comparisons also retain intervention/action-space opportunity cost.
 
 # Diagnostics
 
 ## 1. Seed viability / oracle fairness
 
-Require:
-
-- no forced hard loss before C6 without earlier meaningful counterplay;
-- materially different non-oracle strategies reach C6;
-- multiple non-dominated terminal profiles across viable seeds;
-- costly recovery remains reachable through C5;
-- oracle does not prove unavailable hidden truth was necessary to avoid otherwise unavoidable defeat.
+Require no forced hard loss before C6 without earlier counterplay, materially different non-oracle strategies to reach C6, multiple non-dominated terminal profiles, costly recovery through C5, and no seed where unavailable hidden truth is required merely to survive.
 
 ## 2. Policy dominance
 
-A dominates B only when A is no worse on all Pareto/classification/severe dimensions across identical viable comparisons and strictly better somewhere.
-
-Flag universal dominance by Delegate-all, Intervene-all or one strategy family. Never fix through randomisation/rubber-banding.
+A dominates B only when A is no worse on all Pareto/classification/severe dimensions across paired runs and strictly better somewhere. Never fix dominance through randomisation/rubber-banding.
 
 ## 3. Decision Elasticity
 
 From identical verified pre-state, branch every authored consequential alternative.
 
-Elastic differences may appear in:
-
-- persistent state;
-- HQ evidence/assessment/warning/public-case state+direction;
-- agenda/recommendation/dissent;
-- legal capability/action/final-route space;
-- authorised Ravellan observation/policy path;
-- terminal Pareto/classification/severe state.
+Elastic differences may appear in persistent state, HQ evidence/assessment/warning/public-case state+direction, recommendation/dissent, legal action/route space, Ravellan policy path, or terminal outcome/cost.
 
 Prose-only divergence is fake.
 
-## 4. Player-safe local course/package dominance
+## 4. Player-safe local package dominance
 
-For one player-safe decision state:
+For one player-safe state:
 
-1. group hidden histories compatible with the same legitimate information;
-2. compare complete legal packages differing at focal decision while keeping rest equivalent where possible;
-3. include intervention cost/foreclosed alternatives;
-4. simulate every compatible hidden reality.
+1. group every compatible hidden reality;
+2. compare complete legal packages differing at focal choice;
+3. include intervention/foreclosed-option cost;
+4. simulate all compatible hidden realities.
 
-Compare:
+A is dominated only when comparator is no worse in every compatible reality and authority/severe dimensions, strictly better somewhere, and A has no compensating information/capability/recovery/action-space value.
 
-- terminal Pareto/classification/severe flags;
-- intervention/action-space cost;
-- later legal/recovery/capability space;
-- information value as specific assessment/warning/public-case-direction/action-space effect.
-
-Flag dominated only when comparator is no worse in every compatible hidden reality and authority cost, strictly better somewhere, and focal choice has no compensating information/capability/recovery value.
-
-Do not false-positive legitimate risky choices.
-
-Explicitly test C2 shipping/public posture, C3 reassurance, C4 operational choices, C5 Beacon/authority/attribution complete packages and every displayed C6 route.
+Do not reject legitimate risky choices by hindsight.
 
 ## 5. Exceptional commander authority
 
-Exactly:
+Exactly C2 accusation, C4 liaison and C5 attribution use are `requiresIntervention = true`; none can become Delegate/recommendation and each costs one normal intervention.
 
-1. C2 public-accusation;
-2. C4 request-partner-liaison;
-3. C5 use-attribution
+## 6. Political baselines
 
-are `requiresIntervention = true`.
-
-Prove none can become recommendation/Delegate, each costs one normal intervention and no fourth course gets the flag.
-
-## 6. Political command-by-exception baselines
-
-Prove C1 informal, C2 silence, C3 routine contact and C5 Hold Attribution are final Political baselines except where standing partner direction legitimately selects the corresponding normal positive course.
-
-A beneficial political intervention does not automatically dominate a delegated baseline merely because its direct state effect is positive.
+Prove C1 informal, C2 silence, C3 routine and C5 Hold are staff baselines except where standing partner direction selects the corresponding normal positive course.
 
 ## 7. C5 package recommendation / protected boundary
 
-Using [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] prove:
+Prove all-Delegate legality, package-level partner red line, rapid-channel Honour, Concession/Act behavior and final Political tie:
 
-- all-Delegate package legal every reachable C5 state;
-- partner-consultation red line evaluated against complete packages;
-- rapid channel can make Honour compatible with immediate visible reinforcement;
-- protected consultation prevents auto-Act when coordinated/non-sensitive package preserves boundary;
-- legal Concession may preserve consultation while buying authority;
-- aggressive/Beacon direction may legitimately produce Act with explicit breach/authority reasons;
-- no immediate-authority course → deterministic quiet/hold fallback;
-- no hidden/random repair.
+- compatible Honour > Concession > Act;
+- no Honour + conditional/withdrawn → Concession > Act;
+- no Honour + cooperative/uneasy → Act > Concession.
 
-Final Political tie after all earlier filters:
-
-- compatible Honour → Honour > Concession > Act;
-- Honour absent + conditional/withdrawn → Concession > Act;
-- Honour absent + cooperative/uneasy → Act > Concession.
-
-Never array/lexical/seed/random tie-breaking.
+Never array/random/seed tie-breaking.
 
 ## 8. Intervention / delegation value
 
-Report opportunities, interventions used, downstream elasticity and delegated cost.
-
-Flag if always spending both or never intervening is weakly better in every comparable state, or many overrides are empty.
+Flag if always spending both or never intervening is weakly better in every comparable state, or if many overrides are mechanically empty.
 
 ## 9. Strategy separation
 
-Intelligence-, coalition-, deterrence- and recovery-first must diverge on viable seeds across some of:
-
-- Lattice/liaison;
-- partner/promise/authority;
-- Beacon preparation/exposure;
-- reserve;
-- evidence/assessment/warning/public-case direction/timing;
-- Ravellan policy path;
-- final route/Pareto/classification.
+Intelligence-, coalition-, deterrence- and recovery-first must diverge on viable seeds across some of Lattice/liaison, partner/authority, Beacon, reserve, evidence/assessment/warning/public-case direction, Ravellan path or terminal outcome.
 
 ## 10. Assessment / warning orthogonality
 
@@ -187,122 +125,106 @@ Require reachable:
 
 - preparation assessment + warning none;
 - usable warning without coherent preparation assessment;
-- warning changes later recommendation/terminal consequence in at least one otherwise-comparable history;
-- coherent preparation from non-warning evidence does not receive warning benefit;
-- hidden posture with identical evidence does not change either product.
+- warning changes at least one later decision/route consequence;
+- coherent preparation without warning does not gain warning-specific benefit.
 
-Canonical fixtures:
+## 11. Diagnostic-vs-indicator reducer integrity
 
-- focused staging buildup → preparation weak + usable warning;
-- sync preparation sequence → preparation coherent + warning none;
-- landing concentration + contrary coercion evidence → unclear conflicted + usable warning.
+Exhaustively test the #100 `kestrel-binary-hypothesis-v2` truth table.
 
-## 11. Public-case orthogonality **and direction**
+Required cases:
+
+- prep diagnostic + coercion indicator → preparation weak;
+- coercion diagnostic + prep indicator → coercion weak;
+- diagnostics both directions → unclear conflicted;
+- indicators both directions only → unclear conflicted;
+- diagnostic only → directional coherent;
+- evidence count cannot overturn diagnosticity;
+- surviving directional judgement always surfaces material contrary indicator.
+
+Self-test a deliberately buggy “any contrary evidence vetoes direction” reducer and a “majority vote” reducer; both must fail.
+
+## 12. Public-case orthogonality and direction
+
+Require:
+
+- directional internal estimate with case none/tentative;
+- usable warning with tentative case;
+- credible case only from one eligible diagnostic direction with no active opposite directional evidence;
+- every credible case has exactly one direction;
+- directionless credible rejected;
+- preparation and coercion credible cases both reachable where authored;
+- hidden truth with identical legitimate evidence leaves case state+direction equal;
+- used direction never regenerates/changes.
+
+### Direction vs physical capability
+
+Construct identical player-safe terminal physical/partner states with attribution direction varied.
 
 Prove:
 
-- directional assessment with public case none/tentative reachable;
-- usable warning with public case tentative reachable;
-- diagnostic source-sensitive evidence creates credible only without active opposite direction;
-- every credible case has exactly one direction;
-- directionless credible state is rejected;
-- preparation and coercion credible cases are both reachable through legitimate evidence where authored;
-- hidden truth with identical legitimate evidence leaves public-case state+direction equal;
-- later #101 used case never regenerates.
+- claim direction alone does **not** change `preparedDenial`, exposure, warning, reserve or other physical adequacy;
+- if #27 makes Hold legal for both directions in that state, both receive the same physical-hold evaluation but direction-specific safe claim/cause semantics;
+- if one direction-specific Hold is pruned, the lab report must show the complete player-safe dominance reason rather than a hard-coded “wrong claim” rule;
+- a generic directionless case cannot enter the comparison.
 
-### Direction-sensitive terminal proof
+Also report whether preparation-vs-coercion Hold remains mechanically distinct anywhere besides copy/debrief. If the two directions are mechanically identical across **every** co-eligible state, flag the distinction as underpriced for product review; do not invent a random difference automatically.
 
-Construct identical safe terminal physical/partner state with only attribution direction varied:
-
-- seizure + credible preparation case may display Hold where all other #27 predicates hold;
-- same state + credible coercion case must **not** display Hold;
-- threshold/receding may expose either direction with direction-appropriate safe semantics.
-
-The lab must catch any implementation that collapses both to generic `credible`.
-
-## 12. Intelligence currency / historical integrity
-
-Attack:
-
-- reroute C3 result reading current instead of C2 history;
-- focused C4 result reading tasking-time/current instead of C4 result-time state;
-- later state rewriting earlier snapshots;
-- C3 routine report reading hidden preparation;
-- action-specific C4 prose changing analytic evidence;
-- current HQ query before current Ravellan decision;
-- expired evidence being deleted from history;
-- assessment changing because evidence aged out **without staleness-aware change explanation**.
+## 13. Intelligence currency / historical integrity
 
 Require:
 
-- stale occurrences remain in historical/debrief readout;
-- current reducer excludes them after their relevance window;
-- staleness-only change produces the correct bounded cause class/copy;
-- terminal truth never rewrites earlier source/method context.
+- reroute C3 uses C2 facts;
+- focused C4 uses C4 result-time facts;
+- later state never rewrites earlier snapshot/source context;
+- routine C3 report never reads hidden preparation;
+- world prose never changes analytic evidence;
+- current HQ query before Ravellan fails;
+- stale occurrence remains historical but leaves current reducer;
+- staleness-driven change explains staleness;
+- supersession-driven change explains replacement.
 
-## 13. Same-question retasking / supersession
+## 14. Same-question retasking / supersession
 
-When #102 is implemented, branch legal retask versus broadening collection from identical state.
+When #102 exists:
 
-Require:
-
-- retasking unresolved/non-conclusive question can be legal;
-- new occurrence gets unique deterministic instance ID;
-- newer same-question occurrence replaces older active occurrence, including same definition ID;
-- repeated observation never becomes an additive “second vote”;
+- unresolved/non-conclusive target may be retasked;
+- new occurrence is deterministic/unique;
+- newer same-question occurrence replaces older active occurrence including same definition ID;
+- repeated observation never stacks votes;
 - unrelated questions remain independent;
-- retask can matter when the world changed between observations;
-- always-retask is not globally dominant over broadening across every co-eligible state;
-- broadening is not globally dominant over retasking across every state where a recheck can materially update a decision;
-- conclusive-result eligibility rules prevent mechanically redundant re-tasking where authored.
+- recheck can matter after world change;
+- broadening can matter in other states;
+- neither always-retask nor always-broaden globally dominates where both should be meaningful;
+- conclusive-result eligibility removes mechanically redundant retasks.
 
-Self-test a deliberately buggy reducer that counts both old and new same-question occurrences; lab must fail it.
+## 15. Information value / source context
 
-## 14. Information value / source context
+Information matters only when it changes assessment, warning, public-case state/direction, attribution, advice, legal action/route or rational choice.
 
-Information matters when it changes:
+Evidence count/richer prose is not value.
 
-- assessment;
-- warning;
-- public-case state/direction;
-- attribution opportunity;
-- advice/dissent;
-- legal action/route;
-- rational package choice.
+Require at least one viable non-Lattice non-defeat history, at least one information-sensitive decision, no oracle-only survival requirement, and player-safe source/method context without a numeric reliability meter.
 
-Evidence count or richer prose is not value.
+## 16. Capability / target relevance
 
-Require:
-
-- at least one history where better information changes a sensible/legal choice;
-- at least one viable non-Lattice non-defeat history;
-- preparation/coalition strategy can succeed with imperfect picture at different costs;
-- oracle truth not required for survival;
-- player-safe basis entries identify source/method context without numeric reliability score.
-
-## 15. Capability / target relevance
-
-From identical reachable pre-task state branch every eligible Lattice target and any legal same-question retask.
-
-A target/retask is mechanically different only if it changes later implication/diagnosticity, assessment, warning, public-case state/direction, advice, action/route or terminal outcome/cost.
+From identical pre-task state branch all eligible Lattice targets and legal retasks.
 
 Canonical target identity:
 
-- landing staging → strongest tactical-warning path;
-- auxiliary tasking → strongest diagnostic coercion path;
-- political-operational sync → strongest sustained preparation/public-case path.
+- landing → strongest tactical-warning path;
+- auxiliary → strongest diagnostic coercion path;
+- sync → strongest sustained preparation/public-case path.
 
-Require at least two co-eligible target choices to diverge and no target globally dominated across every state where co-eligible.
+Require at least two choices to diverge mechanically and no target/retask policy globally dominated everywhere co-eligible.
 
-## 16. Recovery reachability
+## 17. Recovery reachability
 
-From every reachable C1–C5 non-terminal state test promised counterplay for reserve, partner, Beacon, missed Lattice and information weakness.
+Every reachable C1–C5 non-terminal state retains promised costly counterplay where authored. Flag costless/dummy recovery.
 
-Flag recovery that cannot change threatened state or is costless/dominant.
+## 18. Terminal route completeness / dominance
 
-## 17. Terminal route completeness / dominance
-
-For every reachable/abstract C6 player-known state:
+For every player-known C6 state:
 
 1. derive route set from [[27-KESTREL-TERMINAL-MATRIX]];
 2. assert non-empty;
@@ -313,103 +235,73 @@ For every reachable/abstract C6 player-known state:
 Canonical invariants:
 
 - pressure receding: Quiet; Hold only where meaningful; no Joint/Emergency;
-- threshold: Quiet; no Emergency; Joint only for known value; Hold under predicates;
+- threshold: Quiet; no Emergency; Joint only for real known value; Hold under predicates;
 - seizure: no known-futile Quiet/Joint; late Quiet pruned when Joint dominates; Emergency fallback-only;
-- clean Quiet uses separate #100 warning;
-- seizure Hold requires preparation-direction credible case;
-- coercion-direction credible case does not suppress Emergency by creating an invalid Hold route.
+- clean Quiet uses separate warning;
+- Hold uses physical/partner adequacy independently from claim direction while preserving the specific claim;
+- direction-specific Hold remains only if non-dominated in its complete safe state.
 
 Expect zero empty route sets and zero displayed pairwise-dominated route pairs.
 
-Also prove C5 attribution use removes Hold, used claim direction persists, source exposure severe, Emergency never clean Strategic Success, each final family useful somewhere and no final route universal.
+## 19. Intent relevance
 
-## 18. Intent relevance
+Every standing-intent answer must change some reachable recommendation/reason or delegated consequence; require at least one real intent conflict.
 
-Vary one standing-intent answer with other inputs fixed. Every answer changes a reachable recommendation/reason or delegated consequence somewhere; require at least one real intent conflict.
+## 20. Adversary responsiveness / signal reachability / isolation
 
-## 19. Adversary responsiveness / signal reachability / isolation
+Prove authorised observations change #99 policy where permitted, private-state isolation, normal reachability of relied-upon rows, deterministic coalescing, no contradictory/dead signals, and C5 reserve exhaustion remains absent.
 
-Using #99 + [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] prove authorised observation responsiveness, private-state isolation, normal reachability of relied-upon rows, deterministic coalescing, no contradictory signals, visible/quiet C5 divergence, C2–C4-only reserve exhaustion and no dead C5 exhaustion observation.
+## 21. Composed-command integrity
 
-## 20. Composed-command integrity
+Prove complete package construction, C2 coordination, C5 channel/tempo, withdrawn+Honour, issue-order invariance, exceptional authority and directional Hold/Use source trade.
 
-Prove complete package construction, C2 coordination, C5 channel/tempo, withdrawn+Honour, issue-order invariance, exceptional authority and directional source-sensitive Hold/Use trade.
+## 22. Snowball / trivial late game
 
-## 21. Snowball / trivial late game
+Flag early-success branches that remove later trade-offs or make one information/attribution policy universally dominant. Never auto-rubber-band.
 
-Flag early-success branches that remove later trade-offs: uniform advice, inelastic interventions, irrelevant recovery/information, one information policy becoming universally dominant, or collapsed route outcomes. Never add rubber-banding automatically.
+## 23. Agenda collision
 
-## 22. Agenda collision
+Report issue count, credible personal alternatives, intervention budget and elastic alternatives. C3/C5 must expose >2 credible intervention candidates in promised histories; fake/dominated collision fails.
 
-Report per cycle issue count, credible personal alternatives, intervention budget and elastic alternatives. C3/C5 must expose >2 credible personal-intervention candidates in promised histories; fake/dominated collision fails.
+## 24. Dead state / observation
 
-## 23. Dead state / observation
-
-Every persisted field/evidence/observation needs downstream policy/state/legality/readout/debrief/replay-integrity purpose.
-
-Canonical regression: no C5 reserve-exhaustion observation because no later normal Ravellan policy consumes it.
+Every persisted field/evidence/observation needs downstream policy/state/legality/readout/debrief/replay purpose. C5 reserve-exhaustion remains absent as canonical regression.
 
 # Counterfactual integrity
 
-Counterfactual branches clone verified state/revision, use normal authoritative sim, never mutate source and remain diagnostic-only.
+Counterfactual branches clone verified state/revision, use authoritative sim, never mutate source and remain diagnostic-only.
 
 # Report
 
-Produce deterministic machine-readable output + concise human summary containing:
-
-- seed/intent/policy matrix;
-- Pareto/classification/severe results;
-- policy/local-package dominance;
-- Decision Elasticity;
-- exceptional-authority/political-baseline findings;
-- C5 package/tie findings;
-- strategy/intent separation;
-- assessment/warning/public-case **direction** orthogonality;
-- evidence currency/supersession findings;
-- retask-vs-broaden collection findings;
-- information/capability/target relevance;
-- historical-intelligence integrity;
-- recovery;
-- terminal completeness/diversity;
-- adversary fairness/reachability;
-- composed-command/dead-state failures;
-- snowball/agenda collision.
+Produce deterministic machine-readable output + concise human summary covering policy/dominance, Decision Elasticity, authority/package ties, strategy separation, reducer truth table, assessment/warning/public-case direction, evidence currency/supersession, retask-vs-broaden, information/target relevance, recovery, terminal completeness/diversity, adversary fairness, composed-command/dead-state failures and snowball/agenda collision.
 
 No fun score.
 
-# Lab self-test fixtures
+# Self-test fixtures
 
-Must deliberately detect:
+Must detect:
 
-- delegate-all/intervene-all dominance;
-- inelastic choice;
-- player-safe dominated trap;
-- false dominance ignoring intervention opportunity cost;
-- risky-but-non-dominated choice false-positive;
+- policy dominance / inelastic choice;
+- false dominance ignoring intervention cost;
+- risky-but-non-dominated false positive;
+- “any contradiction vetoes diagnostic” reducer;
+- majority-vote evidence reducer;
 - assessment-warning conflation;
-- public-case-assessment/warning conflation;
-- **directionless credible public case**;
-- **coercion case incorrectly unlocking seizure Hold**;
+- directionless credible case;
+- claim direction treated as physical adequacy;
+- direction-specific Hold mechanically identical everywhere without being flagged;
 - historical selector reading current state;
-- stale evidence deleted from history;
-- staleness-driven assessment change with no explanation;
-- repeated same-question evidence stacking as votes;
-- retask globally dominating broadening / broadening globally dominating meaningful recheck;
-- routine C3 observation reading hidden preparation;
-- world prose leaking into analytic evidence;
-- equivalent Lattice targets;
-- globally dominated target;
-- worthless information / mandatory Lattice;
-- missing recovery;
-- irrelevant intent / strategy sameness;
-- adversary-private / collection-posture leak;
-- commander-only course delegated;
-- missing/array-ordered C5 Political tie;
-- package red-line violation / hidden repair;
-- doomed seed;
-- invalid all-Delegate package;
-- issue-order dependence / contradictory signal / dead observation;
-- empty terminal route set / displayed dominated terminal pair / universal route;
+- stale evidence deleted / silent staleness drift;
+- same-question retask stacking votes;
+- always-retask or always-broaden dominance;
+- routine C3 hidden-prep leak;
+- world prose→evidence leak;
+- equivalent/globally dominated Lattice target;
+- mandatory/worthless information;
+- missing recovery / strategy sameness;
+- invalid all-Delegate/package tie/order dependence;
+- contradictory/dead signals;
+- empty/dominated/universal terminal routes;
 - severe-cost-blind dominance;
 - trivial snowball.
 
@@ -417,4 +309,4 @@ Then run canonical Kestrel. Green structure only authorises formative smoke/UI s
 
 # Rejection conditions
 
-Reject #107 if it creates scalar fun/balance score, ignores intervention/severe/source cost, collapses assessment/warning/public-case or public claim directions, treats evidence count as value, forgets stale history, allows repeated same-question collection to stack votes, trains a gameplay agent, treats oracle truth as live recommendation truth, repairs invalid packages, preserves dead state for symmetry, allows exceptional authority through Delegate, leaves ties to array order, feeds diagnostics into gameplay, changes Ravellan dynamically to pass metrics or claims machine evidence passes the human gate.
+Reject #107 if it creates a scalar fun/balance score, ignores intervention/severe/source cost, collapses assessment/warning/public-case or claim direction, treats evidence count as value, forgets stale history, stacks repeat collection, treats claim direction as physical capability, trains a gameplay agent, treats oracle truth as live advice, repairs invalid packages, preserves dead state, allows exceptional authority through Delegate, leaves ties to array order, feeds diagnostics into gameplay, changes Ravellan dynamically to pass metrics or claims machine evidence passes the human gate.
