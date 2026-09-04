@@ -7,89 +7,109 @@ status: active
 
 Backlink: [[README]]
 
-This is the implementation authority for Kestrel C6 route legality, physical resolution, terminal state effects and classification. It uses verified player-known state plus the safe overt crisis family, never hidden opening posture as an answer key.
+This is the implementation authority for C6 route legality, physical resolution, terminal state effects and classification. It uses verified player-known state + safe overt crisis family, never hidden opening posture as an answer key.
 
-- [[23-HQ-BELIEF-AND-EVIDENCE]] owns the final pre-manifestation assessment, warning and public-case basis.
-- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns the C6 temporal cut and verified history.
-- [[25-KESTREL-CONSEQUENCE-MATRIX]] owns persistent source-use and campaign records.
-- [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns C5 authority/tempo composition.
-- [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] owns the intelligence state-space envelope consumed here.
+- [[23-HQ-BELIEF-AND-EVIDENCE]] owns final pre-manifestation assessment/warning/public case.
+- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns the C6 information cut.
+- [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] owns the producer envelope.
+- [[25-KESTREL-CONSEQUENCE-MATRIX]] owns persisted campaign/source-use records.
+- [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns C5 authority/tempo.
 
-# C6 temporal order
+# 1. C6 temporal order
 
 Use exactly:
 
 ```text
-#99 selects hidden terminal behaviour
-→ any C5 Task Collection result resolves against authorised pre-manifestation facts
-→ #100 derives the final pre-manifestation intelligence snapshot
-→ current attribution availability derives from that snapshot + source-use state
-→ terminal behaviour manifests as the safe overt crisis family
-→ legal terminal routes derive from overt crisis + player-known campaign state
-→ player selects one route
-→ authoritative terminal effects/classification persist and replay
+#99 selects/persists hidden terminal behaviour
+→ any C5 Task Collection result resolves from authorised latest-normal/pre-manifestation facts
+→ #100 derives final pre-manifestation assessment, current warning and public case
+→ current attribution availability derives from public case + source-use state
+→ terminal behaviour manifests as safe overt crisis family
+→ legal routes derive from overt crisis + player-known campaign state
+→ player selects route
+→ terminal effects/classification persist and replay
 ```
 
-The visible crisis does not retroactively alter what HQ knew before manifestation. The Command Room labels the intelligence readout as the **last pre-manifestation picture**.
+The visible crisis never retroactively changes what HQ knew before manifestation. The Intelligence section is labelled:
 
-# Inputs
+> **What Intelligence knew immediately before the confrontation became overt.**
 
-Terminal route derivation may use only:
+R6 action/row is never evidence or warning.
+
+# 2. Legal inputs
+
+Terminal route derivation may read only:
 
 - safe crisis family;
 - Beacon exposure/preparation;
-- reserve condition;
-- #100 tactical-warning object;
-- #100 current public-case basis, including exact direction/supporting evidence;
-- persistent attribution source-use state;
-- partner consent / C5 partner authority;
-- commitments, concession and liaison history;
+- reserve;
+- current #100 tactical warning;
+- current #100 public-case basis;
+- persistent #101 source-use record;
+- partner consent/C5 authority;
+- commitment/concession/liaison history;
 - severe-cost history.
 
-It may not use hidden opening posture, raw #99 policy row, secret preparation history beyond facts already represented in legitimate player-known state, oracle truth or future outcomes.
+It may not read hidden opening posture, raw #99 policy row/action history, secret preparation history beyond legitimate known state, oracle truth or future outcomes.
 
-# Derived predicates
+# 3. Derived predicates
 
 ```text
-controlledExposure = beacon-exposure != open
-preparedDenial = beacon-preparation == prepared
+controlledExposure = beaconExposure != open
+preparedDenial = beaconPreparation == prepared
 usableWarning = hqBelief.warning.state == usable
-partnerAccess = partner-consent != withdrawn
-jointAuthority = partnerAccess AND partner-authority in {joint, concession}
+partnerAccess = partnerConsent != withdrawn
+jointAuthority = partnerAccess AND partnerAuthority in {joint, concession}
 ```
 
-Current attribution case:
+Current public case:
 
 ```text
 currentCredibleCase =
-  attribution-source-use.state == unspent
+  attributionSourceUse.state == unspent
   AND hqBelief.publicCaseBasis.state == credible-source-sensitive
 ```
 
-When true, retain the entire current basis:
+When true, retain exact:
 
 - direction;
-- ordered supporting evidence occurrence IDs;
-- ordered supporting source groups.
+- ordered `[evidenceInstanceId1, evidenceInstanceId2]`;
+- ordered `[corroborationGroupId1, corroborationGroupId2]`.
 
-There is no persisted `credible` mirror.
+The two corroboration groups are distinct. There is no persisted credible mirror.
 
 Safe crisis family:
 
-- #99 `attempt_seizure` → `seizure-underway`;
+- `attempt_seizure` → `seizure-underway`;
 - `threshold_challenge` → `threshold-confrontation`;
 - `abort_and_pressure` → `pressure-receding`.
 
-Prior hidden history remains private until debrief.
+Prior hidden history stays private until debrief.
 
-## Known physical adequacy
+# 4. Warning currency at C6
+
+Route legality uses the **current warning role**, not the presence of an old preparation report.
+
+Therefore:
+
+- a C4 focused buildup can remain assessment/public-current at C6 while its warning is stale;
+- without a C5 Lattice landing refresh, it does not qualify clean Quiet;
+- a C5→C6 Lattice landing result can provide current warning;
+- preparation assessment alone never qualifies current warning.
+
+The player-safe surface explicitly says warning usable or no current direct warning before route choice.
+
+# 5. Known physical adequacy
 
 ```text
-quietCleanSeizure = preparedDenial AND controlledExposure AND usableWarning
+quietCleanSeizure =
+  preparedDenial
+  AND controlledExposure
+  AND usableWarning
 
 quietLateReactionPossible =
   preparedDenial
-  AND reserve-condition == usable
+  AND reserve == usable
   AND NOT quietCleanSeizure
 
 quietCanHoldSeizure = quietCleanSeizure OR quietLateReactionPossible
@@ -98,19 +118,19 @@ jointCanHoldSeizure = preparedDenial OR controlledExposure
 
 jointBaseSeizure =
   jointAuthority
-  AND reserve-condition != brittle
+  AND reserve != brittle
   AND jointCanHoldSeizure
 
 emergencyCanHoldSeizure =
-  reserve-condition in {usable, strained}
-  OR (reserve-condition == brittle AND preparedDenial)
+  reserve in {usable, strained}
+  OR (reserve == brittle AND preparedDenial)
 
 quietCredibleThreshold = preparedDenial OR controlledExposure
 ```
 
-All physical predicates derive from player-known state. A public claim direction does not create preparation, warning or force capability.
+All derive from player-known state. Public claim direction never creates physical capability.
 
-# Final course IDs
+# 6. Final course IDs
 
 Exactly:
 
@@ -119,9 +139,9 @@ Exactly:
 - `emergency-mobilisation`
 - `hold-and-expose`
 
-The displayed subset excludes routes the player-known state makes futile or strictly dominated under the canonical #107 relation.
+Displayed subset excludes player-known futile or strictly dominated routes under the #107 relation.
 
-# Route legality
+# 7. Route legality
 
 ## Quiet Denial
 
@@ -129,11 +149,11 @@ The displayed subset excludes routes the player-known state makes futile or stri
 
 Require `quietCanHoldSeizure`.
 
-If Quiet succeeds only through late reaction and `jointBaseSeizure` is true, omit Quiet: Joint holds the same position, avoids late-reaction severe cost and preserves/improves the coalition.
+If Quiet succeeds only through late reaction and `jointBaseSeizure` is true, omit Quiet: Joint holds the position, avoids late-reaction severe cost and preserves/improves coalition state.
 
-Clean Quiet may remain beside Joint where the reserve-versus-politics trade is real.
+Clean Quiet may remain beside Joint where reserve-versus-politics trade is real.
 
-### Threshold confrontation / pressure receding
+### Threshold / pressure receding
 
 Always legal.
 
@@ -142,15 +162,15 @@ Always legal.
 Base:
 
 - crisis is seizure or threshold;
-- jointAuthority;
-- reserve is not brittle.
+- joint authority;
+- reserve not brittle.
 
-For seizure, also require `jointCanHoldSeizure`.
+For seizure also require `jointCanHoldSeizure`.
 
-Prune when known credible Quiet supplies the same result without the final reserve cost and the partner is already cooperative:
+Prune when known clean Quiet supplies same result without final reserve cost and partner is already cooperative:
 
-- seizure: `quietCleanSeizure && partner-consent == cooperative`;
-- threshold: `quietCredibleThreshold && partner-consent == cooperative`.
+- seizure: `quietCleanSeizure && partnerConsent == cooperative`;
+- threshold: `quietCredibleThreshold && partnerConsent == cooperative`.
 
 Never legal for pressure receding.
 
@@ -158,84 +178,82 @@ Never legal for pressure receding.
 
 Base for every crisis:
 
-- currentCredibleCase;
-- partnerAccess.
+- current credible case;
+- partner access.
 
-The case retains its exact direction:
+Claim direction controls truthful action/copy:
 
-- preparation — expose a substantiated seizure-preparation sequence/physical preparation case;
+- preparation — expose a substantiated seizure-preparation case;
 - coercion — expose a substantiated coercive/deceptive pressure campaign.
 
-The direction changes truthful copy/history, not physical adequacy.
+Direction does not create preparedness/warning/authority.
 
-### Seizure underway
+### Seizure
 
-Additional physical requirements:
+Additional:
 
-- preparedDenial;
-- controlledExposure.
+- prepared denial;
+- controlled exposure.
 
-Either credible direction may be legal because Beacon is held by already-prepared physical defenses, not by the public claim.
+Either direction may be legal because existing physical defense holds Beacon. Omit when `quietCleanSeizure && partnerConsent == cooperative`: source exposure buys no terminal advantage.
 
-Omit when `quietCleanSeizure && partner-consent == cooperative`: source exposure buys no terminal advantage.
+Any further direction-specific pruning needs complete #107 player-safe dominance proof, not a hard “wrong claim” rule.
 
-Any further direction-specific pruning requires a complete player-safe dominance result from #107, not a hard semantic shortcut.
-
-### Threshold confrontation
+### Threshold
 
 Legal when either:
 
-- partner consent is not cooperative; or
-- `quietCredibleThreshold` is false.
+- partner consent not cooperative; or
+- `quietCredibleThreshold` false.
 
 ### Pressure receding
 
-Legal only when partner consent is not cooperative.
+Legal only when partner consent not cooperative.
 
 ## Emergency Mobilisation
 
 Consider only for seizure.
 
-Let `quietLegal`, `jointLegal` and `holdLegal` be the final predicates above.
+Let `quietLegal`, `jointLegal`, `holdLegal` be the final predicates above.
 
-Emergency is legal only when:
+Legal only when:
 
-- quietLegal is false;
-- jointLegal is false;
-- and either emergencyCanHoldSeizure is true or holdLegal is false.
+- quietLegal false;
+- jointLegal false;
+- and either emergency can hold or Hold is not legal.
 
-Consequences:
+Thus:
 
-- known-valid Quiet or Joint prunes Emergency;
-- known-failing Emergency is pruned if Hold can already preserve Beacon;
-- when no better route can hold, Emergency remains the last-ditch/best-effort response.
+- valid Quiet/Joint prunes Emergency;
+- known-failing Emergency is pruned if Hold can preserve Beacon;
+- if no better route can hold, Emergency remains last-ditch/best-effort.
 
-# Resolution order
+# 8. Resolution order
 
-1. derive/prune route set from safe current state;
-2. validate selected route;
-3. use pre-route state for physical feasibility;
+1. derive/prune route set from current safe state;
+2. validate route;
+3. evaluate physical feasibility from pre-route state;
 4. derive Beacon held/lost;
 5. apply route state/source-use costs;
-6. derive post-route access and severe-cost set;
-7. derive Pareto vector and classification;
-8. persist/replay the authoritative terminal transition;
+6. derive post-route access/severe-cost set;
+7. derive Pareto vector/classification;
+8. persist/replay terminal transition;
 9. expose hidden truth only after completion.
 
-# Route effects
+# 9. Route effects
 
 ## Quiet Denial
 
-### Seizure — clean hold
+### Clean seizure hold
 
 If `quietCleanSeizure`:
 
 - Beacon held;
 - no automatic terminal reserve cost.
 
-### Seizure — late reaction
+### Late seizure reaction
 
-Otherwise route legality guarantees the late-reaction path:
+Otherwise legality guarantees late path:
 
 - Beacon held;
 - reserve worsens one;
@@ -253,29 +271,25 @@ Beacon held; no automatic reserve/partner movement.
 
 ## Joint Visible Denial
 
-- Beacon held for seizure/threshold;
+- Beacon held;
 - reserve worsens one;
 - partner improves one when below cooperative and not withdrawn;
-- access remains because joint authority was required.
+- access survives because joint authority was prerequisite.
 
 ## Emergency Mobilisation
 
-Only seizure fallback.
-
-If `emergencyCanHoldSeizure`:
+If emergency can hold:
 
 - Beacon held;
 - reserve worsens one;
 - severe `emergency-surge`;
-- if no joint authority and partner is not withdrawn, partner worsens one.
+- if no joint authority and partner not withdrawn, partner worsens one.
 
 Otherwise Beacon lost. A known-doomed Emergency appears only where no other displayed route can hold.
 
-Emergency is never clean Strategic Success.
+Emergency never produces clean Strategic Success.
 
 ## Hold And Expose
-
-Precondition includes a current credible public-case basis and unspent source.
 
 Persist exact source use:
 
@@ -285,35 +299,37 @@ Persist exact source use:
   usedAtCycle: 6,
   direction: currentCase.direction,
   supportingEvidenceInstanceIds: currentCase.supportingEvidenceInstanceIds,
-  supportingSourceGroups: currentCase.supportingSourceGroups,
+  supportingCorroborationGroupIds: currentCase.supportingCorroborationGroupIds,
 }
 ```
 
+Validation requires exactly two evidence IDs, exactly two distinct corroboration-group IDs and one-to-one correspondence with the current #100 basis.
+
 Effects:
 
-- Beacon held in every state where route is legal;
+- Beacon held wherever route is legal;
 - severe `attribution-source-exposed`;
 - partner improves one when below cooperative and not withdrawn.
 
-The source cost and exact claim are known before selection. Later terminal truth cannot rewrite the used basis.
+The exact claim/source cost is shown before selection. Terminal truth never rewrites the used basis.
 
-The immediate physical/state effects are currently the same for preparation/coercion cases; #107 must flag the distinction as underpriced if no complete player-safe state gives them a meaningful strategic/copy/history difference.
+The immediate physical effects are currently the same for preparation/coercion claims. #107 flags the distinction as underpriced if no complete player-safe state gives it meaningful strategic/history value; it does not invent arbitrary bonuses.
 
-# C5 source use
+# 10. C5 source use/holding
 
-If source was used in C5, persistent state already contains the exact used basis and C6 currentCredibleCase is false regardless of later evidence.
+If source was used in C5, C6 Hold is unavailable regardless of later evidence.
 
-Holding in C5 persists nothing. C6 availability is re-derived from the final current #100 basis; it may appear, disappear or change direction legitimately.
+Holding in C5 persists nothing. C6 availability is re-derived from the final #100 basis and may appear, disappear or change direction legitimately.
 
-# Severe-cost set
+# 11. Severe-cost set
 
 After route effects, include where present:
 
 - final reserve brittle;
-- consultation promise breached;
-- political concession active;
+- promise breached;
+- concession active;
 - liaison obligation breached;
-- attribution source used/exposed;
+- source used/exposed;
 - late reaction;
 - emergency surge;
 - authored overreaction;
@@ -323,19 +339,19 @@ After route effects, include where present:
 
 Joint Visible against threshold is overreaction only when:
 
-- post-route reserve is brittle; or
-- authority required political concession.
+- post-route reserve brittle; or
+- authority required concession.
 
 No numeric score.
 
-# Terminal classification
+# 12. Terminal classification
 
 1. **Operational Defeat** — Beacon lost.
 2. **Political Defeat** — Beacon held but final partner access withdrawn.
 3. **Costly Success** — Beacon held + access survives + at least one severe cost.
 4. **Strategic Success** — Beacon held + access survives + no severe cost.
 
-# Pareto vector
+# 13. Pareto vector
 
 Post-route dimensions:
 
@@ -344,91 +360,92 @@ Post-route dimensions:
 - reserve readiness;
 - commitment integrity.
 
-Classification and severe flags remain separate and participate in #107 local dominance.
+Classification/severe flags remain separate and participate in #107 local dominance.
 
-# State-space completeness
+# 14. State-space completeness
 
-#107 must exhaust every reachable C6 safe state across:
+#107 exhausts every reachable C6 player-known state across:
 
 - crisis family;
 - Beacon exposure/preparation;
 - reserve;
-- warning;
+- **current** warning;
 - partner consent/authority;
 - commitments/concession/liaison;
 - source use;
-- current public-case state/direction/support basis.
+- current public-case state/direction/two-item basis.
 
-For every safe state:
+For each:
 
-- displayed route set is non-empty;
+- route set non-empty;
 - every displayed route executes;
-- no displayed pair is player-safe dominated;
-- no route family is universal;
+- no displayed pair player-safe dominated;
+- no route universal;
 - claim direction alone never changes physical adequacy;
-- current basis/support IDs used by Hold are the exact final pre-manifestation #100 basis.
+- Hold uses exact current final pre-manifestation basis.
 
-# Required tests
+The architecture envelope says a credible coercion case + attempt seizure is not normal-producer reachable, but generic terminal functions remain type-safe if supplied that algebraically valid state. #107 does not pretend it is a required normal-play fixture.
+
+# 15. Required tests
 
 ## Information/source boundary
 
-- hidden Ravellan posture/preparation history cannot affect route set except through legitimate safe state;
-- warning comes from #100 warning object, never assessment direction;
+- hidden posture/history cannot affect route set except through safe state;
+- warning uses #100 warning role, not assessment or warning-history existence;
+- focused warning can be stale at C6 while assessment/public evidence remains current;
 - coherent preparation + warning none does not qualify clean Quiet;
-- conflicted assessment + physical warning may qualify warning-sensitive predicates;
-- current public case is derived from final pre-manifestation #100 snapshot + unspent source;
-- no persisted credible mirror is consumed;
-- C5 held case may change/disappear by C6;
-- C5 used source makes Hold unavailable permanently;
-- Hold writes exact direction/support IDs/source groups.
+- conflicted assessment + current warning may qualify warning-sensitive predicates;
+- current public case comes from final pre-manifestation #100 + unspent source;
+- no persisted credible mirror;
+- C5 held case may change/disappear at C6;
+- C5 used source permanently removes Hold;
+- Hold writes exact direction/two evidence IDs/two corroboration groups.
 
 ## Physical/pruning
 
-- no displayed Quiet/Joint seizure route is known unable to hold;
-- late Quiet pruned whenever Joint strictly dominates it;
-- clean Quiet remains where reserve/politics trade is real;
-- Emergency pruned whenever legal Quiet/Joint provides known denial;
+- no displayed Quiet/Joint seizure route known unable to hold;
+- late Quiet pruned whenever Joint strictly dominates;
+- clean Quiet retained where reserve/politics trade is real;
+- Emergency pruned when valid Quiet/Joint exists;
 - Emergency pruned when it cannot hold but Hold can;
-- Emergency remains last-ditch when no better route holds;
-- pressure/threshold pruning exact.
+- Emergency remains best effort where no better route holds;
+- threshold/receding pruning exact.
 
-## Attribution direction/value
+## Attribution
 
-- directionless credible case invalid;
-- either direction can be physically legal where all Hold predicates hold;
-- safe claim copy and used record preserve exact direction/basis;
+- directionless/one-source case invalid;
+- either direction can be physically legal where Hold predicates hold;
+- claim copy/used record preserve exact basis;
 - direction alone does not change physical result;
-- any direction-specific pruning is supported by #107 complete-state dominance;
-- C5 source use removes C6 Hold without needing a mirrored opportunity state.
+- direction-specific pruning requires #107 dominance proof.
 
 ## Outcome/replay
 
 - Joint improves degraded partner but spends reserve;
-- Hold spends source and preserves exact basis;
+- Hold spends source;
 - final brittle reserve severe;
 - all four classifications reachable;
-- every displayed course non-dominated or creates blocker;
 - no final course universal;
 - terminal transition replay/tamper proof;
 - truth gated;
 - V1 unchanged.
 
-# Rejection conditions
+# 16. Rejection conditions
 
 Reject terminal implementation if it:
 
-- reads a persisted none/tentative/credible opportunity mirror;
-- derives warning from assessment;
-- uses public-claim direction as physical capability;
-- uses a stale C5 case instead of the final C6 #100 basis;
-- fails to persist exact supporting evidence/source groups on use;
+- reads a persisted none/tentative/credible mirror;
+- derives warning from assessment or stale warning history;
+- uses claim direction as physical capability;
+- uses a frozen C5 case instead of final C6 basis;
+- stores generic source groups rather than exact corroboration groups;
 - displays known-futile/dominated routes;
 - keeps late Quiet beside strictly superior Joint;
-- keeps Emergency beside known-valid better routes;
+- keeps Emergency beside valid better routes;
 - offers mobilisation after pressure recedes;
-- treats attribution as source-free;
-- permits Hold after source use;
+- treats attribution as source-free or permits it after use;
 - infers joint authority from sentiment;
 - classifies pre-route state;
 - matches routes to hidden opening posture;
-- lets terminal truth rewrite the case HQ actually used.
+- treats R6 action as intelligence;
+- lets terminal truth rewrite the claim HQ actually used.
