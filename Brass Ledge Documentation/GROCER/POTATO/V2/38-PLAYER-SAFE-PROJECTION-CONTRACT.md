@@ -7,173 +7,203 @@ status: active
 
 Backlink: [[README]]
 
-This is the implementation authority for the V2 server-to-normal-player information boundary. [[23-HQ-BELIEF-AND-EVIDENCE]] owns HQ intelligence semantics, [[25-KESTREL-CONSEQUENCE-MATRIX]] owns persisted directional attribution state, [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns cross-issue authority and [[27-KESTREL-TERMINAL-MATRIX]] owns final route legality.
+This is the implementation authority for the V2 server-to-normal-player information boundary.
 
-# Product rule
+- [[23-HQ-BELIEF-AND-EVIDENCE]] owns HQ intelligence meaning.
+- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns derived/internal types.
+- [[23C-HQ-BELIEF-EVIDENCE-CATALOG]] owns safe evidence/copy refs.
+- [[25-KESTREL-CONSEQUENCE-MATRIX]] owns persisted irreversible source use.
+- [[26-LATTICE-COLLECTION-MATRIX]] owns delegated Lattice task flow.
+- [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns package authority.
+- [[27-KESTREL-TERMINAL-MATRIX]] owns final-route legality.
 
-Hidden information should be impossible to leak accidentally because the normal player DTO simply does not contain it.
+# 1. Product rule
+
+Hidden information should be difficult to leak accidentally because the normal player DTO simply does not contain it.
 
 Never send raw V2 session/state to browser/headless and rely on presentation to ignore private fields.
 
 Safe projection derives only from:
 
-- derived HQ player-safe intelligence brief;
+- bounded HQ player-safe intelligence brief;
 - public/known campaign records;
 - standing direction/known commitments/capability;
-- authoritative agenda/recommendations;
+- authoritative agenda/recommendations/task default;
 - legitimately observable world/crisis effects.
 
-# Forbidden normal-player fields
+# 2. Forbidden normal-player fields
 
-No direct/nested:
+No direct or nested:
 
-- hidden Ravellan posture;
-- hidden seizure-preparation enum;
+- hidden Ravellan posture/preparation;
 - raw `AdversaryObservation`;
 - raw Ravellan action/policy-row IDs;
 - raw collection selector inputs/action history;
 - raw #100 source facts;
-- raw evidence-definition lookup tables;
+- evidence-definition/producer mapping tables;
+- evidence `basisPattern`, diagnosticity or role-current-through cycles;
+- evidence occurrence origins, ledger refs, revisions or hashes;
 - private player/system ledger entries;
-- pre/post hashes/digests not required for mutation;
 - oracle/counterfactual state;
-- future branches/predicted terminal result;
+- future branches/predicted result;
 - score/win probability;
 - numeric/categorical intelligence confidence;
 - internal `weak/conflicted/coherent` labels;
-- internal `indicator/diagnostic` labels;
-- internal public-case-basis enum before #101 creates a legitimate player-known opportunity;
+- internal public-case basis/state/support IDs;
 - raw sim fields merely because serialisable.
 
-Allowed safe authority metadata includes revision, safe issue/order IDs, public state enums and explicit personal-attention requirement.
+Allowed safe authority metadata includes current revision, safe issue/order/target IDs, public state enums and explicit attention/compatibility semantics.
 
-# Strict modes
+# 3. Strict projection modes
 
-Use strict unknown-key-rejecting discriminated schemas equivalent to:
+Use strict unknown-key-rejecting discriminated schemas for:
 
-- opening-intent;
-- command-room;
-- consequence-reveal;
-- terminal-debrief.
+- opening intent;
+- Command Room;
+- consequence reveal;
+- terminal debrief.
 
 No giant nullable raw-state DTO.
 
-# Opening intent
+# 4. Opening intent
 
-May include player-safe scenario identity/title, revision, four question/answer IDs/copy and known opening situation. Never seeded Ravellan state.
+May include safe scenario identity/title, revision, four question/answer IDs/copy and known opening situation.
 
-# Command Room projection
+Never include seeded Ravellan state.
 
-## Header
+# 5. Command Room header and standing direction
+
+Header:
 
 - cycle;
 - revision;
 - safe situation/change;
-- personal-attention limit/usage;
-- known deadlines/commitment/capability notices.
+- normal personal-attention limit/usage;
+- known deadlines/commitments/capability notices.
 
-## Standing direction
+Standing direction uses stable safe IDs/copy only.
 
-Stable safe IDs/copy only.
+# 6. Intelligence Chief brief
 
-## Intelligence Chief brief
-
-The normal intelligence surface is **bounded and decision-oriented**, not an evidence dashboard.
+The required intelligence surface is bounded and decision-oriented.
 
 Expose safe semantics equivalent to:
 
 - one `judgementRef`;
-- max two basis entries;
-- max one contrary entry;
+- at most two basis entries;
+- at most one contrary entry;
 - exactly one `keyGapRef`;
-- zero/one `watchForRef`;
-- zero/one `assessmentChangeRef` when materially changed;
-- zero/one `warningRef` when tactical warning is material;
-- legal named collection questions supplied through capability authority.
+- at most one `watchForRef`;
+- at most one material `updateRef`;
+- a separate warning-status object;
+- safe collection questions/default target supplied through capability authority.
 
-A basis/contrary entry may contain only player-safe refs equivalent to:
+A safe evidence entry may contain only:
 
 ```ts
 {
   summaryRef: string
   sourceContextRef: string
+  limitationRefs: readonly [string] | readonly [string, string]
 }
 ```
 
-`sourceContextRef` tells the player the collection/method context in ordinary language, for example:
+No occurrence ID/origin/class/weight.
 
-- routine coverage;
-- focused collection;
-- dedicated Lattice collection;
-- partner liaison/reporting.
+The normal required path never dumps full evidence history.
 
-It is **not** a reliability/confidence score.
+## Warning status
 
-Do not expose full evidence history on the required path.
+Warning is a separate safe semantic from judgement.
 
-### Warning presentation
-
-Warning is separate from broader judgement.
-
-Preserved meanings:
-
-- warning none — do not invent “low warning” or percentage;
-- warning usable — “We have direct movement worth acting on, even though the wider picture may still be disputed.”
-
-Normal player must be able to encounter:
-
-- preparation judgement with no usable warning;
-- conflicted judgement with usable warning.
-
-UI never infers warning from judgement prose.
-
-### Assessment-change presentation
-
-Show one short line only when useful.
-
-The line must explain **why** the picture changed when the cause is player-relevant:
-
-- new evidence;
-- earlier information becoming stale;
-- a newer observation superseding an older report;
-- mixed causes.
-
-Examples of preserved meaning:
-
-- “Focused collection has narrowed the picture toward preparation.”
-- “Our earlier staging report is now too old to lean on.”
-- “The new direct observation replaces the earlier routine picture.”
-
-Do not expose the internal change/change-cause enums as a meter or timeline ladder.
-
-### Public case / attribution opportunity
-
-#100's internal basis enum is not directly exposed.
-
-When #101 has created a legitimate player-known opportunity, expose a safe discriminated summary equivalent to:
+Equivalent DTO:
 
 ```ts
-{ state: "none" | "tentative" }
-| {
-    state: "credible" | "used"
-    claimRef: string
-  }
+{ state: "usable"; statusRef: "intel.warning.usable" }
+| { state: "none"; statusRef: "intel.warning.none-late" }
+| { state: "not-emphasised" }
 ```
 
-The `claimRef` must preserve what the case actually substantiates, e.g.:
+Rules:
 
-- “We can substantiate a real seizure-preparation sequence.”
-- “We can substantiate a coercive/deceptive pressure operation.”
+- at C5 and C6, exactly one of `usable` or `none` is projected;
+- at C1–C4, `not-emphasised` is permitted when no warning exists, but any usable warning must be shown;
+- warning-none is never inferred from an absent component at C5/C6;
+- UI never parses judgement text to infer warning.
 
-Do not expose raw internal direction enum if content architecture already provides a safe semantic ref.
+The surface must safely support all algebraically legal #100 combinations, including `coercion / weak + usable warning`, even though that combination is not currently producer-reachable.
 
-A generic “credible case” label with no subject is rejected.
+## Basis-pattern-safe copy
 
-If state is `used`, preserve the safe claim label for consequences/debrief; later evidence may not silently rewrite what was publicly claimed.
+The internal `basisPattern` never appears in JSON.
 
-# Public state
+It selects the exact safe gap/watch mapping in 23C, which distinguishes:
 
-Safe summaries for:
+- indicator-only direction;
+- diagnostic direction qualified by contrary indicators;
+- indicator conflict;
+- diagnostic conflict;
+- warning overlays.
+
+Two internal histories may share the same judgement sentence but require different gap/watch copy.
+
+## Update explanation
+
+Project at most one material update line.
+
+It may explain:
+
+- new/tasked evidence;
+- warning gained/refreshed/lost;
+- assessment change;
+- public action-space change;
+- staleness;
+- supersession;
+- mixed causes.
+
+Do not expose internal enum labels as a progress meter.
+
+A newly gained/lost warning, newly actionable public case or player-tasked result cannot be suppressed merely because the judgement sentence is unchanged.
+
+# 7. Public attribution projection
+
+Do **not** expose a `none → tentative → credible` ladder. That would turn the internal public-case reducer into another player-facing meter.
+
+Before source use, normal Command Room exposes either:
+
+```ts
+{ state: "unavailable" }
+```
+
+or, only when the current #100 basis is credibly corroborated and #101 source use is unspent:
+
+```ts
+{
+  state: "available"
+  claimRef: "intel.public-claim.preparation" | "intel.public-claim.coercion"
+  sourceCostRef: string
+}
+```
+
+The raw basis direction/support IDs remain internal. Safe claim copy tells the player what can be substantiated.
+
+After use, public state/debrief may expose:
+
+```ts
+{
+  state: "used"
+  claimRef: "intel.public-claim.preparation" | "intel.public-claim.coercion"
+  usedCycle: 5 | 6
+}
+```
+
+Later evidence/terminal truth never rewrites the used claim.
+
+A generic subjectless “credible case” is invalid.
+
+# 8. Public campaign state
+
+Safe summaries may include:
 
 - Beacon exposure/preparation;
 - reserve;
@@ -183,19 +213,22 @@ Safe summaries for:
 - political concession;
 - liaison obligation;
 - Lattice progress/operational/unreachable;
-- attribution opportunity + safe claim label when legitimately known.
+- used Lattice target IDs as safe history;
+- current public-claim opportunity as absent/available/used safe form.
 
-# Safe terminal crisis family
+# 9. Safe terminal crisis family
 
 At C6 expose only:
 
-- seizure-underway;
-- threshold-confrontation;
-- pressure-receding.
+- `seizure-underway`;
+- `threshold-confrontation`;
+- `pressure-receding`.
 
-Never raw #99 terminal action IDs.
+Never raw #99 terminal action IDs/rows.
 
-# Agenda issue / alternative
+The intelligence section is labelled as the pre-manifestation picture and remains separate from the overt crisis.
+
+# 10. Agenda issue and alternative
 
 For each issue expose:
 
@@ -206,155 +239,200 @@ For each issue expose:
 - visible concern/dissent;
 - legal alternatives/copy;
 - Defer availability;
-- `requiresIntervention` / attention cost where applicable;
+- `requiresIntervention` / normal attention cost;
 - known immediate/commitment/source cost;
-- safe cross-issue requirement/conflict refs.
+- safe package requirement/conflict refs.
 
-UI must not infer exceptional authority from labels/prose.
+UI never infers exceptional authority from labels/copy.
 
-## Exact commander-only projection
+Exactly these may project `requiresIntervention = true`:
 
-Exactly these three may project `requiresIntervention = true`:
+- C2 `public-accusation`;
+- C4 `request-partner-liaison`;
+- C5 `use-attribution`.
 
-- C2 public-accusation;
-- C4 request-partner-liaison;
-- C5 use-attribution.
+None appears as staff intended course.
 
-They never appear as staff intended course.
+C5 attribution Use copy includes:
 
-For C5 attribution use, safe copy must include:
-
-- one-shot opportunity;
+- the exact safe current claim;
+- one-shot nature;
 - protected-source exposure;
-- compatible immediate authority;
-- the **specific current credible claim** being exposed.
+- compatible authority requirement;
+- one normal intervention.
 
-# Task Collection
+# 11. Lattice Task Collection projection
 
-Expose eligible target IDs/copy as separate zero-normal-intervention action.
+When Lattice is operational, project a separate zero-normal-intervention task object equivalent to:
 
-Do not expose hidden result tables/selector facts.
+```ts
+{
+  kind: "task-collection"
+  cycle: 4 | 5
+  recommendedTargetId: "landing-force-staging" | "auxiliary-tasking" | "operational-sequence"
+  eligibleTargets: readonly Array<{
+    targetId: string
+    questionRef: string
+    purposeRef: string
+  }>
+  attentionCost: 0
+}
+```
 
-If retasking the same target is currently legal under #102, UI may show it again; the copy should make clear that the commander is **rechecking/updating the same question**, not gaining another additive bonus.
+Rules:
 
-# Consequence projection
+- exactly one HQ-recommended unused target;
+- no `collect nothing` target;
+- no already-used target;
+- C5 eligible set excludes the C4 target;
+- focused staging does not remove landing;
+- hidden result branches/selector facts are absent.
+
+The browser may submit only an optional override:
+
+```ts
+{ taskTargetOverride: targetId } | { taskTargetOverride: null }
+```
+
+`null` means accept the authoritative HQ recommendation. The browser never submits the final delegated target as authority.
+
+Sim resolves/persists the final target under #102 and independently validates eligibility.
+
+# 12. Consequence projection
 
 May include:
 
-- cycle resolved/revision;
+- cycle/revision;
 - 1–5 material safe beats;
-- safe causal attribution;
+- safe causality;
 - player/history callbacks;
-- updated public state/authority summaries;
-- updated intelligence change/warning where material;
+- updated public state/authority;
+- intelligence update/warning status where material;
 - unresolved pressure;
 - safe progression action.
 
-Private truth provenance discarded before serialization.
+Private truth provenance is discarded before serialization.
 
 Terminal consequence projection uses post-route state.
 
-# Terminal debrief
+# 13. Terminal debrief
 
 Only terminal-complete replay-valid session receives terminal truth.
 
 ## `whatHqBelieved`
 
-Reconstruct major **player-safe historical** briefs from [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]].
-
-Include where material:
+Reconstruct historical player-safe briefs exactly, including:
 
 - judgement;
-- bounded basis/contrary entries with source context;
-- gap/watch-for;
-- warning;
-- assessment-change line as it appeared then;
-- safe public-case claim/opportunity state available then.
+- bounded basis/contrary entries with source/limitations;
+- gap/watch;
+- warning status as it existed;
+- material update line;
+- safe public claim available/used at that point.
 
-Stale/superseded historical evidence remains reconstructible; terminal truth cannot rewrite or delete what HQ actually had at the time.
+Stale/superseded evidence remains reconstructible historically. Terminal truth cannot rewrite it.
 
 ## `whatActuallyHappened`
 
-Dedicated debrief-safe truth may explain opening posture, transitions, preparation progression, genuine/deceptive signals, final policy reason and final-route interaction.
+May explain opening posture, transitions, preparation progression, genuine/deceptive signals, final policy reason and route interaction through dedicated debrief-safe fields.
 
-Never serialize raw private session/world even here.
+Never serialize raw private session/world.
 
-If the commander publicly used attribution, debrief must preserve the **claim actually used** separately from what terminal truth later showed.
+If attribution was used, preserve the claim actually made separately from terminal truth.
 
-# Hidden-truth non-interference
+# 14. Hidden-truth non-interference
 
-Use pure narrow projection functions. Normal browser/headless path receives parsed strict safe DTOs only; no debug truth flag.
+Normal browser/headless paths receive parsed strict safe DTOs only; no debug-truth flag.
 
-Paired sessions with different hidden truth but identical legitimate HQ evidence/public/standing/capability/observable inputs must project deep-equal normal semantics.
+Paired sessions with different hidden truth but identical legitimate evidence/public/standing/capability/observable inputs must project deep-equal normal semantics.
 
-If hidden truth first changes a legitimate observation, safe DTO may differ only through that path.
+If hidden truth changes a legitimate observation first, safe DTO may differ only through that path.
 
-# Mutation boundary
+# 15. Mutation boundary
 
 Player may submit only:
 
 - opening standing choices;
 - issue dispositions/intervention order IDs;
-- legal Task Collection target;
+- optional legal Lattice target override;
 - final terminal course;
-- expectedRevision.
+- `expectedRevision`.
 
-Player may not submit recommendation, delegated final order, consequence patches, HQ evidence/assessment/warning/public-case state, Ravellan state/action, partner-authority result or terminal outcome.
+Player may not submit:
 
-`requiresIntervention` is read-only server-derived authority metadata.
+- recommendation/delegated final order;
+- final delegated Lattice target;
+- consequence patches;
+- HQ evidence/assessment/warning/public-case state;
+- public claim direction/support basis;
+- Ravellan state/action;
+- partner-authority result;
+- terminal outcome.
 
-# Cross-issue refs
+# 16. Cross-issue refs
 
 DTO may expose safe refs such as:
 
 - personal intervention required;
 - visible action needs compatible partner authority;
-- public attribution spends this specific one-shot source/case;
+- attribution spends this specific one-shot source/claim;
 - draft conflicts with authority choice.
 
-No hidden truth/predicted outcome.
+No hidden prediction.
 
-All-Delegate package is legal by construction; changed draft may become incompatible. UI may explain/prevent but never silently repair; server validates.
+All-Delegate package is legal by construction. Modified draft may become incompatible; UI may explain/prevent but never silently repair. Server/sim validates.
 
-# Readout / replay stability
+# 17. Readout/replay stability
 
-Prefer stable semantic refs rather than locale prose in canonical derived content.
+A session projected under the same ruleset/content identity reproduces equivalent safe semantics.
 
-A session projected under same ruleset/content identity must reproduce equivalent safe semantics.
+The #100 belief model and future #102 collection model participate in Kestrel content identity. Used public claim history is replayable persisted state.
 
-The #100 evidence/readout model and #101 directional attribution semantics participate in Kestrel content/replay identity under their owning contracts.
+# 18. Required tests
 
-# Required tests
+Prove:
 
-At minimum prove:
-
-- strict schemas reject private/unknown fields;
-- raw V2 session/state cannot parse as player DTO;
+- strict schemas reject unknown/private fields;
+- raw session/state cannot parse as player DTO;
 - opening excludes seeded Ravellan state;
-- paired hidden-truth projections equal when legitimate inputs equal;
-- no raw adversary action/observation/row/ledger/hash/future branch leaks;
-- no raw #100 source facts/model tables/internal picture/diagnostic/public-case enum leaks;
-- every directional basis entry includes safe sourceContextRef;
-- Intel brief respects 2-basis/1-contrary/1-gap/1-watch-for bounds;
-- preparation assessment + warning none distinct from usable warning;
-- conflicted assessment + warning usable representable;
-- browser cannot infer warning from judgement text;
-- staleness-driven assessment change explains staleness rather than silently changing wording;
-- supersession-driven change explains replacement;
-- credible attribution exposes a **specific safe claim label**, never generic directionless credible;
-- used claim label remains stable through terminal debrief;
-- exactly three Kestrel courses project requiresIntervention;
-- none of them recommendation/delegable;
-- known cost descriptors present without hidden outcome leakage;
-- Task Collection exposes zero-token choices and legal retask semantics but no hidden result branch;
-- C5 partner-authority safe;
-- C6 only safe crisis family/pruned routes;
-- non-terminal debrief request fails closed;
-- terminal whatHqBelieved equals historical safe semantics rather than hindsight;
-- terminal truth only explicit debrief-safe fields;
-- terminal consequence state post-route;
+- paired hidden-truth projections equal where legitimate inputs equal;
+- no raw action/row/observation/ledger/hash/source-fact/model table leaks;
+- no internal picture/diagnostic/basisPattern/public-case enum leaks;
+- basis/contrary entries include source context and one/two limitation refs;
+- brief bounds hold;
+- all 15 algebraic basis-pattern/warning states project valid safe semantics;
+- C5/C6 explicit usable/none warning status;
+- warning gain/refresh/loss and staleness/supersession updates cannot be silently suppressed;
+- public opportunity projects only unavailable/available/used with exact safe claim;
+- one-source/tentative internal case never creates an available public action;
+- used claim remains stable through debrief;
+- exactly three courses require intervention and none is delegable;
+- known costs present;
+- Lattice object always has one recommended unused target and no no-task/repeat;
+- optional override only; client cannot author final delegated target;
+- focused staging does not remove landing;
+- C5 partner authority safe;
+- C6 only safe crisis/pruned routes;
+- non-terminal debrief fails closed;
+- `whatHqBelieved` equals historical safe semantics rather than hindsight;
+- terminal state is post-route;
 - V1 DTO/API unchanged.
 
-# Rejection conditions
+# 19. Rejection conditions
 
-Reject V2 projection if it serialises raw session/state then redacts in React, exposes unused private state, permits debug truth, leaks confidence/diagnostic/public-case internals, omits source/method context entirely, silently changes judgement because evidence aged out, infers warning from judgement copy, exposes a generic directionless credible attribution case, lets later evidence rewrite the claim already used publicly, dumps full evidence history into required play, lets UI infer commander authority, omits known costs, permits exceptional course through Delegate, exposes raw #99 terminal IDs/predicted outcomes or lets client-supplied derived state become authority.
+Reject projection if it:
+
+- serialises raw session/state then redacts in React;
+- exposes unused private fields or debug truth;
+- leaks confidence/diagnostic/basis/public-case internals;
+- omits evidence limitation context;
+- hides warning-none at C5/C6;
+- silently changes judgement because evidence aged/replaced;
+- exposes none/tentative/credible as a progression meter;
+- exposes a subjectless public case or lets later truth rewrite a used claim;
+- lets client submit final delegated task or no-task/repeat target;
+- dumps full evidence history into required play;
+- infers commander authority in UI;
+- permits exceptional Delegate;
+- exposes raw terminal IDs/predicted outcomes;
+- accepts client-supplied derived state as authority.
