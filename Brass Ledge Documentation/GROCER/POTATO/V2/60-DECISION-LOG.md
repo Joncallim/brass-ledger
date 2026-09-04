@@ -19,46 +19,55 @@ Backlink: [[README]]
 | D8 | Standing direction is four plain-language questions applied red line → priority → style → tolerated cost. | Persistent strategy identity without a hidden score. |
 | D9 | Kestrel is a six-cycle laboratory, not the final campaign. | Test the core loop before breadth. |
 | D10 | Intelligence uses bounded authored evidence + natural language; machine balance remains non-scalar; fun is human-only. | Avoid confidence meters, scalar optimisation and synthetic fun claims. |
-| D11 | HQ belief has one `ravellan-intent` claim with direction + picture state. | Enough uncertainty for Kestrel without generic intelligence architecture. |
-| D12 | Recommendation uses recommendation-applicable courses → command direction → commitment → authored chief tie. | Staff follows the commander before chief preference; no weighted utility. |
+| D11 | HQ intelligence has one bounded claim, `ravellan-intent`, rather than a generic multi-claim intelligence framework. | Enough uncertainty structure for Kestrel while keeping implementation/testability concrete. |
+| D12 | Recommendation uses recommendation-applicable courses → command direction → commitment → authored chief tie. | Staff follows commander before chief preference; no weighted utility. |
 | D13 | Persistent consequence state remains concrete Kestrel records. | Causal meaning and recovery over universal meters. |
-| D14 | Lattice needs all three scheduled advances; a missed build retains the narrower one-token liaison fallback. | Sustained qualitative build without making Lattice mandatory. |
+| D14 | Lattice needs all three scheduled advances; missed build retains a narrower one-token liaison fallback. | Sustained qualitative build without making Lattice mandatory. |
 | D15 | Final route depends on campaign-built player-known state, not hidden opening posture. | Prevent secret-state rock-paper-scissors. |
-| D16 | Command Room defaults locally to Delegate while the authoritative package remains explicit. | Player acts on exceptions rather than approving routine work. |
+| D16 | Command Room defaults locally to Delegate while authoritative package remains explicit. | Player acts on exceptions rather than approving routine work. |
 | D17 | Headless lab includes Decision Elasticity and strategy probes. | Detect fake/decorative choices before human time. |
 | D18 | Long-form Command Windows/Bets/chief memories/builds remain provisional post-gate. | Preserve direction without contaminating Kestrel. |
 | D19 | Directed collection reads only target-authorised physical/action-history facts; hidden posture alone never changes a sensor result. | Prevent an intent oracle. |
-| D20 | C1 formal consultation is not Political's universal baseline; informal liaison wins the final tie unless standing partner direction selects commitment. | Binding promises follow command philosophy or explicit intervention. |
-| D21 | Cross-issue effects derive from the complete atomic command package and are order-independent. | Prevent issue/array order from deciding state. |
+| D20 | C1 formal consultation is not Political's universal baseline; informal liaison wins final tie unless standing partner direction selects commitment. | Binding promises follow command philosophy or explicit intervention. |
+| D21 | Cross-issue effects derive from complete atomic command package and are order-independent. | Prevent issue/array order from deciding state. |
 | D22 | C5 has explicit `partner-authority = pending|none|joint|unilateral|concession`. | Relationship health and permission to act are different. |
 | D23 | Exactly C2 `public-accusation`, C4 `request-partner-liaison`, and C5 `use-attribution` are `requiresIntervention = true`. | Exceptional political/intelligence authority must never occur accidentally through standing style/priority or Delegate. |
-| D24 | Quiet is the restrained non-seizure fallback; final courses mutate authoritative state before classification; successful Emergency carries `emergency-surge`. | Prevent irrational escalation and prose-only terminal costs. |
-| D25 | `usableWarning` is a preparation-direction HQ assessment, not generic credible attribution. | Coercion evidence is not seizure warning. |
+| D24 | Quiet is restrained non-seizure fallback; final courses mutate authoritative state before classification; successful Emergency carries `emergency-surge`. | Prevent irrational escalation and prose-only terminal costs. |
+| D25 | **Tactical warning is a separate #100 product from intent assessment.** `usableWarning` derives only from active preparation evidence explicitly marked as a usable physical warning signpost. | “We think they are preparing” is not the same as “we can see enough physical movement to react in time.” |
 | D26 | #107 plus the 3-player formative smoke precede the main browser tranche. | Falsify structure/loop before polish. |
 | D27 | The untouched all-Delegate staff package must always be legal. | Implicit delegation fails if HQ's own defaults conflict. |
-| D28 | An active C1 formal channel provides rapid C5 consultation; ordinary Honour without it is too slow for a same-cycle sensitive action but can create C6 joint authority. | Makes consultation-vs-tempo real. |
+| D28 | Active C1 formal channel provides rapid C5 consultation; ordinary Honour without it is too slow for same-cycle sensitive action but can create C6 joint authority. | Makes consultation-vs-tempo real. |
 | D29 | Attribution is one-shot: C5 use changes `credible → used` and removes C6 Hold And Expose. | Creates a real use-now-vs-preserve decision. |
-| D30 | C2 `reroute-and-monitor` queues an indicator-only auxiliary clue active C3–C5. | Prevent reroute from becoming quiet escort with greater civilian harm. |
+| D30 | C2 `reroute-and-monitor` queues an indicator-only auxiliary clue C3–C5. | Prevent reroute from becoming quiet escort with greater civilian harm. |
 | D31 | C5 visible reinforcement emits targeted discovery; quiet reinforcement does not. | Gives visible reinforcement a unique C6 deterrence path. |
 | D32 | C5 coalition→Ravellan observations package-compose to at most one non-contradictory value per signal/effective point. | Prevent replay-invalid simultaneous observations. |
 | D33 | #107 includes player-safe local dominance across hidden realities compatible with the same legitimate player information. | Catch elastic traps while preserving meaningful uncertainty. |
-| D34 | Exact coalition→Ravellan emissions are closed in [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]]. | Policy rows relied upon by the product must be reachable through normal play. |
-| D35 | Public attribution is one-shot and source-sensitive: C5 use or C6 Hold And Expose exposes/compromises the protected source as a known severe cost. | Prevent free information/political upside. |
+| D34 | Exact coalition→Ravellan emissions are closed in [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]]. | Policy rows relied upon by product must be reachable through normal play. |
+| D35 | Public attribution is one-shot and source-sensitive: C5 use/C6 Hold exposes or compromises protected source as known severe cost. | Prevent free information/political upside. |
 | D36 | C6 prunes player-safe dominated responses using only overt crisis + known state. | Painful choices are good; known self-harm buttons are not. |
-| D37 | `reserve_exhaustion_signal` is produced only from qualifying C2–C4 history where a later normal Ravellan decision can consume it; C5 emits none. | Remove dead state retained only for symmetry. |
-| D38 | Seizure legality uses known physical adequacy/fallback hierarchy: futile Quiet/Joint are pruned; late Quiet is pruned when Joint dominates; Emergency is fallback-only while preserving a doomed best-effort response if nothing else can hold. | Ensure at least one response without deterministic losing/dominated buttons. |
-| D39 | Political repair/signalling follows command-by-exception: C2 silence and C3 routine contact are staff baselines; joint warning/reassurance become free delegated actions only when standing partner priority/style selects them, otherwise they cost personal intervention. | Prevent beneficial political actions from becoming universal free HQ improvements. |
-| D40 | Player-safe local dominance compares complete legal packages including intervention opportunity cost, not isolated order effects. | A beneficial intervention is not automatically dominant if it consumes one of two scarce interventions and forecloses another response. |
-| D41 | Final C5 Political authority tie is deterministic after package feasibility, protected-boundary, priority/style/cost and commitment filtering: compatible Honour > Concession > Act; without Honour, `conditional|withdrawn` prefers Concession > Act, while `cooperative|uneasy` prefers Act > Concession. | Remove the last array-order ambiguity while preserving command direction and avoiding unnecessary concession/breach. |
+| D37 | `reserve_exhaustion_signal` only from qualifying C2–C4 history where later normal Ravellan policy can consume it; C5 emits none. | Remove dead state kept for symmetry. |
+| D38 | Seizure legality uses known physical adequacy/fallback hierarchy: futile Quiet/Joint pruned; late Quiet pruned when Joint dominates; Emergency fallback-only while preserving doomed best-effort response if nothing else holds. | Ensure at least one response without deterministic losing/dominated buttons. |
+| D39 | Political repair/signalling follows command-by-exception: C2 silence/C3 routine contact are staff baselines; joint warning/reassurance delegate only when standing partner direction selects them, otherwise they cost personal intervention. | Prevent beneficial political actions from becoming universal free HQ improvements. |
+| D40 | Player-safe local dominance compares complete packages including intervention opportunity cost, not isolated order effects. | Beneficial intervention is not automatically dominant if it consumes scarce attention and forecloses another response. |
+| D41 | Final C5 Political authority tie is deterministic after package feasibility, protected-boundary, priority/style/cost and commitment filtering: compatible Honour > Concession > Act; without Honour, `conditional|withdrawn` prefers Concession > Act, while `cooperative|uneasy` prefers Act > Concession. | Remove final array-order ambiguity while preserving command direction. |
+| D42 | **#100 HQ intelligence is pure derived state (Pattern B).** No persisted belief/evidence, no new ledger kind/revision, no `0.5.0` bump. | #99 already persists every authoritative history fact Kestrel needs; duplicating belief would add tamper/version surface without gameplay value. |
+| D43 | #100 derives three orthogonal intelligence products: intent assessment, tactical warning, and public-case basis. | Real command decisions depend differently on estimate, actionable warning and evidence usable publicly; one “confidence” state would collapse meaningful strategy. |
+| D44 | #100 uses a four-layer information boundary: verified hidden history → authorised observation extractor → bounded source fact → evidence mapper → reducers/player brief. | Prevent analytic code from seeing arbitrary hidden state and make posture leakage structurally difficult rather than merely prohibited by comment. |
+| D45 | C3 `combat-elements-dispersed` is bounded routine-coverage reporting, not omniscient global truth. | Mandatory conflict must represent incomplete observation, not an engine lie that secretly knows every formation. |
+| D46 | Action-specific world situation prose never becomes analytic evidence; only explicit observation/evidence rules can change HQ analysis. | Preserve rich narrative variation without turning prose/content writers into covert intelligence oracles. |
+| D47 | #100 derived semantics have canonical content identity `kestrel-hq-belief-v1`; #103 must include its semantic definition/digest in Kestrel's eventual `contentDigest`. | Pure derivation can still rewrite historical meaning if semantics drift under the same identity; content identity protects replay/readout history without a schema bump. |
+| D48 | C5 Operations uses tactical warning as an explicit professional input: usable warning prefers quiet reinforcement > visible > hold after higher command filters; preparation assessment without warning uses the same preparatory tie but gets no warning-specific terminal benefit. | Actionable physical warning must matter even when wider intent remains disputed, while commander's standing red line still outranks professional preference. |
+| D49 | Lattice target roles are intentionally non-equivalent: landing staging is strongest for physical warning; auxiliary tasking is strongest for diagnostic coercion; political/operational sync is strongest for sustained preparation sequence/public case and its negative coercion branch remains only an indicator. | Named collection should change what kind of decision advantage is gained, not merely the wording/amount of evidence. |
+| D50 | #100 internal public-case basis never directly unlocks C5 attribution; #101 persists the one-shot opportunity and `used|expired` remain terminal. | Keep analytic judgement separate from campaign commitment/source-consumption history and prevent later evidence from resurrecting a spent source. |
 
 ## Resolved product blockers
 
 | Blocker | Resolution | Primary authority |
 | --- | --- | --- |
-| B1 — intent/delegation | Responsible officer + dissent + four-question standing direction + explicit exceptional commander authority + deterministic C5 package tie. | D7–D8/D23/D39/D41, [[24-STAFF-RECOMMENDATION-POLICY]], [[36-KESTREL-AGENDA-COURSE-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] |
+| B1 — intent/delegation | Responsible officer + dissent + four-question standing direction + exceptional commander authority + deterministic C5 package tie. | D7–D8/D23/D39/D41, [[24-STAFF-RECOMMENDATION-POLICY]], [[36-KESTREL-AGENDA-COURSE-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] |
 | B2 — six-cycle game | Canonical Kestrel cycle/content model. | D9, [[20-VERTICAL-SLICE]], [[21-KESTREL-SIX-CYCLE-CANON]] |
-| B3 — intelligence | Bounded evidence/natural language; no confidence metric. | D10–D11, [[23-HQ-BELIEF-AND-EVIDENCE]], [[26-LATTICE-COLLECTION-MATRIX]] |
-| B4 — machine diagnostics | Pareto + elasticity + intervention-aware local dominance + dead-state + oracle frontier. | D17/D33/D37/D38/D40, [[31-HEADLESS-DESIGN-LAB]], [[40-EVALUATION-CONTRACT]] |
+| B3 — intelligence | Pure derived evidence/history, separate assessment/warning/public-case products, four-layer observation boundary, bounded brief and content-identity guard. | D10–D11/D19/D25/D42–D50, [[23-HQ-BELIEF-AND-EVIDENCE]], [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]], [[26-LATTICE-COLLECTION-MATRIX]], [[38-PLAYER-SAFE-PROJECTION-CONTRACT]] |
+| B4 — machine diagnostics | Pareto + elasticity + intervention-aware local dominance + intelligence orthogonality/target relevance + dead-state + oracle frontier. | D17/D33/D37/D38/D40/D43/D49, [[31-HEADLESS-DESIGN-LAB]], [[40-EVALUATION-CONTRACT]] |
 | B5 — human proof | 3-player formative after #107; 8-player formal; human-only pass. | D10/D26, [[35-HUMAN-PLAYTEST-HARNESS]], [[40-EVALUATION-CONTRACT]] |
 | B6 — adversary policy | Exact postures/actions/observations/precedence/preparation/terminal behavior. | [[22-RAVELLAN-EXECUTABLE-POLICY]] |
 
@@ -66,24 +75,24 @@ Backlink: [[README]]
 
 Base subsystem contracts are normalised. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns only complete multi-issue/subsystem composition.
 
-[[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] is the reverse-observation authority. [[27-KESTREL-TERMINAL-MATRIX]] is the terminal authority.
+[[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] is reverse-observation authority. [[27-KESTREL-TERMINAL-MATRIX]] is terminal authority. [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] is the exact #100 code/history/replay seam.
 
 ## Downstream map
 
-- #100 → [[23-HQ-BELIEF-AND-EVIDENCE]], [[37-RAVELLAN-WORLD-EFFECT-MATRIX]], [[30-ARCHITECTURE-CONTRACT]];
+- #100 → [[23-HQ-BELIEF-AND-EVIDENCE]], [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]], [[30-ARCHITECTURE-CONTRACT]], [[37-RAVELLAN-WORLD-EFFECT-MATRIX]], [[38-PLAYER-SAFE-PROJECTION-CONTRACT]];
 - #98 → [[24-STAFF-RECOMMENDATION-POLICY]], [[36-KESTREL-AGENDA-COURSE-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]];
-- #101 → [[25-KESTREL-CONSEQUENCE-MATRIX]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]];
-- #102 → [[26-LATTICE-COLLECTION-MATRIX]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] for liaison/package authority;
-- #103 → [[21-KESTREL-SIX-CYCLE-CANON]], [[36-KESTREL-AGENDA-COURSE-MATRIX]], [[37-RAVELLAN-WORLD-EFFECT-MATRIX]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[27-KESTREL-TERMINAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]];
-- #104 → [[33-HEADLESS-SIX-CYCLE-EXECUTION]], [[30-ARCHITECTURE-CONTRACT]] plus the mechanic authorities above;
-- #107 → [[31-HEADLESS-DESIGN-LAB]], [[40-EVALUATION-CONTRACT]], [[27-KESTREL-TERMINAL-MATRIX]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]];
+- #101 → [[25-KESTREL-CONSEQUENCE-MATRIX]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]], [[30-ARCHITECTURE-CONTRACT]];
+- #102 → [[26-LATTICE-COLLECTION-MATRIX]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]], [[30-ARCHITECTURE-CONTRACT]];
+- #103 → [[21-KESTREL-SIX-CYCLE-CANON]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[26-LATTICE-COLLECTION-MATRIX]], [[27-KESTREL-TERMINAL-MATRIX]], [[36-KESTREL-AGENDA-COURSE-MATRIX]], [[37-RAVELLAN-WORLD-EFFECT-MATRIX]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]];
+- #104 → [[33-HEADLESS-SIX-CYCLE-EXECUTION]], [[30-ARCHITECTURE-CONTRACT]] + mechanic authorities;
+- #107 → [[31-HEADLESS-DESIGN-LAB]], [[40-EVALUATION-CONTRACT]], intelligence/capability/terminal/signal/package authorities above;
 - #105 → [[28-COMMAND-ROOM-INTERACTION-CONTRACT]], [[38-PLAYER-SAFE-PROJECTION-CONTRACT]], [[27-KESTREL-TERMINAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]];
 - #106 → [[29-CONSEQUENCE-REVEAL-CONTRACT]], [[38-PLAYER-SAFE-PROJECTION-CONTRACT]], [[25-KESTREL-CONSEQUENCE-MATRIX]], [[27-KESTREL-TERMINAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]];
-- #108 → [[34-BROWSER-E2E-CONTRACT]] plus [[38-PLAYER-SAFE-PROJECTION-CONTRACT]], [[27-KESTREL-TERMINAL-MATRIX]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]];
+- #108 → [[34-BROWSER-E2E-CONTRACT]] + player-safe/terminal/signal/package authorities;
 - #109/#110 → [[35-HUMAN-PLAYTEST-HARNESS]], [[40-EVALUATION-CONTRACT]], [[80-HUMAN-PLAYTESTS]].
 
 ## Escalation
 
-`BLOCKED: PRODUCT DECISION REQUIRED` — record the missing decision, why code depends on it, options/trade-offs, recommended reversible default and changed code (preferably none).
+`BLOCKED: PRODUCT DECISION REQUIRED` — record missing decision, why code depends on it, options/trade-offs, recommended reversible default and changed code (preferably none).
 
 Do not convert unresolved product questions into implementation truth.
