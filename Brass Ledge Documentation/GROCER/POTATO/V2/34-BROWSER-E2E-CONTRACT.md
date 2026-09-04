@@ -7,249 +7,277 @@ status: active
 
 Backlink: [[README]]
 
-This is the implementation authority for **#108 — proving the browser preserves the authoritative Kestrel game through real web → server → sim → replay**. It verifies mechanics/information integrity, never fun.
+This is the implementation authority for **#108 — proving the real web → server → sim → replay path preserves Kestrel authority and information boundaries**. It verifies mechanics, never fun.
 
-# Start gate
+# 1. Start gate
 
-Do not begin #108 until #105/#106 complete after `#104 → #107 → formative-smoke continuation`.
+Do not begin #108 until #105/#106 complete after:
 
-# Environment
+`#104 → #107 → formative-smoke continuation`.
 
-Use real built web app and production V2 API/DTO path with deterministic fixtures.
+# 2. Environment
 
-Test setup may seed known hidden state outside player route, but production player endpoints never gain hidden/debug truth mode.
+Use the built web app and production V2 API/DTO path with deterministic fixtures.
+
+Test setup may seed hidden state outside the player route; production player endpoints never gain hidden/debug truth mode.
 
 Assert semantic DTO/DOM state, not screenshots alone.
 
-# Full-run golden path
+# 3. Full-run golden path
 
 At least one complete browser run must:
 
 1. declare standing direction;
-2. leave at least one issue untouched at Delegate;
-3. use personal intervention;
-4. create/test real commitment/authority choice;
-5. exercise Lattice or commander-only information/political action;
-6. encounter a material Intelligence-Chief change/gap/warning state;
-7. reach C5 collision;
-8. choose one legal C6 route from pruned set;
-9. show post-route state/classification;
-10. show `What HQ believed` then terminal truth debrief;
-11. export/read session that passes trusted replay.
+2. leave an issue untouched at Delegate;
+3. use a personal intervention;
+4. create/test commitment/authority;
+5. mature Lattice or use commander-only fallback;
+6. accept or override an HQ-selected zero-token target;
+7. encounter material assessment/warning/public-case change;
+8. reach C5 collision;
+9. choose one legal C6 route;
+10. show post-route state/classification;
+11. show historical `What HQ believed`, then terminal truth;
+12. export/import a session that passes trusted replay.
 
-Golden route is coverage, not intended strategy.
+Coverage path is not intended strategy.
 
-# Implicit delegation / complete package
+# 4. Implicit delegation and complete package
 
-Prove untouched issues submit Delegate, server/sim derives final orders, all-Delegate package legal, invalid draft safely explained/prevented, UI never silently alters another issue, and server independently rejects incompatible package if client prevention bypassed.
+Prove:
 
-# Exact commander-only actions
+- untouched issues submit Delegate;
+- server/sim derives final orders;
+- all-Delegate/default-target package legal;
+- invalid draft safely explained/prevented;
+- UI never changes another issue/target silently;
+- server independently rejects incompatibility when client checks are bypassed.
 
-Through production safe DTO/UI prove exactly:
+# 5. Commander-only actions
 
-1. C2 `public-accusation`;
-2. C4 `request-partner-liaison`;
-3. C5 `use-attribution`
+Through production DTO/UI prove exactly:
 
-are `requiresIntervention = true`.
+- C2 public accusation;
+- C4 partner liaison;
+- C5 attribution use
 
-Each never appears as staff intended course, costs one normal token, cannot submit as Delegate, shows known cost/authority before selection, and can be undone where draft semantics allow.
+require one normal intervention, never appear as staff intended action and cannot submit as Delegate.
 
-Hostile cases:
+Hostile:
 
 - visible style never auto-accuses;
-- partner priority/style never auto-burns source;
-- understanding priority never auto-liaises.
+- partner direction never auto-uses source;
+- understanding direction never auto-liaises.
 
-Task Collection costs zero normal interventions.
+# 6. Intelligence DTO/DOM proof
 
-# #100 Intelligence-Chief DTO / DOM proof
-
-Normal production DTO/DOM must represent the bounded #100 brief only:
+Normal DTO/DOM contains only:
 
 - one judgement;
 - <=2 basis facts;
 - <=1 contrary fact;
-- exactly one key gap;
+- one gap;
 - optional watch-for;
-- optional assessment-change message;
-- separate safe warning semantic where material.
+- optional material update;
+- separate warning status;
+- safe public claim only when actionable.
 
-Assert JSON/DOM does **not** expose:
+Each evidence fact contains safe source context + one/two limitations.
 
-- internal `weak|conflicted|coherent` labels;
-- `indicator|diagnostic` labels;
-- internal public-case-basis enum;
-- raw source facts;
-- `kestrelHqBeliefModel` lookup tables;
-- raw preparation/action/posture/policy row;
-- numeric/categorical confidence;
-- full raw evidence history in required command path.
+Never expose:
 
-## Assessment / warning orthogonality fixtures
+- weak/conflicted/coherent;
+- indicator/diagnostic/basisPattern;
+- internal public-case state/support IDs;
+- raw source facts/definition maps/origins/hashes;
+- hidden posture/preparation/action/row;
+- confidence score/band;
+- full evidence history in required command path.
 
-Through production API + UI, prove both:
+## Algebraic presentation totality
 
-### Preparation estimate, no warning
+Fixture-driven production API/DOM tests cover all 15 basis-pattern/warning mappings, including algebraically valid producer-unreachable states.
 
-- Intel judgement communicates preparation;
-- warning field/wording is absent or explicitly no direct warning as authored;
-- C5 recommendation may use preparation-oriented tie;
-- C6 clean Quiet does **not** receive warning-specific benefit.
+## Warning status
 
-### Conflicted estimate, usable warning
+Prove:
 
-- wider judgement remains conflicted;
-- separate warning wording says direct movement/physical signpost is worth acting on;
-- C5 Operations recommendation uses warning-sensitive reinforcement tie after higher command filters;
-- UI never presents this as a contradiction/error.
+- preparation assessment + no current warning;
+- conflicted assessment + current warning;
+- algebraic coercion/weak + warning renders without contradiction;
+- at C5/C6 exactly usable or explicit no-current-warning is shown;
+- browser never parses judgement text to infer warning;
+- stale focused warning disappears from current-warning semantics but not assessment/public evidence;
+- Lattice landing can refresh warning through C6;
+- update copy distinguishes gain/refresh/lost-stale.
 
-The browser must not parse judgement prose to infer warning. Warning comes as explicit server/sim safe semantic.
+## Historical Intel / hindsight
 
-## Historical Intel / hindsight hostile test
+Capture earlier safe DTO. After terminal truth, `whatHqBelieved` must deep-equal the semantics originally available, including source limitations, warning status and claim label.
 
-At terminal completion:
+# 7. Hidden-truth non-interference
 
-- capture safe historical brief/DTO at an earlier decisive cycle;
-- after terminal truth is revealed, `whatHqBelieved` for that cycle must deep-equal the semantics originally available then;
-- truth reveal may explain what actually happened separately;
-- historical judgement/warning/gap cannot be rewritten to match hindsight.
+Paired sessions with different hidden truth but identical legitimate HQ/public inputs produce deep-equal normal semantics.
 
-# Hidden-truth non-interference
-
-Paired sessions with different hidden truth but same legitimate HQ/public inputs must produce deep-equal normal semantics.
-
-Assert normal JSON excludes hidden posture/preparation, raw Ravellan action/row, raw `AdversaryObservation`, private ledger/hash, #100 source facts/model tables, oracle state, probability/future branches.
+JSON excludes hidden state, raw observations/action/row, private ledger/hash, source facts/model tables, oracle/future branches.
 
 C6 receives only safe crisis family.
 
-# World prose vs analysis hostile test
+# 8. World prose versus analysis
 
-Use fixtures where the C4 safe situation prose/manifestation differs across legal Ravellan actions while #100 ordinary analytic evidence remains `cycle4-pressure-pattern-ambiguous`.
+Use C4 fixtures with different safe situation prose but identical ordinary analytic evidence.
 
 Prove:
 
 - situation copy may differ;
-- ordinary Intel evidence/assessment derived from that manifestation does **not** differ unless another authorised observation path differs;
-- no browser/server code parses situation text into analytic state.
+- #100 evidence/products do not differ unless another authorised observation differs;
+- browser/server never parses situation text into analysis.
 
-# Reroute / focused collection / Lattice / liaison
+# 9. Reroute / focused / Lattice / liaison
 
 ## Reroute
 
-Show civilian/political disruption + later indicator-only C3 auxiliary clue. No generic `+intel`, hidden selector/model source fact or posture.
+Show civilian/political cost + C3 coercion indicator or ambiguity, never generic +intel or hidden selector fact.
 
 ## Focused staging
 
-Exercise a buildup result that creates **usable warning without necessarily coherent preparation assessment**. Ensure UI wording separates direct observed movement from broader inference.
+Positive fixture:
+
+- preparation indicator;
+- current warning C4–C5;
+- source/limitation says wider intent unresolved and warning requires refresh for clean C6 reaction.
+
+Negative fixture:
+
+- assessment current C4–C5;
+- public evidence may remain C6;
+- report stays historical after assessment staleness.
 
 ## Lattice
 
-Prove scheduled maturity, target choice, next-update evidence, zero normal token, posture-only result isolation and target differentiation across:
+Prove:
 
-- assessment;
-- warning;
-- public-case/attribution path;
-- later recommendation/route space.
-
-At least one targeted fixture should show sync/auxiliary yielding coherent estimate with warning none while landing can produce warning in another comparable state.
+- exact maturation;
+- one HQ-selected target C4 + one different unused target C5;
+- no no-task or repeat;
+- optional zero-token override only;
+- browser cannot submit final delegated target;
+- focused collection does not remove landing;
+- landing can upgrade focused positive and refresh warning;
+- target IDs are landing-force-staging, auxiliary-tasking, operational-sequence;
+- target orders differ across assessment/warning/public-case/recommendation/route space;
+- no hidden result preview/source fact.
 
 ## Liaison
 
-Prove commander-only, one intervention, indicator-only, obligation, no hidden-posture shortcut, no diagnostic/usable-warning result.
+Commander-only one intervention, obligation, indicator-only, no warning/diagnostic, no hidden shortcut.
 
-# C2 / C3 political baselines
+# 10. C2 / C4 political consequences
 
-Prove active C1 channel + joint warning + visible surge coordinates; no channel worsens partner; joint warning delegates only under partner standing direction; C2 accusation commander-only; C3 routine contact baseline unless partner direction selects reassurance.
+Prove:
 
-# C5 package / warning / authority
+- active channel + joint warning coordinates visible surge;
+- no channel means uncoordinated surge;
+- C2 partner contributions sum/clamp once;
+- reroute + joint warning net/causality exact;
+- reroute + accusation may cause two-step deterioration;
+- uncoordinated surge breaches active promise;
+- C4 press visible always carries partner cost and breaches active promise;
+- C3 reassurance baseline rules exact.
+
+# 11. C5 package / warning / authority
 
 Prove:
 
 - partner authority deterministic;
-- rapid channel + Honour can authorise immediate sensitive action;
-- without channel, Honour remains legal but not same-cycle sensitive authority;
-- Act buys unilateral tempo with package damage;
+- rapid channel + Honour authorises same-cycle sensitive action;
+- Honour without channel remains legal but not same-cycle authority;
+- Act buys unilateral tempo with one package-level political damage;
 - Concession buys coordinated authority at severe cost;
-- withdrawn + Honour legal without access recovery;
+- withdrawn+Honour legal without access recovery;
 - state/order effects invariant to issue order;
-- **warning-sensitive C5 Operations advice is exactly sim-derived and never recomputed in React**.
+- warning-sensitive Operations advice is sim-derived;
+- stale warning cannot retain warning-specific advice/route benefit.
 
-# C5 attribution
+# 12. C5 attribution
 
-When persisted #101 opportunity is credible:
+There is no visible/persisted credibility ladder.
 
-- staff always Holds;
+When current #100 basis is corroborated and source unspent:
+
+- safe available claim appears with exact preparation/coercion subject;
+- staff Holds;
 - player spends one intervention to Use;
-- UI discloses one-shot loss/source exposure/authority before selection;
-- Use → used, no regeneration;
-- #100 internal public-case basis is never directly exposed as a bypass/unlock.
+- UI discloses one-shot source/authority cost;
+- client submits only Use, never direction/support basis;
+- sim persists exact `usedAtCycle`, direction, two evidence IDs and two distinct corroboration groups;
+- later evidence cannot regenerate/relabel;
+- #100 internal state never leaks.
 
-# Consequence reveal
+# 13. Consequence reveal
 
-Exercise delegated/personal callbacks, promise/authority, information changes, net C5 effects.
+Exercise delegated/personal callbacks, promise/authority, net C2/C5 effects, target results and warning gain/refresh/loss.
 
-Reveal must distinguish:
+Reveal distinguishes:
 
-- wider assessment;
-- tactical warning;
-- what evidence arrived;
-- what remains unresolved.
+- assessment;
+- current warning;
+- evidence/source/limitation;
+- unresolved question.
 
 No hidden truth/oracle/right-answer language.
 
-# C6 route pruning / outcomes
+# 14. C6 route pruning / outcomes
 
-Match [[27-KESTREL-TERMINAL-MATRIX]] exactly.
+Match 27 exactly.
 
-Pressure receding: Quiet; Hold only where meaningful; no Joint/Emergency.
+Prove:
 
-Threshold: Quiet; Hold under predicates; Joint only for value over Quiet; no Emergency.
+- pressure receding: Quiet; Hold only where meaningful; no Joint/Emergency;
+- threshold: Quiet; conditional Hold/Joint; no Emergency;
+- seizure: no known-futile Quiet/Joint;
+- clean Quiet requires current warning, not stale report/preparation estimate;
+- late Quiet pruned when Joint dominates;
+- Emergency absent when valid better denial exists;
+- Emergency absent when unable to hold but Hold can;
+- Emergency remains last-ditch when no better route;
+- Hold uses current C6 corroborated case + unspent source + physical/partner predicates;
+- source-use exact claim/basis persists;
+- all four outcomes reachable;
+- post-route state authoritative.
 
-Seizure:
+# 15. Replay / accessibility / V1
 
-- no displayed Quiet/Joint known unable to hold;
-- clean Quiet requires separate #100 warning;
-- late Quiet absent when Joint dominates;
-- Emergency absent when legal Quiet/Joint already provides known denial;
-- Emergency absent when unable to hold and legal Hold can;
-- Emergency remains last-ditch when no better viable route exists;
-- Hold requires unspent attribution/access/physical predicates/source cost.
+Golden and hostile runs pass trusted replay/export/import.
 
-Exercise all final families where legal/useful and all four outcomes. Post-route state must match authoritative effects.
+#100 products never appear as duplicate persisted state; after import they reconstruct from replay-valid history + exact content model.
 
-# Replay / accessibility / V1
+At least one complete command/reveal cycle keyboard-only with semantic labels/status/errors.
 
-Golden and hostile runs pass trusted replay/export.
+Retain focused V1 E2E.
 
-#100 derived intelligence never appears as duplicate persisted ledger/state; after import it is reconstructed from replay-valid session + trusted content model.
+# 16. Closure proof
 
-At least one command/reveal cycle keyboard-only with semantic labels/status/errors.
+#108 remains open until evidence covers:
 
-Retain focused V1 E2E under V1 semantics.
-
-# Closure proof
-
-#108 remains open until proof includes:
-
-- full six-cycle authoritative browser run;
-- implicit delegation/package authority;
+- complete six-cycle browser run;
+- implicit delegation/default target authority;
 - exact commander-only actions;
 - stale-write safety;
 - strict hidden DTO boundary;
-- assessment/warning orthogonality;
-- historical Intel/no-hindsight rewrite;
+- all 15 intelligence presentation states;
+- warning currency/refresh/loss;
+- historical no-hindsight rewrite;
 - world-prose/analysis separation;
-- signal timing/composition/dead-state safety;
-- reroute/focused/Lattice/liaison paths;
-- political baselines/C2 coordination;
-- C5 warning/tempo/authority/source attribution;
-- exact terminal pruning/fallback;
+- target/task/liaison paths;
+- C2/C4/C5 package politics;
+- current corroborated attribution/source use;
+- exact terminal pruning;
 - all outcomes;
 - trusted replay;
 - keyboard flow;
 - V1 coexistence.
 
-# Rejection conditions
+# 17. Rejection conditions
 
-Reject #108 if it mocks sim/server authority, asserts screenshots only, auto-repairs packages, infers warning from judgement prose, leaks internal #100 model/source facts, rewrites historical Intel after terminal truth, parses narrative prose into evidence, allows commander-only Delegate, displays known-futile routes, treats E2E as fun proof, bypasses replay or exposes hidden test state through production player routes.
+Reject #108 if it mocks sim/server authority, asserts screenshots only, repairs packages, infers warning from prose, leaks internal model/source/origin data, rewrites historical Intel, parses narrative prose, lets client author delegated target, offers no-task/repeat, allows commander-only Delegate, displays known-futile routes, treats E2E as fun proof, bypasses replay or exposes hidden test state through production routes.
