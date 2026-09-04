@@ -9,7 +9,7 @@ Backlink: [[README]]
 
 This is the protocol authority for **#109 — collecting non-leading human evidence**. [[80-HUMAN-PLAYTESTS]] stores anonymised results. No AI/CI/synthetic run may pass #110.
 
-# Purpose
+# 1. Purpose
 
 Human testing answers what machine proof cannot:
 
@@ -17,34 +17,34 @@ Human testing answers what machine proof cannot:
 - did they form a forward strategy;
 - did uncertainty feel meaningful rather than arbitrary;
 - did Intelligence feel useful without looking omniscient;
-- did named collection questions feel strategically distinct;
+- did players distinguish a wider estimate from **current** direct warning;
+- did they understand when an old warning became stale or a newer observation refreshed it;
+- did named collection questions/ordered target choices feel strategically distinct;
+- did HQ default target selection feel like delegated staff work rather than an unexplained automatic move;
+- did public attribution have a clear claim/source cost;
 - did painful trade-offs create regret/vindication/tension/surprise/payoff;
 - did they voluntarily want the next command or another run;
 - did command-by-exception feel like command rather than approval paperwork.
 
-# Study sequence
+# 2. Study sequence
 
-## Stage A — 3-player formative smoke
+## Stage A — three-player formative smoke
 
 Run only after:
 
 `#104 complete replay-valid headless slice → #107 structural lab complete`
 
-Browser not required.
-
-Purpose: cheaply falsify remaining experiential hypothesis after machine structural defects are screened.
-
-Non-gating.
+Browser not required. Non-gating.
 
 Stop/redesign before browser when at least 2/3:
 
-- cannot explain major consequences from their decisions/history;
-- cannot form next-cycle plan;
+- cannot explain major consequences from decisions/history;
+- cannot form a next-command plan;
 - or show no voluntary desire to continue while another command remains.
 
-Also stop for repeated severe qualitative defect such as approval paperwork, unknowable punishment, omniscient-answer-key staff, or intelligence so opaque players cannot use it strategically.
+Also stop for repeated severe qualitative defects, including approval paperwork, unknowable punishment, omniscient-answer-key staff, opaque unusable Intelligence, unexplained warning loss or automatic Lattice choices players cannot understand.
 
-## Stage B — 8-player formal gate
+## Stage B — eight-player formal gate
 
 After #105/#106, #108 and protocol QA.
 
@@ -58,13 +58,13 @@ Fixed thresholds from [[40-EVALUATION-CONTRACT]]:
 
 Repeated severe qualitative failure overrides counts.
 
-# Fresh participant rule
+# 3. Fresh participant rule
 
-Formal participant must not have read V2 canon, implemented/reviewed V2 mechanics, been told hidden Ravellan policy/state/strategy families, or seen enough prior play to know important branches.
+Formal participant must not have read V2 canon, implemented/reviewed V2 mechanics, been told hidden Ravellan policy/state/strategy families, or seen important branches.
 
-Record only coarse relevant game experience; no project contributors in formal eight.
+Record only coarse relevant game experience. No project contributors in formal eight.
 
-# Minimal facilitator setup
+# 4. Minimal facilitator setup
 
 Equivalent to:
 
@@ -72,48 +72,50 @@ Equivalent to:
 
 Do not teach:
 
-- hidden Ravellan posture/policy;
-- intended builds/optimal strategies;
-- which Lattice target is “best”;
+- hidden Ravellan policy/state;
+- intended/optimal strategies;
+- which Lattice target/order is best;
 - assessment/warning/public-case terminology;
+- that a specific old warning is supposed to expire;
 - final route mapping;
 - gate metrics.
 
-If product cannot communicate a needed concept, record failure instead of teaching it.
+If the product cannot communicate a needed concept, record failure rather than coaching it.
 
-# Uninterrupted primary run
+# 5. Uninterrupted primary run
 
 During play:
 
-- no choice suggestions;
+- no choice suggestion;
 - no uncertainty interpretation;
 - no correctness reassurance;
 - no hidden truth;
-- no reflective questions after every cycle;
+- no reflective question after every cycle;
 - observe silently where possible.
 
-Rules/control questions: answer only what normal product/documentation should state; record help.
+Rules/control questions receive only what normal product/documentation should state; record all help.
 
-Strategic question: neutrally say choice is theirs.
+Strategic question: neutrally say the choice is theirs.
 
-# Evidence channels
+# 6. Evidence channels
 
-## Spontaneous during-play
+## Spontaneous during play
 
-Record verbatim/near-verbatim with cycle context:
+Record verbatim/near-verbatim with cycle:
 
 - causal ownership;
 - forward plan;
 - opponent hypothesis;
-- information gap / “I need to know X” statements;
-- distinction between suspicion and direct observable warning if the player naturally makes it;
-- regret/vindication;
-- desire to see what happens;
+- information gap;
+- suspicion versus direct warning distinction;
+- noticing a warning is old/current;
+- reasoning for accepting/redirecting Lattice target;
+- regret/vindication/desire to continue;
 - confusion/disengagement;
 - history/reason inspection;
 - hesitation under intervention/package collision.
 
-## Observed behavior
+## Observed behaviour
 
 Record:
 
@@ -121,213 +123,234 @@ Record:
 - standing direction;
 - major interventions/delegations;
 - whether staff reasons/dissent read;
-- whether intelligence basis/gap/watch-for is used or ignored;
-- whether player changes action after a **usable warning** while wider estimate remains uncertain;
-- whether they treat a preparation assessment with no warning as certainty;
-- which collection target they choose and any spontaneous rationale;
-- whether they notice promises/authority/source costs;
-- Lattice/liaison/recovery use;
-- invalid package attempts/comprehension;
+- whether evidence source/limitations/gap/watch are used;
+- whether player acts on usable warning while wider estimate remains uncertain;
+- whether preparation estimate is treated as direct warning;
+- whether warning-stale/refresh messaging changes their understanding/action;
+- HQ default Lattice target and whether player leaves it or redirects;
+- rationale for first and second target where spontaneous;
+- whether player looks for an impossible no-task/repeat option;
+- whether they understand second target must differ;
+- whether promise/authority/source costs are noticed;
+- invalid package attempts;
 - abandonment/continuation/replay uptake.
 
-Do not infer emotion from telemetry alone.
+Do not infer emotion/comprehension from telemetry alone.
 
-## Post-run interview
+# 7. Post-run interview
 
 Keep prompted answers separate.
 
-Ask, in order:
+Ask in order:
 
 1. What happened in your campaign?
-2. What do you think you personally caused or set in motion?
+2. What did you personally cause or set in motion?
 3. What were you trying to do by the end?
 4. Which uncertainty mattered most?
-5. Was there a decision you regretted or felt vindicated about? Why?
-6. Did the final confrontation feel connected to earlier choices? Why/why not?
-7. What would you do differently on replay?
+5. What did you regret or feel vindicated about? Why?
+6. Did the final confrontation feel connected to earlier choices?
+7. What would you change on replay?
 8. What felt like paperwork rather than a real decision?
-9. Where did the game confuse you or fail to give enough information?
-10. Did any option feel like an obvious trap or fake choice? Why?
+9. Where was the game confusing or under-informative?
+10. Did any option feel like an obvious trap/fake choice?
 
-Only **after** those open questions, if intelligence comprehension was not already observable, ask neutral follow-ups:
+Only after open questions, where not already observable, ask neutral follow-ups:
 
-11. At any point, did you feel Intelligence was saying “we think this is happening” versus “we have directly seen something we can act on”? If so, when? If not, say so.
-12. If you used or considered different collection questions, did they feel like they would tell you different useful things, or basically the same thing?
-13. Was there any point where Intelligence felt too certain, too vague, or like it already knew the answer? What made it feel that way?
+11. Did Intelligence ever seem to distinguish “our best current interpretation” from “we have current physical warning we can act on”? When?
+12. Did any warning seem to become too old to rely on, or get refreshed by newer reporting? Was that understandable?
+13. Did the three collection questions seem likely to provide different useful information, or basically the same thing?
+14. Did it make sense that Intelligence selected a target under your standing direction unless you redirected it?
+15. When public attribution was available, what did you think the headquarters could actually substantiate and what would using it cost?
+16. Did Intelligence ever feel too certain, too vague, or like it already knew the answer?
 
-Do not introduce internal words `weak`, `coherent`, `diagnostic`, `public-case basis`, or explain what answer is desired.
+Do not introduce internal terms `weak`, `coherent`, `diagnostic`, `basisPattern`, `public-case basis` or explain expected answers.
 
-“Was it fun?” is optional last context question, not primary metric.
+“Was it fun?” may be last context question, not the primary metric.
 
-# Voluntary continuation/replay
+# 8. Voluntary continuation/replay
 
-Observe natural advance/Play Again. One neutral statement that replay is available is allowed. Keep spontaneous desire, prompted interest and actual replay uptake separate.
+Observe natural advance/Play Again. One neutral statement that replay is available is allowed.
 
-# Coding
+Separate spontaneous desire, prompted interest and actual replay uptake.
+
+# 9. Coding
 
 ## Ownership
 
-Count campaign state as owned by decisions/strategy, not generic “game changed stat.”
+Count ownership when player links campaign state to their direction, intervention, retarget, promise or accepted risk—not “the game changed a stat.”
 
 ## Causal understanding
 
-Count when participant links material later state/event to earlier intervention/delegated direction/commitment without being told.
+Count when participant links later state/event to earlier action/delegated direction without being told.
 
 Record misconceptions especially:
 
 - Ravellan reads private intent/orders;
-- staff advice is omniscient/correct answer;
+- staff advice is omniscient/right answer;
 - promises/authority cosmetic;
 - Lattice passive stat buff;
+- HQ target selection is random;
 - reroute produces magic intel;
+- stale warning means old evidence vanished/was false;
 - final routes arbitrary;
 - terminal truth was knowable earlier.
 
 ## Forward plan
 
-Must be spontaneous before post-run interview. “Click next” is not strategy.
+Must be spontaneous before post-run prompting. “Click next” is not strategy.
 
 ## Emotion/payoff
 
-Only decision/state-tied affect. Separate strategic frustration from confusion/UX failure.
+Only decision/state-tied affect. Separate strategic frustration from UX confusion.
 
-# Intelligence comprehension coding
-
-This section is **interpretive after observation**, not facilitator coaching.
+# 10. Intelligence comprehension coding
 
 ## Healthy estimative understanding
 
-Evidence that participant treats HQ judgement as a reasoned but revisable view, e.g. “Intel thinks they're preparing, but I'm not sure,” or behavior showing they consider contrary evidence.
+Player treats HQ judgement as reasoned/revisable and can acknowledge contrary evidence.
 
-Do not require that wording.
+## Healthy current-warning understanding
 
-## Healthy warning understanding
-
-Evidence that participant recognizes a direct observed sign can justify immediate physical action even if broader meaning remains disputed.
-
-This can be behavioral: after a usable-warning brief, they cite movement/reporting as reason to reinforce while still saying intent is unclear.
+Player recognises a direct sign can justify immediate action even when wider intent is disputed—and that an older sign may no longer provide current execution warning.
 
 ## Assessment-warning conflation failure
 
-Record when participant repeatedly behaves as though:
+Repeatedly behaves/explains as though:
 
-- any preparation judgement means a direct attack warning; or
-- a conflicted judgement means there cannot be actionable physical warning.
+- any preparation judgement equals direct attack warning;
+- conflicted judgement means no actionable warning can exist;
+- a report once warning-capable remains current forever;
+- warning loss means the underlying evidence disappeared.
 
-A single strategic choice does not prove misunderstanding; look for explanation/language across context.
-
-Repeated failure is a product-information finding, not a reason to teach intelligence terminology.
+One strategic choice alone is not proof; use explanation/context.
 
 ## Omniscient-advisor failure
 
-Record if players consistently believe Intelligence already knows Ravellan's hidden plan or read staff judgement as the “correct answer” rather than an estimate.
+Player consistently believes Intelligence knows hidden plan or represents correct answer.
 
 ## Collection-question differentiation
 
-Strong evidence:
+Strong evidence includes equivalent player-language reasons for:
 
-- participant chooses landing-force staging because they want physical warning;
-- auxiliary tasking because they want to understand coercive pressure;
-- sync because they want to know whether recent activity forms one preparation sequence;
-- or any equivalent player-language distinction.
+- landing-force staging → current physical concentration/warning;
+- auxiliary tasking → coercive pressure chain;
+- operational sequence → whether recent milestones form sustained preparation.
 
 Failure:
 
-- “these are all just more intel”;
-- choices appear interchangeable;
-- player cannot explain why they picked one even after seeing safe target descriptions.
+- “all just more intel”;
+- choices interchangeable;
+- default target feels random;
+- second target choice feels ceremonial.
 
-Do not require memorising exact target names.
+Do not require exact target names.
 
-# Fairness / trap coding
+## Public-claim comprehension
+
+Healthy:
+
+- player can state whether the available claim concerns preparation or coercive pressure;
+- understands public use exposes/consumes a source;
+- does not treat claim direction as physical readiness.
+
+Failure:
+
+- generic “credible intel” with no subject;
+- believes claim automatically proves attack/defense feasibility;
+- discovers source cost only after selection.
+
+# 11. Fairness/trap coding
 
 ## Unfair hidden-state punishment
 
-If participant says outcome impossible to anticipate, inspect whether legitimate clue/countermeasure existed or risk was explicitly accepted. Repeated “nothing I could have known/done” severe.
+If player says outcome was impossible to anticipate, inspect whether legitimate clue/countermeasure existed or risk was explicitly accepted.
+
+Repeated “nothing I could know/do” is severe.
 
 ## Obvious trap/fake option
 
-Capture why. Determine whether value poorly communicated, #107 missed dominance, or risky upside exists but is illegible.
+Capture why. Determine whether value was poorly communicated, #107 missed dominance, or risky upside exists but is illegible.
 
-Do not dismiss because option changes state technically.
+Do not dismiss because a choice technically changes state.
 
-# Severe qualitative override
+# 12. Severe qualitative override
 
 Fail/route remediation despite numeric thresholds for repeated severe pattern, especially:
 
-- approving staff recommendations dominates experience;
+- approving recommendations dominates;
 - prior choices not connected to final crisis;
-- hidden outcomes feel arbitrary;
-- Intelligence feels omniscient or arbitrary rather than reasoned/uncertain;
-- players cannot distinguish estimate from actionable warning where mechanic materially changes choice;
-- Lattice targets feel cosmetic/equivalent;
-- important information is too dense to read/use;
+- hidden outcomes arbitrary;
+- Intelligence omniscient or unusably vague;
+- estimate/current-warning distinction not understood where it changes play;
+- warning aging/refresh feels arbitrary;
+- Lattice targets/default feel cosmetic or automatic;
+- public claim/source cost unclear;
+- information too dense;
 - obvious trap;
-- cross-issue constraints feel like form validation;
-- source/commitment cost discovered only after selection;
+- package constraints feel like form validation;
 - causality requires facilitator explanation;
-- participants continue from study obligation.
+- continuation is only study obligation.
 
-Document evidence before override.
-
-# Anonymised record
+# 13. Anonymised record
 
 Per participant:
 
 - anonymous ID/stage/coarse experience;
 - run/seed;
 - standing direction;
-- major interventions/commitments/capability/authority choices;
-- major intelligence/collection decisions;
+- major interventions/delegations/retargets;
+- promises/authority/source choices;
+- HQ default + chosen C4/C5 Lattice targets;
+- major intelligence/warning currency moments;
 - terminal outcome;
 - spontaneous causal/plan/intel statements;
 - help/confusion/trap observations;
-- assessment-warning comprehension evidence;
-- collection-question differentiation evidence;
+- estimate-warning/source/target comprehension evidence;
 - emotion/payoff;
 - prompted answers;
-- actual continuation/replay;
+- continuation/replay;
 - coded dimensions/follow-up.
 
 No unnecessary identifiers.
 
-# Formative decision
+# 14. Formative decision
 
 After three:
 
-- `CONTINUE — underlying loop not falsified by smoke`;
-- or `STOP — focused redesign/remediation before browser tranche`.
+- `CONTINUE — underlying loop not falsified by smoke`; or
+- `STOP — focused redesign/remediation before browser tranche`.
 
-If >=2/3 hit core stop criterion, stop. A repeated severe intelligence comprehension/fairness defect may also stop even if shorthand threshold does not capture it.
+If >=2/3 hit core stop criterion, stop. Repeated severe intelligence/fairness/automatic-target failure may also stop.
 
-Do not default to tutorial/copy polish unless evidence shows mechanics sound and presentation alone failing.
+Do not default to tutorial/copy polish when mechanics failed.
 
-# Formal decision
+# 15. Formal decision
 
-After eight fresh players, human product owner reviews fixed thresholds, severe patterns, replay behavior and evidence quality.
+After eight fresh players, human product owner reviews fixed thresholds, severe patterns, replay behaviour and evidence quality.
 
 Possible:
 
-- PASS — authorise post-gate phase;
+- PASS;
 - FAIL — focused mechanical remediation;
 - FAIL — interaction/information remediation;
 - INCONCLUSIVE — rerun contaminated/insufficient study.
 
 No agent closes #110 as passed.
 
-# Protocol QA
+# 16. Protocol QA
 
 Before formal use:
 
-- independent reviewer checks leading language;
+- independent review for leading language;
 - spontaneous/prompted separate;
 - actual replay separate from verbal interest;
 - no telemetry-to-emotion inference;
 - normal product teaches necessary concepts;
-- intelligence follow-ups occur only after open interview and do not teach internal taxonomy;
+- intelligence follow-ups occur only after open interview;
+- no internal taxonomy taught;
 - #107 complete before Stage A;
 - documentation validation passes.
 
-# Rejection conditions
+# 17. Rejection conditions
 
-Reject #109 if Stage A runs before #107, synthetic/project contributors are formal participants, facilitator coaches strategy/intelligence interpretation, prompted/spontaneous merged, politeness counted as replay desire, unnecessary personal data stored, telemetry treated as emotion, incomprehensible intelligence rescued through teaching, or gate changed after results to obtain pass.
+Reject #109 if Stage A runs before #107, synthetic/project contributors are formal participants, facilitator coaches strategy/intelligence interpretation, prompted/spontaneous are merged, politeness counts as replay desire, unnecessary personal data is stored, telemetry becomes emotion/comprehension, warning/target mechanics are rescued by facilitator teaching, or gate thresholds change after results.
