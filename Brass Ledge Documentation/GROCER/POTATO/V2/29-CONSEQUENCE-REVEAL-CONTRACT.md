@@ -7,37 +7,39 @@ status: active
 
 Backlink: [[README]]
 
-This is the player-facing authority for **#106 — explaining authoritative consequences without turning the game into a ledger report or leaking hidden truth**.
+This is the player-facing authority for **#106 — explaining authoritative consequences without becoming a ledger report or leaking hidden truth**.
 
-[[23-HQ-BELIEF-AND-EVIDENCE]] / [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] own historical HQ intelligence reconstruction. [[25-KESTREL-CONSEQUENCE-MATRIX]] owns directional attribution state.
+- [[23-HQ-BELIEF-AND-EVIDENCE]] / [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] own historical intelligence reconstruction.
+- [[23C-HQ-BELIEF-EVIDENCE-CATALOG]] owns exact safe evidence/change/warning copy.
+- [[25-KESTREL-CONSEQUENCE-MATRIX]] owns persistent consequences/source use.
 
-# Start gate
+# 1. Start gate
 
-Do not begin the main browser reveal tranche until #104/#107 + 3-player smoke permit the browser path under [[50-EXECUTION-PLAN]].
+Do not begin the browser reveal tranche until #104/#107 + formative smoke permit it under [[50-EXECUTION-PLAN]].
 
-# Product rule
+# 2. Product rule
 
 Reveal should make the player understand:
 
-> something changed because of my order, the headquarters direction I set, Ravellan/external pressure, an information gap, or a risk I accepted — and now I have a different problem.
+> Something changed because of my order, the standing direction I set, Ravellan/external pressure, an information gap, or a risk I accepted — and now I have a different problem.
 
 It is a causal bridge, not a mini victory screen.
 
-# Material beat structure
+# 3. Material beat structure
 
 Each material non-terminal beat answers:
 
-1. **What happened?**
-2. **What do we know about why?**
-3. **What from the past matters now?**
-4. **What remains unresolved?**
-5. **What can I influence next?**
+1. What happened?
+2. What do we know about why?
+3. What earlier decision/state matters now?
+4. What remains unresolved?
+5. What can I influence next?
 
 Default 1–5 beats.
 
 Priority:
 
-1. material personal-intervention effect;
+1. personal intervention/zero-token retarget effect;
 2. matured promise/obligation/capability/information payoff;
 3. adversary/external change altering next command;
 4. major delegated-HQ consequence;
@@ -45,9 +47,7 @@ Priority:
 
 No numeric importance score.
 
-# Causality language
-
-Internal provenance follows [[25-KESTREL-CONSEQUENCE-MATRIX]], but normal wording remains belief-safe.
+# 4. Causality language
 
 ## Player-caused
 
@@ -57,7 +57,7 @@ Internal provenance follows [[25-KESTREL-CONSEQUENCE-MATRIX]], but normal wordin
 
 > Operations kept the escort quiet under your standing direction. Shipping continued with delay while the reserve stayed out of the visible confrontation.
 
-Do not pretend the player clicked a delegated staff order.
+Do not pretend the player clicked a delegated course.
 
 ## Player-conditioned
 
@@ -65,250 +65,257 @@ Do not pretend the player clicked a delegated staff order.
 
 ## Adversary/external
 
-State observable event where known; keep purpose uncertain where not legitimately known.
+State the observable event where known; keep purpose uncertain where not legitimately known.
 
-# Atomic package narration
+# 5. Atomic package narration
 
-C2/C5 interactions resolve from the complete package under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
-
-Narrate actual net authoritative state, not intermediate states that never existed.
+C2/C5 interactions resolve from complete package under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]]. Narrate net authoritative state, never intermediate array-order states.
 
 Examples:
 
-- coordinated C2 surge: reserve strained; partner penalty avoided because channel + joint warning covered operation;
-- C5 reinforcement + consolidation: net exposure may cancel while Beacon preparation still completes;
-- unilateral C5 package: partner worsens one step total, not once per sensitive order.
+- C2 active channel + warning + visible surge: surge coordinated; partner penalty neutralised; warning may improve partner;
+- C2 reroute + joint warning: partner may net unchanged, but disruption and reassurance are both causal facts;
+- C2 reroute + accusation: two distinct damaging contributions may worsen partner two steps;
+- C5 reinforcement + consolidation: exposure deltas may cancel while preparation completes;
+- C5 unilateral package: one package-level partner deterioration, not one per sensitive action.
 
-Individual contributions may be explained without implying issue-array execution order.
+# 6. Commitment / authority callbacks
 
-# Commitment / authority callbacks
+Show:
 
-Show creation/test of:
+- formal promise/channel creation;
+- exact uncoordinated visible/public action that honoured or breached it;
+- liaison obligation/fulfilment/breach/outstanding status;
+- C5 authority result;
+- concession recovery without pretending earlier damage vanished.
 
-- formal consultation promise/channel;
-- honour/breach;
-- liaison obligation/fulfilment/breach;
-- C5 authority result in player language;
-- political concession recovery without pretending prior damage vanished.
+Withdrawn + Honour must say integrity was preserved without restoring access.
 
-Withdrawn + Honour should explicitly say integrity was preserved without restoring access.
+# 7. Intelligence callbacks
 
-# Intelligence callbacks
-
-Information payoff is causal history, not a stat gain.
+Information payoff is causal history, not a stat increase.
 
 ## Reroute
 
-When C3 reroute evidence arrives, connect it to earlier reroute/monitor choice + civilian/political cost.
+When C3 result arrives, connect it to C2 reroute/monitor choice + civilian/political cost.
 
-## Focused collection
+## Focused staging
 
-When C4 focused staging result arrives, distinguish:
+At C4 distinguish:
 
-- what the wider assessment now says;
-- whether the result created usable tactical warning;
-- that it came from **focused collection**, not generic omniscience.
+- wider assessment;
+- direct warning;
+- focused source/method;
+- current limitations.
 
-Do not narrate a preparation indicator as “we now know Ravellan intends to attack.”
+Do not turn one preparation indicator into certainty.
 
-Preserved meaning:
+Example preserved meaning:
 
-> Focused collection now shows movement worth acting on. Intelligence still cannot fully settle what Ravellan intends to do with it.
+> Focused collection shows movement worth acting on. Intelligence still cannot settle the wider campaign from that report alone.
 
-where wider assessment remains weak/conflicted.
-
-## Lattice
+## Lattice maturity and target sequence
 
 When operational:
 
-> **Lattice Cell is operational.** You can now task one unresolved intelligence question without spending normal personal attention.
+> **Lattice Cell is operational. Intelligence has selected a collection question under your standing priority; you can redirect it without spending normal personal attention.**
 
-Later result should explain the kind of information gained—physical warning, tasking diagnosis, or operational sequence—not “intelligence improved.”
+For each result:
 
-If a player retasks the same unresolved question, explain that this is an **updated observation of the same question**. The newer result replaces the earlier same-question answer; do not narrate it as accumulating another bonus or another independent vote.
+- name the question asked;
+- explain the type of advantage gained—physical warning, coercive tasking diagnosis, or operational-sequence evidence;
+- connect a player retarget to that deliberate change;
+- never say `+intel`.
+
+There is no same-target retask or no-task path. At C5 explain that the second target is the remaining selected question after the C4 target was used.
+
+If Lattice landing replaces focused staging, explain that it is a stronger/newer answer to the same question, not another vote.
 
 ## Liaison
 
-Show narrower evidence + obligation + personal-attention history; never imply equivalence to Lattice.
+Show narrower evidence + obligation + intervention history; never imply equivalence to Lattice.
 
-## Source / method context
+## Source/method and limitations
 
-When a basis fact matters enough to appear in a reveal, preserve its player-safe method context where useful:
+A displayed evidence fact preserves concise source context and one/two limitation lines where needed.
 
-- routine coverage;
-- focused collection;
-- Lattice tasking;
-- partner liaison/reporting.
+Do not add numeric reliability/confidence.
 
-Do not introduce numeric reliability/confidence scores.
+# 8. Assessment, warning and evidence currency
 
-# Assessment changes / evidence currency
+These can change independently.
 
-Where #100 assessment materially changes, use the bounded assessment-change line.
-
-The line must explain the cause when player-relevant:
+The update line must explain the material cause:
 
 - new evidence;
-- older information becoming stale;
-- a newer same-question observation superseding an older one;
+- role-specific staleness;
+- same-question replacement;
 - mixed causes.
+
+Required reachable warning narratives include:
+
+## Warning gained
+
+> New reporting gives us current physical movement worth acting on.
+
+## Warning refreshed
+
+> Lattice’s newer landing-force observation refreshes the warning picture through the final confrontation.
+
+## Warning lost through staleness
+
+> The earlier focused warning is now too old to support a clean reaction. It still informs the wider assessment, but it is not current execution warning.
+
+Stale evidence remains historical. Do not call it false or make it disappear merely because one operational role expired.
+
+At C5/C6 always state whether current direct warning exists.
+
+# 9. Public attribution
+
+The Command Room must already have disclosed the exact claim and source cost.
+
+If used at C5/C6:
+
+- persist/show `usedAtCycle`;
+- preserve preparation or coercion claim exactly;
+- preserve that two independently corroborating evidence sources supported the use;
+- show actual political/discovery effect;
+- show protected source exposed;
+- remove later source-use route;
+- never let later evidence/truth relabel the claim.
 
 Examples:
 
-> Our earlier staging report is now too old to lean on.
+- preparation: “You publicly exposed the seizure-preparation case.”
+- coercion: “You publicly exposed the coercive or deceptive pressure case.”
 
-> The new direct observation replaces the earlier routine picture.
+Do not expose raw evidence IDs/groups in normal prose.
 
-Stale evidence remains in historical/debrief readout. Do not narrate it as though the report vanished or was false merely because it is no longer current enough to drive the estimate.
+If held at C5, say the source remained unspent; do **not** imply the C5 case is guaranteed to remain available at C6.
 
-# Attribution is one-shot, source-sensitive and directional
+A terminal threshold/withdrawal may differ from the case’s subject without proving the historical case was dishonest or omniscient. Do not invent an impossible required history such as a canonical C5 credible coercion case followed by C6 attempt seizure.
 
-The Command Room must already have disclosed the cost **and the claim being made**.
+# 10. Ravellan reactions
 
-If C5 public attribution is used:
+Reveal may describe observable later Ravellan behavior, never raw signals/policy IDs.
 
-- `{ credible, direction } → { used, same direction }`;
-- identify the actual safe claim in the reveal;
-- show the immediate public/political/discovery effect actually produced;
-- show final Hold And Expose opportunity spent;
-- show protected source exposed/compromised;
-- later evidence never regenerates the opportunity or rewrites the claim already made.
+Only say coalition action appears to have changed Ravellan’s immediate posture where resulting behavior is legitimately observable.
 
-Examples of distinct preserved meaning:
+Public use of either claim may generate discovery suspicion because the act reveals collection; that does not make the claims semantically identical.
 
-- preparation claim — “You publicly exposed the seizure-preparation case.”
-- coercion claim — “You publicly exposed the coercive/deceptive pressure case.”
-
-Do not describe a coercion claim as evidence that Ravellan was preparing a seizure.
-
-If attribution is held, preserve the unresolved **directional** opportunity without promising it is the correct C6 route.
-
-# Ravellan reactions
-
-Reveal may describe observable later Ravellan behavior when it actually occurs, never raw signal/policy IDs.
-
-Only say a coalition action “appears to have changed Ravellan's immediate posture” where HQ can legitimately observe the resulting behavior.
-
-Public use of either claim direction may reveal/compromise collection and therefore contribute to the same authored discovery suspicion without implying that both public claims said the same thing.
-
-# No hidden forecast
+# 11. No hidden forecast
 
 May show:
 
 - current observable state;
-- known direct costs/commitments;
-- HQ belief-safe causal interpretation;
-- current warning/gap/source context where relevant;
+- known costs/commitments;
+- belief-safe interpretation;
+- current warning/gap/source limitation;
 - unresolved pressure;
 - legal influence point.
 
-May not show hidden posture/preparation/action/policy row, exact future event, win probability, oracle result, right/wrong verdict or pruned ghost route.
+May not show hidden posture/preparation/action/row, exact future event, win probability, oracle result, right/wrong verdict or pruned ghost route.
 
-# Progression
+# 12. Progression
 
-Use anticipation-oriented safe action where authored:
+Use anticipation-oriented safe labels:
 
 - Advance while collection runs;
 - Advance to partner deadline;
 - Advance to final confrontation;
 - otherwise Advance.
 
-No hidden-event encoding. Avoid `Next Turn` clerical framing.
+Avoid clerical `Next Turn` framing.
 
-# Cycle 6 / terminal reveal
+# 13. Terminal reveal
 
-First show actual post-route outcome from [[27-KESTREL-TERMINAL-MATRIX]]:
+First show post-route outcome:
 
 - Strategic Success;
 - Costly Success;
 - Political Defeat;
 - Operational Defeat.
 
-Public final state is post-route, including reserve, partner/authority, attribution/source, late-reaction/emergency-surge/concession/commitment severe history where player-legitimate.
+Public final state is post-route, including reserve, partner/authority, source use and severe history.
 
-Then present two clearly separated debrief layers.
+Then show two layers.
 
-## What HQ believed at the time
+## What HQ believed
 
-Reconstruct the **actual historical player-safe intelligence state** at decisive cycles, not a terminal-truth reinterpretation.
-
-For each selected window retain:
+Reconstruct actual historical safe briefs at decisive cycles:
 
 - judgement;
-- bounded basis/contrary facts;
-- source/method context;
-- key gap/watch-for;
-- warning none/usable in player language;
-- assessment-change line as it appeared then;
-- player-legitimate public-case/opportunity claim available then.
+- bounded basis/contrary evidence;
+- source/method and limitations;
+- gap/watch;
+- warning status as it existed;
+- material update/currency explanation;
+- safe public claim available/used then.
 
-Stale/superseded occurrences remain reconstructible historically.
+This must preserve distinctions such as:
 
-This layer must preserve distinctions such as:
+- preparation estimate with no current warning;
+- current warning while wider assessment was conflicted;
+- focused warning later lost through staleness;
+- warning refreshed by Lattice;
+- coherent estimate but only tentative public case;
+- a used preparation/coercion claim exactly as made.
 
-- HQ assessed preparation but had no usable warning;
-- HQ had usable warning while wider picture was conflicted;
-- HQ had strong internal estimate but no legitimate public case;
-- HQ had a credible **coercion** case, later used or held, even if terminal truth later showed Ravellan transitioned into real preparation.
+Stale/superseded occurrences remain reconstructible.
 
-Do not rewrite a past judgement or public claim to match terminal truth.
+## What actually happened
 
-## What was actually happening
-
-Only now reveal debrief-safe hidden truth:
+Only now reveal debrief-safe:
 
 - opening posture;
-- posture transitions;
+- transitions;
 - preparation progression;
 - genuine/deceptive signals;
-- why final behavior followed authored policy;
-- how coalition state/final route interacted with it.
+- final policy reason;
+- campaign/final-route interaction.
 
-The contrast is part of the payoff.
+Terminal truth sits beside the historical intelligence record and never rewrites it.
 
-A legitimate historical case can later become wrong because the opponent changed course; that is not automatically a game error or analyst stupidity.
+Do not present one oracle-perfect correct strategy.
 
-Do not present one “correct strategy” or oracle-perfect counterfactual.
+# 14. Density/accessibility
 
-# Density / accessibility
-
-Default ordering:
+Default order:
 
 1. outcome/change headline;
 2. 1–5 material beats;
-3. unresolved pressure/current intel change where material;
-4. progression action.
+3. current intelligence/warning change where material;
+4. next influence/progression action.
 
-Full history stays secondary.
+Full history secondary.
 
 Use semantic headings, textual uncertainty, predictable focus and non-colour-only meaning.
 
-# Required #106 tests
+# 15. Required #106 tests
 
-At minimum prove:
+Prove:
 
-- provenance language distinctions;
+- provenance distinctions;
 - delegated callbacks attribute HQ/standing direction correctly;
-- C2/C5 package causality exact/order-independent;
-- promises/liaison/authority transitions explicit;
-- reroute/focused/Lattice/liaison results connect to prior decisions without +intel language;
-- focused warning result narrated separately from wider assessment;
-- every displayed basis fact can preserve player-safe source/method context;
-- staleness-driven assessment change says earlier reporting became stale;
-- same-question replacement says newer observation replaced older one and does not imply stacked votes;
-- C5 attribution reveal preserves exact used claim direction;
-- coercion claim never rewritten as preparation claim;
-- later evidence/terminal truth cannot alter used claim direction;
-- no raw Ravellan truth before terminal debrief;
+- C2/C5 net and individual contribution narration exact/order-independent;
+- promise/liaison/authority transitions explicit;
+- reroute/focused/Lattice/liaison results connect to prior decisions without stat language;
+- no no-task/same-target narrative;
+- focused→Lattice landing described as replacement/upgrade, not vote stacking;
+- source/method/limitations preserved;
+- warning gained/refreshed/lost-stale narratives distinct;
+- assessment/public case may remain current when warning expires;
+- C5/C6 explicit warning status;
+- attribution reveal preserves exact claim and irreversible use without raw support IDs;
+- no impossible coercion-case→attempt-seizure fixture required;
+- no raw Ravellan truth before debrief;
 - default beats <=5;
 - terminal uses post-route state;
-- `whatHqBelieved` deep-equals safe semantics derivable at original cycles, including claim direction and source context;
-- terminal truth cannot retroactively alter historical assessment/warning/public claim;
-- debrief can show preparation-assessment/no-warning and conflicted-assessment/usable-warning histories;
-- debrief can show a credible/used coercion case followed by a later real seizure without hindsight laundering;
+- `whatHqBelieved` deep-equals original historical safe semantics;
+- terminal truth cannot alter historical assessment/warning/claim;
 - pruned routes absent;
 - V1 After Action unchanged.
 
-# Rejection conditions
+# 16. Rejection conditions
 
-Reject #106 if it becomes an accounting dashboard, narrates invalid intermediate C5 state, double-counts package penalties, collapses assessment into warning, hides source/method context when the basis would otherwise be misleading, makes stale reports disappear from history, narrates retasking as additive intel gain, retells historical HQ analysis using terminal truth, loses or rewrites the public claim direction, hides commitment/source cost, attributes hidden opponent choices directly to the player without evidence, leaks truth early, declares decisions right/wrong, skips consequence payoff or adds cinematic scope before the fun hypothesis passes.
+Reject #106 if it becomes an accounting dashboard, narrates nonexistent intermediate state, double-counts package penalties, collapses assessment/warning/public case, omits source limitations, lets stale reports vanish, narrates repeated target collection, hides warning loss, rewrites historical analysis/claim using terminal truth, hides commitment/source cost, leaks hidden truth early, declares decisions right/wrong or adds cinematic scope before the fun hypothesis passes.
