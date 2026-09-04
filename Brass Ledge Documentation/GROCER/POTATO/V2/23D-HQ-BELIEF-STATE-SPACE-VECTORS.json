@@ -1,0 +1,699 @@
+{
+  "algebraicallyLegalAssessmentWarningStates": [
+    [
+      "unclear",
+      "weak",
+      "none"
+    ],
+    [
+      "unclear",
+      "conflicted",
+      "none"
+    ],
+    [
+      "unclear",
+      "conflicted",
+      "usable"
+    ],
+    [
+      "preparation",
+      "weak",
+      "none"
+    ],
+    [
+      "preparation",
+      "weak",
+      "usable"
+    ],
+    [
+      "preparation",
+      "coherent",
+      "none"
+    ],
+    [
+      "preparation",
+      "coherent",
+      "usable"
+    ],
+    [
+      "coercion",
+      "weak",
+      "none"
+    ],
+    [
+      "coercion",
+      "weak",
+      "usable"
+    ],
+    [
+      "coercion",
+      "coherent",
+      "none"
+    ]
+  ],
+  "algebraicallyLegalBasisPatternWarningStates": [
+    [
+      "no-direction",
+      "none"
+    ],
+    [
+      "indicator-preparation",
+      "none"
+    ],
+    [
+      "indicator-preparation",
+      "usable"
+    ],
+    [
+      "indicator-coercion",
+      "none"
+    ],
+    [
+      "indicator-conflict",
+      "none"
+    ],
+    [
+      "indicator-conflict",
+      "usable"
+    ],
+    [
+      "diagnostic-preparation-clear",
+      "none"
+    ],
+    [
+      "diagnostic-preparation-clear",
+      "usable"
+    ],
+    [
+      "diagnostic-preparation-qualified",
+      "none"
+    ],
+    [
+      "diagnostic-preparation-qualified",
+      "usable"
+    ],
+    [
+      "diagnostic-coercion-clear",
+      "none"
+    ],
+    [
+      "diagnostic-coercion-qualified",
+      "none"
+    ],
+    [
+      "diagnostic-coercion-qualified",
+      "usable"
+    ],
+    [
+      "diagnostic-conflict",
+      "none"
+    ],
+    [
+      "diagnostic-conflict",
+      "usable"
+    ]
+  ],
+  "assessmentTruthTable": [
+    {
+      "Cdiag": false,
+      "Cind": false,
+      "Pdiag": false,
+      "Pind": false,
+      "assessment": {
+        "direction": "unclear",
+        "picture": "weak"
+      },
+      "basisPattern": "no-direction"
+    },
+    {
+      "Cdiag": false,
+      "Cind": true,
+      "Pdiag": false,
+      "Pind": false,
+      "assessment": {
+        "direction": "coercion",
+        "picture": "weak"
+      },
+      "basisPattern": "indicator-coercion"
+    },
+    {
+      "Cdiag": false,
+      "Cind": false,
+      "Pdiag": false,
+      "Pind": true,
+      "assessment": {
+        "direction": "preparation",
+        "picture": "weak"
+      },
+      "basisPattern": "indicator-preparation"
+    },
+    {
+      "Cdiag": false,
+      "Cind": true,
+      "Pdiag": false,
+      "Pind": true,
+      "assessment": {
+        "direction": "unclear",
+        "picture": "conflicted"
+      },
+      "basisPattern": "indicator-conflict"
+    },
+    {
+      "Cdiag": true,
+      "Cind": false,
+      "Pdiag": false,
+      "Pind": false,
+      "assessment": {
+        "direction": "coercion",
+        "picture": "coherent"
+      },
+      "basisPattern": "diagnostic-coercion-clear"
+    },
+    {
+      "Cdiag": true,
+      "Cind": true,
+      "Pdiag": false,
+      "Pind": false,
+      "assessment": {
+        "direction": "coercion",
+        "picture": "coherent"
+      },
+      "basisPattern": "diagnostic-coercion-clear"
+    },
+    {
+      "Cdiag": true,
+      "Cind": false,
+      "Pdiag": false,
+      "Pind": true,
+      "assessment": {
+        "direction": "coercion",
+        "picture": "weak"
+      },
+      "basisPattern": "diagnostic-coercion-qualified"
+    },
+    {
+      "Cdiag": true,
+      "Cind": true,
+      "Pdiag": false,
+      "Pind": true,
+      "assessment": {
+        "direction": "coercion",
+        "picture": "weak"
+      },
+      "basisPattern": "diagnostic-coercion-qualified"
+    },
+    {
+      "Cdiag": false,
+      "Cind": false,
+      "Pdiag": true,
+      "Pind": false,
+      "assessment": {
+        "direction": "preparation",
+        "picture": "coherent"
+      },
+      "basisPattern": "diagnostic-preparation-clear"
+    },
+    {
+      "Cdiag": false,
+      "Cind": true,
+      "Pdiag": true,
+      "Pind": false,
+      "assessment": {
+        "direction": "preparation",
+        "picture": "weak"
+      },
+      "basisPattern": "diagnostic-preparation-qualified"
+    },
+    {
+      "Cdiag": false,
+      "Cind": false,
+      "Pdiag": true,
+      "Pind": true,
+      "assessment": {
+        "direction": "preparation",
+        "picture": "coherent"
+      },
+      "basisPattern": "diagnostic-preparation-clear"
+    },
+    {
+      "Cdiag": false,
+      "Cind": true,
+      "Pdiag": true,
+      "Pind": true,
+      "assessment": {
+        "direction": "preparation",
+        "picture": "weak"
+      },
+      "basisPattern": "diagnostic-preparation-qualified"
+    },
+    {
+      "Cdiag": true,
+      "Cind": false,
+      "Pdiag": true,
+      "Pind": false,
+      "assessment": {
+        "direction": "unclear",
+        "picture": "conflicted"
+      },
+      "basisPattern": "diagnostic-conflict"
+    },
+    {
+      "Cdiag": true,
+      "Cind": true,
+      "Pdiag": true,
+      "Pind": false,
+      "assessment": {
+        "direction": "unclear",
+        "picture": "conflicted"
+      },
+      "basisPattern": "diagnostic-conflict"
+    },
+    {
+      "Cdiag": true,
+      "Cind": false,
+      "Pdiag": true,
+      "Pind": true,
+      "assessment": {
+        "direction": "unclear",
+        "picture": "conflicted"
+      },
+      "basisPattern": "diagnostic-conflict"
+    },
+    {
+      "Cdiag": true,
+      "Cind": true,
+      "Pdiag": true,
+      "Pind": true,
+      "assessment": {
+        "direction": "unclear",
+        "picture": "conflicted"
+      },
+      "basisPattern": "diagnostic-conflict"
+    }
+  ],
+  "canonicalEncoding": "UTF-8 JSON; object keys sorted lexically; arrays pre-sorted lexically by their canonical JSON representation; no insignificant whitespace for hashes",
+  "counts": {
+    "algebraicallyLegalAssessmentWarningStates": 10,
+    "algebraicallyLegalBasisPatternWarningStates": 15,
+    "basisPatternCompositeStates": 20,
+    "basisPatternProductTrajectories": 53,
+    "evidenceDefinitions": 19,
+    "headlineCompositeStates": 18,
+    "headlineProductTrajectories": 50,
+    "maxCurrentAssessmentOccurrences": 4,
+    "maxCurrentOccurrencesAnyRole": 4,
+    "maxCurrentPublicCaseOccurrences": 3,
+    "maxCurrentWarningOccurrences": 1,
+    "maxEvidenceHistoryOccurrences": 9,
+    "producerReachableAssessmentWarningStates": 9,
+    "producerReachableBasisPatternWarningStates": 11,
+    "producerSchedules": 4112,
+    "rawCommandAdversaryHistories": 62208,
+    "semanticEvidenceHistories": 156,
+    "trustedHqRelevantHistoryProjections": 257
+  },
+  "focusedPositiveLandingUpgrade": {
+    "assessmentUpgrades": 138,
+    "focusedPositiveTrustedHistoryProjections": 138,
+    "preparationWeakToCoherent": 118,
+    "unclearConflictedToPreparationWeak": 20
+  },
+  "hashes": {
+    "basisPatternProductTrajectoriesSha256": "73f602cdc4e88d733a604c097a4c9904d145cedb04d81b353066a5491e8c4f46",
+    "headlineProductTrajectoriesSha256": "8f77eb22d9bfcab0b846721a671cc12bf7301150c46edb654944138d2284d025",
+    "perCycleBasisPatternStatesSha256": "3e562d483089d98421ed98ea350c0b0871294f3f25a8d85ca777f0357efa017b",
+    "perCycleHeadlineStatesSha256": "0bb6b0d9a89d00484f8e9516fad0abd6aa54dc3bad7a884b65031674716f215f",
+    "semanticEvidenceHistoriesSha256": "c790c48a1817b8604bd840d59b78c74fc3c07a5c5353b0afb36c392db5a1b2b8"
+  },
+  "modelId": "kestrel-hq-belief-v1",
+  "perCycleCounts": {
+    "1": {
+      "basisPattern": 1,
+      "headline": 1
+    },
+    "2": {
+      "basisPattern": 1,
+      "headline": 1
+    },
+    "3": {
+      "basisPattern": 1,
+      "headline": 1
+    },
+    "4": {
+      "basisPattern": 4,
+      "headline": 4
+    },
+    "5": {
+      "basisPattern": 15,
+      "headline": 13
+    },
+    "6": {
+      "basisPattern": 11,
+      "headline": 11
+    }
+  },
+  "perCycleHeadlineStates": {
+    "1": [
+      [
+        "unclear",
+        "weak",
+        "none",
+        "none",
+        null
+      ]
+    ],
+    "2": [
+      [
+        "unclear",
+        "weak",
+        "none",
+        "none",
+        null
+      ]
+    ],
+    "3": [
+      [
+        "unclear",
+        "conflicted",
+        "none",
+        "none",
+        null
+      ]
+    ],
+    "4": [
+      [
+        "coercion",
+        "weak",
+        "none",
+        "tentative",
+        "coercion"
+      ],
+      [
+        "preparation",
+        "weak",
+        "usable",
+        "tentative",
+        "preparation"
+      ],
+      [
+        "unclear",
+        "conflicted",
+        "none",
+        "none",
+        null
+      ],
+      [
+        "unclear",
+        "conflicted",
+        "usable",
+        "tentative",
+        "preparation"
+      ]
+    ],
+    "5": [
+      [
+        "coercion",
+        "coherent",
+        "none",
+        "credible-source-sensitive",
+        "coercion"
+      ],
+      [
+        "coercion",
+        "coherent",
+        "none",
+        "tentative",
+        "coercion"
+      ],
+      [
+        "coercion",
+        "weak",
+        "none",
+        "none",
+        null
+      ],
+      [
+        "coercion",
+        "weak",
+        "none",
+        "tentative",
+        "coercion"
+      ],
+      [
+        "preparation",
+        "coherent",
+        "none",
+        "tentative",
+        "preparation"
+      ],
+      [
+        "preparation",
+        "coherent",
+        "usable",
+        "credible-source-sensitive",
+        "preparation"
+      ],
+      [
+        "preparation",
+        "coherent",
+        "usable",
+        "tentative",
+        "preparation"
+      ],
+      [
+        "preparation",
+        "weak",
+        "none",
+        "tentative",
+        "preparation"
+      ],
+      [
+        "preparation",
+        "weak",
+        "usable",
+        "tentative",
+        "preparation"
+      ],
+      [
+        "unclear",
+        "conflicted",
+        "none",
+        "tentative",
+        "preparation"
+      ],
+      [
+        "unclear",
+        "conflicted",
+        "usable",
+        "tentative",
+        null
+      ],
+      [
+        "unclear",
+        "conflicted",
+        "usable",
+        "tentative",
+        "preparation"
+      ],
+      [
+        "unclear",
+        "weak",
+        "none",
+        "none",
+        null
+      ]
+    ],
+    "6": [
+      [
+        "coercion",
+        "coherent",
+        "none",
+        "credible-source-sensitive",
+        "coercion"
+      ],
+      [
+        "coercion",
+        "weak",
+        "none",
+        "tentative",
+        "coercion"
+      ],
+      [
+        "preparation",
+        "coherent",
+        "none",
+        "credible-source-sensitive",
+        "preparation"
+      ],
+      [
+        "preparation",
+        "coherent",
+        "none",
+        "tentative",
+        "preparation"
+      ],
+      [
+        "preparation",
+        "coherent",
+        "usable",
+        "credible-source-sensitive",
+        "preparation"
+      ],
+      [
+        "preparation",
+        "coherent",
+        "usable",
+        "tentative",
+        "preparation"
+      ],
+      [
+        "preparation",
+        "weak",
+        "none",
+        "tentative",
+        "preparation"
+      ],
+      [
+        "preparation",
+        "weak",
+        "usable",
+        "tentative",
+        null
+      ],
+      [
+        "unclear",
+        "conflicted",
+        "none",
+        "tentative",
+        null
+      ],
+      [
+        "unclear",
+        "weak",
+        "none",
+        "none",
+        null
+      ],
+      [
+        "unclear",
+        "weak",
+        "none",
+        "tentative",
+        "coercion"
+      ]
+    ]
+  },
+  "producerReachableAssessmentWarningStates": [
+    [
+      "coercion",
+      "coherent",
+      "none"
+    ],
+    [
+      "coercion",
+      "weak",
+      "none"
+    ],
+    [
+      "preparation",
+      "coherent",
+      "none"
+    ],
+    [
+      "preparation",
+      "coherent",
+      "usable"
+    ],
+    [
+      "preparation",
+      "weak",
+      "none"
+    ],
+    [
+      "preparation",
+      "weak",
+      "usable"
+    ],
+    [
+      "unclear",
+      "conflicted",
+      "none"
+    ],
+    [
+      "unclear",
+      "conflicted",
+      "usable"
+    ],
+    [
+      "unclear",
+      "weak",
+      "none"
+    ]
+  ],
+  "producerReachableBasisPatternWarningStates": [
+    [
+      "diagnostic-coercion-clear",
+      "none"
+    ],
+    [
+      "diagnostic-preparation-clear",
+      "none"
+    ],
+    [
+      "diagnostic-preparation-clear",
+      "usable"
+    ],
+    [
+      "diagnostic-preparation-qualified",
+      "none"
+    ],
+    [
+      "diagnostic-preparation-qualified",
+      "usable"
+    ],
+    [
+      "indicator-coercion",
+      "none"
+    ],
+    [
+      "indicator-conflict",
+      "none"
+    ],
+    [
+      "indicator-conflict",
+      "usable"
+    ],
+    [
+      "indicator-preparation",
+      "none"
+    ],
+    [
+      "indicator-preparation",
+      "usable"
+    ],
+    [
+      "no-direction",
+      "none"
+    ]
+  ],
+  "reducerSemanticsId": "kestrel-binary-hypothesis-v1",
+  "schemaVersion": "kestrel-hq-belief-state-space-v1",
+  "scope": "architecture-producer-envelope-not-full-package-legality",
+  "terminalActionHeadlineStateCounts": {
+    "abort_and_pressure": 4,
+    "attempt_seizure": 9,
+    "threshold_challenge": 11
+  },
+  "warningTransitionsAcross4112Schedules": {
+    "gained": 1656,
+    "headlineTrajectoriesContainingLoss": 11,
+    "initialNone": 4112,
+    "lostMixed": 0,
+    "lostStale": 552,
+    "lostSuperseded": 0,
+    "refreshed": 552,
+    "semanticHistoriesContainingLoss": 24,
+    "unchangedNone": 16420,
+    "unchangedUsable": 1380
+  }
+}
