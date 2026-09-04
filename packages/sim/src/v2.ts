@@ -7,12 +7,126 @@ import {
   type V2Identity,
   type V2IntentDeclaration,
   type V2IntentDeclarationLedgerEntry,
+  type V2RavellanAction,
+  type V2RavellanDecision,
+  type V2RavellanDecisionLedgerEntry,
+  type V2RavellanNormalAction,
+  type V2RavellanObservation,
+  type V2RavellanPosture,
+  type V2RavellanState,
   type V2Session,
   v2AgendaIssueSchema,
   v2CommandSetSchema,
   v2IntentDeclarationSchema,
   v2SessionSchema,
 } from "@brass-ledger/shared";
+
+/** #99's narrow, non-omniscient policy input. Do not widen this to campaign state. */
+export type V2RavellanPolicyInput = Readonly<{
+  cycle: number;
+  posture: V2RavellanPosture;
+  preparation: V2RavellanState["preparation"];
+  activeObservations: readonly V2RavellanObservation[];
+}>;
+
+/** Identity and seed are intentionally accepted here, and nowhere in normal policy. */
+export function initializeV2RavellanState(input: Readonly<{ rulesetId: string; scenarioId: string; campaignSeed: string }>): Pick<V2RavellanState, "posture" | "preparation"> {
+  const digest = v2Sha256({ rulesetId: input.rulesetId, scenarioId: input.scenarioId, campaignSeed: input.campaignSeed, tag: "ravellan-opening" });
+  const posture = (["genuine_preparation", "coercive_feint", "testing"] as const)[Number.parseInt(digest.slice(0, 8), 16) % 3]!;
+  return { posture, preparation: posture === "genuine_preparation" ? "developing" : "none" };
+}
+
+const observationLifetime: Record<V2RavellanObservation["signal"], number> = {
+  beacon_coverage_signal: 2,
+  visible_denial_signal: 1,
+  coalition_unity_signal: 2,
+  reserve_exhaustion_signal: 2,
+  ravellan_discovery_signal: 1,
+};
+
+/** Normalizes persisted public observations; a signal is first usable next cycle. */
+export function activeV2RavellanObservations(records: readonly V2RavellanObservation[], cycle: number): readonly V2RavellanObservation[] {
+  const newest = new Map<V2RavellanObservation["signal"], V2RavellanObservation>();
+  for (const record of records) {
+    if (record.observedCycle >= cycle || cycle > record.observedCycle + observationLifetime[record.signal]) continue;
+    const prior = newest.get(record.signal);
+    if (prior !== undefined && prior.observedCycle === record.observedCycle && prior.value !== record.value) {
+      throw new TypeError(`Contradictory Ravellan observation '${record.signal}' at cycle ${record.observedCycle}.`);
+    }
+    if (prior === undefined || record.observedCycle > prior.observedCycle) newest.set(record.signal, record);
+  }
+  return [...newest.values()].sort((left, right) => left.signal < right.signal ? -1 : left.signal > right.signal ? 1 : 0);
+}
+
+/** Persist only observations which can still affect a future policy decision. */
+function canonicalizeV2RavellanObservations(records: readonly V2RavellanObservation[], cycle: number): V2RavellanObservation[] {
+  const newest = new Map<V2RavellanObservation["signal"], V2RavellanObservation>();
+  for (const record of records) {
+    if (record.observedCycle > cycle) throw new TypeError("Ravellan observations cannot be recorded from a future cycle.");
+    const prior = newest.get(record.signal);
+    if (prior !== undefined && prior.observedCycle === record.observedCycle && prior.value !== record.value) {
+      throw new TypeError(`Contradictory Ravellan observation '${record.signal}' at cycle ${record.observedCycle}.`);
+    }
+    if (prior === undefined || record.observedCycle > prior.observedCycle) newest.set(record.signal, record);
+  }
+  return [...newest.values()]
+    .filter((record) => cycle <= record.observedCycle + observationLifetime[record.signal])
+    .sort((left, right) => left.signal < right.signal ? -1 : left.signal > right.signal ? 1 : 0);
+}
+
+function hasObservation(observations: readonly V2RavellanObservation[], signal: V2RavellanObservation["signal"], value: string): boolean {
+  return observations.some((observation) => observation.signal === signal && observation.value === value);
+}
+function advancePreparation(preparation: V2RavellanState["preparation"]): V2RavellanState["preparation"] {
+  return preparation === "none" ? "developing" : preparation === "developing" ? "ready" : "ready";
+}
+function legalNormalAction(cycle: number, action: V2RavellanNormalAction): boolean {
+  return action === "probe_shipping" ? cycle >= 1 && cycle <= 5
+    : action === "pause_consolidate" ? cycle >= 3 && cycle <= 5
+      : cycle >= 2 && cycle <= 5;
+}
+
+/** Exact ordered 22-policy evaluator: first matching legal authored row wins. */
+export function chooseV2RavellanAction(input: V2RavellanPolicyInput): V2RavellanDecision {
+  const { cycle, posture, preparation, activeObservations: observations } = input;
+  if (!Number.isInteger(cycle) || cycle < 1 || cycle > 6) throw new RangeError("Ravellan policy only supports cycles 1 through 6.");
+  if (cycle === 1) return { action: "probe_shipping", matchedPolicyRowId: "C1", nextPosture: posture, nextPreparation: preparation };
+  const weak = hasObservation(observations, "beacon_coverage_signal", "weak");
+  const credible = hasObservation(observations, "beacon_coverage_signal", "credible");
+  const withheld = hasObservation(observations, "visible_denial_signal", "withheld");
+  const demonstrated = hasObservation(observations, "visible_denial_signal", "demonstrated");
+  const fractured = hasObservation(observations, "coalition_unity_signal", "fractured");
+  const coherent = hasObservation(observations, "coalition_unity_signal", "coherent");
+  const exhausted = hasObservation(observations, "reserve_exhaustion_signal", "suspected");
+  const discovered = hasObservation(observations, "ravellan_discovery_signal", "suspected");
+  if (cycle === 6) {
+    if (posture === "genuine_preparation") return { action: preparation === "ready" && !(discovered && credible && coherent) ? "attempt_seizure" : "threshold_challenge", matchedPolicyRowId: preparation === "ready" && !(discovered && credible && coherent) ? "R6-1" : "R6-2", nextPosture: posture, nextPreparation: preparation };
+    if (posture === "coercive_feint") return { action: "threshold_challenge", matchedPolicyRowId: "R6-3", nextPosture: posture, nextPreparation: preparation };
+    if (weak || fractured) return { action: "threshold_challenge", matchedPolicyRowId: "R6-4", nextPosture: posture, nextPreparation: preparation };
+    return { action: "abort_and_pressure", matchedPolicyRowId: "R6-5", nextPosture: posture, nextPreparation: preparation };
+  }
+  const choose = (rowId: V2RavellanDecision["matchedPolicyRowId"], matches: boolean, action: V2RavellanNormalAction, nextPosture: V2RavellanPosture = posture): V2RavellanDecision | undefined =>
+    matches && legalNormalAction(cycle, action) ? { action, matchedPolicyRowId: rowId, nextPosture, nextPreparation: action === "prepare_beacon_seizure" ? advancePreparation(preparation) : preparation } : undefined;
+  if (posture === "genuine_preparation") {
+    return choose("GP-1", discovered && credible && coherent, "pause_consolidate", "coercive_feint")
+      ?? choose("GP-2", weak, "prepare_beacon_seizure")
+      ?? choose("GP-3", discovered, "seed_deception")
+      ?? choose("GP-4", fractured, "probe_shipping")
+      ?? choose("GP-5", true, "prepare_beacon_seizure")!;
+  }
+  if (posture === "coercive_feint") {
+    return choose("CF-1", weak && withheld && fractured, "prepare_beacon_seizure", "genuine_preparation")
+      ?? choose("CF-2", exhausted, "probe_shipping")
+      ?? choose("CF-3", fractured, "seed_deception")
+      ?? choose("CF-4", demonstrated || coherent, "pause_consolidate")
+      ?? choose("CF-5", true, "probe_shipping")!;
+  }
+  return choose("T-1", weak && fractured, "prepare_beacon_seizure", "genuine_preparation")
+    ?? choose("T-2", credible && coherent, "pause_consolidate", "coercive_feint")
+    ?? choose("T-3", exhausted, "probe_shipping")
+    ?? choose("T-4", discovered, "seed_deception")
+    ?? choose("T-5", true, "probe_shipping")!;
+}
 
 export class V2ReplayValidationError extends Error {
   constructor(
@@ -48,6 +162,12 @@ export type V2ResolvedCommandSet = {
 };
 
 export type V2ResolvedIntentDeclaration = {
+  postState: V2Session["state"];
+  postRevision: number;
+};
+
+export type V2ResolvedRavellanDecision = {
+  decision: V2RavellanDecision;
   postState: V2Session["state"];
   postRevision: number;
 };
@@ -188,7 +308,44 @@ export function resolveV2CommandSet(
     finalOrders.push({ issueId: issue.id, responsibleOfficer: issue.responsibleOfficer, disposition: "intervene", orderId: disposition.orderId, interventionCost: 1 });
   }
 
-  return { finalOrders, interventionCost: interventions, postState: { ...state, cycle: state.cycle + 1 }, postRevision: revision + 1 };
+  return {
+    finalOrders,
+    interventionCost: interventions,
+    postState: { ...state, cycle: state.cycle + 1 },
+    postRevision: revision + 1,
+  };
+}
+
+/**
+ * The narrow policy is deliberately isolated from the broader session. This
+ * system transition is the only place Ravellan state changes in #99.
+ */
+export function resolveV2RavellanDecision(
+  state: V2Session["state"],
+  revision: number,
+): V2ResolvedRavellanDecision {
+  if (state.standingIntent === null) {
+    throw new V2CommandValidationError("v2_missing_standing_intent", "Ravellan cannot act before the opening standing intent is declared.");
+  }
+  const observations = canonicalizeV2RavellanObservations(state.ravellan.observations, state.cycle);
+  const decision = chooseV2RavellanAction({
+    cycle: state.cycle,
+    posture: state.ravellan.posture,
+    preparation: state.ravellan.preparation,
+    activeObservations: activeV2RavellanObservations(observations, state.cycle),
+  });
+  return {
+    decision,
+    postState: {
+      ...state,
+      ravellan: {
+        posture: decision.nextPosture,
+        preparation: decision.nextPreparation,
+        observations,
+      },
+    },
+    postRevision: revision + 1,
+  };
 }
 
 /** Stable JSON encoding for V2 replay evidence. Objects are key-sorted. */
@@ -290,6 +447,24 @@ export function createV2CommandSetLedgerEntry(
   };
 }
 
+export function createV2RavellanDecisionLedgerEntry(
+  state: V2Session["state"],
+  revision: number,
+): V2RavellanDecisionLedgerEntry {
+  const resolved = resolveV2RavellanDecision(state, revision);
+  return {
+    kind: "ravellan-decision",
+    cycle: state.cycle,
+    decision: resolved.decision,
+    preState: state,
+    postState: resolved.postState,
+    preRevision: revision,
+    postRevision: resolved.postRevision,
+    preStateHash: v2StateHash(state),
+    postStateHash: v2StateHash(resolved.postState),
+  };
+}
+
 export function createV2IntentDeclarationLedgerEntry(
   state: V2Session["state"],
   revision: number,
@@ -348,24 +523,44 @@ export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProv
   } else {
     let replayState = session.initialState;
     let replayRevision = 0;
+    let openingIntentRecorded = false;
+    let phase: "ravellan" | "command" = "ravellan";
     for (const entry of session.actionLedger) {
       if (canonicalV2Json(entry.preState) !== canonicalV2Json(replayState)) {
         throw new V2ReplayValidationError("v2_ledger_pre_state_mismatch", "A V2 ledger entry does not begin at the reconstructed state.");
       }
       const expectedRevision = entry.kind === "intent-declaration"
         ? entry.intentDeclaration.expectedRevision
-        : entry.commandSet.expectedRevision;
+        : entry.preRevision;
       if (entry.preRevision !== replayRevision || expectedRevision !== replayRevision) {
         throw new V2ReplayValidationError("v2_ledger_revision_mismatch", "A V2 ledger entry has an invalid revision chain.");
       }
       if (entry.preStateHash !== v2StateHash(entry.preState) || entry.postStateHash !== v2StateHash(entry.postState)) {
         throw new V2ReplayValidationError("v2_ledger_hash_mismatch", "A V2 ledger entry has invalid canonical state evidence.");
       }
-      let resolved: V2ResolvedCommandSet | V2ResolvedIntentDeclaration;
+      let resolved: V2ResolvedCommandSet | V2ResolvedIntentDeclaration | V2ResolvedRavellanDecision;
       try {
         if (entry.kind === "intent-declaration") {
+          if (openingIntentRecorded || replayRevision !== 0 || replayState.cycle !== 1) {
+            throw new V2CommandValidationError("v2_invalid_intent_declaration", "The opening declaration is out of canonical ledger order.");
+          }
           resolved = declareV2StandingIntent(replayState, replayRevision, entry.intentDeclaration);
+          openingIntentRecorded = true;
+        } else if (entry.kind === "ravellan-decision") {
+          if (!openingIntentRecorded || phase !== "ravellan" || entry.cycle !== replayState.cycle) {
+            throw new V2CommandValidationError("v2_wrong_cycle", "The Ravellan decision is out of canonical ledger order.");
+          }
+          const terminal = entry.cycle === 6;
+          const actionIsTerminal = entry.decision.action === "attempt_seizure" || entry.decision.action === "threshold_challenge" || entry.decision.action === "abort_and_pressure";
+          if (terminal !== actionIsTerminal) {
+            throw new V2CommandValidationError("v2_wrong_cycle", "Ravellan terminal behaviour is only legal in cycle 6.");
+          }
+          resolved = resolveV2RavellanDecision(replayState, replayRevision);
+          phase = "command";
         } else {
+          if (!openingIntentRecorded || phase !== "command" || replayState.cycle === 6) {
+            throw new V2CommandValidationError("v2_wrong_cycle", "The command set is out of canonical ledger order.");
+          }
           if (trustedAgendaProvider === undefined) throw new V2CommandValidationError("v2_missing_standing_intent", "A V2 command requires its trusted authored agenda.");
           const trustedAgenda = trustedAgendaProvider(replayState);
           const canonicalCommandSet = canonicalizeV2CommandSet(trustedAgenda, entry.commandSet);
@@ -373,6 +568,7 @@ export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProv
             throw new V2CommandValidationError("v2_disposition_order", "A V2 ledger command is not stored in canonical agenda order.");
           }
           resolved = resolveV2CommandSet(replayState, replayRevision, trustedAgenda, canonicalCommandSet);
+          phase = "ravellan";
         }
       } catch (error) {
         if (error instanceof V2CommandValidationError) {
@@ -380,10 +576,13 @@ export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProv
         }
         throw error;
       }
-      const commandEvidenceMatches = entry.kind !== "command-set"
-        || (resolved as V2ResolvedCommandSet).interventionCost === entry.interventionCost
-          && canonicalV2Json((resolved as V2ResolvedCommandSet).finalOrders) === canonicalV2Json(entry.finalOrders);
-      if (!commandEvidenceMatches
+      const evidenceMatches = entry.kind === "command-set"
+        ? (resolved as V2ResolvedCommandSet).interventionCost === entry.interventionCost
+          && canonicalV2Json((resolved as V2ResolvedCommandSet).finalOrders) === canonicalV2Json(entry.finalOrders)
+        : entry.kind === "ravellan-decision"
+          ? canonicalV2Json((resolved as V2ResolvedRavellanDecision).decision) === canonicalV2Json(entry.decision)
+          : true;
+      if (!evidenceMatches
         || canonicalV2Json(entry.postState) !== canonicalV2Json(resolved.postState)) {
         throw new V2ReplayValidationError("v2_ledger_post_state_mismatch", "A V2 ledger entry does not match authoritative re-execution.");
       }

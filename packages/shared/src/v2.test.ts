@@ -22,8 +22,8 @@ const v2Session = {
   campaignId: "v2-campaign-1",
   revision: 0,
   identity: { ruleset: "v2", rulesetVersion: v2CurrentRulesetVersion, scenarioId: "kestrel-strait", contentVersion: "2026.09.02", contentDigest: digest },
-  initialState: { cycle: 1, seed: "kestrel-seed", standingIntent: null },
-  state: { cycle: 1, seed: "kestrel-seed", standingIntent: null },
+  initialState: { cycle: 1, seed: "kestrel-seed", ravellan: { posture: "testing", preparation: "none", observations: [] }, standingIntent: null },
+  state: { cycle: 1, seed: "kestrel-seed", ravellan: { posture: "testing", preparation: "none", observations: [] }, standingIntent: null },
   actionLedger: [],
   initialStateDigest: digest,
   finalStateDigest: digest,
@@ -40,7 +40,7 @@ test("V2 identity/session/export roots round-trip with an explicit required empt
 test("V2 roots reject missing ledgers, unknown mechanics, malformed digests, and untagged lookalikes", () => {
   assert.throws(() => v2SessionSchema.parse(({ ...v2Session, actionLedger: undefined })), /actionLedger/i);
   assert.throws(() => v2SessionSchema.parse(({ ...v2Session, state: { ...v2Session.state, hiddenPosture: "testing" } })), /unrecognized key/i);
-  assert.throws(() => v2SessionSchema.parse(({ ...v2Session, identity: { ...v2Session.identity, rulesetVersion: "0.2.0-prototype" }, initialState: { cycle: 1, seed: "legacy-v2" }, state: { cycle: 1, seed: "legacy-v2" } })), /0.3.0-prototype/i);
+  assert.throws(() => v2SessionSchema.parse(({ ...v2Session, identity: { ...v2Session.identity, rulesetVersion: "0.2.0-prototype" }, initialState: { cycle: 1, seed: "legacy-v2" }, state: { cycle: 1, seed: "legacy-v2" } })), /0.4.0-prototype/i);
   assert.throws(() => v2SessionSchema.parse(({ ...v2Session, identity: { ...v2Session.identity, contentDigest: "not-a-digest" } })), /SHA-256/i);
   assert.equal(isV2SessionPayload({ ...v2Session, identity: { ...v2Session.identity, ruleset: "v1" } }), false);
 });

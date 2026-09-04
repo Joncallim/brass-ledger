@@ -6,7 +6,7 @@ import path from "node:path";
 import { scenarioSummarySchema, chiefSpriteDeterministicSeed, gameSessionSchema, turnInputSchema, v2CurrentRulesetVersion } from "@brass-ledger/shared";
 import { hashPromptText } from "@brass-ledger/headless";
 import { soloScenario, staffExerciseScenario } from "@brass-ledger/content";
-import { campaignStateHash, ineligibleStaffNegotiations, resolveTurn, v2FinalSessionDigest, v2InitialStateDigest } from "@brass-ledger/sim";
+import { campaignStateHash, ineligibleStaffNegotiations, initializeV2RavellanState, resolveTurn, v2FinalSessionDigest, v2InitialStateDigest } from "@brass-ledger/sim";
 
 const saveDir = await mkdtemp(path.join(tmpdir(), "brass-ledger-routes-"));
 process.env.NODE_ENV = "test";
@@ -79,7 +79,12 @@ async function assertImportRejected(exportData: unknown) {
 function validV2Export() {
   const digest = "a".repeat(64);
   const identity = { ruleset: "v2" as const, rulesetVersion: v2CurrentRulesetVersion, scenarioId: "kestrel-strait", contentVersion: "2026.09.02", contentDigest: digest };
-  const initialState = { cycle: 1 as const, seed: "kestrel-seed", standingIntent: null };
+  const initialState = {
+    cycle: 1 as const,
+    seed: "kestrel-seed",
+    standingIntent: null,
+    ravellan: { ...initializeV2RavellanState({ rulesetId: identity.rulesetVersion, scenarioId: identity.scenarioId, campaignSeed: "kestrel-seed" }), observations: [] },
+  };
   const session = {
     id: "v2-save-1", campaignId: "v2-campaign-1", revision: 0, identity,
     initialState, state: initialState, actionLedger: [] as [], updatedAt: "2026-09-02T00:00:00.000Z",
@@ -104,7 +109,7 @@ test("V2 imports surface skeleton tampering instead of falling through to V1", a
   const valid = validV2Export();
   const cases: Array<[string, unknown, string]> = [
     ["initial digest", { ...valid, session: { ...valid.session, initialStateDigest: "0".repeat(64) } }, "v2_initial_state_digest_mismatch"],
-    ["state change", { ...valid, session: { ...valid.session, state: { cycle: 1, seed: "changed", standingIntent: null } } }, "v2_state_changed_without_ledger"],
+    ["state change", { ...valid, session: { ...valid.session, state: { ...valid.session.state, seed: "changed" } } }, "v2_state_changed_without_ledger"],
     ["action", { ...valid, session: { ...valid.session, actionLedger: [{ kind: "command-set" }] } }, "v2_nonempty_ledger_unsupported"],
   ];
   for (const [_name, exportData, code] of cases) {

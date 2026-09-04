@@ -11,7 +11,7 @@ export const v2RulesetTag = "v2" as const;
  * #97 changes the persisted bootstrap state. Earlier V2 skeleton saves are
  * intentionally not parsed as this format: no migration has been authored.
  */
-export const v2CurrentRulesetVersion = "0.3.0-prototype" as const;
+export const v2CurrentRulesetVersion = "0.4.0-prototype" as const;
 export const sha256DigestSchema = z.string().regex(/^[a-f0-9]{64}$/, "must be a lowercase SHA-256 digest");
 
 export const v2IdentitySchema = z.object({
@@ -28,9 +28,50 @@ export type V2Identity = z.infer<typeof v2IdentitySchema>;
  * issues add world, belief, commitments, and consequences as separate fields;
  * none of those may be smuggled into this root before their contracts exist.
  */
+export const v2RavellanPostureSchema = z.enum(["genuine_preparation", "coercive_feint", "testing"]);
+export type V2RavellanPosture = z.infer<typeof v2RavellanPostureSchema>;
+export const v2RavellanPreparationSchema = z.enum(["none", "developing", "ready"]);
+export type V2RavellanPreparation = z.infer<typeof v2RavellanPreparationSchema>;
+export const v2RavellanNormalActionSchema = z.enum(["probe_shipping", "seed_deception", "prepare_beacon_seizure", "pause_consolidate"]);
+export type V2RavellanNormalAction = z.infer<typeof v2RavellanNormalActionSchema>;
+export const v2RavellanTerminalActionSchema = z.enum(["attempt_seizure", "threshold_challenge", "abort_and_pressure"]);
+export type V2RavellanTerminalAction = z.infer<typeof v2RavellanTerminalActionSchema>;
+export const v2RavellanActionSchema = z.union([v2RavellanNormalActionSchema, v2RavellanTerminalActionSchema]);
+export type V2RavellanAction = z.infer<typeof v2RavellanActionSchema>;
+/** Persisted system evidence; never a client command. */
+export const v2RavellanDecisionSchema = z.object({
+  action: v2RavellanActionSchema,
+  matchedPolicyRowId: z.enum([
+    "C1",
+    "GP-1", "GP-2", "GP-3", "GP-4", "GP-5",
+    "CF-1", "CF-2", "CF-3", "CF-4", "CF-5",
+    "T-1", "T-2", "T-3", "T-4", "T-5",
+    "R6-1", "R6-2", "R6-3", "R6-4", "R6-5",
+  ]),
+  nextPosture: v2RavellanPostureSchema,
+  nextPreparation: v2RavellanPreparationSchema,
+}).strict();
+export type V2RavellanDecision = z.infer<typeof v2RavellanDecisionSchema>;
+
+export const v2RavellanObservationSchema = z.discriminatedUnion("signal", [
+  z.object({ signal: z.literal("beacon_coverage_signal"), value: z.enum(["weak", "credible"]), observedCycle: z.number().int().min(1), source: z.string().min(1) }).strict(),
+  z.object({ signal: z.literal("visible_denial_signal"), value: z.enum(["withheld", "demonstrated"]), observedCycle: z.number().int().min(1), source: z.string().min(1) }).strict(),
+  z.object({ signal: z.literal("coalition_unity_signal"), value: z.enum(["fractured", "coherent"]), observedCycle: z.number().int().min(1), source: z.string().min(1) }).strict(),
+  z.object({ signal: z.literal("reserve_exhaustion_signal"), value: z.literal("suspected"), observedCycle: z.number().int().min(1), source: z.string().min(1) }).strict(),
+  z.object({ signal: z.literal("ravellan_discovery_signal"), value: z.literal("suspected"), observedCycle: z.number().int().min(1), source: z.string().min(1) }).strict(),
+]);
+export type V2RavellanObservation = z.infer<typeof v2RavellanObservationSchema>;
+export const v2RavellanStateSchema = z.object({
+  posture: v2RavellanPostureSchema,
+  preparation: v2RavellanPreparationSchema,
+  observations: z.array(v2RavellanObservationSchema),
+}).strict();
+export type V2RavellanState = z.infer<typeof v2RavellanStateSchema>;
+
 export const v2BootstrapStateSchema = z.object({
   cycle: z.number().int().min(1),
   seed: z.string().min(1),
+  ravellan: v2RavellanStateSchema,
   /** Null until the one opening declaration has been authoritatively recorded. */
   standingIntent: z.lazy(() => v2StandingIntentSchema).nullable(),
 }).strict();
@@ -183,6 +224,24 @@ export const v2CommandSetLedgerEntrySchema = z.object({
 }).strict();
 export type V2CommandSetLedgerEntry = z.infer<typeof v2CommandSetLedgerEntrySchema>;
 
+/**
+ * Ravellan is an authoritative system transition, not evidence attached to a
+ * player command. Its full state snapshots make the hidden policy replayable
+ * without ever trusting a client-facing history.
+ */
+export const v2RavellanDecisionLedgerEntrySchema = z.object({
+  kind: z.literal("ravellan-decision"),
+  cycle: z.number().int().min(1).max(6),
+  decision: v2RavellanDecisionSchema,
+  preState: v2BootstrapStateSchema,
+  postState: v2BootstrapStateSchema,
+  preRevision: z.number().int().min(0),
+  postRevision: z.number().int().min(0),
+  preStateHash: sha256DigestSchema,
+  postStateHash: sha256DigestSchema,
+}).strict();
+export type V2RavellanDecisionLedgerEntry = z.infer<typeof v2RavellanDecisionLedgerEntrySchema>;
+
 export const v2IntentDeclarationLedgerEntrySchema = z.object({
   kind: z.literal("intent-declaration"),
   intentDeclaration: v2IntentDeclarationSchema,
@@ -197,6 +256,7 @@ export type V2IntentDeclarationLedgerEntry = z.infer<typeof v2IntentDeclarationL
 
 export const v2ActionLedgerEntrySchema = z.discriminatedUnion("kind", [
   v2IntentDeclarationLedgerEntrySchema,
+  v2RavellanDecisionLedgerEntrySchema,
   v2CommandSetLedgerEntrySchema,
 ]);
 export type V2ActionLedgerEntry = z.infer<typeof v2ActionLedgerEntrySchema>;
