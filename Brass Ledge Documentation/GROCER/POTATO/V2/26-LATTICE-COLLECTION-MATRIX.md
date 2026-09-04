@@ -9,7 +9,7 @@ Backlink: [[README]]
 
 This is the implementation authority for **#102 — Lattice Cell and the Kestrel directed-collection action it unlocks**. It is one concrete capability, not a generic technology tree.
 
-[[23-HQ-BELIEF-AND-EVIDENCE]] owns the shared evidence/assessment/warning/public-case reducers. [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns pure historical derivation. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns cross-system command/attribution interactions.
+[[23-HQ-BELIEF-AND-EVIDENCE]] owns shared evidence/assessment/warning/public-case reducers. [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] owns pure historical derivation. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns cross-system command/attribution interactions.
 
 # Product purpose
 
@@ -19,7 +19,7 @@ Lattice should feel valuable because sustained investment gives the commander a 
 
 It does not add `+intel`, probability, rerolls or hidden score.
 
-The three target choices must answer mechanically different command questions. They are not three labels for “reveal Ravellan's posture”.
+The three target choices answer mechanically different command questions. They are not three labels for “reveal Ravellan's posture”.
 
 # Investment schedule
 
@@ -29,11 +29,9 @@ Exactly three scheduled protected advances:
 - C2: 1 → 2;
 - C3: 2 → `3-operational`.
 
-All must occur on schedule.
+All must occur on schedule. Missing any required advance makes Kestrel maturity unreachable. No catch-up, partial bonus, accelerated investment or refund.
 
-If any scheduled advance is missed, Lattice cannot become operational during Kestrel. No catch-up, partial bonus, accelerated investment or refund.
-
-It becomes operational for C4.
+Operational from C4.
 
 # Task Collection
 
@@ -43,23 +41,33 @@ Operational Lattice unlocks exactly one action family:
 
 Rules:
 
-- available C4 and C5 only;
+- available C4/C5 only;
 - one named eligible target per cycle;
-- does **not** consume either normal intervention token;
-- task is persisted/replayable player authority under #102's later architecture;
+- zero normal intervention cost;
+- task/result authority is persisted/replayable under #102's later architecture;
 - no immediate HQ assessment change;
 - result arrives at the next canonical HQ-belief query point;
 - result becomes ordinary derived HQ evidence under [[23-HQ-BELIEF-AND-EVIDENCE]];
-- no C6 task because there is no later Kestrel command window in which new evidence can guide a decision;
+- no C6 task;
 - result never directly mutates hidden Ravellan state or sets assessment/recommendation.
 
-# Posture-blind observation invariant
+# Observation boundary
 
 Each target may inspect only the physical/action-history facts explicitly listed below.
 
-**Hidden Ravellan posture is not an input to any Lattice result selector.**
+Hidden Ravellan posture is never an input.
 
-Holding target-authorised facts constant while changing posture alone must produce identical evidence.
+#102 should follow the same four-layer pattern as #100 where practical:
+
+```text
+verified hidden history
+→ target-authorised observation extractor
+→ bounded source fact
+→ evidence mapper
+→ #100 reducers
+```
+
+Holding authorised source facts fixed while changing posture alone must produce identical evidence.
 
 # Named targets
 
@@ -69,35 +77,31 @@ Exactly:
 - `auxiliary-tasking`
 - `political-operational-sync`
 
-No free-text target exists.
+No free-text target.
 
 ## Eligibility
 
-A target is eligible when:
+Target eligible when:
 
-- Lattice is operational;
-- current cycle is C4 or C5;
-- no unresolved Lattice task already exists for that cycle;
-- the named question is still materially unresolved;
-- that exact target has not already produced a result authored as conclusive for the remainder of the slice.
+- Lattice operational;
+- cycle C4/C5;
+- no unresolved same-cycle Lattice task;
+- named question materially unresolved;
+- that target has not already produced a result authored as conclusive for the rest of Kestrel.
 
-A coherent overall `ravellan-intent` assessment does not automatically make every named question irrelevant. Another target may still provide tactical warning, create contradiction, strengthen a public case or change later route/recommendation space.
+A coherent overall assessment does not make every named question irrelevant. Another target can still add tactical warning, expose contradiction, strengthen a public case or alter later action/route space.
 
-Eligibility derives from authoritative evidence/state, never UI prose.
-
-# Timing / authorised world slice
+# Timing
 
 Tasked in Cn:
 
-1. persist target/task in Cn;
-2. Ravellan/world advances through the normal lifecycle before result time;
-3. at Cn+1 belief query, inspect only the target-authorised verified facts below;
-4. create the exact evidence result;
-5. feed it through [[23-HQ-BELIEF-AND-EVIDENCE]].
+1. persist task/target authority;
+2. world/Ravellan advances normally;
+3. at Cn+1 belief query inspect only target-authorised verified facts;
+4. map to exact evidence result;
+5. reduce through #100.
 
-A saved task/result record is evidence to verify, not truth to trust blindly. Replay must recompute the result from the same authorised verified history.
-
-Directional Lattice results remain active through terminal unless a newer result of the **same named question** explicitly supersedes them.
+Directional Lattice results remain active through terminal unless newer **same-question** evidence explicitly supersedes them.
 
 # Target 1 — `landing-force-staging`
 
@@ -105,47 +109,37 @@ Question:
 
 > Are units required for a Beacon seizure actually concentrating?
 
-This is the strongest Kestrel **indications-and-warning** question.
+Primary value: **indications-and-warning**.
 
-Authorised input:
+Authorised physical input:
 
 - seizure-preparation state at result time only.
 
-It does not read posture or recent action ID.
+No posture/recent-action input.
 
 ## Preparation `developing|ready`
-
-Evidence:
 
 `lattice-landing-concentration`
 
 - implication `preparation`;
 - diagnosticity `diagnostic`;
-- source `lattice-landing-force-staging`;
-- warning role **`usable`**;
-- public-case role `source-sensitive`;
-- summary: landing elements associated with previous seizure exercises are concentrating near embarkation areas.
+- warning `usable`;
+- public-case `source-sensitive`;
+- summary meaning: landing elements associated with prior seizure exercises are concentrating near embarkation areas.
 
-This can produce:
-
-- a coherent preparation assessment if no contradiction remains;
-- usable tactical warning even if the wider assessment is still conflicted;
-- a source-sensitive public-case basis if contradiction is cleared.
+Can create coherent preparation if uncontradicted and usable warning even if wider assessment remains conflicted.
 
 ## Preparation `none`
-
-Evidence:
 
 `lattice-landing-dispersed`
 
 - implication `coercion`;
 - diagnosticity `indicator`;
-- same source;
-- warning role none;
-- public-case role `source-sensitive`;
-- summary: the force package required for a rapid Beacon seizure remains dispersed.
+- warning none;
+- public-case `source-sensitive`;
+- summary meaning: the force package required for rapid seizure remains dispersed.
 
-The negative result is only an indicator: absence of concentration now does not prove Ravellan cannot pivot later.
+Negative result stays an indicator because absence now does not prove Ravellan cannot pivot later.
 
 # Target 2 — `auxiliary-tasking`
 
@@ -153,64 +147,51 @@ Question:
 
 > Are the vessels pressuring shipping integrated into wider military preparation or primarily part of coercive pressure?
 
-This is the strongest Kestrel question for **understanding the pressure mechanism**.
+Primary value: understand the **pressure mechanism**; strongest Kestrel route to diagnostic coercion.
 
 Authorised inputs:
 
-- seizure-preparation state;
-- most recent verified normal Ravellan action within the collection interval.
+- result-time seizure preparation;
+- most recent verified normal Ravellan action within collection interval.
 
 No posture.
 
-## Physical preparation + active shipping probe
+## Preparation + active shipping probe
 
-Condition:
-
-- preparation `developing|ready`;
-- most recent action `probe_shipping`.
-
-Evidence:
+Condition: preparation `developing|ready` + latest action `probe_shipping`.
 
 `lattice-auxiliary-integrated`
 
-- implication `preparation`;
-- diagnosticity `indicator`;
+- implication preparation;
+- diagnosticity indicator;
 - warning none;
-- public-case role `source-sensitive`;
-- summary: auxiliary vessels appear to be receiving tasking consistent with a wider military preparation effort.
+- public-case source-sensitive.
 
-It remains an indicator because auxiliary integration alone does not establish that the physical seizure force is ready or timed.
+Auxiliary integration alone does not prove the seizure force is ready/timed.
 
-## No physical preparation + coercive/deceptive pressure action
+## No preparation + coercive/deceptive pressure action
 
-Condition:
-
-- preparation `none`;
-- most recent action `probe_shipping|seed_deception`.
-
-Evidence:
+Condition: preparation `none` + latest action `probe_shipping|seed_deception`.
 
 `lattice-auxiliary-coercive`
 
-- implication `coercion`;
-- diagnosticity **`diagnostic`**;
+- implication coercion;
+- diagnosticity **diagnostic**;
 - warning none;
-- public-case role `source-sensitive`;
-- summary: shipping pressure is being directed through a coherent coercive/political tasking chain rather than a seizure-force command sequence.
+- public-case source-sensitive.
+
+This is strong because the collection combines an observed coercive tasking chain with the absence of the physical preparation state the same target is authorised to inspect.
 
 ## Otherwise
 
 `lattice-auxiliary-mixed`
 
-- implication `ambiguous`;
-- diagnosticity `indicator`;
+- implication ambiguous;
+- diagnosticity indicator;
 - warning none;
-- public-case role none;
-- summary: tasking crosses auxiliary and military channels, but the pattern does not establish one common operational plan.
+- public-case none.
 
-A well-chosen target can legitimately return uncertainty.
-
-A Lattice auxiliary result supersedes older active evidence answering the same auxiliary-tasking question, including `reroute-auxiliary-*` or liaison auxiliary evidence. It does not delete evidence from another named question.
+A newer Lattice auxiliary result explicitly supersedes older auxiliary-tasking evidence such as reroute/liaison evidence, not unrelated questions.
 
 # Target 3 — `political-operational-sync`
 
@@ -218,7 +199,7 @@ Question:
 
 > Are Ravellan's recent operational milestones forming one sequence with the pressure campaign?
 
-This is the strongest Kestrel question for **pattern/sequence and a public analytic case**, not tactical warning.
+Primary value: **pattern/sequence and a preparation-oriented public analytic case**, not tactical warning.
 
 Authorised input:
 
@@ -226,174 +207,170 @@ Authorised input:
 
 No posture/preparation input.
 
-If fewer than two actions exist, use the available history and fall through to the weaker case.
-
 ## Two recent prepare actions
 
 `lattice-sync-preparation-sequence`
 
-- implication `preparation`;
-- diagnosticity **`diagnostic`**;
+- implication preparation;
+- diagnosticity **diagnostic**;
 - warning none;
-- public-case role `source-sensitive`;
-- summary: recent operational milestones form a sustained preparation sequence rather than isolated activity.
+- public-case source-sensitive;
+- meaning: recent milestones form a sustained preparation sequence rather than isolated activity.
 
-This can make the intent picture coherent/publicly supportable while still leaving the commander without direct physical warning of when forces will move.
+This can make intent coherent/publicly supportable while still providing no direct physical warning of execution timing.
 
 ## Exactly one recent prepare action
 
 `lattice-sync-preparation-signal`
 
-- implication `preparation`;
-- diagnosticity `indicator`;
+- implication preparation;
+- diagnosticity indicator;
 - warning none;
-- public-case role `source-sensitive`;
-- summary: one recent operational milestone aligns with the pressure campaign, but the wider sequence remains mixed.
+- public-case source-sensitive;
+- meaning: one milestone aligns with preparation, but the wider recent sequence remains mixed.
 
 ## No prepare action + at least one probe/deception action
 
 `lattice-sync-coercive-sequence`
 
-- implication `coercion`;
-- diagnosticity **`diagnostic`**;
+- implication coercion;
+- diagnosticity **indicator**;
 - warning none;
-- public-case role `source-sensitive`;
-- summary: recent activity sustains political/coercive pressure without corresponding seizure-preparation milestones.
+- public-case source-sensitive;
+- meaning: recent activity has sustained pressure without a new preparation milestone in the observed interval.
+
+**Do not mark this branch diagnostic.** Recent pressure/deception actions do not prove that preparation created earlier is absent; this target does not observe preparation state. Strong diagnostic coercion belongs to `auxiliary-tasking`, which is authorised to inspect both tasking and physical preparation.
 
 ## Otherwise
 
 `lattice-sync-partial`
 
-- implication `ambiguous`;
-- diagnosticity `indicator`;
+- implication ambiguous;
+- diagnosticity indicator;
 - warning none;
-- public-case role none;
-- summary: recent activity does not establish whether the political and operational tracks share one timetable.
+- public-case none.
 
 # Target-choice differentiation
 
-The target choice must matter mechanically from identical pre-task states.
+The target choice must matter from identical pre-task states.
 
-Examples:
+Intended triangle:
 
-- physical preparation developing + only one recent prepare action:
-  - landing can produce **diagnostic preparation + usable warning**;
-  - sync may produce only a preparation indicator;
-- no physical preparation + coercive/deception action:
-  - auxiliary/sync can produce **diagnostic coercion**;
-  - landing produces only a weaker coercion indicator;
-- mixed histories:
-  - one target can be ambiguous while another is directional;
-- a sync/auxiliary diagnostic preparation result can make intent coherent **without** usable tactical warning, preserving a reason to value landing-force collection in another history/run.
+- **landing** — best physical warning; can diagnose preparation + warning;
+- **auxiliary** — best diagnostic test of coercive tasking; never warning;
+- **sync** — best test of a sustained preparation sequence/public case; never warning, and negative coercion result is deliberately weaker than auxiliary.
 
-#107 branches target choice from identical pre-task state and rejects a target that never changes later evidence/assessment/warning/public-case/recommendation/route effects relative to the others.
+Representative contrasts:
 
-Do not hide equivalent targets behind randomness.
+- physical preparation developing + one recent prepare action:
+  - landing → diagnostic preparation + usable warning;
+  - sync → preparation indicator only;
+- no preparation + coercive latest action:
+  - auxiliary → diagnostic coercion;
+  - landing → coercion indicator;
+  - sync → at most coercion indicator depending recent sequence;
+- two recent prepare actions:
+  - sync → diagnostic preparation but no warning;
+  - landing can provide warning if physical preparation is present;
+- mixed histories can make one target ambiguous while another is directional.
 
-# Result contradictions / supersession
+#107 branches all eligible targets from identical pre-task state and rejects:
 
-Different named questions are independent. Better collection can reveal a genuinely mixed/changing world.
+- prose/evidence-count-only differentiation;
+- a target globally dominated in every state where co-eligible;
+- a target whose claimed warning/public-case role never changes downstream choice/route space.
 
-Therefore:
+Do not hide equivalence with randomness.
+
+# Contradiction / supersession
+
+Different named questions remain independent. Better collection may legitimately reveal a mixed/changing world.
 
 - different-target evidence does not automatically delete contradiction;
-- same-target newer evidence may supersede older same-question evidence when explicitly authored;
-- active evidence on both directions → HQ `unclear + conflicted` under the shared reducer;
-- a usable physical warning signpost can coexist with a conflicted intent assessment.
+- same-target newer evidence may explicitly supersede older same-question evidence;
+- active opposing directions → `unclear + conflicted`;
+- usable physical warning may coexist with conflicted intent.
 
-Example: landing concentration can provide usable warning while later coercive auxiliary tasking still leaves the wider intent picture disputed.
+Example: landing concentration gives usable warning while auxiliary tasking can still point toward coercive pressure.
 
 # Emergency partner-liaison fallback
 
-If Lattice is not operational in C4, expose exactly one narrower fallback:
+If Lattice unavailable in C4, expose exactly:
 
 `request-partner-liaison`
 
-Under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] it is `requiresIntervention = true`:
+Under [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]]:
 
-- consumes exactly one normal personal intervention;
-- can never be staff-recommended/delegated;
-- creates `liaison-obligation = active`;
-- queues one result for C5;
-- does not create reusable capability;
-- answers only `auxiliary-tasking`;
-- can never produce diagnostic evidence;
-- can never create usable tactical warning.
+- commander-only `requiresIntervention = true`;
+- consumes one normal intervention;
+- creates liaison obligation;
+- queues one C5 result;
+- no reusable capability;
+- answers only auxiliary-tasking;
+- never diagnostic;
+- never usable warning.
 
-It observes the **same authorised auxiliary-tasking facts** as Lattice and maps:
+It observes the same authorised auxiliary facts and maps:
 
-- integrated-preparation condition → `liaison-auxiliary-military-links`, `preparation`, `indicator`, warning none, public-case `source-sensitive`;
-- no-preparation coercive condition → `liaison-auxiliary-coercive-links`, `coercion`, `indicator`, warning none, public-case `source-sensitive`;
-- otherwise → `liaison-auxiliary-unclear`, `ambiguous`, `indicator`, warning none, public-case none.
+- integrated preparation → preparation indicator, warning none, source-sensitive;
+- no-preparation coercive condition → coercion indicator, warning none, source-sensitive;
+- otherwise ambiguous, no public-case role.
 
-A newer liaison result supersedes an older C2 reroute clue for the same auxiliary question.
+A newer liaison result supersedes older C2 reroute clue for the same auxiliary question.
 
-The fallback is useful but narrower/costlier and cannot by itself create the same coherent picture or tactical warning as a good Lattice result.
+Fallback is useful but narrower/costlier and cannot by itself produce coherent intent or tactical warning.
 
 # Public-case / attribution interaction
 
-Lattice never directly creates the persisted attribution opportunity.
+Lattice never directly creates persisted attribution opportunity.
 
-After evidence enters the #100 derived model:
+Evidence enters #100:
 
-- eligible indicator evidence may make the **public-case basis** tentative;
-- an eligible uncontradicted diagnostic result may make it `credible-source-sensitive`.
+- eligible indicators may make public-case basis tentative;
+- eligible uncontradicted diagnostics may make it `credible-source-sensitive`.
 
-Later #101 consumes that basis to manage campaign `attribution-opportunity` state, including the one-shot `used` terminal state.
+#101 later mirrors that basis into its unspent opportunity state and owns one-shot `used`. Later Lattice evidence can change HQ analysis but cannot regenerate a spent opportunity.
 
-A later Lattice result may still change HQ assessment after public use, but must not regenerate a spent Kestrel attribution opportunity.
-
-# Replay / ledger requirements
+# Replay / architecture
 
 #102 must persist/replay or deterministically reconstruct, under [[30-ARCHITECTURE-CONTRACT]]:
 
 - scheduled advances/missed reachability;
 - operational state;
-- target ID / task cycle / queue state;
+- task target/cycle/queue;
 - authorised verified facts or stable references sufficient to recompute result;
-- result evidence ID;
+- result evidence ID where persistence is actually needed;
 - liaison action/obligation/result.
 
-The **#100 belief state itself remains derived** under [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]].
+#100 belief stays derived under [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]].
 
-Trusted replay rejects:
+Before implementation, choose the smallest replay-safe integration against the then-current lifecycle. Do not widen `ravellan-decision` or persist a duplicate belief snapshot.
 
-- task before maturity;
-- catch-up advancement;
-- >1 Lattice task/cycle;
-- C6 task;
-- wrong target/result combination;
-- posture read by target selector;
-- liaison diagnostic result;
-- liaison usable-warning result;
-- liaison via Delegate;
-- target result directly setting hidden state/assessment/warning/recommendation;
-- same-target supersession that does not match authored chronology.
-
-# Required #102 tests
+# Required tests
 
 At minimum:
 
-- exact scheduled maturity and missed-advance failure;
-- operational Lattice changes legal action space C4;
-- Task Collection costs zero normal interventions;
+- exact scheduled maturity/missed-advance failure;
+- Task Collection changes legal info space and costs zero normal interventions;
 - one target/cycle;
-- all target branches deterministic;
-- posture-only variation with authorised target facts fixed → identical result;
-- result projection contains no hidden posture/preparation/action IDs;
-- result enters shared #100 evidence reducers rather than setting analysis directly;
+- all branches deterministic;
+- posture-only change with authorised facts fixed → identical result;
+- no hidden posture/preparation/action IDs in player projection;
+- results enter #100 reducers rather than set analysis directly;
 - landing concentration can create usable warning;
-- sync/auxiliary diagnostic preparation can create coherent preparation **without** warning;
-- auxiliary/sync coercive diagnostic branches create coherent coercion when uncontradicted;
-- public-case roles follow the exact source-sensitive matrix;
-- contradictions retained across different named questions;
-- same-question supersession works across reroute/liaison/Lattice;
-- at least two identical-prestate targets create different downstream mechanics;
-- liaison costs one intervention, creates obligation, cannot delegate, cannot diagnose/coherently settle intent by itself, cannot create warning;
-- at least one viable non-Lattice non-defeat history exists;
-- one-shot attribution timing works: later evidence cannot recreate a used opportunity;
-- V1 capability/programme state unchanged.
+- sync diagnostic preparation can create coherent preparation **without** warning;
+- auxiliary diagnostic coercion can create coherent coercion when uncontradicted;
+- sync no-prepare/recent-pressure branch is only an indicator, never diagnostic;
+- public-case roles exact;
+- contradiction retained across different targets;
+- same-question supersession across reroute/liaison/Lattice;
+- at least two identical-prestate targets produce different downstream assessment/warning/public-case/action effects;
+- no target globally dominated across all co-eligible states;
+- liaison one intervention, obligation, never Delegate/diagnostic/warning;
+- viable non-Lattice non-defeat history;
+- later evidence cannot regenerate used attribution opportunity;
+- V1 unchanged.
 
 # Rejection conditions
 
-Reject #102 if it becomes a tech tree, adds generic intelligence points/bonus, reads hidden posture, reveals hidden truth directly, makes every target equivalent, treats every preparation assessment as tactical warning, hides fake choice with randomness, makes liaison free/delegated, removes non-Lattice counterplay or generalises to arbitrary collection targets before another scenario proves reuse.
+Reject #102 if it becomes a tech tree, adds intelligence points/bonus, reads hidden posture, lets sync infer strong coercion from recent action history alone, reveals truth directly, makes targets equivalent, treats preparation assessment as warning, hides fake choice with randomness, makes liaison free/delegated, removes non-Lattice counterplay, persists duplicate #100 belief or generalises arbitrary collection targets before another scenario proves reuse.
