@@ -17,39 +17,45 @@ The complete Kestrel implementation must prove:
 - ruleset/content/prototype-format boundaries;
 - revision/stale-write protection;
 - hidden-world/adversary isolation;
-- posture-blind collection and explicit raw-history→source-fact observation boundaries;
+- posture-blind collection + explicit raw-history→source-fact observation boundaries;
 - deterministic HQ evidence reduction / safe projection;
-- **intent assessment, tactical warning and public-case basis remain separate products**;
-- historical HQ belief cannot be rewritten by later hidden state;
-- routine C3 observation is bounded coverage rather than omniscient hidden truth;
-- safe world prose cannot feed back into analytic evidence;
-- derived #100 semantics are content-identity stable without becoming persisted state;
+- intent assessment, tactical warning and public-case basis remain separate;
+- every credible public case has a **specific claim direction**;
+- stale information is excluded from current judgement without being deleted from historical reconstruction;
+- same-question retasking replaces older observation rather than stacking votes;
+- source/method context is legible without another confidence meter;
+- historical HQ belief cannot be rewritten by later hidden truth;
+- routine C3 observation is bounded coverage rather than omniscient truth;
+- safe world prose cannot feed analytic evidence;
+- #100 derived semantics are content-identity stable without becoming persisted state;
 - explainable recommendation with real standing-intent relevance;
-- warning changes explicitly warning-sensitive decisions without becoming a universal hidden bonus;
-- #100 internal public-case basis cannot bypass #101 one-shot attribution state;
+- warning changes only explicitly warning-sensitive decisions;
+- #100 internal public-case basis cannot bypass #101 one-shot directional attribution state;
 - commander-only actions never become free delegated recommendations;
 - all-Delegate package always legal;
 - complete-package effects order-independent;
-- Ravellan receives only closed observations and relied-upon policy paths are normal-play reachable;
+- Ravellan receives only closed observations and relied-upon policy paths are normally reachable;
 - concrete consequences + costly recovery through C5;
 - Lattice changes action/information space without becoming mandatory;
-- Lattice targets are mechanically differentiated by **what kind of information advantage they produce**, not prose/evidence count;
-- no Lattice target is globally dominated whenever co-eligible;
+- Lattice targets are differentiated by kind of information advantage, not prose/evidence count;
+- retasking an unresolved question and broadening to a new question can each be rational in some reachable histories;
+- no target or always-retask policy is globally dominated/optimal everywhere co-eligible;
 - consequential choices mechanically elastic;
 - no unintentional player-safe dominated trap;
 - legitimate hidden-state-dependent risk not falsely rejected;
 - local dominance accounts for scarce intervention opportunity cost;
 - C5 consultation-vs-tempo and attribution-use-vs-preserve are real;
-- public attribution/source exposure is disclosed authoritative severe cost;
-- final route legality uses the separate warning product and prunes known futile/dominated responses;
+- public attribution/source exposure + **claim subject** are disclosed before use;
+- final route legality uses separate warning and directional attribution predicates;
+- coercion case cannot masquerade as preparation evidence during seizure;
 - final routes apply real post-route effects before classification;
-- every player-known terminal state has at least one response and no displayed pairwise-dominated terminal pair;
+- every player-known terminal state has at least one response and no displayed pairwise-dominated route pair;
 - no universal final answer;
 - no forced hard loss before C6 without earlier counterplay;
 - no structural success snowball eliminating late trade-offs;
 - no dead persisted observation/state merely for symmetry.
 
-[[31-HEADLESS-DESIGN-LAB]] owns exact diagnostics. [[23-HQ-BELIEF-AND-EVIDENCE]] / [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] own #100 intelligence semantics/architecture. [[26-LATTICE-COLLECTION-MATRIX]] owns target differentiation. [[27-KESTREL-TERMINAL-MATRIX]] owns terminal legality. [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] owns reverse observations. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns cross-issue composition.
+[[31-HEADLESS-DESIGN-LAB]] owns exact diagnostics. [[23-HQ-BELIEF-AND-EVIDENCE]] / [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] own #100 intelligence semantics/architecture. [[26-LATTICE-COLLECTION-MATRIX]] owns target/retask production. [[25-KESTREL-CONSEQUENCE-MATRIX]] owns directional attribution state. [[27-KESTREL-TERMINAL-MATRIX]] owns terminal legality. [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] owns reverse observations. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns cross-issue composition.
 
 # Lab probes
 
@@ -85,12 +91,12 @@ Question:
 
 > Is this player-reachable package/choice an objective trap from the player's legitimate information state?
 
-For one player-safe state:
+For one safe state:
 
-1. group every hidden reality compatible with the same legitimate HQ/public information;
-2. compare complete legal packages differing at focal choice while holding rest equivalent where possible;
-3. preserve whether focal choice is delegated or spends intervention;
-4. include interventions consumed, remaining same-cycle attention and alternatives foreclosed/retained;
+1. group every hidden reality compatible with same legitimate HQ/public information;
+2. compare complete legal packages differing at focal choice while keeping rest equivalent where possible;
+3. preserve delegated vs personal-intervention authority cost;
+4. include interventions consumed, remaining attention and alternatives foreclosed/retained;
 5. simulate all compatible hidden realities.
 
 A may be dominated by B only when across every compatible hidden state:
@@ -99,90 +105,115 @@ A may be dominated by B only when across every compatible hidden state:
 - B no worse in terminal classification;
 - B has no stricter severe-cost set;
 - B no worse in intervention/action-space opportunity cost;
-- A has no compensating **assessment/warning/public-case/capability/recovery/action-space** value;
+- A has no compensating **assessment/warning/public-case-direction/capability/recovery/action-space** value;
 - B strictly better somewhere.
 
 Consequences:
 
-- beneficial warning/reassurance intervention does not automatically dominate silent/routine baseline if it consumes scarce attention;
-- if standing intent makes the same action delegated, comparison changes legitimately;
-- source exposure, emergency surge, concession/breach and late reaction remain real downsides;
-- a risky course that wins in one compatible hidden reality and loses in another is not dominated by oracle hindsight.
+- beneficial intervention does not automatically dominate free delegated baseline;
+- standing intent can legitimately alter dominance because intervention cost changes;
+- source exposure/emergency/concession/breach/late reaction stay visible downsides;
+- risky choice that wins in one compatible hidden world and loses in another is not dominated by hindsight.
 
 # Intelligence orthogonality gates
 
 ## Assessment vs warning
 
-Require reachable proof of:
+Require reachable:
 
 - preparation assessment + warning none;
 - usable warning + wider conflicted assessment;
 - usable warning changes at least one later recommendation/route consequence;
 - coherent preparation without warning does not receive warning-specific benefit.
 
-A clean implementation can therefore represent both:
-
-> “I think they are preparing, but I still lack direct warning.”
-
-and:
-
-> “We have direct movement worth acting on, but I still cannot settle the wider intent picture.”
-
 ## Public case vs assessment/warning
 
 Require:
 
-- directional assessment with public case none/tentative;
-- usable warning with public case tentative where authored;
-- credible-source-sensitive basis only from eligible uncontradicted diagnostic evidence;
-- contradiction can reduce an unspent case basis without deleting an independent warning signpost;
-- hidden truth with identical legitimate evidence leaves basis equal;
-- later #101 `used` opportunity is never regenerated by a later #100 credible basis.
+- directional assessment with case none/tentative;
+- usable warning with case tentative where authored;
+- credible-source-sensitive only from eligible uncontradicted diagnostic evidence;
+- every credible case has exactly one direction;
+- directionless credible state impossible;
+- contradiction can reduce an unspent case without erasing independent warning;
+- hidden truth with identical legitimate evidence leaves case state+direction equal;
+- later #101 `used` case never regenerates.
 
-## Historical intelligence integrity
+## Directional public-case correctness
+
+Require paired player-safe terminal fixtures proving:
+
+- same physical/partner seizure state + credible preparation case may display Hold when #27 predicates hold;
+- same state + credible coercion case does not display Hold;
+- coercion case does not accidentally prune Emergency by creating a fake legal Hold;
+- threshold/receding can use either credible direction where meaningful;
+- C5 Use preserves `used.direction` and safe copy/debrief identify the claim actually made.
+
+# Intelligence currency / historical integrity
 
 Require:
 
-- C2 reroute result reconstructed from historical C2 authorised source facts;
-- C4 focused result reconstructed from C4 result-time source facts;
-- later Ravellan state cannot rewrite prior HQ snapshots;
-- C3 routine disposition report has no hidden-preparation input;
-- action-specific situation prose cannot change generic analytic evidence;
-- current brief before current-cycle Ravellan decision fails closed.
+- C2 reroute reconstructs from C2 authorised facts;
+- C4 focused result reconstructs from C4 result-time facts;
+- later state cannot rewrite prior HQ snapshots;
+- C3 routine report has no hidden-preparation input;
+- action-specific world prose cannot change generic evidence;
+- current brief before current Ravellan decision fails closed;
+- stale occurrences remain historical/debrief-visible;
+- current reducer excludes stale occurrence after relevance window;
+- staleness-driven assessment change explains staleness in safe copy;
+- supersession-driven change explains replacement;
+- source/method context remains historically stable.
 
-# Information / capability value gate
+# Retask / same-question gate
 
-Information is structurally useful only when it can change one or more of:
+When #102 exists:
+
+- a target may be re-tasked only when question remains unresolved/non-conclusive;
+- newer same-question occurrence replaces older occurrence, including same definition ID;
+- repeated collection never creates additive evidence votes;
+- retask can matter when world changed between observations;
+- retasking spends the same cycle's Task Collection opportunity and therefore has real breadth opportunity cost;
+- at least one reachable state makes recheck sensible;
+- at least one reachable state makes broadening sensible;
+- neither “always recheck” nor “always broaden” globally dominates across all co-eligible states;
+- authored conclusive result removes redundant re-tasking.
+
+# Information / capability value
+
+Information is useful only when it can change one or more of:
 
 - assessment;
 - warning;
-- public-case basis / later attribution opportunity;
+- public-case state/direction;
+- attribution opportunity;
 - recommendation/dissent;
-- legal package/route space;
+- legal package/route;
 - later rational choice.
 
-Evidence count or richer prose is not value by itself.
+Evidence count/richer prose is not value.
 
 Require:
 
 - at least one viable non-Lattice non-defeat history;
-- at least one history where better information materially changes a sensible/legal decision;
-- preparation/coalition strategies can succeed with imperfect intent picture at different costs/options;
-- oracle truth is not required merely to avoid hidden unavoidable defeat;
-- at least two Lattice targets from identical co-eligible pre-state produce different downstream mechanics;
-- no target globally dominated in every co-eligible state.
+- at least one history where better information materially changes sensible/legal choice;
+- preparation/coalition strategies can succeed with imperfect intent picture at different costs;
+- oracle truth not required to avoid hidden unavoidable loss;
+- at least two co-eligible target choices produce different downstream mechanics;
+- no target globally dominated whenever co-eligible;
+- player-safe basis includes source/method context without numeric reliability score.
 
-Canonical target identity to test:
+Canonical target identity:
 
 - landing staging → strongest tactical-warning path;
 - auxiliary tasking → strongest diagnostic coercion path;
-- political/operational sync → strongest sustained-preparation/public-case path, with negative coercion result only an indicator.
+- political/operational sync → strongest sustained-preparation/public-case path, with negative coercion result only indicator.
 
 # Oracle frontier
 
 Hidden truth only in isolated exhaustive exploration. It returns feasibility/non-dominated frontier/fairness evidence, never canonical action/staff advice.
 
-It may prove a seed unfair if unavailable truth is required to avoid otherwise unavoidable defeat; it cannot prove strategy fun/correct.
+It may prove a seed unfair if unavailable truth is required to avoid unavoidable defeat; it cannot prove a strategy fun/correct.
 
 # Machine viability gate before human/UI time
 
@@ -191,14 +222,19 @@ Before smoke/UI, #107 should have no unresolved blocker such as:
 - doomed hidden-state seed;
 - invalid all-Delegate package;
 - player-safe dominated trap;
-- false-positive dominance ignoring intervention cost;
+- false dominance ignoring intervention cost;
 - fake major choice;
 - assessment-warning/public-case conflation;
+- directionless credible case;
+- coercion case incorrectly used as seizure-preparation case;
 - historical intelligence using current state;
-- routine coverage behaving as an oracle;
+- stale evidence deleted or silently dropped from judgement without explanation;
+- repeat collection stacking as votes;
+- routine coverage behaving as oracle;
 - narrative prose leaking into analysis;
 - mandatory/cosmetic Lattice;
-- equivalent or globally dominated Lattice target;
+- equivalent/globally dominated target;
+- always-retask or always-broaden dominance where both should be meaningful;
 - worthless information;
 - unreachable recovery;
 - identical strategy families;
@@ -222,32 +258,37 @@ Machines cannot establish:
 - tension/regret/vindication/surprise/payoff;
 - voluntary continuation/replay desire;
 - whether two interventions/six cycles/prose density feel right;
-- whether intelligence feels intriguing rather than opaque;
-- whether assessment vs warning distinction is understandable without jargon;
-- whether named collection questions feel strategically satisfying;
+- whether Intelligence feels intriguing rather than opaque;
+- whether estimate vs warning distinction is understandable without jargon;
+- whether source/method context is enough to judge advice without becoming a dossier;
+- whether players understand what a public case actually claims;
+- whether rechecking a question versus broadening collection feels strategically meaningful;
 - whether authority/source/tempo trade-offs are understandable without over-explanation.
 
 Fresh-player evidence only.
 
 # Formative smoke
 
-After #104 + #107 and before main browser tranche:
+After #104 + #107 and before browser tranche:
 
 - 3 fresh players;
 - complete replay-valid plain-text slice;
 - uninterrupted/non-leading;
 - no hidden truth/strategy coaching.
 
-If >=2/3 cannot explain a major consequence, cannot form next-command plan or show no voluntary desire to continue while another command remains, stop/remediate.
+If >=2/3 cannot explain major consequence, form next-command plan or voluntarily want to continue while another command remains, stop/remediate.
 
 Repeated severe patterns also stop the tranche, including:
 
-- intelligence feels like arbitrary guessing;
-- players treat Intelligence Chief as omniscient answer key;
-- players cannot distinguish “we think preparation” from “we have direct warning” where the distinction matters;
-- collection targets feel equivalent/cosmetic;
-- information text is too dense to use;
-- paperwork/unknowable punishment/obvious trap/incomprehensible package rules.
+- intelligence feels arbitrary;
+- Intelligence Chief feels omniscient/correct-answer UI;
+- players cannot distinguish estimate from direct warning where it matters;
+- a public attribution option appears without the player knowing what claim they would make;
+- judgement changes because an old report aged out but player cannot tell why;
+- repeated collection feels like farming an intel bonus;
+- collection targets/rechecks feel equivalent/cosmetic;
+- information text too dense to use;
+- paperwork/unknowable punishment/obvious trap/package incomprehension.
 
 Smoke falsifies; cannot pass #110.
 
