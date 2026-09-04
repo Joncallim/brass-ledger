@@ -7,7 +7,7 @@ status: active
 
 Backlink: [[README]]
 
-This file owns dependency order and gates. Exact mechanics live in numbered contracts/issues. If sequencing differs, this plan controls; for mechanic authority use [[README]].
+This file owns dependency order and gates. Exact mechanics live in numbered contracts/issues.
 
 # Core chain
 
@@ -17,10 +17,10 @@ This file owns dependency order and gates. Exact mechanics live in numbered cont
 → `#97 standing intent`
 → `#99 Ravellan adversary`
 → `#100 HQ belief/intelligence`
-→ `#98 recommendation`
-→ `#101 persistent consequences`
-→ `#102 Lattice capability`
-→ `#103 complete Kestrel content`
+→ `#101 persistent consequences and irreversible source use`
+→ `#102 Lattice capability/task persistence`
+→ `#98 final belief/state/capability-aware recommendation`
+→ `#103 complete Kestrel content identity`
 → `#104 complete headless six-cycle execution`
 → `#107 headless design laboratory`
 → **3-player non-gating formative smoke**
@@ -32,11 +32,22 @@ This file owns dependency order and gates. Exact mechanics live in numbered cont
 
 Do not begin downstream gameplay merely because predecessor code exists. Dependency clears only when predecessor truthfully closes under its own review/test contract.
 
-# #100 special architecture gate
+# Why #101/#102 precede #98
 
-#99 is now committed at `0.4.0-prototype`.
+The final recommendation system must evaluate actual:
 
-#100 has inspected that committed replay lifecycle and deliberately uses **pure derived readout**:
+- reserve/Beacon/partner/commitment/source-use state from #101;
+- Lattice maturity, used targets, due results and target defaults from #102;
+- #100 assessment/warning/public-case products;
+- complete C5 package feasibility.
+
+Implementing final #98 before #101/#102 would force stubs or a second recommendation pass and would prevent trusted replay from reconstructing the real agenda.
+
+# #100 architecture gate
+
+#99 is committed at `0.4.0-prototype`.
+
+#100 is a pure read model:
 
 ```text
 ravellan-decision CN
@@ -45,64 +56,102 @@ ravellan-decision CN
 → command-set CN
 ```
 
-For #100 specifically:
+For #100:
 
-- no persisted HQ belief/evidence state;
-- no new ledger discriminator;
-- no revision increment for intelligence;
-- no ruleset-version bump;
-- no migration;
-- no derivation from unverified imported history.
+- no persisted evidence/product state;
+- no new ledger discriminator/revision;
+- no ruleset-version bump/migration;
+- no unverified-import derivation;
+- no production #102 task implementation.
 
-[[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] is the exact implementation seam.
+Canonical authority:
 
-Do **not** generalise this into “downstream V2 never needs system transitions.” #101/#102 genuinely persist campaign/capability truth and must independently choose replay-safe integration under [[30-ARCHITECTURE-CONTRACT]].
+- [[23-HQ-BELIEF-AND-EVIDENCE]];
+- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]];
+- [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]];
+- [[23C-HQ-BELIEF-EVIDENCE-CATALOG]];
+- `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json`.
 
-# Why lab/smoke precede browser
+# #101 architecture gate
 
-After #104, complete loop exists in replay-valid plain text.
+#101 persists concrete campaign state and irreversible source-use history, but not a mutable mirror of #100 credibility.
 
-#107 first rejects structural failures such as:
+Current attribution availability remains:
 
-- doomed/unfair seed;
+```text
+current #100 public-case basis + persisted source use
+```
+
+Any new #101 persisted state/ledger/replay semantics follow the next actual prototype version, trusted recomputation/tamper rejection and V1 isolation.
+
+# #102 architecture gate
+
+#102 owns real replay-valid:
+
+- Lattice progress/maturity;
+- used target IDs;
+- mandatory C4/C5 target selections;
+- due-result queue/origins;
+- liaison obligation/task truth;
+- `kestrel-collection-v1` producer digest.
+
+It produces occurrences of definitions already frozen by #100; it never persists duplicate HQ belief.
+
+# #98 replay-provider gate
+
+Once recommendation depends on #100 history and #101/#102 state, the trusted agenda provider may no longer receive only replay state.
+
+#98 must evolve the in-memory provider to receive a sim-created **verified ledger-prefix context** containing only entries already re-executed successfully. It must not inspect the untrusted full imported save or future command entries.
+
+This API evolution changes no persisted version by itself and does not weaken #99 transition ordering.
+
+# Why #107 and smoke precede browser
+
+After #104, the complete loop exists in replay-valid plain text.
+
+#107 first rejects:
+
+- doomed/unfair hidden seed;
 - invalid all-Delegate package;
-- fake/player-safe dominated choice;
-- false dominance ignoring intervention cost;
+- fake or player-safe dominated choice;
 - assessment/warning/public-case conflation;
-- historical intelligence using current state;
-- omniscient routine coverage / narrative prose leaking analysis;
-- mandatory/cosmetic or globally dominated Lattice target;
+- state-space drift from 23D;
+- historical intelligence using current/future state;
+- universal evidence lifetime or stale-warning errors;
+- omniscient routine coverage / narrative prose leakage;
+- no-task or same-target fake Lattice choice;
+- mandatory/cosmetic/globally dominated target order;
 - worthless information;
 - unreachable recovery/policy path;
 - issue-order-dependent state/signals;
 - contradictory/dead observations;
-- identical strategy families;
+- identical strategies;
 - empty/dominated/universal terminal route;
 - trivial snowball.
 
-Then 3-player smoke tests the experiential loop. Stop/redesign before browser if it falsifies causality/comprehension/desire to continue.
+Then three fresh players test experiential causality/comprehension/desire to continue. Stop/redesign before browser if smoke falsifies the loop.
 
 # Authority map
 
 | Work | Primary authority |
 | --- | --- |
 | Product loop / six-cycle story | [[00-NORTH-STAR]], [[10-GAMEPLAY-CONTRACT]], [[20-VERTICAL-SLICE]], [[21-KESTREL-SIX-CYCLE-CANON]] |
-| #99 adversary | [[22-RAVELLAN-EXECUTABLE-POLICY]] + closed issue #99 evidence |
-| #100 HQ intelligence | [[23-HQ-BELIEF-AND-EVIDENCE]], [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]], [[30-ARCHITECTURE-CONTRACT]], [[37-RAVELLAN-WORLD-EFFECT-MATRIX]], [[38-PLAYER-SAFE-PROJECTION-CONTRACT]] |
-| #98 recommendations | [[24-STAFF-RECOMMENDATION-POLICY]], [[36-KESTREL-AGENDA-COURSE-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] |
-| #101 consequences/attribution state | [[25-KESTREL-CONSEQUENCE-MATRIX]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]], [[30-ARCHITECTURE-CONTRACT]] |
-| #102 Lattice | [[26-LATTICE-COLLECTION-MATRIX]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]], [[30-ARCHITECTURE-CONTRACT]] |
-| #103 content | [[21-KESTREL-SIX-CYCLE-CANON]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[26-LATTICE-COLLECTION-MATRIX]], [[27-KESTREL-TERMINAL-MATRIX]], [[36-KESTREL-AGENDA-COURSE-MATRIX]], [[37-RAVELLAN-WORLD-EFFECT-MATRIX]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] |
-| Replay/version integration | [[10-GAMEPLAY-CONTRACT]], [[30-ARCHITECTURE-CONTRACT]] |
-| #104 headless | [[33-HEADLESS-SIX-CYCLE-EXECUTION]] plus mechanic authorities above |
-| #107 lab | [[31-HEADLESS-DESIGN-LAB]], [[40-EVALUATION-CONTRACT]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[26-LATTICE-COLLECTION-MATRIX]], [[27-KESTREL-TERMINAL-MATRIX]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] |
-| #105 Command Room | [[28-COMMAND-ROOM-INTERACTION-CONTRACT]], [[38-PLAYER-SAFE-PROJECTION-CONTRACT]], [[27-KESTREL-TERMINAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] |
-| #106 Reveal | [[29-CONSEQUENCE-REVEAL-CONTRACT]], [[38-PLAYER-SAFE-PROJECTION-CONTRACT]], [[25-KESTREL-CONSEQUENCE-MATRIX]], [[27-KESTREL-TERMINAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] |
-| #108 E2E | [[34-BROWSER-E2E-CONTRACT]], [[38-PLAYER-SAFE-PROJECTION-CONTRACT]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[27-KESTREL-TERMINAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] |
+| #99 adversary | [[22-RAVELLAN-EXECUTABLE-POLICY]] + closed #99 evidence |
+| #100 HQ intelligence | [[23-HQ-BELIEF-AND-EVIDENCE]], [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]], [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]], [[23C-HQ-BELIEF-EVIDENCE-CATALOG]], `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json` |
+| #101 consequences/source use | [[25-KESTREL-CONSEQUENCE-MATRIX]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]], [[30-ARCHITECTURE-CONTRACT]] |
+| #102 Lattice/tasks | [[26-LATTICE-COLLECTION-MATRIX]], [[23C-HQ-BELIEF-EVIDENCE-CATALOG]], [[30-ARCHITECTURE-CONTRACT]] |
+| #98 recommendation | [[24-STAFF-RECOMMENDATION-POLICY]], [[36-KESTREL-AGENDA-COURSE-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]], #100/#101/#102 outputs |
+| #103 content identity | all mechanic authorities above, especially both #100/#102 semantic digests |
+| Replay/version | [[10-GAMEPLAY-CONTRACT]], [[30-ARCHITECTURE-CONTRACT]] |
+| #104 headless | [[33-HEADLESS-SIX-CYCLE-EXECUTION]] + mechanic authorities |
+| #107 lab | [[31-HEADLESS-DESIGN-LAB]], [[40-EVALUATION-CONTRACT]], 23B/23D and complete mechanic authorities |
+| #105 Command Room | [[28-COMMAND-ROOM-INTERACTION-CONTRACT]], [[38-PLAYER-SAFE-PROJECTION-CONTRACT]] |
+| #106 Reveal | [[29-CONSEQUENCE-REVEAL-CONTRACT]], [[38-PLAYER-SAFE-PROJECTION-CONTRACT]] |
+| #108 E2E | [[34-BROWSER-E2E-CONTRACT]] + safe/terminal/package authorities |
 | #109 protocol | [[35-HUMAN-PLAYTEST-HARNESS]], [[80-HUMAN-PLAYTESTS]] |
 | #110 human gate | [[40-EVALUATION-CONTRACT]], [[35-HUMAN-PLAYTEST-HARNESS]], [[80-HUMAN-PLAYTESTS]] |
 
-[[32-POST-GATE-GAME-ARCHITECTURE]] is never implementation authority before human #110 pass + explicit next-phase authorisation.
+[[32-POST-GATE-GAME-ARCHITECTURE]] is never implementation authority before #110 pass + explicit next-phase authorisation.
 
 # Per-issue machine closure
 
@@ -110,27 +159,26 @@ A machine-owned issue closes only when:
 
 - exact positive/rejection cases implemented;
 - focused tests pass;
-- persisted/replay changes, if any, have trusted recomputation/tamper proof;
+- required persisted transitions replay/recompute and reject tampering;
+- pure-derived issues prove no persisted drift;
 - V1 isolation green;
-- required independent reviews have no unresolved blocker;
-- appropriate repository gates pass;
-- commit pushed and CI/hosted status reported honestly.
-
-For a **pure-derived** issue such as #100, closure instead requires explicit proof that no persisted/replay format changed and that derivation is deterministic/trust-boundary safe.
+- required independent reviews clear after remediation;
+- repository gates pass;
+- commit is pushed and hosted status reported honestly.
 
 Do not use future issue code to conceal unmet current acceptance.
 
 # Persisted-format rule
 
-Any issue changing persisted V2 state/ledger/replay semantics follows [[30-ARCHITECTURE-CONTRACT]]:
+Whenever an issue changes persisted V2 state, ledger shape or replay semantics:
 
-1. inspect actual committed current prototype version;
-2. advance next repository-consistent prototype version;
-3. prove previous payload not silently reinterpreted;
-4. invent no migration without authority;
+1. inspect actual current version;
+2. advance to next repository-consistent prototype version;
+3. prove previous payload is not silently reinterpreted;
+4. add no migration without separate authority;
 5. preserve V1.
 
-A pure-derived semantic change can still require **content identity** change even without a ruleset-format bump. #100 therefore versions/digests `kestrel-hq-belief-v1`, and #103 must incorporate that model in Kestrel's final content digest.
+A pure-derived semantic change still changes content identity where decision-significant. #103 binds the #100 belief-model and #102 collection-model digests.
 
 # Formative smoke
 
@@ -141,11 +189,11 @@ After #104 + #107:
 - uninterrupted/non-leading;
 - no hidden truth/strategy coaching.
 
-Stop before browser if >=2/3 cannot explain major consequence, form next-command plan, or voluntarily want to continue while another command remains.
+Stop before browser if >=2/3 cannot explain a major consequence, form a next-command plan or voluntarily want to continue while another command remains.
 
-Also stop for repeated severe pattern including intelligence-as-arbitrary-guessing, omniscient-advisor perception, inability to distinguish judgement from warning when it matters, cosmetic collection targets, paperwork/trap/fairness failure.
+Also stop for repeated severe intelligence-as-arbitrary/omniscient, warning misunderstanding, cosmetic collection, paperwork/trap/fairness or package-comprehension failure.
 
-Smoke can falsify, never pass #110.
+Smoke can falsify; it never passes #110.
 
 # Formal gate
 
@@ -163,7 +211,7 @@ Use `BLOCKED: PRODUCT DECISION REQUIRED` when:
 
 - authority map yields genuine contradiction;
 - required persisted transition cannot be replay-verifiable without lifecycle redesign;
-- implementation needs new threshold/action family/hidden input not authorised;
+- implementation needs a new threshold/action family/hidden input not authorised;
 - fixing lab/human failure changes product hypothesis rather than implementing it.
 
-Record concrete conflict, options/trade-offs and reversible recommendation before changing gameplay truth.
+Record concrete conflict, options/trade-offs and recommended reversible default before changing gameplay truth.
