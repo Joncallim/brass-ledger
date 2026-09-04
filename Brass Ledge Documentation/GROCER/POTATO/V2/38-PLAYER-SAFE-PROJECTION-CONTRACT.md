@@ -7,9 +7,9 @@ status: active
 
 Backlink: [[README]]
 
-This is the implementation authority for the V2 server-to-normal-player information boundary used by #104/#105/#106/#108. [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] supplies cross-issue authority semantics; [[27-KESTREL-TERMINAL-MATRIX]] owns final route legality.
+This is the implementation authority for the V2 server-to-normal-player information boundary. [[23-HQ-BELIEF-AND-EVIDENCE]] owns the HQ intelligence semantics, [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] owns cross-issue authority semantics, and [[27-KESTREL-TERMINAL-MATRIX]] owns final route legality.
 
-## Product rule
+# Product rule
 
 Hidden information should be impossible to leak accidentally because the normal player DTO simply does not contain it.
 
@@ -17,7 +17,7 @@ Never send raw V2 session/state to browser/headless player adapter and rely on p
 
 Safe projection derives only from:
 
-- legitimate HQ belief/evidence;
+- derived HQ player-safe intelligence brief;
 - public/known campaign records;
 - standing direction/known commitments/capability;
 - authoritative agenda/recommendations;
@@ -32,6 +32,7 @@ No direct/nested:
 - raw `AdversaryObservation`;
 - raw Ravellan action/policy-row IDs;
 - raw collection selector inputs/action history;
+- raw evidence selector facts;
 - hidden truth provenance;
 - private player/system ledger entries;
 - pre/post hashes/digests not required for mutation;
@@ -39,6 +40,9 @@ No direct/nested:
 - future branches/predicted terminal result;
 - score/win probability;
 - numeric intelligence confidence;
+- internal `weak/conflicted/coherent` picture labels;
+- internal evidence `indicator/diagnostic` labels;
+- internal public-case-basis enum before a later campaign rule turns it into a legitimate public opportunity;
 - raw sim fields merely because serialisable.
 
 Allowed safe authority metadata includes revision, safe issue/order IDs, public state enums and explicit personal-attention requirement.
@@ -72,14 +76,52 @@ May include player-safe scenario identity/title, revision, four question/answer 
 
 Stable safe IDs/copy for chosen directions; normal copy does not require implementation field labels.
 
-## Intelligence
+## Intelligence Chief brief
 
-- natural-language judgement;
-- selected safe evidence summaries;
-- unresolved gaps;
-- legal named collection targets.
+The normal intelligence surface is **bounded and decision-oriented**, not an evidence dashboard.
 
-Do not expose internal diagnostic enum/source truth/target result branches unless explicitly needed by a later safe detail surface (not required by Kestrel).
+Expose safe refs equivalent to:
+
+- one `judgementRef`;
+- max two `basisEvidenceRefs`;
+- max one `contraryEvidenceRef`;
+- exactly one `keyGapRef`;
+- zero/one `watchForRef`;
+- zero/one `assessmentChangeRef` when analysis materially changed;
+- zero/one safe `warningRef` when tactical warning is operationally material;
+- legal named collection targets/questions supplied through agenda/capability authority.
+
+Do not expose the raw full evidence history in the required command path.
+
+### Warning presentation
+
+Warning is a separate safe semantic from the broader judgement.
+
+Examples of preserved meaning:
+
+- warning none: do not invent “low warning” or a percentage;
+- warning usable: “We have direct movement worth acting on, even though the wider picture may still be disputed.”
+
+The exact player copy is content-owned.
+
+A normal player must be able to encounter:
+
+- preparation judgement with **no** usable warning;
+- conflicted judgement **with** usable warning.
+
+The UI may never infer warning from preparation wording.
+
+### Assessment-change presentation
+
+Show a short change ref only when useful, e.g. “The picture has narrowed toward preparation” or “The indicators are now in conflict.”
+
+Do not display the internal change enum as a score/history ladder.
+
+### Public-case basis
+
+#100's internal `none|tentative|credible-source-sensitive` basis is not directly exposed as a normal player enum.
+
+Later #101 may expose a legitimate public attribution opportunity when campaign rules derive one. Until then, the normal brief can say only what the authorised evidence summaries themselves support; it must not advertise a hidden “credible” threshold.
 
 ## Public state
 
@@ -93,7 +135,7 @@ Safe summaries for:
 - political concession;
 - liaison obligation;
 - Lattice progress/operational/unreachable;
-- attribution opportunity when legitimately known.
+- attribution opportunity when legitimately known under later campaign authority.
 
 ## Safe terminal crisis family
 
@@ -116,35 +158,33 @@ For each issue expose:
 - visible concern/dissent;
 - legal alternatives/copy;
 - Defer availability;
-- **`requiresIntervention` / personal-attention cost as an authoritative safe semantic on each course where applicable**;
+- `requiresIntervention` / personal-attention cost as authoritative safe semantic where applicable;
 - known immediate/commitment/source cost copy;
-- safe cross-issue requirement/conflict refs needed to construct a legal complete package.
+- safe cross-issue requirement/conflict refs needed for a legal complete package.
 
-The UI must not infer exceptional authority from an order name or prose.
+UI must not infer exceptional authority from an order name/prose.
 
 ### Exact Kestrel commander-only projection
 
-When legal, these three alternatives must project `requiresIntervention = true` and one normal personal-attention cost:
+When legal, exactly these three alternatives project `requiresIntervention = true` and one normal personal-attention cost:
 
 - C2 `public-accusation`;
 - C4 `request-partner-liaison`;
 - C5 `use-attribution`.
 
-They must never appear as the `recommendedOrderId` / staff intended course.
+They never appear as the staff intended course.
 
-Their safe known-cost descriptors must include, as applicable:
+Safe known-cost descriptors include, where applicable:
 
 - C2 accusation: unsupported/unilateral public accusation, partner/commitment risk;
-- liaison: creates explicit liaison obligation;
-- C5 attribution use: spends one-shot credible opportunity, exposes/compromises protected source, and requires compatible immediate authority.
+- liaison: explicit liaison obligation;
+- C5 attribution use: one-shot opportunity, protected-source exposure, compatible immediate authority.
 
-These are direct known costs/authority requirements, not predicted hidden outcomes.
-
-No other Kestrel course projects `requiresIntervention = true`.
+No other Kestrel course projects this flag.
 
 ## Task Collection
 
-Expose eligible Lattice target IDs/copy as separate zero-normal-intervention action. Never hidden result table/selector facts.
+Expose eligible Lattice target IDs/copy as a separate zero-normal-intervention action. Never hidden result tables/selector facts.
 
 # Consequence projection
 
@@ -158,9 +198,9 @@ May include:
 - unresolved pressure;
 - safe progression action.
 
-Private truth provenance is used during derivation then discarded.
+Private truth provenance is discarded before serialization.
 
-Terminal consequence projection must show post-route reserve/partner/attribution/source-cost state, not pre-route campaign state.
+Terminal consequence projection shows post-route reserve/partner/attribution/source-cost state, not pre-route state.
 
 # Terminal debrief
 
@@ -168,13 +208,15 @@ Only terminal-complete replay-valid session receives terminal truth.
 
 Two explicit sections:
 
-### `whatHqBelieved`
+## `whatHqBelieved`
 
-Major assessment/evidence available at decisive windows.
+Reconstruct, from [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]], the major **player-safe** Intelligence-Chief briefs available at decisive cycles, including warning where it existed.
 
-### `whatActuallyHappened`
+Do not rewrite history using the terminal truth.
 
-Dedicated debrief-safe truth may explain opening posture, transitions, preparation progression, genuine/deceptive signals, final policy reason and final route interaction.
+## `whatActuallyHappened`
+
+Dedicated debrief-safe truth may explain opening posture, transitions, preparation progression, genuine/deceptive signals, final policy reason and final-route interaction.
 
 Never serialize raw private session/world even here.
 
@@ -182,23 +224,23 @@ Never serialize raw private session/world even here.
 
 Use pure narrow projection functions. Normal browser/headless player path receives parsed strict safe DTOs only; no debug truth flag.
 
-Paired sessions with different hidden truth but same legitimate HQ/public/standing/capability/observable inputs must project deep-equal normal semantics.
+Paired sessions with different hidden truth but the same legitimate HQ evidence/public/standing/capability/observable inputs must project deep-equal normal semantics.
 
-If hidden truth changes a legitimate observable fact first, safe DTO may then differ through that fact.
+If hidden truth changes a legitimate observation first, safe DTO may then differ only through that observation/evidence path.
 
-Collection selectors obey the stricter posture-blind rules from `23`/`26`/`39`.
+Collection selectors obey the stricter posture-blind rules in [[23-HQ-BELIEF-AND-EVIDENCE]], [[26-LATTICE-COLLECTION-MATRIX]] and [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
 
 # Mutation boundary
 
 Player may submit only:
 
 - opening standing choices;
-- issue dispositions / intervention order IDs;
+- issue dispositions/intervention order IDs;
 - legal Task Collection target;
 - final terminal course;
 - `expectedRevision`.
 
-It may not submit recommendation, delegated final order, consequence patches, HQ belief, Ravellan state/action, partner-authority result or terminal outcome.
+It may not submit recommendation, delegated final order, consequence patches, HQ evidence/assessment/warning, Ravellan state/action, partner-authority result or terminal outcome.
 
 `requiresIntervention` is read-only server-derived authority metadata; client cannot downgrade it or submit a commander-only order as Delegate.
 
@@ -215,9 +257,13 @@ No hidden truth/predicted outcome.
 
 All-Delegate package is legal by construction; changed draft may become incompatible. UI may explain/prevent but never silently repair; server validates.
 
-# Readout/replay stability
+# Readout / replay stability
 
-Prefer stable semantic refs rather than locale strings in canonical hashes. Replay-valid state reprojects equivalent safe semantics under same content version.
+Prefer stable semantic refs rather than locale prose in derived canonical content.
+
+A session projected under the same ruleset/content identity must reproduce equivalent safe semantics.
+
+The #100 evidence model/readout refs participate in Kestrel's canonical content identity under [[23-HQ-BELIEF-AND-EVIDENCE]] / [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]].
 
 # Required tests
 
@@ -228,18 +274,23 @@ At minimum prove:
 - opening excludes seeded Ravellan state;
 - paired hidden-truth normal projections equal when legitimate inputs equal;
 - no raw adversary action/observation/row/ledger/hash/probability/future branch leaks;
-- **exactly three Kestrel courses project `requiresIntervention = true`: accusation, liaison, attribution use**;
-- none of those three can appear as staff recommendation;
-- browser mutation cannot submit any of them as Delegate;
-- known cost descriptors for each are present without hidden-outcome leakage;
-- Task Collection exposes target choices but zero normal intervention and no hidden result branch;
-- C5 partner-authority/requirement state safe;
+- no internal picture/diagnostic/public-case enum leaks;
+- Intelligence-Chief brief respects 2-basis/1-contrary/1-gap/1-watch-for bounds;
+- preparation assessment with warning none is rendered distinctly from usable warning;
+- conflicted assessment with warning usable is representable safely;
+- browser cannot infer warning from judgement text;
+- exactly three Kestrel courses project `requiresIntervention = true`;
+- none of those three is staff recommendation or delegable;
+- known cost descriptors are present without hidden-outcome leakage;
+- Task Collection exposes choices/zero normal intervention but no hidden result branch;
+- C5 partner-authority state safe;
 - C6 only safe crisis family/pruned route set;
 - non-terminal debrief request fails closed;
+- terminal `whatHqBelieved` reconstructs historical player-safe briefs rather than terminal-truth-corrected analysis;
 - terminal truth only explicit debrief-safe fields;
 - terminal consequence state is post-route;
 - V1 DTO/API unchanged.
 
-## Rejection conditions
+# Rejection conditions
 
-Reject V2 projection if it serialises raw session/state then redacts in React, exposes private state in unused JSON, permits player debug truth, makes UI infer commander-only authority from labels, omits the one-token requirement for any exceptional course, allows client to submit exceptional course as Delegate, exposes raw #99 terminal IDs/predicted outcomes or lets client-supplied derived state become authority.
+Reject V2 projection if it serialises raw session/state then redacts in React, exposes private state in unused JSON, permits player debug truth, leaks internal confidence/diagnostic/public-case enums, infers tactical warning from judgement copy, dumps the full evidence ledger into required play, lets UI infer commander-only authority, omits exceptional-action costs, permits exceptional course as Delegate, exposes raw #99 terminal IDs/predicted outcomes or lets client-supplied derived state become authority.
