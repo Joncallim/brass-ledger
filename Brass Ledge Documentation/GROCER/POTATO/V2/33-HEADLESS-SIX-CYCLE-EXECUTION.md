@@ -7,205 +7,253 @@ status: active
 
 Backlink: [[README]]
 
-This is the implementation authority for **#104 — complete replay-valid Kestrel execution without browser dependency**. It owns orchestration only. Game rules remain in shared/sim/content under [[30-ARCHITECTURE-CONTRACT]].
+This is the implementation authority for **#104 — complete replay-valid Kestrel execution without browser dependency**. It owns orchestration only; shared/content/sim own game rules.
 
-# Purpose
+# 1. Purpose
 
-Headless exists so the complete six-cycle game can be executed deterministically, replay-verified, exercised by [[31-HEADLESS-DESIGN-LAB]], inspected through a belief-safe transcript, and later used for the 3-player non-gating smoke.
+Headless exists so the complete six-cycle game can be:
 
-It calls the same authoritative transitions/derived readouts later used by server/browser. It is never a simplified second game implementation.
+- executed deterministically;
+- replay-verified;
+- exercised by [[31-HEADLESS-DESIGN-LAB]];
+- inspected through player-safe text;
+- used for the 3-player formative smoke.
 
-# Inputs
+It calls the same authoritative transitions/readouts later used by server/browser. It is never a simplified second game.
+
+# 2. Inputs
 
 A run receives:
 
 - resolved canonical V2/Kestrel content identity;
-- canonical parsed `V2HqBeliefModelDefinition` for `kestrel-hq-belief-v1`;
+- resolved digest-verified `kestrel-hq-belief-v1` bundle;
+- resolved digest-verified `kestrel-collection-v1` bundle once #102 exists;
 - campaign seed;
-- one valid immutable standing direction;
-- command provider receiving only normal player-safe current projection;
-- optional non-authoritative test/run-control metadata.
+- immutable standing direction;
+- command provider receiving only safe current projection;
+- optional non-authoritative test-control metadata.
 
-The normal provider never receives hidden world/Ravellan state, raw adversary observations, private ledger, #100 source facts, internal assessment enums, oracle-frontier state or future branches.
+The normal provider never receives hidden Ravellan state, raw observations, private ledger, source facts, evidence origins, internal assessment/basis/public-case enums, oracle state or future branches.
 
-The supplied HQ-belief model is trusted resolved content. Headless does not invent/patch it.
+# 3. Player-safe headless projection
 
-# Player-safe headless projection
-
-Use [[38-PLAYER-SAFE-PROJECTION-CONTRACT]]. Before browser DTO exists, expose only equivalent safe semantics:
+Use [[38-PLAYER-SAFE-PROJECTION-CONTRACT]]. Expose only:
 
 - cycle/revision;
-- situation/change;
+- safe situation/change;
 - standing direction;
-- bounded Intelligence-Chief brief from #100:
-  - one judgement;
-  - bounded basis/contrary facts;
-  - key gap/watch-for;
-  - separate safe tactical-warning wording where material;
-- public Kestrel state/known commitments;
-- agenda, responsible officer, recommendation/reasons/dissent;
-- legal alternatives/personal-attention cost;
-- safe cross-issue requirements;
-- eligible Task Collection / commander-only liaison where legal;
-- safe C6 crisis + only [[27-KESTREL-TERMINAL-MATRIX]] routes.
+- bounded Intelligence-Chief judgement/basis/contrary/gap/watch/update;
+- explicit warning status where required;
+- public campaign/commitment/capability/source-use state;
+- agenda/recommendation/reasons/dissent;
+- legal alternatives/attention cost;
+- Lattice recommended target + eligible target overrides;
+- safe package requirements;
+- safe C6 crisis + legal routes.
 
-Never expose hidden posture/preparation/action/signal records, #100 source facts, internal weak/conflicted/coherent or diagnosticity/public-case enums, oracle state, future outcomes or best-option score.
+Never expose hidden state/action/row, #100 source facts, occurrence origins/hashes, internal confidence/diagnostic/basis/public-case state, oracle/future result or best-option score.
 
-# Canonical execution
+# 4. Canonical opening
 
-## Opening
-
-1. resolve trusted ruleset/content identity + parsed Kestrel HQ-belief model;
-2. create canonical V2 initial state including #99 Ravellan state;
+1. resolve trusted content identity and both semantic model bundles;
+2. create canonical V2 initial state including #99 Ravellan state and #101 campaign state;
 3. persist/verify initial digest;
 4. apply standing intent;
 5. enter C1.
 
-## C1–C5
+# 5. Canonical C1–C5 orchestration
 
 For each cycle:
 
-1. execute authoritative Ravellan/system transition in canonical ledger order;
-2. execute any due persisted consequence/capability transitions required by later implemented issues;
-3. **derive #100 HQ intelligence purely** from the trusted session + supplied belief model at the current pre-command point;
-4. append any later #102 authorised derived evidence through the narrow sim-owned extension seam before #100 reducers, never by mutating a saved belief snapshot;
-5. build agenda;
-6. derive staff recommendation/reason/dissent using only authorised #100 products/public state;
-7. produce safe player projection;
-8. call command provider exactly once for that command window;
-9. sim derives delegated final orders + validates complete package;
-10. invalid/stale/incomplete/incompatible package fails — no repair;
-11. execute authoritative order/consequence/capability/reverse-signal transitions;
-12. every persisted mutation is replay-verifiable under [[30-ARCHITECTURE-CONTRACT]];
-13. derive belief-safe consequence transcript;
-14. advance to next cycle.
+1. execute authorised Ravellan/system transition in canonical ledger order;
+2. resolve any **persisted** due consequence/capability lifecycle transition;
+3. reconstruct every evidence occurrence due at this pre-command cut:
+   - #100 ordinary/reroute/focused;
+   - #102 Lattice/liaison from replay-valid task history;
+4. pass the complete occurrence set through #100 exactly once to derive:
+   - assessment;
+   - current warning;
+   - public-case basis;
+   - delta;
+   - safe brief;
+5. derive current source-use availability from #100 + #101;
+6. build agenda/task default;
+7. derive staff recommendation/reasons/dissent from authorised products/public state;
+8. project safe player state;
+9. call command provider once;
+10. sim derives delegated final orders/default Lattice target, applies optional overrides and validates complete package;
+11. invalid/stale/incomplete/incompatible package fails; no repair;
+12. execute authoritative command consequences, task persistence, source use and reverse observations;
+13. every persisted mutation is replay-verifiable;
+14. derive safe consequence transcript;
+15. advance.
 
-Preserve explicit system/player ledger entries required by simulator. Do not invent a synthetic “HQ-belief update” transition.
+Critical rule:
 
-## #100 phase safety
+> A due #102 evidence occurrence is incorporated **before** the #100 reducers for that same command window. Never derive #100 first and append evidence afterward.
 
-After a command advances `state.cycle` to N+1 but before `ravellan-decision N+1`, #100 current belief is not ready.
+Do not invent `hq-belief-update` transition.
 
-Headless must not render the next Command Room/brief in that intermediate state. It waits for the canonical next Ravellan/system phase.
+# 6. #100 phase safety
 
-A direct current-belief query there should surface the dedicated not-ready error rather than relabeling the previous brief.
+After command advances state to N+1 but before Ravellan decision N+1, current belief is not ready.
 
-## C6
+Headless must not render the next command window in that intermediate state. A direct query returns the dedicated not-ready error rather than relabelling previous analysis.
 
-1. execute authoritative Ravellan terminal decision;
-2. derive #100 C6 historical/current intelligence with supplied belief model;
-3. project safe overt crisis family;
-4. derive only routes legal under [[27-KESTREL-TERMINAL-MATRIX]] — including the separate #100 warning product;
-5. obtain one legal final player course;
-6. apply terminal state effects/resolution;
-7. produce classification + two-layer debrief;
-8. persist final canonical state/digest;
-9. complete trusted replay verification.
+# 7. Lattice task authority
+
+At C4/C5 when operational:
+
+- safe projection contains one HQ-recommended unused target;
+- provider may return an optional target override or null;
+- null accepts staff default;
+- sim resolves/persists final target;
+- no no-task;
+- C5 target differs from C4;
+- focused collection never consumes landing target;
+- target override costs zero normal intervention.
+
+Provider never returns the final delegated target as authority.
+
+# 8. C6 exact order
+
+1. execute/persist Ravellan terminal decision;
+2. resolve C5 task result from authorised C5/latest-normal facts—never R6 action/row;
+3. derive final pre-manifestation #100 snapshot/public case;
+4. derive current source availability;
+5. project safe overt crisis family;
+6. derive routes from [[27-KESTREL-TERMINAL-MATRIX]] using **current** warning;
+7. obtain one legal final player route;
+8. apply terminal state/source effects;
+9. classify + produce two-layer debrief;
+10. persist final state/digest;
+11. complete trusted replay.
 
 No C6 Task Collection.
 
-# #100 purity / determinism
+# 9. Pure intelligence determinism
 
-HQ evidence/assessment/warning/public-case basis are **not authoritative persisted run state**.
+HQ evidence/products are not persisted authoritative state.
 
-Headless determinism includes:
+Require:
 
-- repeated derived HQ snapshots/briefs from the same trusted session + same belief model are deep-equal;
-- deriving them does not change revision/state hash/final digest;
-- final-session digest does not contain a duplicate #100 belief history;
-- historical transcript/debrief can reconstruct past #100 briefs exactly from canonical ledger + model.
+- same trusted history + semantic bundles → deep-equal snapshots/briefs;
+- derivation leaves state/revision/hash/final digest unchanged;
+- final session contains no duplicate HQ-belief history;
+- historical transcript/debrief reconstructs from ledger + exact model bundles;
+- role-specific warning can expire/refresh without rewriting evidence history.
 
-When reporting a run's “HQ intelligence history,” mean derived historical readout, not a saved mutation log.
+“H​Q intelligence history” means derived history, not saved mutation log.
 
-# Command-provider authority
+# 10. Command-provider authority
 
-Provider returns player authority only:
+Provider returns only:
 
 - one disposition per agenda issue;
 - intervention order ID where applicable;
 - legal Defer;
-- legal Task Collection / commander-only liaison choice;
+- optional Lattice target override;
 - final C6 route.
 
-It does not return delegated final order IDs, recommendations, HQ evidence/assessment/warning, consequences, Ravellan actions/signals, partner-authority result or outcome.
+It does not return:
 
-Untouched all-Delegate package must be legal. If not, recommendation/content is defective.
+- delegated final orders/default target;
+- recommendation;
+- HQ evidence/products;
+- claim direction/support basis;
+- consequences;
+- Ravellan actions/signals;
+- authority result/outcome.
 
-# Invalid provider
+Untouched all-Delegate/default-task package must be legal.
 
-Fail with structured cycle/issue/package error. Preserve last verified canonical state.
+# 11. Invalid provider
 
-Never silently Delegate, alter another issue, sample another action, or mutate provider output into legality.
+Fail with structured cycle/issue/task/package error and preserve last verified state.
 
-# Determinism / replay
+Never silently Delegate, choose another target, repair another issue, sample another action or mutate provider output into legality.
 
-Identical content identity, **identical belief-model definition**, seed, standing intent and deterministic provider outputs must produce identical:
+# 12. Determinism / replay
+
+Identical:
+
+- content identity;
+- belief + collection semantic bundles;
+- seed;
+- standing intent;
+- deterministic provider outputs
+
+must produce identical:
 
 - authoritative ordered ledger;
-- derived HQ historical snapshots/briefs;
+- persisted campaign/task/source state;
+- derived HQ history;
 - Ravellan history/signals;
-- persistent consequences;
 - final post-route state/digest/classification.
 
-Every successful run passes normal trusted replay for persisted truth. #100 derived readout is then recomputed from that replay-valid history + identical semantic model.
+Every successful run passes trusted replay for persisted truth; #100 is recomputed from replay-valid history + exact bundles.
 
-# Transcript
+# 13. Transcript
 
 Per cycle show:
 
 - situation/change;
-- bounded HQ judgement/basis/gap/watch-for;
-- tactical warning distinctly where material;
-- staff intended action/reasons/dissent;
-- legal alternatives/known costs/requirements;
+- bounded judgement/basis/contrary/gap/watch/update;
+- explicit warning status at C5/C6 and whenever usable earlier;
+- staff intended action/default Lattice target;
+- reasons/dissent;
+- legal alternatives/target overrides/known costs;
 - personal exceptions vs delegated work;
 - consequence beats;
-- unresolved next pressure.
+- unresolved pressure.
 
-Do not show internal #100 enums or evidence ledger dump.
+No internal enums/evidence dump.
 
-When C5 attribution available, disclose one-shot/source cost before selection.
+When attribution is available, disclose exact safe claim + one-shot source cost.
 
-Terminal transcript shows post-route classification/state, then:
+Terminal transcript:
 
-1. **What HQ believed** — historical #100 player-safe briefs including warning;
-2. **What was actually happening** — terminal-only debrief truth.
+1. post-route classification/state;
+2. `What HQ believed` — exact historical safe briefs, including warning gain/refresh/loss;
+3. `What was actually happening` — terminal-only truth.
 
-No hindsight rewriting of HQ analysis.
+No hindsight rewrite.
 
-# Batch / lab
+# 14. Batch / lab
 
-Provide bounded programmatic API suitable for #107. Runs isolated/deterministic; counterfactual cloning belongs to lab, never mutates source history.
+Provide bounded programmatic API for #107. Runs are isolated/deterministic; counterfactual cloning never mutates source.
 
-The lab must be able to branch/inspect derived assessment, warning and public-case basis as separate diagnostics while keeping them out of player policy inputs unless player-safe projection legitimately exposes corresponding semantics.
+The lab may inspect internal derived products but normal policy/provider inputs remain safe.
 
-# Human-smoke sequencing
+# 15. Human-smoke sequence
 
 `#104 complete → #107 complete → 3-player smoke → continuation/redesign → #105/#106`
 
-Headless adds no coaching, preferred-strategy hints or hidden truth.
+No coaching, preferred-strategy hints or hidden truth.
 
-# Required #104 tests
+# 16. Required #104 tests
 
-At minimum prove:
+Prove:
 
 - complete C1→C6 run + trusted replay;
-- at least one replayable run per Ravellan opening posture;
-- same canonical inputs/model/provider → same authoritative ledger/final digest and same derived Intel history;
-- provider sees no hidden state/#100 source facts/internal model enums/oracle data;
-- #100 current brief is queried only after current-cycle Ravellan decision;
-- deriving #100 readout does not mutate session/hash/revision;
-- preparation assessment + warning none and conflicted assessment + warning usable are transcript-representable safely;
-- all-Delegate representative packages legal;
-- invalid package fails rather than repaired;
+- one replayable run per opening posture;
+- same canonical inputs/bundles/provider → same ledger/digest/intelligence history;
+- provider sees no hidden/internal/source/oracle state;
+- current brief only after current Ravellan decision;
+- due #102 evidence enters before same-window #100 reducers;
+- derivation pure;
+- all-Delegate/default-target package legal;
+- optional target override only; no no-task/repeat;
+- invalid package/target fails without repair;
 - C2/C5 package/signals exact;
-- C6 route uses separate warning and terminal matrix;
-- terminal `What HQ believed` equals reconstructed historical safe briefs, not hindsight;
-- no C6 Task Collection;
+- C5/C6 warning gain/refresh/loss transcript-safe;
+- C6 route uses current warning/public case;
+- terminal `What HQ believed` equals reconstructed historical briefs;
+- no C6 task;
 - hidden truth only terminal debrief/isolated diagnostics;
 - batch deterministic;
 - V1 CLI/headless green.
 
-# Rejection conditions
+# 17. Rejection conditions
 
-Reject #104 if headless persists/duplicates HQ belief, invents `hq-belief-update`, uses an implicit content singleton inside sim/headless rules, exposes source facts/internal assessment states to normal provider, derives next-cycle brief before Ravellan phase, duplicates game rules, auto-repairs invalid packages, trusts saved state without replay, rewrites historical Intel with terminal truth, runs smoke before #107, or expands into generic orchestration.
+Reject #104 if it persists/duplicates HQ belief, derives #100 before adding due #102 evidence, uses implicit content singleton, exposes source/internal state to provider, lets provider author delegated target, offers no-task/repeat, derives next brief before Ravellan phase, duplicates game rules, repairs invalid output, trusts saved state without replay, rewrites history with terminal truth, runs smoke before #107 or expands into generic orchestration.
