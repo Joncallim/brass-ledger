@@ -70,7 +70,8 @@ Canonical authority:
 - [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]];
 - [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]];
 - [[23C-HQ-BELIEF-EVIDENCE-CATALOG]];
-- `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json`.
+- [[23D-HQ-BELIEF-BRIEF-AND-DELTA-MATRIX]];
+- `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json` as the machine-readable generated/reference artifact.
 
 # #101 architecture gate
 
@@ -115,7 +116,8 @@ After #104, the complete loop exists in replay-valid plain text.
 - invalid all-Delegate package;
 - fake or player-safe dominated choice;
 - assessment/warning/public-case conflation;
-- state-space drift from 23D;
+- state-space drift from [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] / `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json`;
+- briefing/delta drift from [[23D-HQ-BELIEF-BRIEF-AND-DELTA-MATRIX]];
 - historical intelligence using current/future state;
 - universal evidence lifetime or stale-warning errors;
 - omniscient routine coverage / narrative prose leakage;
@@ -137,14 +139,14 @@ Then three fresh players test experiential causality/comprehension/desire to con
 | --- | --- |
 | Product loop / six-cycle story | [[00-NORTH-STAR]], [[10-GAMEPLAY-CONTRACT]], [[20-VERTICAL-SLICE]], [[21-KESTREL-SIX-CYCLE-CANON]] |
 | #99 adversary | [[22-RAVELLAN-EXECUTABLE-POLICY]] + closed #99 evidence |
-| #100 HQ intelligence | [[23-HQ-BELIEF-AND-EVIDENCE]], [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]], [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]], [[23C-HQ-BELIEF-EVIDENCE-CATALOG]], `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json` |
-| #101 consequences/source use | [[25-KESTREL-CONSEQUENCE-MATRIX]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]], [[30-ARCHITECTURE-CONTRACT]] |
-| #102 Lattice/tasks | [[26-LATTICE-COLLECTION-MATRIX]], [[23C-HQ-BELIEF-EVIDENCE-CATALOG]], [[30-ARCHITECTURE-CONTRACT]] |
+| #100 HQ intelligence | [[23-HQ-BELIEF-AND-EVIDENCE]], [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]], [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]], [[23C-HQ-BELIEF-EVIDENCE-CATALOG]], [[23D-HQ-BELIEF-BRIEF-AND-DELTA-MATRIX]], `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json` |
+| #101 consequences/source use | [[25-KESTREL-CONSEQUENCE-MATRIX]], [[23-HQ-BELIEF-AND-EVIDENCE]], [[23D-HQ-BELIEF-BRIEF-AND-DELTA-MATRIX]], [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]], [[30-ARCHITECTURE-CONTRACT]] |
+| #102 Lattice/tasks | [[26-LATTICE-COLLECTION-MATRIX]], [[23C-HQ-BELIEF-EVIDENCE-CATALOG]], [[23D-HQ-BELIEF-BRIEF-AND-DELTA-MATRIX]], [[30-ARCHITECTURE-CONTRACT]] |
 | #98 recommendation | [[24-STAFF-RECOMMENDATION-POLICY]], [[36-KESTREL-AGENDA-COURSE-MATRIX]], [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]], #100/#101/#102 outputs |
 | #103 content identity | all mechanic authorities above, especially both #100/#102 semantic digests |
 | Replay/version | [[10-GAMEPLAY-CONTRACT]], [[30-ARCHITECTURE-CONTRACT]] |
 | #104 headless | [[33-HEADLESS-SIX-CYCLE-EXECUTION]] + mechanic authorities |
-| #107 lab | [[31-HEADLESS-DESIGN-LAB]], [[40-EVALUATION-CONTRACT]], 23B/23D and complete mechanic authorities |
+| #107 lab | [[31-HEADLESS-DESIGN-LAB]], [[40-EVALUATION-CONTRACT]], [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]], [[23D-HQ-BELIEF-BRIEF-AND-DELTA-MATRIX]], `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json`, and complete mechanic authorities |
 | #105 Command Room | [[28-COMMAND-ROOM-INTERACTION-CONTRACT]], [[38-PLAYER-SAFE-PROJECTION-CONTRACT]] |
 | #106 Reveal | [[29-CONSEQUENCE-REVEAL-CONTRACT]], [[38-PLAYER-SAFE-PROJECTION-CONTRACT]] |
 | #108 E2E | [[34-BROWSER-E2E-CONTRACT]] + safe/terminal/package authorities |
