@@ -1,405 +1,398 @@
 /**
  * #100 — HQ belief reduction core.
  *
- * This module implements the deterministic reduction logic for Kestrel HQ
- * intelligence. It is sim-private: all types and functions are internal.
+ * Canonical implementation per 23/23A/23B/23C/23D.
+ *
+ * This module is sim-private. All types and functions are internal.
  *
  * The core accepts a complete list of evidence occurrences and runs:
  *   validation → persistent supersession → role-current sets
  *   → reducers → total delta → briefing selection
  *
- * This is a pure computation; it does not depend on how occurrences were
- * produced or on any persisted state beyond what is passed in.
+ * Pure computation: no global state, no caller-supplied evidence.
  */
 
 import {
-  type V2Assessment,
+  type V2HqAssessment,
+  type V2HqWarning,
+  type V2HqPublicCaseBasis,
   type V2BasisPattern,
   type V2EvidenceDefinitionId,
   type V2EvidenceImplication,
-  type V2EvidenceRole,
+  type V2EvidenceDefinition,
+  type V2EvidenceSummary,
   type V2HqBeliefDelta,
+  type V2HqBeliefSnapshot,
   type V2HqBeliefOutput,
-  type V2IntelligenceBrief,
-  type V2PublicCaseDirection,
-  type V2PublicCaseState,
-  type V2WarningState,
-  v2EvidenceDefinitionSchema,
+  type V2AssessmentChange,
+  type V2WarningChange,
+  type V2PublicCaseStateChange,
+  type V2PublicCaseDirectionChange,
+  type V2PublicCaseSupportChange,
+  type V2AssessmentBasisChange,
+  type V2UpdateCause,
 } from "@brass-ledger/shared";
 
-// ─── Evidence occurrence types (sim-private) ──────────────────────────
+// ═════════════════════════════════════════════════════════════════════
+// Evidence occurrence types (sim-private)
+// ═════════════════════════════════════════════════════════════════════
 
-/** Authoritative origin discriminator for evidence occurrences. */
-export type V2OccurrenceOrigin =
-  | { kind: "ordinary" }
-  | { kind: "reroute" }
-  | { kind: "focused-staging" }
-  // #102 extends this union with:
-  // | { kind: "task-collection"; targetId: string }
+/** Canonical ledger entry ref for origin binding. */
+export type V2CanonicalLedgerEntryRef = Readonly<{
+  kind: "command-set" | "ravellan-decision";
+  cycle: 1 | 2 | 3 | 4 | 5 | 6;
+  preRevision: number;
+  postRevision: number;
+  postStateHash: string;
+}>;
 
-/** A single evidence occurrence: a historical observation instance. */
-export type V2EvidenceOccurrence = {
-  /** Deterministic collision-resistant occurrence ID. */
-  readonly occurrenceId: string;
-  /** Evidence definition ID. */
-  readonly definitionId: V2EvidenceDefinitionId;
-  /** Implication at observation time (matches definition). */
-  readonly implication: V2EvidenceImplication;
-  /** The cycle in which the observation was made. */
-  readonly observedCycle: number;
-  /** Authoritative origin (sim-private). */
-  readonly origin: V2OccurrenceOrigin;
-};
+/** Authoritative origin discriminator per 23A §10. */
+export type V2HqEvidenceOrigin =
+  | { kind: "ordinary"; cycle: 1 | 2 | 3 | 4; slotId: string }
+  | {
+      kind: "reroute" | "focused";
+      triggerEntry: V2CanonicalLedgerEntryRef;
+      observationEntry: V2CanonicalLedgerEntryRef;
+      producerSlotId: string;
+    };
 
-// ─── Resolved semantic model (passed explicitly, never imported) ─────
+/** A single evidence occurrence: a historical observation instance per 23A §10. */
+export type V2HqEvidence = Readonly<{
+  instanceId: string;
+  definitionId: V2EvidenceDefinitionId;
+  origin: V2HqEvidenceOrigin;
+  observedCycle: 1 | 2 | 3 | 4 | 5 | 6;
+  assessmentCurrentThroughCycle: 1 | 2 | 3 | 4 | 5 | 6 | null;
+  warningCurrentThroughCycle: 1 | 2 | 3 | 4 | 5 | 6 | null;
+  publicCaseCurrentThroughCycle: 1 | 2 | 3 | 4 | 5 | 6 | null;
+  // Copied from canonical definition only:
+  claimId: "ravellan-intent";
+  questionId: string;
+  implication: V2EvidenceImplication;
+  diagnosticity: "indicator" | "diagnostic";
+  sourceGroupId: string;
+  corroborationGroupId: string | null;
+  sourceContextRef: string;
+  limitationRef: string;
+  summaryRef: string;
+  warningRole: "none" | "usable";
+  publicCaseRole: "none" | "source-sensitive";
+}>;
 
-/** A resolved evidence definition with its active windows. */
-export type V2ResolvedEvidenceDef = {
-  readonly definitionId: V2EvidenceDefinitionId;
-  readonly implication: V2EvidenceImplication;
-  readonly diagnosticClass: "indicator" | "corroborating";
-  readonly sourceGroup: string;
-  readonly corroborationGroupId: string;
-  readonly summaryRef: string;
-  readonly assessmentActiveCycles: readonly [number, number];
-  readonly warningActiveCycles: readonly [number, number] | null;
-  readonly publicCaseActiveCycles: readonly [number, number] | null;
-  readonly supersedesIds: readonly string[];
-  readonly replaceOlderSameQuestion: boolean;
-  readonly warningCapable: boolean;
-  readonly sourceSensitive: boolean;
-  readonly questionGroup: string;
-};
+/** @deprecated Use V2HqEvidence instead. */
+export type V2EvidenceOccurrence = V2HqEvidence;
 
-// ─── Role-current state ──────────────────────────────────────────────
+/** @deprecated Use V2HqEvidenceOrigin instead. */
+export type V2OccurrenceOrigin = V2HqEvidenceOrigin;
 
-export type V2RoleCurrentSet = {
-  readonly assessment: readonly V2EvidenceOccurrence[];
-  readonly warning: readonly V2EvidenceOccurrence[];
-  readonly publicCase: readonly V2EvidenceOccurrence[];
-};
+/** Resolved evidence definition (sim-internal). */
+export type V2ResolvedEvidenceDef = V2EvidenceDefinition;
 
-// ─── Supersession state ──────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════════
+// Supersession state
+// ═════════════════════════════════════════════════════════════════════
 
 export type V2SupersessionState = {
-  /** Occurrences that are superseded (still in history but not current). */
   readonly superseded: ReadonlySet<string>;
-  /** Map from questionGroup to the occurrenceId that currently answers it. */
   readonly questionAnswers: ReadonlyMap<string, string>;
 };
 
-// ─── Reducer inputs/outputs ──────────────────────────────────────────
-
-export type V2AssessmentResult = {
-  readonly assessment: V2Assessment;
-  readonly basisPattern: V2BasisPattern;
-  readonly direction: "unclear" | "preparation" | "coercion";
-  readonly picture: "weak" | "conflicted" | "coherent";
-};
-
-export type V2WarningResult = {
-  readonly warning: V2WarningState;
-  readonly basisOccurrenceIds: readonly string[];
-};
-
-export type V2PublicCaseResult = {
-  readonly state: V2PublicCaseState;
-  readonly direction: V2PublicCaseDirection | null;
-  readonly supportOccurrenceIds: readonly string[];
-};
-
-// ─── Previous state for delta computation ────────────────────────────
-
-export type V2PreviousBeliefState = {
-  readonly assessment: V2Assessment;
-  readonly basisPattern: V2BasisPattern;
-  readonly warning: V2WarningState;
-  readonly warningBasisIds: readonly string[];
-  readonly publicCase: V2PublicCaseState;
-  readonly publicCaseDirection: V2PublicCaseDirection | null;
-  readonly publicCaseBasisIds: readonly string[];
-  readonly supersededIds: readonly string[];
-};
-
-// ─── Core reduction functions ────────────────────────────────────────
-
 /**
- * Compute persistent supersession state from a list of occurrences.
+ * Compute persistent supersession from all occurrences observed by query cycle Q.
  *
- * Rules:
- * 1. If evidence A supersedes B, and both are present, B is superseded.
- * 2. If `replaceOlderSameQuestion` is true, newer occurrence of the same
- *    question group replaces an older one (permanent replacement).
- * 3. Supersession is permanent: superseded evidence never becomes current
- *    again even if the superseding evidence later ages out.
+ * Rules per 23C §8:
+ * 1. If evidence A supersedes B (explicit supersedesDefinitionIds), B is superseded.
+ * 2. If `replace-older-same-question`, newer occurrence replaces older same-question.
+ * 3. Supersession is permanent: superseded evidence never becomes current again.
  */
 export function computeSupersession(
-  occurrences: readonly V2EvidenceOccurrence[],
+  occurrences: readonly V2HqEvidence[],
   definitions: ReadonlyMap<string, V2ResolvedEvidenceDef>,
 ): V2SupersessionState {
   const superseded = new Set<string>();
   const questionAnswers = new Map<string, string>();
 
-  // Sort by observed cycle then occurrenceId for deterministic ordering
+  // Sort by observed cycle then instanceId for deterministic ordering
   const sorted = [...occurrences].sort((a, b) =>
     a.observedCycle !== b.observedCycle
       ? a.observedCycle - b.observedCycle
-      : a.occurrenceId.localeCompare(b.occurrenceId),
+      : a.instanceId.localeCompare(b.instanceId),
   );
 
   for (const occ of sorted) {
     const def = definitions.get(occ.definitionId);
     if (!def) continue;
 
-    // Explicit supersession: this occurrence supersedes listed definitions
-    for (const supersededId of def.supersedesIds) {
+    // Explicit supersession
+    for (const supersededId of def.supersedesDefinitionIds) {
       for (const other of sorted) {
-        if (other.definitionId === supersededId && other.occurrenceId !== occ.occurrenceId) {
-          superseded.add(other.occurrenceId);
+        if (other.definitionId === supersededId && other.instanceId !== occ.instanceId) {
+          superseded.add(other.instanceId);
         }
       }
     }
 
-    // replace-older-same-question: newer occurrence replaces older in same question group
-    if (def.replaceOlderSameQuestion && def.questionGroup) {
-      const priorId = questionAnswers.get(def.questionGroup);
-      if (priorId && priorId !== occ.occurrenceId) {
+    // replace-older-same-question
+    if (def.supersessionPolicy === "replace-older-same-question") {
+      const priorId = questionAnswers.get(occ.questionId);
+      if (priorId !== undefined && priorId !== occ.instanceId) {
         superseded.add(priorId);
       }
-      questionAnswers.set(def.questionGroup, occ.occurrenceId);
+      questionAnswers.set(occ.questionId, occ.instanceId);
     }
   }
 
   return { superseded, questionAnswers };
 }
 
+// ═════════════════════════════════════════════════════════════════════
+// Role-current filtering
+// ═════════════════════════════════════════════════════════════════════
+
 /**
- * Filter occurrences to those current for a given role at a given cycle.
+ * Filter occurrences to those current for a given role at cycle Q.
  *
- * An occurrence is current if:
+ * An occurrence is current if (per 23A §16):
  * - It is not superseded
- * - The current cycle falls within the definition's active window for that role
+ * - The current cycle Q falls within its current-through window for that role
  */
 export function roleCurrentOccurrences(
-  occurrences: readonly V2EvidenceOccurrence[],
+  occurrences: readonly V2HqEvidence[],
   supersession: V2SupersessionState,
-  definitions: ReadonlyMap<string, V2ResolvedEvidenceDef>,
-  role: V2EvidenceRole,
+  role: "assessment" | "warning" | "public-case",
   cycle: number,
-): V2EvidenceOccurrence[] {
+): V2HqEvidence[] {
   return occurrences.filter((occ) => {
-    if (supersession.superseded.has(occ.occurrenceId)) return false;
-    const def = definitions.get(occ.definitionId);
-    if (!def) return false;
+    if (supersession.superseded.has(occ.instanceId)) return false;
 
-    const window = role === "assessment"
-      ? def.assessmentActiveCycles
+    const through = role === "assessment"
+      ? occ.assessmentCurrentThroughCycle
       : role === "warning"
-        ? def.warningActiveCycles
-        : def.publicCaseActiveCycles;
+        ? occ.warningCurrentThroughCycle
+        : occ.publicCaseCurrentThroughCycle;
 
-    if (!window) return false;
-    return cycle >= window[0] && cycle <= window[1];
+    if (through === null) return false;
+    return occ.observedCycle <= cycle && cycle <= through;
   });
 }
 
+// ═════════════════════════════════════════════════════════════════════
+// Assessment reducer — kestrel-binary-hypothesis-v1
+// ═════════════════════════════════════════════════════════════════════
+
 /**
- * kestrel-binary-hypothesis-v1: exact 16-row truth table.
+ * Exact 16-row truth table per 23B §5.
  *
  * No weighted score, no vote counting. Evidence multiplicity does not
  * change the categorical result.
- *
- * Truth table (diagnosticPrep, diagnosticCoercion, indicatorPrep, indicatorCoercion):
- *
- * Dp  Dc  Ip  Ic  → Assessment       BasisPattern
- * 0   0   0   0   → unclear/weak      no-directional-evidence
- * 0   0   0   1   → coercion/weak     coercion-indicators-only
- * 0   0   1   0   → preparation/weak  preparation-indicators-only
- * 0   0   1   1   → unclear/conflicted  balanced-conflict
- * 0   1   0   0   → coercion/coherent coercion-corroborated
- * 0   1   0   1   → coercion/coherent coercion-corroborated
- * 0   1   1   0   → unclear/conflicted  coercion-dominant-conflict
- * 0   1   1   1   → unclear/conflicted  coercion-dominant-conflict
- * 1   0   0   0   → preparation/coherent preparation-corroborated
- * 1   0   0   1   → unclear/conflicted  preparation-dominant-conflict
- * 1   0   1   0   → preparation/coherent preparation-corroborated
- * 1   0   1   1   → unclear/conflicted  preparation-dominant-conflict
- * 1   1   0   0   → unclear/conflicted  balanced-conflict
- * 1   1   0   1   → unclear/conflicted  balanced-conflict
- * 1   1   1   0   → unclear/conflicted  balanced-conflict
- * 1   1   1   1   → unclear/conflicted  balanced-conflict
  */
-export function reduceAssessment(assessmentCurrent: readonly V2EvidenceOccurrence[], definitions: ReadonlyMap<string, V2ResolvedEvidenceDef>): V2AssessmentResult {
+export function reduceAssessment(
+  assessmentCurrent: readonly V2HqEvidence[],
+  definitions: ReadonlyMap<string, V2ResolvedEvidenceDef>,
+): { assessment: V2HqAssessment; basisPattern: V2BasisPattern } {
   const hasDiagnosticPrep = assessmentCurrent.some((occ) => {
     const def = definitions.get(occ.definitionId);
-    return def && occ.implication === "preparation" && def.diagnosticClass === "corroborating";
+    return def && occ.implication === "preparation" && def.diagnosticity === "diagnostic";
   });
   const hasDiagnosticCoercion = assessmentCurrent.some((occ) => {
     const def = definitions.get(occ.definitionId);
-    return def && occ.implication === "coercion" && def.diagnosticClass === "corroborating";
+    return def && occ.implication === "coercion" && def.diagnosticity === "diagnostic";
   });
   const hasIndicatorPrep = assessmentCurrent.some((occ) => {
     const def = definitions.get(occ.definitionId);
-    return def && occ.implication === "preparation" && def.diagnosticClass === "indicator";
+    return def && occ.implication === "preparation" && def.diagnosticity === "indicator";
   });
   const hasIndicatorCoercion = assessmentCurrent.some((occ) => {
     const def = definitions.get(occ.definitionId);
-    return def && occ.implication === "coercion" && def.diagnosticClass === "indicator";
+    return def && occ.implication === "coercion" && def.diagnosticity === "indicator";
   });
 
-  // 16-row truth table
   const dp = hasDiagnosticPrep ? 1 : 0;
   const dc = hasDiagnosticCoercion ? 1 : 0;
   const ip = hasIndicatorPrep ? 1 : 0;
   const ic = hasIndicatorCoercion ? 1 : 0;
   const row = (dp << 3) | (dc << 2) | (ip << 1) | ic;
 
-  let assessment: V2Assessment;
+  let assessment: V2HqAssessment;
   let basisPattern: V2BasisPattern;
-  let direction: "unclear" | "preparation" | "coercion";
-  let picture: "weak" | "conflicted" | "coherent";
 
   switch (row) {
     case 0b0000:
-      assessment = "unclear/weak"; basisPattern = "no-directional-evidence"; direction = "unclear"; picture = "weak"; break;
+      assessment = { direction: "unclear", picture: "weak", basisPattern: "no-direction" };
+      basisPattern = "no-direction";
+      break;
     case 0b0001:
-      assessment = "coercion/weak"; basisPattern = "coercion-indicators-only"; direction = "coercion"; picture = "weak"; break;
+      assessment = { direction: "coercion", picture: "weak", basisPattern: "indicator-coercion" };
+      basisPattern = "indicator-coercion";
+      break;
     case 0b0010:
-      assessment = "preparation/weak"; basisPattern = "preparation-indicators-only"; direction = "preparation"; picture = "weak"; break;
+      assessment = { direction: "preparation", picture: "weak", basisPattern: "indicator-preparation" };
+      basisPattern = "indicator-preparation";
+      break;
     case 0b0011:
-      assessment = "unclear/conflicted"; basisPattern = "balanced-conflict"; direction = "unclear"; picture = "conflicted"; break;
+      assessment = { direction: "unclear", picture: "conflicted", basisPattern: "indicator-conflict" };
+      basisPattern = "indicator-conflict";
+      break;
     case 0b0100:
-      assessment = "coercion/coherent"; basisPattern = "coercion-corroborated"; direction = "coercion"; picture = "coherent"; break;
+      assessment = { direction: "coercion", picture: "coherent", basisPattern: "diagnostic-coercion-clear" };
+      basisPattern = "diagnostic-coercion-clear";
+      break;
     case 0b0101:
-      assessment = "coercion/coherent"; basisPattern = "coercion-corroborated"; direction = "coercion"; picture = "coherent"; break;
+      assessment = { direction: "coercion", picture: "coherent", basisPattern: "diagnostic-coercion-clear" };
+      basisPattern = "diagnostic-coercion-clear";
+      break;
     case 0b0110:
-      assessment = "unclear/conflicted"; basisPattern = "coercion-dominant-conflict"; direction = "unclear"; picture = "conflicted"; break;
+      assessment = { direction: "coercion", picture: "weak", basisPattern: "diagnostic-coercion-qualified" };
+      basisPattern = "diagnostic-coercion-qualified";
+      break;
     case 0b0111:
-      assessment = "unclear/conflicted"; basisPattern = "coercion-dominant-conflict"; direction = "unclear"; picture = "conflicted"; break;
+      assessment = { direction: "coercion", picture: "weak", basisPattern: "diagnostic-coercion-qualified" };
+      basisPattern = "diagnostic-coercion-qualified";
+      break;
     case 0b1000:
-      assessment = "preparation/coherent"; basisPattern = "preparation-corroborated"; direction = "preparation"; picture = "coherent"; break;
+      assessment = { direction: "preparation", picture: "coherent", basisPattern: "diagnostic-preparation-clear" };
+      basisPattern = "diagnostic-preparation-clear";
+      break;
     case 0b1001:
-      assessment = "unclear/conflicted"; basisPattern = "preparation-dominant-conflict"; direction = "unclear"; picture = "conflicted"; break;
+      assessment = { direction: "preparation", picture: "weak", basisPattern: "diagnostic-preparation-qualified" };
+      basisPattern = "diagnostic-preparation-qualified";
+      break;
     case 0b1010:
-      assessment = "preparation/coherent"; basisPattern = "preparation-corroborated"; direction = "preparation"; picture = "coherent"; break;
+      assessment = { direction: "preparation", picture: "coherent", basisPattern: "diagnostic-preparation-clear" };
+      basisPattern = "diagnostic-preparation-clear";
+      break;
     case 0b1011:
-      assessment = "unclear/conflicted"; basisPattern = "preparation-dominant-conflict"; direction = "unclear"; picture = "conflicted"; break;
+      assessment = { direction: "preparation", picture: "weak", basisPattern: "diagnostic-preparation-qualified" };
+      basisPattern = "diagnostic-preparation-qualified";
+      break;
     case 0b1100:
-      assessment = "unclear/conflicted"; basisPattern = "balanced-conflict"; direction = "unclear"; picture = "conflicted"; break;
+      assessment = { direction: "unclear", picture: "conflicted", basisPattern: "diagnostic-conflict" };
+      basisPattern = "diagnostic-conflict";
+      break;
     case 0b1101:
-      assessment = "unclear/conflicted"; basisPattern = "balanced-conflict"; direction = "unclear"; picture = "conflicted"; break;
+      assessment = { direction: "unclear", picture: "conflicted", basisPattern: "diagnostic-conflict" };
+      basisPattern = "diagnostic-conflict";
+      break;
     case 0b1110:
-      assessment = "unclear/conflicted"; basisPattern = "balanced-conflict"; direction = "unclear"; picture = "conflicted"; break;
+      assessment = { direction: "unclear", picture: "conflicted", basisPattern: "diagnostic-conflict" };
+      basisPattern = "diagnostic-conflict";
+      break;
     case 0b1111:
-      assessment = "unclear/conflicted"; basisPattern = "balanced-conflict"; direction = "unclear"; picture = "conflicted"; break;
+      assessment = { direction: "unclear", picture: "conflicted", basisPattern: "diagnostic-conflict" };
+      basisPattern = "diagnostic-conflict";
+      break;
     default:
-      assessment = "unclear/weak"; basisPattern = "no-directional-evidence"; direction = "unclear"; picture = "weak"; break;
+      assessment = { direction: "unclear", picture: "weak", basisPattern: "no-direction" };
+      basisPattern = "no-direction";
   }
 
-  return { assessment, basisPattern, direction, picture };
+  return { assessment, basisPattern };
 }
 
+// ═════════════════════════════════════════════════════════════════════
+// Warning reducer — per 23 §9 / 23A §17
+// ═════════════════════════════════════════════════════════════════════
+
 /**
- * Warning reducer.
- *
  * Warning uses only warning-current, non-superseded preparation evidence
- * marked warning-capable. Deterministic basis occurrence selection.
- *
- * The reducer/brief must be total even for algebraically valid hostile states.
+ * with warningRole = "usable". Deterministic basis occurrence selection.
  */
 export function reduceWarning(
-  warningCurrent: readonly V2EvidenceOccurrence[],
-  definitions: ReadonlyMap<string, V2ResolvedEvidenceDef>,
-): V2WarningResult {
-  const warningCapable = warningCurrent.filter((occ) => {
-    const def = definitions.get(occ.definitionId);
-    return def && def.warningCapable && occ.implication === "preparation";
-  });
-
-  if (warningCapable.length === 0) {
-    return { warning: "none", basisOccurrenceIds: [] };
-  }
-
-  // Sort by recency (newest first), then by stable occurrenceId
-  const sorted = [...warningCapable].sort((a, b) =>
-    a.observedCycle !== b.observedCycle
-      ? b.observedCycle - a.observedCycle
-      : a.occurrenceId.localeCompare(b.occurrenceId),
+  warningCurrent: readonly V2HqEvidence[],
+): V2HqWarning {
+  const usable = warningCurrent.filter(
+    (occ) => occ.implication === "preparation" && occ.warningRole === "usable",
   );
 
-  return {
-    warning: "usable",
-    basisOccurrenceIds: [sorted[0]!.occurrenceId],
-  };
-}
-
-/**
- * Public-case reducer.
- *
- * Credible requires:
- * 1. A current source-sensitive diagnostic occurrence
- * 2. No material current opposite-direction blocker
- * 3. A same-direction source-sensitive corroborating occurrence from a different corroborationGroupId
- *
- * One privileged source is not enough. Two indicators are not enough.
- * A directionless credible case is invalid.
- */
-export function reducePublicCase(
-  publicCaseCurrent: readonly V2EvidenceOccurrence[],
-  assessmentCurrent: readonly V2EvidenceOccurrence[],
-  definitions: ReadonlyMap<string, V2ResolvedEvidenceDef>,
-): V2PublicCaseResult {
-  const sourceSensitive = publicCaseCurrent.filter((occ) => {
-    const def = definitions.get(occ.definitionId);
-    return def && def.sourceSensitive;
-  });
-
-  if (sourceSensitive.length === 0) {
-    return { state: "none", direction: null, supportOccurrenceIds: [] };
+  if (usable.length === 0) {
+    return { state: "none", basisEvidenceInstanceId: null };
   }
 
-  // Find diagnostic (corroborating) source-sensitive occurrences by direction
-  const prepDiagnostic = sourceSensitive.filter((occ) => {
-    const def = definitions.get(occ.definitionId);
-    return def && def.diagnosticClass === "corroborating" && occ.implication === "preparation";
-  });
-  const coercionDiagnostic = sourceSensitive.filter((occ) => {
-    const def = definitions.get(occ.definitionId);
-    return def && def.diagnosticClass === "corroborating" && occ.implication === "coercion";
+  // Sort by: newest observed cycle, then diagnostic before indicator,
+  // then definition ID, then instance ID
+  const sorted = [...usable].sort((a, b) => {
+    if (a.observedCycle !== b.observedCycle) return b.observedCycle - a.observedCycle;
+    const aDiag = a.diagnosticity === "diagnostic" ? 0 : 1;
+    const bDiag = b.diagnosticity === "diagnostic" ? 0 : 1;
+    if (aDiag !== bDiag) return aDiag - bDiag;
+    if (a.definitionId !== b.definitionId) return a.definitionId.localeCompare(b.definitionId);
+    return a.instanceId.localeCompare(b.instanceId);
   });
 
+  return { state: "usable", basisEvidenceInstanceId: sorted[0]!.instanceId };
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// Public-case reducer — per 23 §10 / 23A §17
+// ═════════════════════════════════════════════════════════════════════
+
+/**
+ * Public attribution is stricter than internal estimation.
+ *
+ * Credible direction D requires:
+ * 1. A current source-sensitive diagnostic occurrence supporting D
+ * 2. No current opposite directional occurrence (assessment or public-case)
+ * 3. One additional same-direction source-sensitive occurrence from a different corroborationGroupId
+ *
+ * One diagnostic source = tentative. Two indicators = tentative.
+ * Directionless credible is invalid.
+ */
+export function reducePublicCase(
+  publicCaseCurrent: readonly V2HqEvidence[],
+  assessmentCurrent: readonly V2HqEvidence[],
+): V2HqPublicCaseBasis {
+  const sourceSensitive = publicCaseCurrent.filter(
+    (occ) => occ.publicCaseRole === "source-sensitive",
+  );
+
+  if (sourceSensitive.length === 0) {
+    return { state: "none", direction: null, supportingInstanceIds: [], supportingCorroborationGroupIds: [] };
+  }
+
+  // Find diagnostic (diagnosticity = "diagnostic") source-sensitive by direction
+  const prepDiagnostic = sourceSensitive.filter(
+    (occ) => occ.diagnosticity === "diagnostic" && occ.implication === "preparation",
+  );
+  const coercionDiagnostic = sourceSensitive.filter(
+    (occ) => occ.diagnosticity === "diagnostic" && occ.implication === "coercion",
+  );
+
   // Check for material opposite-direction blockers in assessment-current
-  const hasMaterialPrepBlocker = assessmentCurrent.some((occ) => {
-    const def = definitions.get(occ.definitionId);
-    return def && occ.implication === "preparation" && def.diagnosticClass === "corroborating";
-  });
-  const hasMaterialCoercionBlocker = assessmentCurrent.some((occ) => {
-    const def = definitions.get(occ.definitionId);
-    return def && occ.implication === "coercion" && def.diagnosticClass === "corroborating";
-  });
+  const hasMaterialPrepBlocker = assessmentCurrent.some(
+    (occ) => occ.implication === "preparation" && occ.diagnosticity === "diagnostic",
+  );
+  const hasMaterialCoercionBlocker = assessmentCurrent.some(
+    (occ) => occ.implication === "coercion" && occ.diagnosticity === "diagnostic",
+  );
+
+  // Helper: sort occurrences by ranking (newest, then diagnostic before indicator, then stable IDs)
+  const rank = (occ: V2HqEvidence): string => {
+    const diag = occ.diagnosticity === "diagnostic" ? "0" : "1";
+    const cycle = String(occ.observedCycle).padStart(2, "0");
+    return `${diag}-${cycle}-${occ.definitionId}-${occ.instanceId}`;
+  };
 
   // Try preparation direction
   if (prepDiagnostic.length > 0 && !hasMaterialCoercionBlocker) {
-    // Need a corroborating occurrence from a different corroborationGroupId
     const groups = new Set<string>();
     for (const occ of prepDiagnostic) {
-      const def = definitions.get(occ.definitionId);
-      if (def) groups.add(def.corroborationGroupId);
+      if (occ.corroborationGroupId) groups.add(occ.corroborationGroupId);
     }
     if (groups.size >= 2) {
-      // Return the two occurrences with different group IDs (deterministic: first two sorted)
-      const sorted = [...prepDiagnostic].sort((a, b) =>
-        a.occurrenceId.localeCompare(b.occurrenceId),
-      );
-      const groupIds = new Map<string, V2EvidenceOccurrence>();
+      const sorted = [...prepDiagnostic].sort((a, b) => rank(a).localeCompare(rank(b)));
+      const groupMap = new Map<string, V2HqEvidence>();
       for (const occ of sorted) {
-        const def = definitions.get(occ.definitionId);
-        if (def && !groupIds.has(def.corroborationGroupId)) {
-          groupIds.set(def.corroborationGroupId, occ);
+        if (occ.corroborationGroupId && !groupMap.has(occ.corroborationGroupId)) {
+          groupMap.set(occ.corroborationGroupId, occ);
         }
       }
-      const basis = [...groupIds.values()].slice(0, 2);
-      return { state: "credible", direction: "preparation", supportOccurrenceIds: basis.map((o) => o.occurrenceId) };
+      const basis = [...groupMap.values()].slice(0, 2);
+      return {
+        state: "credible-source-sensitive",
+        direction: "preparation",
+        supportingInstanceIds: [basis[0]!.instanceId, basis[1]!.instanceId],
+        supportingCorroborationGroupIds: [basis[0]!.corroborationGroupId!, basis[1]!.corroborationGroupId!],
+      };
     }
   }
 
@@ -407,368 +400,560 @@ export function reducePublicCase(
   if (coercionDiagnostic.length > 0 && !hasMaterialPrepBlocker) {
     const groups = new Set<string>();
     for (const occ of coercionDiagnostic) {
-      const def = definitions.get(occ.definitionId);
-      if (def) groups.add(def.corroborationGroupId);
+      if (occ.corroborationGroupId) groups.add(occ.corroborationGroupId);
     }
     if (groups.size >= 2) {
-      const sorted = [...coercionDiagnostic].sort((a, b) =>
-        a.occurrenceId.localeCompare(b.occurrenceId),
-      );
-      const groupIds = new Map<string, V2EvidenceOccurrence>();
+      const sorted = [...coercionDiagnostic].sort((a, b) => rank(a).localeCompare(rank(b)));
+      const groupMap = new Map<string, V2HqEvidence>();
       for (const occ of sorted) {
-        const def = definitions.get(occ.definitionId);
-        if (def && !groupIds.has(def.corroborationGroupId)) {
-          groupIds.set(def.corroborationGroupId, occ);
+        if (occ.corroborationGroupId && !groupMap.has(occ.corroborationGroupId)) {
+          groupMap.set(occ.corroborationGroupId, occ);
         }
       }
-      const basis = [...groupIds.values()].slice(0, 2);
-      return { state: "credible", direction: "coercion", supportOccurrenceIds: basis.map((o) => o.occurrenceId) };
+      const basis = [...groupMap.values()].slice(0, 2);
+      return {
+        state: "credible-source-sensitive",
+        direction: "coercion",
+        supportingInstanceIds: [basis[0]!.instanceId, basis[1]!.instanceId],
+        supportingCorroborationGroupIds: [basis[0]!.corroborationGroupId!, basis[1]!.corroborationGroupId!],
+      };
     }
   }
 
-  // Tentative: any source-sensitive directional indicator/diagnostic
+  // Tentative: any source-sensitive directional evidence
   const directional = sourceSensitive.filter((occ) => occ.implication !== "ambiguous");
   if (directional.length > 0) {
-    // Determine direction from the most recent diagnostic, else most recent indicator
-    const sorted = [...directional].sort((a, b) =>
-      a.observedCycle !== b.observedCycle
-        ? b.observedCycle - a.observedCycle
-        : a.occurrenceId.localeCompare(b.occurrenceId),
-    );
+    const sorted = [...directional].sort((a, b) => rank(a).localeCompare(rank(b)));
     const primary = sorted[0]!;
-    const direction = primary.implication === "preparation" ? "preparation" : "coercion";
-    return { state: "tentative", direction, supportOccurrenceIds: [primary.occurrenceId] };
+    const dir = primary.implication === "preparation" ? "preparation" : "coercion";
+    return {
+      state: "tentative",
+      direction: dir,
+      supportingInstanceIds: [primary.instanceId],
+      supportingCorroborationGroupIds: primary.corroborationGroupId ? [primary.corroborationGroupId] : [],
+    };
   }
 
-  return { state: "none", direction: null, supportOccurrenceIds: [] };
+  return { state: "none", direction: null, supportingInstanceIds: [], supportingCorroborationGroupIds: [] };
 }
 
-// ─── Basis pattern derivation ────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════════
+// Delta computation — per 23D §9-15
+// ═════════════════════════════════════════════════════════════════════
+
+/** Previous snapshot state for delta computation. */
+export type V2PreviousSnapshotState = {
+  readonly assessment: V2HqAssessment;
+  readonly warning: V2HqWarning;
+  readonly publicCaseBasis: V2HqPublicCaseBasis;
+  readonly currentInstanceIds: ReadonlySet<string>;
+  readonly supersededIds: ReadonlySet<string>;
+};
 
 /**
- * Derive the analytical basis pattern from current assessment occurrences.
- * Returns the 9-state basis pattern as analytical provenance.
+ * Compute assessment change per 23D §10.
+ * Total over all 36 pairs.
  */
-export function deriveBasisPattern(
-  assessmentCurrent: readonly V2EvidenceOccurrence[],
-  definitions: ReadonlyMap<string, V2ResolvedEvidenceDef>,
-): V2BasisPattern {
-  const hasPrep = assessmentCurrent.some((occ) => occ.implication === "preparation");
-  const hasCoercion = assessmentCurrent.some((occ) => occ.implication === "coercion");
-  const hasAmbiguous = assessmentCurrent.some((occ) => occ.implication === "ambiguous");
-  const hasDiagnosticPrep = assessmentCurrent.some((occ) => {
-    const def = definitions.get(occ.definitionId);
-    return def && def.diagnosticClass === "corroborating" && occ.implication === "preparation";
-  });
-  const hasDiagnosticCoercion = assessmentCurrent.some((occ) => {
-    const def = definitions.get(occ.definitionId);
-    return def && def.diagnosticClass === "corroborating" && occ.implication === "coercion";
-  });
+function computeAssessmentChange(
+  prev: V2HqAssessment | null,
+  current: V2HqAssessment,
+): V2AssessmentChange {
+  if (prev === null) return "initial";
 
-  if (!hasPrep && !hasCoercion && !hasAmbiguous) return "no-directional-evidence";
-  if (hasAmbiguous && !hasPrep && !hasCoercion) return "ambiguous-only";
+  const prevStr = `${prev.direction}/${prev.picture}`;
+  const curStr = `${current.direction}/${current.picture}`;
 
-  if (hasPrep && hasCoercion) {
-    if (hasDiagnosticPrep && !hasDiagnosticCoercion) return "preparation-dominant-conflict";
-    if (!hasDiagnosticPrep && hasDiagnosticCoercion) return "coercion-dominant-conflict";
-    return "balanced-conflict";
+  if (prevStr === curStr) return "unchanged";
+
+  // reversed: directional swap
+  if (
+    (prev.direction === "preparation" && current.direction === "coercion") ||
+    (prev.direction === "coercion" && current.direction === "preparation")
+  ) return "reversed";
+
+  // Same direction: weak ↔ coherent
+  if (prev.direction === current.direction && prev.direction !== "unclear") {
+    if (prev.picture === "weak" && current.picture === "coherent") return "strengthened";
+    if (prev.picture === "coherent" && current.picture === "weak") return "weakened";
   }
 
-  if (hasPrep && !hasCoercion) {
-    if (hasDiagnosticPrep) return "preparation-corroborated";
-    return "preparation-indicators-only";
-  }
+  // Current unclear/conflicted
+  if (current.direction === "unclear" && current.picture === "conflicted") return "conflicted";
 
-  if (!hasPrep && hasCoercion) {
-    if (hasDiagnosticCoercion) return "coercion-corroborated";
-    return "coercion-indicators-only";
-  }
+  // Previous unclear/conflicted → current unclear/weak
+  if (prev.direction === "unclear" && prev.picture === "conflicted" && current.direction === "unclear" && current.picture === "weak") return "cleared-conflict";
 
-  return "no-directional-evidence";
+  // Previous any unclear → current directional
+  if (prev.direction === "unclear" && current.direction !== "unclear") return "narrowed";
+
+  // Previous directional → current unclear/weak
+  if (prev.direction !== "unclear" && current.direction === "unclear" && current.picture === "weak") return "reopened";
+
+  return "unchanged";
 }
-
-// ─── Briefing selection ──────────────────────────────────────────────
 
 /**
- * Select evidence for the player-facing brief.
- *
- * Ranking: 1. diagnosticity, 2. warning-bearing (within equal diagnosticity),
- * 3. recency, 4. stable IDs.
- *
- * A warning-bearing indicator must not displace a diagnostic report as the
- * main analytical basis. Warning is displayed independently.
- * Material contrary evidence cannot be silently omitted.
+ * Compute assessment basis change per 23D §10.
  */
-export function selectBriefingEvidence(
-  assessmentCurrent: readonly V2EvidenceOccurrence[],
-  warningCurrent: readonly V2EvidenceOccurrence[],
-  assessmentResult: V2AssessmentResult,
-  definitions: ReadonlyMap<string, V2ResolvedEvidenceDef>,
-): { assessmentReasons: V2EvidenceOccurrence[]; unresolvedGap: string | null } {
-  const dir = assessmentResult.direction;
-  const isConflicted = assessmentResult.picture === "conflicted";
-
-  // Supporting evidence: same direction as assessment, or all if conflicted
-  const supporting = assessmentCurrent.filter((occ) => {
-    if (isConflicted) return true;
-    if (dir === "unclear") return false;
-    return occ.implication === dir;
-  });
-
-  // Contrary evidence: opposite direction
-  const contrary = assessmentCurrent.filter((occ) => {
-    if (dir === "preparation") return occ.implication === "coercion";
-    if (dir === "coercion") return occ.implication === "preparation";
-    return false;
-  });
-
-  // Sort by diagnosticity (corroborating first), then recency, then stable ID
-  const rank = (occ: V2EvidenceOccurrence): number => {
-    const def = definitions.get(occ.definitionId);
-    const diagnosticScore = def?.diagnosticClass === "corroborating" ? 0 : 1;
-    const recencyScore = -occ.observedCycle; // newer = lower = better
-    return diagnosticScore * 100 + recencyScore * 10;
-  };
-
-  const sortedSupport = [...supporting].sort((a, b) => rank(a) - rank(b) || a.occurrenceId.localeCompare(b.occurrenceId));
-  const sortedContrary = [...contrary].sort((a, b) => rank(a) - rank(b) || a.occurrenceId.localeCompare(b.occurrenceId));
-
-  // Take top 2 supporting and top 1 contrary (if conflicted)
-  const reasons = sortedSupport.slice(0, 2);
-  if (isConflicted && sortedContrary.length > 0) {
-    reasons.push(sortedContrary[0]!);
-  }
-
-  // Generate unresolved gap text
-  let unresolvedGap: string | null = null;
-  if (isConflicted) {
-    unresolvedGap = "Active evidence points in contradictory directions.";
-  } else if (dir === "unclear") {
-    unresolvedGap = "Not enough evidence to establish Ravellan's intent.";
-  } else if (assessmentResult.picture === "weak") {
-    unresolvedGap = "Directional indicators exist but remain weak and uncorroborated.";
-  }
-
-  return { assessmentReasons: reasons, unresolvedGap };
+function computeAssessmentBasisChange(
+  prev: V2HqAssessment | null,
+  current: V2HqAssessment,
+): V2AssessmentBasisChange {
+  if (prev === null) return "initial";
+  if (prev.basisPattern === current.basisPattern) return "unchanged";
+  return "changed";
 }
 
-// ─── Delta computation ──────────────────────────────────────────────
+/**
+ * Compute warning change per 23D §11 / 23A §18.
+ */
+function computeWarningChange(
+  prev: V2HqWarning | null,
+  current: V2HqWarning,
+  prevSupersededIds: ReadonlySet<string>,
+  currentSupersededIds: ReadonlySet<string>,
+  staleForWarningIds: ReadonlySet<string>,
+): V2WarningChange {
+  if (prev === null) return "initial";
+
+  const prevState = prev.state;
+  const curState = current.state;
+
+  if (prevState === "none" && curState === "none") return "unchanged";
+  if (prevState === "none" && curState === "usable") return "gained";
+  if (prevState === "usable" && curState === "none") {
+    // Determine cause
+    const wasSuperseded = prev.basisEvidenceInstanceId !== null && currentSupersededIds.has(prev.basisEvidenceInstanceId);
+    const wasStale = prev.basisEvidenceInstanceId !== null && staleForWarningIds.has(prev.basisEvidenceInstanceId);
+    if (wasSuperseded && wasStale) return "lost-mixed";
+    if (wasSuperseded) return "lost-superseded";
+    return "lost-stale";
+  }
+  // Both usable
+  if (prevState === "usable" && curState === "usable") {
+    if (prev.basisEvidenceInstanceId === current.basisEvidenceInstanceId) return "unchanged";
+    return "refreshed";
+  }
+
+  return "unchanged";
+}
+
+/**
+ * Compute public-case state change per 23D §12.
+ */
+function computePublicCaseStateChange(
+  prev: V2HqPublicCaseBasis | null,
+  current: V2HqPublicCaseBasis,
+): V2PublicCaseStateChange {
+  if (prev === null) return "initial";
+  if (prev.state === current.state) return "unchanged";
+  if (prev.state === "none" && current.state !== "none") return "opened";
+  if (prev.state !== "none" && current.state === "none") return "closed";
+  if (prev.state === "tentative" && current.state === "credible-source-sensitive") return "strengthened";
+  if (prev.state === "credible-source-sensitive" && current.state === "tentative") return "weakened";
+  return "unchanged";
+}
+
+/**
+ * Compute public-case direction change per 23D §13.
+ */
+function computePublicCaseDirectionChange(
+  prev: V2HqPublicCaseBasis | null,
+  current: V2HqPublicCaseBasis,
+): V2PublicCaseDirectionChange {
+  if (prev === null) return "initial";
+  if (prev.direction === current.direction) return "unchanged";
+
+  // Previous none/null → current directional
+  if (prev.direction === null && current.direction !== null) {
+    // If previous was tentative/null, it's "clarified"; otherwise "established"
+    if (prev.state === "tentative") return "clarified";
+    return "established";
+  }
+  // Previous directional → current none/null
+  if (prev.direction !== null && current.direction === null) {
+    if (current.state === "none") return "cleared";
+    return "became-conflicted";
+  }
+  // Opposite directions
+  if (prev.direction !== null && current.direction !== null && prev.direction !== current.direction) return "reversed";
+
+  return "unchanged";
+}
+
+/**
+ * Compute public-case support change per 23D §14.
+ */
+function computePublicCaseSupportChange(
+  prev: V2HqPublicCaseBasis | null,
+  current: V2HqPublicCaseBasis,
+): V2PublicCaseSupportChange {
+  if (prev === null) return "initial";
+
+  const prevIds = prev.supportingInstanceIds.join(",");
+  const curIds = current.supportingInstanceIds.join(",");
+
+  if (prevIds === curIds) return "unchanged";
+  if (prev.supportingInstanceIds.length > 0 && current.supportingInstanceIds.length === 0) return "cleared";
+  return "changed";
+}
+
+/**
+ * Compute update cause per 23D §15.
+ */
+function computeUpdateCause(
+  addedIds: ReadonlySet<string>,
+  staleForAnyRole: ReadonlySet<string>,
+  newlySupersededIds: ReadonlySet<string>,
+  hasProductChange: boolean,
+): V2UpdateCause {
+  const hasNew = addedIds.size > 0 && hasProductChange;
+  const hasStale = staleForAnyRole.size > 0 && hasProductChange;
+  const hasSupersession = newlySupersededIds.size > 0 && hasProductChange;
+
+  const causes = (hasNew ? 1 : 0) + (hasStale ? 1 : 0) + (hasSupersession ? 1 : 0);
+  if (causes >= 2) return "mixed";
+  if (hasSupersession) return "supersession";
+  if (hasStale) return "staleness";
+  if (hasNew) return "new-evidence";
+  return "none";
+}
 
 /**
  * Compute the total product/evidence delta between previous and current state.
  */
 export function computeDelta(
-  prev: V2PreviousBeliefState | null,
+  prev: V2PreviousSnapshotState | null,
   current: {
-    assessment: V2Assessment;
-    basisPattern: V2BasisPattern;
-    warning: V2WarningState;
-    warningBasisIds: readonly string[];
-    publicCase: V2PublicCaseState;
-    publicCaseDirection: V2PublicCaseDirection | null;
-    publicCaseBasisIds: readonly string[];
-    supersededIds: readonly string[];
+    assessment: V2HqAssessment;
+    warning: V2HqWarning;
+    publicCaseBasis: V2HqPublicCaseBasis;
+    currentInstanceIds: ReadonlySet<string>;
+    supersededIds: ReadonlySet<string>;
+    staleForAssessmentIds: ReadonlySet<string>;
+    staleForWarningIds: ReadonlySet<string>;
+    staleForPublicCaseIds: ReadonlySet<string>;
+    addedInstanceIds: ReadonlySet<string>;
+    newlySupersededInstanceIds: ReadonlySet<string>;
   },
-  cycle: number,
 ): V2HqBeliefDelta {
-  if (prev === null) {
-    return {
-      assessmentChange: "unchanged",
-      assessmentBasisChange: false,
-      warningChange: "unchanged",
-      publicCaseChange: "unchanged",
-      publicCaseDirectionChange: false,
-      supportBasisChange: false,
-      newlySupersededIds: [],
-      stalenessRoles: [],
-      updateCause: "cycle-advance",
-    };
-  }
+  const assessmentChange = computeAssessmentChange(prev?.assessment ?? null, current.assessment);
+  const assessmentBasisChange = computeAssessmentBasisChange(prev?.assessment ?? null, current.assessment);
+  const warningChange = computeWarningChange(
+    prev?.warning ?? null,
+    current.warning,
+    prev?.supersededIds ?? new Set(),
+    current.supersededIds,
+    current.staleForWarningIds,
+  );
+  const publicCaseStateChange = computePublicCaseStateChange(prev?.publicCaseBasis ?? null, current.publicCaseBasis);
+  const publicCaseDirectionChange = computePublicCaseDirectionChange(prev?.publicCaseBasis ?? null, current.publicCaseBasis);
+  const publicCaseSupportChange = computePublicCaseSupportChange(prev?.publicCaseBasis ?? null, current.publicCaseBasis);
 
-  // Assessment change
-  let assessmentChange: V2HqBeliefDelta["assessmentChange"] = "unchanged";
-  const prevDir = prev.assessment.split("/")[0]!;
-  const prevPic = prev.assessment.split("/")[1]!;
-  const curDir = current.assessment.split("/")[0]!;
-  const curPic = current.assessment.split("/")[1]!;
-  if (prevDir !== curDir && prevPic !== curPic) assessmentChange = "both-changed";
-  else if (prevDir !== curDir) assessmentChange = "direction-changed";
-  else if (prevPic !== curPic) assessmentChange = "picture-changed";
-
-  // Warning change
-  let warningChange: V2HqBeliefDelta["warningChange"] = "unchanged";
-  if (prev.warning === "none" && current.warning === "usable") warningChange = "gained";
-  else if (prev.warning === "usable" && current.warning === "none") warningChange = "lost";
-  else if (prev.warning === "usable" && current.warning === "usable") {
-    // Check if basis changed (refreshed)
-    if (prev.warningBasisIds.length > 0 && current.warningBasisIds.length > 0
-      && prev.warningBasisIds[0] !== current.warningBasisIds[0]) {
-      warningChange = "refreshed";
-    }
-  }
-
-  // Public-case change
-  let publicCaseChange: V2HqBeliefDelta["publicCaseChange"] = "unchanged";
-  const prevPubDir = prev.publicCaseDirection;
-  const curPubDir = current.publicCaseDirection;
-  if (prev.publicCase !== current.publicCase && prevPubDir !== curPubDir) publicCaseChange = "both-changed";
-  else if (prev.publicCase !== current.publicCase) publicCaseChange = "state-changed";
-  else if (prevPubDir !== curPubDir) publicCaseChange = "direction-changed";
-
-  // Lost is a special case
-  if (prev.publicCase !== "none" && current.publicCase === "none") publicCaseChange = "lost";
-
-  const publicCaseDirectionChange = prevPubDir !== curPubDir;
-
-  // Support basis change
-  const prevBasisSet = new Set(prev.publicCaseBasisIds);
-  const curBasisSet = new Set(current.publicCaseBasisIds);
-  const supportBasisChange = prev.publicCaseBasisIds.length !== current.publicCaseBasisIds.length
-    || [...prevBasisSet].some((id) => !curBasisSet.has(id));
-
-  // Assessment basis change
-  const assessmentBasisChange = prev.basisPattern !== current.basisPattern;
-
-  // Newly superseded
-  const prevSupersededSet = new Set(prev.supersededIds);
-  const newlySupersededIds: V2EvidenceDefinitionId[] = current.supersededIds.filter((id): id is V2EvidenceDefinitionId => !prevSupersededSet.has(id));
-
-  // Staleness detection (simplified: based on cycle)
-  const stalenessRoles: V2HqBeliefDelta["stalenessRoles"] = [];
-
-  // Update cause
-  let updateCause: V2HqBeliefDelta["updateCause"] = "no-change";
-  if (newlySupersededIds.length > 0) updateCause = "evidence-superseded";
-  else if (assessmentChange !== "unchanged" || warningChange !== "unchanged" || publicCaseChange !== "unchanged") {
-    updateCause = "new-evidence";
-  }
+  const staleForAnyRole = new Set<string>([...current.staleForAssessmentIds, ...current.staleForWarningIds, ...current.staleForPublicCaseIds]);
+  const hasProductChange = assessmentChange !== "unchanged" || warningChange !== "unchanged" || publicCaseStateChange !== "unchanged";
+  const updateCause = computeUpdateCause(current.addedInstanceIds, staleForAnyRole, current.newlySupersededInstanceIds, hasProductChange);
 
   return {
     assessmentChange,
     assessmentBasisChange,
     warningChange,
-    publicCaseChange,
+    publicCaseStateChange,
     publicCaseDirectionChange,
-    supportBasisChange,
-    newlySupersededIds,
-    stalenessRoles,
+    publicCaseSupportChange,
     updateCause,
+    addedInstanceIds: [...current.addedInstanceIds].sort(),
+    staleForAssessmentInstanceIds: [...current.staleForAssessmentIds].sort(),
+    staleForWarningInstanceIds: [...current.staleForWarningIds].sort(),
+    staleForPublicCaseInstanceIds: [...current.staleForPublicCaseIds].sort(),
+    newlySupersededInstanceIds: [...current.newlySupersededInstanceIds].sort(),
   };
 }
 
-// ─── Main reduction entry point ──────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════════
+// Briefing selection — per 23 §16 / 23D §2-8
+// ═════════════════════════════════════════════════════════════════════
+
+/** Select the primary basis evidence from current occurrences within a direction. */
+function selectPrimaryBasis(
+  current: readonly V2HqEvidence[],
+  direction: "preparation" | "coercion",
+): V2HqEvidence | null {
+  const directional = current.filter((occ) => occ.implication === direction);
+  if (directional.length === 0) return null;
+
+  // Rank: 1. diagnostic before indicator, 2. warning-bearing before non-warning (within same class),
+  // 3. newer observed cycle, 4. definition ID, 5. instance ID
+  const ranked = [...directional].sort((a, b) => {
+    const aDiag = a.diagnosticity === "diagnostic" ? 0 : 1;
+    const bDiag = b.diagnosticity === "diagnostic" ? 0 : 1;
+    if (aDiag !== bDiag) return aDiag - bDiag;
+    // Within same class, warning-bearing before non-warning
+    const aWarn = a.warningRole === "usable" ? 0 : 1;
+    const bWarn = b.warningRole === "usable" ? 0 : 1;
+    if (aWarn !== bWarn) return aWarn - bWarn;
+    if (a.observedCycle !== b.observedCycle) return b.observedCycle - a.observedCycle;
+    if (a.definitionId !== b.definitionId) return a.definitionId.localeCompare(b.definitionId);
+    return a.instanceId.localeCompare(b.instanceId);
+  });
+
+  return ranked[0]!;
+}
+
+/** Select the highest-ranked opposite-direction occurrence for contrary evidence. */
+function selectContraryBasis(
+  current: readonly V2HqEvidence[],
+  oppositeDirection: "preparation" | "coercion",
+): V2HqEvidence | null {
+  return selectPrimaryBasis(current, oppositeDirection);
+}
+
+/** Convert evidence to safe summary. */
+function toSummary(occ: V2HqEvidence): V2EvidenceSummary {
+  return {
+    definitionId: occ.definitionId,
+    observedCycle: occ.observedCycle,
+    summaryRef: occ.summaryRef,
+    sourceContextRef: occ.sourceContextRef,
+    limitationRef: occ.limitationRef,
+  };
+}
 
 /**
- * Run the complete reduction pipeline.
+ * Build the player-safe intelligence brief per 23D §5-8.
+ */
+export function buildBrief(
+  assessment: V2HqAssessment,
+  warning: V2HqWarning,
+  assessmentCurrent: readonly V2HqEvidence[],
+  warningCurrent: readonly V2HqEvidence[],
+): {
+  judgementRef: string;
+  basisEvidence: V2EvidenceSummary[];
+  contraryEvidence: V2EvidenceSummary[];
+  keyGapRef: string;
+  watchForRef: string;
+  updateLine: string | null;
+  warningStatementRef: string;
+  warningBasisEvidence: V2EvidenceSummary | null;
+} {
+  const bp = assessment.basisPattern;
+  const warnState = warning.state;
+
+  // Determine gap and watch-for refs from basisPattern + warning state (23D §3)
+  const gapWatchMap: Record<string, { gap: string; watch: string }> = {
+    "no-direction_none": { gap: "intel.gap.no-direction", watch: "intel.watch.no-direction" },
+    "indicator-preparation_none": { gap: "intel.gap.indicator-preparation-none", watch: "intel.watch.indicator-preparation-none" },
+    "indicator-preparation_usable": { gap: "intel.gap.indicator-preparation-warning", watch: "intel.watch.indicator-preparation-warning" },
+    "indicator-coercion_none": { gap: "intel.gap.indicator-coercion", watch: "intel.watch.indicator-coercion" },
+    "indicator-conflict_none": { gap: "intel.gap.indicator-conflict-none", watch: "intel.watch.indicator-conflict-none" },
+    "indicator-conflict_usable": { gap: "intel.gap.indicator-conflict-warning", watch: "intel.watch.indicator-conflict-warning" },
+    "diagnostic-preparation-clear_none": { gap: "intel.gap.diagnostic-preparation-clear-none", watch: "intel.watch.diagnostic-preparation-clear-none" },
+    "diagnostic-preparation-clear_usable": { gap: "intel.gap.diagnostic-preparation-clear-warning", watch: "intel.watch.diagnostic-preparation-clear-warning" },
+    "diagnostic-preparation-qualified_none": { gap: "intel.gap.diagnostic-preparation-qualified-none", watch: "intel.watch.diagnostic-preparation-qualified-none" },
+    "diagnostic-preparation-qualified_usable": { gap: "intel.gap.diagnostic-preparation-qualified-warning", watch: "intel.watch.diagnostic-preparation-qualified-warning" },
+    "diagnostic-coercion-clear_none": { gap: "intel.gap.diagnostic-coercion-clear", watch: "intel.watch.diagnostic-coercion-clear" },
+    "diagnostic-coercion-qualified_none": { gap: "intel.gap.diagnostic-coercion-qualified-none", watch: "intel.watch.diagnostic-coercion-qualified-none" },
+    "diagnostic-coercion-qualified_usable": { gap: "intel.gap.diagnostic-coercion-qualified-warning", watch: "intel.watch.diagnostic-coercion-qualified-warning" },
+    "diagnostic-conflict_none": { gap: "intel.gap.diagnostic-conflict-none", watch: "intel.watch.diagnostic-conflict-none" },
+    "diagnostic-conflict_usable": { gap: "intel.gap.diagnostic-conflict-warning", watch: "intel.watch.diagnostic-conflict-warning" },
+  };
+
+  const gwKey = `${bp}_${warnState}`;
+  const gw = gapWatchMap[gwKey] ?? { gap: "intel.gap.no-direction", watch: "intel.watch.no-direction" };
+
+  // Directional brief selection (23D §5)
+  const isConflicted = assessment.direction === "unclear" && assessment.picture === "conflicted";
+  const isUnclearWeak = assessment.direction === "unclear" && assessment.picture === "weak";
+
+  let basisEvidence: V2EvidenceSummary[] = [];
+  let contraryEvidence: V2EvidenceSummary[] = [];
+
+  if (isConflicted) {
+    // Select one preparation and one coercion representative (23D §6)
+    const prepRep = selectPrimaryBasis(assessmentCurrent, "preparation");
+    const coercionRep = selectPrimaryBasis(assessmentCurrent, "coercion");
+    if (prepRep) basisEvidence.push(toSummary(prepRep));
+    if (coercionRep) basisEvidence.push(toSummary(coercionRep));
+  } else if (!isUnclearWeak) {
+    // Directional assessment
+    const dir = assessment.direction as "preparation" | "coercion";
+    const primary = selectPrimaryBasis(assessmentCurrent, dir);
+    if (primary) basisEvidence.push(toSummary(primary));
+
+    // Second basis slot: prefer another question/group
+    const remaining = assessmentCurrent
+      .filter((occ) => occ.implication === dir && occ.instanceId !== primary?.instanceId);
+    if (remaining.length > 0 && basisEvidence.length < 2) {
+      // Prefer different question, then different corroboration group
+      const sortedRemaining = [...remaining].sort((a, b) => {
+        if (a.questionId !== b.questionId && b.questionId === primary?.questionId) return -1;
+        if (b.questionId !== a.questionId && a.questionId === primary?.questionId) return 1;
+        return a.instanceId.localeCompare(b.instanceId);
+      });
+      basisEvidence.push(toSummary(sortedRemaining[0]!));
+    }
+
+    // Mandatory contrary evidence (23D §5 rule 3)
+    const oppositeDir = dir === "preparation" ? "coercion" : "preparation";
+    const contrary = selectContraryBasis(assessmentCurrent, oppositeDir);
+    if (contrary) {
+      contraryEvidence.push(toSummary(contrary));
+    }
+  }
+
+  // Warning block (23D §8)
+  const warningStatementRef = warnState === "usable"
+    ? "intel.warning.usable"
+    : "intel.warning.none";
+
+  let warningBasisEvidence: V2EvidenceSummary | null = null;
+  if (warnState === "usable" && warning.basisEvidenceInstanceId !== null) {
+    const basisOcc = warningCurrent.find((occ) => occ.instanceId === warning.basisEvidenceInstanceId);
+    if (basisOcc) {
+      warningBasisEvidence = toSummary(basisOcc);
+    }
+  }
+
+  return {
+    judgementRef: `${assessment.direction}/${assessment.picture}`,
+    basisEvidence,
+    contraryEvidence,
+    keyGapRef: gw.gap,
+    watchForRef: gw.watch,
+    updateLine: null, // Set by caller
+    warningStatementRef,
+    warningBasisEvidence,
+  };
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// Main reduction pipeline
+// ═════════════════════════════════════════════════════════════════════
+
+/**
+ * Run the complete reduction pipeline for a single cycle.
  *
- * This is the sim-private core that #102 later extends by merging
- * additional collection occurrences before calling this function.
+ * Pure function: given occurrences, definitions, and optional previous state,
+ * returns the complete output.
  */
 export function reduceHqBelief(
-  occurrences: readonly V2EvidenceOccurrence[],
+  occurrences: readonly V2HqEvidence[],
   definitions: ReadonlyMap<string, V2ResolvedEvidenceDef>,
   cycle: number,
-  prevState: V2PreviousBeliefState | null,
+  prevState: V2PreviousSnapshotState | null,
 ): V2HqBeliefOutput {
   // 1. Supersession
   const supersession = computeSupersession(occurrences, definitions);
 
   // 2. Role-current sets
-  const assessmentCurrent = roleCurrentOccurrences(occurrences, supersession, definitions, "assessment", cycle);
-  const warningCurrent = roleCurrentOccurrences(occurrences, supersession, definitions, "warning", cycle);
-  const publicCaseCurrent = roleCurrentOccurrences(occurrences, supersession, definitions, "public-case", cycle);
+  const assessmentCurrent = roleCurrentOccurrences(occurrences, supersession, "assessment", cycle);
+  const warningCurrent = roleCurrentOccurrences(occurrences, supersession, "warning", cycle);
+  const publicCaseCurrent = roleCurrentOccurrences(occurrences, supersession, "public-case", cycle);
 
   // 3. Reducers
-  const assessmentResult = reduceAssessment(assessmentCurrent, definitions);
-  const warningResult = reduceWarning(warningCurrent, definitions);
-  const publicCaseResult = reducePublicCase(publicCaseCurrent, assessmentCurrent, definitions);
+  const { assessment, basisPattern } = reduceAssessment(assessmentCurrent, definitions);
+  const warning = reduceWarning(warningCurrent);
+  const publicCaseBasis = reducePublicCase(publicCaseCurrent, assessmentCurrent);
 
-  // 4. Basis pattern
-  const basisPattern = deriveBasisPattern(assessmentCurrent, definitions);
+  // 4. Briefing
+  const brief = buildBrief(assessment, warning, assessmentCurrent, warningCurrent);
 
-  // 5. Briefing selection
-  const { assessmentReasons, unresolvedGap } = selectBriefingEvidence(
-    assessmentCurrent, warningCurrent, assessmentResult, definitions,
-  );
+  // 5. Delta computation
+  const currentInstanceIds = new Set(assessmentCurrent.map((o) => o.instanceId));
+  const currentWarningIds = new Set(warningCurrent.map((o) => o.instanceId));
+  const currentPublicIds = new Set(publicCaseCurrent.map((o) => o.instanceId));
 
-  // Build evidence summaries for the brief
-  function toSummary(occ: V2EvidenceOccurrence): { definitionId: V2EvidenceDefinitionId; observedCycle: number; summaryRef: string } {
-    const def = definitions.get(occ.definitionId);
-    return {
-      definitionId: occ.definitionId,
-      observedCycle: occ.observedCycle,
-      summaryRef: def?.summaryRef ?? "",
-    };
+  // Determine stale-for-role: occurrences in previous current set but not in current
+  const staleForAssessmentIds = new Set<string>();
+  const staleForWarningIds = new Set<string>();
+  const staleForPublicCaseIds = new Set<string>();
+  const addedInstanceIds = new Set<string>();
+
+  if (prevState) {
+    for (const id of prevState.currentInstanceIds) {
+      if (!currentInstanceIds.has(id)) staleForAssessmentIds.add(id);
+    }
+    // Track warning and public-case staleness separately
+    for (const id of prevState.currentInstanceIds) {
+      if (!currentWarningIds.has(id) && prevState.currentInstanceIds.has(id)) staleForWarningIds.add(id);
+      if (!currentPublicIds.has(id) && prevState.currentInstanceIds.has(id)) staleForPublicCaseIds.add(id);
+    }
+    for (const id of currentInstanceIds) {
+      if (!prevState.currentInstanceIds.has(id)) addedInstanceIds.add(id);
+    }
+  } else {
+    for (const id of currentInstanceIds) addedInstanceIds.add(id);
   }
 
-  const brief: V2IntelligenceBrief = {
-    assessment: assessmentResult.assessment,
-    assessmentReasons: assessmentReasons.map(toSummary),
-    unresolvedGap,
-    warning: warningResult.warning,
-    warningBasis: warningResult.basisOccurrenceIds.map((id) => {
-      const occ = occurrences.find((o) => o.occurrenceId === id);
-      return occ ? toSummary(occ) : null;
-    }).filter((s): s is { definitionId: V2EvidenceDefinitionId; observedCycle: number; summaryRef: string } => s !== null),
-    publicCase: publicCaseResult.state,
-    publicCaseDirection: publicCaseResult.direction,
-    publicCaseBasis: publicCaseResult.supportOccurrenceIds.map((id) => {
-      const occ = occurrences.find((o) => o.occurrenceId === id);
-      return occ ? toSummary(occ) : null;
-    }).filter((s): s is { definitionId: V2EvidenceDefinitionId; observedCycle: number; summaryRef: string } => s !== null),
-    hasCurrentDirectWarning: warningResult.warning === "usable",
-  };
+  // Newly superseded
+  const newlySupersededInstanceIds = new Set<string>();
+  if (prevState) {
+    for (const id of supersession.superseded) {
+      if (!prevState.supersededIds.has(id)) newlySupersededInstanceIds.add(id);
+    }
+  } else {
+    for (const id of supersession.superseded) newlySupersededInstanceIds.add(id);
+  }
 
-  // 6. Delta
   const delta = computeDelta(prevState, {
-    assessment: assessmentResult.assessment,
-    basisPattern,
-    warning: warningResult.warning,
-    warningBasisIds: warningResult.basisOccurrenceIds,
-    publicCase: publicCaseResult.state,
-    publicCaseDirection: publicCaseResult.direction,
-    publicCaseBasisIds: publicCaseResult.supportOccurrenceIds,
-    supersededIds: [...supersession.superseded],
-  }, cycle);
+    assessment,
+    warning,
+    publicCaseBasis,
+    currentInstanceIds,
+    supersededIds: new Set(supersession.superseded),
+    staleForAssessmentIds,
+    staleForWarningIds,
+    staleForPublicCaseIds,
+    addedInstanceIds,
+    newlySupersededInstanceIds,
+  });
 
-  return {
-    brief,
+  // Build snapshot
+  const snapshot: V2HqBeliefSnapshot = {
+    cycle: cycle as 1 | 2 | 3 | 4 | 5 | 6,
+    assessment,
+    warning,
+    publicCaseBasis,
     delta,
-    basisPattern,
-    cycle,
-    notReady: false,
+    brief: {
+      judgementRef: brief.judgementRef,
+      basisEvidence: brief.basisEvidence,
+      contraryEvidence: brief.contraryEvidence,
+      keyGapRef: brief.keyGapRef,
+      watchForRef: brief.watchForRef,
+      updateLine: brief.updateLine,
+      warning: {
+        state: brief.warningStatementRef === "intel.warning.usable" ? "usable" : "none",
+        statementRef: brief.warningStatementRef,
+        basisEvidence: brief.warningBasisEvidence,
+      },
+    },
   };
+
+  return { kind: "ready", snapshot };
 }
 
 /**
- * Returns a "not ready" output for cycles where Ravellan decision hasn't been made yet.
+ * Create a "not ready" output when the phase is invalid (23 §20).
  */
 export function notReadyOutput(cycle: number): V2HqBeliefOutput {
   return {
-    brief: {
-      assessment: "unclear/weak",
-      assessmentReasons: [],
-      unresolvedGap: "[NOT READY] Intelligence assessment is not yet available for this cycle — the Ravellan decision has not been made.",
-      warning: "none",
-      warningBasis: [],
-      publicCase: "none",
-      publicCaseDirection: null,
-      publicCaseBasis: [],
-      hasCurrentDirectWarning: false,
-    },
-    delta: {
-      assessmentChange: "unchanged",
-      assessmentBasisChange: false,
-      warningChange: "unchanged",
-      publicCaseChange: "unchanged",
-      publicCaseDirectionChange: false,
-      supportBasisChange: false,
-      newlySupersededIds: [],
-      stalenessRoles: [],
-      updateCause: "no-change",
-    },
-    basisPattern: "no-directional-evidence",
-    cycle,
-    notReady: true,
+    kind: "not-ready",
+    cycle: cycle as 1 | 2 | 3 | 4 | 5 | 6,
+    reason: "ravellan-decision-missing",
   };
+}
+
+/** Get the current assessment instance IDs for computing basis change. */
+export function getAssessmentInstanceIds(
+  assessment: V2HqAssessment,
+  assessmentCurrent: readonly V2HqEvidence[],
+): string[] {
+  if (assessment.direction === "unclear") return [];
+  const dir = assessment.direction;
+  return assessmentCurrent
+    .filter((occ) => occ.implication === dir)
+    .sort((a, b) => a.instanceId.localeCompare(b.instanceId))
+    .map((occ) => occ.instanceId);
 }

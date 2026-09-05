@@ -23,7 +23,8 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { canonicalV2Json, v2Sha256 } from "@brass-ledger/shared";
+import { canonicalV2Json } from "@brass-ledger/shared";
+import { v2Sha256 } from "./v2";
 import type {
   V2RavellanPosture,
   V2RavellanPreparation,
@@ -420,23 +421,27 @@ test("DIFFERENTIAL: content model has all 19 definitions with correct structure"
   for (const def of kestrelHqBeliefModelV1.definitions) {
     assert(def.definitionId);
     assert(def.implication);
-    assert(def.diagnosticClass);
-    assert(def.sourceGroup);
-    assert(def.corroborationGroupId);
+    assert(def.diagnosticity);
+    assert(def.sourceGroupId);
     assert(def.summaryRef.length > 0);
-    assert(Array.isArray(def.assessmentActiveCycles));
-    assert.equal(def.assessmentActiveCycles.length, 2);
-    assert(def.assessmentActiveCycles[0] >= 1);
-    assert(def.assessmentActiveCycles[1] <= 6);
+    assert(def.claimId === "ravellan-intent");
+    assert(def.questionId);
+    assert(def.producerKind);
+    assert(def.sourceContextRef.length > 0);
+    assert(def.limitationRefs.length >= 1);
+    assert(def.assessmentRelevance.kind);
+    assert(def.warningRelevance.kind);
+    assert(def.publicCaseRelevance.kind);
+    assert(def.supersessionPolicy);
   }
 
-  const warningCapable = kestrelHqBeliefModelV1.definitions.filter((d) => d.warningCapable);
-  assert.equal(warningCapable.length, 2);
-  assert(warningCapable.some((d) => d.definitionId === "focused-staging-buildup"));
-  assert(warningCapable.some((d) => d.definitionId === "lattice-landing-concentration"));
+  const warningUsable = kestrelHqBeliefModelV1.definitions.filter((d) => d.warningRole === "usable");
+  assert.equal(warningUsable.length, 2);
+  assert(warningUsable.some((d) => d.definitionId === "focused-staging-buildup"));
+  assert(warningUsable.some((d) => d.definitionId === "lattice-landing-concentration"));
 
-  const sourceSensitive = kestrelHqBeliefModelV1.definitions.filter((d) => d.sourceSensitive);
-  assert.equal(sourceSensitive.length, 5);
+  const sourceSensitive = kestrelHqBeliefModelV1.definitions.filter((d) => d.publicCaseRole === "source-sensitive");
+  assert.equal(sourceSensitive.length, 9);
 });
 
 // ── Step 6: Content model digest ────────────────────────────────────

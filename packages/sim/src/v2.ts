@@ -1,6 +1,5 @@
 import {
   canonicalV2Json,
-  v2Sha256,
   type V2AgendaIssue,
   type V2CommandSet,
   type V2CommandSetLedgerEntry,
@@ -22,7 +21,14 @@ import {
   v2SessionSchema,
 } from "@brass-ledger/shared";
 
-export { canonicalV2Json, v2Sha256 } from "@brass-ledger/shared";
+import { createHash } from "node:crypto";
+
+export { canonicalV2Json };
+
+/** SHA-256 digest of canonical V2 JSON representation (sim-local, uses node:crypto). */
+export function v2Sha256(value: unknown): string {
+  return createHash("sha256").update(canonicalV2Json(value)).digest("hex");
+}
 
 /** #99's narrow, non-omniscient policy input. Do not widen this to campaign state. */
 export type V2RavellanPolicyInput = Readonly<{
@@ -351,7 +357,7 @@ export function resolveV2RavellanDecision(
   };
 }
 
-/* canonicalV2Json and v2Sha256 now imported from @brass-ledger/shared */
+/* canonicalV2Json re-exported from @brass-ledger/shared; v2Sha256 implemented locally with node:crypto */
 
 export type V2DigestEnvelope = {
   tag: "v2";

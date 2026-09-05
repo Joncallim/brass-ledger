@@ -1,12 +1,12 @@
-import { createHash } from "node:crypto";
-
 /**
  * Stable JSON encoding for V2 replay evidence.
  *
+ * Pure/browser-safe: no Node crypto dependency.
  * Objects are key-sorted (UTF-16 code unit comparison, never locale-dependent),
  * undefined values are omitted, non-finite numbers are rejected.
  * This must reproduce the existing #99 canonical semantics byte-for-byte.
  */
+
 export function canonicalV2Json(value: unknown): string {
   if (value === null) return "null";
   if (typeof value === "string" || typeof value === "boolean") return JSON.stringify(value);
@@ -25,9 +25,4 @@ export function canonicalV2Json(value: unknown): string {
       .join(",")}}`;
   }
   throw new TypeError("V2 canonical JSON does not permit unsupported values.");
-}
-
-/** SHA-256 digest of canonical V2 JSON representation. */
-export function v2Sha256(value: unknown): string {
-  return createHash("sha256").update(canonicalV2Json(value)).digest("hex");
 }
