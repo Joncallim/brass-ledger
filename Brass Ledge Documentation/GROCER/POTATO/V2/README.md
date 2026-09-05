@@ -15,10 +15,11 @@ This is the canonical authority for the bounded V2 experiment. It supersedes the
 - [[21-KESTREL-SIX-CYCLE-CANON]] — canonical six-cycle product design.
 - [[22-RAVELLAN-EXECUTABLE-POLICY]] — deterministic Kestrel-only adversary policy.
 - [[23-HQ-BELIEF-AND-EVIDENCE]] — #100 product/tradecraft semantics.
-- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] — exact #100 files, types, history cuts, reducers and implementation order.
+- [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]] — exact #100 files, types, trust/history cuts, reducers and implementation order.
 - [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] — single exhaustive algebraic, temporal and information-equivalence authority for #100.
 - [[23C-HQ-BELIEF-EVIDENCE-CATALOG]] — exact 19 definitions, role lifetimes, mappings, copy and future #102 producer overlay.
-- `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json` — machine-readable state-space counts, states and hashes.
+- [[23D-HQ-BELIEF-BRIEF-AND-DELTA-MATRIX]] — exact 15 briefing states, evidence selection, product-delta totality and safe structured updates.
+- `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json` — machine-readable state-space counts, states and hashes; a generated/reference artifact, not a competing prose authority.
 - [[24-STAFF-RECOMMENDATION-POLICY]] — #98 recommendation/dissent algorithm.
 - [[25-KESTREL-CONSEQUENCE-MATRIX]] — #101 concrete persistent records/transitions/recovery.
 - [[26-LATTICE-COLLECTION-MATRIX]] — #102 capability and differentiated mandatory target flow.
@@ -48,9 +49,10 @@ Use the narrowest owner:
 
 - Ravellan policy → [[22-RAVELLAN-EXECUTABLE-POLICY]];
 - HQ intelligence meaning → [[23-HQ-BELIEF-AND-EVIDENCE]];
-- HQ intelligence implementation/replay → [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]];
-- HQ intelligence state-space vectors → [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] and `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json`;
+- HQ intelligence implementation/replay/trust boundary → [[23A-HQ-BELIEF-EXECUTION-ARCHITECTURE]];
+- HQ intelligence generated state-space invariants → [[23B-HQ-BELIEF-STATE-SPACE-AUDIT]] and `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json`;
 - HQ intelligence IDs/mappings/copy → [[23C-HQ-BELIEF-EVIDENCE-CATALOG]];
+- HQ intelligence briefing selection/delta composition → [[23D-HQ-BELIEF-BRIEF-AND-DELTA-MATRIX]];
 - Lattice/task production → [[26-LATTICE-COLLECTION-MATRIX]];
 - other subsystem behavior → its numbered base contract;
 - interactions between otherwise-correct subsystem decisions → [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]];
@@ -68,4 +70,4 @@ Only the six-cycle plain-text vertical slice is in scope. No extra scenario, gra
 
 [[32-POST-GATE-GAME-ARCHITECTURE]] records hypotheses only. It cannot expand implementation scope before #110 and explicit human product-owner authorisation.
 
-The #100 state-space/catalog files and [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] / [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] close ambiguity in approved systems; they do not authorise new product breadth.
+The #100 state-space/catalog/briefing files and [[37A-COALITION-TO-RAVELLAN-SIGNAL-MATRIX]] / [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]] close ambiguity in approved systems; they do not authorise new product breadth.
