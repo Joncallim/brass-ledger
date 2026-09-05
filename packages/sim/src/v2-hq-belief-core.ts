@@ -568,7 +568,6 @@ export function computeDelta(
     publicCaseDirection: V2PublicCaseDirection | null;
     publicCaseBasisIds: readonly string[];
     supersededIds: readonly string[];
-    assessmentChange: V2HqBeliefDelta["assessmentChange"];
   },
   cycle: number,
 ): V2HqBeliefDelta {
@@ -730,16 +729,6 @@ export function reduceHqBelief(
     publicCaseDirection: publicCaseResult.direction,
     publicCaseBasisIds: publicCaseResult.supportOccurrenceIds,
     supersededIds: [...supersession.superseded],
-    assessmentChange: prevState
-      ? (assessmentResult.assessment !== prevState.assessment
-        ? (assessmentResult.assessment.split("/")[0] !== prevState.assessment.split("/")[0]
-          && assessmentResult.assessment.split("/")[1] !== prevState.assessment.split("/")[1]
-          ? "both-changed"
-          : assessmentResult.assessment.split("/")[0] !== prevState.assessment.split("/")[0]
-            ? "direction-changed"
-            : "picture-changed")
-        : "unchanged")
-      : "unchanged",
   }, cycle);
 
   return {
@@ -759,7 +748,7 @@ export function notReadyOutput(cycle: number): V2HqBeliefOutput {
     brief: {
       assessment: "unclear/weak",
       assessmentReasons: [],
-      unresolvedGap: "Intelligence assessment is not yet available for this cycle.",
+      unresolvedGap: "[NOT READY] Intelligence assessment is not yet available for this cycle — the Ravellan decision has not been made.",
       warning: "none",
       warningBasis: [],
       publicCase: "none",

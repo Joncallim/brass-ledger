@@ -264,8 +264,10 @@ export function deriveHqBelief(
   focusedStagingOrdered: boolean,
   ravellanDecision?: V2RavellanDecision,
 ): V2HqBeliefOutput {
-  // Fail closed if the current cycle's Ravellan decision doesn't exist yet
-  if (!hasRavellanDecisionInContext(ctx, cycle)) {
+  // Fail closed if the game hasn't progressed enough.
+  // For cycle 1, no prior decision is needed (initial state).
+  // For cycle > 1, the previous cycle's Ravellan decision must exist.
+  if (cycle > 1 && !hasRavellanDecisionInContext(ctx, cycle - 1)) {
     return notReadyOutput(cycle);
   }
 
