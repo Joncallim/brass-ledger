@@ -84,7 +84,9 @@ import { createHash } from "node:crypto";
 export * from "./v2.js";
 // #100 — Public base intelligence API only
 export { deriveV2BaseHqBeliefAtCycle, deriveV2CurrentHqBelief, deriveV2HqBeliefHistory } from "./v2-hq-belief";
-export { V2VerifiedProjectionContext, createVerifiedProjectionContext } from "./v2-hq-verified-context";
+// V2VerifiedProjectionContext is not constructible from outside the package.
+// Use validateV2ReplayAndCreateContext from ./v2.js to obtain one.
+export type { V2VerifiedProjectionContext } from "./v2-hq-verified-context";
 // Internal types exported for type reference only (not constructible)
 export type { V2ResolvedEvidenceDef, V2EvidenceOccurrence, V2OccurrenceOrigin, V2PreviousSnapshotState } from "./v2-hq-belief-core";
 import {

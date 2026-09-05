@@ -493,3 +493,59 @@ test("#100 content model: digest is deterministic", () => {
   const d2 = kestrelHqBeliefModelDigest();
   assert.equal(d1, d2);
 });
+
+
+// ─── Verified-context hostile tests ─────────────────────────────────
+
+test("#100 hostile: factory functions not exported from package barrel", async () => {
+  // Verify that createVerifiedProjectionContext is NOT exported from index.ts
+  // This is a compile-time boundary test.
+  // We check by importing from the index and verifying the export doesn't exist.
+  const simExports = await import("./index");
+  assert.equal(typeof (simExports as any).createVerifiedProjectionContext, "undefined",
+    "createVerifiedProjectionContext must not be exported from package barrel");
+  assert.equal(typeof (simExports as any).createLiveProjectionContext, "undefined",
+    "createLiveProjectionContext must not be exported from package barrel");
+  // V2VerifiedProjectionContext is a type-only export (export type).
+  // It is accessible at compile-time via "import type { V2VerifiedProjectionContext }".
+  // At runtime, type exports are erased, so we verify the factories are absent instead.
+  // The type being correctly exported is verified by TypeScript compilation.
+});
+
+test("#100 hostile: tampered session rejected by validateV2ReplayAndCreateContext", async () => {
+  // This test verifies that a tampered V2Session cannot be promoted
+  // to a verified context through the only public API path.
+  const { validateV2ReplayAndCreateContext } = await import("./v2");
+
+  const identity = {
+    ruleset: "v2" as const,
+    rulesetVersion: "0.4.0-prototype" as const,
+    scenarioId: "test-scenario",
+    contentVersion: "0.1.0",
+    contentDigest: "0000000000000000000000000000000000000000000000000000000000000000",
+  };
+
+  // Create a minimal raw session with tampered state (state != initialState with zero-action ledger)
+  const tamperedSession = {
+    identity,
+    initialStateDigest: "0000000000000000000000000000000000000000000000000000000000000000",
+    finalStateDigest: "0000000000000000000000000000000000000000000000000000000000000000",
+    initialState: {
+      cycle: 1,
+      standingIntent: null,
+      ravellan: { posture: "testing", preparation: "none", observations: [] },
+    },
+    state: {
+      cycle: 6,  // Tampered - doesn't match initialState
+      standingIntent: null,
+      ravellan: { posture: "testing", preparation: "ready", observations: [] },
+    },
+    revision: 0,
+    actionLedger: [],
+  };
+
+  // This should throw because state != initialState with zero-action ledger
+  assert.throws(() => {
+    validateV2ReplayAndCreateContext(tamperedSession, identity, 1);
+  }, Error);
+});

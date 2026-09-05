@@ -24,6 +24,7 @@ import {
 import { createHash } from "node:crypto";
 
 export { canonicalV2Json };
+import { V2VerifiedProjectionContext, createVerifiedProjectionContext } from "./v2-hq-verified-context";
 
 /** SHA-256 digest of canonical V2 JSON representation (sim-local, uses node:crypto). */
 export function v2Sha256(value: unknown): string {
@@ -609,4 +610,33 @@ export function validateV2ReplaySkeleton(rawSession: unknown, trustedLiveIdentit
     throw new V2ReplayValidationError("v2_content_identity_mismatch", "V2 content identity does not match the live registry.");
   }
   return validateV2ReplayIntegrity(parsed, trustedAgendaProvider);
+}
+
+/**
+ * Validate a raw V2 session and, on success, create a verified projection context.
+ *
+ * This is the ONLY public path to obtain a verified context. It combines:
+ * 1. Content-identity resolution against a trusted live identity
+ * 2. Full replay validation (hashes, revisions, ledger transitions)
+ * 3. Verified context creation with the correct historical cut
+ *
+ * External callers cannot promote an arbitrary V2Session to a verified context
+ * through any other public API.
+ *
+ * @param rawSession - The raw imported session data.
+ * @param trustedLiveIdentity - The trusted content identity (never from the save).
+ * @param cutCycle - The cycle to cut historical evidence at.
+ * @param trustedAgendaProvider - Required if the ledger contains command sets.
+ * @returns The validated session and verified projection context.
+ * @throws V2ReplayValidationError if validation fails.
+ */
+export function validateV2ReplayAndCreateContext(
+  rawSession: unknown,
+  trustedLiveIdentity: V2Identity,
+  cutCycle: number,
+  trustedAgendaProvider?: V2TrustedAgendaProvider,
+): { session: V2Session; context: V2VerifiedProjectionContext } {
+  const session = validateV2ReplaySkeleton(rawSession, trustedLiveIdentity, trustedAgendaProvider);
+  const context = createVerifiedProjectionContext(session, cutCycle);
+  return { session, context };
 }
