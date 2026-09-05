@@ -19,13 +19,13 @@ const indexNotePaths = new Set([
   "CAPSICUM/README.md",
 ].map((file) => path.resolve(root, file)));
 
-async function listMarkdownFiles(dir) {
+async function listFiles(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
   const files = await Promise.all(
     entries.map(async (entry) => {
       const entryPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) return listMarkdownFiles(entryPath);
-      return entry.isFile() && entry.name.endsWith(".md") ? [entryPath] : [];
+      if (entry.isDirectory()) return listFiles(entryPath);
+      return entry.isFile() ? [entryPath] : [];
     }),
   );
   return files.flat();
@@ -47,22 +47,30 @@ function parseFrontmatter(markdown) {
 }
 
 function linkCandidates(filePath, target) {
-  const normalized = target.replace(/\\([|#[\]])/g, "$1").replace(/\\$/g, "").replace(/\\/g, "/").replace(/\.md$/i, "");
+  const normalized = target
+    .replace(/\\([|#[\]])/g, "$1")
+    .replace(/\\$/g, "")
+    .replace(/\\/g, "/");
+  const hasExtension = path.extname(normalized) !== "";
+  const targetPath = hasExtension ? normalized : `${normalized}.md`;
   const candidates = [
-    path.resolve(path.dirname(filePath), `${normalized}.md`),
-    path.resolve(root, `${normalized}.md`),
-    path.resolve(root, `${path.basename(normalized)}.md`),
+    path.resolve(path.dirname(filePath), targetPath),
+    path.resolve(root, targetPath),
+    path.resolve(root, path.basename(targetPath)),
   ];
-  const indexNote = indexNotes.get(normalized) ?? indexNotes.get(path.basename(normalized));
-  if (indexNote) candidates.push(path.resolve(root, indexNote));
+  if (!hasExtension) {
+    const indexNote = indexNotes.get(normalized) ?? indexNotes.get(path.basename(normalized));
+    if (indexNote) candidates.push(path.resolve(root, indexNote));
+  }
   return candidates;
 }
 
-const files = await listMarkdownFiles(root);
-const fileSet = new Set(files.map((file) => path.resolve(file)));
+const allFiles = await listFiles(root);
+const markdownFiles = allFiles.filter((file) => file.endsWith(".md"));
+const fileSet = new Set(allFiles.map((file) => path.resolve(file)));
 const failures = [];
 
-for (const file of files) {
+for (const file of markdownFiles) {
   const markdown = await readFile(file, "utf8");
   const relative = path.relative(".", file);
   if (!hasFrontmatter(markdown)) {
@@ -97,4 +105,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Validated ${files.length} GROCER notes in ${documentationRoot}.`);
+console.log(`Validated ${markdownFiles.length} GROCER notes in ${documentationRoot}.`);
