@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+
 export * from "./v2.js";
+export * from "./canonical-json.js";
 
 export const directorateSchema = z.enum([
   "people",

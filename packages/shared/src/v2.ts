@@ -301,3 +301,236 @@ export function isV2ExportPayload(value: unknown): value is { session?: unknown 
     && "session" in value
     && isV2SessionPayload((value as { session?: unknown }).session);
 }
+
+// ============================================================
+// #100 — HQ belief / intelligence projection derived types
+// ============================================================
+// These are pure derived/public schemas. No persisted V2 session
+// or ledger state is added here. Runtime occurrence/origin and
+// verified-context payload remain sim-private.
+
+/** Evidence implication direction. */
+export const v2EvidenceImplicationSchema = z.enum(["preparation", "coercion", "ambiguous"]);
+export type V2EvidenceImplication = z.infer<typeof v2EvidenceImplicationSchema>;
+
+/** Evidence diagnostic class. */
+export const v2EvidenceDiagnosticClassSchema = z.enum(["indicator", "corroborating"]);
+export type V2EvidenceDiagnosticClass = z.infer<typeof v2EvidenceDiagnosticClassSchema>;
+
+/** Stable evidence definition ID (all 19 from 23C). */
+export const v2EvidenceDefinitionIdSchema = z.enum([
+  "opening-pressure-ambiguous",
+  "shipping-probe-ambiguous",
+  "reroute-auxiliary-integrated",
+  "reroute-auxiliary-coercive",
+  "reroute-auxiliary-unclear",
+  "staging-logistics-anomaly",
+  "combat-elements-dispersed",
+  "focused-staging-buildup",
+  "focused-staging-empty",
+  "cycle4-pressure-pattern-ambiguous",
+  "lattice-landing-concentration",
+  "lattice-landing-dispersed",
+  "lattice-auxiliary-integrated",
+  "lattice-auxiliary-coercive",
+  "lattice-auxiliary-mixed",
+  "lattice-sync-preparation-sequence",
+  "lattice-sync-preparation-signal",
+  "lattice-sync-coercive-sequence",
+  "lattice-sync-partial",
+]);
+export type V2EvidenceDefinitionId = z.infer<typeof v2EvidenceDefinitionIdSchema>;
+
+/** Source group ID for evidence definitions. */
+export const v2EvidenceSourceGroupSchema = z.enum([
+  "opening-maritime-pressure",
+  "shipping-pressure",
+  "reroute-auxiliary-monitoring",
+  "regional-logistics",
+  "force-disposition",
+  "focused-staging-collection",
+  "visible-pressure-pattern",
+  "lattice-landing-force-staging",
+  "lattice-auxiliary-tasking",
+  "lattice-political-operational-sync",
+]);
+export type V2EvidenceSourceGroup = z.infer<typeof v2EvidenceSourceGroupSchema>;
+
+/** Corroboration group ID for multi-source credibility. */
+export const v2CorroborationGroupIdSchema = z.enum([
+  "opening-pressure",
+  "shipping-pressure",
+  "reroute-monitoring",
+  "logistics-anomaly",
+  "force-disposition",
+  "focused-staging",
+  "pressure-pattern",
+  "lattice-landing",
+  "lattice-auxiliary",
+  "lattice-sync",
+]);
+export type V2CorroborationGroupId = z.infer<typeof v2CorroborationGroupIdSchema>;
+
+/** Role-specific relevance window types. */
+export const v2EvidenceRoleSchema = z.enum(["assessment", "warning", "public-case"]);
+export type V2EvidenceRole = z.infer<typeof v2EvidenceRoleSchema>;
+
+/** Intent assessment direction. */
+export const v2IntentDirectionSchema = z.enum(["unclear", "preparation", "coercion"]);
+export type V2IntentDirection = z.infer<typeof v2IntentDirectionSchema>;
+
+/** Intent assessment picture strength. */
+export const v2IntentPictureSchema = z.enum(["weak", "conflicted", "coherent"]);
+export type V2IntentPicture = z.infer<typeof v2IntentPictureSchema>;
+
+/** Six legal assessment combinations. */
+export const v2AssessmentSchema = z.enum([
+  "unclear/weak",
+  "unclear/conflicted",
+  "preparation/weak",
+  "preparation/coherent",
+  "coercion/weak",
+  "coercion/coherent",
+]);
+export type V2Assessment = z.infer<typeof v2AssessmentSchema>;
+
+/** Nine-state internal basis pattern (analytical provenance). */
+export const v2BasisPatternSchema = z.enum([
+  "no-directional-evidence",
+  "preparation-indicators-only",
+  "preparation-corroborated",
+  "coercion-indicators-only",
+  "coercion-corroborated",
+  "preparation-dominant-conflict",
+  "coercion-dominant-conflict",
+  "balanced-conflict",
+  "ambiguous-only",
+]);
+export type V2BasisPattern = z.infer<typeof v2BasisPatternSchema>;
+
+/** Tactical warning state. */
+export const v2WarningStateSchema = z.enum(["none", "usable"]);
+export type V2WarningState = z.infer<typeof v2WarningStateSchema>;
+
+/** Public-case basis state. */
+export const v2PublicCaseStateSchema = z.enum(["none", "tentative", "credible", "used"]);
+export type V2PublicCaseState = z.infer<typeof v2PublicCaseStateSchema>;
+
+/** Public-case direction. */
+export const v2PublicCaseDirectionSchema = z.enum(["preparation", "coercion"]);
+export type V2PublicCaseDirection = z.infer<typeof v2PublicCaseDirectionSchema>;
+
+/** Assessment change type for delta. */
+export const v2AssessmentChangeSchema = z.enum([
+  "unchanged",
+  "direction-changed",
+  "picture-changed",
+  "both-changed",
+]);
+export type V2AssessmentChange = z.infer<typeof v2AssessmentChangeSchema>;
+
+/** Warning change type for delta. */
+export const v2WarningChangeSchema = z.enum([
+  "unchanged",
+  "gained",
+  "refreshed",
+  "lost",
+]);
+export type V2WarningChange = z.infer<typeof v2WarningChangeSchema>;
+
+/** Public-case change type for delta. */
+export const v2PublicCaseChangeSchema = z.enum([
+  "unchanged",
+  "state-changed",
+  "direction-changed",
+  "both-changed",
+  "lost",
+]);
+export type V2PublicCaseChange = z.infer<typeof v2PublicCaseChangeSchema>;
+
+/** Update cause category. */
+export const v2UpdateCauseSchema = z.enum([
+  "new-evidence",
+  "evidence-expired",
+  "evidence-superseded",
+  "cycle-advance",
+  "no-change",
+]);
+export type V2UpdateCause = z.infer<typeof v2UpdateCauseSchema>;
+
+/** Safe evidence summary reference (player-facing). */
+export const v2EvidenceSummarySchema = z.object({
+  definitionId: v2EvidenceDefinitionIdSchema,
+  observedCycle: z.number().int().min(1).max(6),
+  summaryRef: z.string().min(1),
+}).strict();
+export type V2EvidenceSummary = z.infer<typeof v2EvidenceSummarySchema>;
+
+/** Safe intelligence brief (player-facing). */
+export const v2IntelligenceBriefSchema = z.object({
+  assessment: v2AssessmentSchema,
+  assessmentReasons: z.array(v2EvidenceSummarySchema).min(0).max(3),
+  unresolvedGap: z.string().nullable(),
+  warning: v2WarningStateSchema,
+  warningBasis: z.array(v2EvidenceSummarySchema).min(0).max(2),
+  publicCase: v2PublicCaseStateSchema,
+  publicCaseDirection: v2PublicCaseDirectionSchema.nullable(),
+  publicCaseBasis: z.array(v2EvidenceSummarySchema).min(0).max(2),
+  hasCurrentDirectWarning: z.boolean(),
+}).strict();
+export type V2IntelligenceBrief = z.infer<typeof v2IntelligenceBriefSchema>;
+
+/** Total product/evidence delta. */
+export const v2HqBeliefDeltaSchema = z.object({
+  assessmentChange: v2AssessmentChangeSchema,
+  assessmentBasisChange: z.boolean(),
+  warningChange: v2WarningChangeSchema,
+  publicCaseChange: v2PublicCaseChangeSchema,
+  publicCaseDirectionChange: z.boolean(),
+  supportBasisChange: z.boolean(),
+  newlySupersededIds: z.array(v2EvidenceDefinitionIdSchema),
+  stalenessRoles: z.array(z.object({
+    definitionId: v2EvidenceDefinitionIdSchema,
+    role: v2EvidenceRoleSchema,
+    becameStale: z.boolean(),
+  })),
+  updateCause: v2UpdateCauseSchema,
+}).strict();
+export type V2HqBeliefDelta = z.infer<typeof v2HqBeliefDeltaSchema>;
+
+/** Complete #100 HQ belief output. */
+export const v2HqBeliefOutputSchema = z.object({
+  brief: v2IntelligenceBriefSchema,
+  delta: v2HqBeliefDeltaSchema,
+  basisPattern: v2BasisPatternSchema,
+  cycle: z.number().int().min(1).max(6),
+  notReady: z.boolean(),
+}).strict();
+export type V2HqBeliefOutput = z.infer<typeof v2HqBeliefOutputSchema>;
+
+/** Evidence definition catalog entry (content-owned). */
+export const v2EvidenceDefinitionSchema = z.object({
+  definitionId: v2EvidenceDefinitionIdSchema,
+  implication: v2EvidenceImplicationSchema,
+  diagnosticClass: v2EvidenceDiagnosticClassSchema,
+  sourceGroup: v2EvidenceSourceGroupSchema,
+  corroborationGroupId: v2CorroborationGroupIdSchema,
+  summaryRef: z.string().min(1),
+  assessmentActiveCycles: z.tuple([z.number().int().min(1), z.number().int().min(1).max(6)]),
+  warningActiveCycles: z.tuple([z.number().int().min(1), z.number().int().min(1).max(6)]).nullable(),
+  publicCaseActiveCycles: z.tuple([z.number().int().min(1), z.number().int().min(1).max(6)]).nullable(),
+  supersedesIds: z.array(v2EvidenceDefinitionIdSchema).default([]),
+  replaceOlderSameQuestion: z.boolean().default(false),
+  warningCapable: z.boolean().default(false),
+  sourceSensitive: z.boolean().default(false),
+  questionGroup: z.string().default(""),
+}).strict();
+export type V2EvidenceDefinition = z.infer<typeof v2EvidenceDefinitionSchema>;
+
+/** Semantic model digest for content-identity binding. */
+export const v2HqBeliefModelDigestSchema = z.object({
+  modelId: z.literal("kestrel-hq-belief-v1"),
+  definitionCount: z.literal(19),
+  digest: z.string().regex(/^[a-f0-9]{64}$/),
+}).strict();
+export type V2HqBeliefModelDigest = z.infer<typeof v2HqBeliefModelDigestSchema>;

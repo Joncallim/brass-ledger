@@ -82,6 +82,9 @@
  */
 import { createHash } from "node:crypto";
 export * from "./v2.js";
+export { deriveHqBelief, deriveHqBeliefFromOccurrences, produceOrdinaryEvidence, produceRerouteEvidence, produceFocusedStagingEvidence, combineOccurrences } from "./v2-hq-belief";
+export { V2VerifiedProjectionContext, createVerifiedProjectionContext, hasRavellanDecisionInContext, getLastRavellanDecisionInContext } from "./v2-hq-verified-context";
+export { type V2ResolvedEvidenceDef, type V2EvidenceOccurrence, type V2OccurrenceOrigin, type V2PreviousBeliefState, reduceHqBelief, notReadyOutput, computeSupersession, roleCurrentOccurrences, reduceAssessment, reduceWarning, reducePublicCase, deriveBasisPattern, selectBriefingEvidence, computeDelta } from "./v2-hq-belief-core";
 import {
   type AcceptedRiskOverride,
   type BurdenBias,
