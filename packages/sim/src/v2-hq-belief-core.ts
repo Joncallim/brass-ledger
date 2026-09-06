@@ -374,49 +374,58 @@ export function reducePublicCase(
 
   // Try preparation direction
   if (prepDiagnostic.length > 0 && !hasMaterialCoercionBlocker) {
+    // Primary is the best diagnostic. Corroborator can be any source-sensitive
+    // occurrence from a different corroboration group (indicator is acceptable).
+    // But two indicators alone are tentative (handled below).
+    const sameDirection = sourceSensitive.filter(
+      (occ) => occ.implication === "preparation",
+    );
     const groups = new Set<string>();
-    for (const occ of prepDiagnostic) {
+    for (const occ of sameDirection) {
       if (occ.corroborationGroupId) groups.add(occ.corroborationGroupId);
     }
     if (groups.size >= 2) {
-      const sorted = [...prepDiagnostic].sort((a, b) => rank(a).localeCompare(rank(b)));
-      const groupMap = new Map<string, V2HqEvidence>();
-      for (const occ of sorted) {
-        if (occ.corroborationGroupId && !groupMap.has(occ.corroborationGroupId)) {
-          groupMap.set(occ.corroborationGroupId, occ);
-        }
+      // Primary: best diagnostic
+      const primary = [...prepDiagnostic].sort((a, b) => rank(a).localeCompare(rank(b)))[0]!;
+      // Corroborator: best remaining occurrence from a different group
+      const remaining = sameDirection.filter(
+        (occ) => occ.instanceId !== primary.instanceId && occ.corroborationGroupId !== primary.corroborationGroupId,
+      );
+      if (remaining.length > 0) {
+        const corrob = [...remaining].sort((a, b) => rank(a).localeCompare(rank(b)))[0]!;
+        return {
+          state: "credible-source-sensitive",
+          direction: "preparation",
+          supportingInstanceIds: [primary.instanceId, corrob.instanceId],
+          supportingCorroborationGroupIds: [primary.corroborationGroupId!, corrob.corroborationGroupId!],
+        };
       }
-      const basis = [...groupMap.values()].slice(0, 2);
-      return {
-        state: "credible-source-sensitive",
-        direction: "preparation",
-        supportingInstanceIds: [basis[0]!.instanceId, basis[1]!.instanceId],
-        supportingCorroborationGroupIds: [basis[0]!.corroborationGroupId!, basis[1]!.corroborationGroupId!],
-      };
     }
   }
 
   // Try coercion direction
   if (coercionDiagnostic.length > 0 && !hasMaterialPrepBlocker) {
+    const sameDirection = sourceSensitive.filter(
+      (occ) => occ.implication === "coercion",
+    );
     const groups = new Set<string>();
-    for (const occ of coercionDiagnostic) {
+    for (const occ of sameDirection) {
       if (occ.corroborationGroupId) groups.add(occ.corroborationGroupId);
     }
     if (groups.size >= 2) {
-      const sorted = [...coercionDiagnostic].sort((a, b) => rank(a).localeCompare(rank(b)));
-      const groupMap = new Map<string, V2HqEvidence>();
-      for (const occ of sorted) {
-        if (occ.corroborationGroupId && !groupMap.has(occ.corroborationGroupId)) {
-          groupMap.set(occ.corroborationGroupId, occ);
-        }
+      const primary = [...coercionDiagnostic].sort((a, b) => rank(a).localeCompare(rank(b)))[0]!;
+      const remaining = sameDirection.filter(
+        (occ) => occ.instanceId !== primary.instanceId && occ.corroborationGroupId !== primary.corroborationGroupId,
+      );
+      if (remaining.length > 0) {
+        const corrob = [...remaining].sort((a, b) => rank(a).localeCompare(rank(b)))[0]!;
+        return {
+          state: "credible-source-sensitive",
+          direction: "coercion",
+          supportingInstanceIds: [primary.instanceId, corrob.instanceId],
+          supportingCorroborationGroupIds: [primary.corroborationGroupId!, corrob.corroborationGroupId!],
+        };
       }
-      const basis = [...groupMap.values()].slice(0, 2);
-      return {
-        state: "credible-source-sensitive",
-        direction: "coercion",
-        supportingInstanceIds: [basis[0]!.instanceId, basis[1]!.instanceId],
-        supportingCorroborationGroupIds: [basis[0]!.corroborationGroupId!, basis[1]!.corroborationGroupId!],
-      };
     }
   }
 
