@@ -219,7 +219,7 @@ const OBS_LIFETIME: Record<string, number> = {
 };
 
 /** Compute active observations at a given cycle from a sequence of signal packages. */
-function activeObservations(
+export function activeObservations(
   packages: SignalPackage[],
   cycle: number,
 ): V2RavellanObservation[] {
@@ -275,7 +275,7 @@ function reserveExhaustionObs(packages: SignalPackage[], cycle: number): V2Ravel
 }
 
 /** Independent #99 evaluator. Production is used only by the differential below. */
-function refChooseRavellanAction(input: { cycle: number; posture: V2RavellanPosture; preparation: V2RavellanPreparation; activeObservations: readonly V2RavellanObservation[] }): V2RavellanDecision {
+export function refChooseRavellanAction(input: { cycle: number; posture: V2RavellanPosture; preparation: V2RavellanPreparation; activeObservations: readonly V2RavellanObservation[] }): V2RavellanDecision {
   const { cycle, posture, preparation, activeObservations: o } = input;
   const has = (signal: V2RavellanObservation["signal"], value: string) => o.some(x => x.signal === signal && x.value === value);
   const advance = (p: V2RavellanPreparation): V2RavellanPreparation => p === "none" ? "developing" : "ready";
@@ -332,7 +332,7 @@ function computeProjectionKey(history: RawHistory): string {
 }
 
 /** Enumerate all 62,208 raw histories. */
-function enumerateRawHistories(): RawHistory[] {
+export function enumerateRawHistories(): RawHistory[] {
   const histories: RawHistory[] = [];
 
   for (const opening of OPENING_POSTURES) {
@@ -447,7 +447,7 @@ let _cachedHistories: RawHistory[] | null = null;
 let _cachedProjections: Projection[] | null = null;
 let _cachedSchedules: Schedule[] | null = null;
 
-function getCachedHistories(): RawHistory[] {
+export function getCachedHistories(): RawHistory[] {
   if (!_cachedHistories) _cachedHistories = enumerateRawHistories();
   return _cachedHistories;
 }
