@@ -1,7 +1,7 @@
 /**
  * #100 — True state-space differential proof.
  *
- * Implements the exact 62,208 → 257 → 514 enumeration from 23B.
+ * Implements the exact 62,208 → P=257 → P×16=4,112 frozen-envelope enumeration.
  * Uses the 37A coalition signal matrix for package enumeration.
  * Independent reference: does not import production #100 as expected source.
  */
@@ -947,6 +947,52 @@ test("STATE-SPACE: expand full frozen #102 envelope P × 16", () => {
   const schedules = getCachedSchedules();
   assert.equal(schedules.length, 4112, `Expected 4,112 schedules, got ${schedules.length}`);
   console.log(`STATE-SPACE: ${schedules.length} schedules (${schedules.length / 16} projections × 16 frozen-envelope courses)`);
+});
+
+test("STATE-SPACE: projection key is sufficient for every full-envelope semantic fingerprint", { timeout: 120000 }, () => {
+  const histories = getCachedHistories();
+  const byId = new Map(histories.map(history => [history.id, history]));
+  for (const projection of getCachedProjections()) {
+    const members = projection.rawHistoryIds.map(id => byId.get(id)!);
+    for (const hasFocusedStaging of [false, true]) {
+      for (const collectionCourse of ["none", "liaison", "landing-auxiliary", "landing-sequence", "auxiliary-landing", "auxiliary-sequence", "sequence-landing", "sequence-auxiliary"] as const) {
+        const fingerprint = (history: RawHistory) => canonicalV2Json({
+          decisions: history.decisions.map(decision => [decision.action, decision.matchedPolicyRowId, decision.nextPosture, decision.nextPreparation]),
+          c2ShippingCourse: history.c2ShippingCourse,
+          occurrences: deriveRefEvidence(history, hasFocusedStaging, collectionCourse).occurrences.map(occurrence => [occurrence.definitionId, occurrence.observedCycle, occurrence.implication, occurrence.diagnosticity, occurrence.questionId]).sort(),
+        });
+        const expected = fingerprint(members[0]!);
+        for (const member of members.slice(1)) assert.equal(fingerprint(member), expected, `${projection.key} ${collectionCourse} focus=${hasFocusedStaging}`);
+      }
+    }
+  }
+});
+
+test("STATE-SPACE MUTATION: omitting C2 shipping collapses semantically distinct histories", () => {
+  const histories = getCachedHistories();
+  const badGroups = new Map<string, RawHistory[]>();
+  for (const history of histories) {
+    const keyWithoutShipping = history.projectionKey.replace(/\|\|C2_SHIP:[^|]+$/, "");
+    const group = badGroups.get(keyWithoutShipping) ?? [];
+    group.push(history);
+    badGroups.set(keyWithoutShipping, group);
+  }
+  let collapseFound = false;
+  for (const group of badGroups.values()) {
+    const fingerprints = new Set(group.map(history => canonicalV2Json(deriveRefEvidence(history, false, "none").occurrences.map(occ => [occ.definitionId, occ.observedCycle]))));
+    if (fingerprints.size > 1) { collapseFound = true; break; }
+  }
+  assert.ok(collapseFound, "removing C2 shipping must collapse reroute and non-reroute evidence");
+});
+
+test("STATE-SPACE MUTATION: C6 collection never reads R6 terminal facts", () => {
+  const history = getCachedHistories().find(candidate => candidate.decisions[5]!.action === "attempt_seizure")!;
+  const altered = { ...history, decisions: [...history.decisions] };
+  altered.decisions[5] = { ...altered.decisions[5]!, action: "abort_and_pressure", matchedPolicyRowId: "R6-5" };
+  assert.deepEqual(
+    deriveRefEvidence(history, true, "landing-auxiliary").occurrences.filter(occ => occ.observedCycle === 6),
+    deriveRefEvidence(altered, true, "landing-auxiliary").occurrences.filter(occ => occ.observedCycle === 6),
+  );
 });
 
 test("STATE-SPACE: full frozen envelope produces 156 distinct evidence histories", () => {
