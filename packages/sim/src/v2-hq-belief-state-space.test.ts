@@ -920,6 +920,46 @@ test("STATE-SPACE DIFFERENTIAL: independent delayed normalizer matches shipping 
   assert.ok(activeObservations([C1_PACKAGES[0]!, C2_PACKAGES[0]!, C3_PACKAGES[0]!, C4_PACKAGES[0]!, c5], 6).some(o => o.observedCycle === 5), "C5 emission is usable at C6");
 });
 
+test("STATE-SPACE DIFFERENTIAL: independent #99 policy matches the complete legal input domain", () => {
+  const choices: V2RavellanObservation[][] = [
+    [],
+    [{ signal: "beacon_coverage_signal", value: "weak", observedCycle: 1, source: "domain" }],
+    [{ signal: "beacon_coverage_signal", value: "credible", observedCycle: 1, source: "domain" }],
+    [{ signal: "visible_denial_signal", value: "withheld", observedCycle: 1, source: "domain" }],
+    [{ signal: "visible_denial_signal", value: "demonstrated", observedCycle: 1, source: "domain" }],
+    [{ signal: "coalition_unity_signal", value: "fractured", observedCycle: 1, source: "domain" }],
+    [{ signal: "coalition_unity_signal", value: "coherent", observedCycle: 1, source: "domain" }],
+    [{ signal: "reserve_exhaustion_signal", value: "suspected", observedCycle: 1, source: "domain" }],
+    [{ signal: "ravellan_discovery_signal", value: "suspected", observedCycle: 1, source: "domain" }],
+  ];
+  for (let cycle = 1; cycle <= 6; cycle++) for (const posture of ["genuine_preparation", "coercive_feint", "testing"] as const) for (const preparation of ["none", "developing", "ready"] as const) {
+    if (posture !== "genuine_preparation" && preparation !== "none") continue;
+    for (const coverage of choices.slice(0, 3)) for (const denial of choices.slice(0, 5)) for (const unity of choices.slice(0, 7)) for (const exhaustion of choices.slice(0, 8)) for (const discovery of choices.slice(0, 9)) {
+      const observations = [...coverage, ...denial, ...unity, ...exhaustion, ...discovery]
+        .filter((observation, index, all) => all.findIndex(candidate => candidate.signal === observation.signal) === index)
+        .sort((left, right) => left.signal.localeCompare(right.signal));
+      const input = { cycle, posture, preparation, activeObservations: observations };
+      assert.deepEqual(refChooseRavellanAction(input), chooseV2RavellanAction(input));
+    }
+  }
+});
+
+test("STATE-SPACE MUTATION: normalizer rejects contradictory records and preserves exact lifetime boundaries", () => {
+  const contradictory: V2RavellanObservation[] = [
+    { signal: "beacon_coverage_signal", value: "weak", observedCycle: 2, source: "a" },
+    { signal: "beacon_coverage_signal", value: "credible", observedCycle: 2, source: "b" },
+  ];
+  assert.throws(() => activeV2RavellanObservations(contradictory, 3));
+  const lifetimeOne: V2RavellanObservation[] = [{ signal: "visible_denial_signal", value: "demonstrated", observedCycle: 4, source: "x" }];
+  assert.equal(activeV2RavellanObservations(lifetimeOne, 4).length, 0);
+  assert.equal(activeV2RavellanObservations(lifetimeOne, 5).length, 1);
+  assert.equal(activeV2RavellanObservations(lifetimeOne, 6).length, 0);
+  const lifetimeTwo: V2RavellanObservation[] = [{ signal: "beacon_coverage_signal", value: "credible", observedCycle: 3, source: "x" }];
+  assert.equal(activeV2RavellanObservations(lifetimeTwo, 4).length, 1);
+  assert.equal(activeV2RavellanObservations(lifetimeTwo, 5).length, 1);
+  assert.equal(activeV2RavellanObservations(lifetimeTwo, 6).length, 0);
+});
+
 test("STATE-SPACE: enumerate all 62,208 raw histories", { timeout: 120000 }, () => {
   const histories = enumerateRawHistories();
   assert.equal(histories.length, 62208, `Expected 62,208 raw histories, got ${histories.length}`);
