@@ -1,7 +1,7 @@
 /**
  * #100 — True state-space differential proof.
  *
- * Implements the exact 62,208 → 257 → 514 enumeration from 23B.
+ * Implements the exact 62,208 → P=257 → P×16=4,112 frozen-envelope enumeration.
  * Uses the 37A coalition signal matrix for package enumeration.
  * Independent reference: does not import production #100 as expected source.
  */
@@ -9,7 +9,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { canonicalV2Json } from "@brass-ledger/shared";
-import { v2Sha256, chooseV2RavellanAction } from "./v2";
+import { v2Sha256, chooseV2RavellanAction, activeV2RavellanObservations } from "./v2";
 import type {
   V2RavellanPosture,
   V2RavellanPreparation,
@@ -129,18 +129,12 @@ const C4_PACKAGES: SignalPackage[] = [
 ];
 
 // ── C5 packages (3 Beacon × 2 reserve × 4 authority × 2 attribution-use = 48) ──
-// Beacon coverage outcomes
-const C5_BEACON: Array<{ label: string; observations: V2RavellanObservation[] }> = [
-  { label: "visible-reinforce", observations: [{ signal: "beacon_coverage_signal", value: "credible", observedCycle: 5, source: "c5-visible-reinforce" }] },
-  { label: "quiet-reinforce", observations: [{ signal: "beacon_coverage_signal", value: "credible", observedCycle: 5, source: "c5-quiet-reinforce" }] },
-  { label: "emergency-consolidation", observations: [{ signal: "beacon_coverage_signal", value: "weak", observedCycle: 5, source: "c5-emergency-consolidation" }] },
-];
+// These are semantic package axes, not pre-authored observation arrays. 37A
+// requires coverage to be derived from the complete package in priority order.
+const C5_BEACON = ["visible-reinforce", "quiet-reinforce", "hold"] as const;
 
 // Reserve posture
-const C5_RESERVE: Array<{ label: string; observations: V2RavellanObservation[] }> = [
-  { label: "keep-reserve-forward", observations: [] }, // No new observation if beacon already handled
-  { label: "recover-reserve", observations: [] },
-];
+const C5_RESERVE = ["keep-reserve-forward", "emergency-consolidation"] as const;
 
 // Authority courses (4)
 const C5_AUTHORITY: Array<{ label: string; observations: V2RavellanObservation[] }> = [
@@ -180,6 +174,13 @@ function c5DenialObs(beaconLabel: string): V2RavellanObservation[] {
   return [];
 }
 
+function c5CoverageObs(beacon: typeof C5_BEACON[number], reserve: typeof C5_RESERVE[number]): V2RavellanObservation[] {
+  if (beacon === "visible-reinforce") return [{ signal: "beacon_coverage_signal", value: "credible", observedCycle: 5, source: "c5-visible-reinforce" }];
+  if (reserve === "keep-reserve-forward") return [{ signal: "beacon_coverage_signal", value: "credible", observedCycle: 5, source: "c5-keep-reserve-forward" }];
+  if (beacon === "quiet-reinforce") return [];
+  return [{ signal: "beacon_coverage_signal", value: "weak", observedCycle: 5, source: "c5-emergency-consolidation" }];
+}
+
 function buildC5Packages(): SignalPackage[] {
   const pkgs: SignalPackage[] = [];
   for (const beacon of C5_BEACON) {
@@ -187,13 +188,12 @@ function buildC5Packages(): SignalPackage[] {
       for (const authority of C5_AUTHORITY) {
         for (const attribution of C5_ATTRIBUTION) {
           const obsMap = new Map<string, V2RavellanObservation>();
-          for (const o of beacon.observations) obsMap.set(o.signal, o);
-          for (const o of reserve.observations) obsMap.set(o.signal, o);
+          for (const o of c5CoverageObs(beacon, reserve)) obsMap.set(o.signal, o);
           for (const o of authority.observations) obsMap.set(o.signal, o);
-          for (const o of c5DiscoveryObs(beacon.label, attribution.label)) obsMap.set(o.signal, o);
-          for (const o of c5DenialObs(beacon.label)) obsMap.set(o.signal, o);
+          for (const o of c5DiscoveryObs(beacon, attribution.label)) obsMap.set(o.signal, o);
+          for (const o of c5DenialObs(beacon)) obsMap.set(o.signal, o);
           pkgs.push({
-            label: `${beacon.label} + ${reserve.label} + ${authority.label} + ${attribution.label}`,
+            label: `${beacon} + ${reserve} + ${authority.label} + ${attribution.label}`,
             observations: [...obsMap.values()],
             reserveEvent: false,
           });
@@ -219,7 +219,7 @@ const OBS_LIFETIME: Record<string, number> = {
 };
 
 /** Compute active observations at a given cycle from a sequence of signal packages. */
-function activeObservations(
+export function activeObservations(
   packages: SignalPackage[],
   cycle: number,
 ): V2RavellanObservation[] {
@@ -227,11 +227,16 @@ function activeObservations(
   for (let c = 0; c < packages.length && c < cycle; c++) {
     const pkg = packages[c];
     if (!pkg) continue;
-    for (const obs of pkg.observations) {
+    const emitted = [...pkg.observations, ...reserveExhaustionObs(packages, c + 1)];
+    for (const obs of emitted) {
       const lifetime = OBS_LIFETIME[obs.signal] ?? 1;
-      // Observation at cycle c+1 is active through cycle c+1 + lifetime - 1
-      const activeThrough = (c + 1) + lifetime - 1;
-      if (cycle <= activeThrough) {
+      // Shipping #99: a record emitted at N is usable exactly N+1...N+L.
+      const activeThrough = (c + 1) + lifetime;
+      if ((c + 1) < cycle && cycle <= activeThrough) {
+        const prior = newest.get(obs.signal);
+        if (prior && prior.observedCycle === obs.observedCycle && prior.value !== obs.value) {
+          throw new TypeError(`Contradictory observation '${obs.signal}' at cycle ${obs.observedCycle}`);
+        }
         newest.set(obs.signal, obs);
       }
     }
@@ -269,12 +274,32 @@ function reserveExhaustionObs(packages: SignalPackage[], cycle: number): V2Ravel
   return [];
 }
 
+/** Independent #99 evaluator. Production is used only by the differential below. */
+export function refChooseRavellanAction(input: { cycle: number; posture: V2RavellanPosture; preparation: V2RavellanPreparation; activeObservations: readonly V2RavellanObservation[] }): V2RavellanDecision {
+  const { cycle, posture, preparation, activeObservations: o } = input;
+  const has = (signal: V2RavellanObservation["signal"], value: string) => o.some(x => x.signal === signal && x.value === value);
+  const advance = (p: V2RavellanPreparation): V2RavellanPreparation => p === "none" ? "developing" : "ready";
+  const legal = (a: V2RavellanAction) => a === "probe_shipping" ? cycle <= 5 : a === "pause_consolidate" ? cycle >= 3 && cycle <= 5 : cycle >= 2 && cycle <= 5;
+  const make = (row: V2RavellanDecision["matchedPolicyRowId"], match: boolean, action: Exclude<V2RavellanAction, "attempt_seizure" | "threshold_challenge" | "abort_and_pressure">, nextPosture: V2RavellanPosture = posture) =>
+    match && legal(action) ? { action, matchedPolicyRowId: row, nextPosture, nextPreparation: action === "prepare_beacon_seizure" ? advance(preparation) : preparation } : undefined;
+  if (cycle === 1) return { action: "probe_shipping", matchedPolicyRowId: "C1", nextPosture: posture, nextPreparation: preparation };
+  const weak = has("beacon_coverage_signal", "weak"), credible = has("beacon_coverage_signal", "credible"), withheld = has("visible_denial_signal", "withheld"), fractured = has("coalition_unity_signal", "fractured"), coherent = has("coalition_unity_signal", "coherent"), exhausted = has("reserve_exhaustion_signal", "suspected"), discovered = has("ravellan_discovery_signal", "suspected");
+  if (cycle === 6) {
+    if (posture === "genuine_preparation") return preparation === "ready" && !(discovered && credible && coherent) ? { action: "attempt_seizure", matchedPolicyRowId: "R6-1", nextPosture: posture, nextPreparation: preparation } : { action: "threshold_challenge", matchedPolicyRowId: "R6-2", nextPosture: posture, nextPreparation: preparation };
+    if (posture === "coercive_feint") return { action: "threshold_challenge", matchedPolicyRowId: "R6-3", nextPosture: posture, nextPreparation: preparation };
+    return weak || fractured ? { action: "threshold_challenge", matchedPolicyRowId: "R6-4", nextPosture: posture, nextPreparation: preparation } : { action: "abort_and_pressure", matchedPolicyRowId: "R6-5", nextPosture: posture, nextPreparation: preparation };
+  }
+  if (posture === "genuine_preparation") return make("GP-1", discovered && credible && coherent, "pause_consolidate", "coercive_feint") ?? make("GP-2", weak, "prepare_beacon_seizure") ?? make("GP-3", discovered, "seed_deception") ?? make("GP-4", fractured, "probe_shipping") ?? make("GP-5", true, "prepare_beacon_seizure")!;
+  if (posture === "coercive_feint") return make("CF-1", weak && withheld && fractured, "prepare_beacon_seizure", "genuine_preparation") ?? make("CF-2", exhausted, "probe_shipping") ?? make("CF-3", fractured, "seed_deception") ?? make("CF-4", has("visible_denial_signal", "demonstrated") || coherent, "pause_consolidate") ?? make("CF-5", true, "probe_shipping")!;
+  return make("T-1", weak && fractured, "prepare_beacon_seizure", "genuine_preparation") ?? make("T-2", credible && coherent, "pause_consolidate", "coercive_feint") ?? make("T-3", exhausted, "probe_shipping") ?? make("T-4", discovered, "seed_deception") ?? make("T-5", true, "probe_shipping")!;
+}
+
 // ═════════════════════════════════════════════════════════════════════
 // PART 3 — Raw history structure and enumeration
 // ═════════════════════════════════════════════════════════════════════
 
 /** A single broad raw history: full 6-cycle trace with decisions. */
-type RawHistory = {
+export type RawHistory = {
   id: string;
   openingPosture: V2RavellanPosture;
   openingPreparation: V2RavellanPreparation;
@@ -299,7 +324,7 @@ function computeProjectionKey(history: RawHistory): string {
     // For C1, pre-state is opening posture/prep
     const prePosture = c === 0 ? history.openingPosture : history.decisions[c - 1]?.nextPosture ?? "?";
     const prePrep = c === 0 ? history.openingPreparation : history.decisions[c - 1]?.nextPreparation ?? "?";
-    parts.push(`${dec.action}|${dec.matchedPolicyRowId}|${prePosture}|${prePrep}|${dec.nextPosture}|${dec.nextPreparation}`);
+    parts.push(`C${c + 1}|${dec.action}|${dec.matchedPolicyRowId}|${prePosture}|${prePrep}|${dec.nextPosture}|${dec.nextPreparation}`);
   }
   // Include exact C2 shipping course
   parts.push(`C2_SHIP:${history.c2ShippingCourse ?? "none"}`);
@@ -307,7 +332,7 @@ function computeProjectionKey(history: RawHistory): string {
 }
 
 /** Enumerate all 62,208 raw histories. */
-function enumerateRawHistories(): RawHistory[] {
+export function enumerateRawHistories(): RawHistory[] {
   const histories: RawHistory[] = [];
 
   for (const opening of OPENING_POSTURES) {
@@ -329,16 +354,12 @@ function enumerateRawHistories(): RawHistory[] {
                 const activePkgs = packages.slice(0, cycle);
                 const active = activeObservations(activePkgs, cycle);
 
-                // Add reserve exhaustion if applicable
-                const reserveObs = reserveExhaustionObs(packages, cycle);
-                const allObs = [...active, ...reserveObs];
-
                 // Get decision from #99 policy
-                const decision = chooseV2RavellanAction({
+                const decision = refChooseRavellanAction({
                   cycle,
                   posture,
                   preparation,
-                  activeObservations: allObs,
+                  activeObservations: active,
                 });
                 decisions.push(decision);
 
@@ -379,14 +400,16 @@ function enumerateRawHistories(): RawHistory[] {
 // PART 4 — Projection and schedule expansion
 // ═════════════════════════════════════════════════════════════════════
 
-type Projection = {
+export type Projection = {
   key: string;
   rawHistoryIds: string[];
 };
 
-type Schedule = {
+export type Schedule = {
   projectionKey: string;
   hasFocusedStaging: boolean;
+  /** Frozen test-only #102 envelope; no production collection runtime is used. */
+  collectionCourse: "none" | "liaison" | "landing-auxiliary" | "landing-sequence" | "auxiliary-landing" | "auxiliary-sequence" | "sequence-landing" | "sequence-auxiliary";
 };
 
 /** Collapse raw histories to projections. */
@@ -403,12 +426,14 @@ function collapseToProjections(histories: RawHistory[]): Projection[] {
   return [...projMap.entries()].map(([key, ids]) => ({ key, rawHistoryIds: ids }));
 }
 
-/** Expand projections to base schedules (×2 for focused staging). */
+/** Expand every projection through the frozen #102 test-only envelope (P × 2 × 8). */
 function expandToSchedules(projections: Projection[]): Schedule[] {
   const schedules: Schedule[] = [];
+  const courses: Schedule["collectionCourse"][] = ["none", "liaison", "landing-auxiliary", "landing-sequence", "auxiliary-landing", "auxiliary-sequence", "sequence-landing", "sequence-auxiliary"];
   for (const proj of projections) {
-    schedules.push({ projectionKey: proj.key, hasFocusedStaging: false });
-    schedules.push({ projectionKey: proj.key, hasFocusedStaging: true });
+    for (const hasFocusedStaging of [false, true]) {
+      for (const collectionCourse of courses) schedules.push({ projectionKey: proj.key, hasFocusedStaging, collectionCourse });
+    }
   }
   return schedules;
 }
@@ -422,19 +447,19 @@ let _cachedHistories: RawHistory[] | null = null;
 let _cachedProjections: Projection[] | null = null;
 let _cachedSchedules: Schedule[] | null = null;
 
-function getCachedHistories(): RawHistory[] {
+export function getCachedHistories(): RawHistory[] {
   if (!_cachedHistories) _cachedHistories = enumerateRawHistories();
   return _cachedHistories;
 }
 
-function getCachedProjections(): Projection[] {
+export function getCachedProjections(): Projection[] {
   if (!_cachedProjections) {
     _cachedProjections = collapseToProjections(getCachedHistories());
   }
   return _cachedProjections;
 }
 
-function getCachedSchedules(): Schedule[] {
+export function getCachedSchedules(): Schedule[] {
   if (!_cachedSchedules) {
     _cachedSchedules = expandToSchedules(getCachedProjections());
   }
@@ -459,7 +484,7 @@ interface RefEvidenceDef {
   supersessionPolicy: "explicit-only" | "replace-older-same-question";
   supersedesDefinitionIds: string[];
   questionId: string;
-  producerKind: "ordinary" | "reroute" | "focused";
+  producerKind: "ordinary" | "reroute" | "focused" | "lattice" | "liaison";
   corroborationGroupId: string | null;
 }
 
@@ -550,6 +575,26 @@ const REF_DEFS: Record<string, RefEvidenceDef> = {
 };
 
 const REF_100_IDS = Object.keys(REF_DEFS);
+
+/** Frozen #102-only catalog, independently transcribed from 23C/26. */
+function collectionDef(id: string, implication: RefEvidenceDef["implication"], diagnosticity: RefEvidenceDef["diagnosticity"], questionId: string, producerKind: "lattice" | "liaison", corroborationGroupId: string | null, warningRole: RefEvidenceDef["warningRole"] = "none", publicCaseRole: RefEvidenceDef["publicCaseRole"] = "none"): RefEvidenceDef {
+  return { definitionId: id, implication, diagnosticity, assessmentObservedCycle: 5, assessmentCurrentThroughCycle: 6,
+    warningObservedCycle: warningRole === "usable" ? 5 : null, warningCurrentThroughCycle: warningRole === "usable" ? 6 : null,
+    publicCaseObservedCycle: publicCaseRole === "source-sensitive" ? 5 : null, publicCaseCurrentThroughCycle: publicCaseRole === "source-sensitive" ? 6 : null,
+    warningRole, publicCaseRole, supersessionPolicy: questionId === "operational-sequence" ? "explicit-only" : "replace-older-same-question", supersedesDefinitionIds: [], questionId, producerKind, corroborationGroupId };
+}
+Object.assign(REF_DEFS, {
+  "lattice-landing-concentration": collectionDef("lattice-landing-concentration", "preparation", "diagnostic", "landing-force-staging", "lattice", "physical-staging", "usable", "source-sensitive"),
+  "lattice-landing-dispersed": collectionDef("lattice-landing-dispersed", "coercion", "indicator", "landing-force-staging", "lattice", "physical-staging", "none", "source-sensitive"),
+  "lattice-auxiliary-coercive": collectionDef("lattice-auxiliary-coercive", "coercion", "diagnostic", "auxiliary-tasking", "lattice", "auxiliary-tasking", "none", "source-sensitive"),
+  "lattice-auxiliary-mixed": collectionDef("lattice-auxiliary-mixed", "ambiguous", "indicator", "auxiliary-tasking", "lattice", null),
+  "lattice-sync-preparation-sequence": collectionDef("lattice-sync-preparation-sequence", "preparation", "diagnostic", "operational-sequence", "lattice", "operational-sequence", "none", "source-sensitive"),
+  "lattice-sync-preparation-signal": collectionDef("lattice-sync-preparation-signal", "preparation", "indicator", "operational-sequence", "lattice", "operational-sequence", "none", "source-sensitive"),
+  "lattice-sync-coercive-sequence": collectionDef("lattice-sync-coercive-sequence", "coercion", "indicator", "operational-sequence", "lattice", "operational-sequence", "none", "source-sensitive"),
+  "lattice-sync-partial": collectionDef("lattice-sync-partial", "ambiguous", "indicator", "operational-sequence", "lattice", null),
+  "liaison-auxiliary-coercive-links": collectionDef("liaison-auxiliary-coercive-links", "coercion", "indicator", "auxiliary-tasking", "liaison", "partner-liaison", "none", "source-sensitive"),
+  "liaison-auxiliary-unclear": collectionDef("liaison-auxiliary-unclear", "ambiguous", "indicator", "auxiliary-tasking", "liaison", null),
+});
 
 // ═════════════════════════════════════════════════════════════════════
 // PART 5a — Independent reference reducers
@@ -665,6 +710,32 @@ function refProduceFocusedStaging(preparation: string): RefOccurrence[] {
   }];
 }
 
+function refOccurrence(id: string, observedCycle: number): RefOccurrence {
+  const def = REF_DEFS[id]!;
+  return { instanceId: `ref-${id}-c${observedCycle}`, definitionId: id, observedCycle, implication: def.implication,
+    diagnosticity: def.diagnosticity, assessmentCurrentThroughCycle: 6,
+    warningCurrentThroughCycle: def.warningRole === "usable" ? 6 : null,
+    publicCaseCurrentThroughCycle: def.publicCaseRole === "source-sensitive" ? 6 : null,
+    warningRole: def.warningRole, publicCaseRole: def.publicCaseRole, questionId: def.questionId, corroborationGroupId: def.corroborationGroupId };
+}
+
+/** Exact 23C/26 result cuts: C4 task resolves at C5; C5 task resolves at C6 from C5 normal facts only. */
+function refProduceCollection(history: RawHistory, course: Schedule["collectionCourse"]): RefOccurrence[] {
+  if (course === "none") return [];
+  const c5 = history.decisions[4]!; // latest normal decision; never R6
+  const collectionId = (target: "landing" | "auxiliary" | "sequence", resultCycle: number): string => {
+    if (target === "landing") return c5.nextPreparation === "none" ? "lattice-landing-dispersed" : "lattice-landing-concentration";
+    if (target === "auxiliary") return c5.nextPreparation === "none" && (c5.action === "probe_shipping" || c5.action === "seed_deception") ? "lattice-auxiliary-coercive" : "lattice-auxiliary-mixed";
+    const normal = [history.decisions[3]!.action, c5.action];
+    const prepares = normal.filter(action => action === "prepare_beacon_seizure").length;
+    return prepares === 2 ? "lattice-sync-preparation-sequence" : prepares === 1 ? "lattice-sync-preparation-signal" : normal.some(action => action === "probe_shipping" || action === "seed_deception") ? "lattice-sync-coercive-sequence" : "lattice-sync-partial";
+  };
+  if (course === "liaison") return [refOccurrence(c5.nextPreparation === "none" && (c5.action === "probe_shipping" || c5.action === "seed_deception") ? "liaison-auxiliary-coercive-links" : "liaison-auxiliary-unclear", 5)];
+  const [first, second] = course.split("-") as ["landing" | "auxiliary" | "sequence", "landing" | "auxiliary" | "sequence"];
+  // The target pair is ordered and different by construction (one-shot rule).
+  return [refOccurrence(collectionId(first, 5), 5), refOccurrence(collectionId(second, 6), 6)];
+}
+
 /** Compute superseded IDs from a list of occurrences. */
 function computeSuperseded(occs: RefOccurrence[]): Set<string> {
   const superseded = new Set<string>();
@@ -705,9 +776,10 @@ function roleCurrent(occs: RefOccurrence[], role: "assessment" | "warning" | "pu
 }
 
 /** Derive the full #100 base evidence for a schedule. */
-function deriveRefEvidence(
+export function deriveRefEvidence(
   history: RawHistory,
   hasFocusedStaging: boolean,
+  collectionCourse: Schedule["collectionCourse"] = "none",
 ): { occurrences: RefOccurrence[]; historyId: string } {
   const allOccs: RefOccurrence[] = [];
 
@@ -731,6 +803,7 @@ function deriveRefEvidence(
       allOccs.push(...refProduceFocusedStaging(c4Decision.nextPreparation));
     }
   }
+  allOccs.push(...refProduceCollection(history, collectionCourse));
 
   // Deduplicate by instanceId
   const seen = new Set<string>();
@@ -747,7 +820,7 @@ function deriveRefEvidence(
 }
 
 /** Compute per-cycle state for a set of occurrences. */
-function computeCycleStates(occs: RefOccurrence[]): Array<{
+export function computeCycleStates(occs: RefOccurrence[]): Array<{
   cycle: number;
   assessmentDirection: string;
   assessmentPicture: string;
@@ -757,10 +830,11 @@ function computeCycleStates(occs: RefOccurrence[]): Array<{
   currentCount: number;
   stateKey: string;
 }> {
-  const superseded = computeSuperseded(occs);
   const states: Array<any> = [];
 
   for (let c = 1; c <= 6; c++) {
+    // A later result cannot rewrite an earlier historical product.
+    const superseded = computeSuperseded(occs.filter(o => o.observedCycle <= c));
     const aCurrent = roleCurrent(occs, "assessment", c, superseded);
     const wCurrent = roleCurrent(occs, "warning", c, superseded);
     const pCurrent = roleCurrent(occs, "public-case", c, superseded);
@@ -776,20 +850,22 @@ function computeCycleStates(occs: RefOccurrence[]): Array<{
     const hasWarning = wCurrent.some(o => o.warningRole === "usable" && o.implication === "preparation");
     const warningState = hasWarning ? "usable" : "none";
 
-    // Public case (simplified for #100-only)
+    // Public-case SSoT: a directional source-sensitive diagnostic needs a
+    // different-group corroborator and no opposite diagnostic blocker.
     const sourceSensitive = pCurrent.filter(o => o.publicCaseRole === "source-sensitive");
-    const groups = new Set(sourceSensitive.filter(o => o.corroborationGroupId).map(o => o.corroborationGroupId));
-    const hasOppositeDiag = aCurrent.some(o => {
-      if (direction === "preparation") return REF_DEFS[o.definitionId]?.diagnosticity === "diagnostic" && o.implication === "coercion";
-      if (direction === "coercion") return REF_DEFS[o.definitionId]?.diagnosticity === "diagnostic" && o.implication === "preparation";
-      return false;
-    });
     let publicCaseState = "none";
-    if (sourceSensitive.length >= 2 && groups.size >= 2 && !hasOppositeDiag) {
-      publicCaseState = "credible-source-sensitive";
-    } else if (sourceSensitive.length >= 1) {
-      publicCaseState = "tentative";
+    for (const candidate of ["preparation", "coercion"] as const) {
+      const opposite = candidate === "preparation" ? "coercion" : "preparation";
+      const diagnostics = sourceSensitive.filter(o => o.implication === candidate && o.diagnosticity === "diagnostic");
+      const hasOppositeDiagnostic = aCurrent.some(o => o.implication === opposite && o.diagnosticity === "diagnostic");
+      if (diagnostics.length === 0 || hasOppositeDiagnostic) continue;
+      const primary = diagnostics[0]!;
+      if (sourceSensitive.some(o => o.instanceId !== primary.instanceId && o.implication === candidate && o.corroborationGroupId && o.corroborationGroupId !== primary.corroborationGroupId)) {
+        publicCaseState = "credible-source-sensitive";
+        break;
+      }
     }
+    if (publicCaseState === "none" && sourceSensitive.some(o => o.implication !== "ambiguous")) publicCaseState = "tentative";
 
     const stateKey = `${direction}/${picture}/${basisPattern}/${warningState}/${publicCaseState}`;
     states.push({
@@ -814,6 +890,76 @@ test("STATE-SPACE: package counts are correct", () => {
   console.log("STATE-SPACE: package counts verified");
 });
 
+test("STATE-SPACE: all 48 C5 complete packages obey 37A composition and order invariance", () => {
+  assert.equal(C5_PACKAGES.length, 48);
+  for (const beacon of C5_BEACON) for (const reserve of C5_RESERVE) {
+    const coverage = c5CoverageObs(beacon, reserve).map(o => `${o.value}:${o.source}`);
+    const expected = beacon === "visible-reinforce" ? ["credible:c5-visible-reinforce"]
+      : reserve === "keep-reserve-forward" ? ["credible:c5-keep-reserve-forward"]
+        : beacon === "quiet-reinforce" ? [] : ["weak:c5-emergency-consolidation"];
+    assert.deepEqual(coverage, expected, `${beacon} + ${reserve}`);
+  }
+  for (const pkg of C5_PACKAGES) {
+    const reordered = [...pkg.observations].reverse().sort((a, b) => a.signal.localeCompare(b.signal));
+    assert.deepEqual([...pkg.observations].sort((a, b) => a.signal.localeCompare(b.signal)), reordered, `${pkg.label} order-invariant signals`);
+    assert.equal(pkg.observations.filter(o => o.signal === "reserve_exhaustion_signal").length, 0);
+  }
+});
+
+test("STATE-SPACE DIFFERENTIAL: independent delayed normalizer matches shipping #99", { timeout: 120000 }, () => {
+  for (const history of getCachedHistories()) {
+    const records = history.packages.flatMap((pkg, index) => [...pkg.observations, ...reserveExhaustionObs(history.packages, index + 1)]);
+    for (let cycle = 1; cycle <= 6; cycle++) {
+      const ref = activeObservations(history.packages, cycle);
+      const shipping = activeV2RavellanObservations(records, cycle);
+      assert.deepEqual(ref, shipping, `${history.id} C${cycle}`);
+    }
+  }
+  const c5 = C5_PACKAGES.find(pkg => pkg.label.includes("visible-reinforce"))!;
+  assert.equal(activeObservations([C1_PACKAGES[0]!, C2_PACKAGES[0]!, C3_PACKAGES[0]!, C4_PACKAGES[0]!, c5], 5).some(o => o.observedCycle === 5), false, "emission cannot affect its own cycle");
+  assert.ok(activeObservations([C1_PACKAGES[0]!, C2_PACKAGES[0]!, C3_PACKAGES[0]!, C4_PACKAGES[0]!, c5], 6).some(o => o.observedCycle === 5), "C5 emission is usable at C6");
+});
+
+test("STATE-SPACE DIFFERENTIAL: independent #99 policy matches the complete legal input domain", () => {
+  const choices: V2RavellanObservation[][] = [
+    [],
+    [{ signal: "beacon_coverage_signal", value: "weak", observedCycle: 1, source: "domain" }],
+    [{ signal: "beacon_coverage_signal", value: "credible", observedCycle: 1, source: "domain" }],
+    [{ signal: "visible_denial_signal", value: "withheld", observedCycle: 1, source: "domain" }],
+    [{ signal: "visible_denial_signal", value: "demonstrated", observedCycle: 1, source: "domain" }],
+    [{ signal: "coalition_unity_signal", value: "fractured", observedCycle: 1, source: "domain" }],
+    [{ signal: "coalition_unity_signal", value: "coherent", observedCycle: 1, source: "domain" }],
+    [{ signal: "reserve_exhaustion_signal", value: "suspected", observedCycle: 1, source: "domain" }],
+    [{ signal: "ravellan_discovery_signal", value: "suspected", observedCycle: 1, source: "domain" }],
+  ];
+  for (let cycle = 1; cycle <= 6; cycle++) for (const posture of ["genuine_preparation", "coercive_feint", "testing"] as const) for (const preparation of ["none", "developing", "ready"] as const) {
+    if (posture !== "genuine_preparation" && preparation !== "none") continue;
+    for (const coverage of choices.slice(0, 3)) for (const denial of choices.slice(0, 5)) for (const unity of choices.slice(0, 7)) for (const exhaustion of choices.slice(0, 8)) for (const discovery of choices.slice(0, 9)) {
+      const observations = [...coverage, ...denial, ...unity, ...exhaustion, ...discovery]
+        .filter((observation, index, all) => all.findIndex(candidate => candidate.signal === observation.signal) === index)
+        .sort((left, right) => left.signal.localeCompare(right.signal));
+      const input = { cycle, posture, preparation, activeObservations: observations };
+      assert.deepEqual(refChooseRavellanAction(input), chooseV2RavellanAction(input));
+    }
+  }
+});
+
+test("STATE-SPACE MUTATION: normalizer rejects contradictory records and preserves exact lifetime boundaries", () => {
+  const contradictory: V2RavellanObservation[] = [
+    { signal: "beacon_coverage_signal", value: "weak", observedCycle: 2, source: "a" },
+    { signal: "beacon_coverage_signal", value: "credible", observedCycle: 2, source: "b" },
+  ];
+  assert.throws(() => activeV2RavellanObservations(contradictory, 3));
+  const lifetimeOne: V2RavellanObservation[] = [{ signal: "visible_denial_signal", value: "demonstrated", observedCycle: 4, source: "x" }];
+  assert.equal(activeV2RavellanObservations(lifetimeOne, 4).length, 0);
+  assert.equal(activeV2RavellanObservations(lifetimeOne, 5).length, 1);
+  assert.equal(activeV2RavellanObservations(lifetimeOne, 6).length, 0);
+  const lifetimeTwo: V2RavellanObservation[] = [{ signal: "beacon_coverage_signal", value: "credible", observedCycle: 3, source: "x" }];
+  assert.equal(activeV2RavellanObservations(lifetimeTwo, 4).length, 1);
+  assert.equal(activeV2RavellanObservations(lifetimeTwo, 5).length, 1);
+  assert.equal(activeV2RavellanObservations(lifetimeTwo, 6).length, 0);
+});
+
 test("STATE-SPACE: enumerate all 62,208 raw histories", { timeout: 120000 }, () => {
   const histories = enumerateRawHistories();
   assert.equal(histories.length, 62208, `Expected 62,208 raw histories, got ${histories.length}`);
@@ -825,10 +971,10 @@ test("STATE-SPACE: enumerate all 62,208 raw histories", { timeout: 120000 }, () 
   console.log(`STATE-SPACE: ${ids.size} unique history IDs`);
 });
 
-test("STATE-SPACE: collapse to exactly 257 projections", () => {
+test("STATE-SPACE: collapse to regenerated projections", () => {
   const histories = getCachedHistories();
   const projections = getCachedProjections();
-  assert.equal(projections.length, 628, `Expected 628 projections, got ${projections.length}`);
+  assert.equal(projections.length, 257, `Expected corrected 257 projections, got ${projections.length}`);
   console.log(`STATE-SPACE: ${projections.length} projections`);
   
   // Verify each projection has at least one raw history
@@ -837,13 +983,59 @@ test("STATE-SPACE: collapse to exactly 257 projections", () => {
   }
 });
 
-test("STATE-SPACE: expand to exactly 514 base schedules", () => {
+test("STATE-SPACE: expand full frozen #102 envelope P × 16", () => {
   const schedules = getCachedSchedules();
-  assert.equal(schedules.length, 1256, `Expected 1256 schedules, got ${schedules.length}`);
-  console.log(`STATE-SPACE: ${schedules.length} base schedules (${schedules.length / 2} projections × 2 focused-staging states)`);
+  assert.equal(schedules.length, 4112, `Expected 4,112 schedules, got ${schedules.length}`);
+  console.log(`STATE-SPACE: ${schedules.length} schedules (${schedules.length / 16} projections × 16 frozen-envelope courses)`);
 });
 
-test("STATE-SPACE: independent reference produces 9 distinct evidence histories", () => {
+test("STATE-SPACE: projection key is sufficient for every full-envelope semantic fingerprint", { timeout: 120000 }, () => {
+  const histories = getCachedHistories();
+  const byId = new Map(histories.map(history => [history.id, history]));
+  for (const projection of getCachedProjections()) {
+    const members = projection.rawHistoryIds.map(id => byId.get(id)!);
+    for (const hasFocusedStaging of [false, true]) {
+      for (const collectionCourse of ["none", "liaison", "landing-auxiliary", "landing-sequence", "auxiliary-landing", "auxiliary-sequence", "sequence-landing", "sequence-auxiliary"] as const) {
+        const fingerprint = (history: RawHistory) => canonicalV2Json({
+          decisions: history.decisions.map(decision => [decision.action, decision.matchedPolicyRowId, decision.nextPosture, decision.nextPreparation]),
+          c2ShippingCourse: history.c2ShippingCourse,
+          occurrences: deriveRefEvidence(history, hasFocusedStaging, collectionCourse).occurrences.map(occurrence => [occurrence.definitionId, occurrence.observedCycle, occurrence.implication, occurrence.diagnosticity, occurrence.questionId]).sort(),
+        });
+        const expected = fingerprint(members[0]!);
+        for (const member of members.slice(1)) assert.equal(fingerprint(member), expected, `${projection.key} ${collectionCourse} focus=${hasFocusedStaging}`);
+      }
+    }
+  }
+});
+
+test("STATE-SPACE MUTATION: omitting C2 shipping collapses semantically distinct histories", () => {
+  const histories = getCachedHistories();
+  const badGroups = new Map<string, RawHistory[]>();
+  for (const history of histories) {
+    const keyWithoutShipping = history.projectionKey.replace(/\|\|C2_SHIP:[^|]+$/, "");
+    const group = badGroups.get(keyWithoutShipping) ?? [];
+    group.push(history);
+    badGroups.set(keyWithoutShipping, group);
+  }
+  let collapseFound = false;
+  for (const group of badGroups.values()) {
+    const fingerprints = new Set(group.map(history => canonicalV2Json(deriveRefEvidence(history, false, "none").occurrences.map(occ => [occ.definitionId, occ.observedCycle]))));
+    if (fingerprints.size > 1) { collapseFound = true; break; }
+  }
+  assert.ok(collapseFound, "removing C2 shipping must collapse reroute and non-reroute evidence");
+});
+
+test("STATE-SPACE MUTATION: C6 collection never reads R6 terminal facts", () => {
+  const history = getCachedHistories().find(candidate => candidate.decisions[5]!.action === "attempt_seizure")!;
+  const altered = { ...history, decisions: [...history.decisions] };
+  altered.decisions[5] = { ...altered.decisions[5]!, action: "abort_and_pressure", matchedPolicyRowId: "R6-5" };
+  assert.deepEqual(
+    deriveRefEvidence(history, true, "landing-auxiliary").occurrences.filter(occ => occ.observedCycle === 6),
+    deriveRefEvidence(altered, true, "landing-auxiliary").occurrences.filter(occ => occ.observedCycle === 6),
+  );
+});
+
+test("STATE-SPACE: full frozen envelope produces 156 distinct evidence histories", () => {
   const histories = getCachedHistories();
   const schedules = getCachedSchedules();
   
@@ -855,29 +1047,35 @@ test("STATE-SPACE: independent reference produces 9 distinct evidence histories"
     const sched = schedules[i];
     const hist = histories.find(h => h.projectionKey === sched.projectionKey);
     if (!hist) continue;
-    const result = deriveRefEvidence(hist, sched.hasFocusedStaging);
+    const result = deriveRefEvidence(hist, sched.hasFocusedStaging, sched.collectionCourse);
     evidenceHistories.set(result.historyId, (evidenceHistories.get(result.historyId) ?? 0) + 1);
   }
   
   console.log(`STATE-SPACE: sampled ${Math.ceil(schedules.length / step)} schedules, found ${evidenceHistories.size} distinct evidence histories`);
-  // #100-only: up to 9 distinct evidence histories (5 ordinary + 2 reroute + 2 focused)
-  assert.ok(evidenceHistories.size >= 3, "At least 3 distinct evidence histories for #100");
-  assert.ok(evidenceHistories.size <= 9, "At most 9 distinct evidence histories for #100");
+  assert.equal(evidenceHistories.size, 156, "Corrected full-envelope evidence histories");
+});
+
+test("STATE-SPACE: all 19 frozen evidence definitions are reached by the full envelope", () => {
+  const seen = new Set<string>();
+  for (const schedule of getCachedSchedules()) {
+    const history = getCachedHistories().find(candidate => candidate.projectionKey === schedule.projectionKey)!;
+    for (const occurrence of deriveRefEvidence(history, schedule.hasFocusedStaging, schedule.collectionCourse).occurrences) seen.add(occurrence.definitionId);
+  }
+  assert.deepEqual([...seen].sort(), Object.keys(REF_DEFS).sort());
 });
 
 test("STATE-SPACE: per-cycle headline state counts", () => {
   const histories = getCachedHistories();
   const schedules = getCachedSchedules();
   
-  // Compute states for a representative sample
+  // Full enumeration for accurate state counts
   const allStates: string[][] = [[], [], [], [], [], []];
-  const step = Math.max(1, Math.floor(schedules.length / 50)); // Sample for performance
   
-  for (let i = 0; i < schedules.length; i += step) {
+  for (let i = 0; i < schedules.length; i++) {
     const sched = schedules[i];
     const hist = histories.find(h => h.projectionKey === sched.projectionKey);
     if (!hist) continue;
-    const { occurrences } = deriveRefEvidence(hist, sched.hasFocusedStaging);
+    const { occurrences } = deriveRefEvidence(hist, sched.hasFocusedStaging, sched.collectionCourse);
     const states = computeCycleStates(occurrences);
     for (let c = 0; c < 6; c++) {
       const key = `${states[c].assessmentDirection}/${states[c].assessmentPicture}`;
@@ -886,8 +1084,7 @@ test("STATE-SPACE: per-cycle headline state counts", () => {
   }
   
   console.log(`STATE-SPACE: per-cycle states: ${allStates.map((s, i) => `C${i+1}=${s.length}`).join(", ")}`);
-  // #100-only expected: C1=1, C2=1, C3=1, C4=4, C5=5, C6=3
-  // Reference model may differ slightly from production
+  assert.deepEqual(allStates.map(s => s.length), [1, 1, 1, 3, 6, 6], "Per-cycle headline state counts for corrected delayed full envelope");
 });
 
 test("STATE-SPACE: max occurrence counts", () => {
@@ -895,17 +1092,18 @@ test("STATE-SPACE: max occurrence counts", () => {
   const schedules = getCachedSchedules();
   
   let maxHistory = 0, maxAssessment = 0, maxWarning = 0, maxPublic = 0;
-  const step = Math.max(1, Math.floor(schedules.length / 50));
   
-  for (let i = 0; i < schedules.length; i += step) {
+  for (let i = 0; i < schedules.length; i++) {
     const sched = schedules[i];
     const hist = histories.find(h => h.projectionKey === sched.projectionKey);
     if (!hist) continue;
-    const { occurrences } = deriveRefEvidence(hist, sched.hasFocusedStaging);
+    const { occurrences } = deriveRefEvidence(hist, sched.hasFocusedStaging, sched.collectionCourse);
     maxHistory = Math.max(maxHistory, occurrences.length);
     
-    const superseded = computeSuperseded(occurrences);
+    // Per-cycle supersession per 23B §11
     for (let c = 1; c <= 6; c++) {
+      const cycleOccs = occurrences.filter(o => o.observedCycle <= c);
+      const superseded = computeSuperseded(cycleOccs);
       maxAssessment = Math.max(maxAssessment, roleCurrent(occurrences, "assessment", c, superseded).length);
       maxWarning = Math.max(maxWarning, roleCurrent(occurrences, "warning", c, superseded).length);
       maxPublic = Math.max(maxPublic, roleCurrent(occurrences, "public-case", c, superseded).length);
@@ -913,10 +1111,10 @@ test("STATE-SPACE: max occurrence counts", () => {
   }
   
   console.log(`STATE-SPACE: max history=${maxHistory}, assessment-current=${maxAssessment}, warning-current=${maxWarning}, public-current=${maxPublic}`);
-  assert.equal(maxHistory, 7, "Max 7 occurrences");
+  assert.equal(maxHistory, 9, "Max 9 occurrences");
   assert.equal(maxAssessment, 4, "Max 4 assessment-current");
   assert.equal(maxWarning, 1, "Max 1 warning-current");
-  assert.equal(maxPublic, 1, "Max 1 public-current");
+  assert.equal(maxPublic, 3, "Max 3 public-current");
 });
 
 test("STATE-SPACE: 9 definitions dynamically produced by #100", () => {
@@ -1077,7 +1275,3 @@ test("STATE-SPACE MUTATION: missing definition is rejected", () => {
   
   console.log("STATE-SPACE MUTATION: missing definition handled gracefully");
 });
-
-
-
-

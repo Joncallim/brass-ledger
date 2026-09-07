@@ -55,7 +55,7 @@ Exact raw histories:
 
 `3 × 4 × 9 × 4 × 3 × 48 = 62,208`
 
-Every history executes the exact #99 policy; Ravellan actions are not freely sampled.
+Every history executes the exact #99 policy; Ravellan actions are not freely sampled. The regenerated oracle records a package's public observations in cycle N and makes them usable only in N+1 through N+L, matching shipping #99. Earlier vectors were generated with same-cycle availability and are superseded by `23D-HQ-BELIEF-STATE-SPACE-VECTORS.json`.
 
 These collapse to **257** distinct #100-relevant trusted-history projections when keyed by:
 
@@ -274,10 +274,10 @@ A and B remain historical but neither re-enters current reduction.
 With the role-specific currency and corroborated public-case rule above, the independent model yields:
 
 - **156** distinct semantic evidence histories;
-- **50** distinct headline product trajectories (`assessment × warning × public-case state/direction`);
-- **53** distinct basis-pattern product trajectories;
-- **18** distinct headline composite states across C1–C6;
-- **20** distinct basis-pattern composite states;
+- **52** distinct headline product trajectories (`assessment × warning × public-case state/direction`);
+- **54** distinct basis-pattern product trajectories;
+- **16** distinct headline composite states across C1–C6;
+- **18** distinct basis-pattern composite states;
 - maximum evidence history size **9**;
 - maximum occurrences current for any role **4**;
 - maximum assessment-current **4**;

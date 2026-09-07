@@ -295,11 +295,11 @@
   "counts": {
     "algebraicallyLegalAssessmentWarningStates": 10,
     "algebraicallyLegalBasisPatternWarningStates": 15,
-    "basisPatternCompositeStates": 20,
-    "basisPatternProductTrajectories": 53,
+    "basisPatternCompositeStates": 18,
+    "basisPatternProductTrajectories": 54,
     "evidenceDefinitions": 19,
-    "headlineCompositeStates": 18,
-    "headlineProductTrajectories": 50,
+    "headlineCompositeStates": 16,
+    "headlineProductTrajectories": 52,
     "maxCurrentAssessmentOccurrences": 4,
     "maxCurrentOccurrencesAnyRole": 4,
     "maxCurrentPublicCaseOccurrences": 3,
@@ -319,37 +319,42 @@
     "unclearConflictedToPreparationWeak": 20
   },
   "hashes": {
-    "basisPatternProductTrajectoriesSha256": "73f602cdc4e88d733a604c097a4c9904d145cedb04d81b353066a5491e8c4f46",
-    "headlineProductTrajectoriesSha256": "8f77eb22d9bfcab0b846721a671cc12bf7301150c46edb654944138d2284d025",
-    "perCycleBasisPatternStatesSha256": "3e562d483089d98421ed98ea350c0b0871294f3f25a8d85ca777f0357efa017b",
-    "perCycleHeadlineStatesSha256": "0bb6b0d9a89d00484f8e9516fad0abd6aa54dc3bad7a884b65031674716f215f",
-    "semanticEvidenceHistoriesSha256": "c790c48a1817b8604bd840d59b78c74fc3c07a5c5353b0afb36c392db5a1b2b8"
+    "basisPatternProductTrajectoriesSha256": "53fd087640aa7c0df4d346276f75fb5bde2cc98bea41184cbbcc9eea132a2e41",
+    "headlineProductTrajectoriesSha256": "a34eb654ded7efb75164b399d32c082c5f8ee34b663c425029e69d5790a742b5",
+    "perCycleBasisPatternStatesSha256": "9517c78feca4646b607b0260a0df9f8ca5fa3f76b5ac07ec5334b5ec5e5c7275",
+    "perCycleHeadlineStatesSha256": "be3f99459b72eece09c07738380fbe3694d2de3ec8c1eb206812b1184fc6a0b6",
+    "semanticEvidenceHistoriesSha256": "25b0c846289836893219e8725724a3553633876d829e35ab8d6846ed273319de",
+    "rawHistoriesSha256": "11e202daddef3795b4fdf1fd94cf034f3cbd1ee99e09a4f8966a508b947e1d71",
+    "projectionsSha256": "fe9edc7b8c549e68193e15c1edc8768a828f3fe9668c27e26eb3b9a48fae6467",
+    "schedulesSha256": "98cbed1ede2dd043fc411372ab7c8f37448af505b23faecf5a69363472e5219d",
+    "headlineCompositeStatesSha256": "d9f79b79918fd35c48f4d7a140e8725c783a060838fe363fc94a3c37f4ad8071",
+    "basisPatternCompositeStatesSha256": "578d636929176c7f887b8f964c5c69da8e214138a98d18972fe9a25b7b850561"
   },
   "modelId": "kestrel-hq-belief-v1",
   "perCycleCounts": {
     "1": {
-      "basisPattern": 1,
-      "headline": 1
+      "headline": 1,
+      "basisPattern": 1
     },
     "2": {
-      "basisPattern": 1,
-      "headline": 1
+      "headline": 1,
+      "basisPattern": 1
     },
     "3": {
-      "basisPattern": 1,
-      "headline": 1
+      "headline": 1,
+      "basisPattern": 1
     },
     "4": {
-      "basisPattern": 4,
-      "headline": 4
+      "headline": 4,
+      "basisPattern": 4
     },
     "5": {
-      "basisPattern": 15,
-      "headline": 13
+      "headline": 13,
+      "basisPattern": 15
     },
     "6": {
-      "basisPattern": 11,
-      "headline": 11
+      "headline": 11,
+      "basisPattern": 11
     }
   },
   "perCycleHeadlineStates": {
@@ -358,8 +363,7 @@
         "unclear",
         "weak",
         "none",
-        "none",
-        null
+        "none"
       ]
     ],
     "2": [
@@ -367,8 +371,7 @@
         "unclear",
         "weak",
         "none",
-        "none",
-        null
+        "none"
       ]
     ],
     "3": [
@@ -376,8 +379,7 @@
         "unclear",
         "conflicted",
         "none",
-        "none",
-        null
+        "none"
       ]
     ],
     "4": [
@@ -385,29 +387,25 @@
         "coercion",
         "weak",
         "none",
-        "tentative",
-        "coercion"
+        "tentative"
       ],
       [
         "preparation",
         "weak",
         "usable",
-        "tentative",
-        "preparation"
+        "tentative"
       ],
       [
         "unclear",
         "conflicted",
         "none",
-        "none",
-        null
+        "none"
       ],
       [
         "unclear",
         "conflicted",
         "usable",
-        "tentative",
-        "preparation"
+        "tentative"
       ]
     ],
     "5": [
@@ -415,92 +413,79 @@
         "coercion",
         "coherent",
         "none",
-        "credible-source-sensitive",
-        "coercion"
+        "credible-source-sensitive"
       ],
       [
         "coercion",
         "coherent",
         "none",
-        "tentative",
-        "coercion"
+        "tentative"
       ],
       [
         "coercion",
         "weak",
         "none",
-        "none",
-        null
+        "none"
       ],
       [
         "coercion",
         "weak",
         "none",
-        "tentative",
-        "coercion"
+        "tentative"
       ],
       [
         "preparation",
         "coherent",
         "none",
-        "tentative",
-        "preparation"
+        "tentative"
       ],
       [
         "preparation",
         "coherent",
         "usable",
-        "credible-source-sensitive",
-        "preparation"
+        "credible-source-sensitive"
       ],
       [
         "preparation",
         "coherent",
         "usable",
-        "tentative",
-        "preparation"
+        "tentative"
       ],
       [
         "preparation",
         "weak",
         "none",
-        "tentative",
-        "preparation"
+        "tentative"
       ],
       [
         "preparation",
         "weak",
         "usable",
-        "tentative",
-        "preparation"
+        "credible-source-sensitive"
+      ],
+      [
+        "preparation",
+        "weak",
+        "usable",
+        "tentative"
       ],
       [
         "unclear",
         "conflicted",
         "none",
-        "tentative",
-        "preparation"
+        "tentative"
       ],
       [
         "unclear",
         "conflicted",
         "usable",
-        "tentative",
-        null
-      ],
-      [
-        "unclear",
-        "conflicted",
-        "usable",
-        "tentative",
-        "preparation"
+        "tentative"
       ],
       [
         "unclear",
         "weak",
         "none",
-        "none",
-        null
+        "none"
       ]
     ],
     "6": [
@@ -508,78 +493,67 @@
         "coercion",
         "coherent",
         "none",
-        "credible-source-sensitive",
-        "coercion"
+        "credible-source-sensitive"
       ],
       [
         "coercion",
         "weak",
         "none",
-        "tentative",
-        "coercion"
+        "tentative"
       ],
       [
         "preparation",
         "coherent",
         "none",
-        "credible-source-sensitive",
-        "preparation"
+        "credible-source-sensitive"
       ],
       [
         "preparation",
         "coherent",
         "none",
-        "tentative",
-        "preparation"
+        "tentative"
       ],
       [
         "preparation",
         "coherent",
         "usable",
-        "credible-source-sensitive",
-        "preparation"
+        "credible-source-sensitive"
       ],
       [
         "preparation",
         "coherent",
         "usable",
-        "tentative",
-        "preparation"
+        "tentative"
       ],
       [
         "preparation",
         "weak",
         "none",
-        "tentative",
-        "preparation"
+        "tentative"
       ],
       [
         "preparation",
         "weak",
         "usable",
-        "tentative",
-        null
+        "tentative"
       ],
       [
         "unclear",
         "conflicted",
         "none",
-        "tentative",
-        null
+        "tentative"
       ],
       [
         "unclear",
         "weak",
         "none",
-        "none",
-        null
+        "none"
       ],
       [
         "unclear",
         "weak",
         "none",
-        "tentative",
-        "coercion"
+        "tentative"
       ]
     ]
   },

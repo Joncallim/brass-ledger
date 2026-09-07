@@ -99,9 +99,9 @@ A risky choice that wins in some compatible hidden states and loses in others is
 - 257 intelligence-relevant private projections;
 - 4,112 producer schedules;
 - 156 semantic evidence histories;
-- 50 headline product trajectories;
-- 53 basis-pattern trajectories;
-- 18 headline composite states;
+- 52 headline product trajectories;
+- 54 basis-pattern trajectories;
+- 16 headline composite states;
 - per-cycle headline counts `1,1,1,4,13,11`;
 - 19/19 evidence definitions;
 - max history/current-any-role `9/4`;
