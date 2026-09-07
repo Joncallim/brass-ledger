@@ -299,7 +299,7 @@ export function refChooseRavellanAction(input: { cycle: number; posture: V2Ravel
 // ═════════════════════════════════════════════════════════════════════
 
 /** A single broad raw history: full 6-cycle trace with decisions. */
-type RawHistory = {
+export type RawHistory = {
   id: string;
   openingPosture: V2RavellanPosture;
   openingPreparation: V2RavellanPreparation;
@@ -400,12 +400,12 @@ export function enumerateRawHistories(): RawHistory[] {
 // PART 4 — Projection and schedule expansion
 // ═════════════════════════════════════════════════════════════════════
 
-type Projection = {
+export type Projection = {
   key: string;
   rawHistoryIds: string[];
 };
 
-type Schedule = {
+export type Schedule = {
   projectionKey: string;
   hasFocusedStaging: boolean;
   /** Frozen test-only #102 envelope; no production collection runtime is used. */
@@ -452,14 +452,14 @@ export function getCachedHistories(): RawHistory[] {
   return _cachedHistories;
 }
 
-function getCachedProjections(): Projection[] {
+export function getCachedProjections(): Projection[] {
   if (!_cachedProjections) {
     _cachedProjections = collapseToProjections(getCachedHistories());
   }
   return _cachedProjections;
 }
 
-function getCachedSchedules(): Schedule[] {
+export function getCachedSchedules(): Schedule[] {
   if (!_cachedSchedules) {
     _cachedSchedules = expandToSchedules(getCachedProjections());
   }
@@ -776,7 +776,7 @@ function roleCurrent(occs: RefOccurrence[], role: "assessment" | "warning" | "pu
 }
 
 /** Derive the full #100 base evidence for a schedule. */
-function deriveRefEvidence(
+export function deriveRefEvidence(
   history: RawHistory,
   hasFocusedStaging: boolean,
   collectionCourse: Schedule["collectionCourse"] = "none",
@@ -820,7 +820,7 @@ function deriveRefEvidence(
 }
 
 /** Compute per-cycle state for a set of occurrences. */
-function computeCycleStates(occs: RefOccurrence[]): Array<{
+export function computeCycleStates(occs: RefOccurrence[]): Array<{
   cycle: number;
   assessmentDirection: string;
   assessmentPicture: string;
@@ -1053,6 +1053,15 @@ test("STATE-SPACE: full frozen envelope produces 156 distinct evidence histories
   
   console.log(`STATE-SPACE: sampled ${Math.ceil(schedules.length / step)} schedules, found ${evidenceHistories.size} distinct evidence histories`);
   assert.equal(evidenceHistories.size, 156, "Corrected full-envelope evidence histories");
+});
+
+test("STATE-SPACE: all 19 frozen evidence definitions are reached by the full envelope", () => {
+  const seen = new Set<string>();
+  for (const schedule of getCachedSchedules()) {
+    const history = getCachedHistories().find(candidate => candidate.projectionKey === schedule.projectionKey)!;
+    for (const occurrence of deriveRefEvidence(history, schedule.hasFocusedStaging, schedule.collectionCourse).occurrences) seen.add(occurrence.definitionId);
+  }
+  assert.deepEqual([...seen].sort(), Object.keys(REF_DEFS).sort());
 });
 
 test("STATE-SPACE: per-cycle headline state counts", () => {
