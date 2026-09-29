@@ -1,6 +1,6 @@
 ---
 type: officer-style-bible
-status: draft
+status: active
 authority: authored-character-and-dialogue-style
 plain_language: required
 related_issues:
@@ -42,34 +42,40 @@ Nobody should be predictable from billet alone. A logistics officer can recommen
 
 Signature phrases are rare. If a phrase appears often enough for the player to notice the writing pattern, it is being overused.
 
+Names, gender and background do not determine accent, grammar, temper or professional style. Do not reach for cultural shorthand when writing any officer. Their voice comes from career, personality and experience.
+
+Plain English does not mean every officer sounds the same. Distinction comes from sentence length, what they notice first, how directly they disagree, whether they use examples, and what they refuse to leave vague.
+
 ## Roster overview
 
-| Officer | Best fits | Credible cross-posts | First impression |
+The table is a writing summary, not a player-facing rating sheet. Exact fit categories are listed later.
+
+| Officer | Main lane | Other believable posts | First impression |
 | --- | --- | --- | --- |
-| Ruth Warden | J1, J7 | J5 | Protective, plain-spoken, harder than she first appears |
-| Elias Halden | J2 | J5, J3 | Precise, sceptical, unexpectedly decisive |
-| Marcus Briggs | J3 | J4, J5 | Fast, practical, loyal, better prepared than his manner suggests |
-| Amara Okafor | J4 | J3, J5 | Calm realist, inventive once constraints are clear |
-| Emi Sato | J5 | J3, J1 | Polished strategist, values options but will commit hard |
-| Isabel Navarro | J7 | J3, J1 | Demanding teacher, tolerant of honest failure |
+| Ruth Warden | J1 | J7, J5 | Protective, plain-spoken, harder than she first appears |
+| Elias Halden | J2 | J5; J3 only as a deliberate stretch | Precise, sceptical, unexpectedly decisive |
+| Marcus Briggs | J3 | J5, J4 | Fast, practical, loyal, better prepared than his manner suggests |
+| Amara Okafor | J4 | J5, J3 | Calm realist, inventive once constraints are clear |
+| Emi Sato | J5 | J3, J2; J1 only as a deliberate stretch | Polished strategist, values options but will commit hard |
+| Isabel Navarro | J7 | J1, J3 | Demanding teacher, tolerant of honest failure |
 | Daniel Mercer | J1 | J5, J7 | Quiet organiser, sees manpower as a long pipeline |
-| Farah Rahman | J1, J7 | J5 | Energetic reformer, good with people, impatient with stale systems |
-| Claire Dubois | J1 | J5, J4 | Coalition-minded people leader, consensus builder with a stubborn core |
+| Farah Rahman | J7 | J1, J5 | Energetic reformer, good with people, impatient with stale systems |
+| Claire Dubois | J1 | J5, J4 | Relationship builder with a stubborn core |
 | Priya Nair | J2 | J5 | Fast pattern-reader, imaginative, vulnerable to elegant stories |
-| Tomas Varga | J2 | J3 | Field-minded collector, practical, private, distrusts headquarters certainty |
-| Miriam Chen | J2, J5 | J4 | Slow, broad thinker, excellent on systems, can make simple things too complicated |
+| Tomas Varga | J2 | J3 | Field-minded collector, practical, private, distrusts false certainty |
+| Miriam Chen | J2 | J5, J4 | Broad thinker, excellent on systems, can make simple things too complicated |
 | Helena Ortiz | J3 | J5, J4 | Calm operator, excellent coordinator, reluctant to gamble without a branch |
-| Noah Kessler | J3 | J1, J7 | Stabiliser, protects recovery and tempo, can wait too long for the right moment |
-| Laila Haddad | J3 | J2, J5 | Crisis improviser, comfortable with ambiguity, weak at turning temporary fixes into lasting routines |
-| Peter Mensah | J4, J5 | J1 | Persuasive negotiator, good at finding capacity, sometimes believes every constraint can be negotiated |
+| Noah Kessler | J3 | J7, J1 | Stabiliser, protects recovery and tempo, can wait too long |
+| Laila Haddad | J3 | J5; J2 only as a deliberate stretch | Crisis improviser, comfortable with ambiguity, weak at making temporary fixes stick |
+| Peter Mensah | J4 | J5, J1 | Persuasive negotiator, good at finding capacity, sometimes believes every constraint can be moved |
 | Grace Lin | J4 | J7, J3 | Engineer's mind, exacting, quietly creative, impatient with vague plans |
-| Sofia Marin | J4 | J3, J5 | Coalition logistician, strong relationship builder, can compromise too far to keep partners aboard |
+| Sofia Marin | J4 | J3, J5 | Coalition logistician, strong relationship builder, can compromise too far |
 | Adrian Cole | J5 | J3, J4 | Elegant planner, sees structure quickly, at risk of falling in love with a neat plan |
 | Nadia Yusuf | J5 | J1, J2 | Direct strategist, forces choices into the open, can close debate too early |
 | Victor Hale | J5 | J4, J7 | Patient capability builder, thinks in years, can sacrifice too much of the present |
 | Samuel Reyes | J7 | J3, J1 | Practical coach, trusts local leaders, can underweight central control |
-| Mei Tan | J7 | J2, J5 | Curious learning-system builder, absorbs lessons quickly, sometimes changes too much after one bad result |
-| Omar Bell | J7, J1 | J5 | Warm mentor, builds strong teams, can protect weak performers longer than he should |
+| Mei Tan | J7 | J5, J2 | Curious learning-system builder, absorbs lessons quickly, sometimes changes too much |
+| Omar Bell | J1 | J7, J5 | Warm mentor, builds strong teams, can protect weak performers too long |
 
 ---
 
@@ -2004,6 +2010,54 @@ This is a writing aid. Do not turn it into player-visible statistics.
 | Reyes | conversational | warm | asks whether local leaders understand the aim | detailed control being mistaken for good command |
 | Tan | curious | light | asks whether a result is a real lesson or noise | changing doctrine after every vivid event |
 | Bell | warm | easy | asks whether the person was ever properly developed | writing someone off without a fair standard |
+
+# Relationship seeds
+
+These are starting writing anchors, not a complete social graph. A missing relationship means the player may genuinely have little useful information about the pair.
+
+Relationships are directional. Where both directions are listed, each person still sees the relationship differently.
+
+| From | Toward | Starting relationship |
+| --- | --- | --- |
+| Warden | Briggs | Strong respect. She trusts him to own a hard decision but thinks he can spend people too easily. |
+| Briggs | Warden | Strong respect. He values that her objections are concrete and usually come with a boundary he can plan around. |
+| Briggs | Okafor | Old friendship and strong professional trust. They argue often and recover quickly. |
+| Okafor | Briggs | Warm and trusting. She believes he will change a plan when a real limit is proved. |
+| Warden | Sato | Warm respect. Warden thinks Sato understands that promises inside the force matter too. |
+| Sato | Warden | Strong respect. Sato trusts Warden to spot a credibility problem before it becomes visible outside the force. |
+| Halden | Sato | High professional respect with regular disagreement over how far behaviour can support a judgement about intent. |
+| Sato | Halden | High professional respect. She sometimes finds his wording too narrow for the decision that still has to be made. |
+| Halden | Nair | Mentor-like respect. He values her imagination and watches for the moment a hypothesis becomes a favourite story. |
+| Nair | Halden | High respect with some frustration. She wants room to explore before every idea is forced into a final judgement. |
+| Varga | Halden | Strong trust in Halden's handling of source limits. |
+| Halden | Varga | Strong respect for Varga's understanding of what collection can really show. |
+| Briggs | Ortiz | Competitive professional respect. Each thinks the other runs a difficult operation well. |
+| Ortiz | Briggs | Strong respect with less patience for his willingness to start moving before every branch is ready. |
+| Ortiz | Marin | Easy working relationship from previous coalition operations. |
+| Marin | Ortiz | Strong trust in Ortiz's ability to make several partners work to one timetable. |
+| Okafor | Mensah | Respect mixed with friction. She thinks he sometimes tries to negotiate past a physical limit. |
+| Mensah | Okafor | Respect mixed with friction. He thinks she sometimes accepts a limit before checking who can change the rules around it. |
+| Okafor | Lin | Strong technical trust. |
+| Lin | Okafor | Strong respect. Lin knows Okafor will not hide an ugly system constraint behind vague language. |
+| Navarro | Reyes | Warm relationship with a real professional argument about common standards versus local freedom. |
+| Reyes | Navarro | Warm respect. He thinks she sometimes asks for more common practice than good local leaders need. |
+| Navarro | Tan | Mentor-like respect. Navarro likes Tan's curiosity and worries about how quickly she turns one result into a lesson. |
+| Tan | Navarro | High respect. Tan values Navarro as a brake on fashionable lessons. |
+| Rahman | Tan | Warm, energetic working relationship. Their shared appetite for change can become a weakness if nobody slows them down. |
+| Rahman | Hale | Productive friction. She thinks he protects programmes too long. |
+| Hale | Rahman | Productive friction. He thinks she can break a system faster than the replacement can take hold. |
+| Mercer | Bell | Respect with tension over when development has had enough time. |
+| Bell | Mercer | Respect with discomfort about Mercer's willingness to move people for the health of the wider system. |
+| Mercer | Hale | Strong respect around long pipelines and future readiness. |
+| Dubois | Marin | Warm old working relationship built around partner and reserve arrangements. |
+| Nair | Chen | Complementary respect: Nair finds patterns quickly; Chen tests what else those patterns would have to explain. |
+| Chen | Nair | Respect with a useful instinct to widen Nair's favourite explanation before accepting it. |
+| Haddad | Reyes | Warm affinity around trust in people close to the problem. |
+| Yusuf | Briggs | Mutual respect for directness, with friction over whether another workable option still exists. |
+| Cole | Sato | Strong professional respect with tension between a clean campaign shape and preserving room to change it. |
+| Reyes | Bell | Close working friendship built through leader development and training. |
+
+Do not force these relationships into every conversation. A friendship should be visible mainly when it changes patience, trust or the way one officer talks about another.
 
 # Distinction test
 
