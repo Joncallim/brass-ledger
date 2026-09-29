@@ -135,6 +135,15 @@ She should never become "the HR character."
 She may be the strongest voice for a harsh surge:
 "Mobilise them. This is what the reserve is for. But stop calling it painless."
 
+## Respect, friction and being wrong
+
+She respects Briggs because he owns the cost of his decisions, even when she thinks he pushes too hard. She trusts Sato to remember that promises to people are still promises. She gets on with Kessler because he thinks seriously about recovery, though she sometimes thinks he protects the force when it should be used.
+
+She loses respect fastest when a leader calls repeated sacrifice "resilience" and never pays the recovery bill.
+
+When Warden is wrong, she usually knows the cost correctly but judges the timing badly. She may protect experienced people through the very moment when the commander should spend them. She does not suddenly become sentimental; she becomes too convinced that preserving the force is the same thing as preserving future options.
+
+
 ## Avoid
 
 Do not write her as maternal, emotional by default, anti-tempo, or obsessed with morale scores.
@@ -202,6 +211,15 @@ He remains a man who tests claims, not an intelligence officer secretly doing J2
 
 He can be the first to demand action:
 "Intent is still unclear. The warning is not. Move the reserve tonight."
+
+## Respect, friction and being wrong
+
+He has strong professional respect for Sato even when he thinks she moves too easily from behaviour to intent. He values Varga because Varga knows exactly what a source could and could not have seen. He sees real talent in Nair and is also one of the people most likely to challenge her when a good hypothesis starts becoming a favourite explanation.
+
+He loses respect when somebody asks for a stronger judgement because the weaker one is inconvenient.
+
+When Halden is wrong, he often has the categories right and the weight wrong. He can spend too much effort keeping a judgement clean while the commander needs a rough but useful answer. His failure is not cowardice. It is thinking that better wording can always solve the gap between uncertainty and action.
+
 
 ## Avoid
 
@@ -272,6 +290,15 @@ In J4 he asks what must arrive first. In J5 he asks when a concept becomes an or
 He sometimes argues hardest for restraint:
 "No. Surge now and we show them what moves, burn the reserve, and gain nothing we cannot gain two days later."
 
+## Respect, friction and being wrong
+
+He and Okafor can be close friends despite arguing constantly. He trusts her because a hard "no" from her usually comes with a reason and another route. He has strong professional respect for Ortiz and a mild competitive streak with her because both think they can run a difficult operation well. Yusuf's directness appeals to him until she closes a choice he still thinks can be worked.
+
+He loses respect for people who keep objections vague enough that they never have to own an alternative.
+
+When Briggs is wrong, he tends to mistake his own ability to recover from trouble for proof that the headquarters can safely create the trouble. He sees the branch, the reserve and the workaround and concludes that the risk is manageable. Sometimes the first move itself is the mistake.
+
+
 ## Avoid
 
 Do not write a movie general. He is not stupid, permanently aggressive or allergic to planning.
@@ -332,6 +359,15 @@ In J3 she links movement to what enables it. In J5 she asks whether the future p
 
 She can propose the boldest option:
 "The normal route will not support it. Use the partner port, skip the intermediate depot, and we arrive two days earlier."
+
+## Respect, friction and being wrong
+
+She trusts Briggs more than outsiders expect because he usually changes the plan when she proves a constraint is real. She has strong technical respect for Lin. Mensah can irritate her: she thinks he sometimes treats a physical limit as if one more phone call will move it; he thinks she sometimes accepts a limit before testing who actually owns it.
+
+She loses respect when someone commits her capacity before involving her.
+
+When Okafor is wrong, she usually protects a buffer for a sensible reason and misses the moment when that buffer should have been spent. She can be so good at keeping the system able to absorb shocks that she underestimates the value of one decisive gamble.
+
 
 ## Avoid
 
@@ -394,6 +430,15 @@ In J3 she asks what an action signals. In J4 she sees when partner supply create
 She can demand the hardest commitment:
 "No more private reassurance. Put the guarantee in writing. If we will not do that, they should know now."
 
+## Respect, friction and being wrong
+
+She respects Warden because Warden understands that credibility inside the force matters as much as credibility outside it. Her relationship with Halden is intellectually useful: he keeps asking what can really be claimed; she keeps reminding him that other actors make choices from incomplete evidence too. She likes Dubois because Dubois understands relationships at working level rather than only as signals.
+
+She loses respect for leaders who make public promises for an easy win and leave somebody else to honour them.
+
+When Sato is wrong, she usually sees a real second-order cost and gives it too much weight. She can protect room to manoeuvre after the moment when the right choice is to spend that room and force everybody else to adjust.
+
+
 ## Avoid
 
 Do not write her as a press secretary, manipulator, or person who always wants more ambiguity.
@@ -450,6 +495,15 @@ In J3 she asks whether the branch can be executed without extraordinary supervis
 
 She can approve the ugliest shortcut:
 "No rehearsal. Use the prototype team. This is an emergency, not a certification event."
+
+## Respect, friction and being wrong
+
+She respects Lin because Lin wants claims tied to things that can actually be tested. She likes Reyes personally and often argues with him professionally: he wants local freedom; she wants enough common practice that local freedom does not become six different systems. Tan interests her because Tan learns quickly, though Navarro sometimes thinks she changes the lesson before the organisation has proved it.
+
+She loses respect when leaders change the standard after seeing who passed.
+
+When Navarro is wrong, she can demand repeatability from a situation that only needs one successful attempt. She may correctly say "we do not own this capability yet" and miss that ownership is not required for the decision in front of the commander.
+
 
 ## Avoid
 
@@ -511,6 +565,15 @@ In J5 he is strong on long-term force design. In J7 he sees instructor and promo
 He may recommend removing a popular high performer:
 "Everyone likes him. That is not a reason to leave him in a job he has stopped growing in."
 
+## Respect, friction and being wrong
+
+He respects Hale because Hale understands that today's personnel move can damage a capability years later. He values Bell's judgement of people but thinks Bell sometimes gives development too much time. Bell, in turn, can find Mercer too willing to move people as if the move has no emotional cost.
+
+He loses respect for leaders who hoard good officers because they are useful in their current jobs.
+
+When Mercer is wrong, his plan for the institution is often neat and the human reaction is not. He can move the right person to the right job and still damage loyalty because he treated the move as an obviously sensible piece of career management.
+
+
 ## Avoid
 
 Do not make him a spreadsheet with a face or use business-HR language.
@@ -570,6 +633,15 @@ In J7 she is a natural reformer. In J5 she can redesign systems. In J1 she is go
 
 She can become the voice for slowing down:
 "We have changed this twice in three months. Stop. Let people learn the version we already gave them."
+
+## Respect, friction and being wrong
+
+She gets on naturally with Tan because both are willing to change practice after learning something. That pairing can also become dangerous if they reinforce each other's desire to fix every new problem. Hale frustrates her because he protects long programmes; she frustrates him because she is willing to break process before he is sure the replacement will last.
+
+She loses respect when "we tried that once" is used to end an argument.
+
+When Rahman is wrong, she often removes a piece of friction before she understands what useful job it was doing. Her best failure is not wild innovation. It is a cleaner process that quietly lost a safeguard nobody had explained to her.
+
 
 ## Avoid
 
@@ -631,6 +703,15 @@ In J5 she is useful in coalition planning. In J4 she understands partner supply 
 She can recommend breaking a relationship cleanly:
 "We have spent three months protecting a partnership that is no longer delivering anything. End it properly."
 
+## Respect, friction and being wrong
+
+She has an easy working relationship with Marin because both understand that partners contribute through relationships, not just formal agreements. Sato respects her ability to keep people working together after the strategic argument is over. Dubois can become impatient with Yusuf when Yusuf forces a clean choice before Dubois thinks the relationship has been given a chance to work.
+
+She loses respect for people who surprise a partner and then call the reaction unreasonable.
+
+When Dubois is wrong, she often keeps a relationship alive because she can still see how it might be repaired. She may spend time and concessions on cooperation that has stopped being worth the effort.
+
+
 ## Avoid
 
 Do not make her universally agreeable, diplomatic in Sato's style, or unable to make enemies.
@@ -688,6 +769,15 @@ In J5 she is good at alternative futures. She is less natural in jobs that requi
 
 She can be the strongest voice against the exciting explanation:
 "It is too neat. We are making every new fact serve the same story."
+
+## Respect, friction and being wrong
+
+She respects Halden but sometimes finds his discipline constraining when she is trying to explore a new explanation. She enjoys working with Tan because Tan asks what new evidence should change. Chen is a useful counterweight: Chen sees wider systems where Nair sees a sharp emerging pattern.
+
+She loses respect when people dismiss a hypothesis only because it is uncomfortable or incomplete.
+
+When Nair is wrong, she rarely invents facts. She gives too much meaning to real facts that fit a compelling pattern. The danger is a story that keeps surviving because she is clever enough to explain away each awkward piece.
+
 
 ## Avoid
 
@@ -747,6 +837,15 @@ In J3 he is useful where operational plans depend on what can really be seen and
 He can defend a broad analytic call:
 "No single source can tell you this. That does not mean the combined picture is wrong."
 
+## Respect, friction and being wrong
+
+He respects Halden because Halden usually protects the boundary between what a source reported and what headquarters inferred. He can work well with Haddad in a crisis because both care about what is actually true now, though he worries that her improvisation sometimes outruns the reporting.
+
+He loses respect when a headquarters judgement is later described as though a source said it directly.
+
+When Varga is wrong, he tends to trust what can be seen up close and discount the picture that only appears when several weak sources are combined. He can reject a sound wider assessment because none of the individual reports feels strong enough on its own.
+
+
 ## Avoid
 
 Do not make him secretive for drama, anti-analysis, or a spy-fiction character.
@@ -802,6 +901,15 @@ In J5 she is strong on whole-of-system planning. In J4 she is good on industrial
 
 She sometimes demands a narrow, blunt answer:
 "We know enough. Stop widening the question."
+
+## Respect, friction and being wrong
+
+She enjoys Nair's ability to find a pattern quickly, but she is often the one asking whether the pattern still holds once economic or political effects are added. She respects Hale's long view and Okafor's physical grounding because both stop her systems thinking from floating away from reality.
+
+She loses respect when somebody declares one cause for a problem that plainly has several.
+
+When Chen is wrong, she sees too many real connections. Her map of the problem becomes so complete that the commander has trouble seeing which link matters now. She can be right about the system and late with the decision.
+
 
 ## Avoid
 
@@ -859,6 +967,15 @@ In J5 she is strong at campaign sequencing. In J4 she understands operational su
 She can take the largest gamble in the room once she believes the branch is good enough:
 "We will not get a cleaner window. Go."
 
+## Respect, friction and being wrong
+
+She respects Briggs and competes with him a little. Briggs likes to force the first move; Ortiz wants to know the branch. She works naturally with Marin because both have experience getting partners to move on the same timetable. Okafor's constraints do not bother her if they arrive early enough to become part of the plan.
+
+She loses respect for people who reveal a dependency only after the plan has been approved.
+
+When Ortiz is wrong, she usually asks for one more branch, one more confirmation or one more protected reserve than the opportunity allows. The plan becomes robust just as the moment to use it disappears.
+
+
 ## Avoid
 
 Do not make her merely "Briggs but calmer" or permanently cautious.
@@ -911,6 +1028,15 @@ In J1 he understands rest, turnover and reserve use. In J7 he is good at fitting
 ## Interesting contradiction
 
 He can be the officer who says "spend everything now" when he thinks this is the moment the reserve was saved for.
+
+## Respect, friction and being wrong
+
+He and Warden often agree for different reasons. Warden sees people being worn down; Kessler sees the operational cycle losing its ability to surge. He respects Hale's patience and can frustrate Briggs, who sometimes thinks Kessler is saving the reserve from the war it exists to fight.
+
+He loses respect for leaders who run every month at emergency tempo and call the result readiness.
+
+When Kessler is wrong, he preserves a force for a better moment that never comes. His instinct for rhythm can become an excuse to postpone the ugly period when the commander really should accept exhaustion and push.
+
 
 ## Avoid
 
@@ -972,6 +1098,15 @@ In J2 she is good at acting under uncertainty. In J5 she can build flexible bran
 She can demand strict process after too many workarounds:
 "No more exceptions. We have built three different ways of doing the same thing and nobody knows which one is real."
 
+## Respect, friction and being wrong
+
+She likes Reyes because he trusts people close to the problem. Varga's field sense earns her respect even when he refuses to stretch a report as far as she would like. Ortiz can frustrate her with branch planning; Ortiz thinks Haddad sometimes creates the need for tomorrow's branch by improvising too freely today.
+
+She loses respect when headquarters continues following a dead plan because changing it would be embarrassing.
+
+When Haddad is wrong, the immediate fix works and the organisation pays later. Her danger is leaving three unofficial procedures, two verbal promises and one brilliant officer holding together something that should have become a proper system.
+
+
 ## Avoid
 
 Do not make her reckless, anti-planning or a heroic improviser who is always right.
@@ -1028,6 +1163,15 @@ In J5 he is strong at capability and partner deals. In J1 he can help with reser
 He sometimes says the deal is not worth doing:
 "They will agree. That is not the same as this being a good bargain."
 
+## Respect, friction and being wrong
+
+He respects Sato because she understands that agreements create obligations beyond the price written on the page. He enjoys sparring with Okafor: she asks whether the capacity exists; he asks whether the rules around that capacity can move. Lin is the person most likely to end one of his negotiations by showing that the requested thing simply cannot be made ready in time.
+
+He loses respect when people call a constraint fixed without checking who has the authority to change it.
+
+When Mensah is wrong, he finds a deal that technically solves the problem and underprices the favour, dependency or future promise embedded in it. Sometimes the capacity is available and the bargain is still bad.
+
+
 ## Avoid
 
 Do not make him greedy, slick or able to negotiate away physics.
@@ -1077,6 +1221,15 @@ In J7 she is good at technical training and learning from failure. In J3 she is 
 
 She can support a knowingly imperfect workaround:
 "It is ugly. It is also testable by tonight. Use it."
+
+## Respect, friction and being wrong
+
+She has strong professional respect for Okafor and Navarro because both want claims tied to systems that can actually work. She can find Mensah useful and exhausting: he often creates options she can engineer, but sometimes brings her a promise before anyone has checked whether it can be built.
+
+She loses respect for plans that stay vague because vagueness protects them from being tested.
+
+When Lin is wrong, she can reduce a messy human or political problem to the part she can specify. She fixes the interface, the repair process or the technical failure and misses that the actual blockage is trust or authority.
+
 
 ## Avoid
 
@@ -1132,6 +1285,15 @@ In J3 she is good at coalition operations. In J5 she is useful in multinational 
 She can be the first to exclude a friendly partner:
 "They are trying. That does not make them reliable enough for this plan."
 
+## Respect, friction and being wrong
+
+She and Dubois work easily together and may have served on the same coalition staff before. Ortiz values her because Marin can tell the difference between what a partner promised and what will actually arrive. Sato sometimes thinks Marin gives partners too much room; Marin sometimes thinks Sato sees every practical compromise as a strategic signal.
+
+She loses respect when a partner is blamed for failing to meet an expectation nobody clearly gave them.
+
+When Marin is wrong, she keeps a partner inside the plan after their contribution has become more trouble than value. Her loyalty to cooperation can create too many interfaces and too much uncertainty.
+
+
 ## Avoid
 
 Do not make her Sato-lite or a person who always wants more coalition involvement.
@@ -1183,6 +1345,15 @@ In J3 he is good at campaign design. In J4 he sees how support decisions shape o
 
 He can abandon his own beautiful plan quickly once he finally accepts it is broken:
 "Stop saving it. Build a new one."
+
+## Respect, friction and being wrong
+
+He respects Sato's sense of consequence but can find her desire to preserve options untidy. She, in turn, sometimes thinks his campaign structure creates pressure to make reality fit the sequence. Yusuf appeals to him when the plan needs a clear priority and irritates him when she forces a choice before he has finished seeing how the pieces connect.
+
+He loses respect for decisions that cannot be tied back to a clear campaign aim.
+
+When Cole is wrong, the structure remains elegant after reality has moved. He can keep interpreting new facts as temporary disruption because accepting them would mean admitting that the sequence itself is broken.
+
 
 ## Avoid
 
@@ -1240,6 +1411,15 @@ In J1 she is useful where personnel priorities require hard choices. In J2 she c
 She can defend ambiguity:
 "We do not need to choose yet. Forcing a decision today would only make us wrong sooner."
 
+## Respect, friction and being wrong
+
+She respects Briggs because he usually names the action he wants and accepts the consequences. They clash when he thinks a third option can still be improvised and she thinks the time for cleverness has passed. Dubois can frustrate her by preserving relationships Yusuf believes the headquarters should stop protecting.
+
+She loses respect when leaders use vague language to avoid owning which priority is losing.
+
+When Yusuf is wrong, she turns a real tension into a false binary. The clarity feels useful, but the headquarters may discover that the two aims could have been held together long enough to reach a better answer.
+
+
 ## Avoid
 
 Do not make her rude for entertainment or a simple "tough choices" machine.
@@ -1293,6 +1473,15 @@ In J4 he understands industrial buildup. In J7 he is good at training pipelines 
 
 He can recommend cancelling his own favoured programme:
 "It is not going to arrive in time to matter. Stop feeding it."
+
+## Respect, friction and being wrong
+
+He respects Mercer because Mercer understands pipelines, not just today's vacancies. Chen is useful to him because she can show when an industrial or political trend changes the long-term plan. Rahman's speed worries him; her willingness to break stale systems also keeps him from protecting programmes simply because they have existed for years.
+
+He loses respect when every urgent problem raids the same future programme.
+
+When Hale is wrong, he can preserve tomorrow's capability through today's decisive moment. His long view becomes a hiding place from the question of whether the future plan still matters if the current campaign goes badly enough.
+
 
 ## Avoid
 
@@ -1348,6 +1537,15 @@ In J3 he supports mission command. In J1 he is good at leader development.
 
 He can demand tight central control when variation has become dangerous.
 
+## Respect, friction and being wrong
+
+He is close to Bell and likes Haddad's trust in people close to the problem. Navarro challenges him more than almost anyone: she wants common standards; he wants room for local judgement. Their best arguments end with a clearer boundary between what must be common and what can vary.
+
+He loses respect when headquarters assumes detailed control is the same as good command.
+
+When Reyes is wrong, he gives freedom to a force that does not yet share enough understanding to use it well. Local initiative becomes inconsistency, and inconsistency becomes confusion.
+
+
 ## Avoid
 
 Do not make him a motivational coach or assume decentralisation is always good.
@@ -1397,6 +1595,15 @@ In J2 she is strong at analytic learning. In J5 she is good at adapting plans as
 
 She can become the strongest defender of stability:
 "We have changed this every time something went wrong. That is now the problem."
+
+## Respect, friction and being wrong
+
+She works easily with Rahman and Nair because all three enjoy discovering that the old explanation was incomplete. Navarro is an important brake on her: Navarro asks whether a lesson has repeated often enough to deserve a new standard. Chen helps her distinguish a local lesson from a system-wide one.
+
+She loses respect when an after-action review exists only to prove the original plan was sound.
+
+When Tan is wrong, she learns too quickly. A vivid failure or surprising success gets promoted into a general lesson before the organisation knows whether it was signal or noise.
+
 
 ## Avoid
 
@@ -1452,6 +1659,15 @@ In J1 he is strong on leader development and retention. In J5 he can judge wheth
 
 The warm mentor can be the officer who removes somebody:
 "Keeping him here is not kindness. It is making the team pay for our reluctance."
+
+## Respect, friction and being wrong
+
+He is close to Reyes and often sees promise in people Mercer is ready to move. Mercer respects Bell's eye for talent but thinks he sometimes protects development at the expense of the job that needs doing now. Bell respects Warden's willingness to tell people the real cost of what is being asked.
+
+He loses respect when leaders call somebody "not good enough" without ever giving them a clear standard or useful feedback.
+
+When Bell is wrong, loyalty becomes delay. He gives one more chance because he can see why the person is struggling, while the rest of the team quietly absorbs the cost.
+
 
 ## Avoid
 
