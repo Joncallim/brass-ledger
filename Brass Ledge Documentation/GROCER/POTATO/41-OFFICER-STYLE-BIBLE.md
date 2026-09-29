@@ -60,8 +60,8 @@ Signature phrases are rare. If a phrase appears often enough for the player to n
 | Miriam Chen | J2, J5 | J4 | Slow, broad thinker, excellent on systems, can make simple things too complicated |
 | Helena Ortiz | J3 | J5, J4 | Calm operator, excellent coordinator, reluctant to gamble without a branch |
 | Noah Kessler | J3 | J1, J7 | Stabiliser, protects recovery and tempo, can wait too long for the right moment |
-| Laila Haddad | J3 | J2, J5 | Crisis improviser, comfortable with ambiguity, weak on paperwork and institutional follow-through |
-| Peter Mensah | J4, J5 | J1 | Commercially sharp, persuasive, good at finding capacity, sometimes believes every constraint can be negotiated |
+| Laila Haddad | J3 | J2, J5 | Crisis improviser, comfortable with ambiguity, weak at turning temporary fixes into lasting routines |
+| Peter Mensah | J4, J5 | J1 | Persuasive negotiator, good at finding capacity, sometimes believes every constraint can be negotiated |
 | Grace Lin | J4 | J7, J3 | Engineer's mind, exacting, quietly creative, impatient with vague plans |
 | Sofia Marin | J4 | J3, J5 | Coalition logistician, strong relationship builder, can compromise too far to keep partners aboard |
 | Adrian Cole | J5 | J3, J4 | Elegant planner, sees structure quickly, at risk of falling in love with a neat plan |
@@ -827,7 +827,7 @@ Her first question is usually: what larger picture would explain all of this?
 
 ## Career anchor
 
-All-source intelligence analyst with warning, red-team and strategic-analysis experience. She built her reputation by spotting patterns early, including a few that were initially dismissed.
+All-source intelligence analyst with warning, red-team and long-range assessment experience. She built her reputation by spotting patterns early, including a few that were initially dismissed.
 
 ## How the player may read her
 
@@ -983,7 +983,7 @@ Her first question is usually: what else changes if we do this?
 
 ## Career anchor
 
-Strategic intelligence and planning officer with a background in industry, economics and long-range assessment. She has spent much of her career on problems where military action changes markets, politics and supply at the same time.
+Intelligence and planning officer with a background in industry, economics and long-range assessment. She has spent much of her career on problems where military action changes markets, politics and supply at the same time.
 
 ## How the player may read her
 
@@ -1103,7 +1103,7 @@ She talks about coordination failures and what she learned when good plans met u
 
 ## Cross-post
 
-In J5 she is strong at campaign sequencing. In J4 she understands operational support interfaces.
+In J5 she is strong at campaign sequencing. In J4 she understands where operations and support meet.
 
 ## Interesting contradiction
 
@@ -1301,7 +1301,7 @@ Later: capable of walking away from an easy agreement when the long-term depende
 
 He finds capacity through partners, suppliers, contracts and clever trade-offs.
 
-He understands money and leverage without talking like a corporate executive.
+He understands money and bargaining power without talking like a corporate executive.
 
 ## Blind spot
 
@@ -1485,7 +1485,7 @@ She can be the first to exclude a friendly partner:
 
 ## Respect, friction and being wrong
 
-She and Dubois work easily together and may have served on the same coalition staff before. Ortiz values her because Marin can tell the difference between what a partner promised and what will actually arrive. Sato sometimes thinks Marin gives partners too much room; Marin sometimes thinks Sato sees every practical compromise as a strategic signal.
+She and Dubois work easily together and may have served on the same coalition staff before. Ortiz values her because Marin can tell the difference between what a partner promised and what will actually arrive. Sato sometimes thinks Marin gives partners too much room; Marin sometimes thinks Sato sees every practical compromise as a larger political message.
 
 She loses respect when a partner is blamed for failing to meet an expectation nobody clearly gave them.
 
@@ -1508,7 +1508,7 @@ His first question is usually: what are we actually trying to make true?
 
 ## Career anchor
 
-Campaign planner with experience in operational design, force planning and joint headquarters work. He is at his best when a campaign has too many activities and no clear relationship between them.
+Campaign planner with experience in force planning, major exercises and joint headquarters work. He is at his best when a campaign has too many activities and no clear relationship between them.
 
 ## How the player may read him
 
@@ -1593,7 +1593,7 @@ Later: better at living with ambiguity than her manner suggests, but only when s
 
 She strips away false compromise and forces a headquarters to name what it is prioritising.
 
-She is very good when several stakeholders are pretending their goals are compatible.
+She is very good when several senior people are pretending their goals are compatible.
 
 ## Blind spot
 
@@ -1698,7 +1698,7 @@ He likes questions about trade-offs over time and is honest about programmes tha
 
 ## Cross-post
 
-In J4 he understands industrial buildup. In J7 he is good at training pipelines and capability maturation.
+In J4 he understands industrial buildup. In J7 he is good at training pipelines and turning programmes into something the force can actually use.
 
 ## Interesting contradiction
 
@@ -1938,6 +1938,72 @@ When Bell is wrong, loyalty becomes delay. He gives one more chance because he c
 Do not make him sentimental, universally forgiving or a therapist in uniform.
 
 ---
+
+# Appointment fit guide
+
+These fits describe believable career moves, not who is "better".
+
+Natural means the officer has a strong career claim to the billet. Strong means the move is easy to believe and uses much of their experience. Credible means they can do the job but would be moving away from their main professional lane. Stretch means the appointment is possible only in a scenario that deliberately wants that trade-off.
+
+| Officer | Natural | Strong | Credible | Stretch |
+| --- | --- | --- | --- | --- |
+| Ruth Warden | J1 | J7 | J5 | — |
+| Elias Halden | J2 | J5 | — | J3 |
+| Marcus Briggs | J3 | J5 | J4 | — |
+| Amara Okafor | J4 | J5 | J3 | — |
+| Emi Sato | J5 | — | J3, J2 | J1 |
+| Isabel Navarro | J7 | J1 | J3 | — |
+| Daniel Mercer | J1 | J5 | J7 | — |
+| Farah Rahman | J7 | J1 | J5 | — |
+| Claire Dubois | J1 | J5 | J4 | — |
+| Priya Nair | J2 | J5 | — | — |
+| Tomas Varga | J2 | — | J3 | — |
+| Miriam Chen | J2 | J5 | J4 | — |
+| Helena Ortiz | J3 | J5 | J4 | — |
+| Noah Kessler | J3 | J7 | J1 | — |
+| Laila Haddad | J3 | J5 | — | J2 |
+| Peter Mensah | J4 | J5 | J1 | — |
+| Grace Lin | J4 | J7 | J3 | — |
+| Sofia Marin | J4 | J3 | J5 | — |
+| Adrian Cole | J5 | J3 | J4 | — |
+| Nadia Yusuf | J5 | — | J1, J2 | — |
+| Victor Hale | J5 | J4, J7 | — | — |
+| Samuel Reyes | J7 | J3 | J1 | — |
+| Mei Tan | J7 | J5 | J2 | — |
+| Omar Bell | J1 | J7 | J5 | — |
+
+A cross-post changes what the officer is responsible for. It does not turn them into the person normally associated with that billet.
+
+# Voice fingerprint
+
+This is a writing aid. Do not turn it into player-visible statistics.
+
+| Officer | Pace | Humour | How they challenge | What they will not accept |
+| --- | --- | --- | --- | --- |
+| Warden | steady | dry | names who pays | human cost hidden behind soft words |
+| Halden | spare | very dry | separates fact from judgement | stronger claims than the evidence allows |
+| Briggs | fast | blunt | demands the first action or alternative | vague objections with no proposed move |
+| Okafor | steady | understated | names the real bottleneck | somebody spending capacity they do not own |
+| Sato | measured | wry | asks what the choice commits us to next | casual promises that create real obligations |
+| Navarro | precise | sardonic | asks what standard is actually being claimed | calling one success a mature ability |
+| Mercer | calm | rare | shows the later hole created by today's posting | hoarding good people because they are useful now |
+| Rahman | lively | light | asks whether a "rule" is only habit | old practice defended only because it is old |
+| Dubois | warm | gentle | asks whose cooperation the plan needs | surprising partners and blaming their reaction |
+| Nair | quick | curious | offers another explanation for the pattern | dismissing an incomplete idea without testing it |
+| Varga | terse | almost none | narrows the claim to what was actually seen | turning headquarters judgement into source reporting |
+| Chen | slow | mild | follows the second- and third-order effects | pretending one cause explains a mixed problem |
+| Ortiz | steady | dry | asks for the branch when the first plan fails | hidden dependencies appearing after approval |
+| Kessler | steady | low | asks where the reset sits | permanent emergency tempo |
+| Haddad | fast | warm | rebuilds from what is true now | following a dead plan to avoid embarrassment |
+| Mensah | conversational | witty | asks who owns the constraint and what can move it | calling a limit fixed without checking |
+| Lin | terse | dry | turns a vague problem into a testable one | plans kept vague so they cannot fail a test |
+| Marin | warm | practical | asks who will really deliver the partner piece | goodwill being treated as reliability |
+| Cole | measured | quiet | ties each activity back to the main aim | activity that exists only because it was in the plan |
+| Yusuf | crisp | dry | forces the hidden priority into the open | vague language used to avoid owning a loss |
+| Hale | slow | mild | shows what today's shortcut costs later | repeatedly raiding the same future programme |
+| Reyes | conversational | warm | asks whether local leaders understand the aim | detailed control being mistaken for good command |
+| Tan | curious | light | asks whether a result is a real lesson or noise | changing doctrine after every vivid event |
+| Bell | warm | easy | asks whether the person was ever properly developed | writing someone off without a fair standard |
 
 # Distinction test
 
