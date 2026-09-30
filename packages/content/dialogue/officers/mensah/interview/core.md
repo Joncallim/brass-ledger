@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: mensah.interview.headquarters-failure.position.01
 function: position
 text: |
-  We accept 'cannot' before asking who controls the rule.
+  We hear 'can't' and stop too early.
 
 ### beat: mensah.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  Sometimes the limit is real. Sometimes it is a contract, a priority or a queue that somebody can change.
+  Sometimes it really can't be done. Sometimes it's a contract, a queue, or somebody else's priority. Those are things you can at least ask to move.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: mensah.interview.commander-disagreement.example.01
 function: example
 text: |
-  I once negotiated priority access that solved an urgent lift problem.
+  I negotiated priority access once and got us out of a nasty lift problem.
 
 ### beat: mensah.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  We got what we needed and spent far more political favour than I had admitted in the room. It was a good deal for the day and a bad habit if repeated. I learned to price the favour as well as the service.
+  I also burned a lot more goodwill than I'd admitted in the room. Good deal for that day. Bad habit if you keep doing it.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: mensah.interview.red-line.position.01
 function: position
 text: |
-  If a bargain solves today's problem by giving away future control and nobody has put that cost in front of you, I will stop the agreement.
+  If today's bargain quietly gives away control we need later, I'll put that cost in front of you before we sign.
 
 ### beat: mensah.interview.red-line.qualification.01
 function: qualification
 text: |
-  Cheap today can be very expensive later.
+  Cheap today can get expensive very quickly.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: mensah.interview.self-critique.position.01
 function: position
 text: |
-  I can sound as if a negotiation is nearly solved because I can see the shape of the deal.
+  I say 'we're nearly there' too soon.
 
 ### beat: mensah.interview.self-critique.reason.01
 function: reason
 text: |
-  The other side has not agreed just because I understand what would make them agree.
+  I can see the deal before the other side has agreed to it. Those are not the same thing.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: mensah.interview.crisis-peer.reason.01
 function: reason
 text: |
-  He is the person most likely to tell me when the thing I think can be negotiated is simply a physical limit. We annoy each other. That is useful in a crisis.
+  Tunde's the person I want telling me, 'Peter, no, that one is actually physics.' We annoy each other. Useful quality in a crisis.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: mensah.interview.cross-post.position.01
 function: position
 text: |
-  I would not take Plans just because I am good at finding options and making deals.
+  I wouldn't take Plans just because I'm good at finding options.
 
 ### beat: mensah.interview.cross-post.qualification.01
 function: qualification
 text: |
-  Deciding what the campaign should protect is a different job from negotiating the means to support it.
+  Making the deal work and deciding what the campaign should be trying to achieve are different jobs.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: mensah.interview.act-or-wait.position.01
 function: position
 text: |
-  Buy time if time can actually be bought.
+  If time can be bought, buy some.
 
 ### beat: mensah.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Do not pay a premium just to make ourselves feel as if the uncertainty has gone away.
+  Just don't pay for the feeling of certainty. Pay because the extra time changes what we can do.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: mensah.interview.future-cost.position.01
 function: position
 text: |
-  Price next month as part of today's bargain.
+  Put next month's cost into today's price.
 
 ### beat: mensah.interview.future-cost.reason.01
 function: reason
 text: |
-  If the gain is worth it, pay. If nobody can tell you what we are giving away, do not call it a good deal.
-
+  If it's still a good bargain, take it. If nobody can tell me what we're giving up, I'm not calling it good.
