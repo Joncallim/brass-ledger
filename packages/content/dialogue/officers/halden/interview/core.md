@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: halden.interview.headquarters-failure.position.01
 function: position
 text: |
-  Most often? We let the language outrun the reporting.
+  We make the wording stronger than the reporting.
 
 ### beat: halden.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  A claim gets repeated, the wording gets firmer, and eventually everyone remembers it as a fact. Nothing new was actually collected.
+  A claim gets repeated a few times, somebody drops the caveat, and a week later everyone remembers it as fact. The evidence never changed.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: halden.interview.commander-disagreement.example.01
 function: example
 text: |
-  A public brief, a few years ago. The commander wanted the assessment stated more strongly than I thought the reporting allowed.
+  There was a public brief a few years ago. The commander wanted a firmer line than I thought the reporting supported.
 
 ### beat: halden.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  I would not. He made the policy choice anyway, which was his right. My job was to make sure nobody later remembered the intelligence as stronger than it was.
+  I wouldn't sign off on the stronger wording. He made the policy call anyway. Fair enough. I just wanted the record to show what Intelligence had actually said.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: halden.interview.red-line.position.01
 function: position
 text: |
-  If the order rests on a claim we cannot support and that claim is being presented to you as fact, I will stop the discussion.
+  If the order depends on a claim we're presenting as fact when it isn't, I'll stop the conversation there.
 
 ### beat: halden.interview.red-line.qualification.01
 function: qualification
 text: |
-  If you understand the uncertainty and still choose to act, that is a command decision, not an intelligence failure.
+  If you know the uncertainty and choose to act anyway, that's different. That's your call.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: halden.interview.self-critique.position.01
 function: position
 text: |
-  I correct people in the room.
+  I correct people in front of everyone.
 
 ### beat: halden.interview.self-critique.reason.01
 function: reason
 text: |
-  Sometimes the correction matters. Sometimes I have simply embarrassed someone when I could have fixed it afterwards.
+  Sometimes I need to. Sometimes I could have waited five minutes and saved them the embarrassment.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: halden.interview.crisis-peer.reason.01
 function: reason
 text: |
-  He is very good at saying exactly what a source could see and, just as important, what it could not. He occasionally thinks I combine weak reporting too readily. I occasionally think he waits too long before combining it at all.
+  Tomas is very good at telling you what a source actually saw. He thinks I combine weak reports too quickly. I think he waits too long. That's a useful disagreement.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: halden.interview.cross-post.position.01
 function: position
 text: |
-  In Plans I would worry about spending too much time cleaning every assumption instead of choosing a course.
+  In Plans, I'd probably spend too long cleaning up assumptions.
 
 ### beat: halden.interview.cross-post.qualification.01
 function: qualification
 text: |
-  A plan can be good enough to use before every line of its reasoning is equally strong.
+  At some point you have to choose a course even if every line of the argument isn't equally strong.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: halden.interview.act-or-wait.position.01
 function: position
 text: |
-  First question: does the uncertainty change the action?
+  Does the uncertainty change what we need to do?
 
 ### beat: halden.interview.act-or-wait.reason.01
 function: reason
 text: |
-  If we do not know intent but we do have direct warning, act on the warning. Waiting for a perfect answer to a different question is still a choice.
+  If intent is unclear but the warning is real, act on the warning. Waiting for a better answer to a different question doesn't help.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: halden.interview.future-cost.position.01
 function: position
 text: |
-  Keep the questions separate.
+  I'd keep the trade and the evidence separate.
 
 ### beat: halden.interview.future-cost.reason.01
 function: reason
 text: |
-  A gain today can be worth a cost next month, but neither changes what the evidence says. Decide the trade honestly; do not ask Intelligence to make one side of it sound inevitable.
-
+  Maybe the gain is worth being weaker next month. That's a command judgement. Intelligence shouldn't be used to make either side sound more certain than it is.
