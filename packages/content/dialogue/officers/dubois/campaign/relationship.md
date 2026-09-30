@@ -31,7 +31,7 @@ function: position
 requires:
   commander_respect: [low]
 text: |
-  Because they don't believe the reassurance anymore. We've surprised them too many times. I can keep the relationship polite; I can't make it trustworthy by wording it better.
+  Because they don't believe the reassurance anymore. We've surprised them too many times. I can keep the relationship polite. I can't make it trustworthy by wording it better.
 
 ## sequence: relationship-changed-view-high
 
