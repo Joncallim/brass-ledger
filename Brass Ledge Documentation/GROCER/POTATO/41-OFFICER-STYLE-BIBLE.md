@@ -46,36 +46,103 @@ Names, gender and background do not determine accent, grammar, temper or profess
 
 Plain English does not mean every officer sounds the same. Distinction comes from sentence length, what they notice first, how directly they disagree, whether they use examples, and what they refuse to leave vague.
 
+## Headquarters frame
+
+Brass Ledger uses one fictional national joint force. It works closely with allies and a local partner, but the 24 selectable officers all belong to the same force.
+
+This matters because the commander can realistically choose among them without also modelling national ownership of billets, different legal chains of command, or partner vetoes over appointments.
+
+All selectable officers are in the same broad senior grade for appointment purposes. Service rank can differ in the dossier, but rank does not make one candidate mechanically superior or give one officer authority over another candidate.
+
+The original six officers keep their existing identities:
+
+- Ruth Warden;
+- Elias Halden;
+- Mara Briggs;
+- Tunde Okafor;
+- Mina Sato;
+- Elena Navarro.
+
+Halden is a commissioned senior intelligence officer who also holds a doctorate. The old "Dr. Elias Halden" display is a legacy presentation choice, not evidence that he is a civilian. New dossiers should use his military rank once the personnel schema has a separate rank field.
+
+The six selectable posts are:
+
+- J1 Personnel;
+- J2 Intelligence;
+- J3 Operations;
+- J4 Logistics;
+- J5 Plans and Policy;
+- J7 Force Development and Training.
+
+J7 is different from J1-J5. The game still has five core staff readouts. J7 is a cross-cutting senior adviser whose work appears through personnel absorption, operational readiness, exercises, lessons, training standards and long-term capability development.
+
+J5 does not own every long-term problem. J5 owns campaign plans, policy, alliance choices and how major decisions fit together. Resource accounting and programme costing are supported by a non-selectable J8 staff cell.
+
+J6 communications/cyber and J8 resources exist in the headquarters but are not selectable senior advisers in the first game. Their effects appear through capability, burden, events and staff notes rather than another two character systems.
+
+A non-selectable Chief of Staff runs the staff process and helps the commander with appointments. The Chief of Staff does not vote on decisions and does not enter the friendship system. The "Staff Secretary" is the office that prepares dossiers and appointment notes, not another hidden adviser.
+
 ## Roster overview
 
 The table is a writing summary, not a player-facing rating sheet. Exact fit categories are listed later.
 
 | Officer | Main lane | Other believable posts | First impression |
 | --- | --- | --- | --- |
-| Ruth Warden | J1 | J7, J5 | Protective, plain-spoken, harder than she first appears |
-| Elias Halden | J2 | J5; J3 only as a deliberate stretch | Precise, sceptical, unexpectedly decisive |
-| Marcus Briggs | J3 | J5, J4 | Fast, practical, loyal, better prepared than his manner suggests |
-| Amara Okafor | J4 | J5, J3 | Calm realist, inventive once constraints are clear |
-| Emi Sato | J5 | J3, J2; J1 only as a deliberate stretch | Polished strategist, values options but will commit hard |
-| Isabel Navarro | J7 | J1, J3 | Demanding teacher, tolerant of honest failure |
-| Daniel Mercer | J1 | J5, J7 | Quiet organiser, sees manpower as a long pipeline |
-| Farah Rahman | J7 | J1, J5 | Energetic reformer, good with people, impatient with stale systems |
-| Claire Dubois | J1 | J5, J4 | Relationship builder with a stubborn core |
+| Ruth Warden | J1 | J7 | Protective, plain-spoken, harder than she first appears |
+| Elias Halden | J2 | J5 | Precise, sceptical, unexpectedly decisive |
+| Mara Briggs | J3 | J5; J4 only as a deliberate stretch | Fast, practical, loyal, better prepared than his manner suggests |
+| Tunde Okafor | J4 | J3 | Calm realist, inventive once constraints are clear |
+| Mina Sato | J5 | J3 | Polished strategist, values options but will commit hard |
+| Elena Navarro | J7 | J1; J3 only as a deliberate stretch | Demanding teacher, tolerant of honest failure |
+| Daniel Mercer | J1 | J7 | Quiet organiser, sees manpower as a long pipeline |
+| Farah Rahman | J7 | J1 | Energetic reformer, good with people, impatient with stale systems |
+| Claire Dubois | J1 | J5 | Relationship builder with a stubborn core |
 | Priya Nair | J2 | J5 | Fast pattern-reader, imaginative, vulnerable to elegant stories |
-| Tomas Varga | J2 | J3 | Field-minded collector, practical, private, distrusts false certainty |
-| Miriam Chen | J2 | J5, J4 | Broad thinker, excellent on systems, can make simple things too complicated |
-| Helena Ortiz | J3 | J5, J4 | Calm operator, excellent coordinator, reluctant to gamble without a branch |
-| Noah Kessler | J3 | J7, J1 | Stabiliser, protects recovery and tempo, can wait too long |
-| Laila Haddad | J3 | J5; J2 only as a deliberate stretch | Crisis improviser, comfortable with ambiguity, weak at making temporary fixes stick |
-| Peter Mensah | J4 | J5, J1 | Persuasive negotiator, good at finding capacity, sometimes believes every constraint can be moved |
+| Tomas Varga | J2 | J3 only as a deliberate stretch | Field-minded collector, practical, private, distrusts false certainty |
+| Miriam Chen | J2, J5 | — | Broad thinker, excellent on systems, can make simple things too complicated |
+| Helena Ortiz | J3 | J5; J4 only as a deliberate stretch | Calm operator, excellent coordinator, reluctant to gamble without a branch |
+| Noah Kessler | J3 | J7; J1 only as a deliberate stretch | Stabiliser, protects recovery and tempo, can wait too long |
+| Laila Haddad | J3 | J5 | Crisis improviser, comfortable with ambiguity, weak at making temporary fixes stick |
+| Peter Mensah | J4 | — | Persuasive negotiator, good at finding capacity, sometimes believes every constraint can be moved |
 | Grace Lin | J4 | J7, J3 | Engineer's mind, exacting, quietly creative, impatient with vague plans |
 | Sofia Marin | J4 | J3, J5 | Coalition logistician, strong relationship builder, can compromise too far |
-| Adrian Cole | J5 | J3, J4 | Elegant planner, sees structure quickly, at risk of falling in love with a neat plan |
-| Nadia Yusuf | J5 | J1, J2 | Direct strategist, forces choices into the open, can close debate too early |
-| Victor Hale | J5 | J4, J7 | Patient capability builder, thinks in years, can sacrifice too much of the present |
+| Adrian Cole | J5 | J3 | Elegant planner, sees structure quickly, at risk of falling in love with a neat plan |
+| Nadia Yusuf | J5 | — | Direct strategist, forces choices into the open, can close debate too early |
+| Victor Hale | J7 | J5; J4 only as a deliberate stretch | Patient capability builder, thinks in years, can sacrifice too much of the present |
 | Samuel Reyes | J7 | J3, J1 | Practical coach, trusts local leaders, can underweight central control |
-| Mei Tan | J7 | J5, J2 | Curious learning-system builder, absorbs lessons quickly, sometimes changes too much |
-| Omar Bell | J1 | J7, J5 | Warm mentor, builds strong teams, can protect weak performers too long |
+| Mei Tan | J7 | J5 | Curious learning-system builder, absorbs lessons quickly, sometimes changes too much |
+| Omar Bell | J1 | J7 | Warm mentor, builds strong teams, can protect weak performers too long |
+
+## Career background guide
+
+These are grounding facts for dialogue and appointment realism. They are not bonuses.
+
+| Officer | Service / career stream | Formative experience |
+| --- | --- | --- |
+| Ruth Warden | Land force, personnel and reserve command | formation command; reserve mobilisation; personnel planning |
+| Elias Halden | Land force intelligence | warning centre; joint assessment staff; red-team lead |
+| Mara Briggs | Land force operations | brigade command; joint operations centre; crisis task force |
+| Tunde Okafor | Maritime force logistics | fleet support; depot command; joint movement and repair |
+| Mina Sato | Air force plans and policy | air campaign plans; alliance staff; senior policy tour |
+| Elena Navarro | Land force training and force development | training command; exercise evaluation; joint force development |
+| Daniel Mercer | Land force personnel | formation staff; assignments branch; reserve manpower planning |
+| Farah Rahman | Air force force development | squadron command; training reform; headquarters change team |
+| Claire Dubois | Land force reserve and liaison | reserve brigade staff; partner liaison; mobilisation planning |
+| Priya Nair | Air force intelligence | all-source warning; adversary studies; red-team analysis |
+| Tomas Varga | Maritime force intelligence | collection unit; maritime patrol intelligence; joint liaison |
+| Miriam Chen | Joint intelligence and plans | industry assessment; long-range estimates; campaign planning |
+| Helena Ortiz | Maritime force operations | task-group operations; coalition exercises; joint operations centre |
+| Noah Kessler | Air force operations and readiness | wing command; readiness staff; major exercise planning |
+| Laila Haddad | Land force operations | task-force command; contingency planning; crisis response |
+| Peter Mensah | Joint logistics and procurement | movement control; emergency sourcing; partner support agreements |
+| Grace Lin | Air force engineering and logistics | maintenance command; readiness recovery; technical training |
+| Sofia Marin | Maritime force logistics and coalition support | port operations; multinational movement; coalition support staff |
+| Adrian Cole | Land force plans | division plans; joint campaign staff; force planning |
+| Nadia Yusuf | Joint plans and policy | command policy; campaign planning; headquarters priorities team |
+| Victor Hale | Joint force development | capability planning; programme integration; training pipeline work |
+| Samuel Reyes | Land force training and operations | battalion command; training centre; joint exercise staff |
+| Mei Tan | Air force training, simulation and plans | simulation centre; lessons team; campaign-analysis staff |
+| Omar Bell | Land force personnel and training | command; instructor tour; leader-development and assignments staff |
 
 ---
 
@@ -179,7 +246,7 @@ His first question is usually: what do we actually know?
 
 ## Career anchor
 
-Career intelligence analyst and assessment leader with experience in warning, red-teaming and joint headquarters work. He has seen both genuine surprise and false alarms created by people wanting a clean answer.
+Commissioned intelligence officer and assessment leader with a doctorate, with experience in warning, red-teaming and joint headquarters work. He has seen both genuine surprise and false alarms created by people wanting a clean answer.
 
 ## How the player may read him
 
@@ -255,42 +322,42 @@ Do not make him cold, indecisive, permanently sceptical of action, or addicted t
 
 ---
 
-# Marcus Briggs
+# Mara Briggs
 
 ## Core
 
 Briggs believes a decision becomes real when somebody has to do something because of it.
 
-He is impatient with plans that describe the effect but never reach the first action.
+She is impatient with plans that describe the effect but never reach the first action.
 
-His first question is usually: what happens first?
+Her first question is usually: what happens first?
 
 ## Career anchor
 
-Combined-arms commander and joint operations officer with repeated crisis-planning and field-command experience. He has spent much of his career turning broad orders into actions that units can actually carry out.
+Combined-arms commander and joint operations officer with repeated crisis-planning and field-command experience. She has spent much of her career turning broad orders into actions that units can actually carry out.
 
-## How the player may read him
+## How the player may read her
 
 At first: aggressive, impatient, probably the man who always wants to move.
 
-Later: deeply prepared, loyal to people who tell him hard truths, and perfectly willing to wait when movement would spend initiative for no gain.
+Later: deeply prepared, loyal to people who tell her hard truths, and perfectly willing to wait when movement would spend initiative for no gain.
 
 
 ## Strength
 
-He turns intent into action quickly. He sees timelines, branches, unclear authority and plans that will fall apart on first contact.
+She turns intent into action quickly. She sees timelines, branches, unclear authority and plans that will fall apart on first contact.
 
-He prepares more than his manner suggests.
+She prepares more than her manner suggests.
 
 ## Blind spot
 
-He is very good at handling friction, which can make him believe friction is always manageable. He can start moving because he trusts himself to adjust later, even when the first move closes options.
+She is very good at handling friction, which can make her believe friction is always manageable. She can start moving because she trusts himself to adjust later, even when the first move closes options.
 
 ## Social presence
 
-Energetic and direct. He enjoys professional argument. He can have a fierce disagreement and be perfectly friendly twenty minutes later.
+Energetic and direct. She enjoys professional argument. She can have a fierce disagreement and be perfectly friendly twenty minutes later.
 
-He hates passive resistance much more than open opposition.
+She hates passive resistance much more than open opposition.
 
 ## Voice
 
@@ -300,65 +367,65 @@ Short, active and practical.
 "By when?"
 "And if that fails?"
 
-He uses verbs more than abstract nouns.
+She uses verbs more than abstract nouns.
 
 ## Under pressure
 
-He cuts the problem down quickly:
+She cuts the problem down quickly:
 "Move the reserve."
 "Protect the airfield."
 "If they react, branch north."
 
-His failure under stress is closing the argument too early.
+Her failure under stress is closing the argument too early.
 
 ## Interview
 
-He turns broad questions into cases.
+She turns broad questions into cases.
 
 "How do you handle disagreement?"
 "How much time do we have?"
 
-He prefers stories about decisions that nearly failed.
+She prefers stories about decisions that nearly failed.
 
 ## Cross-post
 
-In J4 he asks what must arrive first. In J5 he asks when a concept becomes an order. In J7 he asks what performance matters on the first operational day.
+In J4 she asks what must arrive first. In J5 she asks when a concept becomes an order. In J7 she asks what performance matters on the first operational day.
 
 ## Interesting contradiction
 
-He sometimes argues hardest for restraint:
+She sometimes argues hardest for restraint:
 "No. Surge now and we show them what moves, burn the reserve, and gain nothing we cannot gain two days later."
 
 ## Respect, friction and being wrong
 
-He and Okafor can be close friends despite arguing constantly. He trusts her because a hard "no" from her usually comes with a reason and another route. He has strong professional respect for Ortiz and a mild competitive streak with her because both think they can run a difficult operation well. Yusuf's directness appeals to him until she closes a choice he still thinks can be worked.
+She and Okafor can be close friends despite arguing constantly. She trusts her because a hard "no" from her usually comes with a reason and another route. She has strong professional respect for Ortiz and a mild competitive streak with her because both think they can run a difficult operation well. Yusuf's directness appeals to her until she closes a choice she still thinks can be worked.
 
-He loses respect for people who keep objections vague enough that they never have to own an alternative.
+She loses respect for people who keep objections vague enough that they never have to own an alternative.
 
-When Briggs is wrong, he tends to mistake his own ability to recover from trouble for proof that the headquarters can safely create the trouble. He sees the branch, the reserve and the workaround and concludes that the risk is manageable. Sometimes the first move itself is the mistake.
+When Briggs is wrong, she tends to mistake her own ability to recover from trouble for proof that the headquarters can safely create the trouble. She sees the branch, the reserve and the workaround and concludes that the risk is manageable. Sometimes the first move itself is the mistake.
 
 
 ## Avoid
 
-Do not write a movie general. He is not stupid, permanently aggressive or allergic to planning.
+Do not write a movie general. She is not stupid, permanently aggressive or allergic to planning.
 
 ---
 
-# Amara Okafor
+# Tunde Okafor
 
 ## Core
 
 Okafor believes a real constraint is not an excuse. It is the shape of the problem.
 
-She dislikes both fantasy plans and lazy "we cannot" answers.
+He dislikes both fantasy plans and lazy "we cannot" answers.
 
-Her first question is usually: what physical system makes this work?
+His first question is usually: what physical system makes this work?
 
 ## Career anchor
 
-Logistics and engineering officer with experience in transport, maintenance, depots and operational support. She has managed both routine systems and crisis shortages.
+Logistics and engineering officer with experience in transport, maintenance, depots and operational support. He has managed both routine systems and crisis shortages.
 
-## How the player may read her
+## How the player may read his
 
 At first: practical, cautious, likely to tell everyone what they cannot have.
 
@@ -367,19 +434,19 @@ Later: one of the most creative officers once the real limit is clear, and capab
 
 ## Strength
 
-She sees flows, bottlenecks, repair, stock, transport and several plans quietly using the same capacity.
+He sees flows, bottlenecks, repair, stock, transport and several plans quietly using the same capacity.
 
-Once the constraint is clear, she is often one of the most inventive people in the room.
+Once the constraint is clear, he is often one of the most inventive people in the room.
 
 ## Blind spot
 
-She can protect spare capacity too long. Because she has seen organisations discover why buffers exist, she sometimes saves margin that should be spent on a decisive opportunity.
+He can protect spare capacity too long. Because he has seen organisations discover why buffers exist, he sometimes saves margin that should be spent on a decisive opportunity.
 
 ## Social presence
 
-Calm and hard to fluster. She remembers who gave her warning early and who committed her capacity without asking.
+Calm and hard to fluster. He remembers who gave his warning early and who committed his capacity without asking.
 
-She rarely needs to win a meeting. Physical reality tends to bring the argument back to her.
+He rarely needs to win a meeting. Physical reality tends to bring the argument back to his.
 
 ## Voice
 
@@ -387,45 +454,45 @@ Methodical and concrete.
 
 "The aircraft are available. The crews are available. The spare engines are not."
 
-She often says:
+He often says:
 "That is not the constraint. This is."
 
 ## Under pressure
 
-She becomes sharply selective:
+He becomes sharply selective:
 "Fuel is fine. Lift is not. Protect the lift."
 
-She will burn a buffer if the commander clearly chooses to spend it.
+He will burn a buffer if the commander clearly chooses to spend it.
 
 ## Interview
 
-She answers abstract questions with practical examples. Asked about another officer, she often describes how they react when told something cannot be done as planned.
+He answers abstract questions with practical examples. Asked about another officer, he often describes how they react when told something cannot be done as planned.
 
 ## Cross-post
 
-In J3 she links movement to what enables it. In J5 she asks whether the future programme has a real support chain. In J1 she can spot a scarce human skill holding the wider system together.
+In J3 he links movement to what enables it. In J5 he asks whether the future programme has a real support chain. In J1 he can spot a scarce human skill holding the wider system together.
 
 ## Interesting contradiction
 
-She can propose the boldest option:
+He can propose the boldest option:
 "The normal route will not support it. Use the partner port, skip the intermediate depot, and we arrive two days earlier."
 
 ## Respect, friction and being wrong
 
-She trusts Briggs more than outsiders expect because he usually changes the plan when she proves a constraint is real. She has strong technical respect for Lin. Mensah can irritate her: she thinks he sometimes treats a physical limit as if one more phone call will move it; he thinks she sometimes accepts a limit before testing who actually owns it.
+He trusts Briggs more than outsiders expect because he usually changes the plan when he proves a constraint is real. He has strong technical respect for Lin. Mensah can irritate his: he thinks he sometimes treats a physical limit as if one more phone call will move it; he thinks he sometimes accepts a limit before testing who actually owns it.
 
-She loses respect when someone commits her capacity before involving her.
+He loses respect when someone commits his capacity before involving his.
 
-When Okafor is wrong, she usually protects a buffer for a sensible reason and misses the moment when that buffer should have been spent. She can be so good at keeping the system able to absorb shocks that she underestimates the value of one decisive gamble.
+When Okafor is wrong, he usually protects a buffer for a sensible reason and misses the moment when that buffer should have been spent. He can be so good at keeping the system able to absorb shocks that he underestimates the value of one decisive gamble.
 
 
 ## Avoid
 
-Do not make her a permanent "no", a walking inventory list, or a synonym for caution.
+Do not make his a permanent "no", a walking inventory list, or a synonym for caution.
 
 ---
 
-# Emi Sato
+# Mina Sato
 
 ## Core
 
@@ -506,7 +573,7 @@ Do not write her as a press secretary, manipulator, or person who always wants m
 
 ---
 
-# Isabel Navarro
+# Elena Navarro
 
 ## Core
 
@@ -1949,36 +2016,38 @@ Do not make him sentimental, universally forgiving or a therapist in uniform.
 
 These fits describe believable career moves, not who is "better".
 
-Natural means the officer has a strong career claim to the billet. Strong means the move is easy to believe and uses much of their experience. Credible means they can do the job but would be moving away from their main professional lane. Stretch means the appointment is possible only in a scenario that deliberately wants that trade-off.
+Natural means the officer has a strong career claim to the billet. Strong means the move is easy to believe because of real prior work. Credible means the officer could do the job but would be leaving their main career lane. Stretch means the scenario is deliberately taking a risk.
+
+A personality match is not enough. Every Strong or Credible fit must be supported by the career background above.
 
 | Officer | Natural | Strong | Credible | Stretch |
 | --- | --- | --- | --- | --- |
-| Ruth Warden | J1 | J7 | J5 | — |
-| Elias Halden | J2 | J5 | — | J3 |
-| Marcus Briggs | J3 | J5 | J4 | — |
-| Amara Okafor | J4 | J5 | J3 | — |
-| Emi Sato | J5 | — | J3, J2 | J1 |
-| Isabel Navarro | J7 | J1 | J3 | — |
-| Daniel Mercer | J1 | J5 | J7 | — |
-| Farah Rahman | J7 | J1 | J5 | — |
-| Claire Dubois | J1 | J5 | J4 | — |
-| Priya Nair | J2 | J5 | — | — |
-| Tomas Varga | J2 | — | J3 | — |
-| Miriam Chen | J2 | J5 | J4 | — |
-| Helena Ortiz | J3 | J5 | J4 | — |
-| Noah Kessler | J3 | J7 | J1 | — |
-| Laila Haddad | J3 | J5 | — | J2 |
-| Peter Mensah | J4 | J5 | J1 | — |
+| Ruth Warden | J1 | J7 | — | — |
+| Elias Halden | J2 | — | J5 | — |
+| Mara Briggs | J3 | J5 | — | J4 |
+| Tunde Okafor | J4 | — | J3 | — |
+| Mina Sato | J5 | — | J3 | — |
+| Elena Navarro | J7 | — | J1 | J3 |
+| Daniel Mercer | J1 | — | J7 | — |
+| Farah Rahman | J7 | — | J1 | — |
+| Claire Dubois | J1 | — | J5 | — |
+| Priya Nair | J2 | — | J5 | — |
+| Tomas Varga | J2 | — | — | J3 |
+| Miriam Chen | J2, J5 | — | — | — |
+| Helena Ortiz | J3 | J5 | — | J4 |
+| Noah Kessler | J3 | J7 | — | J1 |
+| Laila Haddad | J3 | — | J5 | — |
+| Peter Mensah | J4 | — | — | — |
 | Grace Lin | J4 | J7 | J3 | — |
 | Sofia Marin | J4 | J3 | J5 | — |
-| Adrian Cole | J5 | J3 | J4 | — |
-| Nadia Yusuf | J5 | — | J1, J2 | — |
-| Victor Hale | J5 | J4, J7 | — | — |
+| Adrian Cole | J5 | J3 | — | — |
+| Nadia Yusuf | J5 | — | — | — |
+| Victor Hale | J7 | J5 | — | J4 |
 | Samuel Reyes | J7 | J3 | J1 | — |
-| Mei Tan | J7 | J5 | J2 | — |
-| Omar Bell | J1 | J7 | J5 | — |
+| Mei Tan | J7 | — | J5 | — |
+| Omar Bell | J1 | J7 | — | — |
 
-A cross-post changes what the officer is responsible for. It does not turn them into the person normally associated with that billet.
+Specialists are allowed to be specialists. Not every officer needs two normal appointments.
 
 # Voice fingerprint
 
