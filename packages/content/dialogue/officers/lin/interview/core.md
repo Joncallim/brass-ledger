@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: lin.interview.headquarters-failure.position.01
 function: position
 text: |
-  We say 'readiness' when we mean three different failures.
+  'Readiness' is too broad a word.
 
 ### beat: lin.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  One system is unreliable, another is short of parts, and a third has crews who have never used it under pressure. Those are not the same problem.
+  Is the system broken? Are parts missing? Have the crews practised? Three problems. Three fixes.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: lin.interview.commander-disagreement.example.01
 function: example
 text: |
-  I once argued for keeping an older system in service while a new fix was being rushed.
+  Old system or new fix? I chose the old system for the operation.
 
 ### beat: lin.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  The commander wanted the newer option because it looked like progress. We kept the old system for the operation and tested the fix in parallel. It was less elegant and much safer.
+  The commander wanted the new one. We tested it in parallel instead. Less elegant. Safer.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: lin.interview.red-line.position.01
 function: position
 text: |
-  If the order relies on a system nobody has tested in the way we intend to use it, I will tell you exactly what we do not know.
+  If nobody has tested the system the way we mean to use it, I will say so.
 
 ### beat: lin.interview.red-line.qualification.01
 function: qualification
 text: |
-  Sometimes we still use it. We should not discover the failure mode by accident if we had another choice.
+  We may still use it. I just do not want the first proper test to happen during the operation.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: lin.interview.self-critique.position.01
 function: position
 text: |
-  I can make people feel foolish when they cannot state a problem precisely.
+  I can make vague people feel stupid.
 
 ### beat: lin.interview.self-critique.reason.01
 function: reason
 text: |
-  That is not helpful. Sometimes they know something is wrong before they have the language to tell me which part is failing.
+  That is on me. People often know something is wrong before they can tell an engineer which part.
 
 ## sequence: crisis-peer
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: lin.interview.act-or-wait.position.01
 function: position
 text: |
-  Use the thing we know works and test the new thing in parallel.
+  Use what works. Test the new thing beside it.
 
 ### beat: lin.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Uncertainty is already expensive; do not add another unknown unless it buys something important.
+  We already have one unknown. Do not add another for no reason.
 
 ## sequence: future-cost
 
