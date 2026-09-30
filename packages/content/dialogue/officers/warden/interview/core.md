@@ -81,7 +81,7 @@ text: |
 ### beat: warden.interview.crisis-peer.reason.01
 function: reason
 text: |
-  Mina. She understands that words turn into promises. She thinks about allies and government; I think about the force. Same problem, different audience.
+  Mina. She understands that words turn into promises. She thinks about allies and government. I think about the force. Same problem, different audience.
 
 ## sequence: cross-post
 
