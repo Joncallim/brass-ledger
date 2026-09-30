@@ -66,7 +66,7 @@ text: |
 ### beat: mensah.interview.self-critique.reason.01
 function: reason
 text: |
-  I can see the deal before the other side has agreed to it. Those are not the same thing.
+  I can see the deal before the other side has agreed to it. Those aren't the same thing.
 
 ## sequence: crisis-peer
 
