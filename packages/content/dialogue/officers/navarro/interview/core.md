@@ -16,7 +16,7 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: navarro.interview.headquarters-failure.position.01
 function: position
 text: |
-  We call exposure competence.
+  We mistake exposure for competence.
 
 ### beat: navarro.interview.headquarters-failure.reason.01
 function: reason
@@ -31,7 +31,7 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: navarro.interview.commander-disagreement.example.01
 function: example
 text: |
-  A commander once wanted to call a new capability operational after one successful exercise.
+  One exercise. One clean run. Headquarters wanted to call the new capability operational.
 
 ### beat: navarro.interview.commander-disagreement.qualification.01
 function: qualification
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: navarro.interview.self-critique.position.01
 function: position
 text: |
-  I can be unfair to senior officers who dress failure as success.
+  Senior officers who dress failure as success bring out the worst in me.
 
 ### beat: navarro.interview.self-critique.reason.01
 function: reason
 text: |
-  I am more patient with a young unit that says 'we failed' than with a headquarters that says 'the objective was broadly met.' Sometimes my contempt shows.
+  A young unit can tell me it failed and I will work with that. A senior headquarters telling me 'the objective was broadly met' after a bad result gets much less patience.
 
 ## sequence: crisis-peer
 
