@@ -34,7 +34,7 @@ Do not write:
 "I value institutional resilience and human capital."
 
 Write:
-"You can use the same crews again. You just will not have them fresh next month."
+"You can use the same crews again. They just won't be fresh next month."
 
 Every officer needs a useful instinct and a matching blind spot. Their best quality should sometimes create their worst judgement.
 
@@ -320,17 +320,17 @@ Plain, concrete, human without sounding therapeutic.
 She uses words like people, crews, instructors, recovery, experience, employers and replacements.
 
 She tends to turn broad ideas into a real group of people:
-"That gives us another exercise. It also gives the same maintainers their third weekend away this month."
+"That gets us another exercise. Same maintainers, third weekend away this month."
 
 ## Under pressure
 
 She gets shorter and firmer.
 
 Low pressure:
-"I would give them another recovery cycle."
+"I'd give them another recovery cycle."
 
 High pressure:
-"Use them. Then take them off the line next month. Put both decisions in the order."
+"Use them. Then take them off the line next month. Put both in the order."
 
 ## Interview
 
@@ -347,7 +347,7 @@ She should remain a J1 specialist first. Do not move her into J3 or J5 just beca
 ## Interesting contradiction
 
 She may be the strongest voice for a harsh surge:
-"Mobilise them. This is what the reserve is for. But stop calling it painless."
+"Mobilise them. That's what the reserve is for. Just don't call it painless."
 
 ## Respect, friction and being wrong
 
@@ -399,23 +399,23 @@ He dislikes having his authority used as decoration:
 
 Precise, simple and clean.
 
-"We know the units moved. We assess why. Those are different claims."
+"We know the units moved. We don't know why. Those are different things."
 
 He asks useful questions rather than giving lectures:
-"What evidence would change your mind?"
+"What would change your mind?"
 
 ## Under pressure
 
 He becomes more decisive because he strips away uncertainty that does not affect the decision.
 
-"I cannot tell you whether they intend to attack. I can tell you they now have enough in place to do it with little warning."
+"I can't tell you if they mean to attack. I can tell you they can do it now with very little warning."
 
 ## Interview
 
 He often corrects the question before answering it.
 
 "Are you cautious?"
-"About conclusions, yes. Not necessarily about action."
+"About claims, yes. Not always about action."
 
 He is unusually willing to discuss times when he was wrong.
 
@@ -428,7 +428,7 @@ He is not a normal J3 candidate. His usefulness to operations comes through advi
 ## Interesting contradiction
 
 He can be the first to demand action:
-"Intent is still unclear. The warning is not. Move the reserve tonight."
+"Intent's still unclear. The warning isn't. Move the reserve tonight."
 
 ## Respect, friction and being wrong
 
@@ -512,11 +512,11 @@ J4 is a deliberate stretch. If a scenario puts her there, the point is the risk:
 ## Interesting contradiction
 
 She sometimes argues hardest for restraint:
-"No. Surge now and we show them what moves, burn the reserve, and gain nothing we cannot gain two days later."
+"No. Surge now and all we do is show them what moves and burn the reserve. Give it two days."
 
 ## Respect, friction and being wrong
 
-She and Okafor can be close friends despite arguing constantly. She trusts her because a hard "no" from her usually comes with a reason and another route. She has strong professional respect for Ortiz and a mild competitive streak with her because both think they can run a difficult operation well. Yusuf's directness appeals to her until she closes a choice she still thinks can be worked.
+She and Okafor can be close friends despite arguing constantly. She trusts him because a hard "no" from him usually comes with a reason and another route. She has strong professional respect for Ortiz and a mild competitive streak with her because both think they can run a difficult operation well. Yusuf's directness appeals to her until she closes a choice she still thinks can be worked.
 
 She loses respect for people who keep objections vague enough that they never have to own an alternative.
 
@@ -563,15 +563,15 @@ He rarely needs to win a meeting. Physical reality tends to bring the argument b
 
 Methodical and concrete.
 
-"The aircraft are available. The crews are available. The spare engines are not."
+"The aircraft are there. The crews are there. The spare engines aren't."
 
 He often says:
-"That is not the constraint. This is."
+"That's not the problem. This is."
 
 ## Under pressure
 
 He becomes sharply selective:
-"Fuel is fine. Lift is not. Protect the lift."
+"Fuel's fine. Lift isn't. Protect the lift."
 
 He will burn a buffer if the commander clearly chooses to spend it.
 
@@ -588,7 +588,7 @@ He is not a generic long-term planner. His value outside J4 comes from connectin
 ## Interesting contradiction
 
 He can propose the boldest option:
-"The normal route will not support it. Use the partner port, skip the intermediate depot, and we arrive two days earlier."
+"The normal route won't carry it. Use the partner port, skip the depot, save two days."
 
 ## Respect, friction and being wrong
 
@@ -601,7 +601,7 @@ When Okafor is wrong, he usually protects a buffer for a sensible reason and mis
 
 ## Avoid
 
-Do not make his a permanent "no", a walking inventory list, or a synonym for caution.
+Do not make him a permanent "no", a walking inventory list, or a synonym for caution.
 
 ---
 
@@ -639,21 +639,21 @@ She is charming, but charm is not her superpower.
 
 Measured and clear.
 
-"The question is not whether the statement sounds strong. The question is what we will be expected to do after saying it."
+"Strong words aren't the issue. What are we going to have to do after we say them?"
 
 She often reframes the problem rather than simply saying no.
 
 ## Under pressure
 
 She stops trying to keep every audience happy:
-"We cannot reassure all three. Decide which relationship must still be intact next week."
+"We can't reassure all three. Which relationship still has to be intact next week?"
 
 ## Interview
 
 She often finds the second question under the first.
 
 "How do you deal with a difficult ally?"
-"Difficult because they want something different, or because we have not decided what we want?"
+"Difficult because they want something different, or because we still haven't decided what we want?"
 
 ## Cross-post
 
@@ -664,7 +664,7 @@ She does not become an intelligence or personnel chief merely because she unders
 ## Interesting contradiction
 
 She can demand the hardest commitment:
-"No more private reassurance. Put the guarantee in writing. If we will not do that, they should know now."
+"No more private reassurance. Put the guarantee in writing. If we won't do that, tell them now."
 
 ## Respect, friction and being wrong
 
@@ -713,15 +713,15 @@ She dislikes leaders who pressure units to claim readiness for appearance.
 
 Precise and plain.
 
-"One successful run tells me it can happen. Repetition tells me the force owns it."
+"One clean run tells me it can work. Show me we can do it again."
 
 She often asks:
-"What exactly are we claiming they can do?"
+"What exactly are we saying they can do?"
 
 ## Under pressure
 
 She becomes practical:
-"Use the emergency procedure. It works. Just do not call it the new standard afterward."
+"Use the emergency procedure. It works. Just don't call it the new standard afterward."
 
 ## Interview
 
@@ -736,7 +736,7 @@ J3 is a deliberate stretch. If used there, her standards can help, but she lacks
 ## Interesting contradiction
 
 She can approve the ugliest shortcut:
-"No rehearsal. Use the prototype team. This is an emergency, not a certification event."
+"No rehearsal. Use the prototype team. It's an emergency. We'll argue about the standard later."
 
 ## Respect, friction and being wrong
 
@@ -787,14 +787,14 @@ He is good at remembering careers and who is ready for more responsibility.
 
 Calm and practical.
 
-"If we move her now, we solve this month and create a hole in training next quarter."
+"Move her now and we fix this month. Training gets the hole next quarter."
 
 He talks about people by name when possible, not as "human capital."
 
 ## Under pressure
 
 He becomes ruthless about priorities:
-"Keep the specialists. Replace the headquarters staff. We can rebuild the second faster than the first."
+"Keep the specialists. Replace the headquarters staff. We'll rebuild that faster."
 
 ## Interview
 
@@ -811,7 +811,7 @@ He should not drift into J5 simply because he thinks long term.
 ## Interesting contradiction
 
 He may recommend removing a popular high performer:
-"Everyone likes him. That is not a reason to leave him in a job he has stopped growing in."
+"Everyone likes him. That's not a reason to leave him in a job he's stopped growing in."
 
 ## Respect, friction and being wrong
 
@@ -862,14 +862,14 @@ She gets frustrated with people who raise history as a complete argument.
 
 Clear, lively and slightly impatient.
 
-"Is that rule, or is that just how the last three people did it?"
+"Is that actually a rule, or just how the last three people did it?"
 
 She prefers short examples over theory.
 
 ## Under pressure
 
 She becomes willing to tear down process quickly:
-"Drop the extra approval. Put one officer on it and let them own the result."
+"Drop the extra approval. Give one officer the job and make them own it."
 
 Her risk is deleting a safeguard she has not understood.
 
@@ -886,7 +886,7 @@ She remains strongest in J7. Do not use her as a generic planner just because sh
 ## Interesting contradiction
 
 She can become the voice for slowing down:
-"We have changed this twice in three months. Stop. Let people learn the version we already gave them."
+"We've changed this twice in three months. Stop. Let people learn the version we've already given them."
 
 ## Respect, friction and being wrong
 
@@ -939,14 +939,14 @@ She remembers favours and obligations.
 
 Plain and relational.
 
-"If we need them to carry this, tell them before the order arrives."
+"If we need them to carry it, tell them before the order arrives."
 
 She does not use Sato's strategic audience language. Dubois focuses more on working relationships than signalling.
 
 ## Under pressure
 
 She becomes firmer:
-"They do not need to like the decision. They do need to hear it from us before they hear it from someone else."
+"They don't have to like it. They should hear it from us first."
 
 ## Interview
 
@@ -961,7 +961,7 @@ She is not a logistics chief. Knowing partners does not make her qualified to ru
 ## Interesting contradiction
 
 She can recommend breaking a relationship cleanly:
-"We have spent three months protecting a partnership that is no longer delivering anything. End it properly."
+"We've spent three months protecting a partnership that's stopped delivering. End it properly."
 
 ## Respect, friction and being wrong
 
@@ -1012,14 +1012,14 @@ She dislikes people dismissing hypotheses simply because they are not yet proven
 
 Fast but clear.
 
-"One report means nothing. Three different oddities pointing the same way are worth asking about."
+"One report is nothing. Three odd things pointing the same way? Worth a look."
 
 She often offers two competing explanations rather than one.
 
 ## Under pressure
 
 She becomes more intuitive:
-"I cannot prove the pattern yet. I would still act as if it might be real, because the cost of waiting is higher."
+"I can't prove it yet. I'd still protect against it. Waiting costs more."
 
 ## Interview
 
@@ -1034,7 +1034,7 @@ Her hypotheses can help any staff function, but that does not make her a normal 
 ## Interesting contradiction
 
 She can be the strongest voice against the exciting explanation:
-"It is too neat. We are making every new fact serve the same story."
+"It's too neat. We're making every new fact fit the same story."
 
 ## Respect, friction and being wrong
 
@@ -1085,14 +1085,14 @@ Once he trusts someone, he is loyal.
 
 Short, concrete and source-minded.
 
-"She saw the convoy. She did not see where it went after the junction."
+"She saw the convoy. She didn't see where it went after the junction."
 
 He dislikes broad words when a narrower claim will do.
 
 ## Under pressure
 
 He becomes very practical:
-"Stop asking what they intend. Give me one question we can actually collect against tonight."
+"Stop asking what they intend. Give me one thing we can collect on tonight."
 
 ## Interview
 
@@ -1107,7 +1107,7 @@ The scenario should make the trade-off clear: good field sense is not the same a
 ## Interesting contradiction
 
 He can defend a broad analytic call:
-"No single source can tell you this. That does not mean the combined picture is wrong."
+"No single source can tell us. Doesn't mean the combined picture is wrong."
 
 ## Respect, friction and being wrong
 
@@ -1156,14 +1156,14 @@ People sometimes mistake her quiet for indecision.
 
 Measured but plain.
 
-"If we cut that route, fuel is not the first problem. Repair parts are."
+"Cut that route and fuel isn't the first problem. Repair parts are."
 
 She explains chains in short steps rather than jargon.
 
 ## Under pressure
 
 She forces herself to choose the most important link:
-"Ignore the rest for now. Shipping is the part that can break this month."
+"Leave the rest for now. Shipping is what can break this month."
 
 ## Interview
 
@@ -1178,7 +1178,7 @@ The danger in either billet is the same: she can make the problem wider faster t
 ## Interesting contradiction
 
 She sometimes demands a narrow, blunt answer:
-"We know enough. Stop widening the question."
+"We know enough. Stop widening it."
 
 ## Respect, friction and being wrong
 
@@ -1227,14 +1227,14 @@ Calm, professional and low-drama. She is good in tense rooms because she rarely 
 
 Clear and ordered.
 
-"I can support the first move. I want to know what we do if the partner is a day late."
+"I can support the first move. What do we do if the partner is a day late?"
 
 She is less blunt than Briggs but just as action-focused.
 
 ## Under pressure
 
 She becomes more willing to accept a thin branch:
-"We have one workable route. Use it. Keep the reserve uncommitted."
+"We've got one workable route. Use it. Keep the reserve free."
 
 ## Interview
 
@@ -1249,7 +1249,7 @@ J4 is a deliberate stretch. She understands where operations and support meet, b
 ## Interesting contradiction
 
 She can take the largest gamble in the room once she believes the branch is good enough:
-"We will not get a cleaner window. Go."
+"We're not getting a cleaner window. Go."
 
 ## Respect, friction and being wrong
 
@@ -1298,12 +1298,12 @@ This can make more aggressive officers feel he lacks urgency.
 
 Simple and time-focused.
 
-"We can surge for two weeks. I do not think we can live at that level for two months."
+"We can surge for two weeks. Two months? No."
 
 ## Under pressure
 
 He becomes much more decisive:
-"This is the surge. Spend the reserve now and plan the reset afterward."
+"This is the surge. Use the reserve now. Reset after."
 
 ## Interview
 
@@ -1370,12 +1370,12 @@ She dislikes excessive supervision.
 
 Direct, flexible and informal by senior-officer standards.
 
-"The plan is gone. Fine. We still have two units, one route and six hours."
+"Plan's gone. Fine. We still have two units, one route and six hours."
 
 ## Under pressure
 
 She gets better:
-"Stop trying to recover the original plan. Build from what is left."
+"Stop trying to get the old plan back. Work with what's left."
 
 Her weakness appears afterward, when somebody has to turn the improvised answer into a repeatable system.
 
@@ -1392,7 +1392,7 @@ She is not a J2 candidate. Comfort with uncertainty is not an intelligence quali
 ## Interesting contradiction
 
 She can demand strict process after too many workarounds:
-"No more exceptions. We have built three different ways of doing the same thing and nobody knows which one is real."
+"No more exceptions. We've got three ways of doing the same thing and nobody knows which one is real."
 
 ## Respect, friction and being wrong
 
@@ -1441,9 +1441,9 @@ He enjoys negotiation and can make colleagues worry that he likes the deal more 
 
 Clear and commercial without business jargon.
 
-"We cannot buy more time, but we can buy priority."
+"We can't buy time. We can buy priority."
 
-"If they want certainty, give them volume. If we want flexibility, pay for it."
+"They want certainty? Give them volume. We want flexibility? Pay for it."
 
 ## Under pressure
 
@@ -1463,7 +1463,7 @@ His negotiation skills are useful across the headquarters, but they do not by th
 ## Interesting contradiction
 
 He sometimes says the deal is not worth doing:
-"They will agree. That is not the same as this being a good bargain."
+"They'll agree. Doesn't mean it's a good deal."
 
 ## Respect, friction and being wrong
 
@@ -1508,12 +1508,12 @@ Quiet, dry and impatient with vague meetings. She prefers working sessions with 
 
 Exact but plain.
 
-"Which failure are we fixing? We have three different problems hiding under 'readiness'."
+"Which failure are we fixing? There are three different problems hiding under 'readiness'."
 
 ## Under pressure
 
 She strips away everything that does not matter:
-"Use the older system. It works. Fix the interface later."
+"Use the old system. It works. Fix the interface later."
 
 ## Interview
 
@@ -1528,7 +1528,7 @@ Her cross-post value comes from technical readiness, not from becoming a generic
 ## Interesting contradiction
 
 She can support a knowingly imperfect workaround:
-"It is ugly. It is also testable by tonight. Use it."
+"It's ugly. We can test it by tonight. Use it."
 
 ## Respect, friction and being wrong
 
@@ -1577,12 +1577,12 @@ She is less polished than Sato and more practical.
 
 Simple and partner-focused.
 
-"They can give us the fuel. They cannot give us the trucks. If we want both, we need two different partners."
+"They can give us fuel. They can't give us trucks. If we need both, we need another partner."
 
 ## Under pressure
 
 She becomes tougher:
-"If they cannot confirm by noon, cut them out of the first move."
+"No answer by noon, cut them out of the first move."
 
 ## Interview
 
@@ -1597,7 +1597,7 @@ She is still a logistics officer first.
 ## Interesting contradiction
 
 She can be the first to exclude a friendly partner:
-"They are trying. That does not make them reliable enough for this plan."
+"They're trying. I still wouldn't put them on the critical path."
 
 ## Respect, friction and being wrong
 
@@ -1644,12 +1644,12 @@ Thoughtful, articulate and self-controlled. He enjoys ideas and can accidentally
 
 Clear and structured, but keep it in plain English.
 
-"If deterrence is the main effort, the other decisions should support it. Right now two of them do not."
+"If deterrence is the main effort, two of these decisions are pulling against it."
 
 ## Under pressure
 
 He becomes much less elegant:
-"The plan is broken. Keep the objective. Drop the sequence."
+"Plan's broken. Keep the objective. Drop the sequence."
 
 ## Interview
 
@@ -1664,7 +1664,7 @@ The player should feel that difference in how he handles fast, messy execution.
 ## Interesting contradiction
 
 He can abandon his own beautiful plan quickly once he finally accepts it is broken:
-"Stop saving it. Build a new one."
+"Stop saving it. Write another one."
 
 ## Respect, friction and being wrong
 
@@ -1713,14 +1713,14 @@ She is fairer than her manner first suggests.
 
 Plain and sharp.
 
-"We keep saying both matter. Fine. Which one loses if we cannot have both?"
+"We keep saying both matter. Fine. Which one loses if we can't have both?"
 
 She avoids Sato's softer reframing.
 
 ## Under pressure
 
 She gets harder:
-"Pick one. We can explain it after we decide it."
+"Pick one. We can explain it after."
 
 ## Interview
 
@@ -1735,7 +1735,7 @@ Her ability to force hard choices into the open is useful elsewhere, but it does
 ## Interesting contradiction
 
 She can defend ambiguity:
-"We do not need to choose yet. Forcing a decision today would only make us wrong sooner."
+"We don't need to choose yet. Choosing now just gets us wrong sooner."
 
 ## Respect, friction and being wrong
 
@@ -1784,12 +1784,12 @@ Patient, calm and hard to hurry. He is not exciting in a meeting, but people oft
 
 Simple and long-horizon.
 
-"We can take those people from the programme. Just be clear that the programme then moves six months."
+"We can take the people. The programme moves six months. That's the trade."
 
 ## Under pressure
 
 He can spend the future deliberately:
-"If this is the crisis we built the capability for, use it. Stop protecting the plan from reality."
+"If this is the crisis we built it for, use it. Stop protecting the programme from the reason it exists."
 
 ## Interview
 
@@ -1804,7 +1804,7 @@ J4 is a deliberate stretch. He understands programme and industrial buildup, but
 ## Interesting contradiction
 
 He can recommend cancelling his own favoured programme:
-"It is not going to arrive in time to matter. Stop feeding it."
+"It's not arriving in time. Stop feeding it."
 
 ## Respect, friction and being wrong
 
@@ -1851,15 +1851,15 @@ Warm, energetic and comfortable with junior leaders. Senior staff sometimes thin
 
 Plain and encouraging without becoming motivational.
 
-"Tell them what must not fail. Let them work out the rest."
+"Tell them what can't fail. Let them work out the rest."
 
 ## Under pressure
 
 He protects local freedom:
-"Do not give them a new checklist tonight. Give them the aim and the boundary."
+"Don't give them another checklist tonight. Give them the aim and the boundary."
 
 But in a badly fragmented force he can reverse:
-"No. Everyone uses the same procedure until we get control back."
+"No. Same procedure for everyone until we've got control back."
 
 ## Interview
 
@@ -1918,12 +1918,12 @@ Curious, open and willing to question her own ideas. She asks many questions wit
 
 Simple, inquisitive and practical.
 
-"Was that failure telling us the plan is wrong, or that the unit had not practised it enough?"
+"Was the plan wrong, or had the unit just not practised enough?"
 
 ## Under pressure
 
 She becomes selective about lessons:
-"Do not redesign anything tonight. Record it. We decide what it means after the operation."
+"Don't redesign it tonight. Record it. We'll decide what it means after."
 
 ## Interview
 
@@ -1938,7 +1938,7 @@ She is not a J2 candidate. Being good at learning from evidence is not the same 
 ## Interesting contradiction
 
 She can become the strongest defender of stability:
-"We have changed this every time something went wrong. That is now the problem."
+"We've changed this every time something went wrong. That's becoming the problem."
 
 ## Respect, friction and being wrong
 
@@ -1985,15 +1985,15 @@ Warm, humorous and easy to trust. He knows many people well and often understand
 
 Friendly and plain, but capable of becoming very direct.
 
-"She has had two chances and learned from both. Give her the third."
+"She's had two chances and learned from both. Give her the third."
 
 Or:
-"He has had three chances and blamed someone else every time. Move him."
+"He's had three chances and blamed somebody else every time. Move him."
 
 ## Under pressure
 
 He stops cushioning the message:
-"We do not have time to develop him in this job. Replace him."
+"We don't have time to develop him in this job. Replace him."
 
 ## Interview
 
@@ -2008,7 +2008,7 @@ He should stay out of J5. Judging whether an organisation has enough leaders is 
 ## Interesting contradiction
 
 The warm mentor can be the officer who removes somebody:
-"Keeping him here is not kindness. It is making the team pay for our reluctance."
+"Keeping him here isn't kind. The team is carrying him for us."
 
 ## Respect, friction and being wrong
 
