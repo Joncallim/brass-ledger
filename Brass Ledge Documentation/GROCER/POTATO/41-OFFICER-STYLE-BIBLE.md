@@ -50,6 +50,8 @@ Plain English does not mean every officer sounds the same. Distinction comes fro
 
 Brass Ledger uses one fictional national joint force. It works closely with allies and a local partner, but the 24 selectable officers all belong to the same force.
 
+The existing "coalition-composite" doctrine label describes **how this force works with allies**. It does not mean the candidate pool is made up of officers owned by different nations.
+
 This matters because the commander can realistically choose among them without also modelling national ownership of billets, different legal chains of command, or partner vetoes over appointments.
 
 All selectable officers are pre-screened at the same **two-star-equivalent appointment level**. Service-specific rank titles can differ in the dossier, but they do not make one candidate mechanically superior or give one candidate command authority over another.
