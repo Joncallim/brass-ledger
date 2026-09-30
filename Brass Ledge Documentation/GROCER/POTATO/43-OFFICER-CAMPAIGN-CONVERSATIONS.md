@@ -257,6 +257,17 @@ Officer-owned memory may retain semantic refs such as:
 
 Do not persist prose as authority.
 
+## Closed conversation memory refs
+
+The first authored campaign baseline uses these semantic memory refs:
+
+- `warning-borne-out` — this officer previously raised a material risk and a later player-safe consequence confirmed that risk mattered;
+- `officer-view-disconfirmed` — this officer's prior material view was later contradicted by a player-safe result strongly enough to support a self-correction callback.
+
+Later refs may include overrule, commitment, repeated-known-failure and owned-mistake semantics, but they must be added to the closed registry before authored files can reference them.
+
+A memory ref is not inferred from prose.
+
 ## Personality and respect expression
 
 The same respect band should look different by officer.
