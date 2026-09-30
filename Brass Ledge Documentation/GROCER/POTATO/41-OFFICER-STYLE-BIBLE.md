@@ -88,6 +88,28 @@ The Chief of Staff should not secretly recommend an "optimal" roster either. The
 
 In ordinary dialogue, use plain role names such as Personnel, Intelligence, Operations, Logistics, Plans and Force Development. J1/J2/J3/J4/J5/J7 are useful dossier shorthand, not something every character needs to say aloud.
 
+## Realism decisions
+
+These decisions close the main realism gaps found during review.
+
+1. **Keep the original six people.** Ruth Warden, Elias Halden, Mara Briggs, Tunde Okafor, Mina Sato and Elena Navarro remain the same officers. Do not rename them just to fit a new roster.
+2. **Halden is military.** He is a commissioned senior intelligence officer who also has a doctorate. "Dr." is an old display choice, not civilian status.
+3. **Keep five core staff readouts, but six selectable advisers.** J7 Force Development and Training is a real senior appointment, but its mechanics feed Personnel, Operations and Plans rather than creating a sixth global meter.
+4. **Keep Plans narrow.** J5 means campaign plans, policy, alliances and how major decisions fit together. It is not the home for every officer who thinks long term.
+5. **Treat Intelligence as a specialist career.** Being clever, analytical or comfortable with uncertainty does not qualify somebody to lead J2.
+6. **Use one fictional national joint force.** The headquarters works closely with allies, but selectable officers are not supplied by different nations. This avoids fake freedom to swap partner-nation officers between posts.
+7. **Put candidates at one appointment level.** All are two-star-equivalent for selection. Old prototype rank strings do not create seniority inside the candidate pool.
+8. **Use one current dialogue authority.** This document owns current character voice. The old detailed advisor-style file is historical only.
+9. **Separate history from opinion.** "Served together" is a shared fact. Liking, trust and professional respect are directional and can differ.
+10. **Allow real friction.** Some officers genuinely dislike or distrust each other. That still does not force them to disagree on the facts.
+11. **Ground every officer in a service and career.** Cross-posting must come from real prior work, not from personality alone.
+12. **Give people ordinary human faults.** Not every weakness is a noble strength used too much. Officers can be defensive, impatient, poor at notes, slow to confront, protective of favourites or too attached to their own work.
+13. **Do not use the same discovery trick for everyone.** Some first impressions are right. Some get worse with familiarity. Some officers stay hard to read.
+14. **Keep the Chief of Staff outside the roster game.** The Chief of Staff runs process. The Staff Secretary office gives factual appointment notes. Neither secretly picks the best roster.
+15. **Do not add J6/J8 characters yet.** Communications/cyber and resources/costing exist in the headquarters and appear through modules, events and staff notes. They are not selectable chiefs in the first roster.
+
+These choices are deliberately simpler than a real headquarters. The goal is a believable command team, not a complete personnel simulator.
+
 ## Roster overview
 
 The table is a writing summary, not a player-facing rating sheet. Exact fit categories are listed later.
