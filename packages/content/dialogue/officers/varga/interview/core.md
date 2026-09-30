@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: varga.interview.headquarters-failure.position.01
 function: position
 text: |
-  We turn reports into stories before asking what the source actually saw.
+  We make reports bigger as they move upward.
 
 ### beat: varga.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  A person sees one convoy at one junction. By the third briefing, headquarters is talking as if they watched the whole movement.
+  One person sees one convoy at one junction. Three briefings later, it sounds like we watched the whole movement.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: varga.interview.commander-disagreement.example.01
 function: example
 text: |
-  I was once asked to brief a location as confirmed because two reports mentioned it.
+  Two reports. One original source. I was asked to call the location confirmed.
 
 ### beat: varga.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  Both reports came from the same original observer. I refused the word. The commander still planned against the location, which was reasonable. What mattered was that he knew what the evidence was.
+  I refused the word. The commander still planned against the location. Fine. He knew what the evidence actually was.
 
 ## sequence: red-line
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: varga.interview.self-critique.position.01
 function: position
 text: |
-  I hold context too long.
+  I hold reporting too long.
 
 ### beat: varga.interview.self-critique.reason.01
 function: reason
 text: |
-  I dislike passing a report upward before I understand where it came from and what changed on the way. Sometimes that means the headquarters gets a useful warning later than it should.
+  I want to know where it came from and what changed on the way. Sometimes that means a useful warning reaches the headquarters later than it should.
 
 ## sequence: crisis-peer
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: varga.interview.cross-post.position.01
 function: position
 text: |
-  Operations would be a stretch for me.
+  Operations? A stretch.
 
 ### beat: varga.interview.cross-post.qualification.01
 function: qualification
 text: |
-  I know what field reporting can and cannot tell an operator. That is not the same as knowing how to run the whole operation. I would worry about giving collection too much weight in the plan.
+  I know what field reporting can tell an operator. I have not spent a career running the whole operation. I would give collection too much weight if I was not careful.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: varga.interview.act-or-wait.position.01
 function: position
 text: |
-  Pick one or two questions we can actually answer tonight.
+  Pick one question we can answer tonight.
 
 ### beat: varga.interview.act-or-wait.reason.01
 function: reason
 text: |
-  While we collect, stage the things we can reverse. Do not wait for a broad answer when a narrow one is enough to protect the force.
+  Stage what we can reverse while we collect. A narrow answer may be enough.
 
 ## sequence: future-cost
 
@@ -121,10 +121,10 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: varga.interview.future-cost.position.01
 function: position
 text: |
-  If today's gain is uncertain and next month's cost is known, be careful.
+  Known cost, uncertain gain? Be careful.
 
 ### beat: varga.interview.future-cost.reason.01
 function: reason
 text: |
-  I would rather pay a known cost for a real advantage than for something we only think happened.
+  Pay the cost when the advantage is real, not because the reporting might mean something.
 
