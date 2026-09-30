@@ -46,6 +46,68 @@ Names, gender and background do not determine accent, grammar, temper or profess
 
 Plain English does not mean every officer sounds the same. Distinction comes from sentence length, what they notice first, how directly they disagree, whether they use examples, and what they refuse to leave vague.
 
+## Information-presentation contract
+
+Voice is not enough. Each officer also needs a recognisable way of **ordering information for another person**.
+
+This is a separate axis from worldview, vocabulary, sentence length and professional stance. Two officers may notice the same fact and reach the same recommendation while still explaining it in a different order.
+
+A presentation profile answers:
+
+> When this person has several relevant things to say, what do they put first, what do they make it mean, and how do they move toward action?
+
+The profile is a default reasoning path, not a catchphrase and not a rigid four-sentence template.
+
+- Do not print the profile name in player-facing dialogue.
+- Do not force every short answer to contain every move.
+- In a substantive multi-beat answer, preserve the officer's normal ordering unless the authored sequence deliberately calls for an inversion, such as a story-first interview answer.
+- Pressure normally **compresses** a profile rather than replacing it. Briggs becomes even more action-first; Halden strips down to the claim that matters; Warden reduces the issue to the people being spent and the recovery term.
+- Cross-posting changes the facts and responsibilities being discussed. It does not turn the officer into the normal occupant of that billet.
+- Presentation order never determines professional stance, trust, social influence, recommendation legality or simulation outcomes.
+- A player should learn these patterns by repeated exposure. If the pattern is so repetitive that it sounds like a branded framework, it is too obvious.
+
+The first 24 officers use these distinct default presentation profiles:
+
+| Officer | Profile id | Normal information order |
+| --- | --- | --- |
+| Ruth Warden | `warden.human-cost` | bearer → burden → duration → recovery / terms |
+| Elias Halden | `halden.claim-ladder` | observed → assessed → unknown or change-trigger → action |
+| Mara Briggs | `briggs.action-sequence` | objective → first action → next trigger → branch |
+| Tunde Okafor | `okafor.constraint-chain` | requirement → bottleneck → real capacity → workaround / price |
+| Mina Sato | `sato.commitment-chain` | purpose → expectation created → commitment implied → future freedom |
+| Elena Navarro | `navarro.standard-proof` | claimed standard → repeated evidence → gap → next test |
+| Daniel Mercer | `mercer.pipeline-domino` | move now → next vacancy → pipeline effect → succession fix |
+| Farah Rahman | `rahman.first-principles-change` | purpose → inherited process → why it still exists → smallest useful change |
+| Claire Dubois | `dubois.cooperation-map` | actors → dependence → relationship risk → who needs to speak, and when |
+| Priya Nair | `nair.hypothesis-test` | pattern → competing explanations → discriminating clue → provisional action |
+| Tomas Varga | `varga.provenance-chain` | source → access → actual observation → limitation / usable claim |
+| Miriam Chen | `chen.system-chain` | change → connected effects → most important link → intervention |
+| Helena Ortiz | `ortiz.branch-plan` | aim → dependency → failure case → branch / trigger |
+| Noah Kessler | `kessler.tempo-cycle` | tempo now → accumulated debt → recovery window → next surge |
+| Laila Haddad | `haddad.reality-workaround` | reality now → what still works → immediate workaround → normalise later |
+| Peter Mensah | `mensah.control-negotiation` | need → who controls it → what they want → trade / agreement |
+| Grace Lin | `lin.requirement-test` | requirement → failure mode → mechanism → test / pass condition |
+| Sofia Marin | `marin.partner-delivery` | needed contribution → owner → promise versus delivery → fallback |
+| Adrian Cole | `cole.end-state-coherence` | end state → main effort → supporting actions → cut what does not serve it |
+| Nadia Yusuf | `yusuf.forced-choice` | real choice → incompatible priorities → sacrifice → decision ownership |
+| Victor Hale | `hale.future-capability` | future capability → dependency / milestone → present raid → delay or irreversible cost |
+| Samuel Reyes | `reyes.intent-boundary-feedback` | intent → non-negotiable boundary → local freedom → feedback |
+| Mei Tan | `tan.lesson-loop` | result → meaning → repeat-or-noise test → adapt or hold |
+| Omar Bell | `bell.development-diagnosis` | performance problem → cause locus → development / support → accountability threshold |
+
+These are deliberately not twenty-four synonyms for “fact → opinion → recommendation”.
+
+The main collision risks are:
+
+- **Warden / Kessler / Mercer / Hale** — all can discuss future cost. Warden follows the people carrying it; Kessler follows operational rhythm; Mercer follows the personnel pipeline; Hale follows capability milestones.
+- **Halden / Nair / Varga / Chen** — all can sound analytical. Halden separates claim levels; Nair compares explanations; Varga follows provenance; Chen follows system effects.
+- **Sato / Cole / Yusuf** — all can talk strategy. Sato follows commitments and future freedom; Cole follows campaign coherence; Yusuf exposes the choice that cannot stay balanced.
+- **Dubois / Marin / Mensah** — all can discuss other actors. Dubois follows the working relationship; Marin follows delivery across a partner boundary; Mensah follows control and negotiability.
+- **Briggs / Ortiz / Haddad / Reyes** — all can sound operational. Briggs sequences action; Ortiz builds branches; Haddad rebuilds from current reality; Reyes frames intent and discretion.
+- **Navarro / Lin / Tan** — all can challenge performance. Navarro asks whether a standard is repeatable; Lin defines and tests a system requirement; Tan asks what a result actually teaches.
+
+When reviewing dialogue, compare information order before comparing word choice. A line can pass the voice test and still fail the character test if it presents the problem in another officer's reasoning shape.
+
 ## Headquarters frame
 
 Brass Ledger uses one fictional national joint force. It works closely with allies and a local partner, but the 24 selectable officers all belong to the same force.
@@ -244,7 +306,7 @@ She may be the strongest voice for a harsh surge:
 
 ## Respect, friction and being wrong
 
-She respects Briggs because he owns the cost of his decisions, even when she thinks he pushes too hard. She trusts Sato to remember that promises to people are still promises. She gets on with Kessler because he thinks seriously about recovery, though she sometimes thinks he protects the force when it should be used.
+She respects Briggs because she owns the cost of her decisions, even when she thinks he pushes too hard. She trusts Sato to remember that promises to people are still promises. She gets on with Kessler because he thinks seriously about recovery, though she sometimes thinks he protects the force when it should be used.
 
 She loses respect fastest when a leader calls repeated sacrifice "resilience" and never pays the recovery bill.
 
