@@ -97,7 +97,7 @@ The table is a writing summary, not a player-facing rating sheet. Exact fit cate
 | Daniel Mercer | J1 | J7 | Quiet organiser, sees manpower as a long pipeline |
 | Farah Rahman | J7 | J1 | Energetic reformer, good with people, impatient with stale systems |
 | Claire Dubois | J1 | J5 | Relationship builder with a stubborn core |
-| Priya Nair | J2 | J5 | Fast pattern-reader, imaginative, vulnerable to elegant stories |
+| Priya Nair | J2 | — | Fast pattern-reader, imaginative, vulnerable to elegant stories |
 | Tomas Varga | J2 | J3 only as a deliberate stretch | Field-minded collector, practical, private, distrusts false certainty |
 | Miriam Chen | J2, J5 | — | Broad thinker, excellent on systems, can make simple things too complicated |
 | Helena Ortiz | J3 | J5; J4 only as a deliberate stretch | Calm operator, excellent coordinator, reluctant to gamble without a branch |
@@ -119,29 +119,29 @@ These are grounding facts for dialogue and appointment realism. They are not bon
 
 | Officer | Service / career stream | Formative experience |
 | --- | --- | --- |
-| Ruth Warden | Land force, personnel and reserve command | formation command; reserve mobilisation; personnel planning |
-| Elias Halden | Land force intelligence | warning centre; joint assessment staff; red-team lead |
-| Mara Briggs | Land force operations | brigade command; joint operations centre; crisis task force |
-| Tunde Okafor | Maritime force logistics | fleet support; depot command; joint movement and repair |
-| Mina Sato | Air force plans and policy | air campaign plans; alliance staff; senior policy tour |
-| Elena Navarro | Land force training and force development | training command; exercise evaluation; joint force development |
-| Daniel Mercer | Land force personnel | formation staff; assignments branch; reserve manpower planning |
-| Farah Rahman | Air force force development | squadron command; training reform; headquarters change team |
-| Claire Dubois | Land force reserve and liaison | reserve brigade staff; partner liaison; mobilisation planning |
+| Ruth Warden | Land force, personnel and reserve command | formation command; reserve mobilisation; training-and-recovery command |
+| Elias Halden | Land force intelligence | warning centre; joint assessment staff; estimates-and-plans tour |
+| Mara Briggs | Land force operations | brigade command; joint operations centre; joint plans tour |
+| Tunde Okafor | Maritime force logistics | fleet support; depot command; deputy in a joint task force |
+| Mina Sato | Air force plans and policy | air operations centre; alliance plans staff; senior policy tour |
+| Elena Navarro | Land force training and force development | training command; personnel-readiness staff; joint force development |
+| Daniel Mercer | Land force personnel | formation staff; assignments branch; training-manpower planning |
+| Farah Rahman | Air force force development | squadron command; personnel-policy tour; training reform |
+| Claire Dubois | Land force reserve and liaison | reserve brigade staff; partner liaison; coalition plans tour |
 | Priya Nair | Air force intelligence | all-source warning; adversary studies; red-team analysis |
 | Tomas Varga | Maritime force intelligence | collection unit; maritime patrol intelligence; joint liaison |
 | Miriam Chen | Joint intelligence and plans | industry assessment; long-range estimates; campaign planning |
-| Helena Ortiz | Maritime force operations | task-group operations; coalition exercises; joint operations centre |
-| Noah Kessler | Air force operations and readiness | wing command; readiness staff; major exercise planning |
+| Helena Ortiz | Maritime force operations | task-group operations; coalition exercises; joint plans deputy |
+| Noah Kessler | Air force operations and readiness | wing command; readiness staff; force-development exercise tour |
 | Laila Haddad | Land force operations | task-force command; contingency planning; crisis response |
 | Peter Mensah | Joint logistics and procurement | movement control; emergency sourcing; partner support agreements |
-| Grace Lin | Air force engineering and logistics | maintenance command; readiness recovery; technical training |
-| Sofia Marin | Maritime force logistics and coalition support | port operations; multinational movement; coalition support staff |
-| Adrian Cole | Land force plans | division plans; joint campaign staff; force planning |
+| Grace Lin | Air force engineering and logistics | maintenance command; readiness recovery; technical training command |
+| Sofia Marin | Maritime force logistics and coalition support | port operations; multinational movement; coalition operations staff |
+| Adrian Cole | Land force plans | division plans; joint campaign staff; operations-plans deputy |
 | Nadia Yusuf | Joint plans and policy | command policy; campaign planning; headquarters priorities team |
-| Victor Hale | Joint force development | capability planning; programme integration; training pipeline work |
-| Samuel Reyes | Land force training and operations | battalion command; training centre; joint exercise staff |
-| Mei Tan | Air force training, simulation and plans | simulation centre; lessons team; campaign-analysis staff |
+| Victor Hale | Joint force development | capability planning; programme integration; long-range plans tour |
+| Samuel Reyes | Land force training and operations | battalion command; training centre; joint operations exercise staff |
+| Mei Tan | Air force training, simulation and plans | simulation centre; lessons team; campaign-plans staff |
 | Omar Bell | Land force personnel and training | command; instructor tour; leader-development and assignments staff |
 
 ---
@@ -2031,7 +2031,7 @@ A personality match is not enough. Every Strong or Credible fit must be supporte
 | Daniel Mercer | J1 | — | J7 | — |
 | Farah Rahman | J7 | — | J1 | — |
 | Claire Dubois | J1 | — | J5 | — |
-| Priya Nair | J2 | — | J5 | — |
+| Priya Nair | J2 | — | — | — |
 | Tomas Varga | J2 | — | — | J3 |
 | Miriam Chen | J2, J5 | — | — | — |
 | Helena Ortiz | J3 | J5 | — | J4 |
@@ -2040,7 +2040,7 @@ A personality match is not enough. Every Strong or Credible fit must be supporte
 | Peter Mensah | J4 | — | — | — |
 | Grace Lin | J4 | J7 | J3 | — |
 | Sofia Marin | J4 | J3 | J5 | — |
-| Adrian Cole | J5 | J3 | — | — |
+| Adrian Cole | J5 | — | J3 | — |
 | Nadia Yusuf | J5 | — | — | — |
 | Victor Hale | J7 | J5 | — | J4 |
 | Samuel Reyes | J7 | J3 | J1 | — |
@@ -2048,6 +2048,8 @@ A personality match is not enough. Every Strong or Credible fit must be supporte
 | Omar Bell | J1 | J7 | — | — |
 
 Specialists are allowed to be specialists. Not every officer needs two normal appointments.
+
+A Strong or Credible fit must have a named career basis in this document. If the career history changes, the fit must be reviewed again. A clever personality match is not enough.
 
 # Voice fingerprint
 
@@ -2082,51 +2084,138 @@ This is a writing aid. Do not turn it into player-visible statistics.
 
 # Relationship seeds
 
-These are starting writing anchors, not a complete social graph. A missing relationship means the player may genuinely have little useful information about the pair.
+Relationships need two different kinds of truth.
 
-Relationships are directional. Where both directions are listed, each person still sees the relationship differently.
+**Shared history** is a fact: two officers served together, one mentored the other, or they argued during a past operation.
 
-| From | Toward | Starting relationship |
-| --- | --- | --- |
-| Warden | Briggs | Strong respect. She trusts him to own a hard decision but thinks he can spend people too easily. |
-| Briggs | Warden | Strong respect. He values that her objections are concrete and usually come with a boundary he can plan around. |
-| Briggs | Okafor | Old friendship and strong professional trust. They argue often and recover quickly. |
-| Okafor | Briggs | Warm and trusting. She believes he will change a plan when a real limit is proved. |
-| Warden | Sato | Warm respect. Warden thinks Sato understands that promises inside the force matter too. |
-| Sato | Warden | Strong respect. Sato trusts Warden to spot a credibility problem before it becomes visible outside the force. |
-| Halden | Sato | High professional respect with regular disagreement over how far behaviour can support a judgement about intent. |
-| Sato | Halden | High professional respect. She sometimes finds his wording too narrow for the decision that still has to be made. |
-| Halden | Nair | Mentor-like respect. He values her imagination and watches for the moment a hypothesis becomes a favourite story. |
-| Nair | Halden | High respect with some frustration. She wants room to explore before every idea is forced into a final judgement. |
-| Varga | Halden | Strong trust in Halden's handling of source limits. |
-| Halden | Varga | Strong respect for Varga's understanding of what collection can really show. |
-| Briggs | Ortiz | Competitive professional respect. Each thinks the other runs a difficult operation well. |
-| Ortiz | Briggs | Strong respect with less patience for his willingness to start moving before every branch is ready. |
-| Ortiz | Marin | Easy working relationship from previous coalition operations. |
-| Marin | Ortiz | Strong trust in Ortiz's ability to make several partners work to one timetable. |
-| Okafor | Mensah | Respect mixed with friction. She thinks he sometimes tries to negotiate past a physical limit. |
-| Mensah | Okafor | Respect mixed with friction. He thinks she sometimes accepts a limit before checking who can change the rules around it. |
-| Okafor | Lin | Strong technical trust. |
-| Lin | Okafor | Strong respect. Lin knows Okafor will not hide an ugly system constraint behind vague language. |
-| Navarro | Reyes | Warm relationship with a real professional argument about common standards versus local freedom. |
-| Reyes | Navarro | Warm respect. He thinks she sometimes asks for more common practice than good local leaders need. |
-| Navarro | Tan | Mentor-like respect. Navarro likes Tan's curiosity and worries about how quickly she turns one result into a lesson. |
-| Tan | Navarro | High respect. Tan values Navarro as a brake on fashionable lessons. |
-| Rahman | Tan | Warm, energetic working relationship. Their shared appetite for change can become a weakness if nobody slows them down. |
-| Rahman | Hale | Productive friction. She thinks he protects programmes too long. |
-| Hale | Rahman | Productive friction. He thinks she can break a system faster than the replacement can take hold. |
-| Mercer | Bell | Respect with tension over when development has had enough time. |
-| Bell | Mercer | Respect with discomfort about Mercer's willingness to move people for the health of the wider system. |
-| Mercer | Hale | Strong respect around long pipelines and future readiness. |
-| Dubois | Marin | Warm old working relationship built around partner and reserve arrangements. |
-| Nair | Chen | Complementary respect: Nair finds patterns quickly; Chen tests what else those patterns would have to explain. |
-| Chen | Nair | Respect with a useful instinct to widen Nair's favourite explanation before accepting it. |
-| Haddad | Reyes | Warm affinity around trust in people close to the problem. |
-| Yusuf | Briggs | Mutual respect for directness, with friction over whether another workable option still exists. |
-| Cole | Sato | Strong professional respect with tension between a clean campaign shape and preserving room to change it. |
-| Reyes | Bell | Close working friendship built through leader development and training. |
+**Directional view** belongs to one person: liking, dislike, trust and professional respect can be different in each direction.
 
-Do not force these relationships into every conversation. A friendship should be visible mainly when it changes patience, trust or the way one officer talks about another.
+A bad relationship does not force disagreement. Senior officers can dislike each other and still reach the same professional answer.
+
+## Shared history
+
+| Officers | Known history |
+| --- | --- |
+| Mara Briggs / Tunde Okafor | Served together on a difficult joint task force. They argued often and became close friends. |
+| Ruth Warden / Mina Sato | Worked together during a reserve mobilisation that became politically sensitive. |
+| Elias Halden / Priya Nair | Halden supervised Nair during an earlier warning assignment. |
+| Elias Halden / Tomas Varga | Worked the same collection-and-assessment problem from opposite ends of the reporting chain. |
+| Mara Briggs / Helena Ortiz | Repeatedly competed for lead planning roles during major exercises. |
+| Helena Ortiz / Sofia Marin | Served together on a coalition maritime operation. |
+| Tunde Okafor / Grace Lin | Worked together during a major readiness recovery. |
+| Elena Navarro / Samuel Reyes | Taught on the same senior exercise staff and argued over how much freedom units should have. |
+| Elena Navarro / Mei Tan | Navarro previously supervised Tan on a lessons and evaluation team. |
+| Farah Rahman / Victor Hale | Worked on the same force-development programme and disagreed over how quickly to change it. |
+| Daniel Mercer / Omar Bell | Worked in the same personnel command. Mercer once moved one of Bell's protégés without warning him. |
+| Claire Dubois / Sofia Marin | Served together on reserve and partner-support arrangements. |
+| Priya Nair / Miriam Chen | Worked on the same long-range warning study. |
+| Laila Haddad / Helena Ortiz | Shared a crisis headquarters where Haddad's improvisation later created work for Ortiz's planning team. |
+| Nadia Yusuf / Claire Dubois | Served through a partner crisis and disagreed over when to stop negotiating. |
+| Grace Lin / Adrian Cole | Clashed during a capability review after Cole backed a plan Lin believed was not technically ready. |
+| Samuel Reyes / Omar Bell | Long friendship from command and instructor tours. |
+| Mina Sato / Adrian Cole | Sato was once Cole's senior planner and later sponsored him for a major plans post. |
+
+## Directional views
+
+| From | Toward | Affinity | Professional respect | What this means in dialogue |
+| --- | --- | --- | --- | --- |
+| Briggs | Okafor | warm | high | Briggs gives Okafor real benefit of doubt when she says a plan cannot be supported. |
+| Okafor | Briggs | warm | high | Okafor will spend more time finding Briggs another route than she would for someone she trusts less. |
+| Warden | Sato | warm | high | Warden trusts Sato to understand that promises to the force matter. |
+| Sato | Warden | warm | high | Sato will sometimes spend political room to protect a personnel promise Warden thinks matters. |
+| Halden | Nair | neutral | high | Halden admires Nair's imagination but challenges her favourite explanations hard. |
+| Nair | Halden | warm | high | Nair wants Halden's approval more than she likes admitting and can become defensive when he rejects a hypothesis. |
+| Varga | Nair | cool | normal | Varga thinks Nair sometimes stretches thin reporting too far. |
+| Nair | Varga | cool | high | Nair respects Varga's source judgement but finds him too reluctant to combine weak signals. |
+| Briggs | Ortiz | neutral | high | Their rivalry sharpens professional argument without making either dismiss the other. |
+| Ortiz | Briggs | neutral | high | Ortiz thinks Briggs starts moving before every branch is ready. |
+| Ortiz | Haddad | cool | high | Ortiz respects Haddad in a crisis and dislikes cleaning up the loose ends afterward. |
+| Haddad | Ortiz | cool | high | Haddad thinks Ortiz sometimes plans for certainty that will never come. |
+| Okafor | Mensah | cool | normal | Okafor thinks Mensah sometimes treats a physical limit like a bargaining problem. |
+| Mensah | Okafor | neutral | high | Mensah respects Okafor and thinks she sometimes stops testing a rule too soon. |
+| Lin | Cole | cool | normal | Lin has not forgotten the old capability review and is quick to challenge vague assumptions in his plans. |
+| Cole | Lin | cool | high | Cole dislikes Lin's manner more than her judgement and knows she is often right about technical risk. |
+| Navarro | Reyes | warm | high | Their arguments are direct because both trust the other's motives. |
+| Reyes | Navarro | warm | high | Reyes accepts more standardisation from Navarro than from most people. |
+| Navarro | Tan | warm | normal | Navarro sees promise in Tan but does not yet rate her judgement as highly as Tan rates Navarro's. |
+| Tan | Navarro | warm | high | Tan can give Navarro too much weight because of the old mentor relationship. |
+| Rahman | Hale | cool | high | Rahman thinks Hale protects programmes too long. |
+| Hale | Rahman | cool | high | Hale thinks Rahman can change a system faster than the replacement can settle. |
+| Mercer | Bell | neutral | high | Mercer values Bell's eye for people but thinks he gives development too much time. |
+| Bell | Mercer | cool | high | Bell still respects Mercer but has not forgotten the protégé move. |
+| Dubois | Marin | warm | high | Dubois assumes good faith from Marin even when she thinks Marin has compromised too far. |
+| Marin | Dubois | warm | high | Marin is unusually candid with Dubois about partner failures. |
+| Yusuf | Dubois | cool | normal | Yusuf thinks Dubois sometimes preserves talks after the decision should already be made. |
+| Dubois | Yusuf | cool | high | Dubois respects Yusuf's clarity but thinks she can damage relationships by forcing the choice too soon. |
+| Reyes | Bell | warm | high | They are close friends and sometimes support each other's judgement more readily than the evidence alone would justify. |
+| Sato | Cole | neutral | high | Sato respects Cole's planning and watches for the point where he starts protecting the plan itself. |
+| Cole | Sato | warm | high | Cole still gives Sato's judgement extra weight because she was once his senior and sponsor. |
+
+A missing edge means the game should not invent a strong opinion.
+
+# Human rough edges
+
+Not every flaw should be a noble strength taken too far. These are small human weaknesses that can make a headquarters harder to manage.
+
+They must be hinted at in interviews or early conversations. They are not hidden traps.
+
+| Officer | Rough edge |
+| --- | --- |
+| Warden | Holds onto broken promises for a long time and can become colder than she realises toward the officer who broke them. |
+| Halden | Corrects sloppy claims in front of other people, even when a private correction would have been kinder. |
+| Briggs | Can dominate a meeting when impatient and may cut off a slower officer before they reach the useful part. |
+| Okafor | Protects spare capacity so instinctively that she sometimes reveals useful margin later than colleagues would like. |
+| Sato | Can over-manage wording and leave people unsure whether she actually agrees with them. |
+| Navarro | Is patient with juniors but can be cutting with senior officers she thinks are pretending a failure was a success. |
+| Mercer | Sometimes moves people for the good of the wider force without warning them early enough. |
+| Rahman | Can dismiss a slow objection as resistance to change before she has properly heard it. |
+| Dubois | Sometimes waits too long to confront someone because she wants to preserve the working relationship. |
+| Nair | Gets defensive when a hypothesis she has worked on for weeks is challenged late in the process. |
+| Varga | Hoards context because he dislikes reporting something before he understands where it came from. |
+| Chen | Can bury a simple recommendation under too many caveats when she is anxious about missing a link. |
+| Ortiz | Has little patience for improvised changes made after she thought a plan was settled. |
+| Kessler | Can sound calm enough that others mistake lack of drama for lack of urgency. |
+| Haddad | Leaves poor notes when moving fast and assumes people will remember why a workaround was chosen. |
+| Mensah | Can promise a negotiation is close to solved before the other side has truly agreed. |
+| Lin | Can make non-technical colleagues feel foolish when they cannot state a problem precisely. |
+| Marin | Sometimes protects a friendly partner from criticism longer than she should. |
+| Cole | Can become attached to being the person with the clear plan and resist admitting that somebody else's simpler answer is better. |
+| Yusuf | Can close down discussion once she thinks the real choice is obvious. |
+| Hale | Is more protective of programmes he personally helped build than he likes to admit. |
+| Reyes | Can give proven local leaders more freedom than newer leaders think is fair. |
+| Tan | Gets excited by a new lesson and can make colleagues tired of another proposed change. |
+| Bell | Sometimes shields an underperformer from consequences because he believes one more coaching conversation will work. |
+
+# Discovery patterns
+
+Do not use the same "first impression was wrong" trick for everyone.
+
+| Officer | How the player learns them |
+| --- | --- |
+| Warden | First impression is mostly right; the surprise is how hard a decision she can support. |
+| Halden | Looks cautious at first; later the player learns his caution is about claims, not action. |
+| Briggs | First impression is partly wrong; impatience hides preparation rather than recklessness. |
+| Okafor | Looks conservative; later her inventiveness becomes obvious. |
+| Sato | Looks diplomatic; the deeper surprise is how seriously she treats hard commitments. |
+| Navarro | Looks strict and remains strict; the surprise is how tolerant she is of honest failure. |
+| Mercer | The first impression of distance is basically right. The player later understands why that distance can be useful and costly. |
+| Rahman | Easy to like early. Familiarity reveals that her speed can exhaust people who need stability. |
+| Dubois | Seems agreeable. The player gradually sees that she has firm lines and can end a relationship cleanly. |
+| Nair | Her talent is obvious early. Her blind spot becomes clearer only after the player watches a favourite hypothesis survive too long. |
+| Varga | Hard to read at first and remains private. Trust grows slowly rather than revealing a hidden opposite personality. |
+| Chen | The player initially finds her broad thinking useful, then may become frustrated by how much she sees. |
+| Ortiz | First impression is accurate: calm and careful. The surprise is how large a risk she will take once satisfied. |
+| Kessler | Appears steady rather than impressive. His value becomes clearer over several turns, especially after repeated tempo. |
+| Haddad | Impresses early in a crisis. Her weaknesses become obvious later, when the organisation has to live with the workaround. |
+| Mensah | Charming competence shows early. The player later learns to ask what the deal costs after the immediate problem is solved. |
+| Lin | Can be difficult on first meeting. Respect often grows before warmth does. |
+| Marin | Easy to work with from the start. The player later learns that her loyalty to partners can also become a weakness. |
+| Cole | Often makes a strong first impression. Familiarity can make him less attractive when the player sees how long he protects a neat plan. |
+| Yusuf | The first impression of bluntness is correct. The deeper question is whether her clarity is useful or premature in this case. |
+| Hale | May seem slow early. His judgement becomes more valuable as delayed consequences begin to arrive. |
+| Reyes | Warm and empowering from the start. His weakness appears only when local freedom produces inconsistent results. |
+| Tan | Curious and likeable early. The player may later become wary of how quickly she wants to learn from one result. |
+| Bell | Warmth is genuine, not a mask. The surprise is that he can eventually be very hard once he gives up on someone's development. |
 
 # Distinction test
 
