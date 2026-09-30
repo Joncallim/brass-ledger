@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: briggs.interview.headquarters-failure.position.01
 function: position
 text: |
-  We leave the verb out.
+  We talk around the action.
 
 ### beat: briggs.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  We agree on the effect, the posture and the message, then nobody says who moves first on Monday morning. If the plan cannot reach an action, it is not ready.
+  Everyone agrees on the effect, the posture, the message. Fine. Who moves first on Monday morning? If nobody can answer that, the plan isn't done.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: briggs.interview.commander-disagreement.example.01
 function: example
 text: |
-  A partner answer was late. I wanted to move without it.
+  A partner was late with an answer. I wanted to move anyway.
 
 ### beat: briggs.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  The commander held. I thought we were wasting time. She was right: the first move would have locked us into a route we did not need. Sometimes the first move is the mistake.
+  The commander held us. I hated it at the time. She was right. If we'd moved, we'd have boxed ourselves into the wrong route.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: briggs.interview.red-line.position.01
 function: position
 text: |
-  I will tell you not to issue an order we cannot execute, or one where the first move creates a problem we have no way to recover from.
+  I'll stop an order we can't carry out, or one where the first move puts us somewhere we can't get back from.
 
 ### beat: briggs.interview.red-line.qualification.01
 function: qualification
 text: |
-  Risk is fine. A dead end dressed up as decisiveness is not.
+  I'm fine with risk. I'm not fine with pretending a dead end is bold.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: briggs.interview.self-critique.position.01
 function: position
 text: |
-  I interrupt slow speakers when I think I already know where they are going.
+  I cut people off.
 
 ### beat: briggs.interview.self-critique.reason.01
 function: reason
 text: |
-  Sometimes I do. Sometimes I cut off the useful part. Under pressure I can close the room too early.
+  Especially when I think I know where they're going. Sometimes I do. Sometimes I've just stopped them before the useful bit.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: briggs.interview.crisis-peer.reason.01
 function: reason
 text: |
-  He tells me no sooner than I want to hear it, then tells me what will work instead. I would rather argue with that than get a polite yes that falls apart outside the room.
+  Tunde. He'll tell me no early, which annoys me, then he'll tell me what we can actually do. That's a much better argument than a polite yes that falls apart later.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: briggs.interview.cross-post.position.01
 function: position
 text: |
-  In Plans I would worry that I turn every discussion into the next action and crowd out the longer political sequence.
+  In Plans, I'd probably drag the room toward the next action too quickly.
 
 ### beat: briggs.interview.cross-post.qualification.01
 function: qualification
 text: |
-  Not every useful plan starts with movement.
+  Not every good plan needs somebody moving straight away.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: briggs.interview.act-or-wait.position.01
 function: position
 text: |
-  Move what is reversible.
+  Move what we can pull back.
 
 ### beat: briggs.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Stage forces, shorten warning time, protect the branch. Do not take an irreversible action just to prove you are not waiting.
+  Stage the force. Cut the warning time. Keep a branch open. Don't do something irreversible just because waiting feels weak.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: briggs.interview.future-cost.position.01
 function: position
 text: |
-  If this is the reason we kept the reserve, spend it.
+  If this is what we kept the reserve for, use it.
 
 ### beat: briggs.interview.future-cost.reason.01
 function: reason
 text: |
-  If the gain is mostly a better-looking posture for one month, no. Activity is not the same thing as advantage.
-
+  If all we get is a better-looking posture this month, keep it. Being busy isn't the same as getting ahead.
