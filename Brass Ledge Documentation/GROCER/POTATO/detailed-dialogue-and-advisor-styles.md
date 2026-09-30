@@ -1,8 +1,9 @@
 ---
 type: dialogue-design-plan
 area: advisor-dialogue
-status: active
+status: superseded
 priority: P1
+superseded_by: 41-OFFICER-STYLE-BIBLE
 tags:
   - POTATO
   - dialogue
@@ -11,6 +12,9 @@ tags:
 ---
 
 # Detailed Dialogue And Advisor Styles
+
+> **Superseded for character voice and dialogue authoring.** [[41-OFFICER-STYLE-BIBLE]] is the current authority for officer identity, plain-English voice, relationships and style. This file is retained as historical design context only. Its old six-person names, style labels, trust-delta examples and generation rules must not be used as current character canon.
+
 
 Backlink: [[POTATO]]
 
