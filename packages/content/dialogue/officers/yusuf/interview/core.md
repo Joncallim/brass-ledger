@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: yusuf.interview.headquarters-failure.position.01
 function: position
 text: |
-  We hide choices inside words like 'balance.'
+  We hide choices inside 'balance.'
 
 ### beat: yusuf.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  Two things cannot both be first. If the resources, time or political room are limited, somebody has to say which one loses.
+  Two things cannot both be first. If we cannot have both, say which one loses.
 
 ## sequence: commander-disagreement
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: yusuf.interview.self-critique.position.01
 function: position
 text: |
-  I can close discussion too early once I think the real choice is obvious.
+  I close rooms too early.
 
 ### beat: yusuf.interview.self-critique.reason.01
 function: reason
 text: |
-  Sometimes I am removing fog. Sometimes I am removing a useful option that has not fully formed yet.
+  Sometimes I have found the real choice. Sometimes I have killed a useful option before it was ready.
 
 ## sequence: crisis-peer
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: yusuf.interview.cross-post.position.01
 function: position
 text: |
-  I would not take Personnel just because I am willing to make hard choices about people.
+  No. I would not take Personnel just because I am willing to make hard choices about people.
 
 ### beat: yusuf.interview.cross-post.qualification.01
 function: qualification
 text: |
-  That is not a personnel qualification. My job is Plans, and I am more useful to Personnel as a demanding customer than as its chief.
+  That is not a qualification. I am more useful to Personnel as a demanding customer than as its chief.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: yusuf.interview.act-or-wait.position.01
 function: position
 text: |
-  If waiting will not produce new information or a better option, decide.
+  Will waiting buy us something? If not, decide.
 
 ### beat: yusuf.interview.act-or-wait.reason.01
 function: reason
 text: |
-  If it will, then forcing a choice now just to look decisive is vanity.
+  If it will, forcing a choice now is vanity.
 
 ## sequence: future-cost
 
