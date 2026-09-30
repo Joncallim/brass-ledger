@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: rahman.interview.headquarters-failure.position.01
 function: position
 text: |
-  We keep bad processes because nobody can remember why they started.
+  We keep doing things because they've been done that way for years.
 
 ### beat: rahman.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  After a while the process becomes the reason for the process. That is usually a sign we should look again.
+  Then you ask why, and nobody remembers. That's usually when I start pulling at the thread.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: rahman.interview.commander-disagreement.example.01
 function: example
 text: |
-  An approval chain was slowing a training change. I thought one step was dead weight.
+  There was an approval step slowing a training change. I thought it was pointless.
 
 ### beat: rahman.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  My commander made me test the change first. I rolled my eyes. The test found a safety check hidden inside the old step. We removed the delay and kept the check. She was right to slow me down.
+  My commander made me test the change before we cut it. I thought she was wasting time. The test found a safety check buried in the old process. We kept the check and dropped the delay. She was right.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: rahman.interview.red-line.position.01
 function: position
 text: |
-  If we are about to remove a control and nobody can explain what job it used to do, I will tell you to stop long enough to find out.
+  If we're about to remove a control and nobody can tell me what it used to protect, I'll stop for long enough to find out.
 
 ### beat: rahman.interview.red-line.qualification.01
 function: qualification
 text: |
-  Old does not mean good. It also does not mean useless.
+  Old doesn't mean good. It doesn't mean useless either.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: rahman.interview.self-critique.position.01
 function: position
 text: |
-  I can hear a slow objection and decide too quickly that the person is defending the past.
+  I can hear a slow objection and write it off as resistance.
 
 ### beat: rahman.interview.self-critique.reason.01
 function: reason
 text: |
-  Sometimes they are. Sometimes they have seen the failure I have not.
+  Sometimes it is resistance. Sometimes they've seen a failure I haven't. I don't always give them enough time to prove which one.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: rahman.interview.crisis-peer.reason.01
 function: reason
 text: |
-  He slows me down in exactly the way I dislike, which is useful when everything is moving fast. I think he protects programmes too long; he thinks I change systems too quickly. In a crisis, I want that argument in the room.
+  Victor slows me down in exactly the way I hate. That's why I'd want him there. I think he protects programmes too long. He thinks I change things too fast.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: rahman.interview.cross-post.position.01
 function: position
 text: |
-  In Personnel I would worry about treating a culture problem like a process problem.
+  In Personnel, I'd have to be careful not to treat every culture problem like a broken process.
 
 ### beat: rahman.interview.cross-post.qualification.01
 function: qualification
 text: |
-  Not every bad habit disappears because the form got shorter or the approval chain got cleaner.
+  You can shorten the form and clean up the approvals. That doesn't mean people suddenly trust each other.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: rahman.interview.act-or-wait.position.01
 function: position
 text: |
-  Make the smallest change that gives us useful information and can be reversed.
+  Make the smallest change that gives us useful information and can still be undone.
 
 ### beat: rahman.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Do not redesign the headquarters in the middle of a fog just because we are uncomfortable with not knowing.
+  I wouldn't redesign the headquarters in the middle of a fog just because not knowing is uncomfortable.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: rahman.interview.future-cost.position.01
 function: position
 text: |
-  If next month is weaker because the new method has not settled, that may be a reason to wait.
+  I'd ask why next month gets worse.
 
 ### beat: rahman.interview.future-cost.reason.01
 function: reason
 text: |
-  If next month is weaker because the old method is already failing, the cost is with us whether we change or not.
-
+  If it's because a new method needs time to settle, maybe we wait. If the old method is already failing, then we're paying a cost either way.
