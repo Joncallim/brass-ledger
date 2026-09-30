@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: okafor.interview.commander-disagreement.example.01
 function: example
 text: |
-  I was told to move three major loads in the same window.
+  Three major loads. One window. Capacity for two.
 
 ### beat: okafor.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  I said two. The commander asked me to find a way rather than repeat the limit, which was fair. We used a partner port and moved all three, but not by pretending our original system had more capacity than it did.
+  The commander asked me to find another route instead of repeating the limit. Fair enough. We used a partner port and moved all three. We did not make our own system magically larger.
 
 ## sequence: red-line
 
