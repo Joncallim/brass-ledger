@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: hale.interview.headquarters-failure.position.01
 function: position
 text: |
-  We raid the future programme for every urgent problem.
+  We keep borrowing from the future every time something urgent comes up.
 
 ### beat: hale.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  Each raid is small enough to look harmless. Three years later we ask why the capability never arrived.
+  Each cut looks small. Then three years pass and everyone wonders why the capability is still six months away.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: hale.interview.commander-disagreement.example.01
 function: example
 text: |
-  I once fought hard to keep people on a programme during a crisis.
+  I fought to keep people on a programme during a crisis once.
 
 ### beat: hale.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  The commander moved them anyway. The crisis was important enough that he was right. I had started protecting the programme because I had helped build it, not only because it was the best use of the people.
+  The commander moved them. He was right. The crisis mattered more. It took me a while to admit I'd started protecting the programme partly because it was mine.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: hale.interview.red-line.position.01
 function: position
 text: |
-  If a decision destroys the only path to a future capability for a small current gain, I will tell you to stop and look again.
+  If we're about to kill the only route to a future capability for a pretty small gain today, I'll ask you to look again.
 
 ### beat: hale.interview.red-line.qualification.01
 function: qualification
 text: |
-  If the current gain decides the campaign, that is a different answer.
+  If today's gain really decides the campaign, then yes, spend it.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: hale.interview.self-critique.position.01
 function: position
 text: |
-  I am more protective of programmes I helped create than I like admitting.
+  I get protective of programmes I've helped build.
 
 ### beat: hale.interview.self-critique.reason.01
 function: reason
 text: |
-  I can give my own work another chance after I would have cancelled somebody else's.
+  I'll give my own work one more chance after I'd have cancelled somebody else's. I know I do it.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: hale.interview.crisis-peer.reason.01
 function: reason
 text: |
-  He understands that a pipeline can look fine right up until the moment you need the next group of people. He is good at showing me where a capability plan depends on careers, not only equipment and money.
+  Daniel sees the people pipeline the same way I see a capability programme. It can look healthy right up until the next stage arrives and there's nobody there to carry it.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: hale.interview.cross-post.position.01
 function: position
 text: |
-  In Plans I would worry about protecting the force we are building and underweighting the political or alliance choice that has to be made now.
+  In Plans, I'd worry about leaning too hard toward the force we're trying to build later.
 
 ### beat: hale.interview.cross-post.qualification.01
 function: qualification
 text: |
-  Long-term sense can still become an excuse not to decide.
+  Sometimes the political choice in front of us matters more than the programme I want to protect.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: hale.interview.act-or-wait.position.01
 function: position
 text: |
-  Use what is ready.
+  Use what is actually ready.
 
 ### beat: hale.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Do not tear apart a future programme merely because uncertainty makes us nervous. If the current threat becomes real enough, then spend the future deliberately.
+  I wouldn't tear a programme apart just because uncertainty makes us nervous. If the threat becomes real enough, then spend the future on purpose.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: hale.interview.future-cost.position.01
 function: position
 text: |
-  This is the question I always ask.
+  This is the argument I have all the time.
 
 ### beat: hale.interview.future-cost.reason.01
 function: reason
 text: |
-  If today's gain changes the campaign, spend future capacity. If it only makes this month look cleaner, do not.
-
+  If today's gain changes the campaign, take the hit later. If it just makes this month look tidier, don't.
