@@ -153,6 +153,55 @@ The main collision risks are:
 
 When reviewing dialogue, compare information order before comparing word choice. A line can pass the voice test and still fail the character test if it presents the problem in another officer's reasoning shape.
 
+## Commander professional respect
+
+Commander trust and professional respect are different.
+
+Trust asks whether the commander keeps their word and deals honestly with the officer.
+
+Professional respect asks whether the officer thinks the commander has sound judgement.
+
+A bad outcome does not automatically lower respect. Officers care about patterns they can actually see: ignoring a known constraint, repeating a warned-about failure, refusing to adjust when the facts change, or making the same kind of poor call again.
+
+Likewise, an officer can gain respect for a commander who overrules them well.
+
+Respect affects **how** the officer speaks, not what facts exist or what their professional duty requires.
+
+High respect is not praise. In many cases it makes the officer more candid because they expect the commander to handle a direct answer.
+
+| Officer | What they judge in the commander | High respect | Guarded respect | Low respect |
+| --- | --- | --- | --- | --- |
+| Ruth Warden | Whether the commander understands who pays the human cost and when they recover | Gives the cost once and trusts the commander to carry it | Repeats the recovery term and asks for it to be explicit | Names the same people being spent again and stops accepting vague promises of recovery |
+| Elias Halden | Whether claims stay tied to evidence and whether the commander learns when the picture changes | Gives the cleanest judgement and leaves the command decision to the commander | Separates fact, assessment and gap more explicitly | Reminds the commander what was already known and refuses to let hindsight rewrite the earlier picture |
+| Mara Briggs | Whether decisions become executable action and whether delay has a real purpose | Uses shorthand and expects the commander to follow the sequence | Asks for the trigger, first move and branch before backing the plan | Stops helping polish vague intent and asks, bluntly, what the actual order is |
+| Tunde Okafor | Whether physical constraints are understood and consciously spent | Offers workarounds early because he trusts the trade will be understood | Names the buffer being used and what it displaces | Requires the commander to say which real capacity is being given up before he treats the plan as serious |
+| Mina Sato | Whether the commander understands the promise created by each choice | Is very candid about when closing an option is worth it | States the likely follow-on expectation before agreeing | Makes the implied promise explicit and asks whether the commander genuinely intends to keep making it |
+| Elena Navarro | Whether the commander can tell one-off success from repeatable capability | Will accept a deliberate exception without a lecture | Asks what standard is being claimed and what evidence supports it | Calls out repeated relabelling of exceptions as readiness and becomes cutting about euphemisms |
+| Daniel Mercer | Whether today’s personnel move leaves a viable next bench | Gives the pipeline consequence briefly and trusts it will be remembered | Names the next vacancy or shortage created by the move | Starts attaching the future hole to every “temporary” personnel fix because previous ones were forgotten |
+| Farah Rahman | Whether change is based on understanding rather than impatience | Moves quickly because she trusts the commander to preserve useful safeguards | Asks what job the old process was doing before removing it | Treats another unexplained “streamlining” move as evidence the commander is changing things faster than they understand them |
+| Claire Dubois | Whether the commander understands who must cooperate and how relationships are spent | Tells the commander the awkward relationship truth early | Becomes more explicit about who has not been consulted or who no longer trusts the headquarters | Stays polite but stops softening the fact that a partner or unit no longer believes the commander’s assurances |
+| Priya Nair | Whether the commander tests more than one explanation before committing to a story | Shares bolder hypotheses because she trusts they will not be mistaken for facts | Keeps competing explanations visible longer | Pushes back when the commander keeps selecting the most convenient or dramatic story despite contrary evidence |
+| Tomas Varga | Whether source access and reporting limits are respected | Gives a narrow claim without over-explaining the provenance every time | Restates exactly what the source saw and did not see | Stops accepting broad summaries and keeps dragging the discussion back to the original source limitation |
+| Miriam Chen | Whether the commander can see connected effects without becoming paralysed by them | Gives the key link and trusts the commander to hold the wider system in mind | Walks through one extra causal step before recommending action | Points out when the commander is repeating the same “fix one box, break another” mistake |
+| Helena Ortiz | Whether the commander understands dependencies and keeps a workable branch | Is comfortable supporting a thin but deliberate branch | Asks who owns the fallback and when it triggers | Will not treat optimism as a branch after repeated plans failed on an unowned dependency |
+| Noah Kessler | Whether surge and recovery are treated as a cycle rather than permanent emergency | Supports spending the reserve when the commander has protected a real reset | Names the reset window before supporting another surge | Reminds the commander how many times recovery has already been postponed and no longer treats “after this one” as a plan |
+| Laila Haddad | Whether the commander adapts to reality without letting temporary workarounds become permanent confusion | Is happy to improvise because she trusts the commander to clean up afterward | Calls out what must be normalised once the crisis passes | Points out when the situation changed but the order did not, or when last month’s workaround is still being treated as policy |
+| Peter Mensah | Whether the commander understands who controls a constraint and the real price of moving it | Brings ambitious deals because he trusts the commander to see the cost | States the favour, money or future control being spent | Stops calling something a solution until the commander acknowledges the price already paid for similar “quick fixes” |
+| Grace Lin | Whether the commander defines the actual failure and tests the fix | Gives a terse technical answer because she trusts the requirement is understood | Makes the pass/fail condition explicit | Becomes very direct when the same untested fix is proposed again or when “readiness” is used to hide an undefined problem |
+| Sofia Marin | Whether partner promises are distinguished from actual delivery | Is comfortable using goodwill because she trusts the commander to keep a fallback | Adds a deadline and fallback to every important partner contribution | Stops letting friendly language substitute for confirmation after repeated partner surprises |
+| Adrian Cole | Whether activity still serves a clear campaign aim | Drops parts of his own plan quickly when the commander changes the main effort for a good reason | Restates the main effort before discussing another task | Calls out every new activity that has no clear link to the stated aim because he no longer assumes the commander is holding the whole plan together |
+| Nadia Yusuf | Whether the commander actually owns hard priority choices | Gives the uncomfortable choice early and trusts the commander to make it | Forces the trade into one plain sentence | Names the same avoided choice again and stops accepting “balance” as an answer |
+| Victor Hale | Whether urgent needs are genuinely worth raiding future capability | Will spend programmes quickly when the commander has shown they distinguish crisis from convenience | States the milestone or delay being traded away | Treats another “temporary” raid as part of a pattern and names what will now fail to arrive later |
+| Samuel Reyes | Whether the commander gives clear intent and boundaries rather than controlling detail or dumping ambiguity | Encourages wide local freedom because he trusts the commander’s intent will stay clear | Restates the aim and boundary before recommending delegation | Calls out another vague or over-detailed order as evidence the commander still does not know what they need subordinates to own |
+| Mei Tan | Whether the commander learns from evidence without chasing every new result | Brings new lessons early because she trusts the commander not to overreact | Asks whether the result repeated or may be noise | Points out when the same lesson was supposedly learned before, or when one vivid result is again driving a whole-system change |
+| Omar Bell | Whether the commander distinguishes development from avoiding accountability | Gives people another chance when he trusts the commander will act if they do not improve | Sets a clearer point at which coaching ends | Becomes disappointed rather than angry when the same underperformance is protected again and the rest of the team keeps carrying it |
+
+Low respect does not mean insubordination.
+
+Every officer still gives material facts, states a real red line, and performs their billet.
+
+The difference is that the commander receives less benefit of the doubt and more callbacks to the pattern that damaged respect.
+
 ## Headquarters frame
 
 Brass Ledger uses one fictional national joint force. It works closely with allies and a local partner, but the 24 selectable officers all belong to the same force.
