@@ -120,7 +120,7 @@ The table is a writing summary, not a player-facing rating sheet. Exact fit cate
 | --- | --- | --- | --- |
 | Ruth Warden | J1 | J7 | Protective, plain-spoken, harder than she first appears |
 | Elias Halden | J2 | J5 | Precise, sceptical, unexpectedly decisive |
-| Mara Briggs | J3 | J5; J4 only as a deliberate stretch | Fast, practical, loyal, better prepared than his manner suggests |
+| Mara Briggs | J3 | J5; J4 only as a deliberate stretch | Fast, practical, loyal, better prepared than her manner suggests |
 | Tunde Okafor | J4 | J3 | Calm realist, inventive once constraints are clear |
 | Mina Sato | J5 | J3 | Polished strategist, values options but will commit hard |
 | Elena Navarro | J7 | J1; J3 only as a deliberate stretch | Demanding teacher, tolerant of honest failure |
@@ -2056,6 +2056,15 @@ A bad relationship does not force disagreement. Senior officers can dislike each
 | Reyes | Bell | warm | high | They are close friends and sometimes support each other's judgement more readily than the evidence alone would justify. |
 | Sato | Cole | neutral | high | Sato respects Cole's planning and watches for the point where he starts protecting the plan itself. |
 | Cole | Sato | warm | high | Cole still gives Sato's judgement extra weight because she was once his senior and sponsor. |
+| Halden | Varga | neutral | high | Halden trusts Varga to be exact about source access and reporting limits. |
+| Varga | Halden | neutral | high | Varga trusts Halden not to turn headquarters judgement into something a source supposedly said. |
+| Nair | Chen | neutral | high | Nair values Chen as the person most likely to test whether an attractive pattern explains enough of the wider picture. |
+| Chen | Nair | neutral | high | Chen values Nair's speed in spotting patterns before the wider system has been fully mapped. |
+| Ortiz | Marin | warm | high | Ortiz trusts Marin's judgement about which partner contribution will really arrive. |
+| Marin | Ortiz | warm | high | Marin trusts Ortiz to build coalition contributions into a plan without pretending promises are guarantees. |
+| Kessler | Warden | neutral | high | Kessler values Warden because she often sees the human version of the same recovery problem he sees in force tempo. |
+| Mercer | Hale | neutral | high | Mercer respects Hale's understanding of long pipelines and future capability. |
+| Hale | Mercer | neutral | high | Hale trusts Mercer to show where a capability plan quietly depends on future people and postings. |
 
 A missing edge means the game should not invent a strong opinion.
 
