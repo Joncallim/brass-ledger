@@ -245,6 +245,34 @@ Examples of the corrected shapes:
 
 The dialogue is now differentiated by sentence shape as well as subject.
 
+## Natural-speech pass
+
+The full 24-officer baseline corpus was rewritten after an additional read-aloud review.
+
+The previous prose was semantically sound but too polished. Repeated synthetic tells included:
+
+- balanced two-clause contrasts;
+- tidy moral-of-the-story endings;
+- formal negatives such as "That does not mean...";
+- complete explanatory paragraphs where a real speaker would stop earlier;
+- too few contractions;
+- statements shaped like staff-paper prose even when the vocabulary was simple.
+
+All 384 authored interview beats were reviewed and rewritten without changing:
+
+- beat IDs;
+- sequence IDs;
+- beat functions;
+- officer identity;
+- peer choice;
+- core professional meaning.
+
+This is a copy-only pass. It must change `dialogueCopyDigest` once #113 exists, but must not change `dialogueSemanticDigest`, beat eligibility, appointment logic or simulation results.
+
+The target is not "casual" dialogue. It is senior professionals speaking normally: simple words, contractions where natural, occasional fragments, uneven sentence length, and no need to end every answer with a polished lesson.
+
+Future validation should include a read-aloud / synthetic-cadence check in addition to banned jargon and lexical overlap.
+
 ## Orthogonal information-presentation review
 
 Baseline result: **failed structurally; character contract repaired; runtime/corpus migration still required under #113/#115.**
