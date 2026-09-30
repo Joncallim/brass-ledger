@@ -52,7 +52,9 @@ Brass Ledger uses one fictional national joint force. It works closely with alli
 
 This matters because the commander can realistically choose among them without also modelling national ownership of billets, different legal chains of command, or partner vetoes over appointments.
 
-All selectable officers are in the same broad senior grade for appointment purposes. Service rank can differ in the dossier, but rank does not make one candidate mechanically superior or give one officer authority over another candidate.
+All selectable officers are pre-screened at the same **two-star-equivalent appointment level**. Service-specific rank titles can differ in the dossier, but they do not make one candidate mechanically superior or give one candidate command authority over another.
+
+The old prototype used mixed rank strings. Those are legacy presentation and should be normalised when #112 creates the new officer records. Officer identity is the person/id, not the old rank text.
 
 The original six officers keep their existing identities:
 
@@ -80,7 +82,11 @@ J5 does not own every long-term problem. J5 owns campaign plans, policy, allianc
 
 J6 communications/cyber and J8 resources exist in the headquarters but are not selectable senior advisers in the first game. Their effects appear through capability, burden, events and staff notes rather than another two character systems.
 
-A non-selectable Chief of Staff runs the staff process and helps the commander with appointments. The Chief of Staff does not vote on decisions and does not enter the friendship system. The "Staff Secretary" is the office that prepares dossiers and appointment notes, not another hidden adviser.
+A non-selectable Chief of Staff runs the staff process and helps the commander with appointments. The Chief of Staff does not vote on decisions and does not enter the friendship system.
+
+The Chief of Staff should not secretly recommend an "optimal" roster either. The factual preflight comes from the **Staff Secretary office**: legal fit, past postings, known working history and obvious gaps. That keeps the appointment screen useful without adding a seventh personality model.
+
+In ordinary dialogue, use plain role names such as Personnel, Intelligence, Operations, Logistics, Plans and Force Development. J1/J2/J3/J4/J5/J7 are useful dossier shorthand, not something every character needs to say aloud.
 
 ## Roster overview
 
@@ -159,13 +165,6 @@ Her first question is usually: who carries this?
 ## Career anchor
 
 Former formation commander with long experience in reserve mobilisation, personnel planning and force recovery. She has spent enough time both commanding units and managing the people system to distrust easy answers from either side.
-
-## How the player may read her
-
-At first: protective, cautious, the person who will object when the force is pushed too hard.
-
-Later: willing to demand very hard service when she believes the reason is good, and often colder about which parts of the organisation can be sacrificed than her manner suggests.
-
 
 ## Strength
 
@@ -248,13 +247,6 @@ His first question is usually: what do we actually know?
 
 Commissioned intelligence officer and assessment leader with a doctorate, with experience in warning, red-teaming and joint headquarters work. He has seen both genuine surprise and false alarms created by people wanting a clean answer.
 
-## How the player may read him
-
-At first: careful, sceptical, likely to slow decisions down.
-
-Later: one of the quickest people to act when the warning is real, and sometimes more comfortable with risk than officers who sound bolder.
-
-
 ## Strength
 
 He sees when a repeated claim is turning into "fact" without new evidence. He notices stale reporting, false corroboration, convenient assumptions and language that has become more certain than the evidence.
@@ -335,13 +327,6 @@ Her first question is usually: what happens first?
 ## Career anchor
 
 Combined-arms commander and joint operations officer with repeated crisis-planning and field-command experience. She has spent much of her career turning broad orders into actions that units can actually carry out.
-
-## How the player may read her
-
-At first: aggressive, impatient, probably the man who always wants to move.
-
-Later: deeply prepared, loyal to people who tell her hard truths, and perfectly willing to wait when movement would spend initiative for no gain.
-
 
 ## Strength
 
@@ -427,13 +412,6 @@ His first question is usually: what physical system makes this work?
 
 Logistics and engineering officer with experience in transport, maintenance, depots and operational support. He has managed both routine systems and crisis shortages.
 
-## How the player may read his
-
-At first: practical, cautious, likely to tell everyone what they cannot have.
-
-Later: one of the most creative officers once the real limit is clear, and capable of proposing risky ways around a constraint that more "aggressive" officers never saw.
-
-
 ## Strength
 
 He sees flows, bottlenecks, repair, stock, transport and several plans quietly using the same capacity.
@@ -509,13 +487,6 @@ Her first question is usually: what follows from this?
 ## Career anchor
 
 Plans and policy officer with coalition, partner and senior-headquarters experience. She has spent years watching small wording choices become real promises.
-
-## How the player may read her
-
-At first: polished, diplomatic, reluctant to close options.
-
-Later: unusually serious about commitments and sometimes the person most willing to make one that cannot easily be undone.
-
 
 ## Strength
 
@@ -593,13 +564,6 @@ Her first question is usually: can they do it again?
 
 Training commander and evaluator with experience in exercises, instructor systems and converting new ideas into routines units can repeat. She has seen many "successful" demonstrations that never became real capability.
 
-## How the player may read her
-
-At first: strict, standards-driven, likely to demand more training before action.
-
-Later: very tolerant of honest failure and surprisingly willing to use a rough emergency method once, provided nobody lies afterward about what that success proves.
-
-
 ## Strength
 
 She sees one-off success being turned into "capability", instructors being exhausted, standards moving after the result, and organisations hiding weak performance behind certification.
@@ -671,13 +635,6 @@ His first question is usually: what does this do to the next group?
 ## Career anchor
 
 Manpower and assignments officer who has also commanded at formation level. His career has moved between field units, promotion boards, reserve planning and the slow work of building the next layer of leaders.
-
-## How the player may read him
-
-At first: tidy, detached, perhaps too interested in moving names around a chart.
-
-Later: often the person who notices that today's popular appointment has quietly destroyed the bench for next year, but also someone who can misjudge how personally people take a "sensible" move.
-
 
 ## Strength
 
@@ -751,13 +708,6 @@ Her first question is usually: why do we still do it this way?
 ## Career anchor
 
 Unit commander, training reformer and headquarters change lead. She has repeatedly been sent into organisations that everyone agrees need to improve but nobody agrees how to change.
-
-## How the player may read her
-
-At first: energetic reformer who thinks every old process is stupid.
-
-Later: capable of defending stability when change itself has become the burden, and much more interested in useful habits than novelty for its own sake.
-
 
 ## Strength
 
@@ -836,13 +786,6 @@ Her first question is usually: whose cooperation does this depend on?
 
 Reserve and partner-force officer with long experience in mobilisation, liaison and joint support arrangements. Much of her career has depended on getting organisations with different incentives to keep working together.
 
-## How the player may read her
-
-At first: friendly consensus-builder who will keep everyone in the room.
-
-Later: prepared to end a failing relationship cleanly once she decides cooperation has become a cost rather than an asset.
-
-
 ## Strength
 
 She reads informal networks well and knows which person or organisation must be brought in before a plan becomes real.
@@ -915,13 +858,6 @@ Her first question is usually: what larger picture would explain all of this?
 ## Career anchor
 
 All-source intelligence analyst with warning, red-team and long-range assessment experience. She built her reputation by spotting patterns early, including a few that were initially dismissed.
-
-## How the player may read her
-
-At first: brilliant intuitive analyst who sees what others miss.
-
-Later: genuinely imaginative but also vulnerable to the beauty of her own explanation, and increasingly valuable when the player learns when to challenge her rather than simply trust her.
-
 
 ## Strength
 
@@ -998,13 +934,6 @@ His first question is usually: where did this come from?
 
 Collection officer with field, liaison and headquarters experience. He has worked close enough to sources and sensors to know how much detail disappears when reporting moves upward.
 
-## How the player may read him
-
-At first: guarded field man who distrusts headquarters analysis.
-
-Later: more balanced than that; he will defend a broad assessment when the pieces really support it, but he insists nobody pretend a source saw something it did not.
-
-
 ## Strength
 
 He understands source access, collection limits and what people on the ground can actually observe.
@@ -1075,13 +1004,6 @@ Her first question is usually: what else changes if we do this?
 ## Career anchor
 
 Intelligence and planning officer with a background in industry, economics and long-range assessment. She has spent much of her career on problems where military action changes markets, politics and supply at the same time.
-
-## How the player may read her
-
-At first: quiet systems thinker who always wants to widen the question.
-
-Later: capable of cutting brutally to one decisive link under pressure, but only after she is convinced the wider system has been understood well enough.
-
 
 ## Strength
 
@@ -1154,13 +1076,6 @@ Her first question is usually: what is our branch if this goes wrong?
 
 Joint operations officer with experience coordinating multinational exercises, task forces and crisis plans. Her strongest work has usually involved several organisations that could not simply be ordered into perfect timing.
 
-## How the player may read her
-
-At first: cautious operator who wants a branch for everything.
-
-Later: a gambler when she believes the branch is good enough, and sometimes more willing than Briggs to take a large risk because she has spent longer thinking through the failure case.
-
-
 ## Strength
 
 She coordinates complicated operations calmly and sees where timing, partners and support must line up.
@@ -1232,13 +1147,6 @@ His first question is usually: when do we recover from this?
 
 Operations and readiness officer who has alternated between field command, force-generation jobs and major exercise planning. He has seen forces burn themselves out by treating surge tempo as a permanent setting.
 
-## How the player may read him
-
-At first: steady, conservative, always asking for rest.
-
-Later: willing to spend reserves very hard when he believes this is the moment they were saved for; his real concern is rhythm, not comfort.
-
-
 ## Strength
 
 He is excellent at pacing operations, preserving reserves and knowing when a headquarters needs to stop adding activity.
@@ -1308,13 +1216,6 @@ Her first question is usually: what can we do with what is actually true now?
 ## Career anchor
 
 Joint task-force and crisis-response officer with repeated experience in plans breaking under real conditions. She has built a career on keeping people effective after the situation stops matching the brief.
-
-## How the player may read her
-
-At first: gifted improviser who can rescue anything.
-
-Later: still excellent in a crisis, but dangerous if the headquarters lets her temporary fixes become the only way the organisation knows how to function.
-
 
 ## Strength
 
@@ -1389,13 +1290,6 @@ His first question is usually: who controls the thing we need?
 
 Logistics, procurement and partner-support officer with experience in contracts, access agreements and emergency sourcing. He understands how much "capacity" is actually controlled by agreements between people.
 
-## How the player may read him
-
-At first: persuasive fixer who believes every problem has a deal.
-
-Later: capable of walking away from an easy agreement when the long-term dependency is too expensive, but still prone to thinking authority can move a limit that is actually physical.
-
-
 ## Strength
 
 He finds capacity through partners, suppliers, contracts and clever trade-offs.
@@ -1467,13 +1361,6 @@ Her first question is usually: what exactly are we asking the system to do?
 
 Engineer and maintenance leader with command experience in technical formations and readiness recovery. She has spent years turning broad complaints about "readiness" into specific failures someone can fix.
 
-## How the player may read her
-
-At first: exacting engineer who cares more about systems than people.
-
-Later: pragmatic enough to accept ugly solutions and more aware of human judgement than her speech suggests, though she still struggles when the real problem cannot be specified neatly.
-
-
 ## Strength
 
 She breaks vague problems into real technical failures. She is excellent at maintenance, reliability and finding simple engineering fixes.
@@ -1538,13 +1425,6 @@ Her first question is usually: which partner owns the part we cannot replace our
 ## Career anchor
 
 Movement and coalition-support officer with experience in multinational logistics, access and shared stock arrangements. She knows which partner promise will survive contact with customs, transport and local politics.
-
-## How the player may read her
-
-At first: friendly partner advocate who wants everyone included.
-
-Later: quite hard-nosed about reliability and often the first to remove a friendly partner from a critical path once goodwill is no longer enough.
-
 
 ## Strength
 
@@ -1615,13 +1495,6 @@ His first question is usually: what are we actually trying to make true?
 
 Campaign planner with experience in force planning, major exercises and joint headquarters work. He is at his best when a campaign has too many activities and no clear relationship between them.
 
-## How the player may read him
-
-At first: elegant thinker who always has the neat plan.
-
-Later: capable of throwing his own plan away faster than expected once he finally accepts it is broken; his real weakness is taking too long to reach that point.
-
-
 ## Strength
 
 He can turn a messy campaign into a simple sequence of priorities and choices.
@@ -1688,13 +1561,6 @@ Her first question is usually: what are we actually choosing between?
 ## Career anchor
 
 Plans and command-policy officer who has spent much of her career turning broad direction into explicit priorities. She has often worked where several senior leaders wanted mutually incompatible things left unsaid.
-
-## How the player may read her
-
-At first: blunt officer who reduces everything to a hard choice.
-
-Later: better at living with ambiguity than her manner suggests, but only when she believes waiting will genuinely improve the decision rather than hide it.
-
 
 ## Strength
 
@@ -1767,13 +1633,6 @@ His first question is usually: what does this cost the force we are trying to ha
 
 Capability-development officer with experience in programmes, training pipelines and industrial planning. He has watched promising long-term efforts die one small "temporary" raid at a time.
 
-## How the player may read him
-
-At first: patient moderniser who always protects the future.
-
-Later: capable of killing a programme he once defended and spending long-term capacity very hard when the crisis proves that the future plan no longer matters.
-
-
 ## Strength
 
 He protects programmes, training pipelines and industrial growth from being repeatedly sacrificed to immediate demands.
@@ -1842,13 +1701,6 @@ His first question is usually: do the people doing this understand what matters?
 ## Career anchor
 
 Field commander and training leader with deep experience in decentralised command, exercises and junior-leader development. He has seen both excellent local initiative and chaos produced by vague intent.
-
-## How the player may read him
-
-At first: believer in freedom and local judgement.
-
-Later: willing to impose a tight common method when the organisation no longer shares enough understanding to use freedom safely.
-
 
 ## Strength
 
@@ -1919,13 +1771,6 @@ Her first question is usually: what did we learn that should change what we do n
 
 Exercise, simulation and lessons officer with experience in analysis and campaign planning. Her career has centred on turning what happened into changes that make the next attempt better.
 
-## How the player may read her
-
-At first: enthusiastic experimenter who wants to change everything after every lesson.
-
-Later: capable of becoming the strongest defender of stability once she sees that constant reaction is preventing anyone from learning what works.
-
-
 ## Strength
 
 She builds strong feedback loops. She is good at after-action review, simulation and turning lessons into changes quickly.
@@ -1990,13 +1835,6 @@ His first question is usually: is this person failing, or are we failing to deve
 ## Career anchor
 
 Commander, instructor and personnel leader known for developing officers who were not obvious early stars. He has spent much of his career in jobs where judging potential matters as much as judging present performance.
-
-## How the player may read him
-
-At first: warm mentor who will keep giving everyone another chance.
-
-Later: able to remove somebody very quickly once he decides continued "development" is making the rest of the team carry a problem leadership should have solved.
-
 
 ## Strength
 
