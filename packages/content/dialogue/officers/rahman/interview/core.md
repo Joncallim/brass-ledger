@@ -76,12 +76,12 @@ prompt: "Who here would you want beside you in a crisis, and why?"
 ### beat: rahman.interview.crisis-peer.peer-reference.01
 function: peer-reference
 text: |
-  Ruth Warden.
+  Victor Hale.
 
 ### beat: rahman.interview.crisis-peer.reason.01
 function: reason
 text: |
-  She is useful when I am changing something that people have to absorb. I tend to see the bad process first. She makes me look at who is carrying the change while we fix it.
+  He slows me down in exactly the way I dislike, which is useful when everything is moving fast. I think he protects programmes too long; he thinks I change systems too quickly. In a crisis, I want that argument in the room.
 
 ## sequence: cross-post
 
