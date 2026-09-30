@@ -210,9 +210,9 @@ Asked about a mistake, she is more likely to talk about asking too much of peopl
 
 ## Cross-post
 
-In J3 she asks who can keep executing the tempo. In J7 she asks whether training is building skill or merely consuming instructors. In J5 she asks whether there are enough people to deliver the future programme.
+In J7 she brings a people-and-recovery view to training and force development. She asks whether the force is actually building depth or simply using the same experienced people again.
 
-She should never become "the HR character."
+She should remain a J1 specialist first. Do not move her into J3 or J5 just because her judgement is useful there.
 
 ## Interesting contradiction
 
@@ -298,9 +298,9 @@ He is unusually willing to discuss times when he was wrong.
 
 ## Cross-post
 
-In J5 he tests the assumptions holding a plan together. In J3 he separates claimed readiness from observed readiness.
+In J5 he can test the assumptions holding a campaign plan together because he has done estimates-and-plans work.
 
-He remains a man who tests claims, not an intelligence officer secretly doing J2 from every chair.
+He is not a normal J3 candidate. His usefulness to operations comes through advice, not through pretending an intelligence career makes him an operations chief.
 
 ## Interesting contradiction
 
@@ -389,7 +389,9 @@ She prefers stories about decisions that nearly failed.
 
 ## Cross-post
 
-In J4 she asks what must arrive first. In J5 she asks when a concept becomes an order. In J7 she asks what performance matters on the first operational day.
+In J5 she pushes a campaign plan toward clear actions, branches and decision points.
+
+J4 is a deliberate stretch. If a scenario puts her there, the point is the risk: she understands operational demand better than the deeper logistics system.
 
 ## Interesting contradiction
 
@@ -470,7 +472,9 @@ He answers abstract questions with practical examples. Asked about another offic
 
 ## Cross-post
 
-In J3 he links movement to what enables it. In J5 he asks whether the future programme has a real support chain. In J1 he can spot a scarce human skill holding the wider system together.
+In J3 he brings a strong sense of what movement and tempo actually require because he has served as a joint task-force deputy.
+
+He is not a generic long-term planner. His value outside J4 comes from connecting action to the support system that makes it possible.
 
 ## Interesting contradiction
 
@@ -551,7 +555,9 @@ She often finds the second question under the first.
 
 ## Cross-post
 
-In J3 she asks what an action signals. In J4 she sees when partner supply creates political obligations. In J1 she notices the expectations created by mobilisation.
+In J3 she brings campaign-planning and operations-centre experience. She notices what operational posture tells allies and adversaries as well as what it does physically.
+
+She does not become an intelligence or personnel chief merely because she understands politics and people.
 
 ## Interesting contradiction
 
@@ -628,7 +634,9 @@ She often asks the player to define a word such as ready, trained or successful.
 
 ## Cross-post
 
-In J3 she asks whether the branch can be executed without extraordinary supervision. In J1 she watches skill retention. In J5 she asks when a programme becomes a real organisational capability.
+In J1 she focuses on skill depth, instructor pipelines and whether the force is keeping the experience it needs.
+
+J3 is a deliberate stretch. If used there, her standards can help, but she lacks the same depth of operations command as the natural J3 candidates.
 
 ## Interesting contradiction
 
@@ -708,7 +716,9 @@ Asked who he would choose, he may answer with the job he needs them for rather t
 
 ## Cross-post
 
-In J5 he is strong on long-term force design. In J7 he sees instructor and promotion pipelines.
+In J7 he thinks about instructor pipelines, leader development and whether training is producing the next group of people the force will need.
+
+He should not drift into J5 simply because he thinks long term.
 
 ## Interesting contradiction
 
@@ -788,7 +798,9 @@ She is candid about frustrations and usually has a story about changing somethin
 
 ## Cross-post
 
-In J7 she is a natural reformer. In J5 she can redesign systems. In J1 she is good at culture and organisational change.
+In J1 she is useful when the people problem is also a culture or organisation problem.
+
+She remains strongest in J7. Do not use her as a generic planner just because she is good at change.
 
 ## Interesting contradiction
 
@@ -868,7 +880,9 @@ She talks easily about people but avoids gossip. She tends to explain why a diff
 
 ## Cross-post
 
-In J5 she is useful in coalition planning. In J4 she understands partner supply relationships.
+In J5 she brings direct experience of coalition plans and the practical relationship work needed to make them hold.
+
+She is not a logistics chief. Knowing partners does not make her qualified to run the support system.
 
 ## Interesting contradiction
 
@@ -946,7 +960,9 @@ She enjoys "what if" questions and admits when a hunch was wrong.
 
 ## Cross-post
 
-In J5 she is good at alternative futures. She is less natural in jobs that require strict routine.
+Nair is a J2 specialist.
+
+Her hypotheses can help any staff function, but that does not make her a normal candidate to lead those functions. Keep the distinction between being useful to a billet and being qualified to hold it.
 
 ## Interesting contradiction
 
@@ -1024,7 +1040,9 @@ He is guarded about operations and people, but willing to talk about how collect
 
 ## Cross-post
 
-In J3 he is useful where operational plans depend on what can really be seen and reported from the field.
+J3 is a deliberate stretch because his field-collection background gives him a practical feel for what can be seen and reported during operations.
+
+The scenario should make the trade-off clear: good field sense is not the same as deep operations command experience.
 
 ## Interesting contradiction
 
@@ -1100,7 +1118,9 @@ She thinks for a moment before answering and often says what she is leaving out.
 
 ## Cross-post
 
-In J5 she is strong on whole-of-system planning. In J4 she is good on industrial and supply effects.
+Chen can credibly lead either J2 or J5. In J2 she joins evidence into a wider picture. In J5 she traces how military, industrial and political choices affect one another.
+
+The danger in either billet is the same: she can make the problem wider faster than she makes it clearer.
 
 ## Interesting contradiction
 
@@ -1176,7 +1196,9 @@ She talks about coordination failures and what she learned when good plans met u
 
 ## Cross-post
 
-In J5 she is strong at campaign sequencing. In J4 she understands where operations and support meet.
+In J5 she brings campaign sequencing and coalition-planning experience.
+
+J4 is a deliberate stretch. She understands where operations and support meet, but that is not the same as having spent a career running logistics.
 
 ## Interesting contradiction
 
@@ -1250,7 +1272,9 @@ He talks about campaigns in phases and often asks what came before and what must
 
 ## Cross-post
 
-In J1 he understands rest, turnover and reserve use. In J7 he is good at fitting training into operational cycles.
+In J7 he is good at fitting training, exercises and recovery into the wider readiness cycle.
+
+J1 is a deliberate stretch. He understands force rhythm, but he is not a career personnel officer.
 
 ## Interesting contradiction
 
@@ -1329,7 +1353,9 @@ She tells vivid stories about moments when plans failed and people adapted.
 
 ## Cross-post
 
-In J2 she is good at acting under uncertainty. In J5 she can build flexible branches but needs stronger staff discipline around documentation.
+In J5 she can build flexible branches and plans that survive a changing situation, though she needs stronger staff discipline around documentation.
+
+She is not a J2 candidate. Comfort with uncertainty is not an intelligence qualification.
 
 ## Interesting contradiction
 
@@ -1405,7 +1431,9 @@ He talks about what people actually wanted in difficult negotiations, not what t
 
 ## Cross-post
 
-In J5 he is strong at capability and partner deals. In J1 he can help with reserve-employer or workforce agreements.
+Mensah is a J4 specialist.
+
+His negotiation skills are useful across the headquarters, but they do not by themselves qualify him to run Plans or Personnel.
 
 ## Interesting contradiction
 
@@ -1475,7 +1503,9 @@ She dislikes questions about leadership style and answers better when given a co
 
 ## Cross-post
 
-In J7 she is good at technical training and learning from failure. In J3 she is strong where operations depend on reliability.
+In J7 she is strong on technical training, standards and learning from failure. In J3 she can be credible when operations depend heavily on system reliability.
+
+Her cross-post value comes from technical readiness, not from becoming a generic operator.
 
 ## Interesting contradiction
 
@@ -1549,7 +1579,9 @@ She speaks warmly about people she has worked with, but she is clear about who d
 
 ## Cross-post
 
-In J3 she is good at coalition operations. In J5 she is useful in multinational planning.
+In J3 she brings real coalition-operations experience. In J5 she can contribute to multinational plans where partner access and support are central.
+
+She is still a logistics officer first.
 
 ## Interesting contradiction
 
@@ -1621,7 +1653,9 @@ He enjoys discussing why campaigns fail as a whole rather than focusing on one d
 
 ## Cross-post
 
-In J3 he is good at campaign design. In J4 he sees how support decisions shape operational options.
+In J3 he is a credible cross-post because of his operations-plans work, but he remains a planner rather than a field commander.
+
+The player should feel that difference in how he handles fast, messy execution.
 
 ## Interesting contradiction
 
@@ -1697,7 +1731,9 @@ She is candid, sometimes uncomfortably so. She respects a player who gives a cle
 
 ## Cross-post
 
-In J1 she is useful where personnel priorities require hard choices. In J2 she can be a strong consumer of intelligence, though she is not a natural collector.
+Yusuf is a J5 specialist.
+
+Her ability to force hard choices into the open is useful elsewhere, but it does not make her a personnel or intelligence chief.
 
 ## Interesting contradiction
 
@@ -1771,7 +1807,9 @@ He likes questions about trade-offs over time and is honest about programmes tha
 
 ## Cross-post
 
-In J4 he understands industrial buildup. In J7 he is good at training pipelines and turning programmes into something the force can actually use.
+Hale is naturally suited to J7 Force Development and can serve strongly in J5 because of his long-range plans experience.
+
+J4 is a deliberate stretch. He understands programme and industrial buildup, but not the day-to-day depth of a career logistician.
 
 ## Interesting contradiction
 
@@ -1846,7 +1884,9 @@ He talks about people learning by doing and is quick to give credit to subordina
 
 ## Cross-post
 
-In J3 he supports mission command. In J1 he is good at leader development.
+In J3 he brings real command experience and a strong instinct for giving subordinate leaders room to act. In J1 he can be credible where leader development is central.
+
+He remains strongest in J7.
 
 ## Interesting contradiction
 
@@ -1915,7 +1955,9 @@ She asks the player questions back, especially about how they decide whether som
 
 ## Cross-post
 
-In J2 she is strong at analytic learning. In J5 she is good at adapting plans as evidence changes.
+In J5 she can use exercise and lessons experience to adapt campaign plans as evidence changes.
+
+She is not a J2 candidate. Being good at learning from evidence is not the same as leading intelligence.
 
 ## Interesting contradiction
 
@@ -1990,7 +2032,9 @@ He is open and personable. He may tell the player something kind about a colleag
 
 ## Cross-post
 
-In J1 he is strong on leader development and retention. In J5 he can judge whether an organisational change has enough leadership depth behind it.
+In J7 he brings leader development, instructor experience and a strong feel for how people actually learn.
+
+He should stay out of J5. Judging whether an organisation has enough leaders is useful planning advice, not a plans qualification.
 
 ## Interesting contradiction
 
