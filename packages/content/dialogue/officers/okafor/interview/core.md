@@ -36,7 +36,7 @@ text: |
 ### beat: okafor.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  The commander told me to find another route instead of repeating the limit. Fair. We used a partner port and moved all three. Our own capacity did not magically increase.
+  The commander told me to find another route instead of repeating the limit. Fair. We used a partner port and moved all three. Our own capacity didn't magically get bigger.
 
 ## sequence: red-line
 
@@ -126,4 +126,4 @@ text: |
 ### beat: okafor.interview.future-cost.reason.01
 function: reason
 text: |
-  Using a buffer once may be fine. Damaging the repair system that has to rebuild that buffer is not the same kind of cost.
+  Using a buffer once may be fine. Damaging the repair system that has to rebuild that buffer is a different kind of cost.
