@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: mercer.interview.headquarters-failure.position.01
 function: position
 text: |
-  We solve vacancies one at a time.
+  We fill the vacancy in front of us and forget what that move does next.
 
 ### beat: mercer.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  We fill the urgent job with the best available person, then discover six months later that we used the only officer who could fill the next two jobs. The people system remembers decisions longer than the meeting does.
+  You put the best person into the urgent job, then six months later discover you've used the only person ready for two other posts. These moves have a long tail.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: mercer.interview.commander-disagreement.example.01
 function: example
 text: |
-  I recommended moving a very popular commander into a harder job.
+  I once recommended moving a very popular commander into a harder job.
 
 ### beat: mercer.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  My commander refused because the unit was performing well and he did not want to break it. The unit stayed excellent. The next appointment cycle was a mess. I was right about the pipeline and too casual about what the move would have done to the people involved.
+  My commander said no. The unit stayed excellent. The next posting cycle was ugly. I still think the move made sense, but I was too casual about what it would have done to the people involved.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: mercer.interview.red-line.position.01
 function: position
 text: |
-  If a plan depends on a group of specialists or leaders that will not exist in the numbers we need, I will tell you now.
+  If the plan needs specialists or leaders we simply won't have in the numbers it assumes, I'll tell you now.
 
 ### beat: mercer.interview.red-line.qualification.01
 function: qualification
 text: |
-  We can choose to spend the pipeline. We cannot pretend the pipeline is still there afterward.
+  We can spend the pipeline. We just can't spend it and then pretend it's still there.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: mercer.interview.self-critique.position.01
 function: position
 text: |
-  I sometimes decide a posting is obviously sensible and explain it too late to the person being moved.
+  I explain some posting decisions too late.
 
 ### beat: mercer.interview.self-critique.reason.01
 function: reason
 text: |
-  The logic may be good and the way I handle it can still damage trust.
+  The move makes perfect sense to me on paper, so I forget the person being moved hasn't been sitting with the same logic for three weeks.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: mercer.interview.crisis-peer.reason.01
 function: reason
 text: |
-  He understands that today's easy personnel answer can damage something that takes years to rebuild. We do not always protect the same thing, but we usually agree that the bill arrives eventually.
+  Victor. He sees the same long tail I do. Different subject, same problem: something can look fine today and still leave you with nothing ready when the next stage arrives.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: mercer.interview.cross-post.position.01
 function: position
 text: |
-  In Force Development I would worry about treating training like throughput: how many people enter, how many finish, how many posts get filled.
+  In Force Development, I'd probably watch the numbers too closely.
 
 ### beat: mercer.interview.cross-post.qualification.01
 function: qualification
 text: |
-  That can miss whether they are learning the right thing well.
+  How many people start and finish matters. It doesn't tell you by itself whether they're learning the right thing.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: mercer.interview.act-or-wait.position.01
 function: position
 text: |
-  Stage the people you can stage without emptying every school and specialist post.
+  Stage the people we can stage without emptying every school and specialist post.
 
 ### beat: mercer.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Uncertainty is not a reason to strip the whole force for one possible problem.
+  A possible problem isn't enough reason to strip the whole force. Keep some depth until we know we need it.
 
 ## sequence: future-cost
 
@@ -126,5 +126,4 @@ text: |
 ### beat: mercer.interview.future-cost.reason.01
 function: reason
 text: |
-  But tell me which future hole we are accepting. I can work with a deliberate gap; I cannot work with a gap everyone pretends will refill itself.
-
+  Just tell me which hole we're accepting afterward. I can plan around a real gap. I can't plan around everyone pretending it'll fill itself.
