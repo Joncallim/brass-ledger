@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: navarro.interview.headquarters-failure.position.01
 function: position
 text: |
-  We mistake exposure for competence.
+  We do something once and start talking as if we've mastered it.
 
 ### beat: navarro.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  A unit does something once, usually with extra help, and the headquarters starts speaking as if the force owns the skill. That is how demonstrations turn into false readiness.
+  Usually that first run had extra help, extra time, or the best people on it. Fine. Show me it again before you tell me the force owns the skill.
 
 ## sequence: commander-disagreement
 
@@ -36,7 +36,7 @@ text: |
 ### beat: navarro.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  I refused the label and supported using the capability anyway. We used it, it worked, and we still needed months before I was willing to say the force could repeat it without special help.
+  I wouldn't use the word. I was happy to use the capability. We did, and it worked. It still took months before I believed we could repeat it without all the extra help.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: navarro.interview.red-line.position.01
 function: position
 text: |
-  If the order depends on people performing a task they have never demonstrated and failure would be hard to recover from, I will tell you to simplify it.
+  If the order depends on people doing something they've never shown they can do, and failure is hard to recover from, I'll ask you to simplify it.
 
 ### beat: navarro.interview.red-line.qualification.01
 function: qualification
 text: |
-  In a real emergency I will accept an exception. I will not call the exception a standard.
+  In an emergency, yes, we may take the chance. I just won't pretend the exception is now the standard.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: navarro.interview.self-critique.position.01
 function: position
 text: |
-  Senior officers who dress failure as success bring out the worst in me.
+  Senior officers who dress up failure really get under my skin.
 
 ### beat: navarro.interview.self-critique.reason.01
 function: reason
 text: |
-  A young unit can tell me it failed and I will work with that. A senior headquarters telling me 'the objective was broadly met' after a bad result gets much less patience.
+  A young unit can tell me, 'we failed,' and we'll fix it. A headquarters tells me, 'the objective was broadly met,' after a bad result and I get much less patient.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: navarro.interview.crisis-peer.reason.01
 function: reason
 text: |
-  We argue about standards and local freedom, but he cares whether people actually understand what they are doing. I would rather argue with him about how much freedom to give than work with someone who only wants a good exercise report.
+  Sam. We argue about how much freedom to give people, but he cares whether they actually understand the job. That's an argument I can use.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: navarro.interview.cross-post.position.01
 function: position
 text: |
-  In Personnel I would worry that I judge people too much through performance.
+  In Personnel, I'd have to watch myself. I judge people heavily through performance.
 
 ### beat: navarro.interview.cross-post.qualification.01
 function: qualification
 text: |
-  A person can be capable and still be in the wrong posting, exhausted, or ready to leave. Those are not training problems.
+  Someone can be capable and still be in the wrong post, exhausted, or halfway out the door. Training doesn't fix all of that.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: navarro.interview.act-or-wait.position.01
 function: position
 text: |
-  Act if the task is inside what the force can genuinely do.
+  Act if the task is inside what the force can really do.
 
 ### beat: navarro.interview.act-or-wait.reason.01
 function: reason
 text: |
-  If it is not, simplify the task before you ask people to improvise a capability they do not have.
+  If it isn't, make the task smaller before you ask people to improvise a capability they don't have.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: navarro.interview.future-cost.position.01
 function: position
 text: |
-  A shortcut today may be exactly right.
+  A shortcut today may be exactly the right call.
 
 ### beat: navarro.interview.future-cost.reason.01
 function: reason
 text: |
-  Just label it properly. The danger is not that we used an emergency method once; the danger is teaching ourselves afterward that the emergency method is normal.
-
+  Just don't come back next month and call the shortcut normal. That's how standards rot.
