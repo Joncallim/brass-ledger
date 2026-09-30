@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: reyes.interview.headquarters-failure.position.01
 function: position
 text: |
-  We tell people how to do the job when what they really need is a clear aim and a boundary.
+  We tell people exactly how to do the job when what they need is a clear aim.
 
 ### beat: reyes.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  Then headquarters is surprised when nobody can adapt after the first detail changes.
+  Then one thing changes and they stop, because headquarters wrote the method but never told them what actually mattered.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: reyes.interview.commander-disagreement.example.01
 function: example
 text: |
-  I once opposed a commander who imposed one common procedure after a unit made a serious mistake.
+  A commander once put one common procedure across the force after a unit made a serious mistake. I pushed back.
 
 ### beat: reyes.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  I thought he was overreacting. He was partly right: the force had become too inconsistent. We needed a common baseline before we could safely give the freedom back.
+  I thought he was overreacting. He wasn't entirely. Things had become too inconsistent. We needed a common floor before we could give the freedom back.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: reyes.interview.red-line.position.01
 function: position
 text: |
-  If the order is so detailed that people cannot adapt to what they can see, I will push back.
+  If the order is so detailed that the people there can't react to what they can see, I'll push back.
 
 ### beat: reyes.interview.red-line.qualification.01
 function: qualification
 text: |
-  I will also push back on a vague 'use your initiative' order that gives them no clear boundary. Freedom without shared understanding is just confusion.
+  Same if the order just says 'use your initiative' and gives them no boundary. That's not freedom. That's dumping the problem on them.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: reyes.interview.self-critique.position.01
 function: position
 text: |
-  I give proven local leaders more room than newer leaders think is fair.
+  I give proven leaders more room than newer ones.
 
 ### beat: reyes.interview.self-critique.reason.01
 function: reason
 text: |
-  I tell myself they have earned it. Sometimes I am creating two standards inside the same force.
+  I tell myself they've earned it. They probably have. But I can end up creating two standards without meaning to.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: reyes.interview.crisis-peer.reason.01
 function: reason
 text: |
-  We have known each other a long time, and he understands when a person needs room to grow rather than another instruction. We can also reinforce each other's patience longer than the job deserves.
+  Omar. We've known each other a long time. He knows when a person needs room instead of another instruction. We can both wait too long before admitting the job needs someone else.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: reyes.interview.cross-post.position.01
 function: position
 text: |
-  In Operations I would worry about delegating too much before the force shares enough of the picture.
+  In Operations, I'd worry about giving too much freedom before everyone shares enough of the picture.
 
 ### beat: reyes.interview.cross-post.qualification.01
 function: qualification
 text: |
-  Mission command only works if people understand what matters and what must not fail.
+  You can delegate a lot, but people still need to know what matters and what absolutely cannot fail.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: reyes.interview.act-or-wait.position.01
 function: position
 text: |
-  Give the people doing the job a clear aim, a boundary and a trigger for when to ask again.
+  Give them the aim, the boundary, and a clear point to come back to us.
 
 ### beat: reyes.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Do not write a new checklist because the headquarters is uncomfortable with uncertainty.
+  I wouldn't write a new checklist just because headquarters is nervous.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: reyes.interview.future-cost.position.01
 function: position
 text: |
-  If people understand why today's surge matters, they can carry a real cost.
+  People can carry a hard month if they understand why it matters.
 
 ### beat: reyes.interview.future-cost.reason.01
 function: reason
 text: |
-  If every month is called exceptional, commander's intent stops meaning much.
-
+  Call every month exceptional and, after a while, the words stop meaning much.
