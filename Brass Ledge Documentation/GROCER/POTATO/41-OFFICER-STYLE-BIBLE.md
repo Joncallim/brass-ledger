@@ -46,6 +46,51 @@ Names, gender and background do not determine accent, grammar, temper or profess
 
 Plain English does not mean every officer sounds the same. Distinction comes from sentence length, what they notice first, how directly they disagree, whether they use examples, and what they refuse to leave vague.
 
+
+## Spoken-English naturalness rule
+
+Player-facing dialogue should sound spoken, not polished for publication.
+
+All 24 officers share the same simple language level. Intelligence, seniority and personality change what they notice and how they order a thought; they do **not** give one officer a more academic vocabulary than another.
+
+Use ordinary contractions where a person would naturally use them: "I'd", "we're", "can't", "that's", "doesn't". Do not force contractions into every line.
+
+Allow:
+
+- short fragments;
+- an uneven sentence beside a longer one;
+- "Fine.", "No.", "Look.", "Maybe.", or a name used naturally;
+- a small self-correction;
+- an answer that stops once the point is clear;
+- a story that does not finish with a perfect lesson.
+
+Avoid the common synthetic patterns:
+
+- perfectly balanced opposites in every answer;
+- "X is not Y. It is Z." as a repeated cadence;
+- "That does not mean..." as a habitual qualification;
+- "The question is not X. The question is Y." unless the character really needs that contrast;
+- repeated "If X... If Y..." pairs that wrap every trade-off into a neat binary;
+- three-item rhetorical lists just because three sounds complete;
+- abstract closing lines that restate the moral after the example already made it clear;
+- turning every answer into a miniature briefing note.
+
+Bad:
+"Uncertainty is not a reason for vague orders. If the job is beyond the person doing it, change the job or change the person."
+
+Better:
+"The picture can be messy. The order still can't be. And if the person's out of their depth, deal with that."
+
+Bad:
+"A relationship can be valuable and still not be worth protecting in every decision."
+
+Better:
+"Sometimes you spend the relationship. Just know you're doing it."
+
+Natural does not mean casual comedy, slang-heavy banter or verbal clutter. These are senior officers at work. The target is **plain, unforced speech**.
+
+When a line sounds quotable because it is too perfectly shaped, distrust it.
+
 ## Information-presentation contract
 
 Voice is not enough. Each officer also needs a recognisable way of **ordering information for another person**.
