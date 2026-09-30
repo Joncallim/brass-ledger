@@ -157,6 +157,22 @@ Mechanic rule of thumb:
 
 `campaign_coherence = doctrine_alignment + alliance_alignment + political_cover - contradiction_penalty`
 
+## Selectable J7 Adviser
+
+The personnel system has six selectable senior appointments: J1, J2, J3, J4, J5 and J7 Force Development and Training.
+
+The **mechanics contract remains S1-S5**. J7 does not add a sixth core meter.
+
+J7 advice and trait hooks must route into owned mechanics:
+
+- S1 for people, instructor depth and absorption;
+- S3 for exercises, readiness, rehearsal and execution learning;
+- S5 for programme integration, lessons and long-term force development.
+
+A J7 officer can disagree with the other chiefs and take part in conversations/social influence, but J7 may not invent a parallel readiness system.
+
+J6 communications/cyber and J8 resources/costing exist as non-selectable support cells in the headquarters. They appear through modules, burdens, events and staff notes rather than new chief characters in the first roster.
+
 ## Cross-Staff Interlocks
 
 | Interlock | Design rule |

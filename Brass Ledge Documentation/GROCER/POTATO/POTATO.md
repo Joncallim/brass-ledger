@@ -32,7 +32,10 @@ Always consult this domain before changing game rules, interface direction, spri
 - [[s1-s5-user-interface-model]]
 - [[plain-language-contract-follow-up]]
 - [[doctrine-mechanics-roadmap]]
-- [[detailed-dialogue-and-advisor-styles]]
+- [[detailed-dialogue-and-advisor-styles]] — historical six-advisor contract only
+- [[41-OFFICER-STYLE-BIBLE]] — current 24-officer character, voice, presentation and commander-respect authority
+- [[42-OFFICER-DIALOGUE-STYLE-VALIDATION]] — authored dialogue validation and review record
+- [[43-OFFICER-CAMPAIGN-CONVERSATIONS]] — evolving campaign questions, trust/respect and contextual reply contract
 - [[development-stages]]
 - [[playability-test-script]]
 - [[sprite-design-logic]]

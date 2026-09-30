@@ -14,7 +14,11 @@ Backlink: [[POTATO]]
 
 ## Recommended Staff Model
 
-The planning docs define S1-S5. The current code uses six directorates: people, intelligence, operations, sustainment, plans, and training. The cleanest product model is to keep the player-facing staff as S1-S5 and treat training as a cross-cutting readiness sub-system, not a sixth peer portfolio.
+The planning docs define S1-S5. The current code uses six directorates: people, intelligence, operations, sustainment, plans, and training.
+
+The refined personnel model keeps **five core staff readouts: S1-S5**, and adds **one selectable J7 Force Development and Training adviser**. J7 is not a sixth independent scorecard. J7 is a cross-cutting appointment whose work appears through S1 people/absorption, S3 readiness/exercises, and S5 long-term capability development.
+
+This preserves the readable S1-S5 command model while giving training, lessons, exercises and force development a believable senior officer in the rotating roster.
 
 | Staff function | Current equivalent | Primary game question |
 | --- | --- | --- |
@@ -189,12 +193,24 @@ Show S5 as a **strategy coherence** view:
 - Add doctrine cards that modify how S1-S4 convert work into outcomes.
 - Add alliance commitments that create both capability help and political obligations.
 
-## Training Function Recommendation
+## J7 Force Development And Training
 
-Training is important, but as a player-facing S6/S7 it splits the staff model and complicates the core fantasy. Keep training in the engine as:
+J7 is a selectable senior adviser but **not** a sixth core staff readout.
 
-- a readiness multiplier under S3
-- an absorption limiter under S1
-- a program integration gate under S5
+J7 owns the human conversation around:
 
-The code can keep `training` internally for balance, but the browser design should present it under S1/S3/S5 depending on context.
+- exercises and training standards;
+- lessons and adaptation;
+- instructor depth;
+- whether a new capability has become something the force can actually use;
+- how quickly the organisation can absorb change.
+
+Mechanically, those effects still land in the existing system:
+
+- readiness and exercises under S3;
+- people, instructor and absorption pressure under S1;
+- programme integration and long-term capability development under S5.
+
+The browser may show J7 as a person and appointment without adding a sixth global scorecard.
+
+This section supersedes the earlier recommendation to keep Training entirely hidden as a sub-system.
