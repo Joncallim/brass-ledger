@@ -96,7 +96,7 @@ text: |
 ### beat: reyes.interview.cross-post.qualification.01
 function: qualification
 text: |
-  You can delegate a lot, but people still need to know what matters and what absolutely cannot fail.
+  You can delegate a lot, but people still need to know what matters and what absolutely can't fail.
 
 ## sequence: act-or-wait
 
