@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: kessler.interview.headquarters-failure.position.01
 function: position
 text: |
-  We treat surge as a normal setting.
+  We run at surge tempo and then act like that's normal.
 
 ### beat: kessler.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  Every month becomes the important month, so the force never gets back to the condition that made the first surge possible.
+  Every month becomes the important month. After a while there's no reset, and then there isn't much left to surge with.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: kessler.interview.commander-disagreement.example.01
 function: example
 text: |
-  I argued against a third high-tempo month after two hard ones.
+  I pushed back on a third hard month after we'd already done two.
 
 ### beat: kessler.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  The commander pushed anyway. We got the immediate effect and paid for it in the following exercise cycle. I was right about the cost, but I also learned that sometimes the third month is the one that matters.
+  The commander went ahead. We got what we needed, then the next exercise cycle was rough. I was right about the cost. I was also reminded that sometimes the third month really is the one that matters.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: kessler.interview.red-line.position.01
 function: position
 text: |
-  If the plan commits every reserve, leaves no reset point and assumes the force can stay at emergency tempo indefinitely, I will tell you to stop.
+  If we've committed every reserve, left no point to reset, and the plan assumes emergency tempo just carries on, I'll stop it.
 
 ### beat: kessler.interview.red-line.qualification.01
 function: qualification
 text: |
-  A force with no way to recover has already spent its next option.
+  Once you've spent the reset, you've spent the next option too.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: kessler.interview.self-critique.position.01
 function: position
 text: |
-  I can sound too calm.
+  I can sound calmer than the situation is.
 
 ### beat: kessler.interview.self-critique.reason.01
 function: reason
 text: |
-  When I say 'this is becoming dangerous,' people sometimes hear 'this can wait.' I do not always change my tone quickly enough when the problem has become urgent.
+  I'll say, 'this is getting dangerous,' and people hear, 'we can deal with it later.' I don't always change gears fast enough.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: kessler.interview.crisis-peer.reason.01
 function: reason
 text: |
-  We often reach the same answer for different reasons. She sees the people being worn down. I see the operational cycle losing its ability to surge.
+  Ruth. We often end up in the same place from different directions. She sees the people getting worn out. I see the force losing its ability to surge again.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: kessler.interview.cross-post.position.01
 function: position
 text: |
-  In Force Development I would worry that I focus too much on the readiness cycle and not enough on what the new standard should actually be.
+  In Force Development, I'd probably spend too much time thinking about when the force can absorb change.
 
 ### beat: kessler.interview.cross-post.qualification.01
 function: qualification
 text: |
-  I know when the force can absorb training better than I know every detail of what the training should contain.
+  I'm less sure I'm the best person to decide exactly what every new standard should be.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: kessler.interview.act-or-wait.position.01
 function: position
 text: |
-  If this is the decision point, use the reserve.
+  If this is the moment we kept the reserve for, use it.
 
 ### beat: kessler.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Do not half-surge for three weeks while waiting for a cleaner picture. Either spend it for a reason or keep it.
+  I wouldn't dribble it away over three weeks while we wait for a prettier picture. Either spend it for a reason or keep it.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: kessler.interview.future-cost.position.01
 function: position
 text: |
-  Sometimes today is exactly why we protected next month.
+  Sometimes today is the reason we protected next month.
 
 ### beat: kessler.interview.future-cost.reason.01
 function: reason
 text: |
-  Spend the capacity if this is the decisive period, but put the reset on the calendar before the next emergency steals it.
-
+  Take the hit if this is the decisive period. Just book the reset now, before the next emergency takes that time too.
