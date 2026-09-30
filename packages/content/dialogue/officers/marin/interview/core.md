@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: marin.interview.headquarters-failure.position.01
 function: position
 text: |
-  We put a partner contribution into the plan as if a promise is the same thing as delivery.
+  We write partner promises into the plan as if the trucks are already moving.
 
 ### beat: marin.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  It is not. The question is who actually moves what, through which route, by what time.
+  A promise matters. Delivery matters more. I want to know who's moving what, on which route, and by when.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: marin.interview.commander-disagreement.example.01
 function: example
 text: |
-  I once defended keeping a friendly partner in the critical path because they had supported us for years.
+  I once kept defending a partner in the critical path because they'd been reliable for years.
 
 ### beat: marin.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  They missed two deadlines. The commander finally cut them out of the first move. He was right. Goodwill is valuable; it is not the same as reliability.
+  Then they missed two deadlines. The commander cut them out of the first move. He was right. Goodwill doesn't move cargo.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: marin.interview.red-line.position.01
 function: position
 text: |
-  If the plan depends on a partner contribution that has not been confirmed and we have no branch without it, I will tell you the plan is not ready.
+  If we need a partner contribution, it isn't confirmed, and we have no way around it, I'll say the plan isn't ready.
 
 ### beat: marin.interview.red-line.qualification.01
 function: qualification
 text: |
-  A friendly answer is still not a confirmed movement.
+  A friendly answer is not the same thing as movement.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: marin.interview.self-critique.position.01
 function: position
 text: |
-  I protect a friendly partner from criticism longer than I should.
+  I give good partners too much time.
 
 ### beat: marin.interview.self-critique.reason.01
 function: reason
 text: |
-  I know how hard coalition work is, and sometimes that turns into giving one more chance after the plan has stopped having time for one.
+  I know how hard coalition work is, so I'm inclined to give them one more chance. Sometimes the clock has already run out on one more chance.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: marin.interview.crisis-peer.reason.01
 function: reason
 text: |
-  She understands that a relationship matters before and after the operation. I can tell her when a partner is failing without worrying that she will turn one bad week into a permanent judgement.
+  Claire understands that one bad week doesn't erase a whole relationship. That means I can tell her a partner is failing without worrying she'll turn it into a permanent judgement.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: marin.interview.cross-post.position.01
 function: position
 text: |
-  In Operations I would worry about giving too much time to coalition coordination and not enough to the military clock.
+  In Operations, I'd probably spend too long trying to get every partner lined up.
 
 ### beat: marin.interview.cross-post.qualification.01
 function: qualification
 text: |
-  Sometimes we have to move before every partner is comfortable.
+  Sometimes the military clock wins. We may have to move before everyone's comfortable.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: marin.interview.act-or-wait.position.01
 function: position
 text: |
-  Separate what we control from what needs somebody else.
+  Split the plan into what we control and what somebody else has to do.
 
 ### beat: marin.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Move our part. Give the partner a clear deadline. Build the branch before the deadline arrives.
+  Move our part. Give them a deadline. Have the fallback ready before the deadline passes.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: marin.interview.future-cost.position.01
 function: position
 text: |
-  If the cost next month is partner trust, understand why we are spending it.
+  If we're spending partner trust today, I'd want to know why.
 
 ### beat: marin.interview.future-cost.reason.01
 function: reason
 text: |
-  A good partner can absorb strain when we explain the reason. They cannot absorb repeated surprises forever.
-
+  A good partner can take strain if we're straight with them. Repeated surprises are different.
