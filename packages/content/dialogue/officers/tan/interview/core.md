@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: tan.interview.headquarters-failure.position.01
 function: position
 text: |
-  We either learn nothing or learn too much.
+  We either learn nothing from a result or we learn far too much from it.
 
 ### beat: tan.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  Sometimes an after-action review proves the original plan was sound. Sometimes one bad exercise causes three new rules by Monday. Both are ways of avoiding the harder question: what does this result actually mean?
+  One bad exercise and suddenly there are three new rules. Or we explain the whole thing away and change nothing. I'd rather ask what the result actually tells us first.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: tan.interview.commander-disagreement.example.01
 function: example
 text: |
-  I once pushed a major training change after one exercise exposed a failure.
+  I pushed a big training change once after one exercise exposed a failure.
 
 ### beat: tan.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  The commander held the system steady for another cycle. The failure did not repeat. I had treated one result as a trend because it was vivid.
+  The commander made us wait another cycle. The failure didn't repeat. I'd treated one vivid result like a trend.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: tan.interview.red-line.position.01
 function: position
 text: |
-  If an order repeats a failure we have already seen and nobody can explain what has changed, I will ask why we expect a different result.
+  If we're about to repeat a failure we've already seen and nobody can tell me what's different this time, I'll ask why we're doing it.
 
 ### beat: tan.interview.red-line.qualification.01
 function: qualification
 text: |
-  That does not mean every failure needs a new rule.
+  That doesn't mean every failure needs a new rule.
 
 ## sequence: self-critique
 
@@ -66,7 +66,7 @@ text: |
 ### beat: tan.interview.self-critique.reason.01
 function: reason
 text: |
-  People can hear me say 'we should change this' before I have proved the lesson is larger than the event that produced it.
+  You'll sometimes hear me say, 'we should change this,' before I've really proved the lesson is bigger than the event.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: tan.interview.crisis-peer.reason.01
 function: reason
 text: |
-  She asks whether a lesson has repeated enough to deserve a standard. I sometimes find that maddening. I also know I need somebody who will stop me turning every interesting result into doctrine.
+  Elena. She keeps asking whether we've seen the same thing enough times to call it a standard. I find that irritating fairly often. I also need it.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: tan.interview.cross-post.position.01
 function: position
 text: |
-  In Plans I would worry about adapting the campaign too quickly to the latest result.
+  In Plans, I'd worry about changing the campaign every time we get an interesting new result.
 
 ### beat: tan.interview.cross-post.qualification.01
 function: qualification
 text: |
-  A plan should learn. It should not twitch every time the environment surprises us.
+  A plan should learn. It shouldn't jump every time something surprises us.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: tan.interview.act-or-wait.position.01
 function: position
 text: |
-  Act on the facts that have stayed stable and record what the uncertainty might teach us.
+  Act on the things that have stayed true.
 
 ### beat: tan.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Do not redesign the system in the middle of the operation because one report surprised us.
+  Record the surprise. Learn from it later. I wouldn't redesign the system in the middle of the operation because one report caught us off guard.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: tan.interview.future-cost.position.01
 function: position
 text: |
-  If today's gain teaches us something important, that has value.
+  If today's move teaches us something important, that matters.
 
 ### beat: tan.interview.future-cost.reason.01
 function: reason
 text: |
-  But one success is still one success. Do not spend next month assuming we have discovered a new rule.
-
+  But one success is still one success. I wouldn't spend next month assuming we've discovered a new rule.
