@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: rahman.interview.commander-disagreement.example.01
 function: example
 text: |
-  I once pushed to remove an extra approval that was slowing a training change.
+  An approval chain was slowing a training change. I thought one step was dead weight.
 
 ### beat: rahman.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  My commander made me run a small trial first. I thought the caution was unnecessary. The trial found a safety check hidden inside the old step. We removed the delay and kept the check. That was better than my first answer.
+  My commander made me test the change first. I rolled my eyes. The test found a safety check hidden inside the old step. We removed the delay and kept the check. She was right to slow me down.
 
 ## sequence: red-line
 
