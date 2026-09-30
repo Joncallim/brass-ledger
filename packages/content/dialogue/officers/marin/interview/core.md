@@ -51,7 +51,7 @@ text: |
 ### beat: marin.interview.red-line.qualification.01
 function: qualification
 text: |
-  A friendly answer is not the same thing as movement.
+  A friendly answer still isn't movement.
 
 ## sequence: self-critique
 
