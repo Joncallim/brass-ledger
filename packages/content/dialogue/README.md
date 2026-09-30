@@ -8,10 +8,11 @@ Current character authority:
 Current style-validation report:
 - `Brass Ledge Documentation/GROCER/POTATO/42-OFFICER-DIALOGUE-STYLE-VALIDATION.md`
 
-The first roster uses one officer/mode bundle:
+The first roster uses authored officer/mode bundles:
 
 ```text
 officers/<officer-id>/interview/core.md
+officers/<officer-id>/campaign/relationship.md
 ```
 
 Each file uses `schema: brass-ledger-dialogue-bundle-v1` and contains stable `## sequence:` and `### beat:` blocks.
@@ -55,3 +56,19 @@ Rules:
 - no hidden state paths or executable expressions;
 - do not duplicate finished prose in TypeScript;
 - interview core files are baseline voice material, not the final variation pool.
+
+
+## Campaign relationship baseline
+
+Every first-roster officer now has `campaign/relationship.md` with six baseline stateful replies:
+
+- guarded-respect pushback;
+- low-respect pushback;
+- high-respect candid reflection;
+- guarded/low-respect repair answer;
+- prior-warning callback when `warning-borne-out` exists;
+- self-correction callback when `officer-view-disconfirmed` exists.
+
+These are the first relationship/history layer, not the complete campaign-fact corpus.
+
+Exact current-state facts still come from player-safe campaign context and issue-specific authored beats. Do not make these relationship files invent a current campaign fact merely to sound contextual.
