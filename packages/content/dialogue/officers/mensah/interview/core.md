@@ -76,12 +76,12 @@ prompt: "Who here would you want beside you in a crisis, and why?"
 ### beat: mensah.interview.crisis-peer.peer-reference.01
 function: peer-reference
 text: |
-  Mina Sato.
+  Tunde Okafor.
 
 ### beat: mensah.interview.crisis-peer.reason.01
 function: reason
 text: |
-  She asks what promise comes attached to the deal. I am usually looking at what can move now; she is useful because she asks what we will owe after it moves.
+  He is the person most likely to tell me when the thing I think can be negotiated is simply a physical limit. We annoy each other. That is useful in a crisis.
 
 ## sequence: cross-post
 
