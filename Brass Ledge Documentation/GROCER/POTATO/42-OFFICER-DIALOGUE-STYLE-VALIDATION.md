@@ -8,6 +8,7 @@ related_issues:
   - 115
   - 120
   - 122
+  - 124
 ---
 
 # Officer Dialogue Style Validation
@@ -353,15 +354,79 @@ Before #115 can claim officer-specific conversation shape, prove:
 
 The current two-beat core bundles remain useful **voice fixtures**, but they are no longer sufficient evidence that final runtime dialogue is structurally distinct.
 
+## Campaign relationship expansion pass
+
+The first stateful campaign-dialogue layer is now authored.
+
+Each of the 24 officers has:
+
+`packages/content/dialogue/officers/<officer-id>/campaign/relationship.md`
+
+Each bundle contains six semantic replies:
+
+1. guarded-respect pushback;
+2. low-respect pushback;
+3. high-respect candid reflection;
+4. guarded/low-respect repair answer;
+5. prior-warning callback gated by `warning-borne-out`;
+6. officer self-correction gated by `officer-view-disconfirmed`.
+
+Total: **24 campaign bundles / 144 new campaign beats**.
+
+This pass tests whether respect/history expression stays character-specific.
+
+It does not claim that every current game-state fact has been authored yet. Exact issue/consequence/billet-specific campaign facts still require safe context tags and content owned by #120/#103 once the compiler/projection contract lands.
+
+### Respect-expression result
+
+Pass at authored-content level.
+
+Low respect does not collapse into generic hostility.
+
+Examples of different failure responses:
+
+- Warden stops accepting vague promises of recovery;
+- Halden restates the fact/assessment distinction already given;
+- Briggs asks for an executable order;
+- Okafor asks which real capacity is being given up;
+- Sato names the promise the commander is creating;
+- Navarro challenges repeated relabelling of one-off success;
+- Dubois stays polite while saying the relationship is no longer trusted;
+- Yusuf simply names the choice being avoided;
+- Bell sounds disappointed that the team is still carrying the same underperformance.
+
+High respect also remains character-specific and does not become praise. It generally lets the officer use more shorthand or challenge the commander more candidly.
+
+### Evolving questions
+
+`packages/content/dialogue/QUESTIONS.md` now defines the first closed question catalog with multiple surface variants across:
+
+- baseline judgement;
+- disagreement;
+- consequence / learning;
+- warning / overrule / commitment callbacks;
+- relationship / professional-respect reflection.
+
+The semantic question ID is stable even when surface wording changes.
+
+### Natural-speech gate
+
+All 24 campaign bundles were reviewed with the same spoken-English checks as the interview corpus.
+
+At the end of the pass:
+
+- 24/24 campaign files contain 6 sequences and 6 beats;
+- 144/144 campaign beats passed the current checks for banned management/AI jargon, formal written negatives, semicolon-heavy speech and overlong answer beats.
+
+This is source validation only. Runtime/compiler/replay proof remains owned by #113/#121/#124.
+
 ## Remaining limitation: the core answers are still too fixed for final runtime
 
-This pass deliberately gives each officer one strong semantic answer to each test question.
+The interview fixture still gives each officer one strong semantic answer to each validation question.
 
-That is enough to prove voice.
+The new campaign layer adds stateful respect/history variants, but the complete dialogue system is **not** finished.
 
-It is **not** enough to make repeated campaigns feel unscripted.
-
-The next authoring layer should add variation through:
+The next authoring layer should add further variation through:
 
 - alternate position/reason/example beats that preserve the same belief;
 - billet-specific context;
@@ -391,18 +456,18 @@ That keeps interviews from feeling like a repeated personality questionnaire.
 
 ## Campaign-dialogue boundary
 
-This pass covers **pre-campaign interview dialogue**.
+The interview fixtures remain pre-campaign validation material and should not be copied into monthly conversations.
 
-Do not copy these answers into monthly chief conversations.
+The new `campaign/relationship.md` bundles cover relationship/respect/history callbacks only.
 
-Campaign dialogue needs memo/option facts, professional stance, social modifier, commitments and memory. It should be authored after #116/#118 semantics are stable enough to give those beats real context.
+Campaign dialogue still needs issue/option facts, professional stance, expressed stance, commitments, billet memory and player-safe consequence context. Those beats should be authored against #116/#118/#124 semantics rather than guessed from prose.
 
 ## Result
 
 The 24 characters pass the baseline worldview, plain-English and cadence tests.
 
-The orthogonal review found that their current baseline bundles do **not** yet pass the final information-presentation test because the validation probes intentionally share one function skeleton.
+The orthogonal review still requires #113/#115 to implement presentation-profile composition before runtime can claim final structural distinctness.
 
-The dialogue corpus remains a suitable semantic foundation for the interview system, provided #113/#115 implement the new presentation-profile layer before these bundles become final runtime conversation content.
+The source corpus now contains both the 384-beat interview baseline and the 144-beat campaign relationship/history baseline.
 
-It is not yet the finished variation or composition corpus and should not be presented as such.
+It is a substantially stronger authored foundation, but it is not yet the complete issue/state-specific campaign corpus or a runtime-certified dialogue system.
