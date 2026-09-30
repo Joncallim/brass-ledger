@@ -111,7 +111,7 @@ text: |
 ### beat: haddad.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Keep the next move reversible if we can, and tell people what absolutely cannot fail. I wouldn't waste time trying to get the old picture back.
+  Keep the next move reversible if we can, and tell people what absolutely can't fail. I wouldn't waste time trying to get the old picture back.
 
 ## sequence: future-cost
 
