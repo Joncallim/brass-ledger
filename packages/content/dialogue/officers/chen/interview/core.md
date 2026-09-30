@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: chen.interview.headquarters-failure.position.01
 function: position
 text: |
-  We split connected problems into separate boxes because the organisation chart is easier to read that way.
+  We break connected problems into neat boxes, then forget the boxes still affect one another.
 
 ### beat: chen.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  Then we are surprised when a logistics choice changes politics, or an industrial problem changes readiness.
+  A shipping decision changes repair parts. Repair delays change readiness. Readiness changes what we can promise a partner. None of those links is complicated on its own. Together they are the problem.
 
 ## sequence: commander-disagreement
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: chen.interview.self-critique.position.01
 function: position
 text: |
-  When I am worried about missing a link, I add caveats.
+  When I am worried I have missed a link, I start adding caveats. Then I think of another link and add one more.
 
 ### beat: chen.interview.self-critique.reason.01
 function: reason
 text: |
-  Then I add another. I can bury the recommendation under a perfectly accurate description of everything that might also matter.
+  The result can be perfectly accurate and almost useless. If you have to dig for my recommendation, I have not finished the job.
 
 ## sequence: crisis-peer
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: chen.interview.act-or-wait.position.01
 function: position
 text: |
-  Find the part that can break first and act there.
+  I would start with the first link that can actually break this week.
 
 ### beat: chen.interview.act-or-wait.reason.01
 function: reason
 text: |
-  We do not need to understand every link before protecting the one that matters this week.
+  The wider picture still matters, but we do not need to solve all of it before protecting that link.
 
 ## sequence: future-cost
 
