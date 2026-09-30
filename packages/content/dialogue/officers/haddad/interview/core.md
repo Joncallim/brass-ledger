@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: haddad.interview.headquarters-failure.position.01
 function: position
 text: |
-  We keep trying to recover the original plan after the situation has stopped matching it.
+  We hang on to the old plan after the situation has already moved on.
 
 ### beat: haddad.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  There is a point where discipline means changing the plan, not following it harder.
+  At some point, changing the plan is the disciplined thing to do.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: haddad.interview.commander-disagreement.example.01
 function: example
 text: |
-  I once rerouted a task force after the approved route became unusable.
+  I rerouted a task force once when the approved route became useless.
 
 ### beat: haddad.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  We got the mission done. We also left two headquarters arguing the next day about which instructions were still valid. The improvisation was right; the way I recorded it was poor.
+  We got where we needed to go. Then two headquarters spent the next day arguing about which orders still applied. The move was right. My paperwork was terrible.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: haddad.interview.red-line.position.01
 function: position
 text: |
-  If the order no longer matches what is actually true and gives the people on the ground no room to adjust, I will tell you to change it.
+  If the order doesn't match what's happening anymore and the people there have no room to adjust, I'll ask you to change it.
 
 ### beat: haddad.interview.red-line.qualification.01
 function: qualification
 text: |
-  Loyalty to a dead plan is not discipline.
+  Following a dead plan isn't discipline.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: haddad.interview.self-critique.position.01
 function: position
 text: |
-  My notes get worse when I move fast.
+  My notes are awful when things get busy.
 
 ### beat: haddad.interview.self-critique.reason.01
 function: reason
 text: |
-  I assume people will remember why we chose the workaround because it is obvious to me in the moment. It is much less obvious a week later.
+  In the moment, the reason for a workaround feels obvious. A week later, nobody remembers why we did it, including me sometimes.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: haddad.interview.crisis-peer.reason.01
 function: reason
 text: |
-  He trusts people close to the problem and usually gives them a clear boundary rather than a script. I like that. We can both go too far in the same direction if nobody asks what needs to be common.
+  Sam trusts the people closest to the problem. He gives them a boundary and lets them work. I like that. Put the two of us together, though, and somebody needs to ask what still has to be common.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: haddad.interview.cross-post.position.01
 function: position
 text: |
-  In Plans I would worry about building too many branches and leaving the staff unsure which one is actually the plan.
+  Plans? I'd probably build too many branches.
 
 ### beat: haddad.interview.cross-post.qualification.01
 function: qualification
 text: |
-  Flexibility only helps if people know what they are flexing from.
+  Flexibility is useful until nobody knows which plan they're actually on.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: haddad.interview.act-or-wait.position.01
 function: position
 text: |
-  Work from what is true now.
+  Start with what's true now.
 
 ### beat: haddad.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Take the action that keeps options open and tell people what must not fail. Do not waste time trying to make the old picture come back.
+  Keep the next move reversible if we can, and tell people what absolutely cannot fail. I wouldn't waste time trying to get the old picture back.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: haddad.interview.future-cost.position.01
 function: position
 text: |
-  If next month is weaker because we used one emergency workaround, maybe that is acceptable.
+  If we burn one emergency workaround today, that's not automatically a problem.
 
 ### beat: haddad.interview.future-cost.reason.01
 function: reason
 text: |
-  If the workaround becomes the only way the organisation knows how to operate, stop and fix the system.
-
+  The problem is when the workaround becomes the way we operate because nobody goes back and fixes the thing underneath it.
