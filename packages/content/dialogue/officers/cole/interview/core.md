@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: cole.interview.headquarters-failure.position.01
 function: position
 text: |
-  We add activities without deciding what they are for.
+  We keep adding things to do without asking what they're meant to achieve.
 
 ### beat: cole.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  The headquarters gets busy, every section has work, and the campaign still has no clear main effort.
+  Soon everyone's busy, every branch has a task, and nobody can tell me what the campaign is really trying to move.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: cole.interview.commander-disagreement.example.01
 function: example
 text: |
-  I once kept trying to save a campaign sequence after the commander changed the main objective.
+  I once spent too long trying to save a campaign plan after the commander changed the main aim.
 
 ### beat: cole.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  I told myself the existing plan only needed adjustment. It did not. Another planner finally showed me a simpler sequence built around the new aim. I should have abandoned mine earlier.
+  I kept telling myself it only needed another adjustment. It didn't. Another planner built a simpler plan around the new aim and I should have let mine go sooner.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: cole.interview.red-line.position.01
 function: position
 text: |
-  If the actions in the order pull against the stated main aim, I will ask us to choose.
+  If the orders are pulling in different directions from the thing we say matters most, I'll ask us to choose.
 
 ### beat: cole.interview.red-line.qualification.01
 function: qualification
 text: |
-  A plan cannot have six priorities and still pretend they are priorities.
+  Six priorities means we haven't set a priority.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: cole.interview.self-critique.position.01
 function: position
 text: |
-  I can become attached to being the person with the clear plan.
+  I get attached to having the neat plan.
 
 ### beat: cole.interview.self-critique.reason.01
 function: reason
 text: |
-  When somebody brings a simpler answer, my first instinct can be to show what their answer misses rather than ask whether it is actually better.
+  Someone brings me a simpler answer and my first instinct is often to show them what they've missed. Sometimes their answer is just better.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: cole.interview.crisis-peer.reason.01
 function: reason
 text: |
-  She taught me to ask what a plan commits us to politically as well as what it achieves on the map. I still think she sometimes preserves choices that a plan should close.
+  Mina. She taught me to look at what a plan commits us to, not just what it achieves. I still think she keeps options open longer than I would.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: cole.interview.cross-post.position.01
 function: position
 text: |
-  In Operations I would worry about over-structuring a fast problem.
+  Operations would be a stretch in a different way. I'd be tempted to organise a fast problem too much.
 
 ### beat: cole.interview.cross-post.qualification.01
 function: qualification
 text: |
-  I have operations-plans experience, but that is not the same as a career spent commanding the field force.
+  I've worked close to operations. That's not the same as spending a career running them.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: cole.interview.act-or-wait.position.01
 function: position
 text: |
-  Decide what objective cannot wait.
+  Pick the objective that can't wait.
 
 ### beat: cole.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Take the smallest action that protects it and keep a branch for the rest. We do not need to solve the whole campaign before the next move.
+  Do enough to protect it. Keep the rest open until we know more. We don't need to solve the whole campaign tonight.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: cole.interview.future-cost.position.01
 function: position
 text: |
-  If the short-term gain advances the main aim, next month's cost may be worth it.
+  If the gain moves the main effort, I'd take a real cost next month.
 
 ### beat: cole.interview.future-cost.reason.01
 function: reason
 text: |
-  If it is a side activity that merely looks useful, protect the capacity.
-
+  If it's a side activity that just looks useful, I'd keep the capacity.
