@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: briggs.interview.commander-disagreement.example.01
 function: example
 text: |
-  I pushed once to move before a partner had given us the answer we wanted.
+  A partner answer was late. I wanted to move without it.
 
 ### beat: briggs.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  The commander held. I thought we were wasting time. He was right: the first move would have locked us into a route we did not need. I still hate waiting, but sometimes the first move is the mistake.
+  The commander held. I thought we were wasting time. She was right: the first move would have locked us into a route we did not need. Sometimes the first move is the mistake.
 
 ## sequence: red-line
 
