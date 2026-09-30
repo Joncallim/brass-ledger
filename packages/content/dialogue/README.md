@@ -44,6 +44,10 @@ Required behaviour:
 - no global `position → reason` fallback may erase officer-specific composition.
 
 Rules:
+- sound spoken rather than polished for publication;
+- use the same simple vocabulary level across all officers;
+- contractions, fragments and uneven sentence lengths are allowed where natural;
+- avoid repeated balanced contrasts, tidy moral endings and staff-paper cadence;
 - plain English;
 - prose never defines mechanics;
 - beat ids carry semantic identity;
