@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: halden.interview.headquarters-failure.position.01
 function: position
 text: |
-  We say 'we know' when we mean 'we have heard the same claim three times.'
+  Most often? We let the language outrun the reporting.
 
 ### beat: halden.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  Repetition is not new evidence. The headquarters gets into trouble when a judgement becomes a fact simply because everyone has got used to saying it.
+  A claim gets repeated, the wording gets firmer, and eventually everyone remembers it as a fact. Nothing new was actually collected.
 
 ## sequence: commander-disagreement
 
@@ -31,7 +31,7 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: halden.interview.commander-disagreement.example.01
 function: example
 text: |
-  A commander once asked me to raise the confidence in an assessment before a public meeting.
+  A public brief, a few years ago. The commander wanted the assessment stated more strongly than I thought the reporting allowed.
 
 ### beat: halden.interview.commander-disagreement.qualification.01
 function: qualification
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: halden.interview.self-critique.position.01
 function: position
 text: |
-  I correct sloppy claims in the room when I could sometimes do it privately.
+  I correct people in the room.
 
 ### beat: halden.interview.self-critique.reason.01
 function: reason
 text: |
-  I tell myself the distinction matters more than the embarrassment. That is not always true.
+  Sometimes the correction matters. Sometimes I have simply embarrassed someone when I could have fixed it afterwards.
 
 ## sequence: crisis-peer
 
@@ -106,7 +106,7 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: halden.interview.act-or-wait.position.01
 function: position
 text: |
-  Ask whether the uncertainty changes the action.
+  First question: does the uncertainty change the action?
 
 ### beat: halden.interview.act-or-wait.reason.01
 function: reason
