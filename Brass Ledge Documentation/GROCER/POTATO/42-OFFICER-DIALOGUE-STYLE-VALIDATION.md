@@ -245,6 +245,86 @@ Examples of the corrected shapes:
 
 The dialogue is now differentiated by sentence shape as well as subject.
 
+## Orthogonal information-presentation review
+
+Baseline result: **failed structurally; character contract repaired; runtime/corpus migration still required under #113/#115.**
+
+The earlier tests proved that officers notice different things and use different cadence. They did **not** test the order in which an officer packages facts, meaning, uncertainty, trade-offs and action.
+
+The orthogonal audit found a complete structural collision across the current 24 baseline bundles.
+
+All 24 officers currently use the same function order for the same eight validation probes:
+
+- headquarters failure: `position → reason`;
+- commander disagreement: `example → qualification`;
+- red line: `position → qualification`;
+- self-critique: `position → reason`;
+- crisis peer: `peer-reference → reason`;
+- cross-post: `position → qualification`;
+- act or wait: `position → reason`;
+- future cost: `position → reason`.
+
+That uniformity is useful for the original controlled voice comparison, but it cannot become the final conversation grammar. If left unchanged, a player would hear twenty-four different vocabularies wrapped around the same underlying answer shape.
+
+### Repair
+
+[[41-OFFICER-STYLE-BIBLE]] now defines a distinct information-presentation profile for every officer.
+
+Examples:
+
+- Warden: bearer → burden → duration → recovery / terms;
+- Halden: observed → assessed → unknown or change-trigger → action;
+- Briggs: objective → first action → next trigger → branch;
+- Sato: purpose → expectation → commitment → future freedom;
+- Nair: pattern → competing explanations → discriminator → provisional action;
+- Varga: source → access → observation → limitation;
+- Ortiz: aim → dependency → failure case → branch;
+- Yusuf: real choice → incompatible priorities → sacrifice → ownership;
+- Tan: result → meaning → repeat-or-noise test → adapt or hold.
+
+The profiles are presentation-only. They do not decide stance or mechanics.
+
+### Engine implication
+
+Issue #113 must keep two different concepts separate:
+
+1. **beat function** — what a beat does in the answer, such as position, reason, example or qualification;
+2. **presentation move/profile** — the officer-specific order in which information is framed.
+
+The compiler/interview engine should not hard-code twenty-four branches. Officer content should reference a validated presentation profile, and sequence composition recipes should select/order authored beats against that profile.
+
+The engine must support:
+
+- a normal profile;
+- a compressed under-pressure form;
+- deliberate authored inversions such as example-first interview stories;
+- omission of unnecessary moves for short answers;
+- deterministic fallback when a preferred move has no eligible authored beat.
+
+It must not:
+
+- generate missing prose;
+- parse presentation style back into mechanics;
+- make every answer emit every profile move;
+- expose profile labels to the player;
+- silently fall back to one global `position → reason` skeleton.
+
+### Final presentation-style gate
+
+Before #115 can claim officer-specific conversation shape, prove:
+
+- all 24 officers resolve to a valid presentation profile;
+- no two of the first 24 use the same full normal-order profile;
+- profile identity is stable across cross-posts;
+- cross-post content changes while the person's information order remains recognisable;
+- at least one common substantive prompt renders materially different composition orders across comparison officers;
+- pressure compression preserves the character's entry logic rather than collapsing everyone to the same terse form;
+- a copy-only edit cannot change profile/beat selection;
+- selection remains deterministic and independent of source-file order;
+- the existing collision pairs are distinguishable by presentation order as well as vocabulary.
+
+The current two-beat core bundles remain useful **voice fixtures**, but they are no longer sufficient evidence that final runtime dialogue is structurally distinct.
+
 ## Remaining limitation: the core answers are still too fixed for final runtime
 
 This pass deliberately gives each officer one strong semantic answer to each test question.
@@ -291,8 +371,10 @@ Campaign dialogue needs memo/option facts, professional stance, social modifier,
 
 ## Result
 
-The 24 characters now pass the baseline voice test.
+The 24 characters pass the baseline worldview, plain-English and cadence tests.
 
-The dialogue corpus is suitable as the semantic foundation for the interview system.
+The orthogonal review found that their current baseline bundles do **not** yet pass the final information-presentation test because the validation probes intentionally share one function skeleton.
 
-It is not yet the finished variation corpus and should not be presented as such.
+The dialogue corpus remains a suitable semantic foundation for the interview system, provided #113/#115 implement the new presentation-profile layer before these bundles become final runtime conversation content.
+
+It is not yet the finished variation or composition corpus and should not be presented as such.
