@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: sato.interview.headquarters-failure.position.01
 function: position
 text: |
-  We confuse speaking clearly with choosing clearly.
+  We can say something very clearly without having made a real choice.
 
 ### beat: sato.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  A strong statement can hide the fact that we have not decided what we will actually do when somebody takes us at our word.
+  A strong statement sounds decisive. Then somebody takes us at our word and we discover we never agreed on what we'd actually do next.
 
 ## sequence: commander-disagreement
 
@@ -36,7 +36,7 @@ text: |
 ### beat: sato.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  He made the guarantee. It worked in the short term, and it also created an expectation we spent months trying to meet. I was not wrong about the cost, but I underestimated the value of making the commitment when we did.
+  He made the guarantee. It worked. It also left us with an expectation we spent months trying to meet. I saw the cost. I didn't give enough weight to what the promise bought us at the time.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: sato.interview.red-line.position.01
 function: position
 text: |
-  If an order makes a promise we are not prepared to honour, I will tell you to change the order or change the promise.
+  If the order makes a promise we aren't prepared to keep, I'll ask you to change either the order or the promise.
 
 ### beat: sato.interview.red-line.qualification.01
 function: qualification
 text: |
-  Ambiguity can be useful. An accidental commitment is not.
+  Leaving some room is fine. Accidentally tying our own hands isn't.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: sato.interview.self-critique.position.01
 function: position
 text: |
-  I can overwork the wording.
+  I spend too much time on wording.
 
 ### beat: sato.interview.self-critique.reason.01
 function: reason
 text: |
-  Sometimes everyone leaves a meeting knowing exactly what each sentence means and still unsure whether I actually support the decision. That is my problem, not theirs.
+  I've had meetings where everyone understood every sentence and still couldn't tell whether I supported the decision. That's on me.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: sato.interview.crisis-peer.reason.01
 function: reason
 text: |
-  She notices promises to people inside the force the same way I notice promises to allies and government. If she tells me the headquarters is spending trust it does not have, I listen.
+  Ruth. She hears promises made inside the force the way I hear promises made outside it. If she says we're spending trust we don't have, I pay attention.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: sato.interview.cross-post.position.01
 function: position
 text: |
-  In Operations I would worry about reading a message into every movement and slowing a simple military action.
+  In Operations, I'd worry about seeing a message in every movement.
 
 ### beat: sato.interview.cross-post.qualification.01
 function: qualification
 text: |
-  Sometimes a truck is just a truck. I would need people around me who are comfortable saying that.
+  Sometimes a truck is just a truck. I'd need people around me who were happy to say that.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: sato.interview.act-or-wait.position.01
 function: position
 text: |
-  Waiting also sends a message.
+  Waiting says something too.
 
 ### beat: sato.interview.act-or-wait.reason.01
 function: reason
 text: |
-  I would take reversible steps that protect us without making a public promise we cannot take back. If we later need the stronger move, we have not spent it early.
+  I'd take the steps we can reverse and avoid a public promise we can't take back. If we need the stronger move later, it's still there.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: sato.interview.future-cost.position.01
 function: position
 text: |
-  If today's action changes the campaign or the partner's behaviour, next month's weakness may be worth it.
+  If today's move changes the campaign or changes how a partner behaves, the cost next month may be worth it.
 
 ### beat: sato.interview.future-cost.reason.01
 function: reason
 text: |
-  If the gain is mostly appearance, keep the room for a decision that matters.
-
+  If all it buys is appearance, I'd rather keep the choice for later.
