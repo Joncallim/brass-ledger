@@ -16,12 +16,12 @@ prompt: "What does this headquarters get wrong most often?"
 ### beat: bell.interview.headquarters-failure.position.01
 function: position
 text: |
-  We decide a person is weak before asking whether we ever gave them a clear standard, useful feedback or a real chance to learn.
+  We decide someone's weak before we've even checked whether they knew the standard, got decent feedback, or had a fair shot at learning the job.
 
 ### beat: bell.interview.headquarters-failure.reason.01
 function: reason
 text: |
-  Sometimes they are not good enough. I just want us to know which problem we are solving.
+  Sometimes the answer really is that they're not good enough. Fine. I just want to be sure that's the problem.
 
 ## sequence: commander-disagreement
 
@@ -31,12 +31,12 @@ prompt: "Tell me about a time you disagreed with a commander."
 ### beat: bell.interview.commander-disagreement.example.01
 function: example
 text: |
-  I once argued for giving an officer one more chance when the commander wanted to replace him.
+  I once pushed to keep an officer in post when my commander wanted him moved.
 
 ### beat: bell.interview.commander-disagreement.qualification.01
 function: qualification
 text: |
-  I got my way. The officer improved a little and the team carried him for another two months. I was wrong. Development is not kind if everybody else pays for it.
+  I got my way. He got a little better. The team spent the next two months covering for him. That one was on me.
 
 ## sequence: red-line
 
@@ -46,12 +46,12 @@ prompt: "What would make you tell me not to execute an order?"
 ### beat: bell.interview.red-line.position.01
 function: position
 text: |
-  If an order or appointment sets someone up to fail without the training, authority or standard they need, I will say so.
+  If we're putting someone into a job they haven't been prepared or empowered to do, I'll say it.
 
 ### beat: bell.interview.red-line.qualification.01
 function: qualification
 text: |
-  That does not mean everyone gets endless chances.
+  Doesn't mean we wait forever. At some point you either back them properly or replace them.
 
 ## sequence: self-critique
 
@@ -61,12 +61,12 @@ prompt: "What are you bad at?"
 ### beat: bell.interview.self-critique.position.01
 function: position
 text: |
-  I protect people too long.
+  I give people too many chances.
 
 ### beat: bell.interview.self-critique.reason.01
 function: reason
 text: |
-  If I can see why someone is struggling, I can convince myself one more conversation will fix it. Sometimes the job needs a different person now.
+  If I can see why someone's struggling, I start thinking one more talk will fix it. Sometimes it won't.
 
 ## sequence: crisis-peer
 
@@ -81,7 +81,7 @@ text: |
 ### beat: bell.interview.crisis-peer.reason.01
 function: reason
 text: |
-  We have been friends for years. He gives people room to grow and usually knows when control from headquarters is making them worse. We can both be too patient with somebody we believe in.
+  Sam. We've known each other for years. He gives people room, and he can usually tell when headquarters is getting in their way. The problem is we can both stay patient too long.
 
 ## sequence: cross-post
 
@@ -91,12 +91,12 @@ prompt: "I'm considering you for another post. What worries you about it?"
 ### beat: bell.interview.cross-post.position.01
 function: position
 text: |
-  In Force Development I would worry about focusing too much on the individual and not enough on the common standard.
+  Force Development? I'd have to watch myself. I tend to start with the person in front of me.
 
 ### beat: bell.interview.cross-post.qualification.01
 function: qualification
 text: |
-  A force cannot be built one coaching conversation at a time.
+  That's useful in Personnel. It can be a problem when you're trying to set one standard for the whole force.
 
 ## sequence: act-or-wait
 
@@ -106,12 +106,12 @@ prompt: "The picture is unclear, but time is short. Do we act or wait?"
 ### beat: bell.interview.act-or-wait.position.01
 function: position
 text: |
-  Be clear about what must happen and what people can decide for themselves.
+  Tell people what has to happen, then be clear about what they can decide for themselves.
 
 ### beat: bell.interview.act-or-wait.reason.01
 function: reason
 text: |
-  Uncertainty is not a reason for vague orders. If the job is beyond the person doing it, change the job or change the person.
+  A messy picture doesn't excuse a vague order. And if the job's beyond the person doing it, fix that instead of hoping.
 
 ## sequence: future-cost
 
@@ -121,10 +121,9 @@ prompt: "We can gain something now, but it will leave us weaker next month. What
 ### beat: bell.interview.future-cost.position.01
 function: position
 text: |
-  Sometimes the team should accept a cost today to develop someone for tomorrow.
+  Sometimes you do take a hit now because someone needs the chance to grow.
 
 ### beat: bell.interview.future-cost.reason.01
 function: reason
 text: |
-  Not during a critical mission, and not forever. The rest of the team should not become the price of our reluctance to decide.
-
+  Just not in the middle of something critical, and not forever. The rest of the team can't keep paying for our patience.
