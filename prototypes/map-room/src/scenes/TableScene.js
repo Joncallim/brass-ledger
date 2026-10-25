@@ -354,7 +354,7 @@ export class TableScene extends Phaser.Scene {
     });
     this.boatLabel?.destroy();
     if (mode === "lane") this.boatLabel = this.add.text(OX + 1012, OY + 560, "Ravellan coastguard boats", MUTED);
-    if (mode === "edge") this.boatLabel = this.add.text(OX + 560, OY + 700, "Ravellan ships at Beacon’s edge", { ...LABEL, color: "#7E1A15", fontStyle: "600" });
+    if (mode === "edge") this.boatLabel = this.add.text(OX + 990, OY + 420, "Ravellan ships\nat Beacon’s edge", { ...LABEL, color: "#7E1A15", fontStyle: "600" });
   }
 
   showWarning(on, { pulse = true, delay = 0 } = {}) {
@@ -399,7 +399,8 @@ export class TableScene extends Phaser.Scene {
     cam.zoomTo(place ? zoom : 1, 900, EASE.travel, true);
   }
 
-  drawPaths(t = 1) {
+  // Only routes that are actually on the table get drawn.
+  drawPaths(t = 1, which = ["quiet", "joint"]) {
     const g = this.paths.clear();
     const b = { x: OX + PLACES.beacon.x, y: OY + PLACES.beacon.y };
     const quiet = [], joint = [];
@@ -407,22 +408,21 @@ export class TableScene extends Phaser.Scene {
       quiet.push({ x: b.x + 20 + s * 150, y: b.y + 20 + Math.sin(s * 1.6) * 120 });
       joint.push({ x: b.x + 20 + s * 190, y: b.y - 20 - Math.sin(s * 1.6) * 110 });
     }
-    this.dashed(g, quiet, 12, 9, 4, C.ink, 1, false, t);
-    g.lineStyle(8, C.brass, 1);
-    const n = Math.max(2, Math.round(joint.length * t));
-    g.strokePoints(joint.slice(0, n), false);
+    if (which.includes("quiet")) this.dashed(g, quiet, 12, 9, 4, C.ink, 1, false, t);
+    if (which.includes("joint")) {
+      g.lineStyle(8, C.brass, 1);
+      g.strokePoints(joint.slice(0, Math.max(2, Math.round(joint.length * t))), false);
+    }
     if (t >= 1 && !this.pathLabels.length) {
-      this.pathLabels = [
-        this.add.text(b.x + 70, b.y + 150, "Hold quietly", { ...LABEL, fontStyle: "600" }),
-        this.add.text(b.x + 120, b.y - 160, "Stand together openly", { ...LABEL, fontStyle: "600", color: "#7A4F0C" }),
-      ];
+      if (which.includes("quiet")) this.pathLabels.push(this.add.text(b.x + 70, b.y + 150, "Hold quietly", { ...LABEL, fontStyle: "600" }));
+      if (which.includes("joint")) this.pathLabels.push(this.add.text(b.x + 120, b.y - 160, "Stand together openly", { ...LABEL, fontStyle: "600", color: "#7A4F0C" }));
     }
   }
 
-  revealPaths() {
+  revealPaths(which) {
     const o = { t: 0 };
-    if (reducedMotion.on) return this.drawPaths(1);
-    this.tweens.add({ targets: o, t: 1, duration: 1200, ease: EASE.travel, onUpdate: () => this.drawPaths(o.t), onComplete: () => this.drawPaths(1) });
+    if (reducedMotion.on) return this.drawPaths(1, which);
+    this.tweens.add({ targets: o, t: 1, duration: 1200, ease: EASE.travel, onUpdate: () => this.drawPaths(o.t, which), onComplete: () => this.drawPaths(1, which) });
   }
 
   revealTruth() {

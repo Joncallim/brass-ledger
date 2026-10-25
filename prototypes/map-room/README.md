@@ -25,8 +25,25 @@ npm run dev          # http://localhost:5173
 | Key | Does |
 | --- | --- |
 | Space / Enter / click on a speaker | Finish the running sequence, or continue |
-| 1–8 | Jump to a chapter: title, December briefing, December orders, orders sent, night, January clash, February showdown, debrief |
+| 1–9 | Jump to a chapter: title, December briefing, December orders, December night, January briefing, January orders, January night, February showdown, debrief |
 | M | Toggle reduced motion (also follows `prefers-reduced-motion`) |
+
+## The sequence
+
+Each month runs **briefing → orders → night**, and everything after December follows
+from what you ordered (`run` in `DeskScene`, built from `DEFAULT_RUN` when you jump in):
+
+- The December night report narrates your Beacon order and the question Lattice asked.
+- January's briefing answers that question.
+- January's orders start from staff's plan. A clash with the host government appears
+  only if you order an open show of force, and Send stays blocked until you settle it.
+- The January night narrates how you settled it.
+- February offers "Stand together openly" only if the host government's OK was waited
+  for or bought; if you acted without them, the screen says why it is missing.
+- The debrief's rows, title and Major General Halden's verdict follow your choices.
+
+Seals are spent and returned by the slips themselves, never more than two a month.
+"Change this order" flips a slip to its choices; "Done" folds it back to show the order.
 
 ## How it is built
 
