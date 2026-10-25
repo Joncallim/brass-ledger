@@ -42,7 +42,7 @@ from what you ordered (`run` in `DeskScene`, built from `DEFAULT_RUN` when you j
   only if you order an open show of force, and Send stays blocked until you settle it.
 - The January night narrates how you settled it.
 - February offers "Stand together openly" only if the host government's OK was waited
-  for or bought; if you acted without them, the screen says why it is missing.
+  for or traded for; if you acted without them, the screen says why it is missing.
 - The debrief's rows, title and Major General Halden's verdict follow your choices.
 
 Seals are spent and returned by the slips themselves, never more than two a month.
@@ -103,7 +103,11 @@ The copy rules live in `src/fixture.js` and are applied to every line:
    hard line around it: "Anyone who tells you what Ravellan means by it is guessing. I
    don't guess." There is no "What we don't know" heading. Briefings use *Bottom line*,
    *Assessment* and *Watch for*.
-4. **Plain words.** The median line reads at about grade 3 (Flesch-Kincaid), down from
+4. **Say it straight.** No shorthand and no figures of speech: "the press", not "the
+   papers"; "Marenna's approval", not "Marenna's yes"; "a fresh look inside Sarn", not
+   "eyes inside Sarn". Officers may use one common idiom in their own voice ("testing
+   your nerve"), never in a label, cost or option.
+5. **Plain words.** The median line reads at about grade 3 (Flesch-Kincaid), down from
    about grade 8 in the current Figma copy.
 
 ## Story content

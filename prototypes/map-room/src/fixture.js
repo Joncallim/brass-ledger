@@ -88,9 +88,9 @@ export const DECEMBER = {
     sections: [
       ["Bottom line", "Ravellan is loading landing craft in Sarn, its main harbour. Lattice counted nine on 1 December."],
       ["Assessment", "That is a landing force for one battalion, about 600 troops. I will tell you whether they mean to use it when I see troops on the quay. Not before."],
-      ["Watch for", "Their fishing fleet working with the landing craft. Fishermen do not keep military hours."],
+      ["Watch for", "Their fishing boats sailing with the landing craft, or keeping to a fixed military schedule. Real fishermen do neither."],
     ],
-    warning: ["Early warning: yes", "Lattice has eyes on Sarn. A sailing would give us at least two days’ notice."],
+    warning: ["Early warning: in place", "Lattice is watching Sarn. If they sail, we get at least two days’ notice."],
   },
   halden: "General. The closer look you ordered in November paid off: nine landing craft in Sarn, loading. Anyone who tells you what Ravellan means by it is guessing. I don’t guess.",
   orders: {
@@ -115,7 +115,7 @@ export const DECEMBER = {
       reply: {
         quiet: ["briggs", "Understood. Companies move on the night of the 18th. In place by the 20th."],
         rest: ["briggs", "Then Beacon runs on 140 troops and 20 miles of radar until the 31st. If they sail in that window, I have two days to get 2nd Battalion back. That’s the trade, General."],
-        show: ["briggs", `We can sail the frigate on the 19th. ${surname("sato")} will need to tell Marenna before the papers do.`],
+        show: ["briggs", `We can sail the frigate on the 19th. ${surname("sato")} will need to tell Marenna before they read it in the press.`],
       },
       ring: { rest: 190, show: 270 },
     },
@@ -143,7 +143,7 @@ export function decemberNight(run) {
         text: {
           quiet: "Two rifle companies and the air-defence battery dug in on the headland. Beacon’s radar still sees 30 miles. 2nd Battalion is now on its 108th day without rest.",
           rest: "2nd Battalion stood down until the 31st. Beacon held on its own 140 troops. Its radar now sees 20 miles, down from 30.",
-          show: "The frigate and two companies exercised off Beacon in daylight. Radar cover held at 32 miles. Marenna’s defence minister read about it in the papers.",
+          show: "The frigate and two companies exercised off Beacon in daylight. Radar cover held at 32 miles. Marenna’s defence minister found out from the press, not from us.",
         }[b],
       },
       {
@@ -166,8 +166,8 @@ export function decemberNight(run) {
       },
     ],
     still: l === "boats"
-      ? ["Early warning: yes, and fresh", "Lattice watched Sarn on the 27th. A sailing still gives us two days’ notice."]
-      : ["Early warning: still yes", "Our 1 December count in Sarn still stands. It is getting old."],
+      ? ["Early warning: in place, up to date", "Lattice watched Sarn on the 27th. If they sail, we still get two days’ notice."]
+      : ["Early warning: in place, getting old", "Our last count in Sarn is from 1 December. It still stands, but it is ageing."],
     next: `Marenna’s cabinet votes on 15 January on whether to back us. ${surname("sato")} needs your January orders before then.`,
     go: "Begin January",
   };
@@ -187,14 +187,14 @@ export function januaryBrief(run) {
       }[l]],
       ["Assessment", {
         boats: "This is a landing plan for one battalion. I will not give you the day, because I do not have it.",
-        who: "That is a military operation wearing civilian clothes. Whether it ends in a landing or a squeeze, nobody can tell you yet. I won’t pretend to.",
+        who: "That is a navy operation using fishing boats as cover. Whether it ends in a landing or just pressure on us, nobody can tell you yet. I won’t pretend to.",
         when: "That is the shape of a landing. Exercises are how you hide one. Plan for 3 February.",
       }[l]],
       ["Watch for", "Troops marching down to the quay at Sarn. That is the last step before they sail."],
     ],
-    warning: l === "boats" ? ["Early warning: yes", "Lattice saw Sarn on 27 December. Two days’ notice of a sailing."] : ["Early warning: yes, but ageing", "Our last count in Sarn is from 1 December."],
+    warning: l === "boats" ? ["Early warning: in place", "Lattice saw Sarn on 27 December. If they sail, we get two days’ notice."] : ["Early warning: in place, but out of date", "Our last count in Sarn is from 1 December."],
     halden: {
-      boats: "General. Eleven craft, one more every day, ready by the 8th of February. I’ll call it a landing plan. The day they sail, I won’t call.",
+      boats: "General. Eleven craft, one more every day, ready by the 8th of February. I’ll call it a landing plan. The day they sail, I can’t give you yet.",
       who: "General. Their fishing fleet takes orders from the navy in Sarn: 23 boats. That is not a fishing fleet. What they mean to do with it, I can’t yet tell you.",
       when: "General. We have their date: 3 February, at sea. If you want my view, plan for a landing on the 4th.",
     }[l],
@@ -212,13 +212,13 @@ export const JANUARY = {
     question: "What should Beacon do in January?",
     options: [
       { id: "quiet", name: "Reinforce Beacon quietly", short: "reinforce Beacon quietly", says: "Air-defence battery to full strength by night, by 20 January. 2nd Battalion stays on duty.", staff: true },
-      { id: "show", name: "Reinforce Beacon openly", short: "reinforce Beacon openly", says: "Frigate and two companies in daylight from 16 January. Ravellan sees we mean it. Needs Marenna’s yes first." },
+      { id: "show", name: "Reinforce Beacon openly", short: "reinforce Beacon openly", says: "Frigate and two companies in daylight from 16 January. Ravellan sees we mean it. Needs Marenna’s approval first." },
       { id: "hold", name: "Hold as we are", short: "hold as we are", says: "No new troops. 2nd Battalion rests from 10 January. Beacon’s radar stays at its current range." },
     ],
     council: {
       briggs: { prefers: "quiet", line: "Full air defence on Beacon by 20 January, moved at night. That covers us to the first week of February without anyone watching us do it." },
       okafor: { prefers: "hold", line: "2nd Battalion passes 120 days this month. Rest them from 10 January or I cannot promise you them in February. Beacon has its guns already." },
-      sato: { prefers: "quiet", line: "The cabinet votes on 15 January. Anything done in daylight before then, they hear from Ravellan first. Quiet keeps their yes." },
+      sato: { prefers: "quiet", line: "The cabinet votes on 15 January. Anything done in daylight before then, they hear about from Ravellan first. If we stay quiet, they vote for us." },
       halden: { prefers: "show", line: "Ravellan sails around 3 February. If they see a frigate off Beacon on the 16th, they have two weeks to think again. Quiet tells them nothing." },
     },
     reply: {
@@ -232,15 +232,15 @@ export const JANUARY = {
     staff: ["sato", "will wait for the cabinet’s vote on 15 January before anything happens in daylight."],
     why: "We promised to consult Marenna. Their answer reaches us on 22 January.",
     cost: "Nothing, if we stay quiet. Their answer is too slow for anything we do in daylight before the 22nd.",
-    clash: "A daylight reinforcement on the 16th needs Marenna’s yes. Their answer arrives on the 22nd. We never set up a hotline.",
+    clash: "A daylight reinforcement on the 16th needs Marenna’s approval. Their answer arrives on the 22nd. We never set up a hotline.",
     ways: [
       { id: "act", name: "Act on the 16th, tell them after", says: "Fast. Marenna’s defence minister has said she will withdraw support for February if we do." },
-      { id: "buy", name: "Buy a quick yes", says: "Offer Marenna our two spare patrol boats. The cabinet votes yes on the 15th. We lose those boats for the rest of the campaign." },
+      { id: "buy", name: "Trade patrol boats for a fast approval", says: "Give Marenna our two spare patrol boats. In return, the cabinet approves on the 15th, in time for the 16th. We lose those boats for the rest of the campaign." },
       { id: "back", name: "Go back to reinforcing Beacon quietly", says: "No clash. Beacon is guarded without a show.", gives: true },
     ],
   },
-  sato: "General, a frigate off Beacon on the 16th needs Marenna’s yes. Without a hotline, their answer reaches us on the 22nd. That is six days late, and I have told them so twice.",
-  blocked: "Settle the clash between Beacon and Marenna first. Nothing is lost.",
+  sato: "General, a frigate off Beacon on the 16th needs Marenna’s approval. Without a hotline, their answer reaches us on the 22nd. That is six days late, and I have told them so twice.",
+  blocked: "Settle the clash between Beacon and Marenna first. Your other orders are kept.",
 };
 
 export function januaryNight(run) {
@@ -258,7 +258,7 @@ export function januaryNight(run) {
           hold: "2nd Battalion stood down to rest. Beacon kept its own guns and 20 miles of radar.",
           show: way === "act"
             ? "The frigate and two companies arrived off Beacon in daylight. We told Marenna the next morning."
-            : "The frigate and two companies arrived off Beacon in daylight, with Marenna’s yes. Ravellan saw it within hours.",
+            : "The frigate and two companies arrived off Beacon in daylight, with Marenna’s approval. Ravellan saw it within hours.",
         }[beacon],
       },
       {
@@ -267,7 +267,7 @@ export function januaryNight(run) {
         text: !open
           ? "Marenna’s cabinet voted to back us. Its navy will sail with ours if Ravellan comes."
           : way === "buy"
-            ? "The cabinet voted yes. Two of our patrol boats now fly Marenna’s flag. Its navy will sail with ours."
+            ? "The cabinet approved, as agreed. Our two spare patrol boats now serve in Marenna’s navy, and that navy will sail with ours."
             : "Marenna’s defence minister withdrew support. Its navy will not sail with ours in February.",
       },
       { at: "lane", cause: "1 February · Ravellan", text: "Their ships left Sarn at dawn: four warships and the landing craft. They are heading for Beacon." },
@@ -278,18 +278,18 @@ export function januaryNight(run) {
   };
 }
 
-// Marenna's yes makes the joint stand possible: by waiting for the vote, or by buying it.
+// Marenna's approval makes the joint stand possible: by waiting for the vote, or by trading for it.
 export const hasJointAuthority = (run) => run.jan.beacon !== "show" || run.jan.way === "buy";
 
 export function february(run) {
   const joint = hasJointAuthority(run);
   const routes = [
-    { id: "quiet", name: "Hold quietly", does: "Beacon’s guns and garrison hold the headland. The reserve stays in barracks.", costs: "Ravellan’s papers will say we hid.", needs: "Beacon’s defences holding for three days on their own.", voice: ["briggs", "The guns are dug in. We can hold for three days without showing our hand."] },
+    { id: "quiet", name: "Hold quietly", does: "Beacon’s guns and garrison hold the headland. The reserve stays in barracks.", costs: "Ravellan’s press will say we were too afraid to show ourselves.", needs: "Beacon’s defences holding for three days on their own.", voice: ["briggs", "The guns are dug in. We can hold for three days without showing our hand."] },
   ];
   if (joint) routes.push({
     id: "joint", name: "Stand with Marenna’s navy", does: "Our frigate and Marenna’s two corvettes block the approach in daylight. 2nd Battalion goes in behind them.",
     costs: "2nd Battalion will be worn out by the end of the month.",
-    needs: run.jan.way === "buy" ? "Marenna’s yes, bought with our two patrol boats." : "Marenna’s yes from the vote on 15 January.",
+    needs: run.jan.way === "buy" ? "Marenna’s navy, which they agreed to send in return for our two patrol boats." : "Marenna’s navy, which their cabinet agreed to send on 15 January.",
     voice: ["sato", "Marenna sails with us on the 4th. They will remember who stood beside them."],
   });
   return {
@@ -303,7 +303,7 @@ export function february(run) {
 
 const DEC_ORDER = { quiet: "Beacon strengthened quietly (staff).", rest: "Rest 2nd Battalion.", show: "Show force openly." };
 const JAN_ORDER = (j) => j.beacon === "show"
-  ? `Reinforce Beacon openly, and ${j.way === "act" ? "tell Marenna after" : "buy Marenna’s yes"}.`
+  ? `Reinforce Beacon openly, and ${j.way === "act" ? "tell Marenna after" : "trade patrol boats for Marenna’s approval"}.`
   : j.beacon === "hold" ? "Hold as we are." : "Reinforce Beacon quietly (staff); wait for Marenna’s vote.";
 
 export function debrief(run) {
@@ -312,18 +312,18 @@ export function debrief(run) {
     title: joint ? "Won, at a price" : "Held, quietly",
     line: joint
       ? "Beacon held, and Marenna trusts us more. 2nd Battalion is worn out, and some will say we overreacted."
-      : "Beacon held without a shot fired in public. 2nd Battalion is still standing. Ravellan’s papers say we hid.",
+      : "Beacon held, and we never had to fire. 2nd Battalion is still fit to fight. Ravellan’s press says we were too afraid to show ourselves.",
     rows: [
-      ["September", "Beacon first, quietly. Lattice started.", "Nothing yet worth reporting.", "They were already planning a landing."],
-      ["November", "A closer look at Sarn.", "Signs both ways: attack or bluff.", "The plan went on behind the pressure."],
+      ["September", "Strengthened Beacon quietly. Set up Lattice.", "Nothing yet worth reporting.", "They were already planning a landing."],
+      ["November", "A closer look at Sarn.", "Signs both ways: attack or bluff.", "They kept planning the landing while they pressured us."],
       ["December", `${DEC_ORDER[run.dec.beacon]} Lattice: ${latticeQ(run.dec.lattice).short}.`, "Nine, then eleven landing craft loading.", "One battalion was loading for Beacon."],
-      ["January", JAN_ORDER(run.jan), "A landing looked likelier than a bluff.", run.jan.beacon === "show" ? "Your frigate made them test, not attack." : "Your quiet made them think Beacon was soft."],
-      ["February", joint ? "Stand with Marenna’s navy." : "Hold quietly.", "No look inside Sarn since the turn of the year.", "They came to test you, and turned back ten miles out."],
+      ["January", JAN_ORDER(run.jan), "A landing looked likelier than a bluff.", run.jan.beacon === "show" ? "Your frigate made them probe our defences instead of attacking." : "Staying quiet made them think Beacon was weak."],
+      ["February", joint ? "Stand with Marenna’s navy." : "Hold quietly.", "No look inside Sarn since the turn of the year.", "They came to probe our defences, and turned back ten miles out."],
     ],
     halden: {
       boats: "We counted their craft to the last day. What we never had was their date. Next time, ask when.",
-      who: "We had their fleet cold in December, and by February we were blind. I asked who. I should have asked when.",
-      when: "We had their date and it held. What we lacked was eyes inside Sarn at the end.",
+      who: "In December we knew who ran their fleet. By February we could not see inside Sarn at all. I asked who. I should have asked when.",
+      when: "We had their date and it held. What we lacked at the end was a fresh look inside Sarn.",
     }[run.dec.lattice],
   };
 }
@@ -331,5 +331,5 @@ export function debrief(run) {
 // Debrief-only truth layer. Shown only after the campaign ends, never before.
 export const TRUTH = [
   { near: "harbour", dx: -160, dy: -55, text: "Really: a landing, planned since September" },
-  { near: "beacon", dx: 450, dy: 80, text: "February: they came to test you, not to land" },
+  { near: "beacon", dx: 450, dy: 80, text: "February: they came to probe our defences, not to land" },
 ];

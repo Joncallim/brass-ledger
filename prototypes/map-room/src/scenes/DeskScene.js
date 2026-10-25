@@ -516,7 +516,7 @@ export class DeskScene extends Phaser.Scene {
       const show = this.run.jan.beacon === "show", w = this.run.jan.way;
       const ways = show ? `<div class="row"><b>Clash</b><span>${H.clash}</span></div>
         <p style="font-size:18px;font-weight:600;margin-top:14px">${w ? "You settled it:" : "Three ways out. Nothing changes until you pick."}</p>
-        <div role="radiogroup">${H.ways.map((x) => `<button class="opt ${w === x.id ? "sel" : ""}" data-way="${x.id}" role="radio" aria-checked="${w === x.id}"><span class="r"></span><span><b>${x.name}</b><span class="s">${x.says}</span><span class="cost ${x.gives ? "free" : ""}">${x.gives ? "Gives your order back" : "Uses 1 personal order"}</span></span></button>`).join("")}</div>`
+        <div role="radiogroup">${H.ways.map((x) => `<button class="opt ${w === x.id ? "sel" : ""}" data-way="${x.id}" role="radio" aria-checked="${w === x.id}"><span class="r"></span><span><b>${x.name}</b><span class="s">${x.says}</span><span class="cost ${x.gives ? "free" : ""}">${x.gives ? "Returns your personal order" : "Uses 1 personal order"}</span></span></button>`).join("")}</div>`
         : `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row"><b>Cost</b><span>${H.cost}</span></div>`;
       slip.node.innerHTML = `<article class="paper slip" style="width:580px" aria-label="${H.head}"><span class="pin"></span><h3>${H.head} · ${w && w !== "back" ? "your order" : "staff plan"}</h3>
         <p class="will">${surname(H.staff[0])} ${H.staff[1]}</p>${ways}</article>`;
@@ -611,14 +611,16 @@ export class DeskScene extends Phaser.Scene {
     this.table.setBoats("edge");
     this.table.setRing(this.ringAfter("jan"));
     this.later(500, () => this.table.revealPaths(F.routes.map((r) => r.id)));
-    const w = this.dom(1250, 120, `<div class="paper sheet" style="width:600px;padding:22px 30px">${this.warnBlock(F.warning, true)}</div>`);
-    move(this, w, { alpha: [0, 1], y: [96, 120] }, { dur: T.paper, delay: 300 });
-    let first;
+    // The right-hand column stacks by measured height, so longer copy never overlaps a button.
+    const w = this.dom(1250, 104, `<div class="paper sheet" style="width:600px;padding:18px 30px">${this.warnBlock(F.warning, true)}</div>`);
+    move(this, w, { alpha: [0, 1], y: [80, 104] }, { dur: T.paper, delay: 300 });
+    let first, y = 104 + w.node.offsetHeight + 14;
     F.routes.forEach((r, i) => {
-      const c = this.dom(1250, 300 + i * 330, `<article class="paper sheet" style="width:600px;padding:26px 30px"><h2 style="font-size:32px">${r.name}</h2><p class="body" style="margin-top:8px">${r.does}</p>
+      const c = this.dom(1250, y, `<article class="paper sheet" style="width:600px;padding:26px 30px"><h2 style="font-size:32px">${r.name}</h2><p class="body" style="margin-top:8px">${r.does}</p>
         <div class="row" style="grid-template-columns:100px 1fr"><b>It costs</b><span>${r.costs}</span></div><div class="row" style="grid-template-columns:100px 1fr"><b>It needs</b><span>${r.needs}</span></div>
         <div class="quote"><span class="av" style="background-image:url(${portrait(r.voice[0])})"></span><span><span class="attrib">${fullName(r.voice[0])}:</span> “${r.voice[1]}”</span></div>
         <div class="btns"><button class="b on" data-route="${r.id}">Choose: ${lower(r.name)}</button></div></article>`);
+      y += c.node.offsetHeight + 14;
       move(this, c, { alpha: [0, 1], x: [1310, 1250] }, { dur: 520, delay: 900 + i * STAGGER.slip });
       const btn = c.node.querySelector("[data-route]");
       first ??= btn;
@@ -630,7 +632,7 @@ export class DeskScene extends Phaser.Scene {
       };
     });
     if (F.notOffered) {
-      const n = this.dom(1250, 630, `<div class="paper sheet" style="width:600px;padding:22px 30px"><p class="lab" style="color:var(--ink2)">Not on the table</p><p class="body" style="font-size:20px;line-height:28px">${F.notOffered}</p></div>`);
+      const n = this.dom(1250, y, `<div class="paper sheet" style="width:600px;padding:22px 30px"><p class="lab" style="color:var(--ink2)">Not on the table</p><p class="body" style="font-size:20px;line-height:28px">${F.notOffered}</p></div>`);
       move(this, n, { alpha: [0, 1] }, { dur: T.paper, delay: 1100 });
     }
     this.talk("halden", F.halden, { w: 1000, delay: 700 });
