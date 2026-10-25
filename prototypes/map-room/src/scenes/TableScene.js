@@ -9,6 +9,8 @@ const C = {
   table: 0x221a14, paper: 0xeee9dc, land: 0xddd4c0, landEdge: 0x8c826f, contour: 0xc9bfa9,
   ink: 0x1b1a18, ink2: 0x4d4a44, brass: 0xc99a3e, brassDeep: 0x7a4f0c, red: 0xb4261f,
 };
+// Chart inks: buff land, blue shallows, Admiralty magenta for navigation marks.
+const INK = { paper: "#F1EBDA", sea: "#EEF4F2", land: "#E2CB93", coast: "#4F4230", ink: "#1B1A18", ink2: "#4D4A44", magenta: "#A3326F" };
 const LABEL = { fontFamily: "IBM Plex Sans", fontSize: "20px", color: "#1B1A18" };
 const MUTED = { ...LABEL, color: "#4D4A44" };
 
@@ -34,7 +36,7 @@ export class TableScene extends Phaser.Scene {
     this.pathT = { quiet: 0, joint: 0 };
     this.pathLabels = [];
     this.truth = this.makeTruth();
-    this.night = this.add.rectangle(OX, OY, MW, MH, 0x0c0d12, 1).setOrigin(0).setAlpha(0);
+    this.night = this.add.rectangle(OX, OY, MW, MH, 0x0a1424, 1).setOrigin(0).setAlpha(0);
     this.drawLight();
     this.redrawRing();
     this.scene.launch("desk");
@@ -68,7 +70,7 @@ export class TableScene extends Phaser.Scene {
     const lamp = this.textures.createCanvas("lamp", 1920, 1080);
     const l = lamp.getContext();
     const warm = l.createRadialGradient(760, 300, 80, 760, 420, 1300);
-    warm.addColorStop(0, "rgba(255,226,170,0.16)"); warm.addColorStop(1, "rgba(255,226,170,0)");
+    warm.addColorStop(0, "rgba(255,226,170,0.09)"); warm.addColorStop(1, "rgba(255,226,170,0)");
     l.fillStyle = warm; l.fillRect(0, 0, 1920, 1080);
     lamp.refresh();
     const vig = this.textures.createCanvas("vignette", 1920, 1080);
@@ -84,11 +86,18 @@ export class TableScene extends Phaser.Scene {
     h.beginPath(); h.moveTo(0, 24); h.lineTo(24, 0); h.moveTo(-6, 6); h.lineTo(6, -6); h.moveTo(18, 30); h.lineTo(30, 18); h.stroke();
     hatch.refresh();
 
-    const boat = this.textures.createCanvas("boat", 64, 24);
+    // A patrol vessel with its wake trailing astern (bow to the right).
+    const boat = this.textures.createCanvas("boat", 110, 30);
     const b = boat.getContext();
-    b.fillStyle = "#1B1A18";
-    b.beginPath(); b.moveTo(4, 6); b.lineTo(46, 6); b.lineTo(60, 12); b.lineTo(46, 18); b.lineTo(4, 18); b.closePath(); b.fill();
-    b.fillStyle = "#4D4A44"; b.fillRect(18, 9, 14, 6);
+    for (let k = 0; k < 4; k++) {
+      b.strokeStyle = `rgba(255,255,255,${0.8 - k * 0.18})`; b.lineWidth = 2 - k * 0.3;
+      b.beginPath(); b.moveTo(44 - k * 2, 11); b.lineTo(4 + k * 6, 3 + k); b.moveTo(44 - k * 2, 19); b.lineTo(4 + k * 6, 27 - k); b.stroke();
+    }
+    b.fillStyle = "rgba(255,255,255,.55)"; b.fillRect(14, 13, 32, 4);
+    b.fillStyle = "#2A2523";
+    b.beginPath(); b.moveTo(46, 8); b.lineTo(92, 8); b.lineTo(106, 15); b.lineTo(92, 22); b.lineTo(46, 22); b.closePath(); b.fill();
+    b.fillStyle = "#7E1A15"; b.fillRect(46, 13, 46, 2);
+    b.fillStyle = "#6E655C"; b.fillRect(60, 11, 18, 8); b.fillStyle = "#2A2523"; b.fillRect(68, 9, 3, 3);
     boat.refresh();
 
     // landing craft: blunt bow ramp, square stern, drawn small and in ink
@@ -114,84 +123,216 @@ export class TableScene extends Phaser.Scene {
     const tex = this.textures.createCanvas("base", 1920, 1080);
     const x = tex.getContext();
     const P = (pts) => { x.beginPath(); pts.forEach((p, i) => (i ? x.lineTo(p.x, p.y) : x.moveTo(p.x, p.y))); };
+    const label = (s, lx, ly, { w = 400, c = INK.ink, f = "IBM Plex Sans", st = "", sz = 20, align = "left" } = {}) => {
+      x.font = `${st} ${w} ${sz}px ${f}`.trim(); x.fillStyle = c; x.textBaseline = "top"; x.textAlign = align; x.fillText(s, lx, ly); x.textAlign = "left";
+    };
     // table
     x.fillStyle = x.createPattern(this.textures.get("wood").getSourceImage(), "repeat");
     x.fillRect(0, 0, 1920, 1080);
-    // paper sheet with a soft shadow
+    // the chart sheet, lifted off the table
     x.save(); x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 60; x.shadowOffsetY = 26;
-    x.fillStyle = "#EEE9DC"; x.fillRect(OX, OY, MW, MH); x.restore();
+    x.fillStyle = INK.paper; x.fillRect(OX, OY, MW, MH); x.restore();
     x.save(); x.beginPath(); x.rect(OX, OY, MW, MH); x.clip();
+    // open water: the palest sea tone, so land never reads as sea
+    x.fillStyle = INK.sea; x.fillRect(OX, OY, MW, MH);
+
     const westPts = this.coast(560, 34, "west", [{ y: 520, dx: 120, w: 40 }, { y: 760, dx: -40, w: 70 }]);
     const eastPts = this.coast(1290, 30, "east", [{ y: 345, dx: 70, w: 46 }, { y: 640, dx: -50, w: 80 }]);
     const W = westPts.map((p) => ({ x: OX + p.x, y: OY + p.y })), E = eastPts.map((p) => ({ x: OX + p.x, y: OY + p.y }));
-    // graticule
-    x.strokeStyle = "rgba(185,174,150,.45)"; x.lineWidth = 1;
-    for (let gx = 230; gx < MW; gx += 230) { x.beginPath(); x.moveTo(OX + gx, OY); x.lineTo(OX + gx, OY + MH); x.stroke(); }
-    for (let gy = 236; gy < MH; gy += 236) { x.beginPath(); x.moveTo(OX, OY + gy); x.lineTo(OX + MW, OY + gy); x.stroke(); }
-    // depth contours
-    for (const [off, a] of [[22, 0.9], [48, 0.65], [84, 0.4], [130, 0.22]]) {
-      x.strokeStyle = `rgba(201,191,169,${a})`; x.lineWidth = 1.5;
+    const westLand = (off = 0) => [{ x: OX, y: OY }, ...W.map((p) => ({ x: p.x + off, y: p.y })), { x: OX, y: OY + MH }];
+    const eastLand = (off = 0) => [{ x: OX + MW, y: OY }, ...E.map((p) => ({ x: p.x - off, y: p.y })), { x: OX + MW, y: OY + MH }];
+    const islands = (grow = 0) => [this.blob(880, 250, 46 + grow, "i1"), this.blob(1020, 780, 34 + grow, "i2"), this.blob(760, 120, 22 + grow, "i3")];
+
+    // shallow water: Admiralty-style blue tints, darkest nearest the shore
+    for (const [off, col] of [[150, "#DCEBEC"], [96, "#C8E0E5"], [52, "#B3D3DC"], [22, "#9CC5D1"]]) {
+      x.fillStyle = col;
+      for (const poly of [westLand(off), eastLand(off), ...islands(off * 0.55)]) { P(poly); x.closePath(); x.fill(); }
+    }
+    // depth contours on the tint edges
+    x.strokeStyle = "rgba(92,140,156,.55)"; x.lineWidth = 1.2;
+    for (const off of [22, 52, 96, 150]) {
       P(W.map((p) => ({ x: p.x + off, y: p.y }))); x.stroke();
       P(E.map((p) => ({ x: p.x - off, y: p.y }))); x.stroke();
     }
-    // land, hatched inside its own outline
-    const polys = [[{ x: OX, y: OY }, ...W, { x: OX, y: OY + MH }], [{ x: OX + MW, y: OY }, ...E, { x: OX + MW, y: OY + MH }],
-      this.blob(880, 250, 46, "i1"), this.blob(1020, 780, 34, "i2"), this.blob(760, 120, 22, "i3")];
-    for (const poly of polys) {
-      P(poly); x.closePath(); x.fillStyle = "#DDD4C0"; x.fill();
-      x.save(); x.clip();
-      x.strokeStyle = "rgba(120,108,86,.20)"; x.lineWidth = 1.2;
-      for (let d = -1100; d < 2000; d += 12) { x.beginPath(); x.moveTo(d, 1080); x.lineTo(d + 1080, 0); x.stroke(); }
-      x.restore();
-      P(poly); x.closePath(); x.strokeStyle = "#8C826F"; x.lineWidth = 2; x.stroke();
+    // engraved water-lining hugging the coast
+    for (let k = 1; k <= 5; k++) {
+      x.strokeStyle = `rgba(60,104,122,${0.32 - k * 0.05})`; x.lineWidth = 0.8;
+      P(W.map((p) => ({ x: p.x + k * 5, y: p.y }))); x.stroke();
+      P(E.map((p) => ({ x: p.x - k * 5, y: p.y }))); x.stroke();
     }
-    // soundings
+    // graticule
+    x.strokeStyle = "rgba(92,120,130,.28)"; x.lineWidth = 1;
+    for (let gx = 230; gx < MW; gx += 230) { x.beginPath(); x.moveTo(OX + gx, OY); x.lineTo(OX + gx, OY + MH); x.stroke(); }
+    for (let gy = 236; gy < MH; gy += 236) { x.beginPath(); x.moveTo(OX, OY + gy); x.lineTo(OX + MW, OY + gy); x.stroke(); }
+
+    // land: buff, height contours inland, sand stipple at the shore, inked coastline
+    const lands = [westLand(), eastLand(), ...islands()];
+    for (const [i, poly] of lands.entries()) {
+      P(poly); x.closePath(); x.fillStyle = INK.land; x.fill();
+      x.save(); x.clip();
+      x.strokeStyle = "rgba(150,118,70,.35)"; x.lineWidth = 1;
+      if (i === 0) for (const off of [36, 80, 140, 210, 300]) { P(W.map((p) => ({ x: p.x - off - Math.sin(p.y / 90 + off) * 14, y: p.y }))); x.stroke(); }
+      if (i === 1) for (const off of [36, 80, 140, 210, 300]) { P(E.map((p) => ({ x: p.x + off + Math.sin(p.y / 90 + off) * 14, y: p.y }))); x.stroke(); }
+      x.fillStyle = "rgba(196,166,104,.55)";
+      const st = seeded(`sand-${i}`);
+      for (let s = 0; s < 900; s++) {
+        const src = i === 0 ? W : i === 1 ? E : poly;
+        const p = src[Math.floor(st() * src.length)];
+        x.fillRect(p.x + (st() - 0.5) * 22, p.y + (st() - 0.5) * 8, 1.4, 1.4);
+      }
+      x.restore();
+      P(poly); x.closePath(); x.strokeStyle = INK.coast; x.lineWidth = 2; x.stroke();
+    }
+    // a greener lowland wash behind the host coast
+    x.save(); P(westLand()); x.closePath(); x.clip();
+    const green = x.createLinearGradient(OX + 200, 0, OX + 560, 0);
+    green.addColorStop(0, "rgba(140,160,110,.18)"); green.addColorStop(1, "rgba(140,160,110,0)");
+    x.fillStyle = green; x.fillRect(OX, OY, 700, MH); x.restore();
+
+    // soundings, in fathoms
     const r = seeded("soundings");
-    x.font = "italic 15px Newsreader"; x.fillStyle = "rgba(140,130,111,.85)";
-    for (let i = 0; i < 52; i++) {
+    x.font = "italic 15px Newsreader"; x.fillStyle = "rgba(52,84,98,.85)";
+    for (let i = 0; i < 64; i++) {
       const y = 40 + r() * (MH - 80), k = Math.round(y / 8);
-      const x0 = westPts[k].x + 70, x1 = eastPts[k].x - 70;
+      const x0 = westPts[k].x + 40, x1 = eastPts[k].x - 40;
       if (x1 - x0 < 40) continue;
       const sx = x0 + r() * (x1 - x0);
-      x.fillText(String(Math.round(8 + Math.sin(((sx - x0) / (x1 - x0)) * Math.PI) * 30 + r() * 6)), OX + sx, OY + y);
+      x.fillText(String(Math.round(4 + Math.sin(((sx - x0) / (x1 - x0)) * Math.PI) * 34 + r() * 6)), OX + sx, OY + y);
     }
-    // shipping lane
-    x.setLineDash([4, 10]); x.strokeStyle = "rgba(77,74,68,.8)"; x.lineWidth = 2;
-    x.beginPath(); for (let y = 0; y <= MH; y += 6) x.lineTo(OX + 940 + Math.sin(y / 160) * 26, OY + y); x.stroke();
+    // wave marks in open water, sparse and pale
+    const wv = seeded("waves");
+    x.strokeStyle = "rgba(70,120,140,.28)"; x.lineWidth = 1.1;
+    for (let i = 0; i < 140; i++) {
+      const y = 30 + wv() * (MH - 60), k = Math.round(y / 8);
+      const x0 = westPts[k].x + 170, x1 = eastPts[k].x - 170;
+      if (x1 - x0 < 20) continue;
+      const wx = OX + x0 + wv() * (x1 - x0), wy = OY + y;
+      x.beginPath(); x.moveTo(wx - 8, wy); x.quadraticCurveTo(wx - 4, wy - 4, wx, wy); x.quadraticCurveTo(wx + 4, wy + 4, wx + 8, wy); x.stroke();
+    }
+    // woodland and towns on land
+    const wd = seeded("woods");
+    x.strokeStyle = "rgba(96,118,70,.55)"; x.lineWidth = 1;
+    for (const [cx0, cy0, n] of [[240, 420, 40], [180, 700, 34], [1660, 620, 36], [1580, 180, 28]]) {
+      for (let i = 0; i < n; i++) {
+        const tx = OX + cx0 + (wd() - 0.5) * 150, ty = OY + cy0 + (wd() - 0.5) * 110;
+        x.beginPath(); x.arc(tx, ty, 3.5, 0, Math.PI * 2); x.stroke();
+        x.beginPath(); x.moveTo(tx, ty + 3.5); x.lineTo(tx, ty + 7); x.stroke();
+      }
+    }
+    x.fillStyle = "rgba(60,48,32,.75)";
+    for (const [cx0, cy0] of [[1480, 300], [380, 790]]) {
+      for (let i = 0; i < 16; i++) x.fillRect(OX + cx0 + (i % 4) * 9 + wd() * 3, OY + cy0 + Math.floor(i / 4) * 9 + wd() * 3, 6, 6);
+    }
+    // reefs and rocks
+    const rocks = seeded("rocks");
+    x.strokeStyle = INK.ink; x.lineWidth = 1.4;
+    for (const [rx, ry, n] of [[690, 610, 5], [960, 300, 4], [1060, 830, 4], [1170, 540, 3]]) {
+      for (let i = 0; i < n; i++) {
+        const px = OX + rx + (rocks() - 0.5) * 50, py = OY + ry + (rocks() - 0.5) * 30;
+        x.beginPath(); x.moveTo(px - 4, py); x.lineTo(px + 4, py); x.moveTo(px, py - 4); x.lineTo(px, py + 4); x.stroke();
+        x.beginPath(); x.arc(px, py, 1.5, 0, Math.PI * 2); x.fill();
+      }
+    }
+    // shipping lane: a magenta traffic lane with direction arrows
+    x.strokeStyle = INK.magenta; x.lineWidth = 2;
+    for (const side of [-26, 26]) {
+      x.setLineDash([14, 8]); x.beginPath();
+      for (let y = 0; y <= MH; y += 6) x.lineTo(OX + 940 + side + Math.sin(y / 160) * 26, OY + y);
+      x.stroke();
+    }
+    x.setLineDash([]); x.fillStyle = INK.magenta;
+    for (const [ay, dir] of [[200, 1], [430, -1], [690, 1]]) {
+      const ax = OX + 940 + Math.sin(ay / 160) * 26 + dir * -11, py = OY + ay;
+      P([{ x: ax, y: py + dir * 14 }, { x: ax - 6, y: py - dir * 6 }, { x: ax + 6, y: py - dir * 6 }]); x.closePath(); x.fill();
+    }
+    label("Shipping lane", OX + 990, OY + 118, { c: INK.magenta, w: 500 });
     // harbour zone
-    x.fillStyle = "rgba(180,38,31,.07)"; x.beginPath(); x.ellipse(OX + PLACES.harbour.x, OY + PLACES.harbour.y, 130, 85, 0, 0, Math.PI * 2); x.fill();
-    x.setLineDash([6, 6]); x.strokeStyle = "rgba(77,74,68,.9)"; x.stroke(); x.setLineDash([]);
-    // labels
-    const label = (s, lx, ly, { w = 400, c = "#1B1A18", f = "IBM Plex Sans", st = "", sz = 20 } = {}) => {
-      x.font = `${st} ${w} ${sz}px ${f}`.trim(); x.fillStyle = c; x.textBaseline = "top"; x.fillText(s, lx, ly);
-    };
-    label("Shipping lane", OX + 968, OY + 118, { c: "#4D4A44" });
+    x.fillStyle = "rgba(180,38,31,.08)"; x.beginPath(); x.ellipse(OX + PLACES.harbour.x, OY + PLACES.harbour.y, 130, 85, 0, 0, Math.PI * 2); x.fill();
+    x.setLineDash([6, 6]); x.strokeStyle = "rgba(126,26,21,.8)"; x.lineWidth = 1.6; x.stroke(); x.setLineDash([]);
     label("Ravellan’s main harbour", OX + 1400, OY + 222, { w: 600 });
-    label("where landing boats load", OX + 1400, OY + 248, { c: "#4D4A44" });
-    label("Host country", OX + 60, OY + 870, { f: "Newsreader", st: "italic", sz: 36, c: "#6A655B" });
-    label("Ravellan", OX + 1560, OY + 870, { f: "Newsreader", st: "italic", sz: 36, c: "#6A655B" });
-    // compass rose
-    const cx = OX + 1760, cy = OY + 110;
-    x.strokeStyle = "#4D4A44"; x.lineWidth = 1.5; x.beginPath(); x.arc(cx, cy, 44, 0, Math.PI * 2); x.stroke();
-    x.globalAlpha = 0.6; x.beginPath(); x.arc(cx, cy, 36, 0, Math.PI * 2); x.stroke(); x.globalAlpha = 1;
-    for (let i = 0; i < 32; i++) {
-      const a = (i / 32) * Math.PI * 2, r0 = i % 8 === 0 ? 30 : 38;
-      x.beginPath(); x.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); x.lineTo(cx + Math.cos(a) * 44, cy + Math.sin(a) * 44); x.stroke();
-    }
-    x.fillStyle = "#1B1A18"; P([{ x: cx, y: cy - 58 }, { x: cx - 9, y: cy }, { x: cx + 9, y: cy }]); x.fill();
-    x.fillStyle = "#EEE9DC"; P([{ x: cx, y: cy + 40 }, { x: cx - 9, y: cy }, { x: cx + 9, y: cy }]); x.closePath(); x.fill(); x.strokeStyle = "#1B1A18"; x.stroke();
-    label("N", cx - 7, cy - 88, { w: 600 });
+    label("where landing boats load", OX + 1400, OY + 248, { c: INK.ink2 });
+    // lighthouse on the north island, with its light character
+    const lx = OX + 900, ly = OY + 236;
+    x.fillStyle = INK.magenta; x.beginPath(); x.moveTo(lx, ly); x.quadraticCurveTo(lx + 30, ly - 22, lx + 40, ly - 6); x.quadraticCurveTo(lx + 22, ly + 4, lx, ly); x.fill();
+    x.fillStyle = INK.ink; x.beginPath(); x.arc(lx, ly, 4, 0, Math.PI * 2); x.fill();
+    label("Fl 5s 12M", lx - 12, ly + 10, { sz: 13, c: INK.magenta, w: 500, align: "right" });
+    // anchorage off the host coast
+    this.anchor(x, OX + 470, OY + 860);
+    label("Anchorage", OX + 486, OY + 850, { sz: 14, c: INK.magenta });
+    // region names
+    label("HOST COUNTRY", OX + 60, OY + 880, { f: "Newsreader", sz: 30, c: "#6B5A3A" });
+    label("RAVELLAN", OX + 1580, OY + 880, { f: "Newsreader", sz: 30, c: "#6B5A3A" });
+    // compass rose, in chart magenta
+    this.rose(x, OX + 1740, OY + 140, 76);
     // scale bar
-    for (let i = 0; i < 4; i++) { x.fillStyle = i % 2 ? "#EEE9DC" : "#1B1A18"; x.fillRect(OX + 1500 + i * 50, OY + 820, 50, 8); }
-    x.strokeStyle = "#1B1A18"; x.lineWidth = 1.5; x.strokeRect(OX + 1500, OY + 820, 200, 8);
-    label("0", OX + 1496, OY + 834, { sz: 14, c: "#4D4A44" }); label("10 nautical miles", OX + 1612, OY + 834, { sz: 14, c: "#4D4A44" });
-    // paper grain
+    for (let i = 0; i < 4; i++) { x.fillStyle = i % 2 ? INK.paper : INK.ink; x.fillRect(OX + 1500 + i * 50, OY + 812, 50, 8); }
+    x.strokeStyle = INK.ink; x.lineWidth = 1.5; x.strokeRect(OX + 1500, OY + 812, 200, 8);
+    label("0", OX + 1496, OY + 826, { sz: 14, c: INK.ink2 }); label("10 nautical miles", OX + 1600, OY + 826, { sz: 14, c: INK.ink2 });
+    // title cartouche
+    x.fillStyle = "rgba(241,235,218,.94)"; x.fillRect(OX + 40, OY + 40, 330, 104);
+    x.strokeStyle = INK.ink; x.lineWidth = 1.5; x.strokeRect(OX + 40, OY + 40, 330, 104); x.lineWidth = 0.8; x.strokeRect(OX + 46, OY + 46, 318, 92);
+    label("Kestrel Strait", OX + 205, OY + 58, { f: "Newsreader", sz: 32, align: "center" });
+    label("Soundings in fathoms · reported positions only", OX + 205, OY + 104, { sz: 13, c: INK.ink2, align: "center" });
+    // neatline with alternating degree bars
+    x.strokeStyle = INK.ink; x.lineWidth = 1; x.strokeRect(OX + 12, OY + 12, MW - 24, MH - 24);
+    for (let i = 0; i < Math.ceil(MW / 46); i++) { if (i % 2) { x.fillStyle = INK.ink; x.fillRect(OX + 12 + i * 46, OY + 6, 46, 6); x.fillRect(OX + 12 + i * 46, OY + MH - 12, 46, 6); } }
+    for (let i = 0; i < Math.ceil(MH / 47); i++) { if (i % 2) { x.fillStyle = INK.ink; x.fillRect(OX + 6, OY + 12 + i * 47, 6, 47); x.fillRect(OX + MW - 12, OY + 12 + i * 47, 6, 47); } }
+    x.strokeRect(OX + 6, OY + 6, MW - 12, MH - 12);
+    const lat = ["36°40′", "36°30′", "36°20′"], lon = ["24°10′", "24°20′", "24°30′", "24°40′", "24°50′", "25°00′", "25°10′"];
+    lat.forEach((s, i) => label(s, OX + 18, OY + 230 + i * 236, { sz: 12, c: INK.ink2 }));
+    lon.forEach((s, i) => label(s, OX + 236 + i * 230, OY + 18, { sz: 12, c: INK.ink2 }));
+    // age: fold creases, foxing, edge toning, grain
+    for (const [fx, fy, w, h] of [[OX + MW / 2, OY, 2, MH], [OX, OY + MH / 2, MW, 2]]) {
+      x.fillStyle = "rgba(255,255,255,.35)"; x.fillRect(fx, fy, w, h);
+      x.fillStyle = "rgba(90,70,40,.12)"; x.fillRect(fx + (w === 2 ? 2 : 0), fy + (h === 2 ? 2 : 0), w, h);
+    }
+    const fox = seeded("foxing");
+    for (let i = 0; i < 14; i++) {
+      const fx = OX + fox() * MW, fy = OY + fox() * MH, fr = 10 + fox() * 40;
+      const g = x.createRadialGradient(fx, fy, 0, fx, fy, fr);
+      g.addColorStop(0, "rgba(150,110,60,.10)"); g.addColorStop(1, "rgba(150,110,60,0)");
+      x.fillStyle = g; x.fillRect(fx - fr, fy - fr, fr * 2, fr * 2);
+    }
+    const tone = x.createRadialGradient(OX + MW / 2, OY + MH / 2, MH * 0.45, OX + MW / 2, OY + MH / 2, MW * 0.62);
+    tone.addColorStop(0, "rgba(120,90,40,0)"); tone.addColorStop(1, "rgba(120,90,40,.16)");
+    x.fillStyle = tone; x.fillRect(OX, OY, MW, MH);
     x.globalCompositeOperation = "multiply";
     x.fillStyle = x.createPattern(this.textures.get("grain").getSourceImage(), "repeat");
     x.fillRect(OX, OY, MW, MH);
     x.restore();
     tex.refresh();
     this.add.image(0, 0, "base").setOrigin(0);
+  }
+
+  // A full compass rose: degree ring, cardinal star, magnetic variation.
+  rose(x, cx, cy, R) {
+    x.save();
+    x.strokeStyle = INK.magenta; x.fillStyle = INK.magenta; x.lineWidth = 1.2;
+    for (const rr of [R, R - 10, R - 30]) { x.beginPath(); x.arc(cx, cy, rr, 0, Math.PI * 2); x.stroke(); }
+    for (let d = 0; d < 360; d += 5) {
+      const a = (d - 90) * Math.PI / 180, k = d % 30 === 0 ? 10 : d % 10 === 0 ? 7 : 4;
+      x.beginPath(); x.moveTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); x.lineTo(cx + Math.cos(a) * (R - k), cy + Math.sin(a) * (R - k)); x.stroke();
+    }
+    x.font = "500 10px IBM Plex Sans"; x.textAlign = "center"; x.textBaseline = "middle";
+    for (let d = 30; d < 360; d += 30) { const a = (d - 90) * Math.PI / 180; x.fillText(String(d), cx + Math.cos(a) * (R - 20), cy + Math.sin(a) * (R - 20)); }
+    for (let i = 0; i < 8; i++) {
+      const a = (i * 45 - 90) * Math.PI / 180, len = i % 2 ? R * 0.42 : R * 0.7, wdt = i % 2 ? 5 : 8;
+      const tip = { x: cx + Math.cos(a) * len, y: cy + Math.sin(a) * len };
+      const l = { x: cx + Math.cos(a - Math.PI / 2) * wdt, y: cy + Math.sin(a - Math.PI / 2) * wdt };
+      const rgt = { x: cx + Math.cos(a + Math.PI / 2) * wdt, y: cy + Math.sin(a + Math.PI / 2) * wdt };
+      x.fillStyle = INK.magenta; x.beginPath(); x.moveTo(cx, cy); x.lineTo(l.x, l.y); x.lineTo(tip.x, tip.y); x.closePath(); x.fill();
+      x.fillStyle = INK.paper; x.beginPath(); x.moveTo(cx, cy); x.lineTo(rgt.x, rgt.y); x.lineTo(tip.x, tip.y); x.closePath(); x.fill(); x.stroke();
+    }
+    x.fillStyle = INK.ink; x.font = "600 16px IBM Plex Sans"; x.fillText("N", cx, cy - R - 12);
+    x.fillStyle = INK.magenta; x.font = "11px IBM Plex Sans"; x.fillText("VAR 3°W (2026)", cx, cy + R + 14);
+    x.restore();
+  }
+
+  anchor(x, ax, ay) {
+    x.save(); x.strokeStyle = INK.magenta; x.lineWidth = 2;
+    x.beginPath(); x.arc(ax, ay - 12, 3, 0, Math.PI * 2); x.moveTo(ax, ay - 9); x.lineTo(ax, ay + 8);
+    x.moveTo(ax - 6, ay - 4); x.lineTo(ax + 6, ay - 4); x.moveTo(ax - 9, ay + 2); x.quadraticCurveTo(ax, ay + 14, ax + 9, ay + 2); x.stroke();
+    x.restore();
   }
 
   // A coastline as points every 8 px down the sheet: seeded waves plus named headlands.
