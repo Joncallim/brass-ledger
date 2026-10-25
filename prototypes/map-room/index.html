@@ -27,7 +27,12 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .seal.empty{background:none;box-shadow:none;border:2px dashed #6B655C;color:transparent}
 .talk{width:1100px;min-height:220px;background:var(--panel);border:1px solid var(--panel-line);border-radius:8px;display:flex;gap:26px;padding:22px 28px 26px 22px;box-shadow:0 22px 50px rgba(0,0,0,.55);position:relative}
 .talk .face{width:170px;height:180px;border-radius:4px;background-size:cover;background-position:center 15%;flex:none}
-.talk .who{font-size:21px;font-weight:600}.talk .post{font-size:17px;color:var(--room-muted);margin-left:10px;font-weight:400}
+.talk .who{font-size:21px;font-weight:600}.talk .who .rank{color:#E4BE6A;font-weight:500}
+/* Officer names are their own type everywhere: sans, brass, rank lighter than the name. */
+.officer{font-family:'IBM Plex Sans',sans-serif;font-weight:600;color:var(--brass-deep);white-space:nowrap;font-size:.92em}
+.officer .rank{font-weight:400}
+.talk .officer{color:#E4BE6A;font-size:1em}
+.attrib{font-family:'IBM Plex Sans',sans-serif;font-size:16px;color:var(--ink2)}.talk .post{font-size:17px;color:var(--room-muted);margin-left:10px;font-weight:400}
 .talk .say{font-size:28px;line-height:39px;margin-top:10px;min-height:117px}
 .talk .hint{position:absolute;right:22px;bottom:12px;font-size:15px;color:var(--room-muted)}
 .paper{background:var(--sheet);color:var(--ink);border-radius:2px;box-shadow:0 18px 40px rgba(0,0,0,.4);

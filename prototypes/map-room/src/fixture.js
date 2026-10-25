@@ -33,8 +33,12 @@ export const OFFICERS = {
   warden: { rank: "Major General", name: "Ruth Warden", post: "Personnel", portrait: "warden" },
   navarro: { rank: "Brigadier General", name: "Elena Navarro", post: "Force development", portrait: "navarro" },
 };
-export const fullName = (id) => `${OFFICERS[id].rank} ${OFFICERS[id].name}`;
-export const surname = (id) => `${OFFICERS[id].rank} ${OFFICERS[id].name.split(" ").pop()}`;
+// Names render as their own type: sans, brass, rank a step lighter than the name, so an
+// officer reads apart from the words around them. plainName is for labels and aria text.
+export const plainName = (id) => `${OFFICERS[id].rank} ${OFFICERS[id].name}`;
+const mark = (id, name) => `<span class="officer"><span class="rank">${OFFICERS[id].rank}</span> ${name}</span>`;
+export const fullName = (id) => mark(id, OFFICERS[id].name);
+export const surname = (id) => mark(id, OFFICERS[id].name.split(" ").pop());
 
 // Map anchors in world pixels (the chart is 1840 × 944, placed at 40, 96).
 export const PLACES = {
@@ -75,7 +79,7 @@ export const DECEMBER = {
       ],
       reply: {
         rest: ["briggs", "Rest the reserve and Beacon takes the hit. That’s the trade, General. You have my recommendation."],
-        show: ["briggs", "We can do it. Rear Admiral Sato will tell you what the host government thinks of it."],
+        show: ["briggs", `We can do it. ${surname("sato")} will tell you what the host government thinks of it.`],
         quiet: ["briggs", "Understood. My plan stands."],
       },
     },

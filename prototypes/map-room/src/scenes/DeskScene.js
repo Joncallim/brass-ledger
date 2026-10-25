@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { EASE, T, STAGGER, TYPE_RATE, move, reducedMotion, seeded } from "../motion.js";
-import { CALENDAR, DEBRIEF, DECEMBER, FEBRUARY, JANUARY, OFFICERS, TITLE, fullName, monthOf } from "../fixture.js";
+import { CALENDAR, DEBRIEF, DECEMBER, FEBRUARY, JANUARY, OFFICERS, TITLE, fullName, monthOf, plainName, surname } from "../fixture.js";
 import { OX, OY } from "./TableScene.js";
 
 const TRAY = { x: 1640, y: 1000 }; // where slips are dealt from and gathered to
@@ -74,18 +74,28 @@ export class DeskScene extends Phaser.Scene {
     this.skipFns = this.skipFns.filter((f) => f !== fn);
   }
 
-  type(el, text, delay = 0) {
-    if (reducedMotion.on) { el.textContent = text; return; }
-    el.textContent = "";
+  // Types out text that may contain markup (officer names), filling text nodes in order so
+  // the styling is there from the first letter.
+  type(el, html, delay = 0) {
+    el.innerHTML = html;
+    if (reducedMotion.on) return;
+    const nodes = [];
+    const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    while (walk.nextNode()) nodes.push([walk.currentNode, walk.currentNode.nodeValue]);
+    const total = nodes.reduce((n, [, s]) => n + s.length, 0);
+    const show = (count) => {
+      for (const [node, s] of nodes) { node.nodeValue = s.slice(0, Math.max(0, count)); count -= s.length; }
+    };
+    show(0);
     let i = 0, timer = null;
     const start = this.time.delayedCall(delay, () => {
       timer = this.time.addEvent({ delay: 1000 / TYPE_RATE, loop: true, callback: () => {
-        el.textContent = text.slice(0, ++i);
-        if (i >= text.length) { timer.remove(false); this.done(finish); }
+        show(++i);
+        if (i >= total) { timer.remove(false); this.done(finish); }
       } });
       this.timers.push(timer);
     });
-    const finish = () => { start.remove(false); timer?.remove(false); el.textContent = text; };
+    const finish = () => { start.remove(false); timer?.remove(false); show(total); };
     this.timers.push(start);
     this.skipFns.push(finish);
   }
@@ -115,9 +125,9 @@ export class DeskScene extends Phaser.Scene {
 
   talk(id, line, { x = 80, y = 812, w = 1100, delay = 600 } = {}) {
     const o = OFFICERS[id];
-    const t = this.dom(x, y, `<div class="talk" style="width:${w}px" role="group" aria-label="${fullName(id)}">
+    const t = this.dom(x, y, `<div class="talk" style="width:${w}px" role="group" aria-label="${plainName(id)}">
       <div class="face" style="background-image:url(${portrait(id)})"></div>
-      <div><div class="who">${o.rank} ${o.name}<span class="post">${o.post}</span></div>
+      <div><div class="who"><span class="rank">${o.rank}</span> ${o.name}<span class="post">${o.post}</span></div>
       <p class="say" aria-live="polite"></p></div><span class="hint">Click or press Space</span></div>`);
     t.node.addEventListener("click", () => this.skip());
     move(this, t, { alpha: [0, 1], x: [x - 32, x] }, { dur: 420, delay });
@@ -264,7 +274,7 @@ export class DeskScene extends Phaser.Scene {
     const D = DECEMBER.orders.beacon;
     return `<article class="paper slip" aria-label="${D.head}"><span class="pin"></span><h3>${D.head}</h3><p class="will">${D.staff}</p>
       <div class="row"><b>Why</b><span>${D.why}</span></div><div class="row"><b>Cost</b><span>${D.cost}</span></div>
-      <div class="quote"><span class="av" style="background-image:url(${portrait(D.dissent[0])})"></span><span><span style="font-family:'IBM Plex Sans';font-size:16px;color:var(--ink2)">${fullName(D.dissent[0])} objects:</span> ${D.dissent[1]}</span></div>
+      <div class="quote"><span class="av" style="background-image:url(${portrait(D.dissent[0])})"></span><span><span class="attrib">${fullName(D.dissent[0])} objects:</span> ${D.dissent[1]}</span></div>
       <div class="btns"><button class="b on" data-keep>Let staff do it</button><button class="b" data-change>Change this order</button></div></article>`;
   }
 
@@ -279,7 +289,7 @@ export class DeskScene extends Phaser.Scene {
   latticeFace(open) {
     const L = DECEMBER.orders.lattice;
     const cur = L.questions.find((x) => x.id === this.state.lattice);
-    const list = open ? `<div role="radiogroup" style="margin-top:6px">${L.questions.map((x) => `<button class="opt ${x.id === this.state.lattice ? "sel" : ""}" data-q="${x.id}" role="radio" aria-checked="${x.id === this.state.lattice}"><span class="r"></span><span><b>${x.q}</b>${x.staff ? '<span class="s">Major General Halden’s choice</span>' : ""}</span></button>`).join("")}</div>` : "";
+    const list = open ? `<div role="radiogroup" style="margin-top:6px">${L.questions.map((x) => `<button class="opt ${x.id === this.state.lattice ? "sel" : ""}" data-q="${x.id}" role="radio" aria-checked="${x.id === this.state.lattice}"><span class="r"></span><span><b>${x.q}</b>${x.staff ? `<span class="s">${surname("halden")}’s choice</span>` : ""}</span></button>`).join("")}</div>` : "";
     return `<article class="paper slip" aria-label="${L.head}"><span class="pin"></span><h3>${L.head}</h3><p class="will" style="font-size:22px;line-height:29px">${cur.q}</p>
       <div class="row"><b>Who</b><span>${L.ask}</span></div><div class="row"><b>Cost</b><span>${L.cost}</span></div>
       ${list}${open ? "" : '<div class="btns"><button class="b" data-ask>Ask something else</button></div>'}</article>`;
@@ -477,7 +487,7 @@ export class DeskScene extends Phaser.Scene {
     F.routes.forEach((r, i) => {
       const c = this.dom(1250, 300 + i * 330, `<article class="paper sheet" style="width:600px;padding:26px 30px"><h2 style="font-size:32px">${r.name}</h2><p class="body" style="margin-top:8px">${r.does}</p>
         <div class="row" style="grid-template-columns:100px 1fr"><b>It costs</b><span>${r.costs}</span></div><div class="row" style="grid-template-columns:100px 1fr"><b>It needs</b><span>${r.needs}</span></div>
-        <div class="quote"><span class="av" style="background-image:url(${portrait(r.voice[0])})"></span><span><span style="font-family:'IBM Plex Sans';font-size:16px;color:var(--ink2)">${fullName(r.voice[0])}:</span> “${r.voice[1]}”</span></div>
+        <div class="quote"><span class="av" style="background-image:url(${portrait(r.voice[0])})"></span><span><span class="attrib">${fullName(r.voice[0])}:</span> “${r.voice[1]}”</span></div>
         <div class="btns"><button class="b ${i ? "on" : ""}" data-route="${r.id}">Choose: ${r.name.toLowerCase()}</button></div></article>`);
       move(this, c, { alpha: [0, 1], x: [1310, 1250] }, { dur: 520, delay: 900 + i * STAGGER.slip });
       c.node.querySelector("[data-route]").onclick = () => {
