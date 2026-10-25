@@ -44,12 +44,8 @@ const mark = (id, name) => `<span class="officer"><span class="rank">${OFFICERS[
 export const fullName = (id) => mark(id, OFFICERS[id].name);
 export const surname = (id) => mark(id, OFFICERS[id].name.split(" ").pop());
 
-// Map anchors in world pixels (the chart is 1840 × 944, placed at 40, 96).
-export const PLACES = {
-  beacon: { x: 700, y: 520 },
-  harbour: { x: 1340, y: 345 },
-  lane: { x: 940, y: 470 },
-};
+// Map places (beacon, harbour, lane) live in the scenario, src/scenarios/; the story only
+// names them.
 
 // The world, named. Marenna is the host country; Sarn is Ravellan's main harbour.
 export const WORLD = {
@@ -334,6 +330,6 @@ export function debrief(run) {
 
 // Debrief-only truth layer. Shown only after the campaign ends, never before.
 export const TRUTH = [
-  { x: 1180, y: 290, text: "Really: a landing, planned since September" },
-  { x: 1150, y: 600, text: "February: they came to test you, not to land" },
+  { near: "harbour", dx: -160, dy: -55, text: "Really: a landing, planned since September" },
+  { near: "beacon", dx: 450, dy: 80, text: "February: they came to test you, not to land" },
 ];

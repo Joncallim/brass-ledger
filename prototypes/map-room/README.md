@@ -17,15 +17,18 @@ without that decision.
 cd prototypes/map-room
 npm install
 npm run dev          # http://localhost:5173
+npm test             # chart checks (Node, no browser)
 ```
 
 `?chapter=dec-orders` opens a chapter directly. `?renderer=canvas` forces the 2D renderer
-(handy without a GPU, e.g. headless capture).
+(handy without a GPU, e.g. headless capture). `?scenario=harrow-sound` draws another sea;
+`?chapter=chart` (or key 0) shows any chart on its own with its validator result.
 
 | Key | Does |
 | --- | --- |
 | Space / Enter / click on a speaker | Finish the running sequence, or continue |
 | 1–9 | Jump to a chapter: title, December briefing, December orders, December night, January briefing, January orders, January night, February showdown, debrief |
+| 0 | Chart preview for the current scenario |
 | M | Toggle reduced motion (also follows `prefers-reduced-motion`) |
 
 ## The sequence
@@ -47,11 +50,33 @@ Seals are spent and returned by the slips themselves, never more than two a mont
 
 ## How it is built
 
-- `TableScene` draws the world. Everything static (table, paper, coastlines, depth
-  contours, hatching, soundings, labels, compass, scale bar, grain) is baked once into one
-  Canvas 2D texture. Only live things are game objects: Beacon's coverage ring and radar
-  sweep, boats, the harbour sighting, Lattice marker, showdown paths and the debrief's
-  truth layer. The camera moves only at night.
+- **Charts are data.** A scenario in `src/scenarios/` describes one sea: its sheet, land
+  (coasts along any edge, or islands), chart marks, labels, named places, and where the
+  live objects sit (station, enemy base, intel note, fleets). Nothing about a particular
+  sea lives in code. `kestrel.js` is the story's sea; `harrow.js` is a deliberately
+  different test sea (coasts north and south, lane east–west) that proves the point.
+- `src/chart/` turns a scenario into a chart and has no Phaser in it:
+  - `geometry.js` builds coastlines and land polygons, answers "is this land?" and "how
+    far to the coast?", places seeded points in open water, and `validateScenario`
+    checks the sea against itself (places on the right side of the coast, ships and reefs
+    in water, the lane clear of land, posts on a real coast).
+  - `paint.js` paints any scenario in a fixed layer order (sea tints, contours,
+    water-lining, grid, land relief and sand, soundings, wave marks, marks, names, frame,
+    age). Each kind of mark is one painter in `FEATURES` (lane, zone, lighthouse,
+    anchorage, posts, reefs, woods, towns, rose, scale, cartouche); a new kind is one new
+    function. Soundings are deeper the further they are from shore, and stay clear of
+    every mark and label.
+  - `npm test` runs `test/chart.test.js`: every scenario validates clean, every mark has
+    a painter, soundings fall in water, and each sea provides the places the story uses.
+  Writing the validator caught two bugs on the old hand-drawn chart: Beacon Station was
+  drawn in the water 36 px off its headland, and the anchorage was on land.
+- `TableScene` loads the scenario, bakes the chart once into one Canvas 2D texture, and
+  animates only live things: the station's coverage ring and radar sweep, boats, the
+  harbour sighting, the intel marker, showdown paths and the debrief's truth layer, all
+  placed from the scenario. The camera moves only at night.
+- The story in `src/fixture.js` names places (`beacon`, `harbour`, `lane`) rather than
+  coordinates, so it plays on any sea that provides them; its words are still written
+  for Kestrel Strait.
 - `DeskScene` runs on top and owns **every word and control as DOM** (`this.add.dom`), so
   text is crisp, selectable, focusable and readable by screen readers. In the real game
   this layer would be React, fed by the existing contracts.
@@ -97,7 +122,8 @@ The copy rules live in `src/fixture.js` and are applied to every line:
 
 - The calendar (one month a turn, September to February), and the dates inside it
   (Marenna's vote on 15 January, Ravellan sailing on 1 February).
-- Names: Marenna, Sarn, 2nd Battalion. Every figure in the copy (94 days on duty, nine and
+- Kestrel Strait's geography: Beacon's headland was widened so the station sits on land.
+- Names: Marenna, Sarn, 2nd Battalion. (Harrow Sound's names are placeholders for testing.) Every figure in the copy (94 days on duty, nine and
   eleven landing craft, 140-strong garrison, 20 or 30 miles of radar, two spare patrol
   boats) is invented dressing; the sim tracks steps, so a content table must map them.
 - Ranks and regional backgrounds for the six staff officers.

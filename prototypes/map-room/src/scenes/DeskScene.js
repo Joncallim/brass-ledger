@@ -5,6 +5,8 @@ import {
   januaryBrief, januaryNight, latticeQ, monthOf, plainName, surname,
 } from "../fixture.js";
 import { OX, OY } from "./TableScene.js";
+import { SCENARIOS, STORY_SCENARIO } from "../scenarios/index.js";
+import { validateScenario } from "../chart/geometry.js";
 
 const TRAY = { x: 1640, y: 1000 }; // where slips are dealt from and gathered to
 const portrait = (id) => `./portraits/${OFFICERS[id].portrait}.jpg`;
@@ -29,8 +31,10 @@ export class DeskScene extends Phaser.Scene {
     this.run = DEFAULT_RUN();
     this.input.keyboard.on("keydown", (e) => this.onKey(e));
     window.mapRoom = { go: (c, opts) => this.go(c, opts), chapters: CHAPTERS, reduced: reducedMotion };
+    // Another sea opens on its chart preview: the story is written for Kestrel Strait.
     const start = new URLSearchParams(location.search).get("chapter");
-    this.go(CHAPTERS.includes(start) ? start : "title");
+    const storySea = this.table.sc.id === STORY_SCENARIO;
+    this.go(CHAPTERS.includes(start) || start === "chart" ? start : storySea ? "title" : "chart");
   }
 
   // ── plumbing ──────────────────────────────────────────────────────────────
@@ -70,6 +74,7 @@ export class DeskScene extends Phaser.Scene {
     if (e.key === "m" || e.key === "M") reducedMotion.on = !reducedMotion.on;
     const n = Number(e.key);
     if (n >= 1 && n <= CHAPTERS.length) this.go(CHAPTERS[n - 1]);
+    if (e.key === "0") this.go("chart");
   }
 
   // Space or a click on the dialogue jumps whatever is running to its end state.
@@ -120,7 +125,7 @@ export class DeskScene extends Phaser.Scene {
     const s = seals ? `<div class="seals"><span>Your personal orders this month</span>${
       Array.from({ length: 2 }, (_, i) => `<span class="seal ${i < used ? "empty" : ""}" data-seal="${i}">BL</span>`).join("")}</div>` : "";
     const h = this.dom(40, 12, `<div class="hud"><div class="mark"><svg width="26" height="26" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="20" height="20" rx="3" fill="#C99A3E"/><rect x="5" y="6" width="12" height="2" fill="#141210"/><rect x="5" y="10" width="12" height="2" fill="#141210"/><rect x="5" y="14" width="7" height="2" fill="#141210"/></svg>Brass Ledger</div>
-      <div class="month"><b data-month>${monthOf(turn)}</b><span>Kestrel Strait · month ${turn} of 6</span></div><div class="track">${track}</div>${s}</div>`);
+      <div class="month"><b data-month>${monthOf(turn)}</b><span>${this.table.sc.name} · month ${turn} of 6</span></div><div class="track">${track}</div>${s}</div>`);
     this.hudEl = h.node;
     if (flipTo) this.flipMonth(flipTo);
     return h;
@@ -129,7 +134,7 @@ export class DeskScene extends Phaser.Scene {
   flipMonth(turn) {
     const b = this.hudEl.querySelector("[data-month]");
     const span = b.nextElementSibling;
-    const swap = () => { b.textContent = monthOf(turn); span.textContent = `Kestrel Strait · month ${turn} of 6`; };
+    const swap = () => { b.textContent = monthOf(turn); span.textContent = `${this.table.sc.name} · month ${turn} of 6`; };
     if (reducedMotion.on) return swap();
     b.animate([{ transform: "scaleY(1)" }, { transform: "scaleY(0)" }], { duration: 200, easing: "ease-in", fill: "forwards" }).onfinish = () => {
       swap();
@@ -222,6 +227,23 @@ export class DeskScene extends Phaser.Scene {
   ringAfter(month) {
     if (month === "dec") return { r: { quiet: 250, rest: 190, show: 270 }[this.run.dec.beacon], dashed: this.run.dec.beacon === "rest" };
     return { r: this.run.jan.beacon === "hold" ? 190 : 270, dashed: this.run.jan.beacon === "hold" };
+  }
+
+  // Chart preview: the sea on its own, with its live objects, for checking any scenario.
+  ch_chart() {
+    const sc = this.table.sc, problems = validateScenario(sc, this.table.geo);
+    this.table.setBoats("lane");
+    this.table.showWarning(true, { pulse: false });
+    this.table.showLattice("(intel marker)");
+    const links = Object.values(SCENARIOS).map((o) => o.id === sc.id ? `<b>${o.name}</b>`
+      : `<a href="?scenario=${o.id}&chapter=chart" style="color:var(--brass-deep)">${o.name}</a>`).join(" · ");
+    const card = this.dom(OX + 24, OY + 820 - 24, `<div class="paper" style="width:560px;padding:18px 22px">
+      <div class="lab">Chart preview · ${esc(sc.name)}</div>
+      <p style="margin:4px 0 0">${sc.land.length} land masses, ${sc.features.length} chart marks, ${Object.keys(sc.places).length} places.
+      ${problems.length ? `<span style="color:var(--red)">${problems.length} problems: ${problems.map(esc).join("; ")}</span>` : "Validator: no problems."}</p>
+      <p class="help" style="margin:8px 0 0">Charts: ${links}. ${sc.id === STORY_SCENARIO ? "Press 1 for the story." : "The story is written for Kestrel Strait; keys 1–9 still play it on this chart."}</p></div>`);
+    move(this, card, { alpha: [0, 1] }, { dur: T.ui });
+    card.y = OY + 920 - 24 - card.node.offsetHeight;
   }
 
   ch_title() {
