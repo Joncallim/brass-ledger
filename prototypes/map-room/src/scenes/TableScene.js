@@ -10,7 +10,7 @@ const C = {
   ink: 0x1b1a18, ink2: 0x4d4a44, brass: 0xc99a3e, brassDeep: 0x7a4f0c, red: 0xb4261f,
 };
 // Chart inks: buff land, blue shallows, Admiralty magenta for navigation marks.
-const INK = { paper: "#F1EBDA", sea: "#EEF4F2", land: "#E2CB93", coast: "#4F4230", ink: "#1B1A18", ink2: "#4D4A44", magenta: "#A3326F" };
+const INK = { brassDeep: "#7A4F0C", paper: "#F1EBDA", sea: "#EEF4F2", land: "#E2CB93", coast: "#4F4230", ink: "#1B1A18", ink2: "#4D4A44", magenta: "#A3326F" };
 const LABEL = { fontFamily: "IBM Plex Sans", fontSize: "20px", color: "#1B1A18" };
 const MUTED = { ...LABEL, color: "#4D4A44" };
 
@@ -249,18 +249,27 @@ export class TableScene extends Phaser.Scene {
     // harbour zone
     x.fillStyle = "rgba(180,38,31,.08)"; x.beginPath(); x.ellipse(OX + PLACES.harbour.x, OY + PLACES.harbour.y, 130, 85, 0, 0, Math.PI * 2); x.fill();
     x.setLineDash([6, 6]); x.strokeStyle = "rgba(126,26,21,.8)"; x.lineWidth = 1.6; x.stroke(); x.setLineDash([]);
-    label("Ravellan’s main harbour", OX + 1400, OY + 222, { w: 600 });
-    label("where landing boats load", OX + 1400, OY + 248, { c: INK.ink2 });
+    label("Sarn", OX + 1400, OY + 214, { f: "Newsreader", sz: 30 });
+    label("Ravellan’s main harbour", OX + 1400, OY + 250, { c: INK.ink2 });
     // lighthouse on the north island, with its light character
     const lx = OX + 900, ly = OY + 236;
     x.fillStyle = INK.magenta; x.beginPath(); x.moveTo(lx, ly); x.quadraticCurveTo(lx + 30, ly - 22, lx + 40, ly - 6); x.quadraticCurveTo(lx + 22, ly + 4, lx, ly); x.fill();
     x.fillStyle = INK.ink; x.beginPath(); x.arc(lx, ly, 4, 0, Math.PI * 2); x.fill();
     label("Fl 5s 12M", lx - 12, ly + 10, { sz: 13, c: INK.magenta, w: 500, align: "right" });
+    // Lattice: twelve radio listening posts along the Marennan coast
+    x.fillStyle = INK.brassDeep; x.strokeStyle = INK.brassDeep; x.lineWidth = 1.5;
+    for (let i = 0; i < 12; i++) {
+      const k = Math.round((60 + i * 72) / 8), p = W[Math.min(k, W.length - 1)];
+      const px = p.x - 26, py = p.y;
+      x.beginPath(); x.moveTo(px, py - 9); x.lineTo(px - 6, py + 5); x.lineTo(px + 6, py + 5); x.closePath(); x.fill();
+      x.beginPath(); x.arc(px, py - 11, 5, -Math.PI * 0.85, -Math.PI * 0.15); x.stroke();
+    }
+    label("Lattice listening posts", OX + 330, OY + 470 - 230, { sz: 14, c: INK.brassDeep, w: 600 });
     // anchorage off the host coast
     this.anchor(x, OX + 470, OY + 860);
     label("Anchorage", OX + 486, OY + 850, { sz: 14, c: INK.magenta });
     // region names
-    label("HOST COUNTRY", OX + 60, OY + 880, { f: "Newsreader", sz: 30, c: "#6B5A3A" });
+    label("MARENNA", OX + 60, OY + 880, { f: "Newsreader", sz: 30, c: "#6B5A3A" });
     label("RAVELLAN", OX + 1580, OY + 880, { f: "Newsreader", sz: 30, c: "#6B5A3A" });
     // compass rose, in chart magenta
     this.rose(x, OX + 1740, OY + 140, 76);

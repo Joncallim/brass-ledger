@@ -283,21 +283,36 @@ export class DeskScene extends Phaser.Scene {
       slip.node.querySelector("[data-staffplan]")?.addEventListener("click", () => pick(cfg.options.find((p) => p.staff).id, true));
       slip.node.querySelector("[data-done]")?.addEventListener("click", () => this.flipTo(slip, () => { slip.node.innerHTML = face(); wire(); slip.node.querySelector("[data-change]")?.focus(); }));
       for (const b of slip.node.querySelectorAll("[data-opt]")) b.addEventListener("click", () => pick(b.dataset.opt));
+      for (const b of slip.node.querySelectorAll("[data-voice]")) b.addEventListener("click", () => {
+        this.drop(this.talkObj);
+        this.talkObj = this.talk(b.dataset.voice, cfg.council[b.dataset.voice].line, { delay: 0, w: 1000 });
+      });
+    };
+    // Everyone with a view on this order: who they are, and whether they back what is on the slip now.
+    const council = () => {
+      if (!cfg.council) return "";
+      const rows = Object.entries(cfg.council).map(([who, c]) => {
+        const backs = c.prefers === get();
+        const pref = cfg.options.find((p) => p.id === c.prefers);
+        return `<button class="voice-btn" data-voice="${who}" aria-label="Hear ${plainName(who)}">
+          <span class="av" style="background-image:url(${portrait(who)})"></span>
+          <span><span class="vname">${surname(who)}</span><span class="stance ${backs ? "backs" : "differs"}">${backs ? "Backs this" : `Would ${pref.short}`}</span></span></button>`;
+      }).join("");
+      return `<div class="council"><p class="lab" style="color:var(--ink2)">Ask your staff</p><div class="council-row">${rows}</div></div>`;
     };
     const face = () => {
       const p = opt();
-      if (p.staff) return `<article class="paper slip" aria-label="${cfg.head}"><span class="pin"></span><h3>${cfg.head} · staff plan</h3>
-        <p class="will">${surname(cfg.staff[0])} ${cfg.staff[1]}</p>
-        <div class="row"><b>Why</b><span>${cfg.why}</span></div><div class="row"><b>Cost</b><span>${cfg.cost}</span></div>
-        ${cfg.dissent ? `<div class="quote"><span class="av" style="background-image:url(${portrait(cfg.dissent[0])})"></span><span><span class="attrib">${fullName(cfg.dissent[0])} objects:</span> ${cfg.dissent[1]}</span></div>` : ""}
-        <div class="btns"><button class="b" data-change>Change this order</button></div></article>`;
-      return `<article class="paper slip" aria-label="${cfg.head}, your order"><span class="pin"></span><h3>${cfg.head} · your order</h3>
-        <p class="will">${p.name}.</p><div class="row"><b>Cost</b><span>${p.says}</span></div>
-        <div class="btns"><button class="b" data-change>Change again</button><button class="b" data-staffplan>Back to the staff plan</button></div></article>`;
+      const top = p.staff
+        ? `<h3>${cfg.head} · unless you change it</h3><p class="will">${surname(cfg.lead)} ${cfg.plan}</p>
+           <div class="row"><b>Gives</b><span>${cfg.does}</span></div><div class="row"><b>Costs</b><span>${cfg.cost}</span></div>`
+        : `<h3>${cfg.head} · your order</h3><p class="will">${p.name}.</p><div class="row"><b>Means</b><span>${p.says}</span></div>`;
+      return `<article class="paper slip" style="width:520px" aria-label="${cfg.head}"><span class="pin"></span>${top}${council()}
+        <div class="btns"><button class="b" data-change>${p.staff ? "Change this order" : "Change again"}</button>${p.staff ? "" : '<button class="b" data-staffplan>Back to the staff plan</button>'}</div></article>`;
     };
-    const choices = () => `<article class="paper slip" style="width:560px" aria-label="${cfg.head}, choose an order"><span class="pin"></span><h3>${cfg.head} · your order</h3>
-      <p class="will">What should Beacon do this month?</p><div role="radiogroup">${cfg.options.map((p) => `<button class="opt ${get() === p.id ? "sel" : ""}" data-opt="${p.id}" role="radio" aria-checked="${get() === p.id}">
-      <span class="r"></span><span><b>${p.name}</b><span class="s">${p.says}</span><span class="cost ${p.staff ? "free" : ""}">${p.staff ? "Free" : "Uses 1 personal order"}</span></span></button>`).join("")}</div>
+    const backers = (id) => Object.entries(cfg.council ?? {}).filter(([, c]) => c.prefers === id).map(([who]) => `<span class="av sm" title="${plainName(who)}" style="background-image:url(${portrait(who)})"></span>`).join("");
+    const choices = () => `<article class="paper slip" style="width:580px" aria-label="${cfg.head}, choose an order"><span class="pin"></span><h3>${cfg.head} · your order</h3>
+      <p class="will">${cfg.question}</p><div role="radiogroup">${cfg.options.map((p) => `<button class="opt ${get() === p.id ? "sel" : ""}" data-opt="${p.id}" role="radio" aria-checked="${get() === p.id}">
+      <span class="r"></span><span><b>${p.name}</b><span class="s">${p.says}</span><span class="opt-foot"><span class="cost ${p.staff ? "free" : ""}">${p.staff ? "Staff plan · free" : "Uses 1 personal order"}</span>${backers(p.id) ? `<span class="backed">Backed by ${backers(p.id)}</span>` : ""}</span></span></button>`).join("")}</div>
       <p class="why-note" style="font-size:16px;color:var(--red-ink);margin-top:8px" aria-live="polite"></p>
       <div class="btns"><button class="b on" data-done>Done</button></div></article>`;
     const pick = (id, fromFace = false) => {
@@ -344,7 +359,7 @@ export class DeskScene extends Phaser.Scene {
       const cur = latticeQ(this.run.dec.lattice);
       const list = open ? `<div role="radiogroup" style="margin-top:6px">${L.questions.map((x) => `<button class="opt ${x.id === cur.id ? "sel" : ""}" data-q="${x.id}" role="radio" aria-checked="${x.id === cur.id}"><span class="r"></span><span><b>${x.q}</b>${x.staff ? `<span class="s">${surname("halden")}’s choice</span>` : ""}</span></button>`).join("")}</div>` : "";
       slip.node.innerHTML = `<article class="paper slip" aria-label="${L.head}"><span class="pin"></span><h3>${L.head}${cur.staff ? " · staff plan" : " · your question"}</h3><p class="will" style="font-size:22px;line-height:29px">${cur.q}</p>
-        <div class="row"><b>Who</b><span>${L.ask}</span></div><div class="row"><b>Cost</b><span>${L.cost}</span></div>
+        <div class="row"><b>What</b><span>${L.what}</span></div><div class="row"><b>Who</b><span>${L.ask}</span></div>
         ${list}<div class="btns">${open ? '<button class="b on" data-close>Done</button>' : '<button class="b" data-ask>Ask something else</button>'}</div></article>`;
       slip.node.querySelector("[data-ask]")?.addEventListener("click", () => {
         // The slip opens upward so the send panel never covers the choices.
@@ -421,7 +436,7 @@ export class DeskScene extends Phaser.Scene {
     const lattice = this.latticeSlip(1290, 530, 1);
     this.orderPanel(() => {
       const b = B.options.find((p) => p.id === this.run.dec.beacon), q = latticeQ(this.run.dec.lattice);
-      return [{ mine: !b.staff, text: `Beacon: ${lower(b.name)}.` }, { mine: !q.staff, text: `Lattice: ${lower(q.q)}` }];
+      return [{ mine: !b.staff, text: `Beacon: ${lower(b.name)}.` }, { mine: !q.staff, text: `Lattice: ${q.short}.` }];
     });
     const go = this.disp.node.querySelector(".go");
     go.addEventListener("click", () => this.send([beacon.slip, lattice.slip], () => this.go("dec-night")));
@@ -465,7 +480,7 @@ export class DeskScene extends Phaser.Scene {
     this.orderPanel(() => {
       const b = J.beacon.options.find((p) => p.id === this.run.jan.beacon), w = this.run.jan.way;
       const lines = [{ mine: !b.staff, text: `Beacon: ${lower(b.name)}.` }];
-      lines.push(w && w !== "back" ? { mine: true, text: `Host government: ${lower(J.host.ways.find((x) => x.id === w).name)}.` } : { mine: false, text: "Host government: wait for their OK." });
+      lines.push(w && w !== "back" ? { mine: true, text: `Marenna: ${lower(J.host.ways.find((x) => x.id === w).name)}.` } : { mine: false, text: "Marenna: wait for the cabinet’s vote." });
       return lines;
     }, () => (clash() ? J.blocked : ""));
     this.disp.node.querySelector(".go").addEventListener("click", () => this.send([beacon.slip, host.slip], () => this.go("jan-night")));

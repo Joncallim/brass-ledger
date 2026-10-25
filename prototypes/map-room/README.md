@@ -81,9 +81,25 @@ The copy rules live in `src/fixture.js` and are applied to every line:
 4. **Plain words.** The median line reads at about grade 3 (Flesch-Kincaid), down from
    about grade 8 in the current Figma copy.
 
+## Story content
+
+- **Places and people.** Marenna is the host country, its cabinet votes on 15 January, and
+  Sarn is Ravellan's main harbour. Lattice is our radio-intercept network: twelve
+  listening posts along the Marennan coast, drawn on the chart.
+- **Ask your staff.** Every order slip lists the officers with a view. Each shows whether they
+  back what is on the slip or what they would do instead; clicking one plays their case.
+  The choices view shows who backs each option.
+- **SMART lines.** Recommendations name a unit or asset, a number, a place and a date ("two
+  rifle companies and the air-defence battery on the headland by 20 December"). Night
+  reports are dated duty logs in which each entry leads into the next.
+
 ## Decisions this prototype makes that need sign-off
 
-- The calendar (one month a turn, September to February).
+- The calendar (one month a turn, September to February), and the dates inside it
+  (Marenna's vote on 15 January, Ravellan sailing on 1 February).
+- Names: Marenna, Sarn, 2nd Battalion. Every figure in the copy (94 days on duty, nine and
+  eleven landing craft, 140-strong garrison, 20 or 30 miles of radar, two spare patrol
+  boats) is invented dressing; the sim tracks steps, so a content table must map them.
 - Ranks and regional backgrounds for the six staff officers.
 - "The host government" for the partner, "hotline" for the rapid consultation channel,
   "personal order" for an intervention.
