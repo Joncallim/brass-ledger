@@ -1,13 +1,14 @@
 import Phaser from "phaser";
 import { EASE, T, STAGGER, TYPE_RATE, move, reducedMotion, seeded } from "../motion.js";
 import {
-  CALENDAR, DECEMBER, DEFAULT_RUN, JANUARY, OFFICERS, TITLE, debrief, decemberNight, february, fullName,
-  januaryBrief, januaryNight, latticeQ, monthOf, plainName, surname,
+  CALENDAR, DEFAULT_CAMPAIGN, DEFAULT_RUN, DIFFICULTY, LATTICE, OFFICERS, TITLE, brief, debrief, february, fullName, host,
+  incident, latticeQ, makeCampaign, monthOf, newSeed, night, orders, plainName, simulate, split, status, surname,
 } from "../fixture.js";
 import { OX, OY } from "./TableScene.js";
 import { SCENARIOS, STORY_SCENARIO } from "../scenarios/index.js";
 import { validateScenario } from "../chart/geometry.js";
 import { glossNode, hasTerm, profileHTML } from "../gloss.js";
+import { WORLD } from "../story/world.js";
 
 const TRAY = { x: 1640, y: 1000 }; // where slips are dealt from and gathered to
 const portrait = (id) => `./portraits/${OFFICERS[id].portrait}.jpg`;
@@ -15,7 +16,10 @@ const portrait = (id) => `./portraits/${OFFICERS[id].portrait}.jpg`;
 const lower = (s) => s[0].toLowerCase() + s.slice(1);
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
 
+// Number keys jump to these. The incident signals sit between briefing and orders.
 export const CHAPTERS = ["title", "dec-brief", "dec-orders", "dec-night", "jan-brief", "jan-orders", "jan-night", "feb-showdown", "debrief"];
+const ALL = [...CHAPTERS, "dec-signal", "jan-signal", "chart"];
+const MONTH = { dec: { turn: 4, name: "December" }, jan: { turn: 5, name: "January" } };
 
 // Every word and every control is DOM, so screen readers, focus and text rendering work
 // as in the web app. Phaser positions and moves it; it never decides what it says.
@@ -29,15 +33,31 @@ export class DeskScene extends Phaser.Scene {
     this.items = [];
     this.timers = [];
     this.skipFns = [];
-    this.run = DEFAULT_RUN();
+    const q = new URLSearchParams(location.search);
+    this.newCampaign(q.get("seed") ?? DEFAULT_CAMPAIGN.seed, q.get("difficulty") ?? DEFAULT_CAMPAIGN.difficulty);
     this.input.keyboard.on("keydown", (e) => this.onKey(e));
     this.setupProfiles();
-    // Test hooks: jump to a chapter, or set the campaign so far (for layout checks of every branch).
-    window.mapRoom = { go: (c, opts) => this.go(c, opts), chapters: CHAPTERS, reduced: reducedMotion, setRun: (r) => (this.run = r) };
+    // Test hooks: jump to a chapter, roll a campaign, or set the choices so far.
+    window.mapRoom = {
+      go: (c, opts) => this.go(c, opts), chapters: CHAPTERS, reduced: reducedMotion,
+      setRun: (r) => (this.run = r), getRun: () => structuredClone(this.run), campaign: (seed, d) => this.newCampaign(seed, d),
+    };
+    Object.defineProperty(window.mapRoom, "c", { get: () => this.campaign });
     // Another sea opens on its chart preview: the story is written for Kestrel Strait.
-    const start = new URLSearchParams(location.search).get("chapter");
+    const start = q.get("chapter");
     const storySea = this.table.sc.id === STORY_SCENARIO;
-    this.go(CHAPTERS.includes(start) || start === "chart" ? start : storySea ? "title" : "chart");
+    this.go(ALL.includes(start) ? start : storySea ? "title" : "chart");
+  }
+
+  // A campaign is rolled from a seed: same seed and difficulty, same campaign.
+  newCampaign(seed, difficulty) {
+    this.campaign = makeCampaign(seed, difficulty);
+    this.run = DEFAULT_RUN();
+  }
+
+  // Where things stand at a point in the campaign, given the choices so far.
+  at(point) {
+    return simulate(this.campaign, this.run)[point];
   }
 
   // ── names and terms ──────────────────────────────────────────────────────
@@ -85,6 +105,7 @@ export class DeskScene extends Phaser.Scene {
       ctx.font = font;
       const w = width ?? Math.max(...String(text).split("\n").map((l) => ctx.measureText(l).width));
       const hot = this.dom(OX + x - 4, OY + y - 4, `<span class="hot" data-term="${term}" aria-hidden="true" style="width:${w + 8}px;height:${h + 8}px"></span>`);
+      this.game.domContainer.prepend(hot.node); // beneath every sheet and slip
       this.hot.push(hot);
     };
     this.hot = [];
@@ -135,6 +156,7 @@ export class DeskScene extends Phaser.Scene {
     if (e.key === "m" || e.key === "M") reducedMotion.on = !reducedMotion.on;
     const n = Number(e.key);
     if (n >= 1 && n <= CHAPTERS.length) this.go(CHAPTERS[n - 1]);
+    if (e.key === "n" || e.key === "N") { this.newCampaign(newSeed(), this.campaign.difficulty); this.go("dec-brief"); }
     if (e.key === "0") this.go("chart");
   }
 
@@ -183,21 +205,28 @@ export class DeskScene extends Phaser.Scene {
   }
 
   // ── shared pieces ─────────────────────────────────────────────────────────
-  hud(turn, { seals = 2, used = 0, flipTo = null } = {}) {
+  // The top bar: month, campaign, readiness at a glance, and this month's personal orders.
+  // Each readiness value belongs to one officer, named in its profile on hover.
+  hud(turn, { seals = 2, used = 0, flipTo = null, state = null } = {}) {
+    const chips = state ? `<div class="chips">${status(this.campaign, state).map((x) => `<span class="chip tone-${x.tone}" data-term="${x.term}" tabindex="0"><i></i><span><small>${x.label}</small>${x.value}</span></span>`).join("")}</div>` : "";
     const track = CALENDAR.map((m, i) => `<i class="${i + 1 < turn ? "done" : i + 1 === turn ? "now" : ""}" title="${m}">${m[0]}</i>`).join("");
-    const s = seals ? `<div class="seals"><span>Your personal orders this month</span>${
+    const s = seals ? `<div class="seals"><span>${state ? "Personal orders" : "Your personal orders this month"}</span>${
       Array.from({ length: 2 }, (_, i) => `<span class="seal ${i < used ? "empty" : ""}" data-seal="${i}">BL</span>`).join("")}</div>` : "";
-    const h = this.dom(40, 12, `<div class="hud"><div class="mark"><svg width="26" height="26" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="20" height="20" rx="3" fill="#C99A3E"/><rect x="5" y="6" width="12" height="2" fill="#141210"/><rect x="5" y="10" width="12" height="2" fill="#141210"/><rect x="5" y="14" width="7" height="2" fill="#141210"/></svg>Brass Ledger</div>
-      <div class="month"><b data-month>${monthOf(turn)}</b><span>${this.table.sc.name} · month ${turn} of 6</span></div><div class="track">${track}</div>${s}</div>`);
+    const h = this.dom(40, 12, `<div class="hud ${state ? "compact" : ""}"><div class="mark"><svg width="26" height="26" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="20" height="20" rx="3" fill="#C99A3E"/><rect x="5" y="6" width="12" height="2" fill="#141210"/><rect x="5" y="10" width="12" height="2" fill="#141210"/><rect x="5" y="14" width="7" height="2" fill="#141210"/></svg>Brass Ledger</div>
+      <div class="month"><b data-month>${monthOf(turn)}</b><span>${this.where(turn)}</span></div><div class="track">${track}</div>${chips}${s}</div>`);
     this.hudEl = h.node;
     if (flipTo) this.flipMonth(flipTo);
     return h;
   }
 
+  where(turn) {
+    return `${this.table.sc.name} · month ${turn} of 6 · ${this.campaign.D.name}`;
+  }
+
   flipMonth(turn) {
     const b = this.hudEl.querySelector("[data-month]");
     const span = b.nextElementSibling;
-    const swap = () => { b.textContent = monthOf(turn); span.textContent = `${this.table.sc.name} · month ${turn} of 6`; };
+    const swap = () => { b.textContent = monthOf(turn); span.textContent = this.where(turn); };
     if (reducedMotion.on) return swap();
     b.animate([{ transform: "scaleY(1)" }, { transform: "scaleY(0)" }], { duration: 200, easing: "ease-in", fill: "forwards" }).onfinish = () => {
       swap();
@@ -209,7 +238,7 @@ export class DeskScene extends Phaser.Scene {
     const o = OFFICERS[id];
     const t = this.dom(x, y, `<div class="talk" style="width:${w}px" role="group" aria-label="${plainName(id)}">
       <div class="face" style="background-image:url(${portrait(id)})"></div>
-      <div><div class="who" data-term="officer:${id}"><span class="rank">${o.rank}</span> ${o.name}<span class="post">${o.post}</span></div>
+      <div><div class="who" data-term="officer:${id}"><span class="rank">${o.rank}</span> ${o.name}<span class="post">${o.post} · ${o.focus}</span></div>
       <p class="say" aria-live="polite"></p></div><span class="hint">Click or press Space</span></div>`);
     t.node.addEventListener("click", () => this.skip());
     move(this, t, { alpha: [0, 1], x: [x - 32, x] }, { dur: 420, delay });
@@ -312,55 +341,152 @@ export class DeskScene extends Phaser.Scene {
     card.y = OY + 920 - 24 - card.node.offsetHeight;
   }
 
+  // Title: continue the current campaign, or roll a new one at a chosen difficulty.
   ch_title() {
-    this.hud(DECEMBER.turn, { seals: 0 });
+    this.hud(4, { seals: 0 });
     this.table.setBoats("lane");
     this.table.showWarning(true, { pulse: false });
     this.dom(OX, OY, `<div style="width:1500px;height:944px;background:linear-gradient(90deg,rgba(20,18,16,.95) 58%,rgba(20,18,16,0))"></div>`);
-    const t = this.dom(150, 300, `<div class="title"><h1>Brass Ledger</h1><p>${TITLE.line}</p>
-      <div style="display:flex;gap:16px;margin-top:44px"><button class="go" data-go>Continue in December</button><button class="ghost" disabled title="Not in this prototype">New campaign</button></div>
-      <p style="font-size:18px;color:var(--room-muted);margin-top:20px">${TITLE.saved}</p></div>`);
-    move(this, t, { alpha: [0, 1], y: [324, 300] }, { dur: T.reveal });
+    const c = this.campaign;
+    const t = this.dom(150, 250, `<div class="title"><h1>Brass Ledger</h1><p>${TITLE.line}</p>
+      <p class="campaign-code">Campaign <b>${esc(c.seed)}</b> · ${c.D.name}</p>
+      <div data-start style="display:flex;gap:16px;margin-top:32px"><button class="go" data-go>Continue in December</button><button class="ghost" data-new>New campaign</button></div>
+      <div data-setup hidden><p class="setup-q">How much should change from one campaign to the next?</p><div class="levels">${Object.entries(DIFFICULTY).map(([id, d]) => `<button class="level ${id === c.difficulty ? "sel" : ""}" data-level="${id}"><b>${d.name}</b><span>${d.line}</span></button>`).join("")}</div>
+        <p class="help" style="margin-top:14px">Each new campaign rolls ${this.campaign.D && "a hidden enemy plan, the ally’s politics, your staff’s starting state and the month’s incidents"} from a fresh code. Replaying a code replays the same campaign.</p></div>
+      <p style="font-size:18px;color:var(--room-muted);margin-top:20px" data-saved>${TITLE.saved}</p></div>`);
+    move(this, t, { alpha: [0, 1], y: [274, 250] }, { dur: T.reveal });
     const go = t.node.querySelector("[data-go]");
     go.onclick = () => { this.run = DEFAULT_RUN(); this.go("dec-brief"); };
+    t.node.querySelector("[data-new]").onclick = () => {
+      t.node.querySelector("[data-start]").style.display = "none";
+      t.node.querySelector("[data-saved]").style.display = "none";
+      t.node.querySelector("[data-setup]").hidden = false;
+      t.node.querySelector(".level.sel")?.focus();
+    };
+    for (const b of t.node.querySelectorAll("[data-level]")) b.onclick = () => { this.newCampaign(newSeed(), b.dataset.level); this.go("dec-brief"); };
     this.focusLater(go, 300);
     this.next = go.onclick;
   }
 
   // A morning briefing: the sheet on the right, the officer speaking, one way on.
-  briefing(turn, data, line, nextChapter, nextLabel) {
-    this.hud(turn);
+  briefing(turn, data, nextChapter, nextLabel, state) {
+    this.hud(turn, { state });
     this.table.cameras.main.fadeIn(reducedMotion.on ? 0 : 600, 20, 18, 16);
     const secs = data.sections.map(([l, b], i) => `${i === 1 ? this.warnBlock(data.warning) : ""}<div class="sec"><p class="lab">${l}</p><p class="body">${b}</p></div>`).join("");
     const sheet = this.dom(1150, 108, `<article class="paper sheet tall" style="width:680px" aria-label="${data.title}"><h2>${data.title}</h2><p class="from">${monthOf(turn)} · ${data.from}</p>${secs}
       <div class="btns" style="margin-top:16px"><button class="b on" data-go>${nextLabel}</button></div></article>`);
     move(this, sheet, { x: [1210, 1150], alpha: [0, 1], angle: [4, 0.8] }, { dur: 600, delay: 1000 });
-    this.talk("halden", line, { delay: 700, w: 1030 });
+    this.talk("halden", data.halden, { delay: 700, w: 1030 });
     const go = sheet.node.querySelector("[data-go]");
     go.onclick = () => this.go(nextChapter);
     this.focusLater(go, 1700);
     this.next = () => this.go(nextChapter);
   }
 
+  afterBrief(month) {
+    return this.campaign.incidents[month] ? [`${month}-signal`, "A signal has come in"] : [`${month}-orders`, `To your ${MONTH[month].name} orders`];
+  }
+
   ch_dec_brief() {
     this.table.setBoats("lane");
     this.table.showWarning(true, { delay: 900 });
-    this.briefing(DECEMBER.turn, DECEMBER.brief, DECEMBER.halden, "dec-orders", "To your December orders");
+    this.briefing(4, brief(this.campaign, this.run, "dec"), ...this.afterBrief("dec"), this.at("decStart"));
   }
 
   ch_jan_brief() {
-    const B = januaryBrief(this.run);
     this.table.setBoats("lane");
     this.table.showWarning(true, { pulse: false });
     this.table.setRing(this.ringAfter("dec"));
     this.table.showLattice(`Answered: ${lower(latticeQ(this.run.dec.lattice).q)}`);
-    this.briefing(JANUARY.turn, B, B.halden, "jan-orders", "To your January orders");
+    this.briefing(5, brief(this.campaign, this.run, "jan"), ...this.afterBrief("jan"), this.at("decEnd"));
+  }
+
+  // ── the hard call ─────────────────────────────────────────────────────────
+  // Every decision shows where the staff stand: the two strongest opposing views side by
+  // side, each with what that officer is protecting and what happens if you overrule them.
+  debate(council, options, staffId) {
+    const sp = split(council, staffId);
+    const optName = (id) => options.find((o) => o.id === id)?.name ?? id;
+    const side = ([opt, who]) => {
+      const lead = who[0], p = council[lead], o = OFFICERS[lead];
+      const also = who.slice(1).map((w) => surname(w)).join(" and ");
+      return `<div class="side"><div class="side-head"><span class="av" style="background-image:url(${portrait(lead)})"></span><span><span class="vname">${surname(lead)}</span><span class="focus">${o.post} · ${o.focus}</span></span></div>
+        <p class="wants">Wants: <b>${optName(opt)}</b>${also ? `<span class="also">, backed by ${also}</span>` : ""}</p>
+        <p class="case"><b>Protecting</b> ${p.because}.</p><p class="case risk"><b>If you overrule</b> ${p.risk}</p>
+        <button class="b sm" data-voice="${lead}">Hear the case</button></div>`;
+    };
+    // Anyone with a third view still gets a line, so no position is hidden.
+    const others = (sp.rest ?? []).map(([opt, who]) => `<p class="other"><span class="av sm" style="background-image:url(${portrait(who[0])})"></span><span>${who.map((w) => surname(w)).join(" and ")} ${who.length > 1 ? "want" : "wants"} <b>${lower(optName(opt))}</b>: ${council[who[0]].because}.</span><button class="b sm" data-voice="${who[0]}">Hear</button></p>`).join("");
+    if (sp.agree) return `<div class="debate agree"><p class="lab">Your staff agree</p>${side(sp.side)}</div>`;
+    return `<div class="debate"><p class="lab">The hard call</p><div class="sides">${side(sp.a)}${side(sp.b)}</div>${others}</div>`;
+  }
+
+  // A case is heard in the speech box, kept clear of the sheet it was asked from.
+  wireVoices(root, council, at = { w: 1000 }) {
+    for (const b of root.querySelectorAll("[data-voice]")) b.addEventListener("click", () => {
+      this.drop(this.talkObj);
+      this.talkObj = this.talk(b.dataset.voice, council[b.dataset.voice].line, { delay: 0, ...at });
+    });
+  }
+
+  // ── incident signals ──────────────────────────────────────────────────────
+  // An incident lands before the month's orders. Picking an answer that costs a personal
+  // order spends it now, so the month's orders start with one fewer.
+  signal(month) {
+    const c = this.campaign, I = incident(c, this.run, month);
+    if (!I) return this.go(`${month}-orders`);
+    const { turn, name } = MONTH[month];
+    this.hud(turn, { state: this.at(month === "dec" ? "decStart" : "decEnd") });
+    this.table.setBoats("lane");
+    this.table.showWarning(true, { pulse: false });
+    if (month === "jan") this.table.setRing(this.ringAfter("dec"));
+    this.dom(OX, OY, `<div style="width:1840px;height:944px;background:rgba(20,18,16,.55)"></div>`);
+    const pick = () => this.run[month].incident ?? I.staffId;
+    const sheet = this.dom(250, 110, "");
+    let spent = false;
+    const render = () => {
+      sheet.node.innerHTML = `<article class="paper sheet signal" aria-label="${I.title}"><p class="lab">Signal · ${I.date} · from ${surname(I.from)}</p><h2>${I.title}</h2>
+        <p class="body" style="margin-top:6px">${I.body}</p>${this.debate(I.council, I.options, I.staffId)}
+        <div role="radiogroup" style="margin-top:10px">${I.options.map((o) => `<button class="opt ${pick() === o.id ? "sel" : ""}" data-pick="${o.id}" role="radio" aria-checked="${pick() === o.id}"><span class="r"></span><span><b>${o.name}</b><span class="s">${o.says}</span><span class="cost ${o.staff ? "free" : ""}">${o.staff ? "Staff answer · free" : "Uses 1 personal order"}</span></span></button>`).join("")}</div>
+        <div class="btns"><button class="b on" data-go>To your ${name} orders</button></div></article>`;
+      this.wireVoices(sheet.node, I.council, { x: 1176, w: 650 });
+      for (const b of sheet.node.querySelectorAll("[data-pick]")) b.onclick = () => {
+        const o = I.options.find((x) => x.id === b.dataset.pick);
+        if (o.id === pick()) return;
+        this.run[month].incident = o.id;
+        if (o.seal && !spent) { this.spendSeal(sheet, 1); spent = true; }
+        if (!o.seal && spent) { this.returnSeal(sheet, 0); spent = false; }
+        render();
+        sheet.node.querySelector(`[data-pick="${o.id}"]`)?.focus();
+        if (I.reply[o.id]) { this.drop(this.talkObj); this.talkObj = this.talk(...I.reply[o.id], { delay: 0, x: 1176, w: 650 }); }
+      };
+      const go = sheet.node.querySelector("[data-go]");
+      go.onclick = () => this.go(`${month}-orders`);
+      this.next = go.onclick;
+    };
+    this.run[month].incident = I.staffId;
+    render();
+    move(this, sheet, { alpha: [0, 1], y: [140, 110] }, { dur: T.paper, delay: 300 });
+    const agree = split(I.council, I.staffId).agree;
+    this.talkObj = this.talk(I.from, `General. ${I.body.split(". ")[0]}. ${agree ? "Your staff agree on what to do; the case is on the sheet." : "Your staff disagree on what to do. Both cases are on the sheet."}`, { x: 1176, w: 650, delay: 900 });
+    this.focusLater(sheet.node.querySelector(".opt.sel"), 1400);
+  }
+
+  ch_dec_signal() { this.signal("dec"); }
+  ch_jan_signal() { this.signal("jan"); }
+
+  // Personal orders already spent on this month's incident.
+  sealsOnIncident(month) {
+    const id = this.campaign.incidents[month];
+    if (!id) return 0;
+    const I = incident(this.campaign, this.run, month);
+    return I.options.find((o) => o.id === this.run[month].incident)?.seal ? 1 : 0;
   }
 
   // ── order slips ───────────────────────────────────────────────────────────
-  // One slip per issue. Its face shows staff's plan or your change; "Change this order"
-  // flips it to the choices. Spending and returning seals happens here, so the count is
-  // always the number of orders you have personally changed (never more than two).
+  // One slip per issue. Its face shows staff's plan or your change, and the hard call
+  // between your staff; "Change this order" flips it to the choices. Seals are spent and
+  // returned here, never more than two a month including any spent on the incident.
   orderSlip(cfg, { get, set, x, y, i, seed, onPicked }) {
     const o = { cfg, get, set };
     const slip = this.dom(0, 0, "");
@@ -371,22 +497,7 @@ export class DeskScene extends Phaser.Scene {
       slip.node.querySelector("[data-staffplan]")?.addEventListener("click", () => pick(cfg.options.find((p) => p.staff).id, true));
       slip.node.querySelector("[data-done]")?.addEventListener("click", () => this.flipTo(slip, () => { slip.node.innerHTML = face(); wire(); slip.node.querySelector("[data-change]")?.focus(); }));
       for (const b of slip.node.querySelectorAll("[data-opt]")) b.addEventListener("click", () => pick(b.dataset.opt));
-      for (const b of slip.node.querySelectorAll("[data-voice]")) b.addEventListener("click", () => {
-        this.drop(this.talkObj);
-        this.talkObj = this.talk(b.dataset.voice, cfg.council[b.dataset.voice].line, { delay: 0, w: 1000 });
-      });
-    };
-    // Everyone with a view on this order: who they are, and whether they back what is on the slip now.
-    const council = () => {
-      if (!cfg.council) return "";
-      const rows = Object.entries(cfg.council).map(([who, c]) => {
-        const backs = c.prefers === get();
-        const pref = cfg.options.find((p) => p.id === c.prefers);
-        return `<button class="voice-btn" data-voice="${who}" aria-label="Hear ${plainName(who)}">
-          <span class="av" style="background-image:url(${portrait(who)})"></span>
-          <span><span class="vname">${surname(who)}</span><span class="stance ${backs ? "backs" : "differs"}">${backs ? "Backs this" : `Would ${pref.short}`}</span></span></button>`;
-      }).join("");
-      return `<div class="council"><p class="lab" style="color:var(--ink2)">Ask your staff</p><div class="council-row">${rows}</div></div>`;
+      this.wireVoices(slip.node, cfg.council);
     };
     const face = () => {
       const p = opt();
@@ -394,11 +505,11 @@ export class DeskScene extends Phaser.Scene {
         ? `<h3>${cfg.head} · unless you change it</h3><p class="will">${surname(cfg.lead)} ${cfg.plan}</p>
            <div class="row"><b>Gives</b><span>${cfg.does}</span></div><div class="row"><b>Costs</b><span>${cfg.cost}</span></div>`
         : `<h3>${cfg.head} · your order</h3><p class="will">${p.name}.</p><div class="row"><b>Means</b><span>${p.says}</span></div>`;
-      return `<article class="paper slip" style="width:520px" aria-label="${cfg.head}"><span class="pin"></span>${top}${council()}
+      return `<article class="paper slip" style="width:600px" aria-label="${cfg.head}"><span class="pin"></span>${top}${this.debate(cfg.council, cfg.options, cfg.staffId)}
         <div class="btns"><button class="b" data-change>${p.staff ? "Change this order" : "Change again"}</button>${p.staff ? "" : '<button class="b" data-staffplan>Back to the staff plan</button>'}</div></article>`;
     };
     const backers = (id) => Object.entries(cfg.council ?? {}).filter(([, c]) => c.prefers === id).map(([who]) => `<span class="av sm" title="${plainName(who)}" style="background-image:url(${portrait(who)})"></span>`).join("");
-    const choices = () => `<article class="paper slip" style="width:580px" aria-label="${cfg.head}, choose an order"><span class="pin"></span><h3>${cfg.head} · your order</h3>
+    const choices = () => `<article class="paper slip" style="width:600px" aria-label="${cfg.head}, choose an order"><span class="pin"></span><h3>${cfg.head} · your order</h3>
       <p class="will">${cfg.question}</p><div role="radiogroup">${cfg.options.map((p) => `<button class="opt ${get() === p.id ? "sel" : ""}" data-opt="${p.id}" role="radio" aria-checked="${get() === p.id}">
       <span class="r"></span><span><b>${p.name}</b><span class="s">${p.says}</span><span class="opt-foot"><span class="cost ${p.staff ? "free" : ""}">${p.staff ? "Staff plan · free" : "Uses 1 personal order"}</span>${backers(p.id) ? `<span class="backed">Backed by ${backers(p.id)}</span>` : ""}</span></span></button>`).join("")}</div>
       <p class="why-note" style="font-size:16px;color:var(--red-ink);margin-top:8px" aria-live="polite"></p>
@@ -440,7 +551,7 @@ export class DeskScene extends Phaser.Scene {
   }
 
   latticeSlip(x, y, i) {
-    const L = DECEMBER.orders.lattice;
+    const L = LATTICE;
     const slip = this.dom(0, 0, "");
     let open = false;
     const render = () => {
@@ -513,83 +624,91 @@ export class DeskScene extends Phaser.Scene {
   }
 
   ch_dec_orders() {
-    this.run.dec = { beacon: "quiet", lattice: "boats" };
-    this.used = 0;
-    this.hud(DECEMBER.turn);
+    this.run.dec = { beacon: "quiet", lattice: "boats", incident: this.run.dec.incident ?? null };
+    this.used = this.sealsOnIncident("dec");
+    this.hud(4, { used: this.used, state: this.at("decOrders") });
     this.table.setBoats("lane");
     this.table.showWarning(true, { pulse: false });
-    const B = DECEMBER.orders.beacon;
+    const B = orders(this.campaign, this.run, "dec");
     const beacon = this.orderSlip(B, {
-      get: () => this.run.dec.beacon, set: (v) => (this.run.dec.beacon = v), x: 300, y: 150, i: 0, seed: "dec",
+      get: () => this.run.dec.beacon, set: (v) => (this.run.dec.beacon = v), x: 260, y: 130, i: 0, seed: "dec",
       onPicked: (id) => this.table.tweenRing({ preview: B.ring[id] ?? null }, 700),
     });
     const lattice = this.latticeSlip(1290, 530, 1);
     this.orderPanel(() => {
       const b = B.options.find((p) => p.id === this.run.dec.beacon), q = latticeQ(this.run.dec.lattice);
-      return [{ mine: !b.staff, text: `Beacon: ${lower(b.name)}.` }, { mine: !q.staff, text: `Lattice: ${q.short}.` }];
+      return [{ mine: !b.staff, text: `${WORLD.stationShort}: ${lower(b.name)}.` }, { mine: !q.staff, text: `${WORLD.network}: ${q.short}.` }];
     });
     const go = this.disp.node.querySelector(".go");
     go.addEventListener("click", () => this.send([beacon.slip, lattice.slip], () => this.go("dec-night")));
     this.focusLater(beacon.slip.node.querySelector("[data-change]"), 1400);
   }
 
+
   ch_jan_orders() {
-    this.run.jan = { beacon: "quiet", way: null };
-    this.used = 0;
-    const J = JANUARY;
-    this.hud(J.turn);
+    this.run.jan = { beacon: "quiet", way: null, incident: this.run.jan.incident ?? null };
+    this.used = this.sealsOnIncident("jan");
+    this.hud(5, { used: this.used, state: this.at("janOrders") });
     this.table.setBoats("lane");
     this.table.showWarning(true, { pulse: false });
     this.table.setRing(this.ringAfter("dec"));
-    const thread = this.dom(610, 300, `<div class="thread" style="width:430px"></div>`);
+    const J = orders(this.campaign, this.run, "jan");
+    const thread = this.dom(670, 300, `<div class="thread" style="width:400px"></div>`);
     thread.setAngle(-6).setAlpha(0);
     thread.node.firstChild.style.transformOrigin = "left center";
-    let host;
-    const clash = () => this.run.jan.beacon === "show" && !this.run.jan.way;
+    let hostSlip;
+    const H = () => host(this.campaign, this.run);
+    const clash = () => H().clash && !this.run.jan.way;
     const showThread = () => {
       if (clash()) {
         thread.setAlpha(1);
         if (!reducedMotion.on) {
           thread.node.firstChild.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: 600, easing: "cubic-bezier(.16,1,.3,1)" });
-          [beacon.slip, host.slip].forEach((s, i) => this.tweens.add({ targets: s, x: s.x + (i ? 4 : -4), duration: 60, yoyo: true, repeat: 1, delay: 500 }));
+          [beacon.slip, hostSlip.slip].forEach((s, i) => this.tweens.add({ targets: s, x: s.x + (i ? 4 : -4), duration: 60, yoyo: true, repeat: 1, delay: 500 }));
         }
         this.drop(this.talkObj);
-        this.talkObj = this.talk("sato", J.sato, { w: 900, delay: 300 });
+        this.talkObj = this.talk("sato", H().sato, { w: 900, delay: 300 });
       } else move(this, thread, { alpha: 0 }, { dur: T.ui, ease: EASE.leave });
     };
-    const beacon = this.orderSlip(J.beacon, {
-      get: () => this.run.jan.beacon, set: (v) => (this.run.jan.beacon = v), x: 170, y: 150, i: 0, seed: "jan",
+    const beacon = this.orderSlip(J, {
+      get: () => this.run.jan.beacon, set: (v) => (this.run.jan.beacon = v), x: 120, y: 130, i: 0, seed: "jan",
       onPicked: (id, before) => {
-        // Leaving an open show of force cancels whatever was done about the host government.
-        if (before === "show" && this.run.jan.way && this.run.jan.way !== "back") this.returnSeal(host.slip, --this.used);
-        if (id !== "show") this.run.jan.way = null;
-        host.render(); showThread();
+        // Acting without Marenna only makes sense alongside an open move; undo it otherwise.
+        if (before === "show" && id !== "show" && this.run.jan.way === "act") { this.returnSeal(hostSlip.slip, --this.used); this.run.jan.way = null; }
+        hostSlip.render(); showThread();
       },
     });
-    host = this.hostSlip(beacon, () => showThread());
+    hostSlip = this.hostSlip(beacon, () => showThread());
     this.orderPanel(() => {
-      const b = J.beacon.options.find((p) => p.id === this.run.jan.beacon), w = this.run.jan.way;
-      const lines = [{ mine: !b.staff, text: `Beacon: ${lower(b.name)}.` }];
-      lines.push(w && w !== "back" ? { mine: true, text: `Marenna: ${lower(J.host.ways.find((x) => x.id === w).name)}.` } : { mine: false, text: "Marenna: wait for the cabinet’s vote." });
+      const b = J.options.find((p) => p.id === this.run.jan.beacon), w = this.run.jan.way, h = H();
+      const lines = [{ mine: !b.staff, text: `${WORLD.stationShort}: ${lower(b.name)}.` }];
+      const all = [...h.ways, h.secure];
+      lines.push(w ? { mine: true, text: `${h.head}: ${lower(all.find((x) => x.id === w).name)}.` } : { mine: false, text: `${h.head}: wait for the cabinet’s vote.` });
       return lines;
-    }, () => (clash() ? J.blocked : ""));
-    this.disp.node.querySelector(".go").addEventListener("click", () => this.send([beacon.slip, host.slip], () => this.go("jan-night")));
+    }, () => (clash() ? H().blocked : ""));
+    this.disp.node.querySelector(".go").addEventListener("click", () => this.send([beacon.slip, hostSlip.slip], () => this.go("jan-night")));
     this.focusLater(beacon.slip.node.querySelector("[data-change]"), 1400);
   }
 
+  // Marenna in January. Three states: an open move that needs an answer in time (a clash
+  // with three ways out), a shaky vote you can choose to secure, or nothing to decide.
   hostSlip(beacon, onChange) {
-    const H = JANUARY.host;
     const slip = this.dom(0, 0, "");
+    const opt = (x, w) => `<button class="opt ${w === x.id ? "sel" : ""}" data-way="${x.id}" role="radio" aria-checked="${w === x.id}"><span class="r"></span><span><b>${x.name}</b><span class="s">${x.says}</span><span class="cost ${x.gives || x.staff ? "free" : ""}">${x.gives ? "Returns your personal order" : x.staff ? "Staff plan · free" : "Uses 1 personal order"}</span></span></button>`;
     const render = () => {
-      const show = this.run.jan.beacon === "show", w = this.run.jan.way;
-      const ways = show ? `<div class="row"><b>Clash</b><span>${H.clash}</span></div>
+      const H = host(this.campaign, this.run), show = this.run.jan.beacon === "show", w = this.run.jan.way;
+      let body;
+      if (H.clash || (show && w)) body = `<div class="row"><b>Clash</b><span>${H.clashText}</span></div>
         <p style="font-size:18px;font-weight:600;margin-top:14px">${w ? "You settled it:" : "Three ways out. Nothing changes until you pick."}</p>
-        <div role="radiogroup">${H.ways.map((x) => `<button class="opt ${w === x.id ? "sel" : ""}" data-way="${x.id}" role="radio" aria-checked="${w === x.id}"><span class="r"></span><span><b>${x.name}</b><span class="s">${x.says}</span><span class="cost ${x.gives ? "free" : ""}">${x.gives ? "Returns your personal order" : "Uses 1 personal order"}</span></span></button>`).join("")}</div>`
-        : `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row"><b>Cost</b><span>${H.cost}</span></div>`;
-      slip.node.innerHTML = `<article class="paper slip" style="width:580px" aria-label="${H.head}"><span class="pin"></span><h3>${H.head} · ${w && w !== "back" ? "your order" : "staff plan"}</h3>
-        <p class="will">${surname(H.staff[0])} ${H.staff[1]}</p>${ways}</article>`;
+        <div role="radiogroup">${H.ways.map((x) => opt(x, w)).join("")}</div>`;
+      else if (show) body = `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row"><b>Vote</b><span>${H.vote}</span></div>`;
+      else if (H.shaky || w === "buy") body = `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row warnrow"><b>Vote</b><span>${H.vote}</span></div>
+        <div role="radiogroup" style="margin-top:8px">${opt({ id: "wait", name: "Let the vote run", says: `${surname("sato")} keeps lobbying. If the vote fails, ${H.head}’s navy stays in port in February.`, staff: true }, w ?? "wait")}${opt(H.secure, w)}</div>`;
+      else body = `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row"><b>Vote</b><span>${H.vote}</span></div>`;
+      slip.node.innerHTML = `<article class="paper slip" style="width:600px" aria-label="${H.head}"><span class="pin"></span><h3>${H.head} · ${w && w !== "back" ? "your order" : "staff plan"}</h3>
+        <p class="will">${surname(H.staff[0])} ${H.staff[1]}</p>${body}</article>`;
       for (const b of slip.node.querySelectorAll("[data-way]")) b.addEventListener("click", () => {
-        const id = b.dataset.way, before = this.run.jan.way;
+        const id = b.dataset.way === "wait" ? null : b.dataset.way, before = this.run.jan.way;
         if (id === before) return;
         if (id === "back") {
           if (before) this.returnSeal(slip, --this.used);
@@ -597,32 +716,33 @@ export class DeskScene extends Phaser.Scene {
           beacon.pick("quiet", true);
           return;
         }
-        if (!before) {
+        if (!before && id) {
           if (this.used >= 2) return;
           this.spendSeal(slip, ++this.used);
         }
+        if (before && !id) this.returnSeal(slip, --this.used);
         this.run.jan.way = id;
-        render(); slip.node.querySelector(`[data-way="${id}"]`)?.focus();
+        render(); slip.node.querySelector(`[data-way="${id ?? "wait"}"]`)?.focus();
         onChange(); this.refreshDispatch();
       });
     };
     render();
-    this.deal(slip, 1040, 140, 1, "jan");
+    this.deal(slip, 1110, 120, 1, "jan");
     return { slip, render };
   }
 
   // ── nights ────────────────────────────────────────────────────────────────
-  night(N, fromTurn, nextChapter, { lattice = null, ravellan = "lane", warning = true } = {}) {
-    this.hud(fromTurn, { seals: 0 });
+  night(N, fromTurn, nextChapter, { ravellan = "lane", warning = true, state } = {}) {
+    this.hud(fromTurn, { seals: 0, state });
     this.later(800, () => this.flipMonth(fromTurn + 1));
     this.table.setBoats("none");
     this.table.showWarning(warning, { pulse: false });
     this.table.setNight(true);
     const beats = N.beats.map((b, i) => `<div class="beat" data-beat="${i}" style="opacity:0"><b class="n">${i + 1}</b><div><p class="lab" style="color:var(--ink2)">${b.cause}</p><p class="body"></p></div></div>`).join("");
-    const sheet = this.dom(64, 108, `<article class="paper sheet tall" style="width:700px" aria-label="${N.title}"><h2>${N.title}</h2><p class="from">${N.sub}</p>${beats}
+    const sheet = this.dom(56, 104, `<article class="paper sheet tall night" style="width:800px" aria-label="${N.title}"><h2>${N.title}</h2><p class="from">${N.sub}</p>${beats}
       <div data-end style="opacity:0">${this.warnBlock(N.still, !warning)}<div class="sec" style="border:0"><p class="lab">Coming up</p><p class="body">${N.next}</p></div>
       <button class="b on" style="height:56px;font-size:20px;margin-top:8px" data-go>${N.go}</button></div></article>`);
-    move(this, sheet, { alpha: [0, 1], x: [30, 70] }, { dur: 600, delay: 400 });
+    move(this, sheet, { alpha: [0, 1], x: [24, 56] }, { dur: 600, delay: 400 });
     const go = sheet.node.querySelector("[data-go]");
     go.onclick = () => this.go(nextChapter);
     const effect = (b) => {
@@ -630,7 +750,7 @@ export class DeskScene extends Phaser.Scene {
       if (b.marker) this.table.showLattice(b.marker);
       if (b.at === "lane") this.table.setBoats(ravellan);
     };
-    const at = [1200, 3300, 4900];
+    const at = N.beats.map((_, i) => 1200 + i * 1800);
     N.beats.forEach((b, i) => this.later(at[i], () => {
       const row = sheet.node.querySelector(`[data-beat="${i}"]`);
       row.style.opacity = 1;
@@ -646,7 +766,7 @@ export class DeskScene extends Phaser.Scene {
       go.focus({ preventScroll: true });
       this.later(950, () => this.mapHotspots());
     };
-    this.later(6400, end);
+    this.later(at[at.length - 1] + 1600, end);
     const skipNight = () => {
       for (const t of this.timers) t.remove(false);
       N.beats.forEach((b, i) => {
@@ -665,18 +785,18 @@ export class DeskScene extends Phaser.Scene {
   }
 
   ch_dec_night() {
-    this.night(decemberNight(this.run), DECEMBER.turn, "jan-brief");
+    this.night(night(this.campaign, this.run, "dec"), 4, "jan-brief", { state: this.at("decEnd") });
   }
 
   ch_jan_night() {
     this.table.setRing(this.ringAfter("dec"));
-    this.night(januaryNight(this.run), JANUARY.turn, "feb-showdown", { ravellan: "edge", warning: false });
+    this.night(night(this.campaign, this.run, "jan"), 5, "feb-showdown", { ravellan: "edge", warning: false, state: this.at("janEnd") });
   }
 
   // ── the showdown and the debrief ──────────────────────────────────────────
   ch_feb_showdown() {
-    const F = february(this.run);
-    this.hud(F.turn, { seals: 0 });
+    const F = february(this.campaign, this.run);
+    this.hud(F.turn, { seals: 0, state: this.at("janEnd") });
     this.table.setBoats("edge");
     this.table.setRing(this.ringAfter("jan"));
     this.later(500, () => this.table.revealPaths(F.routes.map((r) => r.id)));
@@ -710,21 +830,22 @@ export class DeskScene extends Phaser.Scene {
   }
 
   ch_debrief() {
-    const D = debrief(this.run);
-    this.hud(6, { seals: 0 });
+    const D = debrief(this.campaign, this.run);
+    this.hud(6, { seals: 0, state: this.at("janEnd") });
     this.table.setBoats("none");
-    this.table.revealTruth();
+    this.table.revealTruth(D.truth);
     const rows = D.rows.map((r) => `<div class="dt" style="opacity:0"><b>${r[0]}</b><span>${r[1]}</span><span>${r[2]}</span><span style="color:var(--red-ink)">${r[3]}</span></div>`).join("");
-    const s = this.dom(80, 128, `<article class="paper sheet" style="width:1000px"><h2 style="font-size:46px;line-height:52px">${D.title}</h2><p class="body" style="margin-top:8px">${D.line}</p>
-      <div class="dt" style="border:0;font-size:16px;font-weight:600;color:var(--ink2);margin-top:14px"><span></span><span>You ordered</span><span>We believed</span><span style="color:var(--red-ink)">What was really happening</span></div>${rows}
-      <div class="btns" style="margin-top:22px"><button class="b on" style="height:56px;font-size:20px" data-again>Play December again</button></div></article>`);
+    const s = this.dom(80, 108, `<article class="paper sheet" style="width:1000px;padding:28px 42px 26px"><p class="lab">Campaign ${esc(this.campaign.seed)} · ${this.campaign.D.name}</p><h2 style="font-size:44px;line-height:50px">${D.title}</h2><p class="body" style="margin-top:8px">${D.line}</p>
+      <div class="dt" style="border:0;font-size:16px;font-weight:600;color:var(--ink2);margin-top:12px"><span></span><span>You ordered</span><span>We believed</span><span style="color:var(--red-ink)">What was really happening</span></div>${rows}
+      <div class="btns" style="margin-top:18px"><button class="b on" style="height:56px;font-size:20px" data-again>Replay this campaign</button><button class="b" style="height:56px;font-size:20px" data-new>New campaign</button></div></article>`);
     move(this, s, { alpha: [0, 1] }, { dur: 600 });
     s.node.querySelectorAll(".dt[style*='opacity']").forEach((row, i) => {
       if (reducedMotion.on) { row.style.opacity = 1; return; }
       row.animate([{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], { duration: 500, delay: 600 + i * STAGGER.line, easing: "cubic-bezier(.16,1,.3,1)", fill: "forwards" });
     });
     const again = s.node.querySelector("[data-again]");
-    again.onclick = () => this.go("dec-brief");
+    again.onclick = () => { this.run = DEFAULT_RUN(); this.go("dec-brief"); };
+    s.node.querySelector("[data-new]").onclick = () => { this.newCampaign(newSeed(), this.campaign.difficulty); this.go("dec-brief"); };
     this.focusLater(again, 1200);
     this.talk("halden", D.halden, { x: 1120, w: 740, delay: 1400 });
   }

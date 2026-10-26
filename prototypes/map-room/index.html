@@ -43,12 +43,43 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .term:focus-visible,.officer:focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:2px}
 .officer,.talk .who{cursor:help}
 .hot{display:block;cursor:help}
-.tip{pointer-events:none}
+.tip,.tip *{pointer-events:none!important}
 /* Briefings and night reports: slightly smaller body, and a scroll only if copy outgrows the screen. */
+/* Readiness at a glance: one value per officer's concern, coloured by how worried to be. */
+.chips{display:flex;gap:10px;margin-left:12px}
+.chip{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 9px;border:1px solid #3A3530;border-radius:6px;background:#1E1B18;cursor:help;line-height:17px}
+.chip i{width:9px;height:9px;border-radius:50%;flex:none;background:#7FB08A}.chip.tone-warn i{background:#E2B04A}.chip.tone-bad i{background:#E06A5F}
+.chip span{font-size:15px;font-weight:500;white-space:nowrap}.chip small{display:block;font-size:12px;color:var(--room-muted);font-weight:400}
+/* The hard call: the two strongest opposing views on a decision, side by side. */
+.debate{margin-top:14px;padding-top:12px;border-top:1px solid #DCD4C3}
+.debate .sides{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.side{background:#EFE8D8;border-radius:6px;padding:12px 12px 10px;display:flex;flex-direction:column}
+.debate.agree .side{margin-top:6px}
+.side-head{display:flex;gap:10px;align-items:center}.side-head .av{width:44px;height:44px}
+.side .focus{display:block;font-size:13px;line-height:17px;color:var(--ink2)}
+.side .wants{font-size:16px;line-height:22px;margin-top:8px}.side .also{font-size:14px;color:var(--ink2)}
+.side .case{font-size:15px;line-height:21px;margin-top:6px}.side .case b{display:block;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--brass-deep)}
+.side .case.risk b{color:var(--red-ink)}
+.side .b.sm{height:34px;padding:0 12px;font-size:14px;margin-top:auto;align-self:flex-start;margin-top:10px}
+.row.warnrow span{color:var(--red-ink)}
+.b.sm{height:34px;padding:0 12px;font-size:14px}
+.debate .other{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:15px;line-height:21px}.debate .other .b.sm{margin:0 0 0 auto;flex:none}
+.hud.compact .mark{font-size:0;gap:0}.hud.compact{gap:20px}.hud.compact .month span{font-size:14px}
+/* Title: campaign code and the difficulty picker. */
+.title .campaign-code{font-size:18px;color:var(--room-muted);margin-top:14px}.campaign-code b{color:var(--brass);letter-spacing:.08em}
+.title .setup-q{font-size:22px;margin-top:30px}
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px;width:1000px}
+.level{text-align:left;background:#1E1B18;border:1.5px solid #3A3530;border-radius:8px;padding:16px 18px;color:var(--room-ink);display:flex;flex-direction:column;gap:6px;cursor:pointer}
+.level b{font-size:22px}.level span{font-size:16px;line-height:23px;color:var(--room-muted)}
+.level.sel,.level:hover,.level:focus-visible{border-color:var(--brass)}
+.title .help{font-size:16px;line-height:23px;max-width:1000px}
+/* An incident signal: one sheet with the situation, the hard call and the answers. */
+.sheet.signal{width:760px;padding:26px 34px 22px}.sheet.signal h2{font-size:34px;line-height:40px}
 .sheet.tall{max-height:950px;overflow-y:auto;padding:26px 34px 24px}
 .sheet.tall h2{font-size:34px;line-height:40px}
 .sheet.tall .sec{padding:9px 0}
 .sheet.tall .body{font-size:20px;line-height:27px}
+.sheet.night .beat{padding:8px 0}.sheet.night .body{font-size:19px;line-height:26px}.sheet.night .warn{padding:9px 14px}.sheet.night .warn .body{font-size:18px!important;line-height:25px!important}
 .profile{width:440px;background:#F7F2E6;color:var(--ink);border-radius:6px;box-shadow:0 18px 44px rgba(0,0,0,.55);padding:16px 20px 18px;border-top:4px solid #1D5C6A;font-family:'IBM Plex Sans',sans-serif}
 .profile.officer-card{display:grid;grid-template-columns:84px 1fr;gap:16px;border-top-color:var(--brass)}
 .pf-face{width:84px;height:96px;border-radius:4px;background-size:cover;background-position:center 15%}

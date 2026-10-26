@@ -17,10 +17,11 @@ without that decision.
 cd prototypes/map-room
 npm install
 npm run dev          # http://localhost:5173
-npm test             # chart checks (Node, no browser)
+npm test             # chart and campaign checks (Node, no browser)
 ```
 
-`?chapter=dec-orders` opens a chapter directly. `?renderer=canvas` forces the 2D renderer
+`?seed=KX4P2&difficulty=volatile` plays a given campaign (the title screen also rolls new
+ones). `?chapter=dec-orders` opens a chapter directly. `?renderer=canvas` forces the 2D renderer
 (handy without a GPU, e.g. headless capture). `?scenario=harrow-sound` draws another sea;
 `?chapter=chart` (or key 0) shows any chart on its own with its validator result.
 
@@ -29,24 +30,87 @@ npm test             # chart checks (Node, no browser)
 | Space / Enter / click on a speaker | Finish the running sequence, or continue |
 | 1–9 | Jump to a chapter: title, December briefing, December orders, December night, January briefing, January orders, January night, February showdown, debrief |
 | 0 | Chart preview for the current scenario |
+| N | Roll a new campaign at the same difficulty and start December |
 | M | Toggle reduced motion (also follows `prefers-reduced-motion`) |
+
+## Campaigns: almost no two plays alike
+
+Every campaign is rolled from a code (`src/story/campaign.js`). The same code and
+difficulty always roll the same campaign, so a replay matches; a new code rolls a new
+one. What is rolled:
+
+- **Ravellan's hidden plan.** A real landing on Beacon, a bluff meant to make Marenna ask
+  us to leave, or a probe that turns into a landing if Beacon looks weak. The sailing
+  date and how many landing craft load in December go with it. Twelve or more craft is a
+  battalion plus a second wave, which Beacon cannot hold without a fit, warned 2nd
+  Battalion.
+- **The clues.** Lattice's answers, the fishing fleet's behaviour and the night reports
+  follow the hidden plan. On harder settings one clue may be planted to read as a
+  landing, and a defector may be lying.
+- **Marenna's politics.** How many of the eleven ministers back us, whether the defence
+  minister is a hawk or a dove, the vote date, whether a hotline exists, and how support
+  drifts each month.
+- **The staff's starting state.** How long 2nd Battalion has been on duty, which changes
+  what Rear Admiral Okafor argues for, and so on down the staff.
+- **Incidents.** A failing radar, a defector, a leak to the press, a collision on the
+  shipping lane, a minister's visit. Each lands before the month's orders as a signal
+  with its own hard call, a free staff answer and an answer that costs a personal order.
+
+**Difficulty scales the variation in each element** (`DIFFICULTY`):
+
+| | Steady | Shifting | Volatile |
+| --- | --- | --- | --- |
+| Enemy plans | landing or bluff | landing, bluff or probe | any, and a bluff can turn into a landing if Marenna wavers |
+| Sailing date | 3 February | 2–5 February | 1–6 February |
+| Landing craft added in December | 1–2 | 2–4 | 2–5 |
+| Planted clues | never | 1 in 5 | 2 in 5 |
+| Ministers with us at the start | 7–8 of 11 | 6–8 | 5–7, drifting up to ±1 a month |
+| Defence minister | firm | firm, hawk or dove | hawk or dove |
+| Incidents | one | one a month | one a month, harsher |
+
+With identical choices, 192–200 of every 200 campaigns tell a different story. Following
+the staff plan every month loses Beacon in about 7% of Steady campaigns and about a
+quarter of Shifting and Volatile ones, so overruling your staff is sometimes right.
+
+## The staff and the hard call
+
+Each officer has one job and one thing they always push for, shown under their name
+wherever they speak:
+
+| Officer | Job | Always pushes for |
+| --- | --- | --- |
+| Major General Halden | Intelligence: finds out what Ravellan means to do | moves that force Ravellan to show its hand |
+| Brigadier General Briggs | Operations: makes sure Beacon can stop an attack | more troops and guns on Beacon, out of sight |
+| Rear Admiral Okafor | Logistics: keeps our troops and ships fit to fight | rest for 2nd Battalion before it breaks |
+| Rear Admiral Sato | Plans and Marenna: keeps Marenna on our side | nothing Ravellan can photograph before the cabinet agrees |
+
+Their recommendations are worked out each month from the campaign's state (`orders()`
+in `src/story/copy.js`), so who agrees and who clashes changes from run to run. Every
+decision shows **the hard call**: the two strongest opposing views side by side, each
+with what that officer is protecting and what happens if you overrule them, plus a line
+for anyone holding a third view. "Hear the case" plays it in their own voice. The
+readiness bar along the top shows the four things they argue about (2nd Battalion's days
+on duty, the cabinet count, Beacon's defences, our warning before an attack), each owned
+by one officer.
 
 ## The sequence
 
-Each month runs **briefing → orders → night**, and everything after December follows
-from what you ordered (`run` in `DeskScene`, built from `DEFAULT_RUN` when you jump in):
+Each month runs **briefing → signal (if an incident lands) → orders → night**. Everything
+after December follows from what you ordered (`run` in `DeskScene`):
 
-- The December night report narrates your Beacon order and the question Lattice asked.
-- January's briefing answers that question.
-- January's orders start from staff's plan. A clash with the host government appears
-  only if you order an open show of force, and Send stays blocked until you settle it.
-- The January night narrates how you settled it.
-- February offers "Stand together openly" only if the host government's OK was waited
-  for or traded for; if you acted without them, the screen says why it is missing.
-- The debrief's rows, title and Major General Halden's verdict follow your choices.
+- The December night report narrates your Beacon order, Lattice's answer, the incident's
+  result and Ravellan's response, all shaped by the hidden plan.
+- January's briefing reads the clue you bought, honest or planted.
+- In January, Marenna's slip depends on the campaign: an open move may clash with a slow
+  answer (Send stays blocked until you settle it), a hotline may make it easy, or a shaky
+  cabinet may need securing even if you stay quiet.
+- February offers standing with Marenna's navy only if Marenna agreed to send it. If
+  Lattice kept listening to Sarn, Major General Halden can tell you whether the landing
+  craft carry troops; otherwise you choose blind.
+- The debrief shows what you ordered, what we believed and what was really happening.
 
-Seals are spent and returned by the slips themselves, never more than two a month.
-"Change this order" flips a slip to its choices; "Done" folds it back to show the order.
+Seals are spent and returned by the slips themselves, never more than two a month,
+including any spent on the month's incident.
 
 ## How it is built
 
@@ -70,6 +134,12 @@ Seals are spent and returned by the slips themselves, never more than two a mont
     a painter, soundings fall in water, and each sea provides the places the story uses.
   Writing the validator caught two bugs on the old hand-drawn chart: Beacon Station was
   drawn in the water 36 px off its headland, and the anchorage was on land.
+- **The story is generated.** `src/story/` holds the placeholders every campaign is
+  written against (`world.js`: station, host, rival, harbour, network, reserve), the
+  officers (`officers.js`), the generator (`campaign.js`), the incidents
+  (`incidents.js`), the rules that move the state (`play.js`, pure and deterministic) and
+  every word on screen (`copy.js`). Another campaign on the same placeholders is a new
+  `world.js` and its own incidents.
 - `TableScene` loads the scenario, bakes the chart once into one Canvas 2D texture, and
   animates only live things: the station's coverage ring and radar sweep, boats, the
   harbour sighting, the intel marker, showdown paths and the debrief's truth layer, all
@@ -156,8 +226,14 @@ in the scenario and open the same profiles.
 - Ranks and regional backgrounds for the six staff officers.
 - "The host government" for the partner, "hotline" for the rapid consultation channel,
   "personal order" for an intervention.
-- Debrief truth lines (Ravellan cancelling its landing order after the January frigate,
-  the February probe) are illustrative, not sim output.
+- **All campaign rules** in `src/story/play.js` and `campaign.js` are prototype rules,
+  not sim rules: how each order moves 2nd Battalion's days, Beacon's defences and the
+  cabinet count; the penalties for daylight moves by minister type; the vote threshold
+  (6 of 11); the hotline threshold; the second-wave rule; deterrence (a visible January
+  frigate cancels a landing when Beacon is fully reinforced); a bluff turning into a
+  landing when the cabinet drops below 5 of 11; and the seven February results.
+- The incident pool and every figure in it (the radar's one-in-four failure chance, the
+  defector's reliability, the cabinet swings).
 - New figures: Sarn about 30 nautical miles from Beacon; Kestrel Strait about 40 wide;
   two days' warning from the troop-loading order; 2nd Battalion about 600 soldiers; the
   air-defence battery about 120; a week for Marenna's answer without a hotline.

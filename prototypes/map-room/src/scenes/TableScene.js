@@ -255,10 +255,13 @@ export class TableScene extends Phaser.Scene {
     for (let t = 0.08; t <= 0.92; t += 0.02) pts.push({ x: Phaser.Math.Linear(from.x, to.x, t), y: Phaser.Math.Linear(from.y, to.y, t) + Math.sin(t * Math.PI) * -60 });
     this.dashed(g, pts, 5, 9, 3, C.red, 1);
     c.add(g);
-    for (const tr of TRUTH) {
+    // Anchors come from the story; the words arrive with revealTruth(), from the debrief.
+    c.lines = TRUTH.map((tr) => {
       const p = this.at(tr.near);
-      c.add(this.add.text(p.x + tr.dx, p.y + tr.dy, tr.text, { fontFamily: "Newsreader", fontStyle: "italic", fontSize: "26px", color: "#B4261F" }));
-    }
+      const t = this.add.text(p.x + tr.dx, p.y + tr.dy, "", { fontFamily: "Newsreader", fontStyle: "italic", fontSize: "26px", color: "#B4261F" });
+      c.add(t);
+      return t;
+    });
     const mask = this.make.graphics({ add: false });
     c.setMask(mask.createGeometryMask());
     c.maskG = mask;
@@ -361,8 +364,9 @@ export class TableScene extends Phaser.Scene {
     this.tweens.add({ targets: o, t: 1, duration: 1200, ease: EASE.travel, onUpdate: () => this.drawPaths(o.t, which), onComplete: () => this.drawPaths(1, which) });
   }
 
-  revealTruth() {
+  revealTruth(lines = []) {
     const c = this.truth;
+    c.lines.forEach((t, i) => t.setText(lines[i] ?? ""));
     c.setAlpha(1);
     const draw = () => c.maskG.clear().fillStyle(0xffffff).fillRect(OX, OY, MW * c.reveal.w, MH);
     if (reducedMotion.on) { c.reveal.w = 1; return draw(); }
