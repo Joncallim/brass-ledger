@@ -8,11 +8,21 @@ export const EASE = {
 };
 export const T = { press: 100, ui: 240, paper: 480, reveal: 800, scene: 1100 };
 export const STAGGER = { marker: 80, slip: 120, line: 90 };
-export const TYPE_RATE = 40; // characters per second
+export const TYPE_RATE = 40; // characters per second, the default text speed
+
+// Player settings that outlive a page load. Storage can be missing (private windows,
+// blocked site data), so every read and write is guarded and the defaults always work.
+const KEY = "brass-ledger:prefs";
+export const prefs = { typeRate: TYPE_RATE };
+try { Object.assign(prefs, JSON.parse(localStorage.getItem(KEY) ?? "{}")); } catch { /* defaults */ }
+export function savePrefs() {
+  try { localStorage.setItem(KEY, JSON.stringify({ ...prefs, reduced: reducedMotion.on })); } catch { /* not saved */ }
+}
 
 export const reducedMotion = {
   on: typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches,
 };
+try { const saved = JSON.parse(localStorage.getItem("brass-ledger:prefs") ?? "{}"); if (typeof saved.reduced === "boolean") reducedMotion.on = saved.reduced; } catch { /* system setting */ }
 
 // One tween helper so every move obeys reduced motion: travel is dropped, only a
 // 150 ms fade remains, and the end state is always the same.

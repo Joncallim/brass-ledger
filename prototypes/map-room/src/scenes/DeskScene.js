@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { EASE, T, STAGGER, TYPE_RATE, move, reducedMotion, seeded } from "../motion.js";
+import { EASE, T, STAGGER, move, prefs, reducedMotion, savePrefs, seeded } from "../motion.js";
 import {
   CALENDAR, DEFAULT_CAMPAIGN, DEFAULT_RUN, DIFFICULTY, LATTICE, OFFICERS, TITLE, brief, debrief, february, fullName, host,
   incident, latticeQ, makeCampaign, monthOf, newSeed, night, orders, plainName, simulate, split, status, surname,
@@ -9,6 +9,7 @@ import { SCENARIOS, STORY_SCENARIO } from "../scenarios/index.js";
 import { validateScenario } from "../chart/geometry.js";
 import { glossNode, hasTerm, profileHTML } from "../gloss.js";
 import { WORLD } from "../story/world.js";
+import { PROGRESS, ledger, staffRoom } from "../story/rooms.js";
 
 const TRAY = { x: 1640, y: 1000 }; // where slips are dealt from and gathered to
 const portrait = (id) => `./portraits/${OFFICERS[id].portrait}.jpg`;
@@ -151,9 +152,14 @@ export class DeskScene extends Phaser.Scene {
   }
 
   onKey(e) {
+    // The side rooms open over any chapter; while one is open, only its keys work.
+    const room = { s: "staff", S: "staff", l: "ledger", L: "ledger", o: "settings", O: "settings" }[e.key];
+    if (e.key === "Escape" && this.room) return this.closeRoom();
+    if (room && this.chapter !== "title" && this.chapter !== "chart") return this.room?.kind === room ? this.closeRoom() : this.openRoom(room);
+    if (this.room) return;
     if (e.target?.tagName === "BUTTON") return;
     if (e.key === " " || e.key === "Enter") this.skip();
-    if (e.key === "m" || e.key === "M") reducedMotion.on = !reducedMotion.on;
+    if (e.key === "m" || e.key === "M") { reducedMotion.on = !reducedMotion.on; savePrefs(); }
     const n = Number(e.key);
     if (n >= 1 && n <= CHAPTERS.length) this.go(CHAPTERS[n - 1]);
     if (e.key === "n" || e.key === "N") { this.newCampaign(newSeed(), this.campaign.difficulty); this.go("dec-brief"); }
@@ -182,7 +188,7 @@ export class DeskScene extends Phaser.Scene {
     el.innerHTML = html;
     glossNode(el); // before the text nodes are collected, so highlights type out in place
     el.style.minHeight = `${el.offsetHeight}px`; // reserve the finished height, so boxes don't grow as they type
-    if (reducedMotion.on) return;
+    if (reducedMotion.on || !prefs.typeRate) return;
     const nodes = [];
     const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
     while (walk.nextNode()) nodes.push([walk.currentNode, walk.currentNode.nodeValue]);
@@ -193,7 +199,7 @@ export class DeskScene extends Phaser.Scene {
     show(0);
     let i = 0, timer = null;
     const start = this.time.delayedCall(delay, () => {
-      timer = this.time.addEvent({ delay: 1000 / TYPE_RATE, loop: true, callback: () => {
+      timer = this.time.addEvent({ delay: 1000 / prefs.typeRate, loop: true, callback: () => {
         show(++i);
         if (i >= total) { timer.remove(false); this.done(finish); }
       } });
@@ -208,13 +214,15 @@ export class DeskScene extends Phaser.Scene {
   // The top bar: month, campaign, readiness at a glance, and this month's personal orders.
   // Each readiness value belongs to one officer, named in its profile on hover.
   hud(turn, { seals = 2, used = 0, flipTo = null, state = null } = {}) {
+    const tools = state ? `<div class="tools"><button class="tool" data-room="staff" title="Staff room (S)">Staff</button><button class="tool" data-room="ledger" title="Ledger (L)">Ledger</button><button class="tool" data-room="settings" title="Settings (O)">Settings</button></div>` : "";
     const chips = state ? `<div class="chips">${status(this.campaign, state).map((x) => `<span class="chip tone-${x.tone}" data-term="${x.term}" tabindex="0"><i></i><span><small>${x.label}</small>${x.value}</span></span>`).join("")}</div>` : "";
     const track = CALENDAR.map((m, i) => `<i class="${i + 1 < turn ? "done" : i + 1 === turn ? "now" : ""}" title="${m}">${m[0]}</i>`).join("");
     const s = seals ? `<div class="seals"><span>${state ? "Personal orders" : "Your personal orders this month"}</span>${
       Array.from({ length: 2 }, (_, i) => `<span class="seal ${i < used ? "empty" : ""}" data-seal="${i}">BL</span>`).join("")}</div>` : "";
     const h = this.dom(40, 12, `<div class="hud ${state ? "compact" : ""}"><div class="mark"><svg width="26" height="26" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="20" height="20" rx="3" fill="#C99A3E"/><rect x="5" y="6" width="12" height="2" fill="#141210"/><rect x="5" y="10" width="12" height="2" fill="#141210"/><rect x="5" y="14" width="7" height="2" fill="#141210"/></svg>Brass Ledger</div>
-      <div class="month"><b data-month>${monthOf(turn)}</b><span>${this.where(turn)}</span></div><div class="track">${track}</div>${chips}${s}</div>`);
+      <div class="month"><b data-month>${monthOf(turn)}</b><span>${this.where(turn)}</span></div><div class="track">${track}</div>${chips}${tools}${s}</div>`);
     this.hudEl = h.node;
+    for (const b of h.node.querySelectorAll("[data-room]")) b.onclick = () => (this.room?.kind === b.dataset.room ? this.closeRoom() : this.openRoom(b.dataset.room));
     if (flipTo) this.flipMonth(flipTo);
     return h;
   }
@@ -309,6 +317,7 @@ export class DeskScene extends Phaser.Scene {
     this.next = null;
     this.talkObj = null;
     this.chapter = chapter;
+    this.room = null; // cleared with everything else above
     this.hideTip();
     if (!chapter.endsWith("night")) this.mapHotspots();
     this[`ch_${chapter.replace("-", "_")}`](opts);
@@ -470,6 +479,91 @@ export class DeskScene extends Phaser.Scene {
     const agree = split(I.council, I.staffId).agree;
     this.talkObj = this.talk(I.from, `General. ${I.body.split(". ")[0]}. ${agree ? "Your staff agree on what to do; the case is on the sheet." : "Your staff disagree on what to do. Both cases are on the sheet."}`, { x: 1176, w: 650, delay: 900 });
     this.focusLater(sheet.node.querySelector(".opt.sel"), 1400);
+  }
+
+  // ── side rooms ────────────────────────────────────────────────────────────
+  // Staff room, ledger and settings open over the current chapter without resetting it.
+  // They read only what has been committed so far (PROGRESS), never choices in progress.
+  openRoom(kind) {
+    this.closeRoom(false);
+    const progress = PROGRESS[this.chapter] ?? 0;
+    const back = this.dom(0, 0, `<div class="room-back"></div>`);
+    back.node.onclick = () => this.closeRoom();
+    const body = { staff: () => this.staffHTML(progress), ledger: () => this.ledgerHTML(progress), settings: () => this.settingsHTML() }[kind]();
+    const title = { staff: "Staff room", ledger: "The ledger", settings: "Settings" }[kind];
+    const panel = this.dom(180, 96, `<section class="paper room room-${kind}" role="dialog" aria-label="${title}"><header><h2>${title}</h2><button class="b" data-close>Close <kbd>Esc</kbd></button></header>${body}</section>`);
+    this.room = { kind, back, panel, opener: document.activeElement };
+    panel.node.querySelector("[data-close]").onclick = () => this.closeRoom();
+    this.wireRoom(kind, panel.node);
+    move(this, panel, { alpha: [0, 1], y: [116, 96] }, { dur: T.ui });
+    panel.node.querySelector("[data-close]").focus({ preventScroll: true });
+  }
+
+  closeRoom(refocus = true) {
+    if (!this.room) return;
+    const { back, panel, opener } = this.room;
+    this.room = null;
+    this.drop(back); this.drop(panel);
+    if (refocus) opener?.focus?.({ preventScroll: true });
+  }
+
+  staffHTML(progress) {
+    const cards = staffRoom(this.campaign, this.run, progress).map((o) => `<article class="officer-card-full">
+      <div class="ofc-face" style="background-image:url(${portrait(o.id)})"></div>
+      <p class="ofc-name" data-term="officer:${o.id}"><span class="rank">${o.rank}</span> ${o.name}</p><p class="ofc-post">${o.post} · ${o.from}</p>
+      <dl><dt>Job</dt><dd>${o.focus}.</dd><dt>Always pushes for</dt><dd>${o.pushes}.</dd>
+      ${o.watching ? `<dt>Watching</dt><dd><span class="chip tone-${o.watching.tone}"><i></i><span><small>${o.watching.label}</small>${o.watching.value}</span></span></dd>` : ""}</dl>
+      ${o.now ? `<div class="ofc-now"><p class="lab">${o.now.month}: wants</p><p class="wants-big">${o.now.wants}${o.now.staffPlan ? ` <span class="tag">staff plan</span>` : ` <span class="tag differs">against the staff plan</span>`}</p>
+        <p class="case"><b>Protecting</b> ${o.now.because}.</p><p class="case risk"><b>If you overrule</b> ${o.now.risk}</p>
+        <button class="b sm" data-hear="${o.id}">Hear the case</button></div>` : `<div class="ofc-now"><p class="lab">This month</p><p class="case">No order left to argue over.</p></div>`}
+      <p class="ofc-record">${o.record ? `You have taken their advice <b>${o.record.followed} of ${o.record.of}</b> times. Last: ${o.record.last.agreed ? "you agreed on" : "you overruled them on"} ${lower(o.record.last.what)}.` : "No decisions yet on which they gave advice."}</p></article>`).join("");
+    return `<p class="room-intro">Your four staff officers. Each argues from one job, so they will disagree. You never have to remember who cares about what: it is all here, and under their name wherever they speak.</p><div class="staff-grid">${cards}</div>`;
+  }
+
+  ledgerHTML(progress) {
+    const L = ledger(this.campaign, this.run, progress);
+    const chips = (list) => `<div class="chips mini">${list.map((x) => `<span class="chip tone-${x.tone}"><i></i><span><small>${x.label}</small>${x.value}</span></span>`).join("")}</div>`;
+    const entries = L.entries.length ? L.entries.map((e) => `<li><p class="lab">${e.when}</p><p class="entry-title">${e.title}</p>${e.lines.map((l) => `<p class="entry-line">${l}</p>`).join("")}${e.after ? `<div class="after-row"><span class="after">Afterwards</span>${chips(e.after)}</div>` : ""}</li>`).join("")
+      : `<li class="empty"><p class="entry-title">Nothing decided yet.</p><p class="entry-line">Every incident answer and every month’s orders will be written here once you commit them, with where things stood afterwards.</p></li>`;
+    return `<div class="ledger-cols"><ol class="ledger-list">${entries}</ol>
+      <aside><p class="lab">Where things stand</p>${chips(L.now)}<p class="entry-line">${L.cabinet}</p>
+      <p class="lab" style="margin-top:18px">What we know</p>${L.knows.length ? `<ul class="knows">${L.knows.map((k) => `<li>${k}</li>`).join("")}</ul>` : `<p class="entry-line">Only what the December briefing told us. ${WORLD.network}’s answers will be added here.</p>`}
+      <p class="lab" style="margin-top:18px">Campaign</p><p class="entry-line">Code <b class="code">${esc(L.code)}</b> · ${L.difficulty}</p></aside></div>`;
+  }
+
+  settingsHTML() {
+    const speeds = [["Slow", 25], ["Normal", 40], ["Fast", 80], ["Instant", 0]];
+    const c = this.campaign;
+    return `<div class="settings">
+      <div class="set-row"><div><p class="set-name">Text speed</p><p class="set-help">How fast officers’ lines type out. Space or a click always finishes a line at once.</p></div>
+        <div class="seg" role="radiogroup" aria-label="Text speed">${speeds.map(([n, v]) => `<button role="radio" aria-checked="${prefs.typeRate === v}" class="${prefs.typeRate === v ? "sel" : ""}" data-speed="${v}">${n}</button>`).join("")}</div></div>
+      <div class="set-row"><div><p class="set-name">Motion</p><p class="set-help">Reduced motion drops travel and camera moves and keeps short fades. Key M.</p></div>
+        <div class="seg" role="radiogroup" aria-label="Motion"><button role="radio" aria-checked="${!reducedMotion.on}" class="${reducedMotion.on ? "" : "sel"}" data-motion="full">Full</button><button role="radio" aria-checked="${reducedMotion.on}" class="${reducedMotion.on ? "sel" : ""}" data-motion="reduced">Reduced</button></div></div>
+      <div class="set-row"><div><p class="set-name">This campaign</p><p class="set-help">The same code and difficulty always replay the same campaign: the same hidden plan, politics and incidents.</p></div>
+        <div class="set-actions"><span class="code-box">${esc(c.seed)} · ${c.D.name}</span><button class="b" data-copy>Copy code</button><button class="b" data-replay>Replay from December</button></div></div>
+      <div class="set-row"><div><p class="set-name">New campaign</p><p class="set-help">Roll a fresh code. Difficulty sets how far each element can vary.</p></div>
+        <div class="set-actions">${Object.entries(DIFFICULTY).map(([id, d]) => `<button class="b" data-level="${id}">${d.name}</button>`).join("")}</div></div>
+      <div class="set-row keys"><p class="set-name">Keys</p><dl><dt>Space</dt><dd>Finish the line, or continue</dd><dt>S · L · O</dt><dd>Staff room, ledger, settings</dd><dt>1–9</dt><dd>Jump to a chapter</dd><dt>N</dt><dd>New campaign, same difficulty</dd><dt>M</dt><dd>Reduced motion</dd><dt>Esc</dt><dd>Close this panel</dd></dl></div>
+    </div>`;
+  }
+
+  wireRoom(kind, node) {
+    for (const b of node.querySelectorAll("[data-hear]")) b.onclick = () => {
+      const month = (PROGRESS[this.chapter] ?? 0) < 2 ? "dec" : "jan";
+      const line = orders(this.campaign, this.run, month).council[b.dataset.hear].line;
+      this.drop(this.talkObj);
+      this.talkObj = this.talk(b.dataset.hear, line, { delay: 0, w: 1000 });
+    };
+    if (kind !== "settings") return;
+    const reopen = () => { this.openRoom("settings"); };
+    for (const b of node.querySelectorAll("[data-speed]")) b.onclick = () => { prefs.typeRate = Number(b.dataset.speed); savePrefs(); reopen(); };
+    for (const b of node.querySelectorAll("[data-motion]")) b.onclick = () => { reducedMotion.on = b.dataset.motion === "reduced"; savePrefs(); reopen(); };
+    node.querySelector("[data-copy]").onclick = (e) => {
+      const btn = e.currentTarget, text = `${this.campaign.seed} · ${this.campaign.D.name}`;
+      navigator.clipboard?.writeText(text).then(() => { btn.textContent = "Copied"; }, () => { btn.textContent = "Select and copy the code"; });
+    };
+    node.querySelector("[data-replay]").onclick = () => { this.run = DEFAULT_RUN(); this.go("dec-brief"); };
+    for (const b of node.querySelectorAll("[data-level]")) b.onclick = () => { this.newCampaign(newSeed(), b.dataset.level); this.go("dec-brief"); };
   }
 
   ch_dec_signal() { this.signal("dec"); }

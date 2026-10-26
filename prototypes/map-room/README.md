@@ -17,7 +17,7 @@ without that decision.
 cd prototypes/map-room
 npm install
 npm run dev          # http://localhost:5173
-npm test             # chart and campaign checks (Node, no browser)
+npm test             # chart, campaign and room checks (Node, no browser)
 ```
 
 `?seed=KX4P2&difficulty=volatile` plays a given campaign (the title screen also rolls new
@@ -31,6 +31,7 @@ ones). `?chapter=dec-orders` opens a chapter directly. `?renderer=canvas` forces
 | 1–9 | Jump to a chapter: title, December briefing, December orders, December night, January briefing, January orders, January night, February showdown, debrief |
 | 0 | Chart preview for the current scenario |
 | N | Roll a new campaign at the same difficulty and start December |
+| S · L · O | Staff room, ledger, settings (also the buttons in the top bar; Esc closes) |
 | M | Toggle reduced motion (also follows `prefers-reduced-motion`) |
 
 ## Campaigns: almost no two plays alike
@@ -92,6 +93,21 @@ for anyone holding a third view. "Hear the case" plays it in their own voice. Th
 readiness bar along the top shows the four things they argue about (2nd Battalion's days
 on duty, the cabinet count, Beacon's defences, our warning before an attack), each owned
 by one officer.
+
+## Staff room, ledger and settings
+
+Three panels open over any chapter without resetting it (`src/story/rooms.js` works out
+what they show; it adds no rules):
+
+- **Staff room.** Each officer's job, what they always push for, the readout they watch,
+  what they want this month with what they are protecting and what happens if you
+  overrule them, and how often you have taken their advice so far.
+- **Ledger.** Every incident answer and month's orders you have committed, with the four
+  readouts afterwards; where things stand now; what we know; the campaign code. Choices
+  still on the desk are not written in until you send them.
+- **Settings.** Text speed (slow, normal, fast, instant), motion, the campaign code with
+  copy and replay, a new campaign at any difficulty, and the keys. Text speed and motion
+  are remembered in this browser.
 
 ## The sequence
 

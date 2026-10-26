@@ -18,7 +18,7 @@ const pattern = new RegExp(`(?<![\\w-])(${aliases.map((a) => (a.kind === "name" 
 const lookup = (m) => byText.get(m) ?? byText.get(m.toLowerCase());
 
 // Text inside these is left alone: controls, existing marks, and chrome.
-const SKIP = "button, a, h1, .officer, .term, .hud, .stance, .cost, .hint, [data-noterm]";
+const SKIP = "button, a, h1, .officer, .term, .hud, .chip, .stance, .cost, .hint, [data-noterm]";
 
 // Wraps glossary words in every text node under `root`. Names are marked every time;
 // jargon only on its first use in each block, so a paragraph is not a field of underlines.

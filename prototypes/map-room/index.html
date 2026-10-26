@@ -73,6 +73,51 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .level b{font-size:22px}.level span{font-size:16px;line-height:23px;color:var(--room-muted)}
 .level.sel,.level:hover,.level:focus-visible{border-color:var(--brass)}
 .title .help{font-size:16px;line-height:23px;max-width:1000px}
+/* Top-bar tools and the side rooms that open over any chapter. */
+.tools{display:flex;gap:6px}.tool{height:40px;padding:0 12px;border-radius:6px;border:1px solid #3A3530;background:#1E1B18;color:var(--room-ink);font-size:15px!important}
+.tool:hover{border-color:var(--brass)}
+.room-back{width:1920px;height:1080px;background:rgba(12,10,9,.62)}
+.room{width:1560px;max-height:960px;overflow-y:auto;padding:24px 34px 30px;box-sizing:border-box}
+.room header{display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #DCD4C3;padding-bottom:12px}
+.room h2{font-family:'Newsreader',serif;font-weight:400;font-size:40px;line-height:46px;margin:0}
+.room kbd{font:600 12px 'IBM Plex Sans',sans-serif;border:1px solid #B8B0A0;border-radius:4px;padding:1px 5px;margin-left:6px;color:var(--ink2)}
+.room-intro{font-size:18px;line-height:26px;color:var(--ink2);margin-top:12px!important;max-width:980px}
+.staff-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px}
+.officer-card-full{background:#EFE8D8;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.ofc-face{width:100%;aspect-ratio:2/1;border-radius:6px;background-size:cover;background-position:center 18%}
+.ofc-name{font-size:20px;line-height:26px;font-weight:600}.ofc-name .rank{font-weight:400;color:var(--brass-deep)}
+.ofc-post{font-size:14px;color:var(--ink2)}
+.officer-card-full dl{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;margin:0;font-size:15px;line-height:21px}
+.officer-card-full dt{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink2);padding-top:2px}.officer-card-full dd{margin:0}
+.officer-card-full .chip{background:#26221E;border-color:#3A3530;color:var(--room-ink);display:inline-flex}
+.ofc-now{border-top:1px solid #D7CDB8;padding-top:8px;display:flex;flex-direction:column;gap:4px}
+.wants-big{font-size:18px;line-height:24px;font-weight:600}
+.tag{font-size:12px;font-weight:600;padding:1px 7px;border-radius:4px;background:var(--green-tint);color:var(--green-ink);white-space:nowrap}.tag.differs{background:#EADBB8;color:var(--brass-deep)}
+.ofc-now .case{font-size:15px;line-height:21px}.ofc-now .case b{display:block;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--brass-deep)}.ofc-now .case.risk b{color:var(--red-ink)}
+.ofc-now .b.sm{align-self:flex-start;margin-top:4px}
+.ofc-record{font-size:15px;line-height:21px;border-top:1px solid #D7CDB8;padding-top:8px}
+.ofc-role{font-size:14px;line-height:20px;color:var(--ink2);margin-top:auto!important}
+.ledger-cols{display:grid;grid-template-columns:1fr 440px;gap:30px;margin-top:16px}
+.ledger-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ledger-list li{padding:9px 0;border-top:1px solid #DCD4C3}.ledger-list li:first-child{border-top:0}
+.entry-title{font-family:'Newsreader',serif;font-size:24px;line-height:30px}
+.entry-line{font-size:17px;line-height:25px}
+.after-row{display:flex;align-items:center;gap:10px;margin-top:6px}.after-row .chips.mini{margin:0}
+.after{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink2)}
+.chips.mini{flex-wrap:wrap;margin:6px 0 0;gap:6px}.chips.mini .chip{background:#26221E;color:var(--room-ink)}
+.ledger-cols aside{background:#EFE8D8;border-radius:8px;padding:16px 18px;align-self:start}
+.knows{margin:6px 0 0;padding-left:18px;font-size:16px;line-height:23px}
+.code{letter-spacing:.08em;color:var(--brass-deep)}
+.settings{display:flex;flex-direction:column;margin-top:8px}
+.set-row{display:grid;grid-template-columns:1fr auto;gap:30px;align-items:center;padding:18px 0;border-top:1px solid #DCD4C3}.set-row:first-child{border-top:0}
+.set-name{font-size:20px;font-weight:600}.set-help{font-size:16px;line-height:23px;color:var(--ink2);max-width:640px}
+.seg{display:flex;border:1.5px solid #B8B0A0;border-radius:6px;overflow:hidden}
+.seg button{height:44px;padding:0 18px;border:0;background:var(--sheet);color:var(--ink);font-size:16px}.seg button+button{border-left:1.5px solid #B8B0A0}
+.seg button.sel{background:var(--ink);color:var(--sheet)}
+.set-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.code-box{font-weight:600;letter-spacing:.06em;padding:8px 12px;border-radius:6px;background:#EFE8D8;user-select:all}
+.set-row.keys{grid-template-columns:200px 1fr;align-items:start}
+.set-row.keys dl{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;margin:0;font-size:16px}.set-row.keys dt{font-weight:600}.set-row.keys dd{margin:0}
 /* An incident signal: one sheet with the situation, the hard call and the answers. */
 .sheet.signal{width:760px;padding:26px 34px 22px}.sheet.signal h2{font-size:34px;line-height:40px}
 .sheet.tall{max-height:950px;overflow-y:auto;padding:26px 34px 24px}
