@@ -103,18 +103,41 @@ The copy rules live in `src/fixture.js` and are applied to every line:
    hard line around it: "Anyone who tells you what Ravellan means by it is guessing. I
    don't guess." There is no "What we don't know" heading. Briefings use *Bottom line*,
    *Assessment* and *Watch for*.
-4. **Say it straight.** No shorthand and no figures of speech: "the press", not "the
-   papers"; "Marenna's approval", not "Marenna's yes"; "a fresh look inside Sarn", not
-   "eyes inside Sarn". Officers may use one common idiom in their own voice ("testing
-   your nerve"), never in a label, cost or option.
-5. **Plain words.** The median line reads at about grade 3 (Flesch-Kincaid), down from
-   about grade 8 in the current Figma copy.
+4. **Name who.** Never a bare "they" when it could mean two parties: "the Marennan
+   cabinet votes", "Ravellan's ships", "Marenna's defence minister".
+5. **Every statement carries its so-what.** Say what a fact means for us: "Lattice was not
+   listening to Sarn this month, so our warning before an attack is less reliable", not
+   just "our count is getting old".
+6. **Report, don't mind-read.** Officers say what was seen and what it lets Ravellan do.
+   They never guess at the other side's feelings ("they think Beacon is weak", "they are
+   testing your nerve").
+7. **Clear beats short.** Use a full sentence where a clipped phrase would need decoding.
+   No shorthand or figures of speech: "the press", not "the papers"; "Marenna's approval",
+   not "Marenna's yes". Terms like "landing" are explained where they first appear.
+
+## Names and terms you can ask about
+
+Every proper noun (places, our units and systems) is set in teal, and every piece of
+jargon is underlined with dots on first use. Officer names stay brass. Hovering or
+focusing any of them opens a short profile: who or what it is, and why it matters here.
+Profiles live in `GLOSSARY` and `OFFICERS` in `src/fixture.js`; `src/gloss.js` finds the
+words in any text that reaches the screen, including text that types out. The chart's
+own labels (Sarn, Lattice, Marenna, Ravellan, Beacon Station, the title) carry a `term`
+in the scenario and open the same profiles.
 
 ## Story content
 
 - **Places and people.** Marenna is the host country, its cabinet votes on 15 January, and
-  Sarn is Ravellan's main harbour. Lattice is our radio-intercept network: twelve
-  listening posts along the Marennan coast, drawn on the chart.
+  Sarn is Ravellan's main naval harbour, about 30 nautical miles from Beacon. Lattice is
+  our radio-intercept network: twelve listening posts along the Marennan coast, drawn on
+  the chart.
+- **The two readings.** Ravellan's landing craft could mean an amphibious landing on the
+  Beacon headland, or a threat meant to make Marenna ask us to leave. Every briefing keeps
+  both in view until Halden sees troops boarding on the quay.
+- **Warning before an attack.** While Lattice listens to Sarn, it hears the order to put
+  troops aboard about two days before a sailing, which is time to bring 2nd Battalion to
+  Beacon. Pointing Lattice at another question makes that warning less reliable, and the
+  Lattice slip says so on each choice.
 - **Ask your staff.** Every order slip lists the officers with a view. Each shows whether they
   back what is on the slip or what they would do instead; clicking one plays their case.
   The choices view shows who backs each option.
@@ -133,8 +156,11 @@ The copy rules live in `src/fixture.js` and are applied to every line:
 - Ranks and regional backgrounds for the six staff officers.
 - "The host government" for the partner, "hotline" for the rapid consultation channel,
   "personal order" for an intervention.
-- Debrief truth lines ("your show of force made them test, not attack") are illustrative,
-  not sim output.
+- Debrief truth lines (Ravellan cancelling its landing order after the January frigate,
+  the February probe) are illustrative, not sim output.
+- New figures: Sarn about 30 nautical miles from Beacon; Kestrel Strait about 40 wide;
+  two days' warning from the troop-loading order; 2nd Battalion about 600 soldiers; the
+  air-defence battery about 120; a week for Marenna's answer without a hotline.
 
 ## Credits
 

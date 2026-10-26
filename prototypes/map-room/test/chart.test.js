@@ -41,3 +41,11 @@ test("validator catches a misplaced place", () => {
   const broken = { ...sc, places: { ...sc.places, harbour: { x: 1700, y: 500, on: "water" } } };
   assert.match(validateScenario(broken).join("\n"), /harbour" should be in water/);
 });
+
+test("every chart term links to a story profile", async () => {
+  const { GLOSSARY } = await import("../src/fixture.js");
+  const sc = SCENARIOS[STORY_SCENARIO];
+  const terms = [...(sc.labels ?? []), ...sc.land, ...sc.features, sc.station].map((x) => x?.term).filter(Boolean);
+  assert.ok(terms.length >= 5);
+  for (const t of terms) assert.ok(GLOSSARY[t], `no profile for "${t}"`);
+});

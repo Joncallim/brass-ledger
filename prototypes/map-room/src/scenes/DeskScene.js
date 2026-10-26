@@ -7,6 +7,7 @@ import {
 import { OX, OY } from "./TableScene.js";
 import { SCENARIOS, STORY_SCENARIO } from "../scenarios/index.js";
 import { validateScenario } from "../chart/geometry.js";
+import { glossNode, hasTerm, profileHTML } from "../gloss.js";
 
 const TRAY = { x: 1640, y: 1000 }; // where slips are dealt from and gathered to
 const portrait = (id) => `./portraits/${OFFICERS[id].portrait}.jpg`;
@@ -30,11 +31,71 @@ export class DeskScene extends Phaser.Scene {
     this.skipFns = [];
     this.run = DEFAULT_RUN();
     this.input.keyboard.on("keydown", (e) => this.onKey(e));
-    window.mapRoom = { go: (c, opts) => this.go(c, opts), chapters: CHAPTERS, reduced: reducedMotion };
+    this.setupProfiles();
+    // Test hooks: jump to a chapter, or set the campaign so far (for layout checks of every branch).
+    window.mapRoom = { go: (c, opts) => this.go(c, opts), chapters: CHAPTERS, reduced: reducedMotion, setRun: (r) => (this.run = r) };
     // Another sea opens on its chart preview: the story is written for Kestrel Strait.
     const start = new URLSearchParams(location.search).get("chapter");
     const storySea = this.table.sc.id === STORY_SCENARIO;
     this.go(CHAPTERS.includes(start) || start === "chart" ? start : storySea ? "title" : "chart");
+  }
+
+  // ── names and terms ──────────────────────────────────────────────────────
+  // Every glossary word that reaches the DOM is highlighted (a MutationObserver catches
+  // slips that re-render themselves), and one shared card shows its profile on hover or focus.
+  setupProfiles() {
+    const root = this.game.domContainer;
+    const el = document.createElement("div");
+    el.className = "ui tip";
+    el.setAttribute("role", "tooltip");
+    el.id = "profile-tip";
+    this.tip = this.add.dom(0, 0, el).setOrigin(0, 0).setVisible(false);
+    const show = (t) => {
+      const key = t.dataset.term;
+      if (!hasTerm(key)) return;
+      el.innerHTML = profileHTML(key);
+      root.appendChild(el); // always on top of whatever was added since
+      el.style.display = "block"; // measure now; Phaser only applies visibility on its next frame
+      this.tip.setVisible(true);
+      const stage = this.game.canvas.getBoundingClientRect(), r = t.getBoundingClientRect(), k = 1920 / stage.width;
+      const w = el.offsetWidth, h = el.offsetHeight;
+      let y = (r.bottom - stage.top) * k + 10;
+      if (y + h > 1064) y = (r.top - stage.top) * k - h - 10;
+      const x = Math.min(Math.max((r.left - stage.left) * k, 16), 1920 - w - 16);
+      this.tip.setPosition(x, Math.max(16, y));
+      t.setAttribute("aria-describedby", "profile-tip");
+    };
+    this.hideTip = () => this.tip.setVisible(false);
+    const termOf = (e) => e.target.closest?.("[data-term]");
+    root.addEventListener("mouseover", (e) => { const t = termOf(e); if (t) show(t); });
+    root.addEventListener("mouseout", (e) => { const t = termOf(e); if (t && !t.contains(e.relatedTarget)) this.hideTip(); });
+    root.addEventListener("focusin", (e) => { const t = termOf(e); if (t) show(t); else this.hideTip(); });
+    root.addEventListener("focusout", (e) => { if (termOf(e)) this.hideTip(); });
+    new MutationObserver((records) => {
+      for (const r of records) for (const n of r.addedNodes) if (n.nodeType === 1 && n !== el && !el.contains(n)) glossNode(n);
+    }).observe(root, { childList: true, subtree: true });
+  }
+
+  // Invisible hover zones over the chart's own labels, so "Sarn" on the map explains itself
+  // too. Only while the camera is at rest; the night pan would leave them behind.
+  mapHotspots() {
+    const sc = this.table.sc, ctx = (this.measure ??= document.createElement("canvas").getContext("2d"));
+    const box = (term, [x, y], text, font, h, width) => {
+      if (!hasTerm(term)) return;
+      ctx.font = font;
+      const w = width ?? Math.max(...String(text).split("\n").map((l) => ctx.measureText(l).width));
+      const hot = this.dom(OX + x - 4, OY + y - 4, `<span class="hot" data-term="${term}" aria-hidden="true" style="width:${w + 8}px;height:${h + 8}px"></span>`);
+      this.hot.push(hot);
+    };
+    this.hot = [];
+    for (const l of sc.labels ?? []) if (l.term) box(l.term, l.at, l.text, l.style === "place" ? "30px Newsreader" : "20px IBM Plex Sans", l.style === "place" ? 34 : 24);
+    for (const l of sc.land) if (l.term && l.name) box(l.term, l.nameAt, l.name, "30px Newsreader", 34);
+    for (const f of sc.features) {
+      if (f.term && f.label?.text) box(f.term, f.label.at, f.label.text, "600 14px IBM Plex Sans", 18);
+      if (f.term && f.type === "cartouche") box(f.term, [f.at[0] + 4, f.at[1] + 4], f.title, "", 96, (f.width ?? 330) - 8);
+    }
+    const st = sc.station, p = st && sc.places[st.place];
+    if (st?.term && p) box(st.term, [st.side === "right" ? p.x + 40 : p.x - 330, p.y - 34], st.name, "600 20px IBM Plex Sans", 50);
   }
 
   // ── plumbing ──────────────────────────────────────────────────────────────
@@ -97,6 +158,8 @@ export class DeskScene extends Phaser.Scene {
   // the styling is there from the first letter.
   type(el, html, delay = 0) {
     el.innerHTML = html;
+    glossNode(el); // before the text nodes are collected, so highlights type out in place
+    el.style.minHeight = `${el.offsetHeight}px`; // reserve the finished height, so boxes don't grow as they type
     if (reducedMotion.on) return;
     const nodes = [];
     const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -146,11 +209,12 @@ export class DeskScene extends Phaser.Scene {
     const o = OFFICERS[id];
     const t = this.dom(x, y, `<div class="talk" style="width:${w}px" role="group" aria-label="${plainName(id)}">
       <div class="face" style="background-image:url(${portrait(id)})"></div>
-      <div><div class="who"><span class="rank">${o.rank}</span> ${o.name}<span class="post">${o.post}</span></div>
+      <div><div class="who" data-term="officer:${id}"><span class="rank">${o.rank}</span> ${o.name}<span class="post">${o.post}</span></div>
       <p class="say" aria-live="polite"></p></div><span class="hint">Click or press Space</span></div>`);
     t.node.addEventListener("click", () => this.skip());
     move(this, t, { alpha: [0, 1], x: [x - 32, x] }, { dur: 420, delay });
     this.type(t.node.querySelector(".say"), line, delay + 200);
+    t.y = Math.min(y, 1060 - t.node.offsetHeight); // long lines rise from the bottom edge
     return t;
   }
 
@@ -216,6 +280,8 @@ export class DeskScene extends Phaser.Scene {
     this.next = null;
     this.talkObj = null;
     this.chapter = chapter;
+    this.hideTip();
+    if (!chapter.endsWith("night")) this.mapHotspots();
     this[`ch_${chapter.replace("-", "_")}`](opts);
   }
 
@@ -266,10 +332,10 @@ export class DeskScene extends Phaser.Scene {
     this.hud(turn);
     this.table.cameras.main.fadeIn(reducedMotion.on ? 0 : 600, 20, 18, 16);
     const secs = data.sections.map(([l, b], i) => `${i === 1 ? this.warnBlock(data.warning) : ""}<div class="sec"><p class="lab">${l}</p><p class="body">${b}</p></div>`).join("");
-    const sheet = this.dom(1236, 128, `<article class="paper sheet" aria-label="${data.title}"><h2>${data.title}</h2><p class="from">${monthOf(turn)} · ${data.from}</p>${secs}
+    const sheet = this.dom(1150, 108, `<article class="paper sheet tall" style="width:680px" aria-label="${data.title}"><h2>${data.title}</h2><p class="from">${monthOf(turn)} · ${data.from}</p>${secs}
       <div class="btns" style="margin-top:16px"><button class="b on" data-go>${nextLabel}</button></div></article>`);
-    move(this, sheet, { x: [1296, 1236], alpha: [0, 1], angle: [4, 1.2] }, { dur: 600, delay: 1000 });
-    this.talk("halden", line, { delay: 700 });
+    move(this, sheet, { x: [1210, 1150], alpha: [0, 1], angle: [4, 0.8] }, { dur: 600, delay: 1000 });
+    this.talk("halden", line, { delay: 700, w: 1030 });
     const go = sheet.node.querySelector("[data-go]");
     go.onclick = () => this.go(nextChapter);
     this.focusLater(go, 1700);
@@ -379,9 +445,10 @@ export class DeskScene extends Phaser.Scene {
     let open = false;
     const render = () => {
       const cur = latticeQ(this.run.dec.lattice);
-      const list = open ? `<div role="radiogroup" style="margin-top:6px">${L.questions.map((x) => `<button class="opt ${x.id === cur.id ? "sel" : ""}" data-q="${x.id}" role="radio" aria-checked="${x.id === cur.id}"><span class="r"></span><span><b>${x.q}</b>${x.staff ? `<span class="s">${surname("halden")}’s choice</span>` : ""}</span></button>`).join("")}</div>` : "";
+      const list = open ? `<div role="radiogroup" style="margin-top:6px">${L.questions.map((x) => `<button class="opt ${x.id === cur.id ? "sel" : ""}" data-q="${x.id}" role="radio" aria-checked="${x.id === cur.id}"><span class="r"></span><span><b>${x.q}</b><span class="s">${x.means}</span>${x.staff ? `<span class="s">${surname("halden")}’s choice</span>` : ""}</span></button>`).join("")}</div>` : "";
       slip.node.innerHTML = `<article class="paper slip" aria-label="${L.head}"><span class="pin"></span><h3>${L.head}${cur.staff ? " · staff plan" : " · your question"}</h3><p class="will" style="font-size:22px;line-height:29px">${cur.q}</p>
-        <div class="row"><b>What</b><span>${L.what}</span></div><div class="row"><b>Who</b><span>${L.ask}</span></div>
+        <div class="row"><b>So</b><span>${cur.means}</span></div>
+        ${open ? "" : `<div class="row"><b>What</b><span>${L.what}</span></div><div class="row"><b>Who</b><span>${L.ask}</span></div>`}
         ${list}<div class="btns">${open ? '<button class="b on" data-close>Done</button>' : '<button class="b" data-ask>Ask something else</button>'}</div></article>`;
       slip.node.querySelector("[data-ask]")?.addEventListener("click", () => {
         // The slip opens upward so the send panel never covers the choices.
@@ -400,6 +467,7 @@ export class DeskScene extends Phaser.Scene {
       });
     };
     render();
+    y = Math.min(y, 836 - slip.node.offsetHeight); // keep its buttons clear of the send panel
     this.deal(slip, x, y, i, "dec");
     return { slip };
   }
@@ -551,7 +619,7 @@ export class DeskScene extends Phaser.Scene {
     this.table.showWarning(warning, { pulse: false });
     this.table.setNight(true);
     const beats = N.beats.map((b, i) => `<div class="beat" data-beat="${i}" style="opacity:0"><b class="n">${i + 1}</b><div><p class="lab" style="color:var(--ink2)">${b.cause}</p><p class="body"></p></div></div>`).join("");
-    const sheet = this.dom(70, 128, `<article class="paper sheet" style="width:620px" aria-label="${N.title}"><h2>${N.title}</h2><p class="from">${N.sub}</p>${beats}
+    const sheet = this.dom(64, 108, `<article class="paper sheet tall" style="width:700px" aria-label="${N.title}"><h2>${N.title}</h2><p class="from">${N.sub}</p>${beats}
       <div data-end style="opacity:0">${this.warnBlock(N.still, !warning)}<div class="sec" style="border:0"><p class="lab">Coming up</p><p class="body">${N.next}</p></div>
       <button class="b on" style="height:56px;font-size:20px;margin-top:8px" data-go>${N.go}</button></div></article>`);
     move(this, sheet, { alpha: [0, 1], x: [30, 70] }, { dur: 600, delay: 400 });
@@ -576,6 +644,7 @@ export class DeskScene extends Phaser.Scene {
       this.table.setNight(false);
       sheet.node.querySelector("[data-end]").style.opacity = 1;
       go.focus({ preventScroll: true });
+      this.later(950, () => this.mapHotspots());
     };
     this.later(6400, end);
     const skipNight = () => {
@@ -611,10 +680,11 @@ export class DeskScene extends Phaser.Scene {
     this.table.setBoats("edge");
     this.table.setRing(this.ringAfter("jan"));
     this.later(500, () => this.table.revealPaths(F.routes.map((r) => r.id)));
-    // The right-hand column stacks by measured height, so longer copy never overlaps a button.
-    const w = this.dom(1250, 104, `<div class="paper sheet" style="width:600px;padding:18px 30px">${this.warnBlock(F.warning, true)}</div>`);
-    move(this, w, { alpha: [0, 1], y: [80, 104] }, { dur: T.paper, delay: 300 });
-    let first, y = 104 + w.node.offsetHeight + 14;
+    // The warning sits over the open top-left of the chart; the right-hand column stacks the
+    // routes by measured height, so longer copy never overlaps a button.
+    const w = this.dom(64, 108, `<div class="paper sheet" style="width:560px;padding:18px 26px">${this.warnBlock(F.warning, true)}</div>`);
+    move(this, w, { alpha: [0, 1], y: [84, 108] }, { dur: T.paper, delay: 300 });
+    let first, y = 108;
     F.routes.forEach((r, i) => {
       const c = this.dom(1250, y, `<article class="paper sheet" style="width:600px;padding:26px 30px"><h2 style="font-size:32px">${r.name}</h2><p class="body" style="margin-top:8px">${r.does}</p>
         <div class="row" style="grid-template-columns:100px 1fr"><b>It costs</b><span>${r.costs}</span></div><div class="row" style="grid-template-columns:100px 1fr"><b>It needs</b><span>${r.needs}</span></div>
