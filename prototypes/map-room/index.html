@@ -118,6 +118,21 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .code-box{font-weight:600;letter-spacing:.06em;padding:8px 12px;border-radius:6px;background:#EFE8D8;user-select:all}
 .set-row.keys{grid-template-columns:200px 1fr;align-items:start}
 .set-row.keys dl{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;margin:0;font-size:16px}.set-row.keys dt{font-weight:600}.set-row.keys dd{margin:0}
+/* Playtest round: orientation, history months, commit note, before/after, scorecard. */
+.title .orient{display:grid;grid-template-columns:170px 1fr;gap:8px 20px;max-width:980px;margin:22px 0 0;font-size:19px;line-height:27px}
+.title .orient dt{font-weight:600;color:var(--brass)}.title .orient dd{margin:0;color:var(--room-ink)}
+.track i.before{border-style:dotted;opacity:.55}
+details.more{margin-top:6px}details.more summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--ink2)}details.more summary:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+details.more[open] summary{margin-bottom:4px}
+.btns.commit{align-items:center}.commit-note{font-size:15px;line-height:21px;color:var(--ink2);max-width:360px}
+.delta{margin-top:6px;padding:10px 0 8px;border-top:1px solid #DCD4C3}.delta ul{list-style:none;margin:4px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:16px;line-height:22px}
+.delta li b{font-weight:600}.delta li.same{color:var(--ink2)}.delta li.tone-bad{color:var(--red-ink)}.delta li.tone-warn{color:var(--brass-deep)}
+.verdict{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.grade{font-size:16px;font-weight:600;padding:4px 12px;border-radius:999px}.grade-success{background:var(--green-tint);color:var(--green-ink)}.grade-costly{background:#EADBB8;color:var(--brass-deep)}.grade-failure{background:var(--red-tint);color:var(--red-ink)}
+.score{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.score li{display:flex;gap:10px;align-items:center;background:#EFE8D8;border-radius:6px;padding:5px 12px;font-size:15px;line-height:20px}
+.score li i{font-style:normal;font-weight:700;font-size:18px}.score li.ok i{color:var(--green-ink)}.score li.bad i{color:var(--red-ink)}
+.score li b{display:block;font-size:13px;letter-spacing:.03em;color:var(--ink2)}
 /* An incident signal: one sheet with the situation, the hard call and the answers. */
 .sheet.signal{width:760px;padding:26px 34px 22px}.sheet.signal h2{font-size:34px;line-height:40px}
 .sheet.tall{max-height:950px;overflow-y:auto;padding:26px 34px 24px}
@@ -158,7 +173,7 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .b.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .go{white-space:nowrap;height:64px;padding:0 34px;border-radius:6px;border:0;background:var(--brass);color:var(--brass-ink);font-weight:600;font-size:22px}
 .go:disabled{background:#4A4640;color:#E2DCCF;cursor:not-allowed}
-.opt{display:grid;grid-template-columns:24px 1fr;gap:12px;padding:12px 14px;border:1.5px solid #D4CCBC;border-radius:6px;margin-top:8px;background:none;text-align:left;width:100%;color:var(--ink)}
+.opt{display:grid;grid-template-columns:24px 1fr;gap:12px;padding:9px 14px;border:1.5px solid #D4CCBC;border-radius:6px;margin-top:8px;background:none;text-align:left;width:100%;color:var(--ink)}
 .opt.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
 .opt .r{width:20px;height:20px;border-radius:50%;border:2px solid #9C9484;margin-top:3px}.opt.sel .r{border:6px solid var(--ink)}
 .opt b{font-size:19px;font-weight:600;display:block}.opt span.s{font-size:16px;line-height:22px;color:var(--ink2);display:block}
@@ -182,7 +197,7 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .av.sm{width:24px;height:24px;display:inline-block;vertical-align:middle;margin-left:4px;border:2px solid var(--sheet)}
 .opt-foot{display:flex;align-items:center;gap:10px;margin-top:5px}.opt-foot .cost{margin-top:0}
 .backed{font-size:13px;color:var(--ink2);display:flex;align-items:center}
-.dt{display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:16px;padding:11px 0;border-top:1px solid #DCD4C3;font-size:18px;line-height:25px}
+.dt{display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:16px;padding:8px 0;border-top:1px solid #DCD4C3;font-size:17px;line-height:24px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .help{font-size:14px;color:#8F887B}
 </style>

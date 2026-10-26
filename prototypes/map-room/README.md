@@ -34,6 +34,30 @@ ones). `?chapter=dec-orders` opens a chapter directly. `?renderer=canvas` forces
 | S · L · O | Staff room, ledger, settings (also the buttons in the top bar; Esc closes) |
 | M | Toggle reduced motion (also follows `prefers-reduced-motion`) |
 
+## The scenario: three months, with history
+
+You take command on 1 December, three months into the crisis, and play December,
+January and February. September to November happened under your predecessor: the
+title screen says so, the month track shows them dotted, and the debrief credits those
+orders to your predecessor, not to you.
+
+**What counts as winning** (shown on the title screen and scored in the debrief):
+keep Beacon in our hands, keep Marenna on our side (6 of 11 ministers), and bring
+2nd Battalion through fit (120 days without rest or fewer). All three is a **success**;
+holding Beacon at the cost of one of the others is a **costly success**; losing Beacon is
+a **failure**. `outcome()` in `src/story/play.js` computes each fact once, and the
+debrief's words are chosen from those facts, so the ending can't contradict the game.
+
+**Stakes, said plainly in the game:**
+
+- 2nd Battalion is *fit* up to 100 days without rest, *tired* to 120, *unfit* beyond, when
+  a third of it is sick or injured. The readout at the top shows the word, not just the number.
+- Lattice listening to Sarn gives about two days' warning of troops boarding. A known
+  sailing date only gives warning while our patrol boats can see the ships leave; trading
+  the boats to Marenna takes that away.
+- Standing with Marenna's navy stops a landing at sea only with warning or against a
+  force without a second wave; meeting a bluff with two navies costs Marenna's patience.
+
 ## Campaigns: almost no two plays alike
 
 Every campaign is rolled from a code (`src/story/campaign.js`). The same code and
@@ -111,7 +135,11 @@ what they show; it adds no rules):
 
 ## The sequence
 
-Each month runs **briefing → signal (if an incident lands) → orders → night**. Everything
+Each month runs **briefing → signal (if an incident lands) → orders → night**. Briefings
+lead with what changed, how sure we are, and what it means for your orders. An incident
+answer goes out when you press "Confirm answer", and the orders panel lists it under
+"Already sent". Night reports end with what the month changed, readout by readout. Once
+the ships sail, the warning box gives way to what we know about them. Everything
 after December follows from what you ordered (`run` in `DeskScene`):
 
 - The December night report narrates your Beacon order, Lattice's answer, the incident's
@@ -242,6 +270,13 @@ in the scenario and open the same profiles.
 - Ranks and regional backgrounds for the six staff officers.
 - "The host government" for the partner, "hotline" for the rapid consultation channel,
   "personal order" for an intervention.
+- **Balance.** Trading the patrol boats and standing with Marenna's navy is the strongest
+  line: full success in roughly 70–85% of Shifting and Volatile campaigns (300 seeds each),
+  against 0% for following the staff plan every month (which never rests 2nd Battalion).
+  Worth tuning before the human fun gate.
+- The scoring thresholds (6 of 11 ministers, 120 days), the patrol boats' role in warning,
+  interception needing warning against a second wave, and the 15-point cost of meeting a
+  bluff with two navies.
 - **All campaign rules** in `src/story/play.js` and `campaign.js` are prototype rules,
   not sim rules: how each order moves 2nd Battalion's days, Beacon's defences and the
   cabinet count; the penalties for daylight moves by minister type; the vote threshold

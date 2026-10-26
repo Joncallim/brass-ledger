@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { EASE, T, STAGGER, move, prefs, reducedMotion, savePrefs, seeded } from "../motion.js";
 import {
-  CALENDAR, DEFAULT_CAMPAIGN, DEFAULT_RUN, DIFFICULTY, LATTICE, OFFICERS, TITLE, brief, debrief, february, fullName, host,
+  CALENDAR, DEFAULT_CAMPAIGN, DEFAULT_RUN, DIFFICULTY, LATTICE, OFFICERS, ORIENT, TITLE, brief, debrief, february, fullName, host,
   incident, latticeQ, makeCampaign, monthOf, newSeed, night, orders, plainName, simulate, split, status, surname,
 } from "../fixture.js";
 import { OX, OY } from "./TableScene.js";
@@ -216,7 +216,7 @@ export class DeskScene extends Phaser.Scene {
   hud(turn, { seals = 2, used = 0, flipTo = null, state = null } = {}) {
     const tools = state ? `<div class="tools"><button class="tool" data-room="staff" title="Staff room (S)">Staff</button><button class="tool" data-room="ledger" title="Ledger (L)">Ledger</button><button class="tool" data-room="settings" title="Settings (O)">Settings</button></div>` : "";
     const chips = state ? `<div class="chips">${status(this.campaign, state).map((x) => `<span class="chip tone-${x.tone}" data-term="${x.term}" tabindex="0"><i></i><span><small>${x.label}</small>${x.value}</span></span>`).join("")}</div>` : "";
-    const track = CALENDAR.map((m, i) => `<i class="${i + 1 < turn ? "done" : i + 1 === turn ? "now" : ""}" title="${m}">${m[0]}</i>`).join("");
+    const track = CALENDAR.map((m, i) => `<i class="${i < 3 ? "before" : i + 1 < turn ? "done" : i + 1 === turn ? "now" : ""}" title="${i < 3 ? `${m}: before you took command` : m}">${m[0]}</i>`).join("");
     const s = seals ? `<div class="seals"><span>${state ? "Personal orders" : "Your personal orders this month"}</span>${
       Array.from({ length: 2 }, (_, i) => `<span class="seal ${i < used ? "empty" : ""}" data-seal="${i}">BL</span>`).join("")}</div>` : "";
     const h = this.dom(40, 12, `<div class="hud ${state ? "compact" : ""}"><div class="mark"><svg width="26" height="26" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="20" height="20" rx="3" fill="#C99A3E"/><rect x="5" y="6" width="12" height="2" fill="#141210"/><rect x="5" y="10" width="12" height="2" fill="#141210"/><rect x="5" y="14" width="7" height="2" fill="#141210"/></svg>Brass Ledger</div>
@@ -228,7 +228,7 @@ export class DeskScene extends Phaser.Scene {
   }
 
   where(turn) {
-    return `${this.table.sc.name} · month ${turn} of 6 · ${this.campaign.D.name}`;
+    return `${this.table.sc.name} · month ${Math.max(1, turn - 3)} of 3 · ${this.campaign.D.name}`;
   }
 
   flipMonth(turn) {
@@ -304,10 +304,17 @@ export class DeskScene extends Phaser.Scene {
   }
 
   dispatch(changing, staff, { label = "Send orders", disabled = false, why = "" } = {}) {
-    const d = this.dom(1222, 1080, `<div class="dispatch"><dl><dt>You’re changing</dt><dd data-changing>${changing}</dd><dt>Staff will</dt><dd data-staff>${staff}</dd></dl>
+    const d = this.dom(1222, 1080, `<div class="dispatch"><dl data-rows><dt>You’re changing</dt><dd data-changing>${changing}</dd><dt>Staff will</dt><dd data-staff>${staff}</dd></dl>
       <div style="display:flex;align-items:center;gap:16px"><button class="go" ${disabled ? "disabled" : ""}>${label}</button><p class="why" data-why>${why}</p></div></div>`);
-    move(this, d, { y: [1080, 1036 - d.node.offsetHeight], alpha: [0, 1] }, { dur: 420, delay: 1000 });
+    d.setAlpha(0);
     return d;
+  }
+
+  // The send panel sits on the bottom edge; whenever its rows change height, it stays there.
+  settleDispatch(arrive = false) {
+    const d = this.disp, y = 1036 - d.node.offsetHeight;
+    if (arrive) move(this, d, { y: [1080, y], alpha: [0, 1] }, { dur: 420, delay: 1000 });
+    else if (!this.tweens.isTweening(d)) d.y = y;
   }
 
   // ── chapters ──────────────────────────────────────────────────────────────
@@ -357,17 +364,19 @@ export class DeskScene extends Phaser.Scene {
     this.table.showWarning(true, { pulse: false });
     this.dom(OX, OY, `<div style="width:1500px;height:944px;background:linear-gradient(90deg,rgba(20,18,16,.95) 58%,rgba(20,18,16,0))"></div>`);
     const c = this.campaign;
-    const t = this.dom(150, 250, `<div class="title"><h1>Brass Ledger</h1><p>${TITLE.line}</p>
+    const t = this.dom(150, 150, `<div class="title"><h1>Brass Ledger</h1><p>${TITLE.line}</p>
+      <dl class="orient" data-orient>${ORIENT.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
       <p class="campaign-code">Campaign <b>${esc(c.seed)}</b> · ${c.D.name}</p>
       <div data-start style="display:flex;gap:16px;margin-top:32px"><button class="go" data-go>Continue in December</button><button class="ghost" data-new>New campaign</button></div>
       <div data-setup hidden><p class="setup-q">How much should change from one campaign to the next?</p><div class="levels">${Object.entries(DIFFICULTY).map(([id, d]) => `<button class="level ${id === c.difficulty ? "sel" : ""}" data-level="${id}"><b>${d.name}</b><span>${d.line}</span></button>`).join("")}</div>
         <p class="help" style="margin-top:14px">Each new campaign rolls ${this.campaign.D && "a hidden enemy plan, the ally’s politics, your staff’s starting state and the month’s incidents"} from a fresh code. Replaying a code replays the same campaign.</p></div>
       <p style="font-size:18px;color:var(--room-muted);margin-top:20px" data-saved>${TITLE.saved}</p></div>`);
-    move(this, t, { alpha: [0, 1], y: [274, 250] }, { dur: T.reveal });
+    move(this, t, { alpha: [0, 1], y: [174, 150] }, { dur: T.reveal });
     const go = t.node.querySelector("[data-go]");
     go.onclick = () => { this.run = DEFAULT_RUN(); this.go("dec-brief"); };
     t.node.querySelector("[data-new]").onclick = () => {
       t.node.querySelector("[data-start]").style.display = "none";
+      t.node.querySelector("[data-orient]").style.display = "none";
       t.node.querySelector("[data-saved]").style.display = "none";
       t.node.querySelector("[data-setup]").hidden = false;
       t.node.querySelector(".level.sel")?.focus();
@@ -421,8 +430,8 @@ export class DeskScene extends Phaser.Scene {
       const also = who.slice(1).map((w) => surname(w)).join(" and ");
       return `<div class="side"><div class="side-head"><span class="av" style="background-image:url(${portrait(lead)})"></span><span><span class="vname">${surname(lead)}</span><span class="focus">${o.post} · ${o.focus}</span></span></div>
         <p class="wants">Wants: <b>${optName(opt)}</b>${also ? `<span class="also">, backed by ${also}</span>` : ""}</p>
-        <p class="case"><b>Protecting</b> ${p.because}.</p><p class="case risk"><b>If you overrule</b> ${p.risk}</p>
-        <button class="b sm" data-voice="${lead}">Hear the case</button></div>`;
+        <p class="case"><b>Protecting</b> ${p.because}.</p>
+        <details class="more"><summary>If you overrule ${OFFICERS[lead].name.split(" ").pop()}</summary><p class="case risk">${p.risk}</p><button class="b sm" data-voice="${lead}">Hear the case</button></details></div>`;
     };
     // Anyone with a third view still gets a line, so no position is hidden.
     const others = (sp.rest ?? []).map(([opt, who]) => `<p class="other"><span class="av sm" style="background-image:url(${portrait(who[0])})"></span><span>${who.map((w) => surname(w)).join(" and ")} ${who.length > 1 ? "want" : "wants"} <b>${lower(optName(opt))}</b>: ${council[who[0]].because}.</span><button class="b sm" data-voice="${who[0]}">Hear</button></p>`).join("");
@@ -457,7 +466,7 @@ export class DeskScene extends Phaser.Scene {
       sheet.node.innerHTML = `<article class="paper sheet signal" aria-label="${I.title}"><p class="lab">Signal · ${I.date} · from ${surname(I.from)}</p><h2>${I.title}</h2>
         <p class="body" style="margin-top:6px">${I.body}</p>${this.debate(I.council, I.options, I.staffId)}
         <div role="radiogroup" style="margin-top:10px">${I.options.map((o) => `<button class="opt ${pick() === o.id ? "sel" : ""}" data-pick="${o.id}" role="radio" aria-checked="${pick() === o.id}"><span class="r"></span><span><b>${o.name}</b><span class="s">${o.says}</span><span class="cost ${o.staff ? "free" : ""}">${o.staff ? "Staff answer · free" : "Uses 1 personal order"}</span></span></button>`).join("")}</div>
-        <div class="btns"><button class="b on" data-go>To your ${name} orders</button></div></article>`;
+        <div class="btns commit"><button class="b on" data-go>Confirm answer and go to ${name} orders</button><p class="commit-note">Your answer goes out when you continue. You can’t change it afterwards.</p></div></article>`;
       this.wireVoices(sheet.node, I.council, { x: 1176, w: 650 });
       for (const b of sheet.node.querySelectorAll("[data-pick]")) b.onclick = () => {
         const o = I.options.find((x) => x.id === b.dataset.pick);
@@ -569,6 +578,13 @@ export class DeskScene extends Phaser.Scene {
   ch_dec_signal() { this.signal("dec"); }
   ch_jan_signal() { this.signal("jan"); }
 
+  // The month's incident answer, already sent, for the top of the orders panel.
+  sentLine(month) {
+    if (!this.campaign.incidents[month]) return null;
+    const I = incident(this.campaign, this.run, month), o = I.options.find((x) => x.id === (this.run[month].incident ?? I.staffId));
+    return { sent: true, mine: !o.staff, text: `Signal: ${lower(o.name)}${o.staff ? "" : " (personal order)"}.` };
+  }
+
   // Personal orders already spent on this month's incident.
   sealsOnIncident(month) {
     const id = this.campaign.incidents[month];
@@ -653,7 +669,7 @@ export class DeskScene extends Phaser.Scene {
       const list = open ? `<div role="radiogroup" style="margin-top:6px">${L.questions.map((x) => `<button class="opt ${x.id === cur.id ? "sel" : ""}" data-q="${x.id}" role="radio" aria-checked="${x.id === cur.id}"><span class="r"></span><span><b>${x.q}</b><span class="s">${x.means}</span>${x.staff ? `<span class="s">${surname("halden")}’s choice</span>` : ""}</span></button>`).join("")}</div>` : "";
       slip.node.innerHTML = `<article class="paper slip" aria-label="${L.head}"><span class="pin"></span><h3>${L.head}${cur.staff ? " · staff plan" : " · your question"}</h3><p class="will" style="font-size:22px;line-height:29px">${cur.q}</p>
         <div class="row"><b>So</b><span>${cur.means}</span></div>
-        ${open ? "" : `<div class="row"><b>What</b><span>${L.what}</span></div><div class="row"><b>Who</b><span>${L.ask}</span></div>`}
+        ${open ? "" : `<details class="more"><summary>About ${WORLD.network}</summary><div class="row"><b>What</b><span>${L.what}</span></div><div class="row"><b>Who</b><span>${L.ask}</span></div></details>`}
         ${list}<div class="btns">${open ? '<button class="b on" data-close>Done</button>' : '<button class="b" data-ask>Ask something else</button>'}</div></article>`;
       slip.node.querySelector("[data-ask]")?.addEventListener("click", () => {
         // The slip opens upward so the send panel never covers the choices.
@@ -672,7 +688,7 @@ export class DeskScene extends Phaser.Scene {
       });
     };
     render();
-    y = Math.min(y, 836 - slip.node.offsetHeight); // keep its buttons clear of the send panel
+    y = Math.min(y, 744 - slip.node.offsetHeight); // keep its buttons clear of the send panel, even with an "Already sent" row
     this.deal(slip, x, y, i, "dec");
     return { slip };
   }
@@ -683,19 +699,22 @@ export class DeskScene extends Phaser.Scene {
     this.blocked = blocked;
     this.disp = this.dispatch("", "");
     this.refreshDispatch();
+    this.settleDispatch(true);
   }
 
   refreshDispatch() {
     if (!this.disp) return;
     const all = this.lines();
-    const mine = all.filter((l) => l.mine).map((l) => l.text).join(" ");
-    const staff = all.filter((l) => !l.mine).map((l) => l.text).join(" ");
-    this.disp.node.querySelector("[data-changing]").textContent = mine || "Nothing yet.";
-    this.disp.node.querySelector("[data-staff]").textContent = staff || "Nothing else this month.";
+    const sent = all.filter((l) => l.sent).map((l) => l.text).join(" ");
+    const mine = all.filter((l) => l.mine && !l.sent).map((l) => l.text).join(" ");
+    const staff = all.filter((l) => !l.mine && !l.sent).map((l) => l.text).join(" ");
+    const row = (k, v) => `<dt>${k}</dt><dd>${esc(v)}</dd>`;
+    this.disp.node.querySelector("[data-rows]").innerHTML = (sent ? row("Already sent", sent) : "") + row("You’re changing", mine || "Nothing yet.") + row("Staff will", staff || "Nothing else this month.");
     const why = this.blocked?.() || "";
     const go = this.disp.node.querySelector(".go");
     go.disabled = Boolean(why);
     this.disp.node.querySelector("[data-why]").textContent = why;
+    this.settleDispatch();
   }
 
   // Signature move. The stamp lands at once; nothing on the map changes until the server
@@ -731,7 +750,7 @@ export class DeskScene extends Phaser.Scene {
     const lattice = this.latticeSlip(1290, 530, 1);
     this.orderPanel(() => {
       const b = B.options.find((p) => p.id === this.run.dec.beacon), q = latticeQ(this.run.dec.lattice);
-      return [{ mine: !b.staff, text: `${WORLD.stationShort}: ${lower(b.name)}.` }, { mine: !q.staff, text: `${WORLD.network}: ${q.short}.` }];
+      return [this.sentLine("dec"), { mine: !b.staff, text: `${WORLD.stationShort}: ${lower(b.name)}.` }, { mine: !q.staff, text: `${WORLD.network}: ${q.short}.` }].filter(Boolean);
     });
     const go = this.disp.node.querySelector(".go");
     go.addEventListener("click", () => this.send([beacon.slip, lattice.slip], () => this.go("dec-night")));
@@ -775,7 +794,7 @@ export class DeskScene extends Phaser.Scene {
     hostSlip = this.hostSlip(beacon, () => showThread());
     this.orderPanel(() => {
       const b = J.options.find((p) => p.id === this.run.jan.beacon), w = this.run.jan.way, h = H();
-      const lines = [{ mine: !b.staff, text: `${WORLD.stationShort}: ${lower(b.name)}.` }];
+      const lines = [this.sentLine("jan"), { mine: !b.staff, text: `${WORLD.stationShort}: ${lower(b.name)}.` }].filter(Boolean);
       const all = [...h.ways, h.secure];
       lines.push(w ? { mine: true, text: `${h.head}: ${lower(all.find((x) => x.id === w).name)}.` } : { mine: false, text: `${h.head}: wait for the cabinet’s vote.` });
       return lines;
@@ -834,7 +853,7 @@ export class DeskScene extends Phaser.Scene {
     this.table.setNight(true);
     const beats = N.beats.map((b, i) => `<div class="beat" data-beat="${i}" style="opacity:0"><b class="n">${i + 1}</b><div><p class="lab" style="color:var(--ink2)">${b.cause}</p><p class="body"></p></div></div>`).join("");
     const sheet = this.dom(56, 104, `<article class="paper sheet tall night" style="width:800px" aria-label="${N.title}"><h2>${N.title}</h2><p class="from">${N.sub}</p>${beats}
-      <div data-end style="opacity:0">${this.warnBlock(N.still, !warning)}<div class="sec" style="border:0"><p class="lab">Coming up</p><p class="body">${N.next}</p></div>
+      <div data-end style="opacity:0">${N.changes ? `<div class="delta"><p class="lab">What changed this month</p><ul>${N.changes.map((x) => `<li class="${x.same ? "same" : `tone-${x.tone}`}"><b>${x.label}</b> ${x.same ? `${x.after}, unchanged` : `${x.before} <span aria-label="to">→</span> ${x.after}`}</li>`).join("")}</ul></div>` : ""}${this.warnBlock(N.still, !warning)}<div class="sec" style="border:0"><p class="lab">Coming up</p><p class="body">${N.next}</p></div>
       <button class="b on" style="height:56px;font-size:20px;margin-top:8px" data-go>${N.go}</button></div></article>`);
     move(this, sheet, { alpha: [0, 1], x: [24, 56] }, { dur: 600, delay: 400 });
     const go = sheet.node.querySelector("[data-go]");
@@ -929,8 +948,9 @@ export class DeskScene extends Phaser.Scene {
     this.table.setBoats("none");
     this.table.revealTruth(D.truth);
     const rows = D.rows.map((r) => `<div class="dt" style="opacity:0"><b>${r[0]}</b><span>${r[1]}</span><span>${r[2]}</span><span style="color:var(--red-ink)">${r[3]}</span></div>`).join("");
-    const s = this.dom(80, 108, `<article class="paper sheet" style="width:1000px;padding:28px 42px 26px"><p class="lab">Campaign ${esc(this.campaign.seed)} · ${this.campaign.D.name}</p><h2 style="font-size:44px;line-height:50px">${D.title}</h2><p class="body" style="margin-top:8px">${D.line}</p>
-      <div class="dt" style="border:0;font-size:16px;font-weight:600;color:var(--ink2);margin-top:12px"><span></span><span>You ordered</span><span>We believed</span><span style="color:var(--red-ink)">What was really happening</span></div>${rows}
+    const s = this.dom(80, 108, `<article class="paper sheet" style="width:1000px;padding:28px 42px 26px"><p class="lab">Campaign ${esc(this.campaign.seed)} · ${this.campaign.D.name}</p><div class="verdict"><h2 style="font-size:44px;line-height:50px">${D.title}</h2><span class="grade grade-${D.grade}">${D.gradeName}</span></div>
+      <ul class="score">${D.score.map((x) => `<li class="${x.ok ? "ok" : "bad"}"><i aria-hidden="true">${x.ok ? "✓" : "✗"}</i><span><b>${x.label}</b>${x.text}</span></li>`).join("")}</ul><p class="body" style="margin-top:8px">${D.line}</p>
+      <div class="dt" style="border:0;font-size:16px;font-weight:600;color:var(--ink2);margin-top:12px"><span></span><span>Ordered</span><span>We believed</span><span style="color:var(--red-ink)">What was really happening</span></div>${rows}
       <div class="btns" style="margin-top:18px"><button class="b on" style="height:56px;font-size:20px" data-again>Replay this campaign</button><button class="b" style="height:56px;font-size:20px" data-new>New campaign</button></div></article>`);
     move(this, s, { alpha: [0, 1] }, { dur: 600 });
     s.node.querySelectorAll(".dt[style*='opacity']").forEach((row, i) => {

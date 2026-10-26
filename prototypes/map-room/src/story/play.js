@@ -76,21 +76,51 @@ export function simulate(c, run = {}) {
 // Whether the January order needs an answer from Marenna before Send.
 export const needsApproval = (c, s, beacon) => beacon === "show" && !(c.hotline && s.support >= 55);
 
+// How tired 2nd Battalion is, in the words every screen uses. Past 100 days a unit starts
+// losing people to sickness and mistakes; past 120 a third of it is unfit to fight.
+export const FATIGUE = { tired: 100, unfit: 120 };
+export const fatigueWord = (days) => (days === 0 ? "rested" : days > FATIGUE.unfit ? "unfit" : days > FATIGUE.tired ? "tired" : "fit");
+
+// What a joint stand in February costs 2nd Battalion: a month of hard work; a battle on the
+// headland costs more. Meeting an empty landing force with two navies costs Marenna's
+// ministers' patience (OVERREACTION, in support points).
+const JOINT_DAYS = 30, BATTLE_DAYS = 20, OVERREACTION = 15;
+
 // The February result. Route is "quiet" (hold on Beacon) or "joint" (with Marenna's navy).
+// Every fact the debrief states is computed here once, so the words can't contradict it.
 export function outcome(c, run) {
   const s = simulate(c, run).janEnd;
   const route = run.feb?.route ?? "quiet";
-  const fit = s.fatigue <= 120;
-  const warned = s.warning === "fresh" || (s.knows.date && !s.knows.date.planted);
+  const fit = s.fatigue <= FATIGUE.unfit;
+  // Two separate things: Lattice still listening to Sarn (hears troops ordered aboard), and
+  // knowing the sailing date. A date alone only helps if the patrol boats are still ours to
+  // see the ships actually leave.
+  const listening = s.warning === "fresh";
+  const dated = Boolean(s.knows.date && !s.knows.date.planted);
+  const warned = listening || (dated && s.boats >= 2);
   const reinforced = fit && warned;
   const def = s.def - (s.radarFails ? 1 : 0);
-  let code;
   // A landing force of 12 or more craft is a battalion and a second wave: Beacon alone
   // cannot hold it, so a worn-out or unwarned 2nd Battalion loses the headland.
   const big = c.craft.jan >= 12;
   const holds = big ? def >= 3 && reinforced : def >= 3 || (def >= 2 && reinforced);
-  if (s.plan === "land") code = route === "joint" ? "stopped" : holds ? "held" : "lost";
+  // Two navies stop a landing at sea only if they know when it sails, or if it is small enough
+  // to turn back in one meeting. Otherwise it lands, and Beacon has to hold.
+  const intercept = warned || !big;
+  let code;
+  if (s.plan === "land") code = route === "joint" ? (intercept ? "stopped" : "landed") : holds ? "held" : "lost";
   else if (s.plan === "bluff") code = route === "joint" ? "called" : "outlasted";
   else code = route === "joint" ? "faced" : "waited";
-  return { code, route, s, fit, warned, reinforced, def, big };
+
+  // The three things you are asked to protect, and the grade they add up to.
+  const battle = code === "held" || code === "landed";
+  const daysAfter = s.fatigue + (route === "joint" ? JOINT_DAYS : 0) + (battle ? BATTLE_DAYS : 0);
+  const supportAfter = s.support - (code === "called" ? OVERREACTION : 0);
+  const kept = {
+    beacon: code !== "lost",
+    ally: ministersFor(supportAfter) >= 6,
+    battalion: daysAfter <= FATIGUE.unfit,
+  };
+  const grade = !kept.beacon ? "failure" : kept.ally && kept.battalion ? "success" : "costly";
+  return { code, route, s, fit, listening, dated, warned, reinforced, def, big, intercept, battle, daysAfter, supportAfter, kept, grade };
 }

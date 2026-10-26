@@ -3,7 +3,7 @@
 // gathers what the scenes need and defines the glossary every highlighted word opens.
 import { WORLD as W } from "./story/world.js";
 export { OFFICERS, fullName, plainName, surname } from "./story/officers.js";
-export { CALENDAR, monthOf, TITLE, LATTICE, latticeQ, brief, orders, host, incident, night, february, debrief, split, status } from "./story/copy.js";
+export { CALENDAR, monthOf, TITLE, ORIENT, LATTICE, latticeQ, brief, orders, host, incident, night, february, debrief, split, status } from "./story/copy.js";
 export { makeCampaign, newSeed, DIFFICULTY } from "./story/campaign.js";
 export { simulate, needsApproval } from "./story/play.js";
 
