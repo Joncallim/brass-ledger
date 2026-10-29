@@ -20,8 +20,9 @@ npm run dev          # http://localhost:5173
 npm test             # chart, campaign and room checks (Node, no browser)
 ```
 
-`?seed=KX4P2&difficulty=volatile` plays a given campaign (the title screen also rolls new
-ones). `?chapter=dec-orders` opens a chapter directly. `?renderer=canvas` forces the 2D renderer
+`?seed=KX4P2&difficulty=volatile` plays a given campaign in that code's generated theatre
+(the title screen also rolls new ones); no seed, or `?seed=KESTREL`, is the authored Kestrel
+Strait. `?chapter=dec-orders` opens a chapter directly. `?renderer=canvas` forces the 2D renderer
 (handy without a GPU, e.g. headless capture). `?scenario=harrow-sound` draws another sea;
 `?chapter=chart` (or key 0) shows any chart on its own with its validator result.
 
@@ -30,7 +31,7 @@ ones). `?chapter=dec-orders` opens a chapter directly. `?renderer=canvas` forces
 | Space / Enter / click on a speaker | Finish the running sequence, or continue |
 | 1–9 | Jump to a chapter: title, December briefing, December orders, December night, January briefing, January orders, January night, February showdown, debrief |
 | 0 | Chart preview for the current scenario |
-| N | Roll a new campaign at the same difficulty and start December |
+| N | Roll a new theatre and campaign at the same difficulty and start December |
 | S · L · O | Staff room, ledger, settings (also the buttons in the top bar; Esc closes) |
 | M | Toggle reduced motion (also follows `prefers-reduced-motion`) |
 
@@ -96,6 +97,35 @@ one. What is rolled:
 With identical choices, 192–200 of every 200 campaigns tell a different story. Following
 the staff plan every month loses Beacon in about 7% of Steady campaigns and about a
 quarter of Shifting and Volatile ones, so overruling your staff is sometimes right.
+
+## Generated theatres (proof of concept)
+
+A new campaign is now also a new theatre: a new strait, a new host country and rival, a
+new harbour, station, intercept network and reserve, and a new chart. The code decides
+all of it, so replaying a code replays the same theatre and campaign. This is the first
+step towards the roguelike war in [ROADMAP.md](ROADMAP.md); it plays the existing
+three-month campaign and changes nothing about its rules.
+
+- `src/gen/factions.js` rolls the names. The host and the rival come from two different
+  sets of sounds so they don't read as related, and are checked against a list of real
+  countries and the authored names. The staff do not change: they are ours and travel
+  with the task force.
+- `src/gen/mapgen.js` rolls the chart: our station on a headland of the host's (west)
+  coast, the rival's harbour in a bay across the strait, a shipping lane down the middle,
+  islands, reefs, woods, towns and the chart furniture kept clear of every label. Each
+  try is checked with `validateScenario`; a failing try is thrown away and rolled again.
+  The copy's "nautical miles across the strait" is measured from the chart.
+- The host coast stays on the west because the desk's papers sit on the right of the
+  table, over the rival's side. Other orientations wait for a desk that can move its
+  papers.
+- `src/story/world.js` holds a live `WORLD`. Modules that work something out from the
+  names (titles, the glossary, the highlighter, the officers' lines) re-run when
+  `setWorld` swaps the theatre, so a new theatre starts without reloading the page.
+  This is what makes it work in the hosted preview, which can't take a query string.
+- `test/procgen.test.js` checks 200 codes: every chart validates, the same code gives the
+  same theatre, the names are distinct, and across 12 theatres no authored name (Kestrel,
+  Marenna, Ravellan, Sarn, Beacon, Lattice, 2nd Battalion) leaks into any line the desk can
+  show.
 
 ## The staff and the hard call
 
@@ -264,6 +294,9 @@ in the scenario and open the same profiles.
 - The calendar (one month a turn, September to February), and the dates inside it
   (Marenna's vote on 15 January, Ravellan sailing on 1 February).
 - Kestrel Strait's geography: Beacon's headland was widened so the station sits on land.
+- **Generated theatres** (all invented for the proof of concept): the name lists and sound
+  sets, the theatre's code also seeding the campaign, a new campaign always meaning a new
+  theatre, the staff staying the same across theatres, and the host coast always on the west.
 - Names: Marenna, Sarn, 2nd Battalion. (Harrow Sound's names are placeholders for testing.) Every figure in the copy (94 days on duty, nine and
   eleven landing craft, 140-strong garrison, 20 or 30 miles of radar, two spare patrol
   boats) is invented dressing; the sim tracks steps, so a content table must map them.

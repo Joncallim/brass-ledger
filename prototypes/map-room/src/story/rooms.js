@@ -2,12 +2,12 @@
 // often you have taken their advice) and the ledger (every decision committed so far and
 // what it changed). Pure: both are read from the campaign and the committed choices, so
 // they add no rules of their own.
-import { WORLD as W } from "./world.js";
+import { WORLD as W, onWorld } from "./world.js";
 import { OFFICERS } from "./officers.js";
 import { host, incident, latticeQ, orders, status } from "./copy.js";
 import { ministersFor, simulate } from "./play.js";
 
-const MA = W.hostAdj, R = W.rival, S = W.harbour, B = W.stationShort;
+let MA, R, S, B;
 // Lower-case only the first letter, so names inside an option (Beacon, Marenna) keep theirs.
 const lower = (t) => t[0].toLowerCase() + t.slice(1);
 export const STAFF = ["halden", "briggs", "okafor", "sato"];
@@ -106,3 +106,8 @@ export function ledger(c, run, progress) {
     now: status(c, s),
   };
 }
+
+// Recomputed whenever the theatre changes (see setWorld in src/story/world.js).
+onWorld(() => {
+  MA = W.hostAdj; R = W.rival; S = W.harbour; B = W.stationShort;
+});

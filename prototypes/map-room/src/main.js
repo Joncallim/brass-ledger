@@ -1,6 +1,11 @@
 import Phaser from "phaser";
 import { TableScene } from "./scenes/TableScene.js";
 import { DeskScene } from "./scenes/DeskScene.js";
+import { setWorld } from "./story/world.js";
+import { worldFor } from "./gen/factions.js";
+
+// `?seed=<code>` opens that code's theatre; no code (or KESTREL) is the authored one.
+setWorld(worldFor(new URLSearchParams(location.search).get("seed")));
 
 // Canvas text needs the real faces before the first frame, or map labels fall back.
 await Promise.all([

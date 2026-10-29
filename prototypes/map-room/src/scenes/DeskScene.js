@@ -8,7 +8,8 @@ import { OX, OY } from "./TableScene.js";
 import { SCENARIOS, STORY_SCENARIO } from "../scenarios/index.js";
 import { validateScenario } from "../chart/geometry.js";
 import { glossNode, hasTerm, profileHTML } from "../gloss.js";
-import { WORLD } from "../story/world.js";
+import { WORLD, setWorld } from "../story/world.js";
+import { worldFor } from "../gen/factions.js";
 import { PROGRESS, ledger, staffRoom } from "../story/rooms.js";
 
 const TRAY = { x: 1640, y: 1000 }; // where slips are dealt from and gathered to
@@ -29,24 +30,27 @@ export class DeskScene extends Phaser.Scene {
     super("desk");
   }
 
-  create() {
+  // `data` is set when a new theatre restarted the table (see newTheatre); otherwise the
+  // page's query string decides.
+  create(data = {}) {
     this.table = this.scene.get("table");
     this.items = [];
     this.timers = [];
     this.skipFns = [];
     const q = new URLSearchParams(location.search);
-    this.newCampaign(q.get("seed") ?? DEFAULT_CAMPAIGN.seed, q.get("difficulty") ?? DEFAULT_CAMPAIGN.difficulty);
+    this.newCampaign(data.seed ?? q.get("seed") ?? DEFAULT_CAMPAIGN.seed, data.difficulty ?? q.get("difficulty") ?? DEFAULT_CAMPAIGN.difficulty);
     this.input.keyboard.on("keydown", (e) => this.onKey(e));
     this.setupProfiles();
     // Test hooks: jump to a chapter, roll a campaign, or set the choices so far.
     window.mapRoom = {
       go: (c, opts) => this.go(c, opts), chapters: CHAPTERS, reduced: reducedMotion,
       setRun: (r) => (this.run = r), getRun: () => structuredClone(this.run), campaign: (seed, d) => this.newCampaign(seed, d),
+      theatre: (seed, d, chapter) => this.newTheatre(seed, d, chapter),
     };
     Object.defineProperty(window.mapRoom, "c", { get: () => this.campaign });
     // Another sea opens on its chart preview: the story is written for Kestrel Strait.
-    const start = q.get("chapter");
-    const storySea = this.table.sc.id === STORY_SCENARIO;
+    const start = data.chapter ?? q.get("chapter");
+    const storySea = this.table.sc.story || this.table.sc.id === STORY_SCENARIO;
     this.go(ALL.includes(start) ? start : storySea ? "title" : "chart");
   }
 
@@ -54,6 +58,17 @@ export class DeskScene extends Phaser.Scene {
   newCampaign(seed, difficulty) {
     this.campaign = makeCampaign(seed, difficulty);
     this.run = DEFAULT_RUN();
+  }
+
+  // A new code is a new theatre: new countries, new names, a new chart, and a campaign
+  // rolled on them. The world changes in place and both scenes restart on it, so this works
+  // where the page can't be reloaded with a new query string (the hosted preview).
+  newTheatre(seed, difficulty, chapter = "dec-brief") {
+    this.clear();
+    setWorld(worldFor(seed));
+    const table = this.table;
+    this.scene.stop();
+    table.scene.restart({ seed, difficulty, chapter });
   }
 
   // Where things stand at a point in the campaign, given the choices so far.
@@ -66,12 +81,16 @@ export class DeskScene extends Phaser.Scene {
   // slips that re-render themselves), and one shared card shows its profile on hover or focus.
   setupProfiles() {
     const root = this.game.domContainer;
+    // A theatre change restarts this scene; the page-level listeners below go on only once
+    // and always talk to the desk that is running now.
+    this.game.desk = this;
     const el = document.createElement("div");
     el.className = "ui tip";
     el.setAttribute("role", "tooltip");
     el.id = "profile-tip";
     this.tip = this.add.dom(0, 0, el).setOrigin(0, 0).setVisible(false);
-    const show = (t) => {
+    this.tipEl = el;
+    this.showTip = (t) => {
       const key = t.dataset.term;
       if (!hasTerm(key)) return;
       el.innerHTML = profileHTML(key);
@@ -87,13 +106,17 @@ export class DeskScene extends Phaser.Scene {
       t.setAttribute("aria-describedby", "profile-tip");
     };
     this.hideTip = () => this.tip.setVisible(false);
+    if (this.game.profilesWired) return;
+    this.game.profilesWired = true;
+    const desk = () => this.game.desk;
     const termOf = (e) => e.target.closest?.("[data-term]");
-    root.addEventListener("mouseover", (e) => { const t = termOf(e); if (t) show(t); });
-    root.addEventListener("mouseout", (e) => { const t = termOf(e); if (t && !t.contains(e.relatedTarget)) this.hideTip(); });
-    root.addEventListener("focusin", (e) => { const t = termOf(e); if (t) show(t); else this.hideTip(); });
-    root.addEventListener("focusout", (e) => { if (termOf(e)) this.hideTip(); });
+    root.addEventListener("mouseover", (e) => { const t = termOf(e); if (t) desk().showTip(t); });
+    root.addEventListener("mouseout", (e) => { const t = termOf(e); if (t && !t.contains(e.relatedTarget)) desk().hideTip(); });
+    root.addEventListener("focusin", (e) => { const t = termOf(e); if (t) desk().showTip(t); else desk().hideTip(); });
+    root.addEventListener("focusout", (e) => { if (termOf(e)) desk().hideTip(); });
     new MutationObserver((records) => {
-      for (const r of records) for (const n of r.addedNodes) if (n.nodeType === 1 && n !== el && !el.contains(n)) glossNode(n);
+      const tip = desk().tipEl;
+      for (const r of records) for (const n of r.addedNodes) if (n.nodeType === 1 && n !== tip && !tip.contains(n)) glossNode(n);
     }).observe(root, { childList: true, subtree: true });
   }
 
@@ -162,7 +185,7 @@ export class DeskScene extends Phaser.Scene {
     if (e.key === "m" || e.key === "M") { reducedMotion.on = !reducedMotion.on; savePrefs(); }
     const n = Number(e.key);
     if (n >= 1 && n <= CHAPTERS.length) this.go(CHAPTERS[n - 1]);
-    if (e.key === "n" || e.key === "N") { this.newCampaign(newSeed(), this.campaign.difficulty); this.go("dec-brief"); }
+    if (e.key === "n" || e.key === "N") { this.newTheatre(newSeed(), this.campaign.difficulty); }
     if (e.key === "0") this.go("chart");
   }
 
@@ -352,7 +375,7 @@ export class DeskScene extends Phaser.Scene {
       <div class="lab">Chart preview · ${esc(sc.name)}</div>
       <p style="margin:4px 0 0">${sc.land.length} land masses, ${sc.features.length} chart marks, ${Object.keys(sc.places).length} places.
       ${problems.length ? `<span style="color:var(--red)">${problems.length} problems: ${problems.map(esc).join("; ")}</span>` : "Validator: no problems."}</p>
-      <p class="help" style="margin:8px 0 0">Charts: ${links}. ${sc.id === STORY_SCENARIO ? "Press 1 for the story." : "The story is written for Kestrel Strait; keys 1–9 still play it on this chart."}</p></div>`);
+      <p class="help" style="margin:8px 0 0">Charts: ${links}. ${sc.story ? "Press 1 for the story." : "The story is written for Kestrel Strait; keys 1–9 still play it on this chart."}</p></div>`);
     move(this, card, { alpha: [0, 1] }, { dur: T.ui });
     card.y = OY + 920 - 24 - card.node.offsetHeight;
   }
@@ -369,7 +392,7 @@ export class DeskScene extends Phaser.Scene {
       <p class="campaign-code">Campaign <b>${esc(c.seed)}</b> · ${c.D.name}</p>
       <div data-start style="display:flex;gap:16px;margin-top:32px"><button class="go" data-go>Continue in December</button><button class="ghost" data-new>New campaign</button></div>
       <div data-setup hidden><p class="setup-q">How much should change from one campaign to the next?</p><div class="levels">${Object.entries(DIFFICULTY).map(([id, d]) => `<button class="level ${id === c.difficulty ? "sel" : ""}" data-level="${id}"><b>${d.name}</b><span>${d.line}</span></button>`).join("")}</div>
-        <p class="help" style="margin-top:14px">Each new campaign rolls ${this.campaign.D && "a hidden enemy plan, the ally’s politics, your staff’s starting state and the month’s incidents"} from a fresh code. Replaying a code replays the same campaign.</p></div>
+        <p class="help" style="margin-top:14px">Each new campaign is set in a new theatre: a new strait, new countries and a new chart. A fresh code also rolls the hidden enemy plan, the ally’s politics, your staff’s starting state and the month’s incidents. Replaying a code replays the same theatre and campaign.</p></div>
       <p style="font-size:18px;color:var(--room-muted);margin-top:20px" data-saved>${TITLE.saved}</p></div>`);
     move(this, t, { alpha: [0, 1], y: [174, 150] }, { dur: T.reveal });
     const go = t.node.querySelector("[data-go]");
@@ -381,7 +404,7 @@ export class DeskScene extends Phaser.Scene {
       t.node.querySelector("[data-setup]").hidden = false;
       t.node.querySelector(".level.sel")?.focus();
     };
-    for (const b of t.node.querySelectorAll("[data-level]")) b.onclick = () => { this.newCampaign(newSeed(), b.dataset.level); this.go("dec-brief"); };
+    for (const b of t.node.querySelectorAll("[data-level]")) b.onclick = () => { this.newTheatre(newSeed(), b.dataset.level); };
     this.focusLater(go, 300);
     this.next = go.onclick;
   }
@@ -550,7 +573,7 @@ export class DeskScene extends Phaser.Scene {
         <div class="seg" role="radiogroup" aria-label="Motion"><button role="radio" aria-checked="${!reducedMotion.on}" class="${reducedMotion.on ? "" : "sel"}" data-motion="full">Full</button><button role="radio" aria-checked="${reducedMotion.on}" class="${reducedMotion.on ? "sel" : ""}" data-motion="reduced">Reduced</button></div></div>
       <div class="set-row"><div><p class="set-name">This campaign</p><p class="set-help">The same code and difficulty always replay the same campaign: the same hidden plan, politics and incidents.</p></div>
         <div class="set-actions"><span class="code-box">${esc(c.seed)} · ${c.D.name}</span><button class="b" data-copy>Copy code</button><button class="b" data-replay>Replay from December</button></div></div>
-      <div class="set-row"><div><p class="set-name">New campaign</p><p class="set-help">Roll a fresh code. Difficulty sets how far each element can vary.</p></div>
+      <div class="set-row"><div><p class="set-name">New campaign</p><p class="set-help">Roll a fresh code: a new theatre and a new campaign. Difficulty sets how far each element can vary.</p></div>
         <div class="set-actions">${Object.entries(DIFFICULTY).map(([id, d]) => `<button class="b" data-level="${id}">${d.name}</button>`).join("")}</div></div>
       <div class="set-row keys"><p class="set-name">Keys</p><dl><dt>Space</dt><dd>Finish the line, or continue</dd><dt>S · L · O</dt><dd>Staff room, ledger, settings</dd><dt>1–9</dt><dd>Jump to a chapter</dd><dt>N</dt><dd>New campaign, same difficulty</dd><dt>M</dt><dd>Reduced motion</dd><dt>Esc</dt><dd>Close this panel</dd></dl></div>
     </div>`;
@@ -572,7 +595,7 @@ export class DeskScene extends Phaser.Scene {
       navigator.clipboard?.writeText(text).then(() => { btn.textContent = "Copied"; }, () => { btn.textContent = "Select and copy the code"; });
     };
     node.querySelector("[data-replay]").onclick = () => { this.run = DEFAULT_RUN(); this.go("dec-brief"); };
-    for (const b of node.querySelectorAll("[data-level]")) b.onclick = () => { this.newCampaign(newSeed(), b.dataset.level); this.go("dec-brief"); };
+    for (const b of node.querySelectorAll("[data-level]")) b.onclick = () => { this.newTheatre(newSeed(), b.dataset.level); };
   }
 
   ch_dec_signal() { this.signal("dec"); }
@@ -959,7 +982,7 @@ export class DeskScene extends Phaser.Scene {
     });
     const again = s.node.querySelector("[data-again]");
     again.onclick = () => { this.run = DEFAULT_RUN(); this.go("dec-brief"); };
-    s.node.querySelector("[data-new]").onclick = () => { this.newCampaign(newSeed(), this.campaign.difficulty); this.go("dec-brief"); };
+    s.node.querySelector("[data-new]").onclick = () => { this.newTheatre(newSeed(), this.campaign.difficulty); };
     this.focusLater(again, 1200);
     this.talk("halden", D.halden, { x: 1120, w: 740, delay: 1400 });
   }

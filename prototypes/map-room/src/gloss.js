@@ -2,19 +2,24 @@
 // wrapped in a highlighted span that opens a short profile on hover or keyboard focus.
 // Officers are already wrapped by fullName()/surname(); this finds everything else.
 import { GLOSSARY, OFFICERS } from "./fixture.js";
+import { onWorld } from "./story/world.js";
 
 const portrait = (id) => `./portraits/${OFFICERS[id].portrait}.jpg`;
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // One regex for every alias, longest first, so "Beacon Station" wins over "Beacon" and
 // "landing craft" over "landing". Proper nouns match case-sensitively; jargon does not.
-const aliases = Object.entries(GLOSSARY)
-  .flatMap(([id, g]) => g.match.map((text) => ({ id, text, kind: g.kind })))
-  .sort((a, b) => b.text.length - a.text.length);
-const byText = new Map(aliases.map((a) => [a.kind === "name" ? a.text : a.text.toLowerCase(), a]));
+// Rebuilt when the theatre changes, since the names change with it.
+let byText, pattern;
 // Jargon may open a sentence, so its first letter matches either case.
 const loose = (t) => `[${t[0].toUpperCase()}${t[0].toLowerCase()}]${esc(t.slice(1))}`;
-const pattern = new RegExp(`(?<![\\w-])(${aliases.map((a) => (a.kind === "name" ? esc(a.text) : loose(a.text))).join("|")})(?![\\w-])`, "g");
+onWorld(() => {
+  const aliases = Object.entries(GLOSSARY)
+    .flatMap(([id, g]) => g.match.map((text) => ({ id, text, kind: g.kind })))
+    .sort((a, b) => b.text.length - a.text.length);
+  byText = new Map(aliases.map((a) => [a.kind === "name" ? a.text : a.text.toLowerCase(), a]));
+  pattern = new RegExp(`(?<![\\w-])(${aliases.map((a) => (a.kind === "name" ? esc(a.text) : loose(a.text))).join("|")})(?![\\w-])`, "g");
+});
 const lookup = (m) => byText.get(m) ?? byText.get(m.toLowerCase());
 
 // Text inside these is left alone: controls, existing marks, and chrome.

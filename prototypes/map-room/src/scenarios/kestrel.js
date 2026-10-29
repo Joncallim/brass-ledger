@@ -4,7 +4,7 @@ const laneX = (y) => 940 + Math.sin(y / 160) * 26;
 
 export default {
   id: "kestrel-strait",
-  name: "Kestrel Strait",
+  name: "Kestrel Strait", story: true,
   sheet: { width: 1840, height: 944 },
   grid: {
     cols: 230, rows: 236,

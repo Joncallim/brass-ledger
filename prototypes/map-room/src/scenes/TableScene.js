@@ -22,7 +22,8 @@ export class TableScene extends Phaser.Scene {
 
   // Everything about the sea comes from the scenario (`?scenario=<id>`); this scene only
   // knows how to animate a station, a base, fleets and intel on whatever chart it gets.
-  create() {
+  // `data` comes from a theatre change (DeskScene.newTheatre) and is passed on to the desk.
+  create(data = {}) {
     this.sc = getScenario(new URLSearchParams(location.search).get("scenario"));
     this.geo = buildGeometry(this.sc);
     const { width, height } = this.sc.sheet;
@@ -47,11 +48,13 @@ export class TableScene extends Phaser.Scene {
     this.night = this.add.rectangle(OX, OY, MW, MH, 0x0a1424, 1).setOrigin(0).setAlpha(0);
     this.drawLight();
     this.redrawRing();
-    this.scene.launch("desk");
+    this.scene.launch("desk", data);
   }
 
   // ── textures ──────────────────────────────────────────────────────────────
   makeTextures() {
+    // A theatre change restarts this scene; the old chart's textures go first.
+    for (const key of ["grain", "wood", "lamp", "vignette", "hatch", "boat", "landingcraft", "sweep", "base"]) if (this.textures.exists(key)) this.textures.remove(key);
     const grain = this.textures.createCanvas("grain", 256, 256);
     const g = grain.getContext();
     const img = g.createImageData(256, 256);
@@ -259,6 +262,7 @@ export class TableScene extends Phaser.Scene {
     c.lines = TRUTH.map((tr) => {
       const p = this.at(tr.near);
       const t = this.add.text(p.x + tr.dx, p.y + tr.dy, "", { fontFamily: "Newsreader", fontStyle: "italic", fontSize: "26px", color: "#B4261F" });
+      t.home = { x: t.x, y: t.y };
       c.add(t);
       return t;
     });
@@ -307,7 +311,8 @@ export class TableScene extends Phaser.Scene {
   showLattice(text, delay = 0) {
     if (!text) return move(this, this.lattice, { alpha: 0 }, { dur: T.ui });
     this.lattice.q.setText(text);
-    move(this, this.lattice, { alpha: 1, x: [OX + 1280, OX + 1240] }, { dur: T.paper, delay });
+    const x = OX + this.sc.intel.at[0];
+    move(this, this.lattice, { alpha: 1, x: [x + 40, x] }, { dur: T.paper, delay });
   }
 
   tweenRing(props, dur = T.scene) {
@@ -366,7 +371,12 @@ export class TableScene extends Phaser.Scene {
 
   revealTruth(lines = []) {
     const c = this.truth;
-    c.lines.forEach((t, i) => t.setText(lines[i] ?? ""));
+    // Keep each line on the sheet, wherever this chart put its anchor.
+    c.lines.forEach((t, i) => {
+      t.setText(lines[i] ?? "");
+      t.setX(Math.max(OX + 16, Math.min(t.home.x, OX + MW - 16 - t.width)));
+      t.setY(Math.max(OY + 16, Math.min(t.home.y, OY + MH - 16 - t.height)));
+    });
     c.setAlpha(1);
     const draw = () => c.maskG.clear().fillStyle(0xffffff).fillRect(OX, OY, MW * c.reveal.w, MH);
     if (reducedMotion.on) { c.reveal.w = 1; return draw(); }
