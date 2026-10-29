@@ -17,8 +17,12 @@ without that decision.
 cd prototypes/map-room
 npm install
 npm run dev          # http://localhost:5173
-npm test             # chart, campaign and room checks (Node, no browser)
+npm test             # chart, campaign, room, consistency and balance checks (Node, no browser)
+node scripts/balance.mjs 150   # the full balance report: does one fixed plan win?
 ```
+
+To run a playtest, follow [PLAYTEST.md](PLAYTEST.md). The game keeps a playtest log in the
+browser (Settings, then "Playtest log").
 
 `?seed=KX4P2&difficulty=volatile` plays a given campaign in that code's generated theatre
 (the title screen also rolls new ones); no seed, or `?seed=KESTREL`, is the authored Kestrel
@@ -129,10 +133,10 @@ three-month campaign and changes nothing about its rules.
 
 ## The staff and the hard call
 
-Each officer has one job and one thing they always push for, shown under their name
-wherever they speak:
+Each officer has one job and something they usually argue for. Their advice adapts to the
+campaign, so the slips say "advises", never "wants":
 
-| Officer | Job | Always pushes for |
+| Officer | Job | Usually argues for |
 | --- | --- | --- |
 | Major General Halden | Intelligence: finds out what Ravellan means to do | moves that force Ravellan to show its hand |
 | Brigadier General Briggs | Operations: makes sure Beacon can stop an attack | more troops and guns on Beacon, out of sight |
@@ -140,8 +144,9 @@ wherever they speak:
 | Rear Admiral Sato | Plans and Marenna: keeps Marenna on our side | nothing Ravellan can photograph before the cabinet agrees |
 
 Their recommendations are worked out each month from the campaign's state (`orders()`
-in `src/story/copy.js`), so who agrees and who clashes changes from run to run. Every
-decision shows **the hard call**: the two strongest opposing views side by side, each
+and `latticeOrders()` in `src/story/copy.js`), so who agrees and who clashes changes from
+run to run. A slip's face leads with the decision and its cost, then one line for each
+officer who advises otherwise. Opening the slip shows **the hard call**: the two strongest opposing views side by side, each
 with what that officer is protecting and what happens if you overrule them, plus a line
 for anyone holding a third view. "Hear the case" plays it in their own voice. The
 readiness bar along the top shows the four things they argue about (2nd Battalion's days
@@ -165,7 +170,11 @@ what they show; it adds no rules):
 
 ## The sequence
 
-Each month runs **briefing → signal (if an incident lands) → orders → night**. Briefings
+Each month runs **briefing → signal (if an incident lands) → orders → night**. Each month
+has two order slips on the left (the station, and what Lattice listens for) and, in
+January, Marenna on the right. Changing any staff plan, or answering an incident your own
+way, uses one of two personal orders. Each slip's choice is pinned to the chart where it
+acts. Briefings
 lead with what changed, how sure we are, and what it means for your orders. An incident
 answer goes out when you press "Confirm answer", and the orders panel lists it under
 "Already sent". Night reports end with what the month changed, readout by readout. Once
@@ -178,10 +187,17 @@ after December follows from what you ordered (`run` in `DeskScene`):
 - In January, Marenna's slip depends on the campaign: an open move may clash with a slow
   answer (Send stays blocked until you settle it), a hotline may make it easy, or a shaky
   cabinet may need securing even if you stay quiet.
-- February offers standing with Marenna's navy only if Marenna agreed to send it. If
-  Lattice kept listening to Sarn, Major General Halden can tell you whether the landing
-  craft carry troops; otherwise you choose blind.
-- The debrief shows what you ordered, what we believed and what was really happening.
+- January's Lattice question decides February's warning. Staying on Sarn's harbour net
+  hears the order that puts troops aboard. The fleet net gives the true sailing date, which
+  lets Okafor rest 2nd Battalion for 20 days, but loses that warning.
+- February offers three ways to meet the ships: hold quietly, dig 2nd Battalion in on the
+  headland (no warning needed, costs days whatever happens), or stand with Marenna's navy
+  if Marenna agreed to send it. Good intelligence narrows the choice without settling it:
+  Halden says what he knows and what he doesn't (troops aboard, how many waves).
+- The showdown report plays out what happened, hour by hour, then the debrief shows what
+  you ordered, what we believed and what was really happening, and what each officer
+  will remember. The top bar shows the state after February, the same numbers as the
+  debrief.
 
 Seals are spent and returned by the slips themselves, never more than two a month,
 including any spent on the month's incident.
@@ -303,19 +319,36 @@ in the scenario and open the same profiles.
 - Ranks and regional backgrounds for the six staff officers.
 - "The host government" for the partner, "hotline" for the rapid consultation channel,
   "personal order" for an intervention.
-- **Balance.** Trading the patrol boats and standing with Marenna's navy is the strongest
-  line: full success in roughly 70–85% of Shifting and Volatile campaigns (300 seeds each),
-  against 0% for following the staff plan every month (which never rests 2nd Battalion).
-  Worth tuning before the human fun gate.
-- The scoring thresholds (6 of 11 ministers, 120 days), the patrol boats' role in warning,
-  interception needing warning against a second wave, and the 15-point cost of meeting a
-  bluff with two navies.
+- **Balance targets** (proposed; `test/balance.test.js` guards them, and
+  `node scripts/balance.mjs` reports them over every legal plan within two personal orders
+  a month):
+  - On Shifting, no single fixed plan wins more than 60% of campaigns. Today the best
+    one wins about 53%, Volatile's best about 45%. Steady stays easy on purpose: about 91%
+    for its best plan.
+  - The best result for a campaign usually needs a different plan: 75–86% of campaigns.
+  - About half of Shifting and Volatile campaigns need both January personal orders for
+    the best result.
+  - At most 20% of Shifting and 30% of Volatile campaigns can't be won outright (today
+    about 11% and 16–27%, depending on the seeds).
+  - Following the staff plan every month never wins outright (it never rests the battalion).
+- **Playtest 2 rules:**
+  - The radar repair costs the battalion's engineers 12 days.
+  - The January sailing date buys the battalion 20 days' rest but loses the boarding
+    warning.
+  - Digging the battalion in costs 20 days, plus 20 more after a battle. Doing it against
+    an empty landing force costs 10 support points.
+  - Meeting an empty force with two navies costs 20 points.
+  - Allied ships in a fight move the cabinet by the defence minister's stance: −12 dove,
+    −6 firm, +4 hawk.
+  - Casualties by result: 60 held, 40 repelled, 80 landed, 140 lost.
+  - Trading the patrol boats now buys the approval but no extra goodwill.
+  - Shifting's cabinet now starts at 46–66 and Volatile's at 48–66, with drift ±8.
 - **All campaign rules** in `src/story/play.js` and `campaign.js` are prototype rules,
   not sim rules: how each order moves 2nd Battalion's days, Beacon's defences and the
   cabinet count; the penalties for daylight moves by minister type; the vote threshold
   (6 of 11); the hotline threshold; the second-wave rule; deterrence (a visible January
   frigate cancels a landing when Beacon is fully reinforced); a bluff turning into a
-  landing when the cabinet drops below 5 of 11; and the seven February results.
+  landing when the cabinet drops below 5 of 11; and the ten February results.
 - The incident pool and every figure in it (the radar's one-in-four failure chance, the
   defector's reliability, the cabinet swings).
 - New figures: Sarn about 30 nautical miles from Beacon; Kestrel Strait about 40 wide;

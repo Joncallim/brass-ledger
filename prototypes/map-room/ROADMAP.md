@@ -1,8 +1,8 @@
 # Map Room roadmap: from one campaign to a war
 
-This is a proposal for the product owner. One decision is signed: the player commands a
-task force moving through one war (decided 29 October 2026). Every other item past phase 1
-is an unsigned gameplay decision. Under the repository's V2 freeze (`AGENTS.md`), none of it goes
+This is a proposal for the product owner. Signed so far: the player commands a task force
+moving through one war, and the war layer's shape described under phase 2 (both
+29 October 2026). Everything else past phase 1 is an unsigned gameplay decision. Under the repository's V2 freeze (`AGENTS.md`), none of it goes
 into the shipped game until the V2 human fun gate passes. Until then it stays in
 `prototypes/map-room`.
 
@@ -37,36 +37,33 @@ the sea and the countries change.
 
 ## Phase 2: the war layer
 
-A war is a chain of 3 to 5 campaigns. The task force redeploys after each one to a newly
-generated sector.
+Product owner direction, 29 October 2026, after the second playtest:
 
-- **Length.** A campaign should take under 20 minutes as a baseline. A war rolls a few
-  shorter campaigns (2 months) and longer ones (4 months) around the usual 3. A whole war
-  is about one to one and a half hours.
-- **Between campaigns, a redeployment screen.** It shows:
-  - the war map, with the sectors and which are held;
-  - the task force's state: each unit's strength and fatigue, each officer's trust in you;
-  - the funding;
-  - one choice of the next sector from two or three generated options. Each option shows its
-    difficulty and what it pays.
-- **Rewards for a good result** (proposed, needs sign-off):
-  - Success: extra funding, plus a choice of one reinforcement (a fresh battalion, a
-    second station radar, more patrol boats, a better intercept network).
-  - Costly success: funding only.
-  - Failure: no reward, and the next sector starts harder (the rival is emboldened).
-- **What carries over:**
-  - unit fatigue and losses (2nd Battalion ends a campaign at 110 days and starts the next
-    one tired);
-  - officers' trust, from how often you overruled them;
-  - the funding balance;
-  - a short history the officers quote ("we did this at Sarn and it cost us").
-- **A floor.** Every sector can be won from a bad start: rest and replacement are always
-  on offer at a price. A war ends early only if you lose two sectors in a row.
-- **Spending.** Funding buys:
-  - rest for a unit;
-  - a replacement officer;
-  - an extra personal order next campaign;
-  - better intelligence at the start.
+- **Two campaigns first.** Build a two-campaign war and test it. If it works, test a fixed
+  war of four campaigns. A war is not yet rolled at random lengths.
+- **Every result pays a refit.** Each campaign ends with a minimum operating and refit
+  allocation, whatever the result. A success adds a bonus on top.
+- **No extra penalty for failure.** The next sector does not automatically get harder
+  after a loss. Losses already carried into the next campaign hurt enough; adding a
+  penalty on top risks a death spiral.
+- **Carry force condition and funding.** Each unit's days without rest and its casualties
+  go into the next campaign, and so does the funding balance.
+- **Specific officer memories, not a trust score.** Officers remember what happened
+  ("you took Lattice off the quay in January and it cost us"), not just how often you
+  overruled them. The debrief already lists these memories (`debrief().leaves`).
+- **One war, consistent sides.** The rival and its losses carry across sectors: a landing
+  force beaten on a beach is gone in the next sector. The war's factions stay the same.
+  Only the sector (the strait, the ally and the places) is new.
+
+Still to decide or to set in the prototype for sign-off:
+
+- **Length.** A campaign should take under 20 minutes as a baseline.
+- **Between campaigns, a redeployment screen.** It would show what the task force carries
+  (each unit's days and casualties, the officers' memories, the funding) and the next sector.
+  In the two-campaign test the next sector is fixed; later, a choice of two or three.
+- **What the refit allocation and success bonus buy.** Candidates: rest for a unit,
+  replacing casualties, an extra personal order next campaign, better intelligence at the
+  start. The amounts need sign-off.
 
 ## Phase 3: a second campaign type
 
@@ -126,9 +123,9 @@ what the task force has and remembers, and the officers quote only that.
 ## Open questions for the product owner
 
 1. ~~Task force or theatre-hopping?~~ Decided: the task force.
-2. Are the reward types and sizes right? Is there a floor on bad runs?
-3. Should a war have a fixed length (for example 4 campaigns) or end on a victory
-   condition?
+2. ~~Reward shape and the floor?~~ Decided: a minimum refit allocation every time, a bonus
+   for success, no extra penalty after failure. The amounts are still open.
+3. ~~War length?~~ Decided: two campaigns first, then a fixed four if that works.
 4. Which second campaign type comes first?
 5. Who reviews generated art, and what licence bar must it meet before it leaves
    prototype-only?

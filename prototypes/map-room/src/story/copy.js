@@ -55,7 +55,7 @@ export function brief(c, run, month) {
         ["What it means for your orders", `If this is a landing, ${B} needs more guns before February and ${BN} must be fit to reinforce it. If it is a threat, the danger is losing ${M}, so how visibly we move matters as much as what we move.`],
       ],
       warning: WARN[s.warning],
-      halden: `General. ${c.craft.dec} landing craft are loading in ${S}. Whether they are meant for ${B} or for the cameras, I will tell you when I see troops on the quay. Not before.`,
+      halden: `I can count landing craft, General. I cannot yet tell you what they are for. Until I hear troops ordered onto that quay, anyone who says landing or bluff is guessing, including me.`,
     };
   }
   const s = sim.decEnd, q = run.dec?.lattice ?? "boats";
@@ -91,7 +91,13 @@ export function brief(c, run, month) {
     title: "Intelligence summary", from: `${fullName("halden")}, Intelligence`,
     sections: [["What changed", changed], ["How sure we are", sure], ["What it means for your orders", means]],
     warning: WARN[s.warning],
-    halden: `General. ${changed.split(". ")[0].replace(/\.$/, "")}. That is what has changed since December.`,
+    // Halden's own read, not a repeat of the sheet: how far he trusts what he has, and what
+    // it still leaves open.
+    halden: {
+      boats: () => `A count is a fact, General. ${k.count >= 12 ? "This one says two waves." : "This one says one wave."} It still does not tell me whether they mean to use them.`,
+      who: () => `Radio orders are harder to fake than pictures. Harder, not impossible: a trail can be laid for us to find. It tells me their intent, not their date.`,
+      when: () => `One signal on the fleet net. If it is true, it is the most useful thing I have. If it was meant for us, it is the most dangerous.`,
+    }[q](),
   };
 }
 
@@ -103,12 +109,12 @@ const pos = (prefers, line, because, risk) => ({ prefers, line, because, risk })
 function decemberCouncil(c, s) {
   const tired = s.fatigue >= 90, solid = s.support >= 66 && c.minister !== "dove", murky = c.D.plans.length > 2 || c.craft.dec < 9;
   return {
-    briggs: pos("quiet", `Two rifle companies and the air-defence battery on the headland by 20 December, moved at night. That holds ${B} for three weeks against a battalion landed from the sea. It costs ${BN} its Christmas. I can live with that.`,
+    briggs: pos("quiet", `Two rifle companies and the battery on the headland by the 20th, by night. Holds ${B} three weeks against a battalion from the sea. Costs ${BN} its Christmas. Worth it.`,
       `${B} able to stop a landing`, `${B} faces a battalion with ${W.garrison} soldiers.`),
     okafor: tired
-      ? pos("rest", `${BN} has been on duty ${s.fatigue} days. Past 100, I lose a third of them to sickness and mistakes. Stand them down from 18 to 31 December and they are fit for January. ${B}’s own garrison covers the gap.`,
+      ? pos("rest", `${BN} has been on duty ${s.fatigue} days. Past 100 my sick list grows every week; past 120 a third of them cannot fight. Give me 18 to 31 December and I will give you a battalion in January.`,
         `${BN} still able to fight in February`, `${BN} passes 120 days by the end of January, and a third of it is unfit when ${R} comes.`)
-      : pos("quiet", `${BN} is on ${s.fatigue} days. It can take one more month before it needs rest. Move them now, rest them in January.`,
+      : pos("quiet", `${s.fatigue} days. They have one more month in them, not two. Use it now and rest them in January.`,
         `${BN} being used while it is still fresh`, "we spend the battalion’s good month doing nothing."),
     sato: solid
       ? pos("show", `I count ${ministersFor(s.support)} of ${W.ministers} ministers with us, and the defence minister is ${c.minister === "hawk" ? "pushing us to do more" : "content"}. A frigate in daylight will cost us a day of phone calls, not a vote.`,
@@ -130,12 +136,12 @@ function januaryCouncil(c, s) {
     briggs: read === "land" || read === "probe"
       ? pos("show", `If ${R} is coming in early February, I want it to see a frigate and two companies off ${B} on the 16th. A landing that can see what it faces is a landing that may not happen.`,
         `${B} looking too strong to attack`, `${R} plans its landing against a ${B} it believes is thin.`)
-      : pos("quiet", `Full air defence on ${B} by 20 January, moved at night. That covers us to the first week of February, and ${R} never sees us do it.`,
+      : pos("quiet", `Battery to full strength by the 20th, by night. Covers us into February. ${R} sees nothing.`,
         `${B} at full strength without a show`, `${B} goes into February with the guns it has now.`),
     okafor: s.fatigue > 110
       ? pos("hold", `${BN} passes ${s.fatigue + 10} days on the 10th. Rest them from 10 January, or I cannot promise you a fit battalion in February. ${B} already has its guns.`,
         `${BN} fit to fight in February`, `a third of ${BN} is sick or unfit when ${R} sails.`)
-      : pos("quiet", `${BN} rested over Christmas and has days to spare. Use them now while they are fresh.`,
+      : pos("quiet", `They rested over Christmas. I have no objection to working them now.`,
         "using a rested battalion while it is fresh", "we hold back troops who can afford the work."),
     sato: s.support >= 60 && (c.hotline || c.minister === "hawk")
       ? pos("show", c.hotline ? `We have a hotline to the ${MA} ministers. I can have their yes within hours, and with ${ministersFor(s.support)} of ${W.ministers} behind us, it will be yes.` : `The defence minister wants us to be seen. With ${ministersFor(s.support)} of ${W.ministers} ministers behind us, a daylight move helps the vote.`,

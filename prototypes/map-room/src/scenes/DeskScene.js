@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { EASE, T, STAGGER, move, prefs, reducedMotion, savePrefs, seeded } from "../motion.js";
 import {
   CALENDAR, DEFAULT_CAMPAIGN, DEFAULT_RUN, DIFFICULTY, LATTICE, OFFICERS, ORIENT, TITLE, brief, debrief, february, fullName, host,
-  incident, latticeOrders, latticeQ, makeCampaign, monthOf, newSeed, night, orders, plainName, showdown, simulate, split, status, surname,
+  incident, latticeOrders, latticeQ, makeCampaign, monthOf, newSeed, night, orders, outcome, plainName, showdown, simulate, split, status, surname,
 } from "../fixture.js";
 import { OX, OY } from "./TableScene.js";
 import { SCENARIOS, STORY_SCENARIO } from "../scenarios/index.js";
@@ -11,6 +11,7 @@ import { glossNode, hasTerm, profileHTML } from "../gloss.js";
 import { WORLD, setWorld } from "../story/world.js";
 import { worldFor } from "../gen/factions.js";
 import { PROGRESS, ledger, staffRoom } from "../story/rooms.js";
+import { clearLog, log, rawLog, summary } from "../playlog.js";
 
 const TRAY = { x: 1640, y: 1000 }; // where slips are dealt from and gathered to
 const portrait = (id) => `./portraits/${OFFICERS[id].portrait}.jpg`;
@@ -58,6 +59,7 @@ export class DeskScene extends Phaser.Scene {
   newCampaign(seed, difficulty) {
     this.campaign = makeCampaign(seed, difficulty);
     this.run = DEFAULT_RUN();
+    log("campaign", { code: this.campaign.seed, difficulty: this.campaign.difficulty, theatre: WORLD.strait });
   }
 
   // A new code is a new theatre: new countries, new names, a new chart, and a campaign
@@ -345,6 +347,8 @@ export class DeskScene extends Phaser.Scene {
 
   // ── chapters ──────────────────────────────────────────────────────────────
   go(chapter, opts = {}) {
+    if (this.chapter) log("screen", { chapter: this.chapter, ms: Date.now() - (this.chapterAt ?? Date.now()) });
+    this.chapterAt = Date.now();
     this.clear();
     this.table.reset();
     this.next = null;
@@ -469,6 +473,7 @@ export class DeskScene extends Phaser.Scene {
   // A case is heard in the speech box, kept clear of the sheet it was asked from.
   wireVoices(root, council, at = { w: 1000 }) {
     for (const b of root.querySelectorAll("[data-voice]")) b.addEventListener("click", () => {
+      log("hear", { who: b.dataset.voice });
       this.drop(this.talkObj);
       this.talkObj = this.talk(b.dataset.voice, council[b.dataset.voice].line, { delay: 0, ...(typeof at === "function" ? at() : at) });
     });
@@ -579,8 +584,18 @@ export class DeskScene extends Phaser.Scene {
         <div class="set-actions"><span class="code-box">${esc(c.seed)} · ${c.D.name}</span><button class="b" data-copy>Copy code</button><button class="b" data-replay>Replay from December</button></div></div>
       <div class="set-row"><div><p class="set-name">New campaign</p><p class="set-help">Roll a fresh code: a new theatre and a new campaign. Difficulty sets how far each element can vary.</p></div>
         <div class="set-actions">${Object.entries(DIFFICULTY).map(([id, d]) => `<button class="b" data-level="${id}">${d.name}</button>`).join("")}</div></div>
+      <div class="set-row"><div><p class="set-name">Playtest log</p><p class="set-help">Kept in this browser only. Copy it into the playtest sheet after a session.</p></div>
+        <div class="set-actions"><button class="b" data-log>Show the log</button><button class="b" data-clearlog>Clear</button></div></div>
+      <div class="set-row log" data-logbox hidden>${this.logHTML()}</div>
       <div class="set-row keys"><p class="set-name">Keys</p><dl><dt>Space</dt><dd>Finish the line, or continue</dd><dt>S · L · O</dt><dd>Staff room, ledger, settings</dd><dt>1–9</dt><dd>Jump to a chapter</dd><dt>N</dt><dd>New campaign, same difficulty</dd><dt>M</dt><dd>Reduced motion</dd><dt>Esc</dt><dd>Close this panel</dd></dl></div>
     </div>`;
+  }
+
+  // Campaigns played in this browser, one row each, and the raw lines to copy.
+  logHTML() {
+    const rows = summary().slice(-8).reverse();
+    const table = rows.length ? `<table class="logtable"><tr><th>Code</th><th>Minutes</th><th>Orders used Dec · Jan</th><th>Slips opened</th><th>Picks taken back</th><th>Cases heard</th><th>February</th><th>Result</th></tr>${rows.map((r) => `<tr><td>${esc(r.code)} · ${r.difficulty}</td><td>${r.minutes}</td><td>${r.seals.dec} · ${r.seals.jan}</td><td>${r.opened}</td><td>${r.undone}</td><td>${r.heard}</td><td>${r.route ?? "–"}</td><td>${r.grade ? `${r.grade}, ${r.days} days, ${r.casualties} casualties` : "unfinished"}</td></tr>`).join("")}</table>` : `<p class="set-help">Nothing logged yet.</p>`;
+    return `${table}<textarea readonly rows="5" aria-label="Raw playtest log">${esc(rawLog())}</textarea>`;
   }
 
   wireRoom(kind, node) {
@@ -599,6 +614,8 @@ export class DeskScene extends Phaser.Scene {
       navigator.clipboard?.writeText(text).then(() => { btn.textContent = "Copied"; }, () => { btn.textContent = "Select and copy the code"; });
     };
     node.querySelector("[data-replay]").onclick = () => { this.run = DEFAULT_RUN(); this.go("dec-brief"); };
+    node.querySelector("[data-log]").onclick = () => { const box = node.querySelector("[data-logbox]"); box.hidden = !box.hidden; };
+    node.querySelector("[data-clearlog]").onclick = () => { clearLog(); node.querySelector("[data-logbox]").innerHTML = this.logHTML(); };
     for (const b of node.querySelectorAll("[data-level]")) b.onclick = () => { this.newTheatre(newSeed(), b.dataset.level); };
   }
 
@@ -666,6 +683,7 @@ export class DeskScene extends Phaser.Scene {
         this.spendSeal(slip, ++this.used);
       }
       if (!wasStaff && isStaff) this.returnSeal(slip, --this.used);
+      log("pick", { slip: cfg.head.replace(/<[^>]+>/g, ""), option: id, back: isStaff && !wasStaff });
       set(id);
       slip.node.innerHTML = fromFace ? face() : choices();
       wire();
@@ -697,6 +715,7 @@ export class DeskScene extends Phaser.Scene {
 
   // Open a slip to its choices. Others in its column step aside until it closes.
   openSlip(o, swap) {
+    log("open", { slip: o.cfg.head.replace(/<[^>]+>/g, "") });
     for (const other of this.slips ?? []) if (other !== o && other.column && other.column === o.column) {
       other.slip.node.style.pointerEvents = "none";
       move(this, other.slip, { alpha: 0 }, { dur: T.ui });
@@ -761,6 +780,7 @@ export class DeskScene extends Phaser.Scene {
   // Signature move. The stamp lands at once; nothing on the map changes until the server
   // accepts. Here a 900 ms timer stands in for that receipt.
   send(slips, then) {
+    log("seals", { month: this.chapter.slice(0, 3), used: this.used });
     this.disp.node.querySelector(".go").disabled = true;
     slips.forEach((s, i) => this.stamp(s, 120 + i * 90));
     this.later(600, () => {
@@ -981,6 +1001,7 @@ export class DeskScene extends Phaser.Scene {
       btn.onclick = () => {
         for (const b of this.items.flatMap((o) => [...(o.node?.querySelectorAll?.("[data-route]") ?? [])])) b.disabled = true;
         this.run.feb.route = r.id;
+        log("route", { route: r.id });
         this.stamp(c);
         this.later(1400, () => this.go("feb-night"));
       };
@@ -1006,7 +1027,8 @@ export class DeskScene extends Phaser.Scene {
   }
 
   ch_debrief() {
-    const D = debrief(this.campaign, this.run);
+    const D = debrief(this.campaign, this.run), O = outcome(this.campaign, this.run);
+    log("result", { grade: D.grade, days: O.daysAfter, casualties: O.casualties, ministers: D.score[1].text.split(" ")[0] });
     this.hud(6, { seals: 0, state: D.after });
     this.table.setBoats("none");
     this.table.revealTruth(D.truth);
