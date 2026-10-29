@@ -1,7 +1,8 @@
 # Map Room roadmap: from one campaign to a war
 
-This is a proposal for the product owner, not a decision. Every item past phase 1 is an
-unsigned gameplay decision. Under the repository's V2 freeze (`AGENTS.md`), none of it goes
+This is a proposal for the product owner. One decision is signed: the player commands a
+task force moving through one war (decided 29 October 2026). Every other item past phase 1
+is an unsigned gameplay decision. Under the repository's V2 freeze (`AGENTS.md`), none of it goes
 into the shipped game until the V2 human fun gate passes. Until then it stays in
 `prototypes/map-room`.
 
@@ -15,7 +16,7 @@ into the shipped game until the V2 human fun gate passes. Until then it stays in
 - **Phase 1, generated theatres (built, proof of concept).** Each code also rolls the
   sea, the two countries and every place name. The campaign plays the same on any of them.
 
-## Recommendation: a task force moving through one war
+## Decided: a task force moving through one war
 
 Two shapes were on the table:
 
@@ -27,7 +28,7 @@ Two shapes were on the table:
 | Fits the staff and ledger | Yes: officers remember what you did to them | Loosely |
 | Risk | A bad run can snowball; it needs a floor | Each campaign feels disconnected |
 
-**Recommended: the task force.** The game already puts its weight on your staff, your
+**Decided: the task force** (product owner, 29 October 2026). The game already puts its weight on your staff, your
 reserve battalion's fatigue and the ally's trust. Carrying those from campaign to campaign
 makes every choice cost something later. A theatre-hopper resets them every time.
 
@@ -124,7 +125,7 @@ what the task force has and remembers, and the officers quote only that.
 
 ## Open questions for the product owner
 
-1. Task force or theatre-hopping? The recommendation above is the task force.
+1. ~~Task force or theatre-hopping?~~ Decided: the task force.
 2. Are the reward types and sizes right? Is there a floor on bad runs?
 3. Should a war have a fixed length (for example 4 campaigns) or end on a victory
    condition?
