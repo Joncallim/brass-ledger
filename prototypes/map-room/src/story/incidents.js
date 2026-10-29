@@ -7,6 +7,8 @@ import { surname } from "./officers.js";
 
 let B, R, M, MA, S, L, BN;
 const n = (x, k) => Math.round(x * k);
+// Days the battalion's engineer company spends changing the radar's waveguide.
+export const ENG_DAYS = 12;
 
 export let INCIDENTS;
 
@@ -19,19 +21,21 @@ onWorld(() => {
     {
       id: "radar", months: ["dec", "jan"], day: { dec: 9, jan: 7 }, from: "briggs",
       title: `${B}’s main radar is failing`,
-      text: (c, s, k) => `The main radar on ${B} has a cracked waveguide. Fixed now, it is off for six days and ${B} sees only ${n(20, 1)} nautical miles with the spare. Left running, the engineers give it a one in ${k > 1.3 ? "three" : "four"} chance of failing for good before the end of February.`,
+      text: (c, s, k) => `The main radar on ${B} has a cracked waveguide. Only ${BN}’s engineer company can change it, and the work takes them off the battalion’s rest for ${ENG_DAYS} days. Left running, the engineers give it a one in ${k > 1.3 ? "three" : "four"} chance of failing for good before the end of February, and ${B} would fight blind on that side.`,
       options: [
-        { id: "fix", name: "Repair it now", says: "Six days on the spare radar: 20 nautical miles instead of 30. After that, it is sound.", staff: true,
-          effect: (s) => { s.notes.push("radar-fixed"); } },
-        { id: "run", name: "Keep it running", says: `Full radar cover through the build-up, with a real chance it fails when ${R} sails.`, seal: true,
+        { id: "fix", name: "Repair it now", says: `${BN}’s engineers do the work: ${ENG_DAYS} more days on duty for the battalion, on top of this month’s orders. Six days on the spare radar, then it is sound.`, staff: true,
+          effect: (s) => { s.eng += ENG_DAYS; s.notes.push("radar-fixed"); } },
+        { id: "run", name: "Keep it running", says: `No cost now. A real chance it fails when ${R} sails, and ${B} loses a step of its defence that day.`, seal: true,
           effect: (s, c, k) => { if (c.luck.radar < (k > 1.3 ? 0.34 : 0.25)) s.radarFails = true; s.notes.push("radar-run"); } },
       ],
-      council: () => ({
-        okafor: { prefers: "fix", line: "A cracked waveguide does not heal. Six days on the spare now, or it dies on the day we need it most.", because: "keeping equipment working when it matters", risk: `${B} could be blind on the day ${R} sails.` },
+      council: (c, s) => ({
+        okafor: s.fatigue + ENG_DAYS > 100
+          ? { prefers: "run", line: `Those engineers are my tiredest men. Twelve more days and I am signing sick notes in February. Let the radar take its chances.`, because: `${BN} fit in February`, risk: `${BN} carries another ${ENG_DAYS} days into February.` }
+          : { prefers: "fix", line: "A cracked waveguide does not heal. The engineers have the days to spare now; they may not in February.", because: "keeping equipment working when it matters", risk: `${B} could be blind on the day ${R} sails.` },
         halden: { prefers: "run", line: `Six days with 20 miles is six days I cannot see what leaves ${S}. That is the week I most need to watch.`, because: `watching ${R} through its build-up`, risk: `six days in which a sailing from ${S} could go unseen.` },
         briggs: { prefers: "fix", line: "I would rather lose six days now than lose the radar in February.", because: `${B} being able to see an attack coming`, risk: "a radar failure at the worst possible moment." },
       }),
-      reply: { fix: ["briggs", "Engineers start tonight. Spare radar up by midnight."], run: ["okafor", "Then we run it hot and pray. I have logged my objection, General."] },
+      reply: { fix: ["briggs", "Engineers start tonight. Spare radar up by midnight."], run: ["briggs", "Then we run it and watch it. If it goes, it goes on the worst day, and I will be short a gun line."] },
     },
     {
       id: "defector", months: ["dec", "jan"], day: { dec: 11, jan: 9 }, from: "halden",

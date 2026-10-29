@@ -8,7 +8,9 @@ export const EASE = {
 };
 export const T = { press: 100, ui: 240, paper: 480, reveal: 800, scene: 1100 };
 export const STAGGER = { marker: 80, slip: 120, line: 90 };
-export const TYPE_RATE = 40; // characters per second, the default text speed
+// Characters per second for officers' lines. 0 shows each line whole: the playtest found
+// typing left panels half-filled while the player waited, so whole lines are the default.
+export const TYPE_RATE = 0;
 
 // Player settings that outlive a page load. Storage can be missing (private windows,
 // blocked site data), so every read and write is guarded and the defaults always work.

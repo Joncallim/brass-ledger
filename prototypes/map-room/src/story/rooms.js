@@ -4,7 +4,7 @@
 // they add no rules of their own.
 import { WORLD as W, onWorld } from "./world.js";
 import { OFFICERS } from "./officers.js";
-import { host, incident, latticeQ, orders, status } from "./copy.js";
+import { host, incident, latticeOrders, latticeQ, orders, status } from "./copy.js";
 import { ministersFor, simulate } from "./play.js";
 
 let MA, R, S, B;
@@ -25,7 +25,7 @@ const POINT = ["decStart", "decOrders", "decEnd", "janOrders", "janEnd", "janEnd
 export function committed(run, progress) {
   return {
     dec: { beacon: progress >= 2 ? run.dec?.beacon ?? "quiet" : "quiet", lattice: progress >= 2 ? run.dec?.lattice ?? "boats" : "boats", incident: progress >= 1 ? run.dec?.incident ?? null : null },
-    jan: { beacon: progress >= 4 ? run.jan?.beacon ?? "quiet" : "quiet", way: progress >= 4 ? run.jan?.way ?? null : null, incident: progress >= 3 ? run.jan?.incident ?? null : null },
+    jan: { beacon: progress >= 4 ? run.jan?.beacon ?? "quiet" : "quiet", lattice: progress >= 4 ? run.jan?.lattice ?? "sarn" : "sarn", way: progress >= 4 ? run.jan?.way ?? null : null, incident: progress >= 3 ? run.jan?.incident ?? null : null },
     feb: { route: progress >= 5 ? run.feb?.route ?? "quiet" : null },
   };
 }
@@ -42,6 +42,8 @@ function decisions(c, run, progress) {
     if (progress < at) return;
     const o = orders(c, done, month), pick = done[month].beacon;
     out.push({ when: month === "dec" ? "18 December" : "January", what: `${B}’s ${month === "dec" ? "December" : "January"} orders`, chose: o.options.find((x) => x.id === pick).name, staff: pick === o.staffId, council: o.council, pick });
+    const l = latticeOrders(c, done, month), q = done[month].lattice;
+    out.push({ when: month === "dec" ? "December" : "January", what: `${W.network}’s ${month === "dec" ? "December" : "January"} question`, chose: l.options.find((x) => x.id === q).name, staff: q === l.staffId, council: l.council, pick: q });
   };
   inc("dec", 1); ord("dec", 2); inc("jan", 3); ord("jan", 4);
   return out;
@@ -71,7 +73,7 @@ const knowLines = (c, s) => {
   const k = s.knows, out = [];
   if (k.count) out.push(`${k.count} landing craft in ${S} at the end of December.`);
   if (k.role) out.push({ screen: `${R}’s fishing boats are sailing with the landing craft, under navy orders.`, swarm: `${R}’s fishing boats crowd the shipping lane in daylight, under navy orders.`, scout: `${R}’s fishing boats are counting ${B}’s guns at night, under navy orders.` }[k.role]);
-  if (k.date) out.push(k.date.kind === "exercise" ? `${R} has announced an exercise from ${k.date.day} February.` : `${R}’s ships are ordered to sea by ${k.date.day} February.`);
+  if (k.date) out.push((k.date.confirmed ? "Confirmed: " : "") + (k.date.kind === "exercise" ? `${R} has announced an exercise from ${k.date.day} February.` : `${R}’s ships are ordered to sea by ${k.date.day} February.`));
   if (k.claim) out.push(`The defector says ${k.claim.plan === "land" ? "a landing is planned" : k.claim.plan === "bluff" ? "there is no landing, only a threat" : "they will test us first"}. Not yet confirmed.`);
   return out;
 };
@@ -86,7 +88,7 @@ export function ledger(c, run, progress) {
   }
   if (progress >= 2) {
     const o = orders(c, done, "dec"), b = o.options.find((x) => x.id === done.dec.beacon), q = latticeQ(done.dec.lattice);
-    add("December", "December orders", [`${B}: ${lower(b.name)}${b.staff ? " (staff plan)" : " (your order)"}.`, `${W.network}: ${q.q}${q.staff ? " (staff plan)" : " (your question)"}`], "decEnd");
+    add("December", "December orders", [`${B}: ${lower(b.name)}${b.staff ? " (staff plan)" : " (your order)"}.`, `${W.network}: ${q.q}${q.staff ? " (staff plan)" : " (your order)"}`], "decEnd");
   }
   if (progress >= 3 && c.incidents.jan) {
     const I = incident(c, done, "jan"), pick = done.jan.incident ?? I.staffId, o = I.options.find((x) => x.id === pick);
@@ -95,9 +97,10 @@ export function ledger(c, run, progress) {
   if (progress >= 4) {
     const o = orders(c, done, "jan"), b = o.options.find((x) => x.id === done.jan.beacon), H = host(c, done);
     const way = done.jan.way && [...H.ways, H.secure].find((x) => x.id === done.jan.way);
-    add("January", "January orders", [`${B}: ${lower(b.name)}${b.staff ? " (staff plan)" : " (your order)"}.`, `${W.host}: ${way ? lower(way.name) : "wait for the cabinet’s vote"}${way ? " (your order)" : " (staff plan)"}.`], "janEnd");
+    const jq = latticeQ(done.jan.lattice, "jan");
+    add("January", "January orders", [`${B}: ${lower(b.name)}${b.staff ? " (staff plan)" : " (your order)"}.`, `${W.network}: ${lower(jq.q)}${jq.staff ? " (staff plan)" : " (your order)"}.`, `${W.host}: ${way ? lower(way.name) : "wait for the cabinet’s vote"}${way ? " (your order)" : " (staff plan)"}.`], "janEnd");
   }
-  if (progress >= 5) add("February", "The showdown", [done.feb.route === "joint" ? `Stood with ${W.host}’s navy.` : "Held quietly."], null);
+  if (progress >= 5) add("February", "The showdown", [{ joint: `Stood with ${W.host}’s navy.`, forward: `Dug ${W.reserve} in on the headland.`, quiet: "Held quietly." }[done.feb.route]], null);
   const s = sim[POINT[progress]];
   return {
     code: c.seed, difficulty: c.D.name, entries,

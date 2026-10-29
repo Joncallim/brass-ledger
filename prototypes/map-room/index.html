@@ -32,7 +32,7 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .officer{font-family:'IBM Plex Sans',sans-serif;font-weight:600;color:var(--brass-deep);white-space:nowrap;font-size:.92em}
 .officer .rank{font-weight:400}
 .talk .officer{color:#E4BE6A;font-size:1em}
-.attrib{font-family:'IBM Plex Sans',sans-serif;font-size:16px;color:var(--ink2)}.talk .post{font-size:17px;color:var(--room-muted);margin-left:10px;font-weight:400}
+.attrib{font-family:'IBM Plex Sans',sans-serif;font-size:16px;color:var(--ink2)}.talk .post{font-size:18px;color:var(--room-muted);margin-left:10px;font-weight:400}
 .talk .say{font-size:28px;line-height:39px;margin-top:10px;min-height:117px}
 /* Names and terms you can ask about: places, units and our own systems in teal, jargon
    underlined only. Hover or focus opens a profile card. */
@@ -49,7 +49,7 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .chips{display:flex;gap:10px;margin-left:12px}
 .chip{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 9px;border:1px solid #3A3530;border-radius:6px;background:#1E1B18;cursor:help;line-height:17px}
 .chip i{width:9px;height:9px;border-radius:50%;flex:none;background:#7FB08A}.chip.tone-warn i{background:#E2B04A}.chip.tone-bad i{background:#E06A5F}
-.chip span{font-size:15px;font-weight:500;white-space:nowrap}.chip small{display:block;font-size:12px;color:var(--room-muted);font-weight:400}
+.chip span{font-size:17px;font-weight:500;white-space:nowrap}.chip small{display:block;font-size:13px;color:var(--room-muted);font-weight:400}
 /* The hard call: the two strongest opposing views on a decision, side by side. */
 .debate{margin-top:14px;padding-top:12px;border-top:1px solid #DCD4C3}
 .debate .sides{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
@@ -161,6 +161,17 @@ details.more[open] summary{margin-bottom:4px}
 .warn .lab{color:var(--red-ink)}
 .warn.none{background:#E6E1D5;border-left-color:#6B655C}.warn.none .lab{color:var(--ink2)}
 .slip{width:480px;padding:30px 28px 24px;position:relative}
+/* One line per officer who advises otherwise; the full case is behind "Change this order". */
+.advice{margin-top:12px;padding-top:10px;border-top:1px solid #DCD4C3;display:grid;gap:6px}
+.advice p{display:flex;gap:8px;align-items:flex-start;margin:0;font-size:16px;line-height:22px}.advice .av.sm{margin:0;flex:none}
+.advice.agree{font-size:16px;color:var(--ink2);margin-top:12px}.more-advice{font-size:15px;color:var(--ink2);margin:0}
+/* Order slips: the face is compact so two fit in a column; an open slip never runs off the table. */
+.slip .will{font-size:23px;line-height:30px}.slip .row{font-size:17px;line-height:23px;margin-top:8px}
+.slip.open{max-height:960px;overflow-y:auto;box-sizing:border-box}.slip.open>.btns{position:sticky;bottom:-24px;background:var(--sheet);padding:12px 0 6px;margin-bottom:-6px;box-shadow:0 -10px 14px -10px rgba(0,0,0,.25)}.slip.open .opt .s{font-size:16px;line-height:22px}
+/* February: three routes side by side along the bottom edge. */
+.route{padding:22px 24px 20px;box-sizing:border-box}.route h2{font-size:28px;line-height:33px}.route .body{font-size:18px;line-height:25px;margin-top:6px}
+.route .row{grid-template-columns:72px 1fr;font-size:16px;line-height:22px}.route .quote{font-size:18px;line-height:24px}
+.memories{padding:26px 30px;box-sizing:border-box}.memory{display:flex;gap:12px;align-items:flex-start;font-size:18px;line-height:26px;margin:14px 0 0}.memory .av{width:40px;height:40px}
 .pin{position:absolute;top:-14px;left:50%;margin-left:-14px;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#E6C277,#C99A3E 60%,#8E6A1D);box-shadow:0 3px 6px rgba(0,0,0,.4)}
 .slip h3{margin:0;font-size:16px;font-weight:600;color:var(--ink2)}
 .will{font-size:25px;line-height:32px;font-weight:600;margin-top:6px}

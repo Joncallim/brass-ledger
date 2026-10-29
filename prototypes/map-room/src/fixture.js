@@ -3,9 +3,9 @@
 // gathers what the scenes need and defines the glossary every highlighted word opens.
 import { WORLD as W, onWorld } from "./story/world.js";
 export { OFFICERS, fullName, plainName, surname } from "./story/officers.js";
-export { CALENDAR, monthOf, TITLE, ORIENT, LATTICE, latticeQ, brief, orders, host, incident, night, february, debrief, split, status } from "./story/copy.js";
+export { CALENDAR, monthOf, TITLE, ORIENT, LATTICE, latticeQ, latticeOrders, brief, orders, host, incident, night, february, showdown, debrief, split, status } from "./story/copy.js";
 export { makeCampaign, newSeed, DIFFICULTY } from "./story/campaign.js";
-export { simulate, needsApproval } from "./story/play.js";
+export { simulate, needsApproval, outcome } from "./story/play.js";
 
 let B, R, M, MA, S, L, BN;
 
@@ -13,7 +13,7 @@ let B, R, M, MA, S, L, BN;
 export const DEFAULT_CAMPAIGN = { seed: "KESTREL", difficulty: "shifting" };
 export const DEFAULT_RUN = () => ({
   dec: { beacon: "rest", lattice: "who", incident: null },
-  jan: { beacon: "show", way: "buy", incident: null },
+  jan: { beacon: "show", lattice: "sarn", way: "buy", incident: null },
   feb: { route: "joint" },
 });
 

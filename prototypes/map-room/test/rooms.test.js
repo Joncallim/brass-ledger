@@ -22,7 +22,7 @@ test("advice records count only decisions the officer argued about", () => {
     for (const o of staffRoom(c, RUN, 5)) {
       if (!o.record) continue;
       assert.ok(o.record.followed >= 0 && o.record.followed <= o.record.of);
-      assert.ok(o.record.of <= 4, "at most two incidents and two months of orders");
+      assert.ok(o.record.of <= 6, "at most two incidents, and two months of station and listening orders");
     }
   }
 });

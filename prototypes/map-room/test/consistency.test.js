@@ -7,9 +7,9 @@ import { outcome } from "../src/story/play.js";
 import * as story from "../src/fixture.js";
 
 const PATHS = [];
-for (const beacon of ["quiet", "rest", "show"]) for (const lattice of ["boats", "who", "when"])
-  for (const [jb, way] of [["quiet", null], ["hold", null], ["show", "act"], ["show", "buy"], ["quiet", "buy"]]) for (const route of ["quiet", "joint"])
-    PATHS.push({ dec: { beacon, lattice }, jan: { beacon: jb, way }, feb: { route } });
+for (const beacon of ["quiet", "rest", "show"]) for (const lattice of ["boats", "who", "when"]) for (const jl of ["sarn", "when"])
+  for (const [jb, way] of [["quiet", null], ["hold", null], ["show", "act"], ["show", "buy"], ["quiet", "buy"]]) for (const route of ["quiet", "forward", "joint"])
+    PATHS.push({ dec: { beacon, lattice }, jan: { beacon: jb, lattice: jl, way }, feb: { route } });
 
 function* everyEnding() {
   for (const d of ["steady", "shifting", "volatile"]) for (let i = 0; i < 12; i++) {
@@ -20,7 +20,7 @@ function* everyEnding() {
 
 test("Halden only claims we kept watch on Sarn when Lattice was listening", () => {
   for (const { o, D } of everyEnding()) {
-    const claims = /kept Lattice on Sarn|kept our watch/.test(D.halden);
+    const claims = /stayed on Sarn’s harbour net/.test(D.halden);
     assert.equal(claims, o.listening, D.halden);
   }
 });
@@ -40,20 +40,29 @@ test("the grade follows the three things you were asked to keep", () => {
   }
 });
 
-test("months before your command are credited to your predecessor", () => {
-  for (const { D } of everyEnding()) {
-    assert.match(D.rows[0][1], /^Before you/);
-    assert.match(D.rows[1][1], /^Before you/);
+test("the debrief reads your three months in calendar order", () => {
+  for (const { D } of everyEnding()) assert.deepEqual(D.rows.map((r) => r[0]), ["December", "January", "February"]);
+});
+
+// The playtest found the debrief saying "fit after 61 days" while the top bar still showed
+// 31: the bar read the state before February. Both must read the same final state.
+test("the debrief and the top bar read the same final state", () => {
+  for (const { c, o, D } of everyEnding()) {
+    const bar = story.status(c, D.after);
+    assert.equal(D.after.fatigue, o.daysAfter);
+    assert.ok(bar[0].value.includes(String(o.daysAfter)) || o.daysAfter === 0, `${bar[0].value} vs ${o.daysAfter}`);
+    assert.ok(bar[1].value.startsWith(String(D.score[1].text.split(" ")[0])), `${bar[1].value} vs ${D.score[1].text}`);
+    assert.equal(bar[0].tone === "bad", !o.kept.battalion);
   }
 });
 
 test("once the ships sail, no screen warns of an attack still to come", () => {
   for (const { c, run } of everyEnding()) {
-    assert.doesNotMatch(story.night(c, run, "jan").still[0], /Warning before an attack/);
+    assert.equal(story.night(c, run, "jan").still, null);
     assert.doesNotMatch(story.february(c, run).warning[0], /Warning before an attack/);
   }
 });
 
 test("the February believed-column matches what Lattice could hear", () => {
-  for (const { o, D } of everyEnding()) assert.equal(D.rows[4][2].startsWith("Lattice heard"), o.listening);
+  for (const { o, D } of everyEnding()) assert.equal(D.rows[2][2].startsWith("Lattice heard"), o.listening);
 });

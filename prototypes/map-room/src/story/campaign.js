@@ -20,14 +20,14 @@ export const DIFFICULTY = {
     name: "Shifting",
     line: "Three possible enemy plans, a sailing date anywhere in early February, the odd misleading clue, a divided cabinet, an incident every month.",
     plans: ["land", "bluff", "probe"], sailDays: [2, 5], deception: 0.2, planShift: false,
-    support: [52, 70], ministers: ["firm", "hawk", "dove"], voteDays: [12, 17], hotline: 0.3, drift: 5,
+    support: [46, 66], ministers: ["firm", "hawk", "dove"], voteDays: [12, 17], hotline: 0.3, drift: 5,
     fatigue: [78, 100], incidents: 2, severity: 1.25, growth: [2, 4],
   },
   volatile: {
     name: "Volatile",
     line: "Any enemy plan, which can change mid-campaign; clues that may be planted; a cabinet that drifts month to month; harsher incidents.",
     plans: ["land", "bluff", "probe"], sailDays: [1, 6], deception: 0.4, planShift: true,
-    support: [42, 62], ministers: ["hawk", "dove"], voteDays: [10, 20], hotline: 0.45, drift: 10,
+    support: [48, 66], ministers: ["hawk", "dove"], voteDays: [10, 20], hotline: 0.45, drift: 8,
     fatigue: [72, 106], incidents: 2, severity: 1.5, growth: [2, 5],
   },
 };

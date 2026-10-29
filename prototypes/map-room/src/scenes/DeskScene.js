@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { EASE, T, STAGGER, move, prefs, reducedMotion, savePrefs, seeded } from "../motion.js";
 import {
   CALENDAR, DEFAULT_CAMPAIGN, DEFAULT_RUN, DIFFICULTY, LATTICE, OFFICERS, ORIENT, TITLE, brief, debrief, february, fullName, host,
-  incident, latticeQ, makeCampaign, monthOf, newSeed, night, orders, plainName, simulate, split, status, surname,
+  incident, latticeOrders, latticeQ, makeCampaign, monthOf, newSeed, night, orders, plainName, showdown, simulate, split, status, surname,
 } from "../fixture.js";
 import { OX, OY } from "./TableScene.js";
 import { SCENARIOS, STORY_SCENARIO } from "../scenarios/index.js";
@@ -20,7 +20,7 @@ const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">":
 
 // Number keys jump to these. The incident signals sit between briefing and orders.
 export const CHAPTERS = ["title", "dec-brief", "dec-orders", "dec-night", "jan-brief", "jan-orders", "jan-night", "feb-showdown", "debrief"];
-const ALL = [...CHAPTERS, "dec-signal", "jan-signal", "chart"];
+const ALL = [...CHAPTERS, "dec-signal", "jan-signal", "feb-night", "chart"];
 const MONTH = { dec: { turn: 4, name: "December" }, jan: { turn: 5, name: "January" } };
 
 // Every word and every control is DOM, so screen readers, focus and text rendering work
@@ -211,7 +211,10 @@ export class DeskScene extends Phaser.Scene {
     el.innerHTML = html;
     glossNode(el); // before the text nodes are collected, so highlights type out in place
     el.style.minHeight = `${el.offsetHeight}px`; // reserve the finished height, so boxes don't grow as they type
-    if (reducedMotion.on || !prefs.typeRate) return;
+    if (reducedMotion.on || !prefs.typeRate) {
+      if (!reducedMotion.on) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay, fill: "backwards" });
+      return;
+    }
     const nodes = [];
     const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
     while (walk.nextNode()) nodes.push([walk.currentNode, walk.currentNode.nodeValue]);
@@ -269,7 +272,7 @@ export class DeskScene extends Phaser.Scene {
     const o = OFFICERS[id];
     const t = this.dom(x, y, `<div class="talk" style="width:${w}px" role="group" aria-label="${plainName(id)}">
       <div class="face" style="background-image:url(${portrait(id)})"></div>
-      <div><div class="who" data-term="officer:${id}"><span class="rank">${o.rank}</span> ${o.name}<span class="post">${o.post} · ${o.focus}</span></div>
+      <div><div class="who" data-term="officer:${id}"><span class="rank">${o.rank}</span> ${o.name}<span class="post">${o.post}</span></div>
       <p class="say" aria-live="polite"></p></div><span class="hint">Click or press Space</span></div>`);
     t.node.addEventListener("click", () => this.skip());
     move(this, t, { alpha: [0, 1], x: [x - 32, x] }, { dur: 420, delay });
@@ -348,6 +351,7 @@ export class DeskScene extends Phaser.Scene {
     this.talkObj = null;
     this.chapter = chapter;
     this.room = null; // cleared with everything else above
+    this.slips = []; this.extraNotes = null; this.talkAt = { w: 1000 };
     this.hideTip();
     if (!chapter.endsWith("night")) this.mapHotspots();
     this[`ch_${chapter.replace("-", "_")}`](opts);
@@ -402,7 +406,7 @@ export class DeskScene extends Phaser.Scene {
       t.node.querySelector("[data-orient]").style.display = "none";
       t.node.querySelector("[data-saved]").style.display = "none";
       t.node.querySelector("[data-setup]").hidden = false;
-      t.node.querySelector(".level.sel")?.focus();
+      t.node.querySelector(".level.sel")?.focus({ preventScroll: true });
     };
     for (const b of t.node.querySelectorAll("[data-level]")) b.onclick = () => { this.newTheatre(newSeed(), b.dataset.level); };
     this.focusLater(go, 300);
@@ -451,13 +455,13 @@ export class DeskScene extends Phaser.Scene {
     const side = ([opt, who]) => {
       const lead = who[0], p = council[lead], o = OFFICERS[lead];
       const also = who.slice(1).map((w) => surname(w)).join(" and ");
-      return `<div class="side"><div class="side-head"><span class="av" style="background-image:url(${portrait(lead)})"></span><span><span class="vname">${surname(lead)}</span><span class="focus">${o.post} · ${o.focus}</span></span></div>
-        <p class="wants">Wants: <b>${optName(opt)}</b>${also ? `<span class="also">, backed by ${also}</span>` : ""}</p>
+      return `<div class="side"><div class="side-head"><span class="av" style="background-image:url(${portrait(lead)})"></span><span><span class="vname">${surname(lead)}</span><span class="focus">${o.post}</span></span></div>
+        <p class="wants">Advises: <b>${optName(opt)}</b>${also ? `<span class="also">, backed by ${also}</span>` : ""}</p>
         <p class="case"><b>Protecting</b> ${p.because}.</p>
         <details class="more"><summary>If you overrule ${OFFICERS[lead].name.split(" ").pop()}</summary><p class="case risk">${p.risk}</p><button class="b sm" data-voice="${lead}">Hear the case</button></details></div>`;
     };
     // Anyone with a third view still gets a line, so no position is hidden.
-    const others = (sp.rest ?? []).map(([opt, who]) => `<p class="other"><span class="av sm" style="background-image:url(${portrait(who[0])})"></span><span>${who.map((w) => surname(w)).join(" and ")} ${who.length > 1 ? "want" : "wants"} <b>${lower(optName(opt))}</b>: ${council[who[0]].because}.</span><button class="b sm" data-voice="${who[0]}">Hear</button></p>`).join("");
+    const others = (sp.rest ?? []).map(([opt, who]) => `<p class="other"><span class="av sm" style="background-image:url(${portrait(who[0])})"></span><span>${who.map((w) => surname(w)).join(" and ")} ${who.length > 1 ? "advise" : "advises"} <b>${lower(optName(opt))}</b>: ${council[who[0]].because}.</span><button class="b sm" data-voice="${who[0]}">Hear</button></p>`).join("");
     if (sp.agree) return `<div class="debate agree"><p class="lab">Your staff agree</p>${side(sp.side)}</div>`;
     return `<div class="debate"><p class="lab">The hard call</p><div class="sides">${side(sp.a)}${side(sp.b)}</div>${others}</div>`;
   }
@@ -466,7 +470,7 @@ export class DeskScene extends Phaser.Scene {
   wireVoices(root, council, at = { w: 1000 }) {
     for (const b of root.querySelectorAll("[data-voice]")) b.addEventListener("click", () => {
       this.drop(this.talkObj);
-      this.talkObj = this.talk(b.dataset.voice, council[b.dataset.voice].line, { delay: 0, ...at });
+      this.talkObj = this.talk(b.dataset.voice, council[b.dataset.voice].line, { delay: 0, ...(typeof at === "function" ? at() : at) });
     });
   }
 
@@ -498,7 +502,7 @@ export class DeskScene extends Phaser.Scene {
         if (o.seal && !spent) { this.spendSeal(sheet, 1); spent = true; }
         if (!o.seal && spent) { this.returnSeal(sheet, 0); spent = false; }
         render();
-        sheet.node.querySelector(`[data-pick="${o.id}"]`)?.focus();
+        sheet.node.querySelector(`[data-pick="${o.id}"]`)?.focus({ preventScroll: true });
         if (I.reply[o.id]) { this.drop(this.talkObj); this.talkObj = this.talk(...I.reply[o.id], { delay: 0, x: 1176, w: 650 }); }
       };
       const go = sheet.node.querySelector("[data-go]");
@@ -543,9 +547,9 @@ export class DeskScene extends Phaser.Scene {
     const cards = staffRoom(this.campaign, this.run, progress).map((o) => `<article class="officer-card-full">
       <div class="ofc-face" style="background-image:url(${portrait(o.id)})"></div>
       <p class="ofc-name" data-term="officer:${o.id}"><span class="rank">${o.rank}</span> ${o.name}</p><p class="ofc-post">${o.post} · ${o.from}</p>
-      <dl><dt>Job</dt><dd>${o.focus}.</dd><dt>Always pushes for</dt><dd>${o.pushes}.</dd>
+      <dl><dt>Job</dt><dd>${o.focus}.</dd><dt>Usually argues for</dt><dd>${o.pushes}.</dd>
       ${o.watching ? `<dt>Watching</dt><dd><span class="chip tone-${o.watching.tone}"><i></i><span><small>${o.watching.label}</small>${o.watching.value}</span></span></dd>` : ""}</dl>
-      ${o.now ? `<div class="ofc-now"><p class="lab">${o.now.month}: wants</p><p class="wants-big">${o.now.wants}${o.now.staffPlan ? ` <span class="tag">staff plan</span>` : ` <span class="tag differs">against the staff plan</span>`}</p>
+      ${o.now ? `<div class="ofc-now"><p class="lab">Advises for ${o.now.month}</p><p class="wants-big">${o.now.wants}${o.now.staffPlan ? ` <span class="tag">staff plan</span>` : ` <span class="tag differs">against the staff plan</span>`}</p>
         <p class="case"><b>Protecting</b> ${o.now.because}.</p><p class="case risk"><b>If you overrule</b> ${o.now.risk}</p>
         <button class="b sm" data-hear="${o.id}">Hear the case</button></div>` : `<div class="ofc-now"><p class="lab">This month</p><p class="case">No order left to argue over.</p></div>`}
       <p class="ofc-record">${o.record ? `You have taken their advice <b>${o.record.followed} of ${o.record.of}</b> times. Last: ${o.record.last.agreed ? "you agreed on" : "you overruled them on"} ${lower(o.record.last.what)}.` : "No decisions yet on which they gave advice."}</p></article>`).join("");
@@ -617,34 +621,36 @@ export class DeskScene extends Phaser.Scene {
   }
 
   // ── order slips ───────────────────────────────────────────────────────────
-  // One slip per issue. Its face shows staff's plan or your change, and the hard call
-  // between your staff; "Change this order" flips it to the choices. Seals are spent and
-  // returned here, never more than two a month including any spent on the incident.
-  orderSlip(cfg, { get, set, x, y, i, seed, onPicked }) {
-    const o = { cfg, get, set };
+  // One slip per issue. Its face leads with the decision and its cost, and one line for each
+  // officer who advises otherwise; "Change this order" opens the full hard call and the
+  // choices. Seals are spent and returned here, never more than two a month including any
+  // spent on the incident. Slips in one column make room for each other while open.
+  orderSlip(cfg, { get, set, x, y, i, seed, onPicked, w = 560, column = null }) {
+    const o = { cfg, get, set, x, y, column };
     const slip = this.dom(0, 0, "");
     o.slip = slip;
     const opt = () => cfg.options.find((p) => p.id === get());
     const wire = () => {
-      slip.node.querySelector("[data-change]")?.addEventListener("click", () => this.flipTo(slip, () => { slip.node.innerHTML = choices(); wire(); slip.node.querySelector(".opt.sel")?.focus(); }));
+      slip.node.querySelector("[data-change]")?.addEventListener("click", () => this.openSlip(o, () => { slip.node.innerHTML = choices(); wire(); slip.node.querySelector(".opt.sel")?.focus({ preventScroll: true }); }));
       slip.node.querySelector("[data-staffplan]")?.addEventListener("click", () => pick(cfg.options.find((p) => p.staff).id, true));
-      slip.node.querySelector("[data-done]")?.addEventListener("click", () => this.flipTo(slip, () => { slip.node.innerHTML = face(); wire(); slip.node.querySelector("[data-change]")?.focus(); }));
+      slip.node.querySelector("[data-done]")?.addEventListener("click", () => this.closeSlip(o, () => { slip.node.innerHTML = face(); wire(); slip.node.querySelector("[data-change]")?.focus({ preventScroll: true }); }));
       for (const b of slip.node.querySelectorAll("[data-opt]")) b.addEventListener("click", () => pick(b.dataset.opt));
-      this.wireVoices(slip.node, cfg.council);
+      this.wireVoices(slip.node, cfg.council, () => this.talkAt);
     };
     const face = () => {
       const p = opt();
       const top = p.staff
-        ? `<h3>${cfg.head} · unless you change it</h3><p class="will">${surname(cfg.lead)} ${cfg.plan}</p>
-           <div class="row"><b>Gives</b><span>${cfg.does}</span></div><div class="row"><b>Costs</b><span>${cfg.cost}</span></div>`
-        : `<h3>${cfg.head} · your order</h3><p class="will">${p.name}.</p><div class="row"><b>Means</b><span>${p.says}</span></div>`;
-      return `<article class="paper slip" style="width:600px" aria-label="${cfg.head}"><span class="pin"></span>${top}${this.debate(cfg.council, cfg.options, cfg.staffId)}
+        ? `<h3>${cfg.head} · staff plan</h3><p class="will">Your staff ${cfg.plan}</p>
+           <div class="row"><b>Costs</b><span>${cfg.cost}</span></div><div class="row"><b>Gives</b><span>${cfg.does}</span></div>`
+        : `<h3>${cfg.head} · your order</h3><p class="will">${/[?.]$/.test(p.name) ? p.name : `${p.name}.`}</p><div class="row"><b>Means</b><span>${p.says}</span></div>`;
+      return `<article class="paper slip" style="width:${w}px" aria-label="${cfg.head}"><span class="pin"></span>${top}${this.advice(cfg.council, cfg.options, p.id)}
         <div class="btns"><button class="b" data-change>${p.staff ? "Change this order" : "Change again"}</button>${p.staff ? "" : '<button class="b" data-staffplan>Back to the staff plan</button>'}</div></article>`;
     };
     const backers = (id) => Object.entries(cfg.council ?? {}).filter(([, c]) => c.prefers === id).map(([who]) => `<span class="av sm" title="${plainName(who)}" style="background-image:url(${portrait(who)})"></span>`).join("");
-    const choices = () => `<article class="paper slip" style="width:600px" aria-label="${cfg.head}, choose an order"><span class="pin"></span><h3>${cfg.head} · your order</h3>
-      <p class="will">${cfg.question}</p><div role="radiogroup">${cfg.options.map((p) => `<button class="opt ${get() === p.id ? "sel" : ""}" data-opt="${p.id}" role="radio" aria-checked="${get() === p.id}">
-      <span class="r"></span><span><b>${p.name}</b><span class="s">${p.says}</span><span class="opt-foot"><span class="cost ${p.staff ? "free" : ""}">${p.staff ? "Staff plan · free" : "Uses 1 personal order"}</span>${backers(p.id) ? `<span class="backed">Backed by ${backers(p.id)}</span>` : ""}</span></span></button>`).join("")}</div>
+    const choices = () => `<article class="paper slip open" style="width:${Math.max(w, 780)}px" aria-label="${cfg.head}, choose an order"><span class="pin"></span><h3>${cfg.head} · your order</h3>
+      <p class="will">${cfg.question}</p>${cfg.explain ? `<div class="row"><b>Why</b><span>${cfg.explain}</span></div>` : ""}${this.debate(cfg.council, cfg.options, cfg.staffId)}
+      <div role="radiogroup">${cfg.options.map((p) => `<button class="opt ${get() === p.id ? "sel" : ""}" data-opt="${p.id}" role="radio" aria-checked="${get() === p.id}">
+      <span class="r"></span><span><b>${p.name}</b><span class="s">${p.says}</span><span class="opt-foot"><span class="cost ${p.staff ? "free" : ""}">${p.staff ? "Staff plan · free" : "Uses 1 personal order"}</span>${backers(p.id) ? `<span class="backed">Advised by ${backers(p.id)}</span>` : ""}</span></span></button>`).join("")}</div>
       <p class="why-note" style="font-size:16px;color:var(--red-ink);margin-top:8px" aria-live="polite"></p>
       <div class="btns"><button class="b on" data-done>Done</button></div></article>`;
     const pick = (id, fromFace = false) => {
@@ -663,16 +669,61 @@ export class DeskScene extends Phaser.Scene {
       set(id);
       slip.node.innerHTML = fromFace ? face() : choices();
       wire();
-      if (!fromFace) slip.node.querySelector(`[data-opt="${id}"]`)?.focus();
-      if (cfg.reply?.[id]) { this.drop(this.talkObj); this.talkObj = this.talk(...cfg.reply[id], { delay: 0, w: 1000 }); }
+      if (!fromFace) slip.node.querySelector(`[data-opt="${id}"]`)?.focus({ preventScroll: true });
+      if (cfg.reply?.[id]) { this.drop(this.talkObj); this.talkObj = this.talk(...cfg.reply[id], { delay: 0, ...this.talkAt }); }
       onPicked?.(id, before);
+      this.refreshNotes();
       this.refreshDispatch();
     };
     o.pick = pick;
+    o.mark = () => opt().mark;
     o.render = () => { slip.node.innerHTML = face(); wire(); };
     o.render();
+    (this.slips ??= []).push(o);
+    if (y + slip.node.offsetHeight > 1064) o.y = y = Math.max(108, 1064 - slip.node.offsetHeight);
     this.deal(slip, x, y, i, seed);
     return o;
+  }
+
+  // One line per officer who advises something other than the current choice.
+  advice(council, options, current) {
+    const name = (id) => { const o = options.find((x) => x.id === id); return o?.short ?? lower(o?.name ?? id); };
+    const differ = Object.entries(council ?? {}).filter(([, p]) => p.prefers !== current);
+    if (!differ.length) return `<p class="advice agree">Your staff all advise this.</p>`;
+    // Two lines at most on the face; the rest are one click away.
+    const more = differ.length > 2 ? `<p class="more-advice">${differ.slice(2).map(([w]) => surname(w)).join(" and ")} also ${differ.length > 3 ? "advise" : "advises"} otherwise.</p>` : "";
+    return `<div class="advice">${differ.slice(0, 2).map(([who, p]) => `<p><span class="av sm" style="background-image:url(${portrait(who)})"></span><span>${surname(who)} advises <b>${name(p.prefers)}</b>: ${p.because}.</span></p>`).join("")}${more}</div>`;
+  }
+
+  // Open a slip to its choices. Others in its column step aside until it closes.
+  openSlip(o, swap) {
+    for (const other of this.slips ?? []) if (other !== o && other.column && other.column === o.column) {
+      other.slip.node.style.pointerEvents = "none";
+      move(this, other.slip, { alpha: 0 }, { dur: T.ui });
+    }
+    this.game.domContainer.appendChild(o.slip.node); // above its neighbours
+    this.talkAt = { x: 1262, y: 108, w: 602 }; // the open slip spans the middle; speak from the right
+    if (o.column) move(this, o.slip, { y: 100 }, { dur: T.ui });
+    this.flipTo(o.slip, swap);
+  }
+
+  closeSlip(o, swap) {
+    this.flipTo(o.slip, swap);
+    if (o.column) move(this, o.slip, { y: o.y }, { dur: T.ui });
+    this.talkAt = this.talkBase;
+    // A reply given while the slip was open stood over the right-hand column; it has been read.
+    this.drop(this.talkObj); this.talkObj = null;
+    // A seal spent while the slip was open follows it back to its pin.
+    if (o.slip.seal) move(this, o.slip.seal, { x: o.slip.x + 560 - 30, y: o.y - 22 }, { dur: T.ui });
+    for (const other of this.slips ?? []) if (other !== o && other.column && other.column === o.column) {
+      other.slip.node.style.pointerEvents = "";
+      move(this, other.slip, { alpha: 1 }, { dur: T.ui });
+    }
+  }
+
+  // The chart shows what every slip on the desk would do.
+  refreshNotes() {
+    this.table.setNotes([...(this.slips ?? []).map((o) => o.mark?.()), ...(this.extraNotes?.() ?? [])].filter(Boolean));
   }
 
   flipTo(slip, swap) {
@@ -681,39 +732,6 @@ export class DeskScene extends Phaser.Scene {
       swap();
       this.tweens.add({ targets: slip, scaleX: 1, duration: 160, ease: EASE.arrive });
     } });
-  }
-
-  latticeSlip(x, y, i) {
-    const L = LATTICE;
-    const slip = this.dom(0, 0, "");
-    let open = false;
-    const render = () => {
-      const cur = latticeQ(this.run.dec.lattice);
-      const list = open ? `<div role="radiogroup" style="margin-top:6px">${L.questions.map((x) => `<button class="opt ${x.id === cur.id ? "sel" : ""}" data-q="${x.id}" role="radio" aria-checked="${x.id === cur.id}"><span class="r"></span><span><b>${x.q}</b><span class="s">${x.means}</span>${x.staff ? `<span class="s">${surname("halden")}’s choice</span>` : ""}</span></button>`).join("")}</div>` : "";
-      slip.node.innerHTML = `<article class="paper slip" aria-label="${L.head}"><span class="pin"></span><h3>${L.head}${cur.staff ? " · staff plan" : " · your question"}</h3><p class="will" style="font-size:22px;line-height:29px">${cur.q}</p>
-        <div class="row"><b>So</b><span>${cur.means}</span></div>
-        ${open ? "" : `<details class="more"><summary>About ${WORLD.network}</summary><div class="row"><b>What</b><span>${L.what}</span></div><div class="row"><b>Who</b><span>${L.ask}</span></div></details>`}
-        ${list}<div class="btns">${open ? '<button class="b on" data-close>Done</button>' : '<button class="b" data-ask>Ask something else</button>'}</div></article>`;
-      slip.node.querySelector("[data-ask]")?.addEventListener("click", () => {
-        // The slip opens upward so the send panel never covers the choices.
-        const h0 = slip.node.offsetHeight;
-        open = true; render();
-        move(this, slip, { y: Math.max(110, slip.y - (slip.node.offsetHeight - h0)) }, { dur: T.ui });
-        slip.node.querySelector(".opt.sel")?.focus();
-      });
-      slip.node.querySelector("[data-close]")?.addEventListener("click", () => {
-        const h0 = slip.node.offsetHeight;
-        open = false; render();
-        move(this, slip, { y: Math.min(y, slip.y + (h0 - slip.node.offsetHeight)) }, { dur: T.ui });
-      });
-      for (const b of slip.node.querySelectorAll("[data-q]")) b.addEventListener("click", () => {
-        this.run.dec.lattice = b.dataset.q; render(); slip.node.querySelector(`[data-q="${b.dataset.q}"]`)?.focus(); this.refreshDispatch();
-      });
-    };
-    render();
-    y = Math.min(y, 744 - slip.node.offsetHeight); // keep its buttons clear of the send panel, even with an "Already sent" row
-    this.deal(slip, x, y, i, "dec");
-    return { slip };
   }
 
   // The send panel reads every slip, so "You're changing" and "Staff will" are always true.
@@ -759,20 +777,25 @@ export class DeskScene extends Phaser.Scene {
     this.later(2600, then);
   }
 
+  // Orders sit in two columns: the station and Lattice on the left, Marenna and the send
+  // panel on the right. The middle of the chart stays clear, with each choice pinned to it.
   ch_dec_orders() {
     this.run.dec = { beacon: "quiet", lattice: "boats", incident: this.run.dec.incident ?? null };
     this.used = this.sealsOnIncident("dec");
     this.hud(4, { used: this.used, state: this.at("decOrders") });
     this.table.setBoats("lane");
     this.table.showWarning(true, { pulse: false });
+    this.talkAt = this.talkBase = { x: 664, y: 108, w: 590 }; // between the columns, clear of the send panel
     const B = orders(this.campaign, this.run, "dec");
     const beacon = this.orderSlip(B, {
-      get: () => this.run.dec.beacon, set: (v) => (this.run.dec.beacon = v), x: 260, y: 130, i: 0, seed: "dec",
+      get: () => this.run.dec.beacon, set: (v) => (this.run.dec.beacon = v), x: 40, y: 108, i: 0, seed: "dec", column: "left",
       onPicked: (id) => this.table.tweenRing({ preview: B.ring[id] ?? null }, 700),
     });
-    const lattice = this.latticeSlip(1290, 530, 1);
+    const L = latticeOrders(this.campaign, this.run, "dec");
+    const lattice = this.orderSlip(L, { get: () => this.run.dec.lattice, set: (v) => (this.run.dec.lattice = v), x: 40, y: this.below(beacon), i: 1, seed: "dec", column: "left" });
+    this.refreshNotes();
     this.orderPanel(() => {
-      const b = B.options.find((p) => p.id === this.run.dec.beacon), q = latticeQ(this.run.dec.lattice);
+      const b = B.options.find((p) => p.id === this.run.dec.beacon), q = L.options.find((p) => p.id === this.run.dec.lattice);
       return [this.sentLine("dec"), { mine: !b.staff, text: `${WORLD.stationShort}: ${lower(b.name)}.` }, { mine: !q.staff, text: `${WORLD.network}: ${q.short}.` }].filter(Boolean);
     });
     const go = this.disp.node.querySelector(".go");
@@ -780,49 +803,53 @@ export class DeskScene extends Phaser.Scene {
     this.focusLater(beacon.slip.node.querySelector("[data-change]"), 1400);
   }
 
+  // Where the next slip in a column goes: under the last one, but never off the table.
+  below(prev, gap = 18) {
+    return prev.y + prev.slip.node.offsetHeight + gap;
+  }
 
   ch_jan_orders() {
-    this.run.jan = { beacon: "quiet", way: null, incident: this.run.jan.incident ?? null };
+    this.run.jan = { beacon: "quiet", lattice: "sarn", way: null, incident: this.run.jan.incident ?? null };
     this.used = this.sealsOnIncident("jan");
     this.hud(5, { used: this.used, state: this.at("janOrders") });
     this.table.setBoats("lane");
     this.table.showWarning(true, { pulse: false });
     this.table.setRing(this.ringAfter("dec"));
+    this.talkAt = this.talkBase = { x: 664, y: 108, w: 590 };
     const J = orders(this.campaign, this.run, "jan");
-    const thread = this.dom(670, 300, `<div class="thread" style="width:400px"></div>`);
-    thread.setAngle(-6).setAlpha(0);
-    thread.node.firstChild.style.transformOrigin = "left center";
     let hostSlip;
     const H = () => host(this.campaign, this.run);
     const clash = () => H().clash && !this.run.jan.way;
     const showThread = () => {
-      if (clash()) {
-        thread.setAlpha(1);
-        if (!reducedMotion.on) {
-          thread.node.firstChild.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: 600, easing: "cubic-bezier(.16,1,.3,1)" });
-          [beacon.slip, hostSlip.slip].forEach((s, i) => this.tweens.add({ targets: s, x: s.x + (i ? 4 : -4), duration: 60, yoyo: true, repeat: 1, delay: 500 }));
-        }
-        this.drop(this.talkObj);
-        this.talkObj = this.talk("sato", H().sato, { w: 900, delay: 300 });
-      } else move(this, thread, { alpha: 0 }, { dur: T.ui, ease: EASE.leave });
+      if (!clash()) return;
+      this.drop(this.talkObj);
+      this.talkObj = this.talk("sato", H().sato, { ...this.talkAt, delay: 300 });
+      if (!reducedMotion.on) [beacon.slip, hostSlip.slip].forEach((s, i) => this.tweens.add({ targets: s, x: s.x + (i ? 4 : -4), duration: 60, yoyo: true, repeat: 1, delay: 300 }));
     };
     const beacon = this.orderSlip(J, {
-      get: () => this.run.jan.beacon, set: (v) => (this.run.jan.beacon = v), x: 120, y: 130, i: 0, seed: "jan",
+      get: () => this.run.jan.beacon, set: (v) => (this.run.jan.beacon = v), x: 40, y: 108, i: 0, seed: "jan", column: "left",
       onPicked: (id, before) => {
         // Acting without Marenna only makes sense alongside an open move; undo it otherwise.
         if (before === "show" && id !== "show" && this.run.jan.way === "act") { this.returnSeal(hostSlip.slip, --this.used); this.run.jan.way = null; }
         hostSlip.render(); showThread();
       },
     });
+    const L = latticeOrders(this.campaign, this.run, "jan");
+    const lattice = this.orderSlip(L, { get: () => this.run.jan.lattice, set: (v) => (this.run.jan.lattice = v), x: 40, y: this.below(beacon), i: 1, seed: "jan", column: "left" });
     hostSlip = this.hostSlip(beacon, () => showThread());
+    this.extraNotes = () => {
+      const h = H(), w = this.run.jan.way;
+      return [w ? [...h.ways, h.secure].find((x) => x.id === w)?.mark : null];
+    };
+    this.refreshNotes();
     this.orderPanel(() => {
-      const b = J.options.find((p) => p.id === this.run.jan.beacon), w = this.run.jan.way, h = H();
-      const lines = [this.sentLine("jan"), { mine: !b.staff, text: `${WORLD.stationShort}: ${lower(b.name)}.` }].filter(Boolean);
+      const b = J.options.find((p) => p.id === this.run.jan.beacon), q = L.options.find((p) => p.id === this.run.jan.lattice), w = this.run.jan.way, h = H();
+      const lines = [this.sentLine("jan"), { mine: !b.staff, text: `${WORLD.stationShort}: ${lower(b.name)}.` }, { mine: !q.staff, text: `${WORLD.network}: ${q.short}.` }].filter(Boolean);
       const all = [...h.ways, h.secure];
       lines.push(w ? { mine: true, text: `${h.head}: ${lower(all.find((x) => x.id === w).name)}.` } : { mine: false, text: `${h.head}: wait for the cabinet’s vote.` });
       return lines;
     }, () => (clash() ? H().blocked : ""));
-    this.disp.node.querySelector(".go").addEventListener("click", () => this.send([beacon.slip, hostSlip.slip], () => this.go("jan-night")));
+    this.disp.node.querySelector(".go").addEventListener("click", () => this.send([beacon.slip, lattice.slip, hostSlip.slip], () => this.go("jan-night")));
     this.focusLater(beacon.slip.node.querySelector("[data-change]"), 1400);
   }
 
@@ -841,8 +868,8 @@ export class DeskScene extends Phaser.Scene {
       else if (H.shaky || w === "buy") body = `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row warnrow"><b>Vote</b><span>${H.vote}</span></div>
         <div role="radiogroup" style="margin-top:8px">${opt({ id: "wait", name: "Let the vote run", says: `${surname("sato")} keeps lobbying. If the vote fails, ${H.head}’s navy stays in port in February.`, staff: true }, w ?? "wait")}${opt(H.secure, w)}</div>`;
       else body = `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row"><b>Vote</b><span>${H.vote}</span></div>`;
-      slip.node.innerHTML = `<article class="paper slip" style="width:600px" aria-label="${H.head}"><span class="pin"></span><h3>${H.head} · ${w && w !== "back" ? "your order" : "staff plan"}</h3>
-        <p class="will">${surname(H.staff[0])} ${H.staff[1]}</p>${body}</article>`;
+      slip.node.innerHTML = `<article class="paper slip" style="width:580px" aria-label="${H.head}"><span class="pin"></span><h3>${H.head} · ${w && w !== "back" ? "your order" : "staff plan"}</h3>
+        <p class="will">Your staff ${H.staff[1]}</p>${body}</article>`;
       for (const b of slip.node.querySelectorAll("[data-way]")) b.addEventListener("click", () => {
         const id = b.dataset.way === "wait" ? null : b.dataset.way, before = this.run.jan.way;
         if (id === before) return;
@@ -850,6 +877,7 @@ export class DeskScene extends Phaser.Scene {
           if (before) this.returnSeal(slip, --this.used);
           this.run.jan.way = null;
           beacon.pick("quiet", true);
+          this.refreshNotes();
           return;
         }
         if (!before && id) {
@@ -858,25 +886,25 @@ export class DeskScene extends Phaser.Scene {
         }
         if (before && !id) this.returnSeal(slip, --this.used);
         this.run.jan.way = id;
-        render(); slip.node.querySelector(`[data-way="${id ?? "wait"}"]`)?.focus();
-        onChange(); this.refreshDispatch();
+        render(); slip.node.querySelector(`[data-way="${id ?? "wait"}"]`)?.focus({ preventScroll: true });
+        onChange(); this.refreshNotes(); this.refreshDispatch();
       });
     };
     render();
-    this.deal(slip, 1110, 120, 1, "jan");
+    this.deal(slip, 1270, 108, 2, "jan");
     return { slip, render };
   }
 
   // ── nights ────────────────────────────────────────────────────────────────
-  night(N, fromTurn, nextChapter, { ravellan = "lane", warning = true, state } = {}) {
+  night(N, fromTurn, nextChapter, { ravellan = "lane", warning = true, state, flip = true } = {}) {
     this.hud(fromTurn, { seals: 0, state });
-    this.later(800, () => this.flipMonth(fromTurn + 1));
+    if (flip) this.later(800, () => this.flipMonth(fromTurn + 1));
     this.table.setBoats("none");
     this.table.showWarning(warning, { pulse: false });
     this.table.setNight(true);
     const beats = N.beats.map((b, i) => `<div class="beat" data-beat="${i}" style="opacity:0"><b class="n">${i + 1}</b><div><p class="lab" style="color:var(--ink2)">${b.cause}</p><p class="body"></p></div></div>`).join("");
     const sheet = this.dom(56, 104, `<article class="paper sheet tall night" style="width:800px" aria-label="${N.title}"><h2>${N.title}</h2><p class="from">${N.sub}</p>${beats}
-      <div data-end style="opacity:0">${N.changes ? `<div class="delta"><p class="lab">What changed this month</p><ul>${N.changes.map((x) => `<li class="${x.same ? "same" : `tone-${x.tone}`}"><b>${x.label}</b> ${x.same ? `${x.after}, unchanged` : `${x.before} <span aria-label="to">→</span> ${x.after}`}</li>`).join("")}</ul></div>` : ""}${this.warnBlock(N.still, !warning)}<div class="sec" style="border:0"><p class="lab">Coming up</p><p class="body">${N.next}</p></div>
+      <div data-end style="opacity:0">${N.changes ? `<div class="delta"><p class="lab">What changed this month</p><ul>${N.changes.map((x) => `<li class="${x.same ? "same" : `tone-${x.tone}`}"><b>${x.label}</b> ${x.same ? `${x.after}, unchanged` : `${x.before} <span aria-label="to">→</span> ${x.after}`}</li>`).join("")}</ul></div>` : ""}${N.still ? this.warnBlock(N.still, !warning) : ""}${N.next ? `<div class="sec" style="border:0"><p class="lab">Coming up</p><p class="body">${N.next}</p></div>` : ""}
       <button class="b on" style="height:56px;font-size:20px;margin-top:8px" data-go>${N.go}</button></div></article>`);
     move(this, sheet, { alpha: [0, 1], x: [24, 56] }, { dur: 600, delay: 400 });
     const go = sheet.node.querySelector("[data-go]");
@@ -913,7 +941,7 @@ export class DeskScene extends Phaser.Scene {
         if (b.marker) this.table.showLattice(b.marker);
         if (b.at === "lane") this.table.setBoats(ravellan);
       });
-      this.flipMonth(fromTurn + 1);
+      if (flip) this.flipMonth(fromTurn + 1);
       end();
     };
     this.skipFns.push(skipNight);
@@ -930,60 +958,76 @@ export class DeskScene extends Phaser.Scene {
   }
 
   // ── the showdown and the debrief ──────────────────────────────────────────
+  // February: the routes along the bottom edge, what we know top left, Halden top right. The
+  // chart between them shows the routes, so the choice is made looking at the sea.
   ch_feb_showdown() {
     const F = february(this.campaign, this.run);
     this.hud(F.turn, { seals: 0, state: this.at("janEnd") });
     this.table.setBoats("edge");
     this.table.setRing(this.ringAfter("jan"));
     this.later(500, () => this.table.revealPaths(F.routes.map((r) => r.id)));
-    // The warning sits over the open top-left of the chart; the right-hand column stacks the
-    // routes by measured height, so longer copy never overlaps a button.
-    const w = this.dom(64, 108, `<div class="paper sheet" style="width:560px;padding:18px 26px">${this.warnBlock(F.warning, true)}</div>`);
+    const w = this.dom(56, 108, `<div class="paper sheet" style="width:560px;padding:18px 26px">${this.warnBlock(F.warning, true)}</div>`);
     move(this, w, { alpha: [0, 1], y: [84, 108] }, { dur: T.paper, delay: 300 });
-    let first, y = 108;
-    F.routes.forEach((r, i) => {
-      const c = this.dom(1250, y, `<article class="paper sheet" style="width:600px;padding:26px 30px"><h2 style="font-size:32px">${r.name}</h2><p class="body" style="margin-top:8px">${r.does}</p>
-        <div class="row" style="grid-template-columns:100px 1fr"><b>It costs</b><span>${r.costs}</span></div><div class="row" style="grid-template-columns:100px 1fr"><b>It needs</b><span>${r.needs}</span></div>
-        <div class="quote"><span class="av" style="background-image:url(${portrait(r.voice[0])})"></span><span><span class="attrib">${fullName(r.voice[0])}:</span> “${r.voice[1]}”</span></div>
+    // Cards share the bottom edge, right-aligned, at most 600 wide, so the station stays in view.
+    const n = F.routes.length, cw = Math.min(600, Math.floor((1808 - 16 * (n - 1)) / n)), x0 = 1864 - n * cw - (n - 1) * 16;
+    let first;
+    const cards = F.routes.map((r, i) => {
+      const c = this.dom(x0 + i * (cw + 16), 1080, `<article class="paper sheet route" style="width:${cw}px"><h2>${r.name}</h2><p class="body">${r.does}</p>
+        <div class="row"><b>Costs</b><span>${r.costs}</span></div><div class="row"><b>Needs</b><span>${r.needs}</span></div>
+        <div class="quote"><span class="av" style="background-image:url(${portrait(r.voice[0])})"></span><span><span class="attrib">${surname(r.voice[0])}:</span> “${r.voice[1]}”</span></div>
         <div class="btns"><button class="b on" data-route="${r.id}">Choose: ${lower(r.name)}</button></div></article>`);
-      y += c.node.offsetHeight + 14;
-      move(this, c, { alpha: [0, 1], x: [1310, 1250] }, { dur: 520, delay: 900 + i * STAGGER.slip });
       const btn = c.node.querySelector("[data-route]");
       first ??= btn;
       btn.onclick = () => {
         for (const b of this.items.flatMap((o) => [...(o.node?.querySelectorAll?.("[data-route]") ?? [])])) b.disabled = true;
         this.run.feb.route = r.id;
         this.stamp(c);
-        this.later(1400, () => this.go("debrief"));
+        this.later(1400, () => this.go("feb-night"));
       };
+      return c;
     });
+    // All cards share the tallest card's top edge, so they read as one row.
+    const h = Math.max(...cards.map((c) => c.node.offsetHeight));
+    cards.forEach((c, i) => { c.node.firstChild.style.minHeight = `${h}px`; move(this, c, { alpha: [0, 1], y: [1080, 1064 - h] }, { dur: 520, delay: 900 + i * STAGGER.slip }); });
     if (F.notOffered) {
-      const n = this.dom(1250, y, `<div class="paper sheet" style="width:600px;padding:22px 30px"><p class="lab" style="color:var(--ink2)">Not on the table</p><p class="body" style="font-size:20px;line-height:28px">${F.notOffered}</p></div>`);
+      const n = this.dom(56, 108 + w.node.offsetHeight + 14, `<div class="paper sheet" style="width:560px;padding:16px 26px"><p class="lab" style="color:var(--ink2)">Not on the table</p><p class="body" style="font-size:19px;line-height:27px">${F.notOffered}</p></div>`);
       move(this, n, { alpha: [0, 1] }, { dur: T.paper, delay: 1100 });
     }
-    this.talk("halden", F.halden, { w: 1000, delay: 700 });
+    this.talk("halden", F.halden, { x: 1180, y: 108, w: 684, delay: 700 });
     this.focusLater(first, 1600);
+  }
+
+  // The showdown, hour by hour, then the debrief. The top bar now reads the state after
+  // February, the same numbers the debrief gives.
+  ch_feb_night() {
+    const N = showdown(this.campaign, this.run);
+    this.table.setRing(this.ringAfter("jan"));
+    this.night(N, 6, "debrief", { ravellan: "edge", warning: false, state: N.after, flip: false });
   }
 
   ch_debrief() {
     const D = debrief(this.campaign, this.run);
-    this.hud(6, { seals: 0, state: this.at("janEnd") });
+    this.hud(6, { seals: 0, state: D.after });
     this.table.setBoats("none");
     this.table.revealTruth(D.truth);
     const rows = D.rows.map((r) => `<div class="dt" style="opacity:0"><b>${r[0]}</b><span>${r[1]}</span><span>${r[2]}</span><span style="color:var(--red-ink)">${r[3]}</span></div>`).join("");
-    const s = this.dom(80, 108, `<article class="paper sheet" style="width:1000px;padding:28px 42px 26px"><p class="lab">Campaign ${esc(this.campaign.seed)} · ${this.campaign.D.name}</p><div class="verdict"><h2 style="font-size:44px;line-height:50px">${D.title}</h2><span class="grade grade-${D.grade}">${D.gradeName}</span></div>
+    const s = this.dom(56, 108, `<article class="paper sheet" style="width:1060px;padding:28px 42px 26px"><p class="lab">Campaign ${esc(this.campaign.seed)} · ${this.campaign.D.name}</p><div class="verdict"><h2 style="font-size:44px;line-height:50px">${D.title}</h2><span class="grade grade-${D.grade}">${D.gradeName}</span></div>
       <ul class="score">${D.score.map((x) => `<li class="${x.ok ? "ok" : "bad"}"><i aria-hidden="true">${x.ok ? "✓" : "✗"}</i><span><b>${x.label}</b>${x.text}</span></li>`).join("")}</ul><p class="body" style="margin-top:8px">${D.line}</p>
       <div class="dt" style="border:0;font-size:16px;font-weight:600;color:var(--ink2);margin-top:12px"><span></span><span>Ordered</span><span>We believed</span><span style="color:var(--red-ink)">What was really happening</span></div>${rows}
+      <p class="body" style="margin-top:14px;font-size:19px;line-height:27px"><b>${surname("halden")}:</b> ${D.halden}</p>
       <div class="btns" style="margin-top:18px"><button class="b on" style="height:56px;font-size:20px" data-again>Replay this campaign</button><button class="b" style="height:56px;font-size:20px" data-new>New campaign</button></div></article>`);
     move(this, s, { alpha: [0, 1] }, { dur: 600 });
     s.node.querySelectorAll(".dt[style*='opacity']").forEach((row, i) => {
       if (reducedMotion.on) { row.style.opacity = 1; return; }
       row.animate([{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], { duration: 500, delay: 600 + i * STAGGER.line, easing: "cubic-bezier(.16,1,.3,1)", fill: "forwards" });
     });
+    // What the campaign leaves the task force: what each officer will remember.
+    const m = this.dom(1136, 108, `<aside class="paper sheet memories" style="width:728px"><p class="lab">What your staff will remember</p>
+      ${D.leaves.map(([who, line]) => `<p class="memory"><span class="av" style="background-image:url(${portrait(who)})"></span><span>${line}</span></p>`).join("")}</aside>`);
+    move(this, m, { alpha: [0, 1], x: [1160, 1136] }, { dur: 600, delay: 900 });
     const again = s.node.querySelector("[data-again]");
     again.onclick = () => { this.run = DEFAULT_RUN(); this.go("dec-brief"); };
     s.node.querySelector("[data-new]").onclick = () => { this.newTheatre(newSeed(), this.campaign.difficulty); };
     this.focusLater(again, 1200);
-    this.talk("halden", D.halden, { x: 1120, w: 740, delay: 1400 });
   }
 }

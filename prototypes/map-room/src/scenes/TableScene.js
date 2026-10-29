@@ -343,6 +343,25 @@ export class TableScene extends Phaser.Scene {
     cam.zoomTo(place ? zoom : 1, 900, EASE.travel, true);
   }
 
+  // What the orders on the desk would do, pinned to the place they act on: each slip's current
+  // choice puts one note on the chart, so the map shows the plan as it is being made.
+  setNotes(list = []) {
+    for (const n of this.noteObjs ?? []) n.destroy();
+    this.noteObjs = [];
+    const OFF = { beacon: [46, 30], harbour: [-560, 60], lane: [46, -70] };
+    const INK = { ok: "#1B1A18", warn: "#6B4508", bad: "#7E1A15" };
+    const stack = {};
+    for (const n of list) {
+      const p = this.at(n.at), [dx, dy] = OFF[n.at] ?? [40, 0], k = (stack[n.at] = (stack[n.at] ?? -1) + 1);
+      const t = this.add.text(p.x + dx, p.y + dy + k * 38, n.text, {
+        fontFamily: "IBM Plex Sans", fontSize: "19px", fontStyle: "600", color: INK[n.tone ?? "ok"],
+        backgroundColor: "rgba(246,241,228,0.94)", padding: { x: 10, y: 5 },
+      });
+      t.setX(Math.min(t.x, OX + MW - 16 - t.width));
+      this.noteObjs.push(t);
+    }
+  }
+
   // Only routes that are actually on the table get drawn.
   drawPaths(t = 1, which = ["quiet", "joint"]) {
     const g = this.paths.clear();
@@ -353,6 +372,12 @@ export class TableScene extends Phaser.Scene {
       joint.push({ x: b.x + 20 + s * 190, y: b.y - 20 - Math.sin(s * 1.6) * 110 });
     }
     if (which.includes("quiet")) this.dashed(g, quiet, 12, 9, 4, C.ink, 1, false, t);
+    if (which.includes("forward")) {
+      // the battalion's trench line across the headland, facing the sea
+      g.lineStyle(5, C.red, 0.85);
+      const n = Math.max(2, Math.round(8 * t));
+      for (let i = 0; i < n; i++) g.lineBetween(b.x + 26 + i * 4, b.y - 70 + i * 18, b.x + 34 + i * 4, b.y - 60 + i * 18);
+    }
     if (which.includes("joint")) {
       g.lineStyle(8, C.brass, 1);
       g.strokePoints(joint.slice(0, Math.max(2, Math.round(joint.length * t))), false);
@@ -360,6 +385,7 @@ export class TableScene extends Phaser.Scene {
     if (t >= 1 && !this.pathLabels.length) {
       if (which.includes("quiet")) this.pathLabels.push(this.add.text(b.x + 70, b.y + 150, "Hold quietly", { ...LABEL, fontStyle: "600" }));
       if (which.includes("joint")) this.pathLabels.push(this.add.text(b.x + 120, b.y - 160, "Stand together openly", { ...LABEL, fontStyle: "600", color: "#7A4F0C" }));
+      if (which.includes("forward")) this.pathLabels.push(this.add.text(b.x + 70, b.y - 104, "Dig in", { ...LABEL, fontStyle: "600", color: "#7E1A15" }));
     }
   }
 
@@ -384,6 +410,7 @@ export class TableScene extends Phaser.Scene {
   }
 
   reset() {
+    this.setNotes([]);
     this.cameras.main.setZoom(1).centerOn(960, 540);
     this.paths.clear();
     for (const l of this.pathLabels) l.destroy();
