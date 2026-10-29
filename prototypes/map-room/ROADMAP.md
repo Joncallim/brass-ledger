@@ -56,7 +56,11 @@ Product owner direction, 29 October 2026, after the second playtest:
   Only the sector (the strait, the ally and the places) is new.
 
 **Built (prototype):** the two-sector war, on the title screen. The README lists its
-amounts for sign-off. Next, if the two-sector test works: a fixed war of four sectors.
+amounts for sign-off.
+
+**On hold** (product owner, after the third playtest): no more systems or sectors until
+one campaign is satisfying to watch, understand and resolve. The visual resolution of
+February and the tension of each decision come first. The four-sector test waits until then.
 
 Still to decide or to set in the prototype for sign-off:
 

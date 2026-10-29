@@ -10,6 +10,7 @@
 --sheet:#F7F3EA;--ink:#1B1A18;--ink2:#4D4A44;--brass:#C99A3E;--brass-deep:#7A4F0C;--brass-ink:#1A1206;
 --red:#B4261F;--red-tint:#F6DDD8;--red-ink:#7E1A15;--green-tint:#DCE8DD;--green-ink:#1F4A2C}
 html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
+[hidden]{display:none!important}
 #stage{width:100vw;height:100vh}
 #stage canvas{display:block}
 /* DOM layer: every word and control lives here, not on the canvas. */
@@ -64,7 +65,9 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .row.warnrow span{color:var(--red-ink)}
 .b.sm{height:34px;padding:0 12px;font-size:14px}
 .debate .other{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:15px;line-height:21px}.debate .other .b.sm{margin:0 0 0 auto;flex:none}
-.hud.compact .mark{font-size:0;gap:0}.hud.compact{gap:20px}.hud.compact .month span{font-size:14px}
+.hud.compact .mark{font-size:0;gap:0}.hud.compact{gap:16px}.hud.compact .month span{font-size:14px;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+/* The top bar never spills: the orders label shortens, the seals shrink a little. */
+.hud.compact .seals{gap:8px;white-space:nowrap}.hud.compact .seals .seal{width:40px;height:40px;font-size:13px}.hud .chips{flex:none}.hud .month{flex:none}
 /* Title: campaign code and the difficulty picker. */
 .title .campaign-code{font-size:18px;color:var(--room-muted);margin-top:14px}.campaign-code b{color:var(--brass);letter-spacing:.08em}
 .title .setup-q{font-size:22px;margin-top:30px}
@@ -173,6 +176,10 @@ details.more[open] summary{margin-bottom:4px}
 .route{padding:22px 24px 20px;box-sizing:border-box}.route h2{font-size:28px;line-height:33px}.route .body{font-size:18px;line-height:25px;margin-top:6px}
 .route .row{grid-template-columns:72px 1fr;font-size:16px;line-height:22px}.route .quote{font-size:18px;line-height:24px}
 .memories{padding:26px 30px;box-sizing:border-box}
+.quote.dissent{margin-top:14px;padding-top:12px;border-top:1px solid #DCD4C3;font-size:19px;line-height:26px}
+/* The showdown report: short dated entries that appear as the chart plays them. */
+.showdown{padding:26px 32px 24px;box-sizing:border-box}.sd-log{list-style:none;padding:0;margin:4px 0 0}.sd-log li{padding:8px 0;border-top:1px solid #DCD4C3;transition:opacity .3s}
+.sd-log .body{font-size:19px;line-height:26px;margin:2px 0 0}.sd-controls{margin-top:12px}
 /* The war: the redeployment between sectors, and the summary at the end. */
 .redeploy{box-sizing:border-box}.redeploy-cols{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:18px}
 .carry{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px}.carry li{display:grid;grid-template-columns:150px 1fr;font-size:19px;line-height:26px}.carry li b{font-weight:600;color:var(--ink2)}

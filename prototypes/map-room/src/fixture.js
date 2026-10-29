@@ -3,7 +3,7 @@
 // gathers what the scenes need and defines the glossary every highlighted word opens.
 import { WORLD as W, onWorld } from "./story/world.js";
 export { OFFICERS, fullName, plainName, surname } from "./story/officers.js";
-export { CALENDAR, monthOf, TITLE, ORIENT, LATTICE, latticeQ, latticeOrders, brief, orders, host, incident, night, february, showdown, debrief, split, status } from "./story/copy.js";
+export { CALENDAR, monthOf, TITLE, ORIENT, LATTICE, latticeQ, latticeOrders, januaryRead, brief, orders, host, incident, night, february, showdown, debrief, split, status } from "./story/copy.js";
 export { makeCampaign, newSeed, DIFFICULTY } from "./story/campaign.js";
 export { simulate, needsApproval, outcome } from "./story/play.js";
 
@@ -41,7 +41,9 @@ onWorld(() => {
     kestrel: { title: W.strait, kind: "name", tag: "The sea between", match: [W.strait],
       body: `The stretch of sea between ${M} and ${R}, about ${W.straitNm} nautical miles wide. A busy shipping lane runs through the middle of it.` },
     battalion: { title: BN, kind: "name", tag: "Our reserve", match: [BN],
-      body: `Our reserve infantry battalion, about ${W.battalion} soldiers, based a day’s move from ${B}. It reinforces ${B} when needed. It has been on duty without rest since the autumn. Rear Admiral Okafor’s rule of thumb: past 100 days, a third of a unit is lost to sickness and mistakes.` },
+      body: `Our reserve infantry battalion, about ${W.battalion} soldiers, based a day’s move from ${B}. It reinforces ${B} when needed. It has been on duty without rest since the autumn; Rear Admiral Okafor watches its fatigue.` },
+    fatigue: { title: "Fatigue", kind: "term", tag: "How worn a unit is", match: ["fatigue"],
+      body: `A point for each day a unit is on duty without rest, plus more for hard work: digging in, a battle, a month at sea, an engineering job. It is not a count of days. Rest brings it down. Rear Admiral Okafor’s rule: past 100, sickness and mistakes set in; past 120, a third of the unit is unfit to fight.` },
     craft: { title: "Landing craft", kind: "term", tag: "Ships", match: ["landing craft"],
       body: "Flat-bottomed boats built to carry soldiers and vehicles from the sea straight onto a beach. Nine of them can put one battalion, about 600 soldiers, ashore at once. A country loads them when it is preparing an amphibious landing, or wants others to think it is." },
     landing: { title: "Amphibious landing", kind: "term", tag: "An attack from the sea", match: ["amphibious landing", "landing"],

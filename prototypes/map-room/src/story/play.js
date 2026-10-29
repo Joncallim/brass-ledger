@@ -52,6 +52,9 @@ export function simulate(c, run = {}) {
     ? { day: c.plan === "land" ? Math.min(9, c.sailDay + 3) : c.sailDay, kind: "landing", planted: true }
     : { day: c.sailDay, kind: c.plan === "bluff" ? "exercise" : c.plan === "probe" ? "two-stage" : "landing" };
   if (c.plan === "bluff" && db === "show") s.support -= n(5, k); // Ravellan's press makes the most of it
+  // A bluff is aimed at the ally: Ravellan's press works on the cabinet every month, so even
+  // a campaign with no landing needs orders spent on keeping the ally.
+  if (c.plan === "bluff") s.support -= n(BLUFF_PRESS, k);
   s.support += c.drift.dec;
   snap.decEnd = take();
 
@@ -75,6 +78,7 @@ export function simulate(c, run = {}) {
     s.notes.push("rest-to-date");
   }
   if (jq === "who") s.knows.role = c.fleetRole;
+  if (c.plan === "bluff") s.support -= n(BLUFF_PRESS, k);
   s.support += c.drift.jan;
   const hotlineYes = c.hotline && snap.janOrders.support >= 55;
   if (way === "buy") { s.boats -= 2; s.navy = true; s.approvedBy = "trade"; }
@@ -93,6 +97,9 @@ export function simulate(c, run = {}) {
   snap.janEnd = take();
   return snap;
 }
+
+// Support points Ravellan's press takes from the ally's cabinet each month of a bluff.
+export const BLUFF_PRESS = 3;
 
 // Days of rest a true sailing date buys the battalion: it stands down until the last week.
 export const DATE_REST = 20;

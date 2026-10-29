@@ -33,7 +33,7 @@ export const DIFFICULTY = {
 };
 
 // The fleet's real job under each plan, and what Lattice would find if asked.
-const FLEET_ROLE = { land: "screen", bluff: "swarm", probe: "scout" };
+export const FLEET_ROLE = { land: "screen", bluff: "swarm", probe: "scout" };
 
 export function makeCampaign(seed, difficulty = "shifting") {
   const D = DIFFICULTY[difficulty] ?? DIFFICULTY.shifting;

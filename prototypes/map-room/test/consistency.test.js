@@ -3,7 +3,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { makeCampaign } from "../src/story/campaign.js";
-import { outcome } from "../src/story/play.js";
+import { outcome, simulate } from "../src/story/play.js";
 import * as story from "../src/fixture.js";
 
 const PATHS = [];
@@ -65,4 +65,14 @@ test("once the ships sail, no screen warns of an attack still to come", () => {
 
 test("the February believed-column matches what Lattice could hear", () => {
   for (const { o, D } of everyEnding()) assert.equal(D.rows[2][2].startsWith("Lattice heard"), o.listening);
+});
+
+// Playtest 3: a briefing favoured a show of force while the debrief said a landing had
+// looked more likely. January's "we believed" must be the reading the staff argued from.
+test("the debrief's January belief is what January's orders were argued from", () => {
+  const WORDS = { land: /as a landing/, bluff: /as a show of force/, probe: /as a test/, null: /Still open/ };
+  for (const { c, run, D } of everyEnding()) {
+    const read = story.januaryRead(simulate(c, run).janOrders);
+    assert.match(D.rows[1][2], WORDS[read], D.rows[1][2]);
+  }
 });

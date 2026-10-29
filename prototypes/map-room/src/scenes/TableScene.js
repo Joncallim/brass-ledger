@@ -54,7 +54,7 @@ export class TableScene extends Phaser.Scene {
   // ── textures ──────────────────────────────────────────────────────────────
   makeTextures() {
     // A theatre change restarts this scene; the old chart's textures go first.
-    for (const key of ["grain", "wood", "lamp", "vignette", "hatch", "boat", "landingcraft", "sweep", "base"]) if (this.textures.exists(key)) this.textures.remove(key);
+    for (const key of ["grain", "wood", "lamp", "vignette", "hatch", "boat", "friend", "unit", "landingcraft", "sweep", "base"]) if (this.textures.exists(key)) this.textures.remove(key);
     const grain = this.textures.createCanvas("grain", 256, 256);
     const g = grain.getContext();
     const img = g.createImageData(256, 256);
@@ -110,6 +110,29 @@ export class TableScene extends Phaser.Scene {
     b.fillStyle = "#7E1A15"; b.fillRect(46, 13, 46, 2);
     b.fillStyle = "#6E655C"; b.fillRect(60, 11, 18, 8); b.fillStyle = "#2A2523"; b.fillRect(68, 9, 3, 3);
     boat.refresh();
+
+    // Our ships and the ally's: the same hull in navy grey with a brass band, so the two
+    // sides read apart at a glance.
+    const fr = this.textures.createCanvas("friend", 110, 30);
+    const f = fr.getContext();
+    for (let k = 0; k < 3; k++) {
+      f.strokeStyle = `rgba(255,255,255,${0.7 - k * 0.2})`; f.lineWidth = 2 - k * 0.4;
+      f.beginPath(); f.moveTo(44 - k * 2, 11); f.lineTo(8 + k * 6, 4 + k); f.moveTo(44 - k * 2, 19); f.lineTo(8 + k * 6, 26 - k); f.stroke();
+    }
+    f.fillStyle = "#3E4F5E";
+    f.beginPath(); f.moveTo(46, 8); f.lineTo(92, 8); f.lineTo(106, 15); f.lineTo(92, 22); f.lineTo(46, 22); f.closePath(); f.fill();
+    f.fillStyle = "#C99A3E"; f.fillRect(46, 13, 46, 3);
+    f.fillStyle = "#8C9AA6"; f.fillRect(60, 11, 18, 8);
+    fr.refresh();
+
+    // The battalion as a map symbol: an infantry box (a cross inside a rectangle), in brass.
+    const un = this.textures.createCanvas("unit", 52, 36);
+    const u = un.getContext();
+    u.fillStyle = "#F3E6C4"; u.fillRect(2, 2, 48, 32);
+    u.strokeStyle = "#1B1A18"; u.lineWidth = 3; u.strokeRect(2, 2, 48, 32);
+    u.beginPath(); u.moveTo(2, 2); u.lineTo(50, 34); u.moveTo(50, 2); u.lineTo(2, 34); u.stroke();
+    u.fillStyle = "#C99A3E"; u.fillRect(20, -1, 12, 5);
+    un.refresh();
 
     // landing craft: blunt bow ramp, square stern, drawn small and in ink
     const lc = this.textures.createCanvas("landingcraft", 30, 12);
@@ -362,6 +385,201 @@ export class TableScene extends Phaser.Scene {
     }
   }
 
+  // ── the showdown, played on the chart ─────────────────────────────────────
+  // February resolves as five steps the report reads in step with: they sail, we move,
+  // contact, how it ended, and the cost. Every step has an end state, so skipping, reduced
+  // motion and a full play all leave the chart showing what the report says.
+  showdownSetup(f) {
+    this.showdownClear();
+    this.setBoats("none");
+    this.boatLabel?.destroy(); this.boatLabel = null;
+    this.warning.setAlpha(0); this.landingBoats.setAlpha(0);
+    const toSheet = (p) => ({ x: p.x - OX, y: p.y - OY }), land = (p) => this.geo.isLand(p.x - OX, p.y - OY);
+    const lane = this.sc.features.find((x) => x.type === "lane")?.path ?? [];
+    const laneAt = (y) => OX + (lane.reduce((best, p) => (Math.abs(p[1] - (y - OY)) < Math.abs(best[1] - (y - OY)) ? p : best), lane[0] ?? [toSheet(this.at("lane")).x, 0])[0]);
+    const seaward = (p, step = 6) => { const q = { ...p }; for (let i = 0; i < 120 && land(q); i++) q.x += step; return { x: q.x + 20, y: q.y }; };
+    const B = this.at(this.sc.station.place), H = this.at(this.sc.base.place);
+    const beach = seaward(B), approach = { x: beach.x + 170, y: beach.y };
+    const flank = [130, -130, 180, -180].map((dy) => seaward({ x: B.x, y: B.y + dy })).find((p) => !land(p) && p.y > OY + 40 && p.y < OY + MH - 40) ?? beach;
+    const route = [H, { x: laneAt(H.y), y: H.y }, { x: laneAt((H.y + B.y) / 2) + 40, y: (H.y + B.y) / 2 }, approach];
+    let reserve = { x: B.x - 170, y: B.y + 70 };
+    if (!land(reserve)) reserve = { x: B.x - 90, y: B.y + 40 };
+    let dug = { x: beach.x - 46, y: beach.y + 24 };
+    if (!land(dug)) dug = { x: B.x - 10, y: B.y + 30 };
+    const friendStart = seaward({ x: B.x - 60, y: Math.min(OY + MH - 60, B.y + 280) });
+    const lineX = approach.x + 70, line = [-80, 0, 80].map((dy) => ({ x: lineX, y: approach.y + dy }));
+    const P = this.sd = { f, beach, approach, flank, route, reserve, dug, friendStart, line, H, B, timers: [] };
+    const later = (ms, fn) => P.timers.push(this.time.delayedCall(ms, fn));
+
+    const ship = (key, x, y) => this.add.image(x, y, key).setScale(0.62);
+    P.escorts = this.add.container(H.x, H.y, [ship("boat", 18, -26), ship("boat", 18, 26), ship("boat", 46, 0), ship("boat", -14, 0)]);
+    const n = Math.min(8, f.craft);
+    P.craft = this.add.container(H.x, H.y, Array.from({ length: n }, (_, i) => this.add.image(-60 - (i % 4) * 26, -18 + Math.floor(i / 4) * 30, "landingcraft")));
+    P.friends = this.add.container(friendStart.x, friendStart.y, line.map((p, i) => ship("friend", 0, (i - 1) * 34)));
+    P.unit = this.add.container(reserve.x, reserve.y, [this.add.image(0, 0, "unit"), this.add.text(-80, 22, f.unitName, { ...MUTED, fontSize: "16px", fontStyle: "600", color: "#1B1A18", align: "center", fixedWidth: 160 })]);
+    P.trench = this.add.graphics();
+    P.fx = this.add.graphics();
+    P.tags = [];
+    for (const o of [P.escorts, P.craft, P.friends, P.unit]) o.setAlpha(0);
+    P.escorts.rotation = P.craft.rotation = Math.atan2(route[1].y - H.y, route[1].x - H.x);
+
+    const go = (obj, pts, dur) => {
+      // Along a polyline, bow first.
+      const segs = [], total = pts.slice(1).reduce((s, p, i) => s + Phaser.Math.Distance.BetweenPoints(pts[i], p), 0) || 1;
+      const t = { v: 0 };
+      this.tweens.add({ targets: t, v: 1, duration: dur, ease: EASE.travel, onUpdate: () => {
+        let d = t.v * total;
+        for (let i = 1; i < pts.length; i++) {
+          const len = Phaser.Math.Distance.BetweenPoints(pts[i - 1], pts[i]);
+          if (d <= len || i === pts.length - 1) {
+            const k = len ? Math.min(1, d / len) : 1;
+            obj.setPosition(pts[i - 1].x + (pts[i].x - pts[i - 1].x) * k, pts[i - 1].y + (pts[i].y - pts[i - 1].y) * k);
+            obj.rotation = Math.atan2(pts[i].y - pts[i - 1].y, pts[i].x - pts[i - 1].x);
+            break;
+          }
+          d -= len;
+        }
+      } });
+      segs.push(t);
+    };
+    const place = (obj, p, angleFrom) => { obj.setPosition(p.x, p.y); if (angleFrom) obj.rotation = Math.atan2(p.y - angleFrom.y, p.x - angleFrom.x); };
+    const flash = (p, count = 6, dur = 1600) => {
+      const r = seeded(`fx-${p.x}-${p.y}`);
+      for (let i = 0; i < count; i++) {
+        const c = this.add.circle(p.x + (r() - 0.5) * 70, p.y + (r() - 0.5) * 50, 6, i % 2 ? 0xe2702a : C.red).setAlpha(0);
+        P.tags.push(c);
+        this.tweens.add({ targets: c, alpha: { from: 0.95, to: 0 }, scale: { from: 0.6, to: 2.4 }, duration: 520, delay: (i * dur) / count });
+      }
+    };
+    const trench = () => {
+      P.trench.clear().lineStyle(5, C.red, 0.9);
+      for (let i = 0; i < 7; i++) P.trench.lineBetween(dug.x - 30 + i * 9, dug.y - 30 + i * 9, dug.x - 22 + i * 9, dug.y - 18 + i * 9);
+    };
+    const tag = (p, text, color = "#7E1A15") => P.tags.push(this.add.text(p.x, p.y, text, { ...LABEL, fontSize: "18px", fontStyle: "600", color, backgroundColor: "rgba(246,241,228,0.94)", padding: { x: 8, y: 4 } }).setOrigin(0.5));
+    const home = [approach, route[2], route[1], H];
+    const landed = ["held", "repelled", "landed", "lost"].includes(f.code);
+    const turned = !landed;
+
+    // Each step: what plays, and the state it leaves.
+    P.steps = [
+      { // 1 · they sail
+        play: () => { P.escorts.setAlpha(1); P.craft.setAlpha(1); go(P.escorts, route, 2600); later(250, () => go(P.craft, route.map((p) => ({ x: p.x - 10, y: p.y })), 2600)); },
+        end: () => { P.escorts.setAlpha(1); P.craft.setAlpha(1); place(P.escorts, approach, route[2]); place(P.craft, { x: approach.x - 10, y: approach.y }, route[2]); },
+        dur: 2900,
+      },
+      { // 2 · we move
+        play: () => {
+          if (f.route === "joint") { P.friends.setAlpha(1); go(P.friends, [friendStart, { x: lineX, y: friendStart.y }, line[1]], 2000); }
+          P.unit.setAlpha(1);
+          if (f.route === "forward") { go(P.unit, [reserve, dug], 1600); later(1500, trench); }
+        },
+        end: () => {
+          if (f.route === "joint") { P.friends.setAlpha(1); place(P.friends, line[1]); P.friends.rotation = -Math.PI / 2; }
+          P.unit.setAlpha(1); P.unit.rotation = 0;
+          if (f.route === "forward") { place(P.unit, dug); trench(); } else place(P.unit, reserve);
+        },
+        dur: 2200,
+      },
+      { // 3 · contact
+        play: () => {
+          if (f.code === "stopped") flash({ x: (line[1].x + approach.x) / 2 + 20, y: approach.y }, 5);
+          if (landed) {
+            const target = f.code === "landed" ? flank : beach;
+            go(P.craft, f.code === "landed" ? [approach, { x: approach.x, y: flank.y }, target] : [approach, target], 1800);
+            later(1500, () => flash(f.code === "repelled" ? dug : target, 8));
+            if (f.route !== "forward") later(f.warned ? 300 : 1900, () => go(P.unit, [reserve, dug], 900));
+            if (f.code === "lost") later(2000, () => { this.sd.flag = this.flag(B); });
+          }
+        },
+        end: () => {
+          P.unit.rotation = 0;
+          if (landed) {
+            place(P.craft, f.code === "landed" ? flank : beach);
+            if (f.route !== "forward") place(P.unit, dug);
+            if (f.code === "lost" && !P.flag) P.flag = this.flag(B);
+          }
+        },
+        dur: 2600,
+      },
+      { // 4 · how it ended
+        play: () => {
+          if (turned) { go(P.escorts, home, 2600); later(200, () => go(P.craft, home.map((p) => ({ x: p.x - 10, y: p.y })), 2600)); }
+          else if (f.code === "lost") { go(P.unit, [P.unit, reserve], 1400); go(P.escorts, [approach, { x: approach.x - 60, y: approach.y }], 1400); }
+          else { this.tweens.add({ targets: P.craft, alpha: 0, duration: 1400 }); flash(f.code === "landed" ? flank : beach, 4, 900); go(P.escorts, home, 2600); }
+        },
+        end: () => {
+          P.unit.rotation = 0;
+          if (turned) { place(P.escorts, H, home[2]); place(P.craft, { x: H.x - 10, y: H.y }, home[2]); }
+          else if (f.code === "lost") { place(P.unit, reserve); place(P.escorts, { x: approach.x - 60, y: approach.y }); }
+          else { P.craft.setAlpha(0); place(P.escorts, H, home[2]); }
+        },
+        dur: 2900,
+      },
+      { // 5 · the cost
+        play: () => this.showdownTags(),
+        end: () => this.showdownTags(),
+        dur: 900,
+      },
+    ];
+    P.tagged = false;
+    P.showdownTag = tag;
+  }
+
+  // Where the report can sit without covering the action: the first corner of the table
+  // whose box keeps clear of every place the showdown uses.
+  showdownCorner(w, h) {
+    const P = this.sd;
+    const pts = P ? [P.H, P.B, P.beach, P.approach, P.flank, P.reserve, P.dug, ...P.line, P.friendStart, ...P.route] : [];
+    const corners = [[56, 108], [1864 - w, 1040 - h], [56, 1040 - h], [1864 - w, 108]];
+    const covered = ([x, y]) => pts.filter((p) => p.x > x - 70 && p.x < x + w + 70 && p.y > y - 60 && p.y < y + h + 60).length;
+    return corners.reduce((best, c) => (covered(c) < covered(best) ? c : best));
+  }
+
+  showdownTags() {
+    const P = this.sd;
+    if (P.tagged) return;
+    P.tagged = true;
+    const u = P.unit;
+    P.showdownTag({ x: u.x, y: u.y - 46 }, P.f.unitTag, P.f.unitTone === "bad" ? "#7E1A15" : "#1B1A18");
+  }
+
+  flag(p) {
+    const g = this.add.container(p.x, p.y - 30, [this.add.rectangle(0, -10, 30, 20, C.red).setStrokeStyle(2, C.ink), this.add.rectangle(-15, 6, 3, 34, C.ink)]);
+    return g;
+  }
+
+  // Play step i; returns its length in ms. With reduced motion it jumps to its end state.
+  showdownStep(i) {
+    const s = this.sd?.steps[i];
+    if (!s) return 0;
+    if (reducedMotion.on) { s.end(); return 300; }
+    s.play();
+    return s.dur;
+  }
+
+  // Jump to the end of step i (and every step before it), killing what is still moving.
+  showdownJump(i) {
+    if (!this.sd) return;
+    for (const t of this.sd.timers) t.remove(false);
+    this.sd.timers = [];
+    for (const o of [this.sd.escorts, this.sd.craft, this.sd.friends, this.sd.unit]) this.tweens.killTweensOf(o);
+    this.tweens.getTweens().forEach((t) => { if (t.targets?.some?.((x) => x && typeof x.v === "number")) t.stop(); });
+    for (let k = 0; k <= i; k++) this.sd.steps[k].end();
+  }
+
+  showdownPause(on) {
+    if (on) this.tweens.pauseAll(); else this.tweens.resumeAll();
+    this.time.paused = on;
+  }
+
+  showdownClear() {
+    const P = this.sd;
+    if (!P) return;
+    for (const o of [P.escorts, P.craft, P.friends, P.unit, P.trench, P.fx, P.flag, ...(P.tags ?? [])]) o?.destroy();
+    this.sd = null;
+    this.time.paused = false;
+  }
+
   // Only routes that are actually on the table get drawn.
   drawPaths(t = 1, which = ["quiet", "joint"]) {
     const g = this.paths.clear();
@@ -410,7 +628,9 @@ export class TableScene extends Phaser.Scene {
   }
 
   reset() {
+    this.tweens.killTweensOf([this.warning, this.landingBoats, this.lattice]);
     this.setNotes([]);
+    this.showdownClear();
     this.cameras.main.setZoom(1).centerOn(960, 540);
     this.paths.clear();
     for (const l of this.pathLabels) l.destroy();

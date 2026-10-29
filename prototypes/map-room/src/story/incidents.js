@@ -21,16 +21,16 @@ onWorld(() => {
     {
       id: "radar", months: ["dec", "jan"], day: { dec: 9, jan: 7 }, from: "briggs",
       title: `${B}’s main radar is failing`,
-      text: (c, s, k) => `The main radar on ${B} has a cracked waveguide. Only ${BN}’s engineer company can change it, and the work takes them off the battalion’s rest for ${ENG_DAYS} days. Left running, the engineers give it a one in ${k > 1.3 ? "three" : "four"} chance of failing for good before the end of February, and ${B} would fight blind on that side.`,
+      text: (c, s, k) => `The main radar on ${B} has a cracked waveguide. Only ${BN}’s engineer company can change it, and the work keeps them from resting: ${ENG_DAYS} more fatigue for the battalion. Left running, the engineers give it a one in ${k > 1.3 ? "three" : "four"} chance of failing for good before the end of February, and ${B} would fight blind on that side.`,
       options: [
-        { id: "fix", name: "Repair it now", says: `${BN}’s engineers do the work: ${ENG_DAYS} more days on duty for the battalion, on top of this month’s orders. Six days on the spare radar, then it is sound.`, staff: true,
+        { id: "fix", name: "Repair it now", says: `${BN}’s engineers do the work: ${ENG_DAYS} more fatigue for the battalion, on top of this month’s orders. Six days on the spare radar, then it is sound.`, staff: true,
           effect: (s) => { s.eng += ENG_DAYS; s.notes.push("radar-fixed"); } },
         { id: "run", name: "Keep it running", says: `No cost now. A real chance it fails when ${R} sails, and ${B} loses a step of its defence that day.`, seal: true,
           effect: (s, c, k) => { if (c.luck.radar < (k > 1.3 ? 0.34 : 0.25)) s.radarFails = true; s.notes.push("radar-run"); } },
       ],
       council: (c, s) => ({
         okafor: s.fatigue + ENG_DAYS > 100
-          ? { prefers: "run", line: `Those engineers are my tiredest men. Twelve more days and I am signing sick notes in February. Let the radar take its chances.`, because: `${BN} fit in February`, risk: `${BN} carries another ${ENG_DAYS} days into February.` }
+          ? { prefers: "run", line: `Those engineers are my tiredest men. Twelve more fatigue on them and I am signing sick notes in February. Let the radar take its chances.`, because: `${BN} fit in February`, risk: `${BN} carries another ${ENG_DAYS} fatigue into February.` }
           : { prefers: "fix", line: "A cracked waveguide does not heal. The engineers have the days to spare now; they may not in February.", because: "keeping equipment working when it matters", risk: `${B} could be blind on the day ${R} sails.` },
         halden: { prefers: "run", line: `Six days with 20 miles is six days I cannot see what leaves ${S}. That is the week I most need to watch.`, because: `watching ${R} through its build-up`, risk: `six days in which a sailing from ${S} could go unseen.` },
         briggs: { prefers: "fix", line: "I would rather lose six days now than lose the radar in February.", because: `${B} being able to see an attack coming`, risk: "a radar failure at the worst possible moment." },
@@ -94,7 +94,7 @@ onWorld(() => {
     {
       id: "visit", months: ["jan"], day: { jan: 5 }, from: "sato",
       title: `${M}’s defence minister wants to visit ${B}`,
-      text: (c) => `${M}’s defence minister asks to visit ${B} on 8 January, a week before the cabinet votes. She is ${c.minister === "dove" ? "the cabinet’s loudest voice for staying out of this" : c.minister === "hawk" ? "the cabinet’s strongest supporter of standing with us" : "undecided, and the cabinet follows her"}. She wants cameras.`,
+      text: (c) => `${M}’s defence minister asks to visit ${B} on 8 January, ${c.voteDay - 8 === 1 ? "the day" : `${c.voteDay - 8} days`} before the cabinet votes on the ${c.voteDay}${[11, 12, 13].includes(c.voteDay) ? "th" : ["th", "st", "nd", "rd"][c.voteDay % 10] ?? "th"}. She is ${c.minister === "dove" ? "the cabinet’s loudest voice for staying out of this" : c.minister === "hawk" ? "the cabinet’s strongest supporter of standing with us" : "undecided, and the cabinet follows her"}. She wants cameras.`,
       options: [
         { id: "open", name: "Host her, with cameras", says: `A public visit. The ${MA} public sees its minister with our troops. ${R} sees it too.`, staff: true,
           effect: (s, c, k) => { s.support += n(c.minister === "dove" ? 4 : 8, k); s.rivalSaw = true; } },

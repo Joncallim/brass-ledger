@@ -50,18 +50,35 @@ test("the battalion's days and casualties carry into the next sector", () => {
 
 test("every result pays a refit, a better result pays more, and failure adds no penalty", () => {
   assert.ok(REFIT.failure > 0 && REFIT.costly >= REFIT.failure && REFIT.success > REFIT.costly);
+  const ALT = { dec: { beacon: "rest", lattice: "boats" }, jan: { beacon: "show", lattice: "sarn", way: "buy" }, feb: { route: "joint" } };
   try {
     for (let i = 0; i < 30; i++) {
-      const war = newWar(`F${i}`, "shifting");
-      const { o } = playSector(war);
-      assert.equal(war.funding, REFIT[o.grade]);
+      // The same war played two ways: the next sector's problem depends on what the last
+      // one was, never on how well it went. Only what the task force carries differs.
+      const a = newWar(`F${i}`, "shifting"), b = newWar(`F${i}`, "shifting");
+      const { o } = playSector(a), { o: o2 } = playSector(b, ALT);
+      assert.equal(a.funding, REFIT[o.grade]);
+      assert.equal(b.funding, REFIT[o2.grade]);
+      nextSector(a); nextSector(b);
+      const x = campaignFor(a), y = campaignFor(b);
+      for (const k of ["plan", "minister", "hotline", "sailDay", "support0", "D"]) assert.deepEqual(x[k], y[k], k);
+    }
+  } finally { setWorld(KESTREL); }
+});
+
+test("the next sector poses a different problem from the last", () => {
+  try {
+    for (let i = 0; i < 30; i++) {
+      const war = newWar(`V${i}`, "shifting");
+      const { c } = playSector(war);
       nextSector(war);
-      // The next sector's campaign is rolled the same way whatever happened before; only
-      // what the task force carries changes it.
-      const fresh = makeCampaign(`F${i}-2`, "shifting"), next = campaignFor(war);
-      assert.equal(next.plan, fresh.plan);
-      assert.equal(next.D, fresh.D);
-      assert.ok(next.craft.jan <= fresh.craft.jan);
+      const next = campaignFor(war);
+      assert.notEqual(next.plan, c.plan);
+      assert.notEqual(next.hotline, c.hotline);
+      // A second wave if the last landing force had none; none if it had one (unless the
+      // rival lost craft on a beach last time, or this sector is a bluff with no landing).
+      if (c.craft.jan >= 12) assert.ok(next.craft.jan < 12);
+      else if (next.plan !== "bluff" && !war.carry.rivalLost) assert.ok(next.craft.jan >= 12);
     }
   } finally { setWorld(KESTREL); }
 });

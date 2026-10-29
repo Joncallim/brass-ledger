@@ -33,7 +33,7 @@ onWorld(() => {
       rank: "Rear Admiral", name: "Tunde Okafor", post: "Logistics", portrait: "okafor", from: "Nigerian",
       focus: "Keeps our troops and ships fit to fight",
       pushes: `rest for ${W.reserve} before it breaks`,
-      role: `Head of logistics. Tracks supplies, fuel, and how long a unit can stay on duty before sickness and mistakes set in. His rule of thumb: past 100 days without rest, a third of a unit is lost.`,
+      role: `Head of logistics. Tracks supplies, fuel, and how long a unit can stay on duty before sickness and mistakes set in. He keeps the battalion’s fatigue: a point for each day on duty without rest, more for hard work. Past 100 sickness and mistakes set in; past 120 a third of a unit is lost.`,
       time: ["since September", "these three months", "before the rains turn"],
     },
     sato: {

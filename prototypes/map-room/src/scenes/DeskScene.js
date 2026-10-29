@@ -52,6 +52,7 @@ export class DeskScene extends Phaser.Scene {
       theatre: (seed, d, chapter) => this.newTheatre(seed, d, chapter), war: (code, d) => this.startWar(code, d), getWar: () => structuredClone(this.game.war ?? null),
     };
     Object.defineProperty(window.mapRoom, "c", { get: () => this.campaign });
+    window.mapRoomTable = this.table; // test hook: the chart's showdown state
     // Another sea opens on its chart preview: the story is written for Kestrel Strait.
     const start = data.chapter ?? q.get("chapter");
     const storySea = this.table.sc.story || this.table.sc.id === STORY_SCENARIO;
@@ -251,10 +252,12 @@ export class DeskScene extends Phaser.Scene {
     const tools = state ? `<div class="tools"><button class="tool" data-room="staff" title="Staff room (S)">Staff</button><button class="tool" data-room="ledger" title="Ledger (L)">Ledger</button><button class="tool" data-room="settings" title="Settings (O)">Settings</button></div>` : "";
     const chips = state ? `<div class="chips">${status(this.campaign, state).map((x) => `<span class="chip tone-${x.tone}" data-term="${x.term}" tabindex="0"><i></i><span><small>${x.label}</small>${x.value}</span></span>`).join("")}</div>` : "";
     const track = CALENDAR.map((m, i) => `<i class="${i < 3 ? "before" : i + 1 < turn ? "done" : i + 1 === turn ? "now" : ""}" title="${i < 3 ? `${m}: before you took command` : m}">${m[0]}</i>`).join("");
-    const s = seals ? `<div class="seals"><span>${state ? "Personal orders" : "Your personal orders this month"}</span>${
+    const s = seals ? `<div class="seals"><span>${state ? "Orders" : "Your personal orders this month"}</span>${
       Array.from({ length: this.limit ?? 2 }, (_, i) => `<span class="seal ${i < used ? "empty" : ""}" data-seal="${i}">BL</span>`).join("")}</div>` : "";
     const h = this.dom(40, 12, `<div class="hud ${state ? "compact" : ""}"><div class="mark"><svg width="26" height="26" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="20" height="20" rx="3" fill="#C99A3E"/><rect x="5" y="6" width="12" height="2" fill="#141210"/><rect x="5" y="10" width="12" height="2" fill="#141210"/><rect x="5" y="14" width="7" height="2" fill="#141210"/></svg>Brass Ledger</div>
       <div class="month"><b data-month>${monthOf(turn)}</b><span>${this.where(turn)}</span></div><div class="track">${track}</div>${chips}${tools}${s}</div>`);
+    this.drop(this.hudObj); // one top bar at a time
+    this.hudObj = h;
     this.hudEl = h.node;
     for (const b of h.node.querySelectorAll("[data-room]")) b.onclick = () => (this.room?.kind === b.dataset.room ? this.closeRoom() : this.openRoom(b.dataset.room));
     if (flipTo) this.flipMonth(flipTo);
@@ -263,7 +266,8 @@ export class DeskScene extends Phaser.Scene {
 
   where(turn) {
     const w = this.game.war;
-    return `${w ? `Sector ${w.sector} of ${SECTORS} · ` : ""}${this.table.sc.name} · month ${Math.max(1, turn - 3)} of 3 · ${this.campaign.D.name}`;
+    // The month track beside it shows which of the three months this is.
+    return `${w ? `Sector ${w.sector} of ${SECTORS} · ` : ""}${this.table.sc.name} · ${this.campaign.D.name}`;
   }
 
   flipMonth(turn) {
@@ -356,6 +360,7 @@ export class DeskScene extends Phaser.Scene {
   go(chapter, opts = {}) {
     if (this.chapter) log("screen", { chapter: this.chapter, ms: Date.now() - (this.chapterAt ?? Date.now()) });
     this.chapterAt = Date.now();
+    this.time.paused = false;
     this.clear();
     this.table.reset();
     this.next = null;
@@ -433,7 +438,8 @@ export class DeskScene extends Phaser.Scene {
     this.hud(turn, { state });
     this.table.cameras.main.fadeIn(reducedMotion.on ? 0 : 600, 20, 18, 16);
     const secs = data.sections.map(([l, b], i) => `${i === 1 ? this.warnBlock(data.warning) : ""}<div class="sec"><p class="lab">${l}</p><p class="body">${b}</p></div>`).join("");
-    const sheet = this.dom(1150, 108, `<article class="paper sheet tall" style="width:680px" aria-label="${data.title}"><h2>${data.title}</h2><p class="from">${monthOf(turn)} · ${data.from}</p>${secs}
+    const dissent = data.dissent ? `<div class="quote dissent"><span class="av" style="background-image:url(${portrait(data.dissent[0])})"></span><span><span class="attrib">${surname(data.dissent[0])} reads it differently:</span> “${data.dissent[1]}”</span></div>` : "";
+    const sheet = this.dom(1150, 108, `<article class="paper sheet tall" style="width:680px" aria-label="${data.title}"><h2>${data.title}</h2><p class="from">${monthOf(turn)} · ${data.from}</p>${secs}${dissent}
       <div class="btns" style="margin-top:16px"><button class="b on" data-go>${nextLabel}</button></div></article>`);
     move(this, sheet, { x: [1210, 1150], alpha: [0, 1], angle: [4, 0.8] }, { dur: 600, delay: 1000 });
     this.talk("halden", data.halden, { delay: 700, w: 1030 });
@@ -530,7 +536,9 @@ export class DeskScene extends Phaser.Scene {
     render();
     move(this, sheet, { alpha: [0, 1], y: [140, 110] }, { dur: T.paper, delay: 300 });
     const agree = split(I.council, I.staffId).agree;
-    this.talkObj = this.talk(I.from, `General. ${I.body.split(". ")[0]}. ${agree ? "Your staff agree on what to do; the case is on the sheet." : "Your staff disagree on what to do. Both cases are on the sheet."}`, { x: 1176, w: 650, delay: 900 });
+    // The officer who brings the signal opens with their own judgment, not a summary of the sheet.
+    const own = I.council[I.from]?.line ?? Object.values(I.council)[0].line;
+    this.talkObj = this.talk(I.from, `${own}${agree ? "" : " Not everyone agrees; both cases are on the sheet."}`, { x: 1176, w: 650, delay: 900 });
     this.focusLater(sheet.node.querySelector(".opt.sel"), 1400);
   }
 
@@ -606,7 +614,7 @@ export class DeskScene extends Phaser.Scene {
   // Campaigns played in this browser, one row each, and the raw lines to copy.
   logHTML() {
     const rows = summary().slice(-8).reverse();
-    const table = rows.length ? `<table class="logtable"><tr><th>Code</th><th>Minutes</th><th>Orders used Dec · Jan</th><th>Slips opened</th><th>Picks taken back</th><th>Cases heard</th><th>February</th><th>Result</th></tr>${rows.map((r) => `<tr><td>${esc(r.code)} · ${r.difficulty}</td><td>${r.minutes}</td><td>${r.seals.dec} · ${r.seals.jan}</td><td>${r.opened}</td><td>${r.undone}</td><td>${r.heard}</td><td>${r.route ?? "–"}</td><td>${r.grade ? `${r.grade}, ${r.days} days, ${r.casualties} casualties` : "unfinished"}</td></tr>`).join("")}</table>` : `<p class="set-help">Nothing logged yet.</p>`;
+    const table = rows.length ? `<table class="logtable"><tr><th>Code</th><th>Minutes</th><th>Orders used Dec · Jan</th><th>Slips opened</th><th>Picks taken back</th><th>Cases heard</th><th>February</th><th>Result</th></tr>${rows.map((r) => `<tr><td>${esc(r.code)} · ${r.difficulty}</td><td>${r.minutes}</td><td>${r.seals.dec} · ${r.seals.jan}</td><td>${r.opened}</td><td>${r.undone}</td><td>${r.heard}</td><td>${r.route ?? "–"}</td><td>${r.grade ? `${r.grade}, fatigue ${r.days}, ${r.casualties} casualties` : "unfinished"}</td></tr>`).join("")}</table>` : `<p class="set-help">Nothing logged yet.</p>`;
     return `${table}<textarea readonly rows="5" aria-label="Raw playtest log">${esc(rawLog())}</textarea>`;
   }
 
@@ -1018,7 +1026,7 @@ export class DeskScene extends Phaser.Scene {
         <div class="redeploy-cols">
           <section><p class="lab">What the task force carries</p>
             <ul class="carry">
-              <li class="${days > 120 ? "bad" : days > 100 ? "warn" : ""}"><b>${WORLD.reserve}</b>${days === 0 ? "rested" : `${days} days without rest`}${bought.has("rest") ? " (after two weeks ashore)" : ""}</li>
+              <li class="${days > 120 ? "bad" : days > 100 ? "warn" : ""}"><b>${WORLD.reserve}</b>${days === 0 ? "rested" : `fatigue ${days}`}${bought.has("rest") ? " (after two weeks ashore)" : ""}</li>
               <li class="${strength < UNDER_STRENGTH ? "bad" : ""}"><b>Strength</b>${strength} of ${FULL_STRENGTH}${strength < UNDER_STRENGTH ? ": under strength, it can’t hold a second wave" : ""}${bought.has("replace") ? " (casualties replaced)" : last.casualties ? ` (${last.casualties} killed or wounded)` : ""}</li>
               <li><b>${WORLD.rival}</b>${k.rivalLost ? `lost ${k.rivalLost} landing craft; it starts the next sector with fewer` : "lost nothing it can’t replace"}</li>
             </ul>
@@ -1083,22 +1091,67 @@ export class DeskScene extends Phaser.Scene {
     this.focusLater(first, 1600);
   }
 
-  // The showdown, hour by hour, then the debrief. The top bar now reads the state after
-  // February, the same numbers the debrief gives.
+  // The showdown, played on the chart. Each report entry appears as its move plays; the
+  // chart ends in the state the last entry describes. Pause holds everything; "Skip to the
+  // end" jumps the chart and the report to the final state; reduced motion shows each step's
+  // end state in turn.
   ch_feb_night() {
     const N = showdown(this.campaign, this.run);
+    this.hud(6, { seals: 0, state: this.at("janEnd") });
     this.table.setRing(this.ringAfter("jan"));
-    this.night(N, 6, "debrief", { ravellan: "edge", warning: false, state: N.after, flip: false });
+    this.table.showdownSetup(N.play);
+    const rows = N.beats.map((b, i) => `<li data-beat="${i}" style="opacity:0"><p class="lab">${b.cause}</p><p class="body">${b.text}</p></li>`).join("");
+    const sheet = this.dom(...this.table.showdownCorner(560, 520), `<article class="paper sheet showdown" style="width:560px"><h2>${N.title}</h2><p class="from">${N.sub}</p><ol class="sd-log">${rows}</ol>
+      <div class="btns sd-controls"><button class="b" data-pause>Pause</button><button class="b" data-skip>Skip to the end</button></div>
+      <div class="btns" data-end hidden><button class="b on" data-go>${N.go}</button></div></article>`);
+    if (sheet.y > 300) sheet.y = 1064 - sheet.node.offsetHeight; // a bottom corner sits on the bottom edge
+    move(this, sheet, { alpha: [0, 1] }, { dur: T.ui });
+    const node = sheet.node, go = node.querySelector("[data-go]");
+    let i = -1, paused = false, timer = null;
+    const show = (k) => { const row = node.querySelector(`[data-beat="${k}"]`); row.style.opacity = 1; glossNode(row); };
+    const finish = () => {
+      this.table.showdownJump(N.beats.length - 1);
+      N.beats.forEach((_, k) => show(k));
+      node.querySelector(".sd-controls").hidden = true;
+      node.querySelector("[data-end]").hidden = false;
+      this.hud(6, { seals: 0, state: N.after }); // February is over: the bar now reads the final state
+      go.focus({ preventScroll: true });
+      this.next = () => this.go("debrief");
+    };
+    const step = () => {
+      i += 1;
+      if (i >= N.beats.length) return finish();
+      show(i);
+      const dur = this.table.showdownStep(i);
+      timer = this.time.delayedCall(dur + (reducedMotion.on ? 500 : 400), step);
+      this.timers.push(timer);
+    };
+    node.querySelector("[data-pause]").onclick = (e) => {
+      paused = !paused;
+      this.table.showdownPause(paused);
+      this.time.paused = paused;
+      e.currentTarget.textContent = paused ? "Resume" : "Pause";
+    };
+    node.querySelector("[data-skip]").onclick = () => {
+      this.table.showdownPause(false); this.time.paused = false;
+      timer?.remove(false);
+      finish();
+    };
+    go.onclick = () => this.go("debrief");
+    this.skipFns.push(() => { if (node.querySelector("[data-end]").hidden) node.querySelector("[data-skip]").click(); });
+    this.later(500, step);
   }
 
   ch_debrief() {
     const D = debrief(this.campaign, this.run), O = outcome(this.campaign, this.run);
     log("result", { grade: D.grade, days: O.daysAfter, casualties: O.casualties, ministers: D.score[1].text.split(" ")[0] });
     this.hud(6, { seals: 0, state: D.after });
-    this.table.setBoats("none");
-    this.table.revealTruth(D.truth);
+    // The chart stays as the showdown left it.
+    this.table.showdownSetup(showdown(this.campaign, this.run).play);
+    this.table.showdownJump(4);
+    this.table.revealTruth([]); // the real route only; the words are in the debrief's last column
     const rows = D.rows.map((r) => `<div class="dt" style="opacity:0"><b>${r[0]}</b><span>${r[1]}</span><span>${r[2]}</span><span style="color:var(--red-ink)">${r[3]}</span></div>`).join("");
-    const s = this.dom(56, 108, `<article class="paper sheet" style="width:1060px;padding:28px 42px 26px"><p class="lab">Campaign ${esc(this.campaign.seed)} · ${this.campaign.D.name}</p><div class="verdict"><h2 style="font-size:44px;line-height:50px">${D.title}</h2><span class="grade grade-${D.grade}">${D.gradeName}</span></div>
+    const s = this.dom(56, 108, `<article class="paper sheet" style="width:1060px;box-sizing:border-box;padding:28px 42px 26px"><p class="lab">Campaign ${esc(this.campaign.seed)} · ${this.campaign.D.name}</p><div class="verdict"><h2 style="font-size:44px;line-height:50px">${D.title}</h2><span class="grade grade-${D.grade}">${D.gradeName}</span></div>
       <ul class="score">${D.score.map((x) => `<li class="${x.ok ? "ok" : "bad"}"><i aria-hidden="true">${x.ok ? "✓" : "✗"}</i><span><b>${x.label}</b>${x.text}</span></li>`).join("")}</ul><p class="body" style="margin-top:8px">${D.line}</p>
       <div class="dt" style="border:0;font-size:16px;font-weight:600;color:var(--ink2);margin-top:12px"><span></span><span>Ordered</span><span>We believed</span><span style="color:var(--red-ink)">What was really happening</span></div>${rows}
       <p class="body" style="margin-top:14px;font-size:19px;line-height:27px"><b>${surname("halden")}:</b> ${D.halden}</p>
@@ -1126,7 +1179,7 @@ export class DeskScene extends Phaser.Scene {
         btns.querySelector("[data-redeploy]").onclick = () => this.go("redeploy");
         this.focusLater(btns.firstChild, 1200);
       } else {
-        btns.innerHTML = `<div class="war-over"><p class="lab">The war · ${esc(w.code)}</p>${w.results.map((r) => `<p><b>Sector ${r.sector}, ${r.strait}:</b> ${GRADES[r.grade].toLowerCase()}, ${r.days} days on the battalion, ${r.casualties} casualties.</p>`).join("")}</div>
+        btns.innerHTML = `<div class="war-over"><p class="lab">The war · ${esc(w.code)}</p>${w.results.map((r) => `<p><b>Sector ${r.sector}, ${r.strait}:</b> ${GRADES[r.grade].toLowerCase()}, the battalion at fatigue ${r.days}, ${r.casualties} casualties.</p>`).join("")}</div>
           <button class="b on" style="height:56px;font-size:20px" data-newwar>Start a new war</button><button class="b" style="height:56px;font-size:20px" data-new>New single campaign</button>`;
         btns.querySelector("[data-newwar]").onclick = () => this.startWar(newSeed(), w.difficulty);
         btns.querySelector("[data-new]").onclick = () => this.newTheatre(newSeed(), w.difficulty);

@@ -17,7 +17,7 @@ Give every tester the same seeds, in this order, so results can be compared:
 
 | Run | Code | Difficulty | Why this one |
 | --- | --- | --- | --- |
-| 1 | `KESTREL` | Shifting | The authored theatre, and everyone's first run |
+| 1 | `KESTREL` | Shifting | The authored theatre, and everyone's first run. It is a real landing, so February ends in a fight |
 | 2 | `B6` | Shifting | A real landing with a second wave (13 craft) |
 | 3 | `B5` | Shifting | A bluff, with the cabinet already below a majority |
 | 4 | `B4` | Volatile | A bluff that turns into a landing if the cabinet wavers |
@@ -50,6 +50,11 @@ Most of this is in the in-game log: Settings, then "Playtest log", then copy the
 3. In February, did you feel you knew the answer, or that you were choosing between costs?
 4. Did anything in the story contradict what you saw on the screen? Write down exactly where.
 5. Which text did you skip, and which did you read twice?
+6. Did you change a plan after reading an officer's case or opening a slip? What made you
+   change it?
+7. What did you give up to get what you chose? Could you say it in one sentence?
+8. Watching February play out on the chart: could you follow who moved where, and did the
+   chart end where the report said it did?
 
 ## Recovery (the poor run)
 

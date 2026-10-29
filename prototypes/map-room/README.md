@@ -148,6 +148,12 @@ force against one rival (`src/story/war.js`; see ROADMAP, phase 2):
   - an extra personal order in the first month (2);
   - Lattice in place early, with a known count (1).
   A failure adds no penalty of its own.
+- The second sector poses a different problem from the first:
+  - a different enemy plan;
+  - a second wave if the last landing force had none, or none if it had one;
+  - a different defence minister;
+  - a hotline if the last ally had none, or none if it had one.
+  It never depends on how well the last sector went.
 - Each officer remembers something specific from the sector, and says it at the start of
   the next one ("We left the quay at Sarn and paid for it").
 - A war has no replays. The second debrief shows both sectors' results.
@@ -216,10 +222,22 @@ after December follows from what you ordered (`run` in `DeskScene`):
   headland (no warning needed, costs days whatever happens), or stand with Marenna's navy
   if Marenna agreed to send it. Good intelligence narrows the choice without settling it:
   Halden says what he knows and what he doesn't (troops aboard, how many waves).
-- The showdown report plays out what happened, hour by hour, then the debrief shows what
-  you ordered, what we believed and what was really happening, and what each officer
-  will remember. The top bar shows the state after February, the same numbers as the
-  debrief.
+- The showdown plays out on the chart in five steps, each with a short entry in the report:
+  - the rival's ships leave harbour and come down the lane;
+  - our forces move (the battalion stands by, digs in on the headland, or the two navies
+    form a line);
+  - contact (shots across the bows, a landing on the beach, or a second wave round the flank);
+  - how it ended (ships home, landing craft lost on the beach, or the rival's flag over the
+    station);
+  - the cost.
+  Pause and "Skip to the end" work at any point. With reduced motion each step shows its
+  end state. The chart always ends where the report does.
+- The debrief shows what you ordered, what we believed (January's column is the reading
+  the staff argued from) and what was really happening, and what each officer will
+  remember. The top bar shows the state after February, the same numbers as the debrief.
+- **Fatigue** is one point a day on duty without rest, plus more for hard work (an
+  engineering job, digging in, a battle, a month at sea). It is not a count of days, and
+  every screen calls it fatigue.
 
 Seals are spent and returned by the slips themselves, never more than two a month,
 including any spent on the month's incident.
@@ -357,6 +375,12 @@ in the scenario and open the same profiles.
   under strength; the rival losing one craft in its next sector for every four beaten on a
   beach, up to three; and the second sector reusing the December to February calendar. That
   calendar is a stand-in: a real war needs dates that don't depend on the season.
+- **Playtest 3 rules:**
+  - A bluff costs the ally's cabinet 3 support a month (scaled by difficulty) from the
+    rival's press, so even a campaign with no landing needs orders spent on the ally. The
+    Shifting cap on campaigns that can't be won outright moved from 20% to 25% because of it.
+  - The second sector varies as above.
+  - Fatigue replaces "days" everywhere.
 - **Playtest 2 rules:**
   - The radar repair costs the battalion's engineers 12 days.
   - The January sailing date buys the battalion 20 days' rest but loses the boarding
