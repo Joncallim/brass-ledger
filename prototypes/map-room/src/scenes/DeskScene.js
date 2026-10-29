@@ -12,6 +12,9 @@ import { WORLD, setWorld } from "../story/world.js";
 import { worldFor } from "../gen/factions.js";
 import { PROGRESS, ledger, staffRoom } from "../story/rooms.js";
 import { clearLog, log, rawLog, summary } from "../playlog.js";
+import { FULL_STRENGTH, REFIT, SECTORS, SPEND, UNDER_STRENGTH, campaignFor, closeSector, newWar, nextSector, sectorCode, toggleSpend, worldForSector } from "../story/war.js";
+
+const GRADES = { success: "Success", costly: "Costly success", failure: "Failure" };
 
 const TRAY = { x: 1640, y: 1000 }; // where slips are dealt from and gathered to
 const portrait = (id) => `./portraits/${OFFICERS[id].portrait}.jpg`;
@@ -21,7 +24,7 @@ const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">":
 
 // Number keys jump to these. The incident signals sit between briefing and orders.
 export const CHAPTERS = ["title", "dec-brief", "dec-orders", "dec-night", "jan-brief", "jan-orders", "jan-night", "feb-showdown", "debrief"];
-const ALL = [...CHAPTERS, "dec-signal", "jan-signal", "feb-night", "chart"];
+const ALL = [...CHAPTERS, "dec-signal", "jan-signal", "feb-night", "redeploy", "chart"];
 const MONTH = { dec: { turn: 4, name: "December" }, jan: { turn: 5, name: "January" } };
 
 // Every word and every control is DOM, so screen readers, focus and text rendering work
@@ -46,7 +49,7 @@ export class DeskScene extends Phaser.Scene {
     window.mapRoom = {
       go: (c, opts) => this.go(c, opts), chapters: CHAPTERS, reduced: reducedMotion,
       setRun: (r) => (this.run = r), getRun: () => structuredClone(this.run), campaign: (seed, d) => this.newCampaign(seed, d),
-      theatre: (seed, d, chapter) => this.newTheatre(seed, d, chapter),
+      theatre: (seed, d, chapter) => this.newTheatre(seed, d, chapter), war: (code, d) => this.startWar(code, d), getWar: () => structuredClone(this.game.war ?? null),
     };
     Object.defineProperty(window.mapRoom, "c", { get: () => this.campaign });
     // Another sea opens on its chart preview: the story is written for Kestrel Strait.
@@ -57,7 +60,8 @@ export class DeskScene extends Phaser.Scene {
 
   // A campaign is rolled from a seed: same seed and difficulty, same campaign.
   newCampaign(seed, difficulty) {
-    this.campaign = makeCampaign(seed, difficulty);
+    const w = this.game.war;
+    this.campaign = w && sectorCode(w) === seed ? campaignFor(w) : makeCampaign(seed, difficulty);
     this.run = DEFAULT_RUN();
     log("campaign", { code: this.campaign.seed, difficulty: this.campaign.difficulty, theatre: WORLD.strait });
   }
@@ -65,9 +69,11 @@ export class DeskScene extends Phaser.Scene {
   // A new code is a new theatre: new countries, new names, a new chart, and a campaign
   // rolled on them. The world changes in place and both scenes restart on it, so this works
   // where the page can't be reloaded with a new query string (the hosted preview).
-  newTheatre(seed, difficulty, chapter = "dec-brief") {
+  // A war passes the sector's world; anything else is a single campaign, so the war ends.
+  newTheatre(seed, difficulty, chapter = "dec-brief", world = null) {
     this.clear();
-    setWorld(worldFor(seed));
+    if (!world) this.game.war = null;
+    setWorld(world ?? worldFor(seed));
     const table = this.table;
     this.scene.stop();
     table.scene.restart({ seed, difficulty, chapter });
@@ -246,7 +252,7 @@ export class DeskScene extends Phaser.Scene {
     const chips = state ? `<div class="chips">${status(this.campaign, state).map((x) => `<span class="chip tone-${x.tone}" data-term="${x.term}" tabindex="0"><i></i><span><small>${x.label}</small>${x.value}</span></span>`).join("")}</div>` : "";
     const track = CALENDAR.map((m, i) => `<i class="${i < 3 ? "before" : i + 1 < turn ? "done" : i + 1 === turn ? "now" : ""}" title="${i < 3 ? `${m}: before you took command` : m}">${m[0]}</i>`).join("");
     const s = seals ? `<div class="seals"><span>${state ? "Personal orders" : "Your personal orders this month"}</span>${
-      Array.from({ length: 2 }, (_, i) => `<span class="seal ${i < used ? "empty" : ""}" data-seal="${i}">BL</span>`).join("")}</div>` : "";
+      Array.from({ length: this.limit ?? 2 }, (_, i) => `<span class="seal ${i < used ? "empty" : ""}" data-seal="${i}">BL</span>`).join("")}</div>` : "";
     const h = this.dom(40, 12, `<div class="hud ${state ? "compact" : ""}"><div class="mark"><svg width="26" height="26" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="20" height="20" rx="3" fill="#C99A3E"/><rect x="5" y="6" width="12" height="2" fill="#141210"/><rect x="5" y="10" width="12" height="2" fill="#141210"/><rect x="5" y="14" width="7" height="2" fill="#141210"/></svg>Brass Ledger</div>
       <div class="month"><b data-month>${monthOf(turn)}</b><span>${this.where(turn)}</span></div><div class="track">${track}</div>${chips}${tools}${s}</div>`);
     this.hudEl = h.node;
@@ -256,7 +262,8 @@ export class DeskScene extends Phaser.Scene {
   }
 
   where(turn) {
-    return `${this.table.sc.name} · month ${Math.max(1, turn - 3)} of 3 · ${this.campaign.D.name}`;
+    const w = this.game.war;
+    return `${w ? `Sector ${w.sector} of ${SECTORS} · ` : ""}${this.table.sc.name} · month ${Math.max(1, turn - 3)} of 3 · ${this.campaign.D.name}`;
   }
 
   flipMonth(turn) {
@@ -398,21 +405,25 @@ export class DeskScene extends Phaser.Scene {
     const t = this.dom(150, 150, `<div class="title"><h1>Brass Ledger</h1><p>${TITLE.line}</p>
       <dl class="orient" data-orient>${ORIENT.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
       <p class="campaign-code">Campaign <b>${esc(c.seed)}</b> · ${c.D.name}</p>
-      <div data-start style="display:flex;gap:16px;margin-top:32px"><button class="go" data-go>Continue in December</button><button class="ghost" data-new>New campaign</button></div>
-      <div data-setup hidden><p class="setup-q">How much should change from one campaign to the next?</p><div class="levels">${Object.entries(DIFFICULTY).map(([id, d]) => `<button class="level ${id === c.difficulty ? "sel" : ""}" data-level="${id}"><b>${d.name}</b><span>${d.line}</span></button>`).join("")}</div>
+      <div data-start style="display:flex;gap:16px;margin-top:32px"><button class="go" data-go>Continue in December</button><button class="ghost" data-new>New campaign</button><button class="ghost" data-war>Start a two-sector war</button></div>
+      <div data-setup hidden><p class="setup-q" data-setup-q>How much should change from one campaign to the next?</p><div class="levels">${Object.entries(DIFFICULTY).map(([id, d]) => `<button class="level ${id === c.difficulty ? "sel" : ""}" data-level="${id}"><b>${d.name}</b><span>${d.line}</span></button>`).join("")}</div>
         <p class="help" style="margin-top:14px">Each new campaign is set in a new theatre: a new strait, new countries and a new chart. A fresh code also rolls the hidden enemy plan, the ally’s politics, your staff’s starting state and the month’s incidents. Replaying a code replays the same theatre and campaign.</p></div>
       <p style="font-size:18px;color:var(--room-muted);margin-top:20px" data-saved>${TITLE.saved}</p></div>`);
     move(this, t, { alpha: [0, 1], y: [174, 150] }, { dur: T.reveal });
     const go = t.node.querySelector("[data-go]");
     go.onclick = () => { this.run = DEFAULT_RUN(); this.go("dec-brief"); };
-    t.node.querySelector("[data-new]").onclick = () => {
+    const setup = (war) => {
+      this.warSetup = war;
       t.node.querySelector("[data-start]").style.display = "none";
       t.node.querySelector("[data-orient]").style.display = "none";
       t.node.querySelector("[data-saved]").style.display = "none";
       t.node.querySelector("[data-setup]").hidden = false;
+      t.node.querySelector("[data-setup-q]").textContent = war ? "A war: one task force, two sectors, one enemy. How much should change from sector to sector?" : "How much should change from one campaign to the next?";
       t.node.querySelector(".level.sel")?.focus({ preventScroll: true });
     };
-    for (const b of t.node.querySelectorAll("[data-level]")) b.onclick = () => { this.newTheatre(newSeed(), b.dataset.level); };
+    t.node.querySelector("[data-new]").onclick = () => setup(false);
+    t.node.querySelector("[data-war]").onclick = () => setup(true);
+    for (const b of t.node.querySelectorAll("[data-level]")) b.onclick = () => (this.warSetup ? this.startWar(newSeed(), b.dataset.level) : this.newTheatre(newSeed(), b.dataset.level));
     this.focusLater(go, 300);
     this.next = go.onclick;
   }
@@ -486,6 +497,7 @@ export class DeskScene extends Phaser.Scene {
     const c = this.campaign, I = incident(c, this.run, month);
     if (!I) return this.go(`${month}-orders`);
     const { turn, name } = MONTH[month];
+    this.limit = this.campaign.seals?.[month] ?? 2;
     this.hud(turn, { state: this.at(month === "dec" ? "decStart" : "decEnd") });
     this.table.setBoats("lane");
     this.table.showWarning(true, { pulse: false });
@@ -675,9 +687,9 @@ export class DeskScene extends Phaser.Scene {
       if (id === before) return;
       const wasStaff = cfg.options.find((p) => p.id === before).staff, isStaff = cfg.options.find((p) => p.id === id).staff;
       if (wasStaff && !isStaff) {
-        if (this.used >= 2) {
+        if (this.used >= this.limit) {
           const note = slip.node.querySelector(".why-note");
-          if (note) note.textContent = "You have used both personal orders this month. Give one back first.";
+          if (note) note.textContent = "You have used all your personal orders this month. Give one back first.";
           return;
         }
         this.spendSeal(slip, ++this.used);
@@ -802,6 +814,7 @@ export class DeskScene extends Phaser.Scene {
   ch_dec_orders() {
     this.run.dec = { beacon: "quiet", lattice: "boats", incident: this.run.dec.incident ?? null };
     this.used = this.sealsOnIncident("dec");
+    this.limit = this.campaign.seals?.dec ?? 2;
     this.hud(4, { used: this.used, state: this.at("decOrders") });
     this.table.setBoats("lane");
     this.table.showWarning(true, { pulse: false });
@@ -831,6 +844,7 @@ export class DeskScene extends Phaser.Scene {
   ch_jan_orders() {
     this.run.jan = { beacon: "quiet", lattice: "sarn", way: null, incident: this.run.jan.incident ?? null };
     this.used = this.sealsOnIncident("jan");
+    this.limit = this.campaign.seals?.jan ?? 2;
     this.hud(5, { used: this.used, state: this.at("janOrders") });
     this.table.setBoats("lane");
     this.table.showWarning(true, { pulse: false });
@@ -901,7 +915,7 @@ export class DeskScene extends Phaser.Scene {
           return;
         }
         if (!before && id) {
-          if (this.used >= 2) return;
+          if (this.used >= this.limit) return;
           this.spendSeal(slip, ++this.used);
         }
         if (before && !id) this.returnSeal(slip, --this.used);
@@ -977,6 +991,57 @@ export class DeskScene extends Phaser.Scene {
     this.night(night(this.campaign, this.run, "jan"), 5, "feb-showdown", { ravellan: "edge", warning: false, state: this.at("janEnd") });
   }
 
+  // ── the war: two sectors, one task force ─────────────────────────────────
+  // Starting a war rolls its code; each sector is a new theatre against the same rival.
+  startWar(code, difficulty) {
+    this.game.war = newWar(code, difficulty);
+    log("war", { code, difficulty });
+    const w = this.game.war;
+    this.newTheatre(sectorCode(w), difficulty, "dec-brief", worldForSector(w));
+  }
+
+  // Between sectors: what the task force carries, the refit money and what it buys, and
+  // what each officer remembers. Nothing here is undone once the task force deploys.
+  ch_redeploy() {
+    const w = this.game.war;
+    this.hud(6, { seals: 0 });
+    this.table.setBoats("none");
+    this.dom(OX, OY, `<div style="width:1840px;height:944px;background:rgba(20,18,16,.6)"></div>`);
+    const last = w.results.at(-1), k = w.carry;
+    const sheet = this.dom(160, 120, "");
+    const render = () => {
+      const bought = new Set(w.spent);
+      const days = bought.has("rest") ? 0 : k.fatigue, strength = bought.has("replace") ? FULL_STRENGTH : k.strength;
+      sheet.node.innerHTML = `<article class="paper sheet redeploy" style="width:1600px"><p class="lab">The war · ${esc(w.code)} · ${DIFFICULTY[w.difficulty].name}</p>
+        <h2>Redeployment: sector ${w.sector} to sector ${w.sector + 1}</h2>
+        <p class="from">${last.strait} is behind you: ${GRADES[last.grade].toLowerCase()}. The task force sails for a new strait. ${WORLD.rival} is still the enemy.</p>
+        <div class="redeploy-cols">
+          <section><p class="lab">What the task force carries</p>
+            <ul class="carry">
+              <li class="${days > 120 ? "bad" : days > 100 ? "warn" : ""}"><b>${WORLD.reserve}</b>${days === 0 ? "rested" : `${days} days without rest`}${bought.has("rest") ? " (after two weeks ashore)" : ""}</li>
+              <li class="${strength < UNDER_STRENGTH ? "bad" : ""}"><b>Strength</b>${strength} of ${FULL_STRENGTH}${strength < UNDER_STRENGTH ? ": under strength, it can’t hold a second wave" : ""}${bought.has("replace") ? " (casualties replaced)" : last.casualties ? ` (${last.casualties} killed or wounded)` : ""}</li>
+              <li><b>${WORLD.rival}</b>${k.rivalLost ? `lost ${k.rivalLost} landing craft; it starts the next sector with fewer` : "lost nothing it can’t replace"}</li>
+            </ul>
+            <p class="lab" style="margin-top:20px">Refit money: ${w.funding} left</p>
+            <p class="set-help">Every result pays a refit: ${REFIT.failure} after a failure, ${REFIT.costly} after a costly success, ${REFIT.success} after a success. This sector paid ${REFIT[last.grade]}.</p>
+            <div class="spend">${SPEND.map((x) => `<button class="opt ${bought.has(x.id) ? "sel" : ""}" data-spend="${x.id}" role="checkbox" aria-checked="${bought.has(x.id)}" ${!bought.has(x.id) && w.funding < x.cost ? "disabled" : ""}><span class="r"></span><span><b>${x.name}</b><span class="s">${x.says}</span><span class="cost">${x.cost} of refit money</span></span></button>`).join("")}</div>
+          </section>
+          <section><p class="lab">What your staff remember</p>
+            ${k.memories.map((m) => `<p class="memory"><span class="av" style="background-image:url(${portrait(m.who)})"></span><span>${m.line}</span></p>`).join("")}
+            <div class="btns" style="margin-top:28px"><button class="b on" style="height:56px;font-size:20px" data-deploy>Deploy to sector ${w.sector + 1}</button></div>
+          </section>
+        </div></article>`;
+      for (const b of sheet.node.querySelectorAll("[data-spend]")) b.onclick = () => { toggleSpend(w, b.dataset.spend); log("spend", { item: b.dataset.spend, on: w.spent.includes(b.dataset.spend) }); render(); sheet.node.querySelector(`[data-spend="${b.dataset.spend}"]`)?.focus({ preventScroll: true }); };
+      sheet.node.querySelector("[data-deploy]").onclick = () => {
+        nextSector(w);
+        this.newTheatre(sectorCode(w), w.difficulty, "dec-brief", worldForSector(w));
+      };
+    };
+    render();
+    move(this, sheet, { alpha: [0, 1], y: [140, 120] }, { dur: T.paper });
+    this.focusLater(sheet.node.querySelector("[data-deploy]"), 600);
+  }
+
   // ── the showdown and the debrief ──────────────────────────────────────────
   // February: the routes along the bottom edge, what we know top left, Halden top right. The
   // chart between them shows the routes, so the choice is made looking at the sea.
@@ -1045,11 +1110,28 @@ export class DeskScene extends Phaser.Scene {
     });
     // What the campaign leaves the task force: what each officer will remember.
     const m = this.dom(1136, 108, `<aside class="paper sheet memories" style="width:728px"><p class="lab">What your staff will remember</p>
-      ${D.leaves.map(([who, line]) => `<p class="memory"><span class="av" style="background-image:url(${portrait(who)})"></span><span>${line}</span></p>`).join("")}</aside>`);
+      ${D.leaves.map((m) => `<p class="memory"><span class="av" style="background-image:url(${portrait(m.who)})"></span><span>${m.line}</span></p>`).join("")}</aside>`);
     move(this, m, { alpha: [0, 1], x: [1160, 1136] }, { dur: 600, delay: 900 });
     const again = s.node.querySelector("[data-again]");
     again.onclick = () => { this.run = DEFAULT_RUN(); this.go("dec-brief"); };
     s.node.querySelector("[data-new]").onclick = () => { this.newTheatre(newSeed(), this.campaign.difficulty); };
     this.focusLater(again, 1200);
+    const w = this.game.war;
+    if (w) {
+      // A war has no replays. The sector closes once, and the task force moves on.
+      if (w.results.length < w.sector) closeSector(w, this.campaign, this.run, D.leaves, WORLD);
+      const btns = s.node.querySelector(".btns");
+      if (w.sector < SECTORS) {
+        btns.innerHTML = `<button class="b on" style="height:56px;font-size:20px" data-redeploy>To the redeployment</button>`;
+        btns.querySelector("[data-redeploy]").onclick = () => this.go("redeploy");
+        this.focusLater(btns.firstChild, 1200);
+      } else {
+        btns.innerHTML = `<div class="war-over"><p class="lab">The war · ${esc(w.code)}</p>${w.results.map((r) => `<p><b>Sector ${r.sector}, ${r.strait}:</b> ${GRADES[r.grade].toLowerCase()}, ${r.days} days on the battalion, ${r.casualties} casualties.</p>`).join("")}</div>
+          <button class="b on" style="height:56px;font-size:20px" data-newwar>Start a new war</button><button class="b" style="height:56px;font-size:20px" data-new>New single campaign</button>`;
+        btns.querySelector("[data-newwar]").onclick = () => this.startWar(newSeed(), w.difficulty);
+        btns.querySelector("[data-new]").onclick = () => this.newTheatre(newSeed(), w.difficulty);
+        this.focusLater(btns.querySelector("[data-newwar]"), 1200);
+      }
+    }
   }
 }

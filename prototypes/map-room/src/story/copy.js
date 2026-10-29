@@ -55,7 +55,7 @@ export function brief(c, run, month) {
         ["What it means for your orders", `If this is a landing, ${B} needs more guns before February and ${BN} must be fit to reinforce it. If it is a threat, the danger is losing ${M}, so how visibly we move matters as much as what we move.`],
       ],
       warning: WARN[s.warning],
-      halden: `I can count landing craft, General. I cannot yet tell you what they are for. Until I hear troops ordered onto that quay, anyone who says landing or bluff is guessing, including me.`,
+      halden: `${c.memories?.find((m) => m.who === "halden")?.quote.concat(" ") ?? ""}I can count landing craft, General. I cannot yet tell you what they are for. Until I hear troops ordered onto that quay, anyone who says landing or bluff is guessing, including me.`,
     };
   }
   const s = sim.decEnd, q = run.dec?.lattice ?? "boats";
@@ -105,6 +105,13 @@ export function brief(c, run, month) {
 // For each decision, an officer's recommendation follows from their priority and the state.
 // `because` is what they are protecting; `risk` is what happens if you overrule them.
 const pos = (prefers, line, because, risk) => ({ prefers, line, because, risk });
+
+// In a later sector of a war, each officer opens December's advice with what they
+// remember from the last one.
+function remembered(c, council) {
+  for (const m of c.memories ?? []) if (council[m.who]) council[m.who] = { ...council[m.who], line: `${m.quote} ${council[m.who].line}` };
+  return council;
+}
 
 function decemberCouncil(c, s) {
   const tired = s.fatigue >= 90, solid = s.support >= 66 && c.minister !== "dove", murky = c.D.plans.length > 2 || c.craft.dec < 9;
@@ -184,7 +191,7 @@ export function orders(c, run, month) {
         { id: "rest", name: `Rest ${BN}`, short: `rest ${BN}`, says: `${B} keeps only its own ${W.garrison} soldiers, and its radar drops from 30 to 20 nautical miles while the crews rest. ${BN} stands down from 18 to 31 December and comes back fit.`, mark: { at: "beacon", text: "Garrison only · radar 20 nm", tone: "bad" } },
         { id: "show", name: "Show force openly", short: "show force openly", says: `${M}’s government has not approved it, and ${ministersFor(s.support)} of ${W.ministers} ministers are with us. A frigate and two rifle companies exercise off ${B} in daylight from 19 December, and ${R} sees it within a day.`, mark: { at: "beacon", text: "Frigate in daylight · seen by both capitals", tone: "warn" } },
       ],
-      council: decemberCouncil(c, s),
+      council: remembered(c, decemberCouncil(c, s)),
       reply: {
         quiet: ["briggs", "Understood. Companies move on the night of the 18th. In place by the 20th."],
         rest: ["briggs", `Then ${B} runs on ${W.garrison} soldiers and 20 miles of radar until the 31st. If ${R} sails in that window, I need two days to get ${BN} back. That’s the trade, General.`],
@@ -476,11 +483,26 @@ export function showdown(c, run) {
 // and what each officer will remember. Specific, so the next campaign can quote it.
 function memories(c, run, o) {
   const s = o.s, out = [];
+  // `line` is the debrief's note; `quote` is what the officer says about it in the next
+  // sector, with this sector's names already in it.
+  const add = (who, line, quote) => out.push({ who, line, quote });
   const rested = run.dec?.beacon === "rest" || run.jan?.beacon === "hold" || run.jan?.lattice === "when";
-  out.push(["okafor", rested ? `You found ${BN} its rest${run.jan?.lattice === "when" ? " by buying the sailing date" : ""}. ${surname("okafor")} will trust your next promise about it.` : o.daysAfter > FATIGUE.unfit ? `You worked ${BN} to ${o.daysAfter} days. ${surname("okafor")} has written it down.` : `${BN} never rested, and got through. ${surname("okafor")} calls that luck.`]);
-  out.push(["halden", (run.jan?.lattice ?? "sarn") !== "sarn" ? `You took ${L} off ${S}’s harbour in January, and ${o.code === "called" || o.code === "lost" ? "it cost us" : "we got away with it"}. ${surname("halden")} will argue harder for the quay next time.` : s.knows.date?.corrected ? `${L} caught a planted date. ${surname("halden")} will remember that ${R} lies on its fleet net.` : `You kept ${L} on the quay. ${surname("halden")} heard what he needed when it mattered.`]);
-  out.push(["sato", s.actedAlone ? `You told ${M} after, not before. ${surname("sato")} will need a month to repair it.` : s.approvedBy === "trade" ? `Our patrol boats bought ${M}’s vote. ${surname("sato")} will say so to the next ally, too.` : o.navyFought && c.minister === "dove" ? `${M} lost sailors standing with us. ${surname("sato")} expects to be reminded.` : `${M} was asked first, every time. ${surname("sato")} can build on that.`]);
-  out.push(["briggs", s.radarFails ? `The radar failed on the day. ${surname("briggs")} will not let you run equipment hot again without a fight.` : o.code === "lost" ? `${B} fell on ${surname("briggs")}’s watch. She will not forget it.` : o.battle ? `${B} held a landing. ${surname("briggs")} knows what the headland can take.` : `${B} was never tested. ${surname("briggs")} still does not know what it can take.`]);
+  if (rested) add("okafor", `You found ${BN} its rest${run.jan?.lattice === "when" ? " by buying the sailing date" : ""}. ${surname("okafor")} will trust your next promise about it.`, `You found them their rest at ${B}. I am asking you to do it again.`);
+  else if (o.daysAfter > FATIGUE.unfit) add("okafor", `You worked ${BN} to ${o.daysAfter} days. ${surname("okafor")} has written it down.`, `At ${B} you took them to ${o.daysAfter} days. I would rather not watch that twice.`);
+  else add("okafor", `${BN} never rested, and got through. ${surname("okafor")} calls that luck.`, `They never rested at ${B} and got away with it. Luck is not a plan.`);
+  if ((run.jan?.lattice ?? "sarn") !== "sarn") {
+    const cost = o.code === "called" || o.code === "lost";
+    add("halden", `You took ${L} off ${S}’s harbour in January, and ${cost ? "it cost us" : "we got away with it"}. ${surname("halden")} will argue harder for the quay next time.`, cost ? `We left the quay at ${S} and paid for it. I would like my ears where the boarding order is.` : `We left the quay at ${S} and got away with it. I would not count on that twice.`);
+  } else if (s.knows.date?.corrected) add("halden", `${L} caught a planted date. ${surname("halden")} will remember that ${R} lies on its fleet net.`, `${R} lied to us on its fleet net at ${S}. I will not take its dates on one signal again.`);
+  else add("halden", `You kept ${L} on the quay. ${surname("halden")} heard what he needed when it mattered.`, `At ${S} the quay told us what we needed. Same again, if you will.`);
+  if (s.actedAlone) add("sato", `You told ${M} after, not before. ${surname("sato")} will need a month to repair it.`, `${M} heard about our move from the press. This government will have heard that story too.`);
+  else if (s.approvedBy === "trade") add("sato", `Our patrol boats bought ${M}’s vote. ${surname("sato")} will say so to the next ally, too.`, `We bought ${M}’s vote with boats. Word of that travels faster than we do.`);
+  else if (o.navyFought && c.minister === "dove") add("sato", `${M} lost sailors standing with us. ${surname("sato")} expects to be reminded.`, `${M} buried sailors for us. Allies remember who asks that of them.`);
+  else add("sato", `${M} was asked first, every time. ${surname("sato")} can build on that.`, `We asked ${M} first every time. I can say so to this government, and they will check.`);
+  if (s.radarFails) add("briggs", `The radar failed on the day. ${surname("briggs")} will not let you run equipment hot again without a fight.`, `The radar failed on the day at ${B}. I am not running anything hot again.`);
+  else if (o.code === "lost") add("briggs", `${B} fell on ${surname("briggs")}’s watch. She will not forget it.`, `We lost ${B}. I am not losing this one.`);
+  else if (o.battle) add("briggs", `${B} held a landing. ${surname("briggs")} knows what the headland can take.`, `${B} held a landing. I know what a dug-in headland can take now.`);
+  else add("briggs", `${B} was never tested. ${surname("briggs")} still does not know what it can take.`, `${B} was never tested. I still do not know what a headland like this can take.`);
   return out;
 }
 
@@ -518,7 +540,7 @@ export function debrief(c, run) {
     rows: [
       ["December", `${ORDER.dec[run.dec?.beacon ?? "quiet"]} ${L}: ${latticeQ(q).short}.`, `${c.craft.dec}${s.knows.count ? `, then ${s.knows.count}` : ""} landing craft loading in ${S}.`, planted ? `One of our clues was planted: ${R} wanted us to read it as a landing.` : PLAN_TRUTH[c.plan]],
       ["January", `${ORDER.jan(run.jan ?? { beacon: "quiet" })} ${L}: ${latticeQ(jq, "jan").short}.`, s.knows.claim ? `The defector said ${s.knows.claim.plan === "land" ? "a landing" : s.knows.claim.plan === "bluff" ? "a bluff" : "a test, then a landing"}.` : "A landing looked more likely than a bluff.", janTruth],
-      ["February", ROUTE_ORDER[o.route], o.listening ? `${L} heard ${troops ? "troops ordered aboard" : "no order to board troops"}.` : "We could not tell whether the landing craft carried troops.", happened.split(". ")[0] + "."],
+      ["February", ROUTE_ORDER[o.route], o.listening ? `${L} heard ${troops ? "troops ordered aboard" : "no order to board troops"}.` : "We could not tell whether the landing craft carried troops.", happened.split(". ")[0].replace(/\.$/, "") + "."],
     ],
     // Where the campaign leaves the task force, for the next sector.
     leaves: memories(c, run, o),

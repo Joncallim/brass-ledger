@@ -55,6 +55,9 @@ Product owner direction, 29 October 2026, after the second playtest:
   force beaten on a beach is gone in the next sector. The war's factions stay the same.
   Only the sector (the strait, the ally and the places) is new.
 
+**Built (prototype):** the two-sector war, on the title screen. The README lists its
+amounts for sign-off. Next, if the two-sector test works: a fixed war of four sectors.
+
 Still to decide or to set in the prototype for sign-off:
 
 - **Length.** A campaign should take under 20 minutes as a baseline.

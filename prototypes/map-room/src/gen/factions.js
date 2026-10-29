@@ -46,10 +46,12 @@ function country(r, s, avoid) {
 // The host's adjective: every host name ends in "a", so "Marenna" → "Marennan".
 const adjective = (name) => `${name}n`;
 
-export function generateWorld(code) {
+// `keep` fixes names that must not change: in a war, the rival and the task force's own
+// network and reserve stay the same from sector to sector.
+export function generateWorld(code, keep = {}) {
   const r = seeded(`world-${code}`);
-  const host = country(r, SOUNDS.host, [KESTREL.host]);
-  const rival = country(r, SOUNDS.rival, [host, KESTREL.rival]);
+  const host = country(r, SOUNDS.host, [KESTREL.host, ...(keep.rival ? [keep.rival] : [])]);
+  const rival = keep.rival ?? country(r, SOUNDS.rival, [host, KESTREL.rival]);
   const harbour = pick(r, HARBOURS.filter((h) => ![host, rival].some((n) => n.startsWith(h.slice(0, 2)))));
   const station = pick(r, STATIONS);
   const world = {
@@ -60,6 +62,7 @@ export function generateWorld(code) {
     host, hostAdj: adjective(host), rival, harbour,
     network: pick(r, NETWORKS),
     reserve: pick(r, RESERVES),
+    ...keep,
   };
   // The chart is part of the theatre; the copy quotes the crossing it measures.
   world.layout = generateScenario(world);

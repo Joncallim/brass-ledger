@@ -172,7 +172,13 @@ details.more[open] summary{margin-bottom:4px}
 /* February: three routes side by side along the bottom edge. */
 .route{padding:22px 24px 20px;box-sizing:border-box}.route h2{font-size:28px;line-height:33px}.route .body{font-size:18px;line-height:25px;margin-top:6px}
 .route .row{grid-template-columns:72px 1fr;font-size:16px;line-height:22px}.route .quote{font-size:18px;line-height:24px}
-.memories{padding:26px 30px;box-sizing:border-box}.memory{display:flex;gap:12px;align-items:flex-start;font-size:18px;line-height:26px;margin:14px 0 0}.memory .av{width:40px;height:40px}
+.memories{padding:26px 30px;box-sizing:border-box}
+/* The war: the redeployment between sectors, and the summary at the end. */
+.redeploy{box-sizing:border-box}.redeploy-cols{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:18px}
+.carry{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px}.carry li{display:grid;grid-template-columns:150px 1fr;font-size:19px;line-height:26px}.carry li b{font-weight:600;color:var(--ink2)}
+.carry li.bad{color:var(--red-ink)}.carry li.warn{color:#6B4508}
+.spend{display:grid;gap:8px;margin-top:10px}.spend .opt[disabled]{opacity:.45}
+.war-over{flex-basis:100%;font-size:18px;line-height:26px;margin-bottom:10px}.war-over p{margin:2px 0}.memory{display:flex;gap:12px;align-items:flex-start;font-size:18px;line-height:26px;margin:14px 0 0}.memory .av{width:40px;height:40px}
 .pin{position:absolute;top:-14px;left:50%;margin-left:-14px;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#E6C277,#C99A3E 60%,#8E6A1D);box-shadow:0 3px 6px rgba(0,0,0,.4)}
 .slip h3{margin:0;font-size:16px;font-weight:600;color:var(--ink2)}
 .will{font-size:25px;line-height:32px;font-weight:600;margin-top:6px}

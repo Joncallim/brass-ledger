@@ -131,6 +131,28 @@ three-month campaign and changes nothing about its rules.
   Marenna, Ravellan, Sarn, Beacon, Lattice, 2nd Battalion) leaks into any line the desk can
   show.
 
+## A two-sector war (prototype)
+
+"Start a two-sector war" on the title screen plays two campaigns in a row with one task
+force against one rival (`src/story/war.js`; see ROADMAP, phase 2):
+
+- Each sector is a new strait and a new ally, generated from the war's code. The rival
+  stays the same, and so do the task force's staff, reserve battalion and intercept network.
+- The battalion's days without rest and its casualties carry into the next sector. Under
+  500 soldiers it can't hold a second wave. A landing force beaten on a beach is gone:
+  the rival starts the next sector with up to three fewer landing craft.
+- Every result pays a refit (3 after a failure, 4 after a costly success, 5 after a
+  success). Between sectors it buys:
+  - rest for the battalion (2);
+  - replacing its casualties (2);
+  - an extra personal order in the first month (2);
+  - Lattice in place early, with a known count (1).
+  A failure adds no penalty of its own.
+- Each officer remembers something specific from the sector, and says it at the start of
+  the next one ("We left the quay at Sarn and paid for it").
+- A war has no replays. The second debrief shows both sectors' results.
+- `test/war.test.js` checks what carries over, the refit, and that failure adds no penalty.
+
 ## The staff and the hard call
 
 Each officer has one job and something they usually argue for. Their advice adapts to the
@@ -331,6 +353,10 @@ in the scenario and open the same profiles.
   - At most 20% of Shifting and 30% of Volatile campaigns can't be won outright (today
     about 11% and 16–27%, depending on the seeds).
   - Following the staff plan every month never wins outright (it never rests the battalion).
+- **The war** (all proposed): the refit amounts and prices; 500 soldiers as the line for
+  under strength; the rival losing one craft in its next sector for every four beaten on a
+  beach, up to three; and the second sector reusing the December to February calendar. That
+  calendar is a stand-in: a real war needs dates that don't depend on the season.
 - **Playtest 2 rules:**
   - The radar repair costs the battalion's engineers 12 days.
   - The January sailing date buys the battalion 20 days' rest but loses the boarding

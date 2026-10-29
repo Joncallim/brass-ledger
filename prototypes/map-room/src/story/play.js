@@ -29,6 +29,8 @@ export function simulate(c, run = {}) {
     // Days the battalion's engineers owe this month (the radar repair), added after its orders.
     eng: 0,
   };
+  // In a war, refit money can put Lattice in place early: the count is known from the start.
+  if (c.knownCount) s.knows.count = c.craft.jan;
   const snap = {};
   const take = () => structuredClone(s);
   snap.decStart = take();
@@ -131,10 +133,13 @@ export function outcome(c, run) {
   // A landing force of 12 or more craft is a battalion and a second wave: Beacon alone
   // cannot hold it, so a worn-out or unwarned battalion loses the headland.
   const big = c.craft.jan >= 12;
-  const holds = big ? def >= 3 && reinforced : def >= 3 || (def >= 2 && reinforced);
+  // An under-strength battalion (casualties carried from an earlier sector) can't hold a
+  // second wave, wherever it stands.
+  const strong = !c.understrength;
+  const holds = big ? def >= 3 && reinforced && strong : def >= 3 || (def >= 2 && reinforced);
   // Dug in beforehand, the battalion needs no warning, but it holds one beach: a second
   // wave lands round it unless Beacon's own guns are strong. A worn-out battalion holds less.
-  const holdsDug = fit ? (big ? def >= 3 : def >= 1) : (big ? false : def >= 2);
+  const holdsDug = fit ? (big ? def >= 3 && strong : def >= 1) : (big ? false : def >= 2);
   // Two navies stop a landing at sea only if they know when it sails, or if it is small enough
   // to turn back in one meeting. Otherwise it lands, and Beacon has to hold.
   const intercept = warned || !big;
