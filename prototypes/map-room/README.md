@@ -467,8 +467,9 @@ in the scenario and open the same profiles.
     happens.
   - **Staff business and incidents apply in date order**, and January's incidents come
     before the vote.
-  - **The decisive requirement is stated from December**, in every briefing and on the
-    orders' "Gives" row, not first at the finale.
+  - **The decisive requirement is stated from December**, in full in every briefing, not
+    first at the finale. The orders' "Gives" row keeps the one line that bears on the order
+    ("level 3 against a landing holds one wave without 2nd Battalion"), so the slips fit.
 - **Playtest 4 rules:**
   - **The decision comes when we learn they are moving.** That is when Lattice hears the
     boarding order (two days out), when the patrol boats see the ships leave on a known
