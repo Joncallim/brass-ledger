@@ -85,7 +85,7 @@ function build(W) {
   // Landing craft: one threshold, said one way. Twelve or more carry a second wave.
   const craftWord = (n) => (n >= WAVE ? "enough for a second wave" : "one wave, not enough for a second");
   // What each level's order puts on the headland, and the log's record of it.
-  const MOVE = { 2: "two rifle companies and the air-defence battery onto the headland", 3: "the air-defence battery up to full strength", 4: "the last guns and wire onto the headland" };
+  const MOVE = { 2: "move two rifle companies and the air-defence battery onto the headland", 3: "bring the air-defence battery up to full strength", 4: "put the last guns and wire on the headland" };
   const MOVED = { 2: "Two rifle companies and the air-defence battery dug in on the headland", 3: `${B}’s air-defence battery reached full strength`, 4: "The last guns and wire went in on the headland" };
 
   // How much warning we would get, from what is actually listening or watching. A date from a
@@ -162,11 +162,11 @@ function build(W) {
       "whether troops will board",
       !k.date ? "when they sail" : null,
     ].filter(Boolean);
-    const carried = c.war && c.war.sector > 1 ? ` ${BN} arrives from the last sector at fatigue ${c.fatigue0}, ${c.strength ?? W.battalion} strong.` : "";
+    const carried = c.war && c.war.sector > 1 && month === "dec" ? ` It comes from the last sector ${c.strength ?? W.battalion} strong.` : "";
     const sections = [
       ["What we know", Object.values(known).map(intelLine).join(" ")],
       ["What we don’t know", `${cap(unknown.join(", "))}. ${month === "dec" ? `What ${R} means to do: ${plans}.` : read ? `Our best reading is ${READ[read]}; nothing has settled it.` : "Nothing yet points to one plan over another."}`],
-      ["What it means for your orders", `${RULE} ${B} is at ${defenceText(s)} now; ${BN} is ${fitText(s.fatigue)}.${carried}`],
+      ["What it means for your orders", `${RULE} ${B} is now at ${defenceText(s)}; ${BN} is ${fitText(s.fatigue)}.${carried}`],
     ];
     const memory = c.memories?.find((m) => m.who === "halden")?.quote;
     const halden = month === "dec"
@@ -245,7 +245,7 @@ function build(W) {
   function orders(c, run, month) {
     const sim = simulate(c, run), s = month === "dec" ? sim.decOrders : sim.janOrders;
     const f = s.fatigue, eng = s.eng ?? 0, onDuty = f + FIXED.monthOnDuty + eng, C = CALENDAR[month], mon = MONTH[month];
-    const staffPlan = `will move ${MOVE[s.def + 1]} by night, in place by ${C.quiet} ${mon}.`;
+    const staffPlan = `will ${MOVE[s.def + 1]} by night, in place by ${C.quiet} ${mon}.`;
     const does = `${B} goes from ${nowLevel(s)} to ${next(s)}. ${RULE}`;
     const council = month === "dec" ? remembered(c, decemberCouncil(c, s)) : januaryCouncil(c, s);
     if (month === "dec") {
@@ -278,7 +278,7 @@ function build(W) {
       ],
       council,
       reply: {
-        quiet: ["briggs", `${cap(MOVE[s.def + 1])} by the ${ord(C.quiet)}. ${R} won’t see it happen.`],
+        quiet: ["briggs", `Done by the ${ord(C.quiet)}, by night. ${R} won’t see it happen.`],
         show: ["briggs", `Frigate sails on the ${ord(C.show)}. ${needsApproval(c, s, "show") ? `Not without ${M}’s yes. Talk to ${surname("sato")}.` : `${surname("sato")} is on the hotline now.`}`],
         hold: ["briggs", `We hold at ${nowLevel(s)}. If they come, ${B} fights with what it has.`],
       },

@@ -48,16 +48,19 @@ const adjective = (name) => `${name}n`;
 
 // `keep` fixes names that must not change: in a war, the rival and the task force's own
 // network and reserve stay the same from sector to sector.
-export function generateWorld(code, keep = {}) {
+// `avoid` lists names a new sector must not reuse (the last sector's strait, harbour, station
+// and host), so two sectors of one war never read as the same place.
+export function generateWorld(code, { avoid = [], ...keep } = {}) {
   const r = seeded(`world-${code}`);
-  const host = country(r, SOUNDS.host, [KESTREL.host, ...(keep.rival ? [keep.rival] : [])]);
+  const fresh = (list, name = (x) => x) => list.filter((x) => !avoid.includes(name(x)));
+  const host = country(r, SOUNDS.host, [KESTREL.host, ...(keep.rival ? [keep.rival] : []), ...avoid]);
   const rival = keep.rival ?? country(r, SOUNDS.rival, [host, KESTREL.rival]);
-  const harbour = pick(r, HARBOURS.filter((h) => ![host, rival].some((n) => n.startsWith(h.slice(0, 2)))));
-  const station = pick(r, STATIONS);
+  const harbour = pick(r, fresh(HARBOURS).filter((h) => ![host, rival].some((n) => n.startsWith(h.slice(0, 2)))));
+  const station = pick(r, fresh(STATIONS));
   const world = {
     ...KESTREL,
     id: `theatre-${code}`, generated: true, code,
-    strait: `${pick(r, STRAITS)} Strait`,
+    strait: `${pick(r, fresh(STRAITS, (s) => `${s} Strait`))} Strait`,
     station: `${station} Station`, stationShort: station,
     host, hostAdj: adjective(host), rival, harbour,
     network: pick(r, NETWORKS),

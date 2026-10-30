@@ -17,9 +17,14 @@ without that decision.
 cd prototypes/map-room
 npm install
 npm run dev          # http://localhost:5173
-npm test             # chart, campaign, room, consistency, surface and balance checks (Node, no browser)
-node scripts/balance.mjs 150   # the full balance report: does one fixed plan win?
+npm test             # chart, campaign, room, consistency, surface, modular and balance checks (Node)
+npm run build && npm run test:browser   # the built prototype in Chromium (CI runs both)
+npm run balance -- 150      # the balance report, with decision diversity per order slot
+npm run rules-review -- 60  # the rules under review against their alternatives (RULES-REVIEW.md)
 ```
+
+CI runs the map-room job (`.github/workflows/ci.yml`): install, `npm test`, build, and the
+browser checks. Root `npm test` still doesn't see this package.
 
 To run a playtest, follow [PLAYTEST.md](PLAYTEST.md). The game keeps a playtest log in the
 browser (Settings, then "Playtest log").
@@ -264,19 +269,44 @@ including any spent on the month's incident.
     a painter, soundings fall in water, and each sea provides the places the story uses.
   Writing the validator caught two bugs on the old hand-drawn chart: Beacon Station was
   drawn in the water 36 px off its headland, and the anchorage was on land.
-- **The story is generated.** `src/story/` holds the placeholders every campaign is
-  written against (`world.js`: station, host, rival, harbour, network, reserve), the
-  officers (`officers.js`), the generator (`campaign.js`), the incidents
-  (`incidents.js`), the rules that move the state (`play.js`, pure and deterministic) and
-  every word on screen (`copy.js`). Another campaign on the same placeholders is a new
-  `world.js` and its own incidents.
+- **A campaign is a definition, a resolver and words** (`src/story/`, review 6):
+  - `definition.js` is the station-defence campaign as data: its roles, objectives, phases,
+    calendar, the order slots each phase offers, its incidents' rules, and its constants.
+    `FIXED` holds the structure (defence levels, the second-wave threshold, the cabinet's
+    majority, the exposure and radar penalties); changing one makes a different game, so
+    they are not presented as settings. `TUNING` holds the balance numbers that
+    `npm run balance` measures.
+  - `play.js` resolves it. `simulate()` records every dated fact and every piece of
+    intelligence (claim, source, certainty, whether it was true) as it applies each
+    transition. `resolve()` decides February for one case. `outcome()` resolves the true
+    case, and `forecast()` resolves every case the evidence leaves open with the same
+    function. The forecast is therefore the result, number for number.
+  - `chronicle.js` only gathers that record and answers "what did we know at this moment?"
+    (`knownAt`, and `evidence`, which strips the hidden truth).
+  - `copy.js`, `incidents.js`, `officers.js` and the glossary in `fixture.js` are
+    factories of a world. `storyFor(c.world)` builds the words once per world. The
+    campaign carries its world (`makeCampaign(seed, difficulty, world)`), so rules and
+    words never read shared state. The shared `WORLD` in `world.js` is now only the chart
+    on the table, for the scenes and the glossary highlighter.
+  - `battle.js` describes a battle as a plan: actors, their moves along named anchors
+    (harbour, approach, beach, flank, reserve, dug, line and so on), effects (flash, trench,
+    flag, fade) and labels, in steps. `stateAfter(plan, i)` gives the end state a skip or
+    reduced motion must leave. `TableScene.playPlan` plays any plan on any chart and knows
+    nothing about how a campaign is won or lost.
+  - `sketch.js` is a deliberately small second scenario, a garrison withdrawal, to prove
+    the interfaces. It has a different objective (bring the soldiers and the guns out), its
+    own resolver, its own battle plan, and a decision driven by geography read from the
+    chart (`geographyOf`: how far the rival's harbour and our anchorage are). Across 200
+    generated charts plus the two authored ones, the best decision is two lifts under
+    frigate cover on 174 charts, two lifts with no cover needed on 21, and on 5 charts
+    (and Harrow Sound) the guns can't come out in time. It is not a campaign: one decision,
+    invented numbers, no words beyond its labels.
 - `TableScene` loads the scenario, bakes the chart once into one Canvas 2D texture, and
   animates only live things: the station's coverage ring and radar sweep, boats, the
   harbour sighting, the intel marker, showdown paths and the debrief's truth layer, all
   placed from the scenario. The camera moves only at night.
-- The story in `src/fixture.js` names places (`beacon`, `harbour`, `lane`) rather than
-  coordinates, so it plays on any sea that provides them; its words are still written
-  for Kestrel Strait.
+- The story names places (`beacon`, `harbour`, `lane`) and battle anchors rather than
+  coordinates, so it plays on any sea that provides them.
 - `DeskScene` runs on top and owns **every word and control as DOM** (`this.add.dom`), so
   text is crisp, selectable, focusable and readable by screen readers. In the real game
   this layer would be React, fed by the existing contracts.
@@ -343,7 +373,7 @@ in the scenario and open the same profiles.
 
 ## Story content
 
-- **Places and people.** Marenna is the host country, its cabinet votes on 15 January, and
+- **Places and people.** Marenna is the host country, its cabinet votes in mid-January, and
   Sarn is Ravellan's main naval harbour, about 30 nautical miles from Beacon. Lattice is
   our radio-intercept network: twelve listening posts along the Marennan coast, drawn on
   the chart.
@@ -358,13 +388,13 @@ in the scenario and open the same profiles.
   back what is on the slip or what they would do instead; clicking one plays their case.
   The choices view shows who backs each option.
 - **SMART lines.** Recommendations name a unit or asset, a number, a place and a date ("two
-  rifle companies and the air-defence battery on the headland by 20 December"). Night
-  reports are dated duty logs in which each entry leads into the next.
+  rifle companies and the air-defence battery on the headland by 20 December"). The monthly
+  logs are dated duty records in which each entry leads into the next.
 
 ## Decisions this prototype makes that need sign-off
 
 - The calendar (one month a turn, September to February), and the dates inside it
-  (Marenna's vote on 15 January, Ravellan sailing on 1 February).
+  (Marenna's vote between 10 and 20 January depending on the campaign, Ravellan sailing between 1 and 6 February; every other date is in `CALENDAR` in `src/story/definition.js`).
 - Kestrel Strait's geography: Beacon's headland was widened so the station sits on land.
 - **Generated theatres** (all invented for the proof of concept): the name lists and sound
   sets, the theatre's code also seeding the campaign, a new campaign always meaning a new
@@ -391,6 +421,30 @@ in the scenario and open the same profiles.
   under strength; the rival losing one craft in its next sector for every four beaten on a
   beach, up to three; and the second sector reusing the December to February calendar. That
   calendar is a stand-in: a real war needs dates that don't depend on the season.
+- **Review 6.** The rules review is in [RULES-REVIEW.md](RULES-REVIEW.md): exposure,
+  the staff's camera default and the naval route each have a recommendation awaiting your
+  decision, and none has been applied. Also proposed here:
+  - **The calendar is causal.** Incidents land before the month's orders: in December on
+    4 to 8 December, with orders on the 10th; in January on 2 to 6 January, with orders on
+    the 7th. Everything an order causes comes after: in December, the companies in place
+    on the 20th, the frigate from the 19th, rest from the 11th; in January, the fleet net's
+    date on the 9th, the rotation from the 10th, the frigate on the 16th, the battery on the
+    20th. The minister asks on 2 January and visits on the 6th. A failing radar left running
+    fails, and shows, on 28 January, not on the day of the roll.
+  - **One craft threshold.** Twelve or more landing craft carry a second wave; fewer is
+    one wave. The old "battalion's worth" wording is gone.
+  - **Built and against a landing.** When exposure or a failed radar lowers the level a
+    landing meets, every screen says both: "level 2 against a landing (3 built)".
+  - **February's forecast lists every open case**, including empty landing forces that are
+    a show for the cameras and those that turn back. Where their results differ, both rows
+    are shown; where they're the same, they share one row.
+  - **Decision diversity** (`npm run balance`) is measured per order slot. Today:
+    - December's Lattice question never changes the best result.
+    - The December and January station orders have almost no spread.
+    - The incident answers and the February route carry most of the variety: 13 to 16
+      different best plans, the commonest covering 19 to 25% of campaigns.
+
+    See RULES-REVIEW.md for what this means and its limits.
 - **Playtest 5 rules and architecture:**
   - **One record.** `src/story/chronicle.js` builds the campaign's dated events and its
     intelligence (claim, source, certainty, and whether it was true) from the rules.

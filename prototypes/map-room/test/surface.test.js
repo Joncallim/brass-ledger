@@ -7,7 +7,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { makeCampaign } from "../src/story/campaign.js";
 import { BATTLE_DAYS, DIG_DAYS, JOINT_DAYS, outcome, simulate } from "../src/story/play.js";
-import { chronicle, dateKey } from "../src/story/chronicle.js";
+import { chronicle, dateKey, evidence } from "../src/story/chronicle.js";
+import { CALENDAR } from "../src/story/definition.js";
+import { FLEET_ROLE } from "../src/story/campaign.js";
 import { campaignFor, closeSector, newWar, nextSector, worldForSector } from "../src/story/war.js";
 import { KESTREL, setWorld } from "../src/story/world.js";
 import { ledger, staffRoom } from "../src/story/rooms.js";
@@ -191,4 +193,92 @@ test("a war's second sector tells the same truth", () => {
       }
     }
   } finally { setWorld(KESTREL); }
+});
+
+// Review 6: advice must not depend on hidden truth. Variants of a campaign that differ only in
+// what the rival is really doing (its plan, a planted clue, its sailing date, its real craft
+// count) and that leave the same evidence up to January's orders must get the same words on
+// every screen up to that point: the same briefings, councils, options and log.
+test("identical evidence gives identical advice, whatever the hidden truth", () => {
+  const cutoff = { month: "jan", day: CALENDAR.jan.orders - 1, hour: 23 };
+  // What the player can see. Two rival behaviours that read the same are the same evidence.
+  const SAME = { "probe-show": "land-show" };
+  const signature = (c, run) => {
+    const ev = evidence(chronicle(c, run), cutoff), s = simulate(c, run).janOrders;
+    return JSON.stringify({ intel: ev.intel, facts: ev.facts.map((f) => (f.kind === "rival" ? { ...f, behaviour: SAME[f.behaviour] ?? f.behaviour } : f)), knows: s.knows.count ?? null });
+  };
+  const screens = (c, run) => JSON.stringify([
+    story.brief(c, run, "dec"), story.brief(c, run, "jan"), story.orders(c, run, "dec"), story.orders(c, run, "jan"),
+    story.latticeOrders(c, run, "dec"), story.latticeOrders(c, run, "jan"), story.host(c, run), story.incident(c, run, "dec"), story.incident(c, run, "jan"),
+    story.night(c, run, "dec"), story.status(c, simulate(c, run).janOrders), staffRoom(c, run, 3),
+  ], (k, v) => (typeof v === "function" ? undefined : v));
+  let compared = 0;
+  for (const d of ["shifting", "volatile"]) for (let i = 0; i < 3; i++) {
+    const base = makeCampaign(`H${i}`, d);
+    for (const run of runs(base, 4)) {
+      const groups = new Map();
+      for (const plan of base.D.plans) for (const deceive of [null, "who", "when"]) for (const sailDay of [2, 4, 5, 7]) for (const extra of [0, 3]) {
+        const c = { ...base, plan, deceive, sailDay, fleetRole: FLEET_ROLE[plan], craft: { dec: base.craft.dec, jan: base.craft.dec + extra } };
+        const key = signature(c, run);
+        if (!groups.has(key)) groups.set(key, { c, words: screens(c, run) });
+        else { compared++; assert.equal(screens(c, run), groups.get(key).words, `${base.seed}/${d}: ${plan}/${deceive}/${sailDay}/${extra} reads differently from ${groups.get(key).c.plan}/${groups.get(key).c.deceive}/${groups.get(key).c.sailDay}`); }
+      }
+    }
+  }
+  assert.ok(compared > 100, `only ${compared} same-evidence pairs: the test is not exercising anything`);
+});
+
+// Review 6: a January incident on the 11th came before an order whose result was dated the
+// 8th. Every month runs incidents, then orders, then what the orders cause; the record must be
+// causally possible on every path.
+test("the record is causally possible: incidents, then orders, then what they cause", () => {
+  const CAUSED = ["beacon", "rotation", "coalition"];
+  for (const { c, run } of sample()) {
+    const rec = chronicle(c, run);
+    for (const month of ["dec", "jan"]) {
+      const orders = CALENDAR[month].orders, mine = rec.events.filter((e) => e.month === month);
+      for (const e of mine.filter((x) => ["incident", "staff"].includes(x.kind))) assert.ok(e.day < orders, `${c.seed}: ${e.kind} ${e.id} on ${e.day} ${month}, orders on ${orders}`);
+      for (const e of mine.filter((x) => CAUSED.includes(x.kind))) assert.ok(e.day > orders, `${c.seed}: ${e.kind} on ${e.day} ${month}, before the orders on ${orders}`);
+      // What the orders bought from Lattice arrives after them; the 1 December count is the
+      // closer look ordered in November.
+      for (const i of rec.intel.filter((x) => x.month === month && x.source.startsWith("lattice") && !(x.month === "dec" && x.day === CALENDAR.dec.count))) assert.ok(i.day > orders, `${c.seed}: ${i.source} on ${i.day} ${month}`);
+    }
+    // The visit's effects come after she asks, and the vote comes after everything it counts.
+    const vote = rec.events.find((e) => e.kind === "coalition");
+    for (const e of rec.events.filter((x) => x.month === "jan" && x.cabinet && x.kind !== "coalition")) assert.ok(dateKey(e) < dateKey(vote), `${c.seed}: ${e.kind} on ${e.day} moved the cabinet after the ${vote.how} on ${vote.day}`);
+    for (let i = 1; i < rec.events.length; i++) assert.ok(dateKey(rec.events[i - 1]) <= dateKey(rec.events[i]), "events out of order");
+  }
+});
+
+// Review 6: B0 (a bluff, Lattice on the quay, holding quietly) showed "troops boarding" on the
+// chart. Every chart label says how we knew from the decision in the record.
+test("the chart's labels never claim troops boarded unless the record has the order", () => {
+  for (const { c, run } of sample()) {
+    const rec = chronicle(c, run), heard = rec.decision.source === "lattice-boarding";
+    const labels = story.showdown(c, run).play.steps.flatMap((s) => s.labels ?? []).map((l) => l.text).join(" | ");
+    assert.equal(/troops boarding/.test(labels), heard, `${c.seed}: ${labels}`);
+    if (!outcome(c, run).boarded) assert.match(labels, /No troops aboard/);
+  }
+});
+
+// Review 6: every number and threshold about landing craft says the same thing.
+test("landing-craft counts are described by one threshold everywhere", () => {
+  for (const { c, run } of sample()) {
+    const all = JSON.stringify(surfaces(c, run));
+    assert.doesNotMatch(all, /battalion’s worth|Not quite a battalion|Enough to land a battalion|Ten craft is one battalion/);
+    for (const m of all.matchAll(/(\d+) (?:landing )?craft[^.]*?: (enough for a second wave|one wave, not enough for a second)/g)) assert.equal(m[2] === "enough for a second wave", Number(m[1]) >= 12, m[0]);
+  }
+});
+
+// Review 6: after exposure, the built level and the level a landing meets are both said, on
+// every screen that names a level.
+test("built level and level against a landing are distinguished wherever they differ", () => {
+  for (const { c, run } of sample()) {
+    const s = simulate(c, run).janEnd;
+    const bar = story.status(c, s)[2].value, F = story.february(c, run).warning[1];
+    if (s.rivalKnows || s.radarFails) {
+      assert.match(bar, /built/, bar);
+      assert.match(F, /against a landing \(\d built/, F);
+    } else assert.doesNotMatch(bar, /built/, bar);
+  }
 });

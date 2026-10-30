@@ -508,13 +508,30 @@ export class TableScene extends Phaser.Scene {
       },
       labels: st.labels ?? [],
     }));
-    P.showdownTag = (p, text, color) => P.tags.push(this.add.text(p.x, p.y, text, { ...LABEL, fontSize: "18px", fontStyle: "600", color, backgroundColor: "rgba(246,241,228,0.94)", padding: { x: 8, y: 4 } }).setOrigin(0.5));
+    // A label starts at its anchor and steps aside, as little as it can, until it is on the
+    // table, clear of the report and clear of the labels already shown.
+    P.showdownTag = (p, text, color) => {
+      const t = this.add.text(p.x, p.y, text, { ...LABEL, fontSize: "18px", fontStyle: "600", color, backgroundColor: "rgba(246,241,228,0.94)", padding: { x: 8, y: 4 } }).setOrigin(0.5);
+      const w = t.width, h = t.height, others = P.tags.filter((x) => x.type === "Text").map((x) => x.getBounds());
+      const hit = (r, q) => r && q.x < r.x + r.width + 8 && q.x + w > r.x - 8 && q.y < r.y + r.height + 4 && q.y + h > r.y - 4;
+      const ok = (x, y) => { const q = { x: x - w / 2, y: y - h / 2 }; return q.x >= OX + 8 && q.x + w <= OX + MW - 8 && q.y >= OY + 8 && q.y + h <= OY + MH - 8 && !hit(P.avoid, q) && !others.some((r) => hit(r, q)); };
+      // Up and down first, so a label stays in its place's column; sideways only if it must.
+      const vertical = [0, -44, 44, -88, 88, -132, 132, -176, 176, -220, 220, -264, -308, -352];
+      const steps = [...vertical.map((dy) => [0, dy]), ...[-220, 220, -330, 330].flatMap((dx) => [0, -44, 44, -88, 88].map((dy) => [dx, dy]))];
+      const at = steps.map(([dx, dy]) => [p.x + dx, p.y + dy]).find(([x, y]) => ok(x, y)) ?? [Math.max(OX + 8 + w / 2, Math.min(p.x, OX + MW - 8 - w / 2)), p.y];
+      t.setPosition(at[0], at[1]);
+      P.tags.push(t);
+    };
   }
 
   // Kept for the desk: the showdown is a plan like any other.
   showdownSetup(plan) { this.playPlan(plan); }
 
-  // Every place a label or the battalion will be: the report must keep clear of all of them.
+  // Where the report sits, in table coordinates: labels step aside from it.
+  setReportRect(x, y, w, h) { if (this.sd) this.sd.avoid = { x, y, width: w, height: h }; }
+
+  // The battalion's path and every effect must stay in view (vital); the rival's moves and
+  // the labels' anchors are better in view too (labels can step aside, so they are not vital).
   planPoints() {
     const P = this.sd, A = P.A, pts = [], other = [];
     const box = (p, text) => { const w = Math.min(560, 18 + text.length * 9.6); return [{ x: p.x - w / 2, y: p.y }, { x: p.x + w / 2, y: p.y }]; };
@@ -527,27 +544,25 @@ export class TableScene extends Phaser.Scene {
     const unitEnd = (() => { let at = P.plan.actors.find((a) => a.kind === "unit")?.at; for (const st of P.plan.steps) for (const m of st.moves ?? []) if (P.plan.actors.find((a) => a.id === m.actor)?.kind === "unit") at = m.path.at(-1); return at; })();
     const unitPts = [...new Set(P.plan.steps.flatMap((st) => (st.moves ?? []).filter((m) => P.plan.actors.find((a) => a.id === m.actor)?.kind === "unit").flatMap((m) => m.path)).concat(P.plan.actors.filter((a) => a.kind === "unit").map((a) => a.at)))];
     for (const st of P.plan.steps) for (const l of st.labels ?? []) {
-      if (l.at === "unit") for (const n of unitPts.length ? unitPts : [unitEnd]) pts.push(...box({ x: A[n].x, y: A[n].y + (l.above ? -46 : 52) }, l.text));
-      else pts.push(...box(this.labelAt(l, P), l.text));
+      if (l.at === "unit") for (const n of unitPts.length ? unitPts : [unitEnd]) other.push(...box({ x: A[n].x, y: A[n].y + (l.above ? -46 : 52) }, l.text));
+      else other.push(...box(this.labelAt(l, P), l.text));
     }
     return { vital: pts.filter(Boolean), other: other.filter(Boolean) };
   }
 
-  // Where the report can sit without covering the action: the first corner of the table
-  // whose box keeps clear of every place the plan uses, its labels included.
-  showdownCorner(w, h) {
+  // Where a report of this size can sit without covering the action: the corner of the table
+  // whose box keeps clear of every place the plan uses, its labels included. `clear` asks for
+  // a corner that covers nothing vital (or null); otherwise the least-covered corner is given.
+  showdownCorner(w, h, { clear = false } = {}) {
     const P = this.sd;
     if (!P) return [56, 108];
     const { vital, other } = this.planPoints();
-    const covered = (pts, [x, y], ww, hh) => pts.filter((p) => p.x > x - 24 && p.x < x + ww + 24 && p.y > y - 24 && p.y < y + hh + 24).length;
-    for (const [ww, hh] of [[w, h], [460, h], [400, h + 60]]) {
-      const corners = [[56, 108], [1864 - ww, 1064 - hh], [56, 1064 - hh], [1864 - ww, 108]];
-      const clear = corners.filter((c) => covered(vital, c, ww, hh) === 0);
-      if (clear.length) { const best = clear.reduce((a, c) => (covered(other, c, ww, hh) < covered(other, a, ww, hh) ? c : a)); this.sdPanelWidth = ww; return best; }
-    }
-    this.sdPanelWidth = 400;
-    const corners = [[56, 108], [1464, 1064 - h - 60], [56, 1064 - h - 60], [1464, 108]];
-    return corners.reduce((a, c) => (covered(vital, c, 400, h + 60) * 10 + covered(other, c, 400, h + 60) < covered(vital, a, 400, h + 60) * 10 + covered(other, a, 400, h + 60) ? c : a));
+    const covered = (pts, [x, y]) => pts.filter((p) => p.x > x - 24 && p.x < x + w + 24 && p.y > y - 24 && p.y < y + h + 24).length;
+    const corners = [[56, 108], [1864 - w, 1064 - h], [56, 1064 - h], [1864 - w, 108]];
+    const free = corners.filter((c) => covered(vital, c) === 0);
+    if (free.length) return free.reduce((a, c) => (covered(other, c) < covered(other, a) ? c : a));
+    if (clear) return null;
+    return corners.reduce((a, c) => (covered(vital, c) * 10 + covered(other, c) < covered(vital, a) * 10 + covered(other, a) ? c : a));
   }
 
   flag(p) {
@@ -622,8 +637,8 @@ export class TableScene extends Phaser.Scene {
     }
     if (t >= 1 && !this.pathLabels.length) {
       if (which.includes("quiet")) this.pathLabels.push(this.add.text(b.x + 70, b.y + 150, "Hold quietly", { ...LABEL, fontStyle: "600" }));
-      if (which.includes("joint")) this.pathLabels.push(this.add.text(b.x + 120, b.y - 160, "Stand together openly", { ...LABEL, fontStyle: "600", color: "#7A4F0C" }));
-      if (which.includes("forward")) this.pathLabels.push(this.add.text(b.x + 70, b.y - 104, "Dig in", { ...LABEL, fontStyle: "600", color: "#7E1A15" }));
+      if (which.includes("joint")) this.pathLabels.push(this.add.text(b.x + 120, b.y - 160, "Stand with the navy", { ...LABEL, fontStyle: "600", color: "#7A4F0C" }));
+      if (which.includes("forward")) this.pathLabels.push(this.add.text(b.x + 70, b.y - 104, "Dig in on the headland", { ...LABEL, fontStyle: "600", color: "#7E1A15" }));
     }
   }
 

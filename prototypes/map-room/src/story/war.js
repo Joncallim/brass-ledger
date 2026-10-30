@@ -85,7 +85,7 @@ export function closeSector(war, c, run, memories, world = c.world) {
     plan: c.plan, big: c.craft.jan >= FIXED.secondWave, minister: c.minister, hotline: c.hotline });
   war.funding += REFIT[o.grade];
   war.carry = { fatigue: o.daysAfter, strength, rivalLost: o.rivalLost, memories };
-  war.keep = { rival: world.rival, network: world.network, reserve: world.reserve };
+  war.keep = { rival: world.rival, network: world.network, reserve: world.reserve, avoid: [world.strait, world.harbour, world.stationShort, world.host] };
   war.spent = [];
   return war;
 }

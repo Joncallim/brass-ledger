@@ -24,7 +24,10 @@ const OWN_ANSWER = { radar: "run", defector: "talk", leak: "brief", collision: "
 
 // The run a plan gives in one campaign, or null if it breaks the two-orders rule there.
 export function runFor(c, p) {
-  const inc = (m, x) => (c.incidents[m] ? (x === "own" ? OWN_ANSWER : STAFF_ANSWER)[c.incidents[m]] : null);
+  // Under the review's visit variant the staff answer is no cameras, and cameras cost the order.
+  const swap = c.variant?.visit === "quiet";
+  const staff = swap ? { ...STAFF_ANSWER, visit: "quiet" } : STAFF_ANSWER, own = swap ? { ...OWN_ANSWER, visit: "open" } : OWN_ANSWER;
+  const inc = (m, x) => (c.incidents[m] ? (x === "own" ? own : staff)[c.incidents[m]] : null);
   const run = { dec: { beacon: p.db, lattice: p.dl, incident: inc("dec", p.di) }, jan: { beacon: p.jb, lattice: p.jl, way: p.way, incident: inc("jan", p.ji) }, feb: { route: p.route } };
   const decSeals = (p.db !== "quiet") + (p.dl !== "boats") + (c.incidents.dec && p.di === "own" ? 1 : 0);
   const janSeals = (p.jb !== "quiet") + (p.jl !== "sarn") + (p.way ? 1 : 0) + (c.incidents.jan && p.ji === "own" ? 1 : 0);
@@ -42,7 +45,34 @@ const SCORE = { success: 2, costly: 1, failure: 0 };
 // ministers: what the task force carries into its next sector.
 const fine = (o) => SCORE[o.grade] * 10000 - o.casualties * 4 - o.daysAfter + Math.round(o.supportAfter) * 3;
 
-export function report(seeds = SEEDS) {
+// Decision diversity, measured on the decisions rather than the seeds. For each order slot:
+//   decisive  share of campaigns where some option of that slot can't reach the best result
+//   spread    how evenly the best option is spread across campaigns (normalised entropy:
+//             0 = the same option is always best, 1 = every option is best equally often)
+// and for whole plans: how many different best plans the campaigns ask for, and the share of
+// campaigns the single most common best plan covers.
+export const SLOTS_MEASURED = { db: ["quiet", "rest", "show"], dl: ["boats", "who", "when"], di: ["staff", "own"], jb: ["quiet", "hold", "show"], jl: ["sarn", "when", "who"], way: [null, "buy", "act"], ji: ["staff", "own"], route: ["quiet", "forward", "joint"] };
+const entropy = (counts) => { const n = counts.reduce((a, b) => a + b, 0), k = counts.length; if (!n || k < 2) return 0; return -counts.filter(Boolean).reduce((h, x) => h + (x / n) * Math.log(x / n), 0) / Math.log(k); };
+export function decisionDiversity(bestPlans) {
+  const slots = {};
+  for (const [slot, options] of Object.entries(SLOTS_MEASURED)) {
+    let decisive = 0;
+    const preferred = new Map(options.map((o) => [o, 0]));
+    for (const best of bestPlans) {
+      const seen = new Map(options.map((o) => [o, 0]));
+      for (const p of best) seen.set(p[slot], seen.get(p[slot]) + 1);
+      if ([...seen.values()].some((x) => x === 0)) decisive++;
+      const top = [...seen.entries()].sort((a, b) => b[1] - a[1])[0][0];
+      preferred.set(top, preferred.get(top) + 1);
+    }
+    slots[slot] = { decisive: decisive / bestPlans.length, spread: entropy([...preferred.values()]) };
+  }
+  const modal = new Map();
+  for (const best of bestPlans) { const k = best.map(key).sort()[0]; modal.set(k, (modal.get(k) ?? 0) + 1); }
+  return { slots, distinctBestPlans: modal.size, commonestShare: Math.max(...modal.values()) / bestPlans.length };
+}
+
+export function report(seeds = SEEDS, variant = null) {
   const all = [...plans()];
   const out = {};
   for (const d of Object.keys(DIFFICULTY)) {
@@ -50,6 +80,7 @@ export function report(seeds = SEEDS) {
     let staffWins = 0, bestVaries = 0, seals = 0, fails = 0, binds = 0;
     for (let i = 0; i < seeds; i++) {
       const c = makeCampaign(`B${i}`, d);
+      if (variant) c.variant = variant;
       const staffRun = { ...structuredClone(STAFF), dec: { ...STAFF.dec, incident: null }, jan: { ...STAFF.jan, incident: null }, feb: { route: "quiet" } };
       if (outcome(c, staffRun).grade === "success") staffWins++;
       let best = -1, bestKeys = [];
@@ -71,8 +102,10 @@ export function report(seeds = SEEDS) {
       if (Math.min(...bestKeys.map(janCost)) >= 2) binds++;
       out[d] ??= {};
       (out[d].bestSets ??= []).push(new Set(bestKeys.map(key)));
+      (out[d].bestPlans ??= []).push(bestKeys);
     }
     const ranked = [...wins.entries()].sort((a, b) => b[1] - a[1]);
+    const diversity = decisionDiversity(out[d].bestPlans);
     const top = ranked[0];
     for (const set of out[d].bestSets) if (!set.has(top[0])) bestVaries++;
     out[d] = {
@@ -83,6 +116,7 @@ export function report(seeds = SEEDS) {
       unwinnable: fails / seeds,
       fewestOrdersForBest: seals / seeds,
       januaryLimitBinds: binds / seeds,
+      diversity,
     };
   }
   return out;
@@ -99,5 +133,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.log(`  campaigns with no full success possible:       ${(x.unwinnable * 100).toFixed(0)}%`);
     console.log(`  personal orders the best answer needs, average: ${x.fewestOrdersForBest.toFixed(2)} of 4`);
     console.log(`  campaigns where the best answer needs both January orders: ${(x.januaryLimitBinds * 100).toFixed(0)}%`);
+    const v = x.diversity;
+    console.log(`  decision diversity: ${v.distinctBestPlans} different best plans; the commonest covers ${(v.commonestShare * 100).toFixed(0)}% of campaigns`);
+    console.log(`    slot      decisive  spread`);
+    for (const [k, y] of Object.entries(v.slots)) console.log(`    ${k.padEnd(9)} ${(y.decisive * 100).toFixed(0).padStart(6)}%   ${y.spread.toFixed(2)}`);
   }
 }

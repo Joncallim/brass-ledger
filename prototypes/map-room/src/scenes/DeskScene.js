@@ -5,6 +5,7 @@ import {
   incident, latticeOrders, latticeQ, makeCampaign, monthOf, newSeed, night, orders, outcome, plainName, showdown, simulate, split, status, surname,
 } from "../fixture.js";
 import { OX, OY } from "./TableScene.js";
+import { FATIGUE } from "../story/play.js";
 import { SCENARIOS, STORY_SCENARIO } from "../scenarios/index.js";
 import { validateScenario } from "../chart/geometry.js";
 import { glossNode, hasTerm, profileHTML } from "../gloss.js";
@@ -50,6 +51,9 @@ export class DeskScene extends Phaser.Scene {
       go: (c, opts) => this.go(c, opts), chapters: CHAPTERS, reduced: reducedMotion,
       setRun: (r) => (this.run = r), getRun: () => structuredClone(this.run), campaign: (seed, d) => this.newCampaign(seed, d),
       theatre: (seed, d, chapter) => this.newTheatre(seed, d, chapter), war: (code, d) => this.startWar(code, d), getWar: () => structuredClone(this.game.war ?? null),
+      // Plays any battle plan on the chart (src/story/battle.js), e.g. the withdrawal sketch.
+      playPlan: (plan) => { this.clear(); this.table.playPlan(plan); return plan.steps.length; },
+      sketch: () => import("../story/sketch.js"),
     };
     Object.defineProperty(window.mapRoom, "c", { get: () => this.campaign });
     window.mapRoomTable = this.table; // test hook: the chart's showdown state
@@ -1050,7 +1054,7 @@ export class DeskScene extends Phaser.Scene {
         <div class="redeploy-cols">
           <section><p class="lab">What the task force carries</p>
             <ul class="carry">
-              <li class="${days > 120 ? "bad" : days > 100 ? "warn" : ""}"><b>${this.campaign.world.reserve}</b>${days === 0 ? "rested" : `fatigue ${days}`}${bought.has("rest") ? " (after two weeks ashore)" : ""}</li>
+              <li class="${days > FATIGUE.unfit ? "bad" : days > FATIGUE.tired ? "warn" : ""}"><b>${this.campaign.world.reserve}</b>${days === 0 ? "rested" : `fatigue ${days}`}${bought.has("rest") ? " (after two weeks ashore)" : ""}</li>
               <li class="${strength < UNDER_STRENGTH ? "bad" : ""}"><b>Strength</b>${strength} of ${FULL_STRENGTH}${strength < UNDER_STRENGTH ? ": under strength, it can’t hold a second wave" : ""}${bought.has("replace") ? " (casualties replaced)" : last.casualties ? ` (${last.casualties} killed or wounded)` : ""}</li>
               <li><b>${this.campaign.world.rival}</b>${k.rivalLost ? `lost ${k.rivalLost} landing craft; it starts the next sector with fewer` : "lost nothing it can’t replace"}</li>
             </ul>
@@ -1128,11 +1132,22 @@ export class DeskScene extends Phaser.Scene {
     this.table.setRing(this.ringAfter("jan"));
     this.table.showdownSetup(N.play);
     const rows = N.beats.map((b, i) => `<li data-beat="${i}" style="opacity:0"><p class="lab">${b.cause}</p><p class="body">${b.text}</p></li>`).join("");
-    const corner = this.table.showdownCorner(560, 520), pw = this.table.sdPanelWidth ?? 560;
-    const sheet = this.dom(...corner, `<article class="paper sheet showdown" style="width:${pw}px"><h2>${N.title}</h2><p class="from">${N.sub}</p><ol class="sd-log">${rows}</ol>
+    const sheet = this.dom(0, 0, `<article class="paper sheet showdown" style="width:560px;visibility:hidden"><h2>${N.title}</h2><p class="from">${N.sub}</p><ol class="sd-log">${rows}</ol>
       <div class="btns sd-controls"><button class="b" data-pause>Pause</button><button class="b" data-skip>Skip to the end</button></div>
       <div class="btns" data-end style="visibility:hidden"><button class="b on" data-go>${N.go}</button></div></article>`);
-    if (sheet.y > 300) sheet.y = 1064 - sheet.node.offsetHeight; // a bottom corner sits on the bottom edge
+    // The report is measured at each width it can take, and sits in the first corner that keeps
+    // every label and the battalion's path in view (the widest that fits wins).
+    const art = sheet.node.querySelector("article");
+    let placed = null;
+    for (const w of [560, 460, 400]) {
+      art.style.width = `${w}px`;
+      placed = this.table.showdownCorner(w, sheet.node.offsetHeight, { clear: true });
+      if (placed) break;
+    }
+    if (!placed) placed = this.table.showdownCorner(400, sheet.node.offsetHeight);
+    sheet.setPosition(...placed);
+    this.table.setReportRect(placed[0], placed[1], art.offsetWidth, sheet.node.offsetHeight);
+    art.style.visibility = "";
     move(this, sheet, { alpha: [0, 1] }, { dur: T.ui });
     const node = sheet.node, go = node.querySelector("[data-go]");
     let i = -1, paused = false, timer = null;

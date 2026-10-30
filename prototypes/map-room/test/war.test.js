@@ -112,3 +112,17 @@ test("officers quote what they remember in the next sector's December", () => {
     assert.ok(c.memories === undefined);
   } finally { setWorld(KESTREL); }
 });
+
+// Review 6: a second sector is a new place. On one seed its strait and harbour repeated the
+// first sector's names.
+test("a war's second sector never reuses the first sector's place names", () => {
+  for (let i = 0; i < 100; i++) {
+    const war = newWar(`N${i}`, "shifting"), a = worldForSector(war);
+    const c1 = campaignFor(war, a), run = { dec: { beacon: "quiet", lattice: "boats" }, jan: { beacon: "quiet", lattice: "sarn", way: null }, feb: { route: "quiet" } };
+    closeSector(war, c1, run, []);
+    nextSector(war);
+    const b = worldForSector(war);
+    for (const k of ["strait", "harbour", "stationShort", "host"]) assert.notEqual(b[k], a[k], `N${i}: ${k} ${a[k]} repeated`);
+    for (const k of ["rival", "network", "reserve"]) assert.equal(b[k], a[k], `N${i}: ${k} should carry over`);
+  }
+});

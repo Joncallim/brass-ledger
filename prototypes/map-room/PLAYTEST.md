@@ -98,3 +98,8 @@ The human fun gate is the product owner's call. These are proposed signals, not 
 - Experienced players still lose sometimes, and say why without blaming luck.
 - No tester wins three seeds in a row with one fixed plan.
 - First-time players finish a campaign in under 20 minutes.
+
+**Automated checks don't close this gate.** `npm test`, the browser checks and the balance
+report show that the screens agree with the rules and that no fixed plan wins everywhere.
+They can't show that the game is understood or fun. That needs the uncoached comprehension
+check and the sessions above, with people.

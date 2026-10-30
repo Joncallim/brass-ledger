@@ -93,6 +93,30 @@ Each type is its own skeleton of roles and its own incidents. It reuses the gene
 staff, the ledger and the redeployment screen. The war layer then mixes types, so no two
 wars run the same order.
 
+**Foundations laid (review 6).** The interfaces a second type needs now exist, and none of
+them is a general scripting engine:
+
+- **A definition** (`src/story/definition.js`): roles, objectives, phases, a causal
+  calendar, order slots, incident rules, and `FIXED` structure kept apart from `TUNING`
+  balance.
+- **A resolver** that records dated facts and intelligence as it applies each transition,
+  and resolves February for any case (`play.js`). Forecasts come from the same resolver.
+- **Words built for a world the campaign carries** (`storyFor(c.world)`), not for a shared
+  global.
+- **Battle plans:** actors, moves along named anchors, effects and labels, played by the
+  table with no knowledge of the campaign (`battle.js`, `TableScene.playPlan`).
+- **Geography read from the chart** (`geographyOf` in `sketch.js`).
+
+`sketch.js` puts a small, different scenario through those interfaces: the "evacuating a
+garrison" candidate, with one decision driven by the chart's distances. It is a proof of
+the interfaces, not the second campaign. That still needs its own phases, incidents,
+officers' advice, words and human testing, and should wait for the V2 gate and the answer
+to question 4.
+
+**Still single-type.** The desk screens (orders slips, the host's slip, February's cards)
+are written for station defence. A second type needs its own screens, or a desk that reads
+the order slots from the definition. That is the next piece of work once a type is chosen.
+
 ## Phase 4: meta-progression (deferred)
 
 Unlocks between wars are not planned until the POC shows whether the war loop is worth it.
@@ -151,6 +175,9 @@ what the task force has and remembers, and the officers quote only that.
 2. ~~Reward shape and the floor?~~ Decided: a minimum refit allocation every time, a bonus
    for success, no extra penalty after failure. The amounts are still open.
 3. ~~War length?~~ Decided: two campaigns first, then a fixed four if that works.
-4. Which second campaign type comes first?
+4. Which second campaign type comes first? (The withdrawal sketch shows the interfaces fit
+   one; it is not a recommendation.)
+6. The rules under review in RULES-REVIEW.md: exposure, the staff's camera default, and
+   the naval route when a second wave slips past.
 5. Who reviews generated art, and what licence bar must it meet before it leaves
    prototype-only?

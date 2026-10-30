@@ -13,8 +13,16 @@ export const ministersFor = (support, total = FIXED.ministers) => Math.max(0, Ma
 // Beacon's defence level as a landing meets it: one lower if the main radar has failed, and
 // one lower if the rival knows where our guns are (it lands where they are not).
 export function effectiveDefence(s) {
-  return s.def - (s.radarFails ? FIXED.radarFailure : 0) - (s.rivalKnows ? FIXED.exposure : 0);
+  const exposed = s.rivalKnows && !(s.variant?.exposure === "none") && !(s.variant?.exposure === "fades" && s.exposedIn === "dec");
+  return s.def - (s.radarFails ? FIXED.radarFailure : 0) - (exposed ? FIXED.exposure : 0);
 }
+
+// Rules variants, for RULES-REVIEW.md only (scripts/rules-review.mjs sets c.variant). The game
+// never sets one; every screen and test plays the rules above. Each is an alternative the
+// product owner is asked to choose between, not a setting.
+//   exposure: "none"  (no level lost for exposure) | "fades" (December's exposure is stale by February)
+//   visit:    "quiet" (the staff answer to the minister's visit is no cameras)
+//   naval:    "check" (a second wave that slips past the navies must still be held on the beach)
 
 // Kept for the copy and tests: the same numbers, by their old names.
 export const BLUFF_PRESS = CAB.bluffPress, DATE_REST = FT.dateRest;
@@ -47,7 +55,7 @@ export function simulate(c, run = {}) {
   const k = c.D.severity;
   const s = {
     fatigue: c.fatigue0, ring: 30, def: FIXED.defence.start, support: c.support0, boats: 2, warning: "fresh",
-    knows: {}, rivalSaw: false, rivalKnows: false, radarFails: false, radarWillFail: false, tension: 0,
+    knows: {}, rivalSaw: false, rivalKnows: false, exposedIn: null, radarFails: false, radarWillFail: false, tension: 0, variant: c.variant ?? null,
     navy: null, voteFailed: false, actedAlone: false, approvedBy: null, incident: {}, notes: [], plan: c.plan, shift: null,
     // Fatigue the battalion's engineers owe this month (the radar repair), added after its orders.
     eng: 0,
@@ -71,13 +79,15 @@ export function simulate(c, run = {}) {
     list.sort((a, b) => effectDay(a.id, month) - effectDay(b.id, month));
     for (const e of list) {
       const rule = incidentRule(e.id);
-      const opt = e.staffBusiness ? rule.options.find((o) => o.staff) : rule.options.find((o) => o.id === choice) ?? rule.options.find((o) => o.staff);
+      const staffAnswer = c.variant?.visit === "quiet" && e.id === "visit" ? rule.options.find((o) => o.id === "quiet") : rule.options.find((o) => o.staff);
+      const opt = e.staffBusiness ? staffAnswer : rule.options.find((o) => o.id === choice) ?? staffAnswer;
       const was = { support: s.support, rivalKnows: s.rivalKnows, fatigue: s.eng };
       opt.effect(s, c, k);
       const by = e.staffBusiness ? "staff" : opt.staff ? "staff-answer" : "you";
       if (e.staffBusiness) s.staffDone = { ...(s.staffDone ?? {}), [month]: opt.id };
       else s.incident[month] = opt.id;
       const exposed = s.rivalKnows && !was.rivalKnows;
+      if (exposed) s.exposedIn = month;
       const day = incidentDay(e.id, month), effect = effectDay(e.id, month);
       if (effect === day) fact(at(month, day), e.staffBusiness ? "staff" : "incident", { id: e.id, option: opt.id, by, fatigue: s.eng - was.fatigue, cabinet: moved(was.support, s.support), exposed });
       else {
@@ -250,6 +260,11 @@ export function landingCheck(c, s, route, big) {
     // Two navies stop a landing at sea if they know when it sails, or if it is one wave. A
     // second wave that gets past them lands. (Under review: RULES-REVIEW.md.)
     needs = big ? [req("warning", warned, "warning, to meet both waves at sea")] : [];
+    if (big && !warned && s.variant?.naval === "check") {
+      // The variant: the battalion, already behind the navies, must hold the second wave.
+      const second = [req("defences", def >= D.holdsWithReserve, D.holdsWithReserve), req("fit", fit, "a fit battalion")];
+      return { holds: false, needs, failed: needs, def, warned, fit, strong, listening, dated, intercepted: false, second, secondHolds: second.every((r) => r.ok) };
+    }
   } else if (route === "forward") {
     needs = big ? [req("fit", fit, "a fit battalion"), req("defences", def >= D.holdsAlone, D.holdsAlone), req("strength", strong, "a battalion at full strength")]
       // Dug in, a fit battalion holds one wave on almost anything; a worn-out one needs level 2.
@@ -273,7 +288,7 @@ export function resolve(c, s, route, hyp) {
   const check = landingCheck(c, s, route, hyp.big);
   const { warned } = check;
   let code;
-  if (hyp.troops) code = route === "joint" ? (check.holds ? "stopped" : "landed") : check.holds ? (route === "forward" ? "repelled" : "held") : "lost";
+  if (hyp.troops) code = route === "joint" ? (check.holds ? "stopped" : check.secondHolds === false ? "lost" : "landed") : check.holds ? (route === "forward" ? "repelled" : "held") : "lost";
   else if (hyp.show) code = route === "joint" ? "called" : route === "forward" ? "dugin" : "outlasted";
   else code = route === "joint" ? "faced" : route === "forward" ? "dugin" : "waited";
   const battle = ["held", "landed", "repelled", "lost"].includes(code);
