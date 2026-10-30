@@ -17,7 +17,7 @@ without that decision.
 cd prototypes/map-room
 npm install
 npm run dev          # http://localhost:5173
-npm test             # chart, campaign, room, consistency and balance checks (Node, no browser)
+npm test             # chart, campaign, room, consistency, surface and balance checks (Node, no browser)
 node scripts/balance.mjs 150   # the full balance report: does one fixed plan win?
 ```
 
@@ -33,7 +33,7 @@ Strait. `?chapter=dec-orders` opens a chapter directly. `?renderer=canvas` force
 | Key | Does |
 | --- | --- |
 | Space / Enter / click on a speaker | Finish the running sequence, or continue |
-| 1–9 | Jump to a chapter: title, December briefing, December orders, December night, January briefing, January orders, January night, February showdown, debrief |
+| 1–9 | Jump to a chapter: title, December briefing, December orders, December log, January briefing, January orders, January log, February showdown, debrief |
 | 0 | Chart preview for the current scenario |
 | N | Roll a new theatre and campaign at the same difficulty and start December |
 | S · L · O | Staff room, ledger, settings (also the buttons in the top bar; Esc closes) |
@@ -74,7 +74,7 @@ one. What is rolled:
   date and how many landing craft load in December go with it. Twelve or more craft is a
   battalion plus a second wave, which Beacon cannot hold without a fit, warned 2nd
   Battalion.
-- **The clues.** Lattice's answers, the fishing fleet's behaviour and the night reports
+- **The clues.** Lattice's answers, the fishing fleet's behaviour and the monthly logs
   follow the hidden plan. On harder settings one clue may be planted to read as a
   landing, and a defector may be lying.
 - **Marenna's politics.** How many of the eleven ministers back us, whether the defence
@@ -198,18 +198,18 @@ what they show; it adds no rules):
 
 ## The sequence
 
-Each month runs **briefing → signal (if an incident lands) → orders → night**. Each month
+Each month runs **briefing → signal (if an incident lands) → orders → monthly log**. Each month
 has two order slips on the left (the station, and what Lattice listens for) and, in
 January, Marenna on the right. Changing any staff plan, or answering an incident your own
 way, uses one of two personal orders. Each slip's choice is pinned to the chart where it
 acts. Briefings
 lead with what changed, how sure we are, and what it means for your orders. An incident
 answer goes out when you press "Confirm answer", and the orders panel lists it under
-"Already sent". Night reports end with what the month changed, readout by readout. Once
+"Already sent". Each month's log is a dated duty record built from the campaign's record, and ends with what the month changed, readout by readout. Once
 the ships sail, the warning box gives way to what we know about them. Everything
 after December follows from what you ordered (`run` in `DeskScene`):
 
-- The December night report narrates your Beacon order, Lattice's answer, the incident's
+- The December log records your Beacon order, Lattice's answer, the incident's
   result and Ravellan's response, all shaped by the hidden plan.
 - January's briefing reads the clue you bought, honest or planted.
 - In January, Marenna's slip depends on the campaign: an open move may clash with a slow
@@ -217,9 +217,9 @@ after December follows from what you ordered (`run` in `DeskScene`):
   cabinet may need securing even if you stay quiet.
 - January's Lattice question decides February's warning. Staying on Sarn's harbour net
   hears the order that puts troops aboard. The fleet net gives the true sailing date, which
-  lets Okafor rest 2nd Battalion for 20 days, but loses that warning.
+  lets Okafor take 20 fatigue off 2nd Battalion, but loses that warning.
 - February offers three ways to meet the ships: hold quietly, dig 2nd Battalion in on the
-  headland (no warning needed, costs days whatever happens), or stand with Marenna's navy
+  headland (no warning needed, costs fatigue whatever happens), or stand with Marenna's navy
   if Marenna agreed to send it. Good intelligence narrows the choice without settling it:
   Halden says what he knows and what he doesn't (troops aboard, how many waves).
 - The showdown plays out on the chart in five steps, each with a short entry in the report:
@@ -289,31 +289,47 @@ including any spent on the month's incident.
 
 ## How officers talk
 
-The copy rules live in `src/fixture.js` and are applied to every line:
+State-aware first, then sharp. Every sentence on screen is built from the campaign's
+record (below), never from a fixed date or an inferred number.
+
+**Three registers.**
+
+- **Interface text is literal.** Option names, costs, chips and labels say exactly what
+  happens and what it costs: "Beacon to level 2 by 20 December, moved by night. Fatigue
+  111 by New Year."
+- **Speech is punchier.** Officers talk in short, concrete sentences, and say plainly what
+  they don't know: "We have twelve craft at Sarn, which is enough for a second wave. We
+  have the numbers, but not the boarding order." Direct orders and decisive verbs, in the
+  task force's own restrained voice: no catchphrases.
+- **The ledger and logs are a factual record.** Date, source, what happened, what it
+  changed. No opinion.
+
+**Each officer has a job.**
+
+| Officer | Speaks to | Sounds like |
+| --- | --- | --- |
+| Brigadier General Briggs | position and deadlines | "Two rifle companies and the battery on the headland by the 20th, by night." |
+| Major General Halden | sources and uncertainty | "8 craft at Sarn. I have the numbers, not the intent." |
+| Rear Admiral Okafor | readiness and human cost | "Fatigue 80. They have one more month in them. Not two." |
+| Rear Admiral Sato | permissions and political leverage | "5 for, 6 against. Move in daylight and Ravellan's embassy shows the photographs first." |
+
+**Rules applied to every line.**
 
 1. **Rank before every name**, everywhere: "Major General Elias Halden", then
    "Major General Halden". Never a bare surname.
-2. **Months, not turns.** One turn is one month, September to February. Officers name time
-   the way their background suggests:
-   - Major General Halden (British): "since the autumn", "before Christmas".
-   - Brigadier General Briggs (American): "since October", "through Q1".
-   - Rear Admiral Okafor (Nigerian): "since September", "these three months".
-   - Rear Admiral Sato (Japanese): "before the fiscal year closes", "by the end of the month".
-3. **Firm, and doubt in character.** Generals state what they have seen as fact and draw a
-   hard line around it: "Anyone who tells you what Ravellan means by it is guessing. I
-   don't guess." There is no "What we don't know" heading. Briefings use *Bottom line*,
-   *Assessment* and *Watch for*.
-4. **Name who.** Never a bare "they" when it could mean two parties: "the Marennan
-   cabinet votes", "Ravellan's ships", "Marenna's defence minister".
-5. **Every statement carries its so-what.** Say what a fact means for us: "Lattice was not
-   listening to Sarn this month, so our warning before an attack is less reliable", not
-   just "our count is getting old".
+2. **Intelligence is not truth.** Every claim carries its source, date and certainty
+   (confirmed, likely, one signal, or a claim we can't check). Briefings separate *What
+   we know*, *What we don't know* and *What it means for your orders*. Only the debrief's
+   last column says what was really happening.
+3. **Numbers are the model's numbers.** A forecast quotes the same fatigue, level and
+   cabinet count the rules will use, and the outcome reports the same figures. Fitness
+   (fatigue) and strength (soldiers lost) are separate. Cabinet counts always say "N for,
+   M against".
+4. **Name who.** Never a bare "they" when it could mean two parties.
+5. **Every statement carries its so-what**, and no trade-off is advertised that the rules
+   don't apply.
 6. **Report, don't mind-read.** Officers say what was seen and what it lets Ravellan do.
-   They never guess at the other side's feelings ("they think Beacon is weak", "they are
-   testing your nerve").
-7. **Clear beats short.** Use a full sentence where a clipped phrase would need decoding.
-   No shorthand or figures of speech: "the press", not "the papers"; "Marenna's approval",
-   not "Marenna's yes". Terms like "landing" are explained where they first appear.
+7. **The player sets intent; the staff execute.** Staff business is reported, not asked.
 
 ## Names and terms you can ask about
 
@@ -363,18 +379,42 @@ in the scenario and open the same profiles.
   `node scripts/balance.mjs` reports them over every legal plan within two personal orders
   a month):
   - On Shifting, no single fixed plan wins more than 60% of campaigns. Today the best
-    one wins about 53%, Volatile's best about 45%. Steady stays easy on purpose: about 91%
+    one wins about 52%, Volatile's best about 56%. Steady stays easy on purpose: about 89%
     for its best plan.
   - The best result for a campaign usually needs a different plan: 75–86% of campaigns.
   - About half of Shifting and Volatile campaigns need both January personal orders for
     the best result.
   - At most 20% of Shifting and 30% of Volatile campaigns can't be won outright (today
-    about 11% and 16–27%, depending on the seeds).
+    about 12% and 13% over 150 seeds).
   - Following the staff plan every month never wins outright (it never rests the battalion).
 - **The war** (all proposed): the refit amounts and prices; 500 soldiers as the line for
   under strength; the rival losing one craft in its next sector for every four beaten on a
   beach, up to three; and the second sector reusing the December to February calendar. That
   calendar is a stand-in: a real war needs dates that don't depend on the season.
+- **Playtest 5 rules and architecture:**
+  - **One record.** `src/story/chronicle.js` builds the campaign's dated events and its
+    intelligence (claim, source, certainty, and whether it was true) from the rules.
+    Every log, the February decision, the showdown, the debrief, the ledger and the
+    officers' memories read from it, so none can claim an event that didn't happen.
+  - **The decision's date comes from its source**: the boarding order two days out (which
+    can fall in January), the patrol boats at 05:00 on the sailing day, or the radar at
+    07:00. January's log ends the day before a January decision.
+  - **Exposure costs a level.** Briefing the press openly, or the minister's visit with
+    cameras, tells Ravellan where our guns are: Beacon counts one level lower against a
+    landing (as a failed radar does). Said where you choose it, in the log, on the top
+    bar ("level 2 · exposed") and in February's case table.
+  - **Who fought, and what it cost.** The battalion takes the +20 battle fatigue only if it
+    fought. Losses are split between the garrison and the battalion, and only the
+    battalion's reduce its strength.
+  - **A December show of force gives a clue** (likely, not confirmed) from how Ravellan
+    reacts.
+  - **The cabinet's own drift lands before January's orders**, so the count on the host's
+    slip is the count the vote uses. Every change in the count is logged where it
+    happens.
+  - **Staff business and incidents apply in date order**, and January's incidents come
+    before the vote.
+  - **The decisive requirement is stated from December**, in every briefing and on the
+    orders' "Gives" row, not first at the finale.
 - **Playtest 4 rules:**
   - **The decision comes when we learn they are moving.** That is when Lattice hears the
     boarding order (two days out), when the patrol boats see the ships leave on a known

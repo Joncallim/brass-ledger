@@ -133,6 +133,15 @@ The playtest showed that generated text can contradict itself. Every new piece k
 current rule: one function works out the facts (`outcome()` in `src/story/play.js`), and
 the copy only reads them. Tests then run every campaign path against those facts.
 
+Since playtest 5 there is one record for history as well: `chronicle()` in
+`src/story/chronicle.js` turns the rules into dated events and intelligence with source and
+certainty, and every log, decision, debrief and memory is written from it.
+`test/surface.test.js` renders every screen for a broad sample of campaigns and checks
+each class of defect: undefined text, boarding claimed without the order, rest claimed
+without a rest, forecasts that don't match results, cabinet counts that don't add up or
+change without a logged cause, logs out of date order, exposure claimed without its rule,
+unfit confused with under strength, and the second sector.
+
 In the war layer, carried-over state gets the same treatment. One function works out
 what the task force has and remembers, and the officers quote only that.
 

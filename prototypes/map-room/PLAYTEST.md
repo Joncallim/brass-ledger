@@ -48,13 +48,38 @@ Most of this is in the in-game log: Settings, then "Playtest log", then copy the
 1. What was the hardest call, and what made it hard?
 2. Was there a month where both personal orders felt worth spending on more than two things?
 3. In February, did you feel you knew the answer, or that you were choosing between costs?
-4. Did anything in the story contradict what you saw on the screen? Write down exactly where.
+4. Did anything in the story contradict what you saw on the screen, or another screen?
+   Write down exactly where, with the date in the game.
 5. Which text did you skip, and which did you read twice?
 6. Did you change a plan after reading an officer's case or opening a slip? What made you
    change it?
 7. What did you give up to get what you chose? Could you say it in one sentence?
 8. Watching February play out on the chart: could you follow who moved where, and did the
    chart end where the report said it did?
+
+## Uncoached comprehension check
+
+Run this before the questions above, with first-time players only, on `KESTREL` and one of
+`B6` or `B13`. The aim is to find out whether the words alone are understood. Say nothing
+about the rules beforehand, and don't explain anything during the run.
+
+1. Ask the tester to think aloud. Record the screen and their voice.
+2. Stop them at three points and ask the questions below, without showing anything new:
+   - **After the December briefing:** What does Beacon need to hold against one wave? And
+     against two? What do we know for certain, and what is only likely?
+   - **After the January log:** What changed this month, and why? Who moved the cabinet
+     count? Is Beacon's defence level what it says on the headland, or lower, and why?
+   - **At the February decision:** When and how did we learn they are moving? What does
+     each option cost if they fight, and if they don't?
+3. After the debrief, ask: Why did it end the way it did? Was anything you were told
+   wrong, and could you have known?
+4. Score each answer as **right**, **partly right** or **wrong**, and note the exact words
+   the tester used. A wrong answer is a text defect: note which screen should have told
+   them, and file it with the sentence that misled them.
+
+Proposed signal: every first-time tester answers the "what does Beacon need" and
+"why did it end" questions right without help. Anything they get wrong points at a
+sentence to rewrite.
 
 ## Recovery (the poor run)
 
