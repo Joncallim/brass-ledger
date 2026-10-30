@@ -30,6 +30,8 @@ const browser = await chromium.launch();
 
 async function page(viewport = { width: 1920, height: 1080 }, query = "chapter=title") {
   const p = await browser.newPage({ viewport });
+  // THROTTLE=4 slows the CPU as a slow CI runner would, to find timing assumptions.
+  if (process.env.THROTTLE) { const cdp = await p.context().newCDPSession(p); await cdp.send("Emulation.setCPUThrottlingRate", { rate: Number(process.env.THROTTLE) }); }
   p.errors = [];
   p.on("pageerror", (e) => p.errors.push(e.message));
   await p.goto(`${base}?renderer=canvas&${query}`);
@@ -69,6 +71,12 @@ async function screens() {
           const rc = btn.getBoundingClientRect(); if (!rc.width) continue;
           const top = document.elementFromPoint(rc.left + rc.width / 2, rc.top + rc.height / 2);
           if (top && !btn.contains(top) && !top.closest(".tip")) out.push(`button covered: ${btn.textContent.trim().slice(0, 30)}`);
+        }
+        // Papers never overlap each other: a covered control is then only a matter of fonts.
+        const slips = [...document.querySelectorAll(".slip")].map((e) => e.getBoundingClientRect()).filter((r) => r.height);
+        for (let a = 0; a < slips.length; a++) for (let b = a + 1; b < slips.length; b++) {
+          const x = Math.min(slips[a].right, slips[b].right) - Math.max(slips[a].left, slips[b].left), y = Math.min(slips[a].bottom, slips[b].bottom) - Math.max(slips[a].top, slips[b].top);
+          if (x > 0 && y > 0) out.push(`order slips overlap by ${Math.round(y * k)} px`);
         }
         if (/undefined|NaN|\[object/.test(document.body.innerText)) out.push("undefined/NaN on screen");
         res(out);
@@ -168,7 +176,7 @@ async function playCampaign(seed, diff, plan) {
     if (title !== want.title) fail(area, `debrief "${title}", expected "${want.title}" (played ${JSON.stringify(await p.evaluate(() => window.mapRoom.getRun()))})`);
     const score = await p.$eval(".score", (e) => e.innerText);
     if (!score.includes(want.score[2].text.split(",")[0])) fail(area, `scorecard "${score}" vs "${want.score[2].text}"`);
-  } catch (e) { fail(area, `stopped: ${e.message.split("\n")[0]}`); }
+  } catch (e) { fail(area, `stopped: ${e.message.split("\n")[0]} (${e.message.match(/waiting for (locator\([^)]*\)|[^\n]*)/)?.[1] ?? ""})`); }
   pageErrors(area, p);
   await p.close();
 }
@@ -277,7 +285,9 @@ async function sketch() {
 }
 
 try {
+  const only = process.argv.find((x) => x.startsWith("--only="))?.slice(7).split(",");
   for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["sketch", sketch]]) {
+    if (only && !only.some((o) => name.startsWith(o))) continue;
     const t = Date.now(), said = await fn();
     console.log(`${name.padEnd(16)} ${said} (${((Date.now() - t) / 1000).toFixed(0)} s)`);
   }

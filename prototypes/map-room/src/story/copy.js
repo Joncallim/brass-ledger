@@ -246,7 +246,8 @@ function build(W) {
     const sim = simulate(c, run), s = month === "dec" ? sim.decOrders : sim.janOrders;
     const f = s.fatigue, eng = s.eng ?? 0, onDuty = f + FIXED.monthOnDuty + eng, C = CALENDAR[month], mon = MONTH[month];
     const staffPlan = `will ${MOVE[s.def + 1]} by night, in place by ${C.quiet} ${mon}.`;
-    const does = `${B} goes from ${nowLevel(s)} to ${next(s)}. ${RULE}`;
+    // The full rule is in the briefing; the slip keeps the line this order bears on.
+    const does = `${B} goes from ${nowLevel(s)} to ${next(s)}. Level ${D.holdsAlone} against a landing holds one wave without ${BN}.`;
     const council = month === "dec" ? remembered(c, decemberCouncil(c, s)) : januaryCouncil(c, s);
     if (month === "dec") {
       return {
