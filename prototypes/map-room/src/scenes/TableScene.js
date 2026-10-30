@@ -531,10 +531,20 @@ export class TableScene extends Phaser.Scene {
   // whose box keeps clear of every place the showdown uses.
   showdownCorner(w, h) {
     const P = this.sd;
-    const pts = P ? [P.H, P.B, P.beach, P.approach, P.flank, P.reserve, P.dug, ...P.line, P.friendStart, ...P.route, ...Object.values(P.callAt)] : [];
-    const corners = [[56, 108], [1864 - w, 1040 - h], [56, 1040 - h], [1864 - w, 108]];
-    const covered = ([x, y]) => pts.filter((p) => p.x > x - 70 && p.x < x + w + 70 && p.y > y - 60 && p.y < y + h + 60).length;
-    return corners.reduce((best, c) => (covered(c) < covered(best) ? c : best));
+    if (!P) return [56, 108];
+    // The battalion's whole path and its labels must stay visible; ships and labels at sea
+    // matter too, but less.
+    const vital = [P.B, P.beach, P.flank, P.reserve, P.dug, { x: P.reserve.x, y: P.reserve.y - 60 }, { x: P.reserve.x, y: P.reserve.y + 60 }, { x: P.dug.x, y: P.dug.y - 60 }, P.callAt.beacon, P.callAt.contact];
+    const other = [P.H, P.approach, ...P.line, P.friendStart, ...P.route, P.callAt.harbour];
+    const covered = (pts, [x, y], ww) => pts.filter((p) => p.x > x - 80 && p.x < x + ww + 80 && p.y > y - 70 && p.y < y + h + 70).length;
+    for (const ww of [w, 460]) {
+      const corners = [[56, 108], [1864 - ww, 1040 - h], [56, 1040 - h], [1864 - ww, 108]];
+      const clear = corners.filter((c) => covered(vital, c, ww) === 0);
+      if (clear.length) { const best = clear.reduce((a, c) => (covered(other, c, ww) < covered(other, a, ww) ? c : a)); this.sdPanelWidth = ww; return best; }
+    }
+    this.sdPanelWidth = 460;
+    const corners = [[56, 108], [1404, 1040 - h], [56, 1040 - h], [1404, 108]];
+    return corners.reduce((a, c) => (covered(vital, c, 460) * 10 + covered(other, c, 460) < covered(vital, a, 460) * 10 + covered(other, a, 460) ? c : a));
   }
 
   showdownTags() {

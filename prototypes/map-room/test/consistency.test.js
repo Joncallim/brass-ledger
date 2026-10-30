@@ -27,7 +27,7 @@ test("Halden only claims we kept watch on Sarn when Lattice was listening", () =
 
 test("the ending never calls an unfit battalion fit", () => {
   for (const { o, D } of everyEnding()) {
-    assert.equal(/ends the campaign fit/.test(D.line), o.kept.battalion, D.line);
+    assert.equal(/ends fit at fatigue/.test(D.line), o.kept.battalion, D.line);
     if (!o.kept.battalion) assert.match(D.line, /unfit/);
   }
 });
@@ -70,7 +70,7 @@ test("the February believed-column matches what Lattice could hear", () => {
 // Playtest 3: a briefing favoured a show of force while the debrief said a landing had
 // looked more likely. January's "we believed" must be the reading the staff argued from.
 test("the debrief's January belief is what January's orders were argued from", () => {
-  const WORDS = { land: /as a landing/, bluff: /as a show of force/, probe: /as a test/, null: /Still open/ };
+  const WORDS = { land: /as a landing/, bluff: /as a show of force/, probe: /as a test/, null: /No reading yet/ };
   for (const { c, run, D } of everyEnding()) {
     const read = story.januaryRead(simulate(c, run).janOrders);
     assert.match(D.rows[1][2], WORDS[read], D.rows[1][2]);

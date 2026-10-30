@@ -79,7 +79,7 @@ function vary(c, last) {
 // condition and its officers' memories into the next sector.
 export function closeSector(war, c, run, memories, world) {
   const o = outcome(c, run);
-  const strength = Math.max(0, (c.strength ?? FULL_STRENGTH) - o.casualties);
+  const strength = Math.max(0, (c.strength ?? FULL_STRENGTH) - o.losses.battalion);
   war.results.push({ sector: war.sector, strait: world.strait, host: world.host, grade: o.grade, code: o.code, days: o.daysAfter, casualties: o.casualties, rivalLost: o.rivalLost,
     plan: c.plan, big: c.craft.jan >= 12, minister: c.minister, hotline: c.hotline });
   war.funding += REFIT[o.grade];

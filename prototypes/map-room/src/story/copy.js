@@ -1,187 +1,193 @@
-// Every word the story says, worked out from the campaign (what Ravellan is really doing,
-// Marenna's politics, the incidents) and the state your choices produce. Copy rules: rank
-// before every name; months, not turns; say who acts; every fact carries its so-what;
-// officers report what they have seen, never what the other side feels.
+// Every word the story says. The facts come from three places only: the campaign (what
+// Ravellan is really doing), the rules (simulate and outcome in play.js) and the record of
+// dated events and intelligence (chronicle.js). Nothing here infers an event from a number.
+//
+// Voice. Interface text is literal: what an order does, what it costs, in the rules' own
+// terms. Officers speak from their jobs, briefly:
+//   Briggs (operations): positions, levels and deadlines.
+//   Halden (intelligence): sources, dates and how sure he is.
+//   Okafor (logistics): readiness and what it costs the soldiers.
+//   Sato (plans and the ally): permissions, votes and leverage.
+// The ledger and the logs are a factual record. No officer reports a hidden fact as known,
+// and no line promises an effect the rules do not deliver.
 import { WORLD as W, onWorld } from "./world.js";
 import { OFFICERS, fullName, surname } from "./officers.js";
 import { incidentById } from "./incidents.js";
-import { DATE_REST, DIG_DAYS, FATIGUE, fatigueWord, landingCheck, ministersFor, needsApproval, outcome, simulate } from "./play.js";
+import { DATE_REST, DIG_DAYS, FATIGUE, JOINT_DAYS, BATTLE_DAYS, effectiveDefence, fatigueWord, landingCheck, ministersFor, needsApproval, outcome, simulate } from "./play.js";
+import { chronicle, dateKey, decisionAt, knownAt, logEnd } from "./chronicle.js";
 
 let B, ST, R, M, MA, S, L, BN;
 const ord = (x) => `${x}${x % 100 >= 11 && x % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][x % 10] ?? "th"}`;
-const lift = (craft) => (craft >= 9 ? "enough to put one battalion, about 600 soldiers, ashore at once" : "nearly enough to put one battalion, about 600 soldiers, ashore at once");
+const MONTH = { dec: "December", jan: "January", feb: "February" };
 export const CALENDAR = ["September", "October", "November", "December", "January", "February"];
 export const monthOf = (turn) => CALENDAR[turn - 1];
 const PLAN_ORDER = ["quiet", "rest", "show", "hold"];
+const day = (d) => `${d.day} ${MONTH[d.month]}`;
+const dayTime = (d) => `${day(d)}${d.hour != null ? `, ${String(d.hour).padStart(2, "0")}:00` : ""}`;
+const lower = (t) => t[0].toLowerCase() + t.slice(1);
 
-// ── what we know, in words ──────────────────────────────────────────────────
-let WARN;
-// Once the ships have sailed there is nothing left to warn of: say what we know about them.
-const atSea = (s, troops) => s.warning === "fresh"
-  ? (troops
-    ? ["At sea: a landing force", `${L} heard ${R} order troops aboard two days before the ships sailed. ${BN} has had that time to move.`]
-    : ["At sea: no troops seen boarding", `${L} heard no order to put troops aboard before the ships sailed. The landing craft are probably empty.`])
-  : ["At sea: troops aboard unknown", `We saw the ships leave ${S}, but ${L} was not listening for the order that puts troops aboard. Until ${R} acts, we cannot tell a landing from a show of force.`];
+// ── shared facts, in words ─────────────────────────────────────────────────
+const DEF = ["lost", "garrison only", "reinforced", "fully reinforced", "fortified"];
+const defWord = (d) => DEF[Math.max(0, Math.min(4, d))];
+export const defenceLabel = (d) => `level ${Math.max(0, d)}, ${defWord(d)}`;
+const votes = (support) => { const f = ministersFor(support); return { for: f, against: W.ministers - f }; };
+const voteText = (support) => { const v = votes(support); return `${v.for} for, ${v.against} against`; };
+const fitText = (f) => (f > FATIGUE.unfit ? `unfit at fatigue ${f}` : `${fatigueWord(f)} at fatigue ${f}`);
 
-// Readiness at a glance, for the bar along the top. Each value belongs to one officer.
+// How much warning we would get, from what is actually listening or watching.
+function warningState(s) {
+  if (s.warning === "fresh") return { key: "two-days", label: "about two days", tone: "ok" };
+  if (s.knows.date && !s.knows.date.planted && s.boats >= 2) return { key: "date", label: "on the known date", tone: "ok" };
+  return { key: "none", label: "hours, by radar", tone: "warn" };
+}
+
+// The rule that decides a landing, stated once, so every screen that explains it says the same.
+const RULE = () => `Against one wave, ${B} holds at defence level 3, or at level 2 if ${BN} is warned and fit. Against two waves it needs level 3, warning, and ${BN} fit and at full strength.`;
+
+// The readiness bar along the top. Each value belongs to one officer.
 export function status(c, s) {
-  const days = s.fatigue, sup = ministersFor(s.support);
+  const f = s.fatigue, v = votes(s.support), w = warningState(s), eff = s.def <= 0 ? 0 : effectiveDefence(s);
+  const strength = c.strength ?? W.battalion;
   return [
-    { term: "battalion", label: BN, value: days === 0 ? "rested" : `fatigue ${days} · ${fatigueWord(days)}`, tone: days > FATIGUE.unfit ? "bad" : days > FATIGUE.tired ? "warn" : "ok", who: "okafor" },
-    { term: "marenna", label: `${MA} cabinet`, value: `${sup} of ${W.ministers} with us`, tone: sup < 6 ? "bad" : sup < 7 ? "warn" : "ok", who: "sato" },
-    { term: "beacon", label: B, value: s.def <= 0 ? "lost" : `${DEF[Math.min(4, s.def)]} · level ${s.def}`, tone: s.def >= 3 ? "ok" : s.def === 2 ? "warn" : "bad", who: "briggs" },
-    { term: "warning", label: "Warning", value: s.warning === "fresh" ? "about two days" : "less reliable", tone: s.warning === "fresh" ? "ok" : "warn", who: "halden" },
+    { term: "battalion", label: BN, value: `${f === 0 ? "rested" : `fatigue ${f} · ${fatigueWord(f)}`}${strength < W.battalion ? ` · ${strength} strong` : ""}`, tone: f > FATIGUE.unfit || c.understrength ? "bad" : f > FATIGUE.tired ? "warn" : "ok", who: "okafor" },
+    { term: "marenna", label: `${MA} cabinet`, value: `${v.for} for · ${v.against} against`, tone: v.for < 6 ? "bad" : v.for < 7 ? "warn" : "ok", who: "sato" },
+    { term: "defence", label: `${B} defences`, value: s.def <= 0 ? "lost" : `level ${eff}${eff < s.def ? " · exposed" : ""}`, tone: eff >= 3 ? "ok" : eff === 2 ? "warn" : "bad", who: "briggs" },
+    { term: "warning", label: "Warning", value: w.label, tone: w.tone, who: "halden" },
   ];
 }
 
 // ── the title ───────────────────────────────────────────────────────────────
 export let TITLE;
-// What a new player needs before the first briefing: the goal, the monthly loop, and what
-// was decided before they took over.
 export let ORIENT;
 
+// ── what we know, from whom, how sure ──────────────────────────────────────
+const CERTAINTY = { confirmed: "confirmed", likely: "likely", single: "one signal, unconfirmed", claimed: "one man’s word" };
+const SOURCE = () => ({ "lattice-harbour": `${L}, on ${S}’s harbour net`, "lattice-fleet": `${L}, on the fleet command net`, "lattice-fishing": `${L}, on the fishing fleet’s net`, search: "our boarding party", defector: `${M}’s security service, from the defector`, reaction: "what we watched them do", "patrol-boats": "our patrol boats", radar: `${B}’s radar` });
+const ROLE = () => ({ screen: "sailing with the landing craft under navy orders, as a screen", swarm: "crowding the shipping lane in daylight, for the cameras", scout: `running along our coast at night, close enough to count ${B}’s guns` });
+const REACTION = () => ({ faster: `${R} loaded faster after it saw our frigate`, cameras: `${R}’s television doubled its coverage, and the loading slowed`, probing: `${R}’s patrol boats came close to ${B} at night, twice` });
+
+function claimText(i) {
+  const v = i.claim.value;
+  switch (i.claim.kind) {
+    case "count": return `${v} landing craft in ${S}${v >= 12 ? ": enough for a second wave" : ": one battalion’s worth, not a second wave"}`;
+    case "role": return `${R}’s fishing boats are ${ROLE()[v]}`;
+    case "date": return v.kind === "exercise" ? `a public naval exercise from ${v.day} February` : v.kind === "two-stage" ? `ships to sea on ${v.day} February, landing craft to follow on command` : `ships ready at sea by ${v.day} February`;
+    case "plan": return v === "land" ? "a landing is planned" : v === "bluff" ? "there is no landing, only a threat" : "they will test us first and land only if we look weak";
+    case "reaction": return REACTION()[v];
+    case "boarding": return v ? `${R} has ordered troops aboard the landing craft` : `no order to put troops aboard${i.claim.asOf ? `, as of ${day(i.claim.asOf)}` : ""}`;
+    case "sailing": return `${R}’s ships are leaving ${S}`;
+    default: return "";
+  }
+}
+const intelLine = (i) => `${claimText(i)[0].toUpperCase()}${claimText(i).slice(1)}. Source: ${SOURCE()[i.source]}, ${day(i)}. ${CERTAINTY[i.certainty][0].toUpperCase()}${CERTAINTY[i.certainty].slice(1)}.`;
+
+// Everything we knew at a moment, one line per item, with source and certainty: the ledger's
+// "What we know".
+export function knownLines(c, run, date) {
+  return Object.values(knownAt(chronicle(c, run), date)).map(intelLine);
+}
+
+// What January's briefing read from what we knew by then. The staff argue from it, and the
+// debrief quotes it, so both say what you were actually told.
+export function januaryRead(s) {
+  const k = s.knows;
+  if (k.claim) return k.claim.plan;
+  if (k.role) return { screen: "land", swarm: "bluff", scout: "probe" }[k.role];
+  if (k.date) return { landing: "land", exercise: "bluff", "two-stage": "probe" }[k.date.kind];
+  if (k.reaction) return { faster: "land", cameras: "bluff", probing: "probe" }[k.reaction];
+  return null;
+}
+const READ = () => ({ land: "a landing", bluff: "a show of force", probe: `a test, then a landing if ${B} looks weak` });
+
 // ── briefings ───────────────────────────────────────────────────────────────
-const readings = (c) => `${R} may mean to land a battalion and take ${B}, or only to frighten ${M} into asking us to leave${c.D.plans.includes("probe") ? `, or to test ${B} first and land only if it looks weak` : ""}.`;
+const pos = (prefers, line, because, risk) => ({ prefers, line, because, risk });
 
 export function brief(c, run, month) {
-  const sim = simulate(c, run);
-  if (month === "dec") {
-    const s = sim.decStart;
-    return {
-      title: "Intelligence summary", from: `${fullName("halden")}, Intelligence`,
-      sections: [
-        ["What changed", `${R} has started loading landing craft in ${S}, its main naval harbour, ${W.harbourNm} nautical miles across the strait from ${B}. ${L} counted ${c.craft.dec} on 1 December, ${lift(c.craft.dec)}.`],
-        ["How sure we are", `Sure of the count: ${L} heard the loading orders. Not sure what the craft are for. ${readings(c)} Troops boarding on the quay in ${S} would settle it.`],
-        ["What it means for your orders", `If this is a landing, ${B} needs more guns before February and ${BN} must be fit to reinforce it. If it is a threat, the danger is losing ${M}, so how visibly we move matters as much as what we move.`],
-      ],
-      warning: WARN[s.warning],
-      // A second reading of the same facts, so the sheet is an argument, not a lecture.
-      dissent: c.craft.dec >= 9
-        ? ["briggs", `${c.craft.dec} craft can land a battalion whatever they are for. I plan for the landing until someone shows me troops are not on that quay.`]
-        : ["sato", `If this is theatre, the audience is the ${MA} cabinet. Whatever we do on ${B}, they will be watching it before ${R} does.`],
-      halden: `${c.memories?.find((m) => m.who === "halden")?.quote.concat(" ") ?? ""}I can count landing craft, General. I cannot yet tell you what they are for. Until I hear troops ordered onto that quay, anyone who says landing or bluff is guessing, including me.`,
-    };
-  }
-  const s = sim.decEnd, q = run.dec?.lattice ?? "boats";
-  const k = s.knows;
-  const changed = {
-    boats: () => `${k.count} landing craft in ${S}, up from ${c.craft.dec}. ${c.plan === "bluff" ? `${R} has nearly stopped adding to them.` : k.count >= 12 ? `That is more than one battalion needs: a battalion and a second wave behind it.` : `${R} is adding about one every few days.`}`,
-    who: () => k.role === "screen"
-      ? `${R}’s fishing boats are sailing together with the landing craft, keeping military hours, under navy orders: 23 boats in all.`
-      : k.role === "swarm"
-        ? `${R}’s fishing boats take navy orders, but they crowd the shipping lane in daylight, where cameras can see them, and stay away from the landing craft.`
-        : `${R}’s fishing boats take navy orders. Since mid-December they have been running along our coast at night, close enough to count ${B}’s guns.`,
-    when: () => k.date.kind === "exercise"
-      ? `${R} has announced a naval exercise in the strait from ${k.date.day} February, and invited foreign reporters.`
-      : k.date.kind === "two-stage"
-        ? `${R}’s ships are ordered to sea on ${k.date.day} February; the landing craft are held “ready to follow on command”.`
-        : `${R}’s ships are ordered to be ready at sea by ${k.date.day} February.`,
-  }[q]();
-  const sure = {
-    boats: () => `Sure of the numbers: ${L} counted them, and is still listening to ${S}.`,
-    who: () => `Fairly sure: ${L} traced the boats’ orders over the radio. A trail laid for us to find would look the same.`,
-    when: () => `Fairly sure: one navy signal, not yet confirmed by a second source.`,
-  }[q]() + (k.claim ? ` A defector says ${k.claim.plan === "land" ? "a landing is planned" : k.claim.plan === "bluff" ? "there is no landing, only a threat" : "they will test us first"}; that is one man’s word.` : "");
-  const means = {
-    boats: () => c.plan === "bluff"
-      ? `A force that has stopped growing is either complete or for show. Plan to defend ${B}, but don’t give ${R}’s cameras a reason to call us the aggressor.`
-      : k.count >= 12 ? `${B}’s garrison could not hold a second wave alone. It would need ${BN}, fit and in time, or ${M}’s navy beside ours at sea.` : `Enough for a landing on the ${B} headland. ${B} should be at full strength by February.`,
-    who: () => k.role === "screen" ? `That points to an amphibious landing, screened by the fishing fleet. ${B} is the obvious target, not the only one.`
-      : k.role === "swarm" ? `That points to a show of force meant to frighten ${M}. It does not rule out a landing behind it.` : `That points to scouting before a decision. If ${B} looks weak, expect a landing.`,
-    when: () => k.date.kind === "exercise" ? `An exercise with reporters leans toward a show of force, but exercises also hide real attacks. Plan for both from ${k.date.day} February.`
-      : k.date.kind === "two-stage" ? `${R} wants to look before it lands. ${B} must look strong on ${k.date.day} February.` : `A landing could come as early as the ${ord(k.date.day + 1)}. Plan for it.`,
-  }[q]();
-  return {
-    title: "Intelligence summary", from: `${fullName("halden")}, Intelligence`,
-    sections: [["What changed", changed], ["How sure we are", sure], ["What it means for your orders", means]],
-    warning: WARN[s.warning],
-    dissent: {
-      land: ["sato", `If we read this as a landing and we are wrong, we have frightened the ${MA} cabinet for nothing. They vote on the ${ord(c.voteDay)}.`],
-      bluff: ["briggs", `A show can turn into a landing in one night. I would still want the guns dug in.`],
-      probe: ["okafor", `A test is aimed at whatever looks weakest. Right now that may be my battalion, at fatigue ${s.fatigue}.`],
-      open: ["okafor", `Whatever it is, ${BN} has to be fit for it, and it is at fatigue ${s.fatigue}.`],
-    }[januaryRead(s) ?? "open"],
-    // Halden's own read, not a repeat of the sheet: how far he trusts what he has, and what
-    // it still leaves open.
-    halden: {
-      boats: () => `A count is a fact, General. ${k.count >= 12 ? "This one says two waves." : "This one says one wave."} It still does not tell me whether they mean to use them.`,
-      who: () => `Radio orders are harder to fake than pictures. Harder, not impossible: a trail can be laid for us to find. It tells me their intent, not their date.`,
-      when: () => `One signal on the fleet net. If it is true, it is the most useful thing I have. If it was meant for us, it is the most dangerous.`,
-    }[q](),
-  };
+  const sim = simulate(c, run), rec = chronicle(c, run);
+  const s = month === "dec" ? sim.decStart : sim.decEnd;
+  const asOf = month === "dec" ? { month: "dec", day: 1 } : { month: "dec", day: 31 };
+  const known = Object.values(knownAt(rec, asOf));
+  const k = s.knows, count = k.count ?? (month === "dec" ? c.craft.dec : null);
+  const plans = c.D.plans.includes("probe") ? `a landing on ${B}, a show of force to frighten ${M} into asking us to leave, or a test of ${B} first` : `a landing on ${B}, or a show of force to frighten ${M} into asking us to leave`;
+  const read = month === "jan" ? januaryRead(s) : null;
+  const unknown = [
+    !k.count && month === "jan" ? "how many landing craft there are now" : null,
+    "whether troops will board",
+    !k.date ? "when they sail" : null,
+  ].filter(Boolean);
+  const carried = c.war && c.war.sector > 1 ? ` ${BN} arrives from the last sector at fatigue ${c.fatigue0}, ${c.strength ?? W.battalion} strong.` : "";
+  const sections = [
+    ["What we know", known.map(intelLine).join(" ")],
+    ["What we don’t know", `${unknown[0][0].toUpperCase()}${unknown.join(", ").slice(1)}. ${month === "dec" ? `What ${R} means to do: ${plans}.` : read ? `Our best reading is ${READ()[read]}; nothing has settled it.` : "Nothing yet points to one plan over another."}`],
+    ["What it means for your orders", `${RULE()} ${B} is at ${defenceLabel(effectiveDefence(s))} now; ${BN} is ${fitText(s.fatigue)}.${carried}`],
+  ];
+  const memory = c.memories?.find((m) => m.who === "halden")?.quote;
+  const halden = month === "dec"
+    ? `${memory ? `${memory} ` : ""}${count} craft at ${S}. ${count >= 9 ? "Enough to land a battalion." : "Not quite a battalion’s worth."} I have the numbers, not the intent. The order that puts troops aboard is the one thing that would tell me.`
+    : k.count ? `${k.count} craft at ${S}${k.count >= 12 ? ", which is enough for a second wave" : ""}. I have the numbers, but not the boarding order.`
+      : k.date ? `One date, ${k.date.day} February, from one signal on their fleet net. If it is true, it is the most useful thing I have. If it was meant for us, it is the most dangerous.`
+        : k.role ? `Radio orders are harder to fake than pictures. Harder, not impossible. They tell me intent, not timing.`
+          : `What we watched them do points one way. One observation is not a pattern.`;
+  const dissent = month === "dec"
+    ? (count >= 9 ? ["briggs", `${count} craft land a battalion whatever they are for. I plan for the landing until someone shows me an empty quay.`] : ["sato", `If this is theatre, the audience is the ${MA} cabinet. They will see our response before ${R} does.`])
+    : { land: ["sato", `If we read this as a landing and we are wrong, the ${MA} cabinet will remember who frightened it. They vote on the ${ord(c.voteDay)}.`],
+      bluff: ["briggs", `A show can turn into a landing in one night. I want the guns dug in regardless.`],
+      probe: ["okafor", `A test goes for whatever looks weakest. That may be my battalion, at fatigue ${s.fatigue}.`],
+      open: ["okafor", `Whatever it is, ${BN} has to be fit for it. It is at fatigue ${s.fatigue}.`] }[read ?? "open"];
+  return { title: "Intelligence summary", from: `${fullName("halden")}, Intelligence`, sections, warning: null, dissent, halden };
 }
 
 // ── where each officer stands, and why ─────────────────────────────────────
-// For each decision, an officer's recommendation follows from their priority and the state.
-// `because` is what they are protecting; `risk` is what happens if you overrule them.
-const pos = (prefers, line, because, risk) => ({ prefers, line, because, risk });
-
-// In a later sector of a war, each officer opens December's advice with what they
-// remember from the last one.
+// In a later sector of a war, each officer opens December's advice with what they remember.
 function remembered(c, council) {
   for (const m of c.memories ?? []) if (council[m.who]) council[m.who] = { ...council[m.who], line: `${m.quote} ${council[m.who].line}` };
   return council;
 }
 
 function decemberCouncil(c, s) {
-  const tired = s.fatigue >= 90, solid = s.support >= 66 && c.minister !== "dove", murky = c.D.plans.length > 2 || c.craft.dec < 9;
+  const tired = s.fatigue >= 90, solid = s.support >= 66 && c.minister !== "dove", v = votes(s.support);
   return {
-    briggs: pos("quiet", `Two rifle companies and the battery on the headland by the 20th, by night. Holds ${B} three weeks against a battalion from the sea. Costs ${BN} its Christmas. Worth it.`,
-      `${B} able to stop a landing`, `${B} faces a battalion with ${W.garrison} soldiers.`),
+    briggs: pos("quiet", `Two rifle companies and the battery on the headland by the 20th, by night. That takes ${B} to level ${s.def + 1}.`,
+      `${B} at level ${s.def + 1} by 20 December`, `${B} stays at level ${s.def}: the garrison alone.`),
     okafor: tired
-      ? pos("rest", `${BN}’s fatigue is ${s.fatigue}. Past 100 my sick list grows every week; past 120 a third of them cannot fight. Give me 18 to 31 December and I will give you a battalion in January.`,
-        `${BN} still able to fight in February`, `${BN}’s fatigue passes 120 by the end of January, and a third of it is unfit when ${R} comes.`)
-      : pos("quiet", `Fatigue ${s.fatigue}. They have one more month in them, not two. Use it now and rest them in January.`,
-        `${BN} being used while it is still fresh`, "we spend the battalion’s good month doing nothing."),
+      ? pos("rest", `Fatigue ${s.fatigue}. Another month on the headland takes them to ${s.fatigue + 31}. Past 120 a third of them can’t fight. Give me 18 to 31 December.`,
+        `${BN} fit in February`, `${BN} reaches fatigue ${s.fatigue + 31} by New Year.`)
+      : pos("quiet", `Fatigue ${s.fatigue}. They have one more month in them. Not two.`, `using ${BN} while it is fit`, "we rest a battalion that can still work."),
     sato: solid
-      ? pos("show", `I count ${ministersFor(s.support)} of ${W.ministers} ministers with us, and the defence minister is ${c.minister === "hawk" ? "pushing us to do more" : "content"}. A frigate in daylight will cost us a day of phone calls, not a vote.`,
-        `${M} seeing us defend its coast`, `${M}’s ministers wonder whether we would fight for them at all.`)
-      : pos("quiet", `I count ${ministersFor(s.support)} of ${W.ministers} ministers with us. If ${R} photographs us moving troops in daylight, ${R}’s government will show those photographs to the ${MA} ministers before we have told them anything. Keep it quiet until the vote on ${c.voteDay} January.`,
-        `the ${MA} cabinet’s vote on ${c.voteDay} January`, `the vote that decides whether ${M}’s navy sails with ours.`),
-    halden: murky
-      ? pos("show", `A move ${R} can see is a test I can read. ${R} will see it within 24 hours, and the loading in ${S} will either stop or speed up. Either answer is worth more than what I have today.`,
-        `knowing what ${R} really means to do`, `we go into January still unable to tell a landing from a threat.`)
-      : pos("quiet", `I have the count. What I need now is the date, and a quiet month gives me the best chance of hearing it. Do not give ${R} a reason to change its plans.`,
-        `a steady month to read ${R}’s plans`, `${R} changes its plans just as we begin to understand them.`),
+      ? pos("show", `${v.for} of ${W.ministers} ministers are with us, and the defence minister ${c.minister === "hawk" ? "wants us seen" : "is content"}. A frigate in daylight costs us phone calls, not the vote.`,
+        `${M} seeing us defend its coast`, `${M}’s ministers wonder whether we would fight for them.`)
+      : pos("quiet", `${v.for} for, ${v.against} against. Move in daylight and ${R}’s embassy shows the photographs to those ministers before we do. Nothing visible before the vote on the ${ord(c.voteDay)}.`,
+        `the vote on ${c.voteDay} January`, `${R} shows the ministers our troops before we have asked them.`),
+    halden: c.D.plans.length > 2 || c.craft.dec < 9
+      ? pos("show", `A move they can see makes them react, and the reaction is a clue. I would take one clue over a quiet month.`,
+        `a clue to what ${R} means to do`, `we go into January with the same guesses.`)
+      : pos("quiet", `I have the count. A quiet month gives me the best chance of hearing the rest.`, `a steady month on the radio`, `${R} changes its routine as we begin to read it.`),
   };
 }
 
-// What January's briefing told you Ravellan means to do, from what we knew by then. The
-// staff argue from it and the debrief quotes it, so both say what you were actually told.
-export function januaryRead(s) {
-  const k = s.knows;
-  if (k.claim) return k.claim.plan;
-  if (k.role) return { screen: "land", swarm: "bluff", scout: "probe" }[k.role];
-  if (k.date) return { landing: "land", exercise: "bluff", "two-stage": "probe" }[k.date.kind];
-  return null; // a count says how big, not what for
-}
-
 function januaryCouncil(c, s) {
-  const read = januaryRead(s);
+  const read = januaryRead(s), v = votes(s.support), eff = effectiveDefence(s);
   return {
-    briggs: read === "land" || read === "probe"
-      ? pos("show", `If ${R} is coming in early February, I want it to see a frigate and two companies off ${B} on the 16th. A landing that can see what it faces is a landing that may not happen.`,
-        `${B} looking too strong to attack`, `${R} plans its landing against a ${B} it believes is thin.`)
-      : pos("quiet", `Battery to full strength by the 20th, by night. Covers us into February. ${R} sees nothing.`,
-        `${B} at full strength without a show`, `${B} goes into February with the guns it has now.`),
-    okafor: s.fatigue > 110
-      ? pos("hold", `${BN}’s fatigue passes ${s.fatigue + 10} by the 10th. Rest them from 10 January, or I cannot promise you a fit battalion in February. ${B} already has its guns.`,
-        `${BN} fit to fight in February`, `a third of ${BN} is sick or unfit when ${R} sails.`)
-      : pos("quiet", `They rested over Christmas. I have no objection to working them now.`,
-        "using a rested battalion while it is fresh", "we hold back troops who can afford the work."),
+    briggs: (read === "land" || read === "probe") && eff + 1 >= 3
+      ? pos("show", `A frigate and two companies off ${B} on the 16th, in daylight. At level ${eff + 1}, a landing they can see coming may not come at all.`,
+        `${R} seeing a ${B} too strong to attack`, `${R} plans against a ${B} it thinks is thin.`)
+      : pos("quiet", `Battery to full strength by the 20th, by night. That takes ${B} to level ${s.def + 1}. ${R} sees nothing.`,
+        `${B} at level ${s.def + 1} without a show`, `${B} stays at level ${s.def}.`),
+    okafor: s.fatigue > 90
+      ? pos("hold", `Fatigue ${s.fatigue}. Another month takes them to ${s.fatigue + 31}. Stand them down from the 10th and I can give you a fit battalion in February.`,
+        `${BN} fit in February`, `${BN} goes into February at fatigue ${s.fatigue + 31}.`)
+      : pos("quiet", `Fatigue ${s.fatigue}. They can carry January.`, `using ${BN} while it is fit`, "we rest troops who can still work."),
     sato: s.support >= 60 && (c.hotline || c.minister === "hawk")
-      ? pos("show", c.hotline ? `We have a hotline to the ${MA} ministers. I can have their yes within hours, and with ${ministersFor(s.support)} of ${W.ministers} behind us, it will be yes.` : `The defence minister wants us to be seen. With ${ministersFor(s.support)} of ${W.ministers} ministers behind us, a daylight move helps the vote.`,
+      ? pos("show", c.hotline ? `We have the hotline. With ${v.for} for, I can have their yes within hours.` : `The defence minister wants us seen, and ${v.for} of ${W.ministers} are with us.`,
         `${M} seeing us stand with it`, `${M}’s ministers start to doubt we would fight for them.`)
-      : pos("quiet", `The ${MA} cabinet votes on ${c.voteDay} January, and I count ${ministersFor(s.support)} of ${W.ministers} with us. If we do anything in daylight before then, the ${MA} ministers will hear about it from ${R} first, and some of them will vote against us.`,
-        `the ${MA} vote on ${c.voteDay} January`, `${M}’s navy stays in port in February.`),
+      : pos("quiet", `The vote is on the ${ord(c.voteDay)}: ${v.for} for, ${v.against} against. Anything in daylight before then, they hear from ${R} first.`,
+        `the vote on ${c.voteDay} January`, `${M}’s navy stays in port in February.`),
     halden: read === "bluff"
-      ? pos("hold", `Everything I have says ${R} is putting on a show for the cameras. If we answer it with troops, we give them the pictures they want. Rest the battalion and let them sail at nothing.`,
-        `not playing the part ${R} has written for us`, `we hand ${R}’s press the escalation it is hoping for.`)
+      ? pos("hold", `What we have points to a show for the cameras. Answer it with troops and we give them the pictures. That is a reading, not a certainty.`,
+        `not playing the part ${R} has written`, `we hand ${R}’s press the escalation it wants.`)
       : read === "land"
-        ? pos("quiet", `${R} is coming. Dig in quietly. Every gun ${R} cannot see is a gun it has not planned for.`,
-          `${B} stronger than ${R} thinks`, `${R} adjusts its landing to what it sees us add.`)
-        : pos("show", `I still cannot tell you whether this is a landing or a threat. A frigate off ${B} on the 16th will make ${R} show me which, two weeks before it sails.`,
-          `forcing ${R} to show its hand`, `we meet February without knowing what is coming.`),
+        ? pos("quiet", `What we have points to a landing. Every gun they cannot see is a gun they have not planned for.`, `${B} stronger than ${R} thinks`, `${R} plans around what it sees us add.`)
+        : pos("quiet", `I cannot tell you yet whether this is a landing. Keep the headland quiet and my nets clear.`, `a clean picture on the radio`, `${R} changes its signals before I can read them.`),
   };
 }
 
@@ -198,91 +204,88 @@ export function split(council, staffId) {
 export function orders(c, run, month) {
   const sim = simulate(c, run);
   if (month === "dec") {
-    const s = sim.decOrders;
+    const s = sim.decOrders, f = s.fatigue, eng = s.eng ?? 0;
     return {
       head: ST, lead: "briggs", staffId: "quiet",
       plan: `will move two rifle companies and the air-defence battery onto the ${B} headland by night, in place by 20 December.`,
-      does: `${B} could hold for about three weeks against a battalion landed from the sea. That is long enough for reinforcements to arrive.`,
-      cost: `${BN} works through Christmas: its fatigue reaches ${s.fatigue + 31} by the end of December. ${R} will see that ${B} is now defended, though not how strongly.`,
+      does: `${B} goes from level ${s.def} to level ${s.def + 1}. ${RULE()}`,
+      cost: `${BN} works through Christmas: fatigue ${f} to ${f + 31 + eng} by the end of December.`,
       question: `What should ${B} do in December?`,
       options: [
-        { id: "quiet", name: `Strengthen ${B} quietly`, short: `strengthen ${B} quietly`, says: `${BN} stays on duty through Christmas. Two rifle companies and the air-defence battery, moved by night, in place by 20 December.`, staff: true, mark: { at: "beacon", text: "+2 companies and the battery, by night" } },
-        { id: "rest", name: `Rest ${BN}`, short: `rest ${BN}`, says: `${B} keeps only its own ${W.garrison} soldiers, and its radar drops from 30 to 20 nautical miles while the crews rest. ${BN} stands down from 18 to 31 December and comes back fit.`, mark: { at: "beacon", text: "Garrison only · radar 20 nm", tone: "bad" } },
-        { id: "show", name: "Show force openly", short: "show force openly", says: `${M}’s government has not approved it, and ${ministersFor(s.support)} of ${W.ministers} ministers are with us. A frigate and two rifle companies exercise off ${B} in daylight from 19 December, and ${R} sees it within a day.`, mark: { at: "beacon", text: "Frigate in daylight · seen by both capitals", tone: "warn" } },
+        { id: "quiet", name: `Strengthen ${B} quietly`, short: `strengthen ${B} quietly`, says: `${B} to level ${s.def + 1} by 20 December, moved by night. ${BN} stays on duty: fatigue ${f + 31 + eng} by New Year.`, staff: true, mark: { at: "beacon", text: `Level ${s.def + 1} by 20 Dec, by night` } },
+        { id: "rest", name: `Rest ${BN}`, short: `rest ${BN}`, says: `${BN} stands down from 18 to 31 December: fatigue ${f} to ${eng}. ${B} gets nothing new and stays at level ${s.def}.`, mark: { at: "beacon", text: `${BN} rests · ${B} stays level ${s.def}`, tone: "bad" } },
+        { id: "show", name: "Show force openly", short: "show force openly", says: `${B} to level ${s.def + 1}, in daylight from 19 December, with the frigate. ${R} sees it, and how it reacts is a clue to its plan. ${M} has not approved it: ${voteText(s.support)} today, and some will turn. Fatigue ${f + 31 + eng}.`, mark: { at: "beacon", text: `Level ${s.def + 1} · frigate in daylight`, tone: "warn" } },
       ],
       council: remembered(c, decemberCouncil(c, s)),
       reply: {
-        quiet: ["briggs", "Understood. Companies move on the night of the 18th. In place by the 20th."],
-        rest: ["briggs", `Then ${B} runs on ${W.garrison} soldiers and 20 miles of radar until the 31st. If ${R} sails in that window, I need two days to get ${BN} back. That’s the trade, General.`],
-        show: ["briggs", `We can sail the frigate on the 19th. ${surname("sato")} will need to tell ${M}’s government before they read about it in the press.`],
+        quiet: ["briggs", "Companies move on the night of the 18th. In place by the 20th."],
+        rest: ["briggs", `Then ${B} stays at level ${s.def} until January. Understood.`],
+        show: ["briggs", `Frigate sails on the 19th. ${surname("sato")} needs to tell ${M} before they read it.`],
       },
       ring: { rest: 190, show: 270 },
     };
   }
-  const s = sim.janOrders;
+  const s = sim.janOrders, f = s.fatigue, eng = s.eng ?? 0;
   return {
     head: ST, lead: "briggs", staffId: "quiet",
     plan: `will bring ${B}’s air-defence battery to full strength, by night, by 20 January.`,
-    does: `${B} could hold until reinforcements arrive in the first week of February.`,
-    cost: s.fatigue === 0 || s.fatigue <= 31 ? `${BN} goes back on duty after its Christmas rest.` : `${BN}’s fatigue passes ${s.fatigue + 20}. ${surname("okafor")} expects a third of it to be sick or unfit by February.`,
+    does: `${B} goes from level ${s.def} to level ${s.def + 1}. ${RULE()}`,
+    cost: `${BN} stays on duty: fatigue ${f} to ${f + 31 + eng} by the end of January.`,
     question: `What should ${B} do in January?`,
     options: [
-      { id: "quiet", name: `Reinforce ${B} quietly`, short: `reinforce ${B} quietly`, says: `${BN} stays on duty, another month. The air-defence battery reaches full strength, moved by night, by 20 January.`, staff: true, mark: { at: "beacon", text: "Battery to full strength, by night" } },
-      { id: "show", name: `Reinforce ${B} openly`, short: `reinforce ${B} openly`, says: `${needsApproval(c, s, "show") ? `${M}’s government must approve it first, and its answer is slow.` : `${surname("sato")} can get ${M}’s answer the same day on the hotline.`} ${BN} stays on duty. A frigate and two rifle companies off ${B} in daylight from 16 January: ${R} will see that we mean to defend ${B}.`, mark: { at: "beacon", text: "Frigate and 2 companies, 16 Jan, in daylight", tone: "warn" } },
-      { id: "hold", name: "Hold as we are", short: "hold as we are", says: `${B} gets no new guns. ${BN} rests from 10 January and is fit for February.`, mark: { at: "beacon", text: `No new guns · ${BN} rests from 10 Jan`, tone: "warn" } },
+      { id: "quiet", name: `Reinforce ${B} quietly`, short: `reinforce ${B} quietly`, says: `${B} to level ${s.def + 1} by 20 January, moved by night. Fatigue ${f + 31 + eng} by the end of January.`, staff: true, mark: { at: "beacon", text: `Level ${s.def + 1} by 20 Jan, by night` } },
+      { id: "show", name: `Reinforce ${B} openly`, short: `reinforce ${B} openly`, says: `${B} to level ${s.def + 1}, in daylight from 16 January, with the frigate. If ${R} means to land and ${B} reaches level 3, it may call the landing off. ${needsApproval(c, s, "show") ? `${M} must approve it first, and the answer is slow.` : `${surname("sato")} can get ${M}’s answer the same day on the hotline.`} Fatigue ${f + 31 + eng}.`, mark: { at: "beacon", text: `Level ${s.def + 1} · frigate, 16 Jan`, tone: "warn" } },
+      { id: "hold", name: "Hold as we are", short: "hold as we are", says: `${BN} stands down from 10 January: fatigue ${f} to ${eng}. ${B} gets nothing new and stays at level ${s.def}.`, mark: { at: "beacon", text: `${BN} rests from 10 Jan · ${B} stays level ${s.def}`, tone: "warn" } },
     ],
     council: januaryCouncil(c, s),
     reply: {
-      quiet: ["briggs", `Good. Battery at full strength by the 20th. ${R} won’t see it happen.`],
-      show: ["briggs", `Frigate sails on the 16th. ${needsApproval(c, s, "show") ? `${M} has to approve it first, and a new request takes a week without a hotline. Talk to ${surname("sato")}.` : `${surname("sato")} is on the hotline now.`}`],
-      hold: ["briggs", `We hold. If ${R} comes in early February, ${B} fights with what it has.`],
+      quiet: ["briggs", `Battery at full strength by the 20th. ${R} won’t see it happen.`],
+      show: ["briggs", `Frigate sails on the 16th. ${needsApproval(c, s, "show") ? `Not without ${M}’s yes. Talk to ${surname("sato")}.` : `${surname("sato")} is on the hotline now.`}`],
+      hold: ["briggs", `We hold at level ${s.def}. If they come, ${B} fights with what it has.`],
     },
   };
 }
 
-// The Lattice question for December. Each choice says what it gives and what it costs.
+// The Lattice question. Halden's question is the staff plan; asking anything else uses a
+// personal order.
 export let LATTICE;
 export const latticeQ = (id, month = "dec") => LATTICE[month].find((x) => x.id === id);
 
-// Where Lattice listens, as an order slip like the others. Halden's question is the staff
-// plan; asking anything else uses a personal order.
 function latticeCouncil(c, s, month) {
   const k = s.knows;
   if (month === "dec") {
     const three = c.D.plans.includes("probe");
     return {
-      halden: pos("boats", `Ten craft is one battalion. Thirteen is a battalion and a second wave, and that is a different war. I want the count.`,
-        `knowing whether a second wave is coming`, `we plan ${B}’s defence without knowing how many waves it faces.`),
+      halden: pos("boats", `Ten craft is one battalion. Twelve is a second wave, and that changes what ${B} needs. I want the count.`,
+        `knowing whether a second wave is coming`, `we plan ${B}’s defence without knowing how many waves.`),
       briggs: three
-        ? pos("who", `Three plans fit what we have. The fishing boats are the tell. I would rather know which plan I am digging against than count one more boat.`,
-          `knowing which plan ${R} is following`, `we count boats for a month and still cannot tell a landing from a show.`)
-        : pos(c.craft.dec >= 9 ? "when" : "boats", c.craft.dec >= 9 ? `They have enough craft already. What I cannot plan without is a date.` : `Count them. If the number stops growing, I know how much headland to dig.`,
-          c.craft.dec >= 9 ? `a date to plan ${B}’s defence around` : `knowing how big a landing to plan for`, c.craft.dec >= 9 ? "the battery moves on a guess." : "I dig for a force I have not measured."),
-      ...(s.support < 60 ? { sato: pos("who", `If those fishing boats are only for the cameras, I can tell the ministers so, with evidence. That steadies the vote.`, `evidence to steady the ${MA} cabinet`, `the ministers hear only ${R}’s version of what the boats are for.`) } : {}),
+        ? pos("who", `Three plans fit what we have. The fishing boats are the tell. Tell me which plan I am digging against.`, `knowing which plan ${R} is following`, `we count boats and still can’t tell a landing from a show.`)
+        : pos(c.craft.dec >= 9 ? "when" : "boats", c.craft.dec >= 9 ? `They have enough craft already. I need a date.` : `Count them. Then I know how much headland to dig.`,
+          c.craft.dec >= 9 ? `a date to plan ${B}’s defence around` : `knowing how big a landing to plan for`, c.craft.dec >= 9 ? "the battery moves on a guess." : "I dig for a force I haven’t measured."),
+      ...(s.support < 60 ? { sato: pos("who", `If those fishing boats are only for the cameras, I can show the ministers the evidence.`, `evidence to steady the ${MA} cabinet`, `the ministers hear only ${R}’s version.`) } : {}),
     };
   }
   return {
-    halden: pos("sarn", `The order to put troops aboard is the one thing that tells a landing from a show. It comes over ${S}’s harbour net, two days before they sail. Don’t take my ears off the quay.`,
-      `knowing in February whether troops are aboard`, `when the ships sail, we cannot tell a landing from a show of force.`),
+    halden: pos("sarn", `The boarding order is the one thing that tells a landing from a show. It comes over ${S}’s harbour net, two days before they sail. Keep my ears on the quay.`,
+      `hearing whether troops board`, `when the ships sail, we can’t tell a landing from a show.`),
     okafor: s.fatigue >= 90
-      ? pos("when", `Give me the true date early in January and I stand ${BN} down a company at a time until the last week. That is twenty fatigue I cannot take off any other way.`, `${BN} rested before February`, `${BN} carries every one of its ${s.fatigue} days into February.`)
-      : pos("sarn", `${BN} can carry January. Keep listening; I would rather know whether to send them.`, `${BN} sent only when it is needed`, "we move the battalion on a guess."),
+      ? pos("when", `Get me the true date early and I stand them down a company at a time until the last week. Twenty fatigue I can’t take off any other way.`, `${BN} rested before February`, `${BN} carries fatigue ${s.fatigue} into February.`)
+      : pos("sarn", `${BN} can carry January. I’d rather know whether to send them.`, `${BN} sent only when needed`, "we move the battalion on a guess."),
     briggs: k.date?.planted || !k.date
-      ? pos("when", k.date ? `December’s date came from one signal. A second source on the fleet net tells me whether to trust it.` : `I have a battery to move and no date to move it by. The fleet net has the date.`, `a date ${B}’s defence can be timed to`, "we keep the whole headland on alert for a week we cannot name.")
-      : pos("sarn", `I have the date. Now I need to know whether they are coming with soldiers.`, `knowing whether to expect a landing`, `${B} braces for a landing that may be a show.`),
+      ? pos("when", k.date ? `December’s date is one signal. A second source tells me whether to trust it.` : `I have a battery to move and no date to move it by.`, `a date to time ${B}’s defence to`, "the headland stays on alert for a week we can’t name.")
+      : pos("sarn", `I have the date. Now I need to know whether they bring soldiers.`, `knowing whether to expect a landing`, `${B} braces for a landing that may be a show.`),
   };
 }
 
 export function latticeOrders(c, run, month) {
   const sim = simulate(c, run), s = month === "dec" ? sim.decOrders : sim.janOrders, k = s.knows;
   const qs = LATTICE[month].map((q) => ({ ...q, name: q.q, says: typeof q.means === "function" ? q.means(k) : q.means }));
-  const name = month === "dec" ? "December" : "January";
   return {
     head: LATTICE.head, lead: "halden", staffId: qs.find((q) => q.staff).id,
-    plan: month === "dec" ? `will keep ${L} on ${S}’s harbour net and count the landing craft by the end of December.` : `will keep ${L} on ${S}’s harbour net through January, listening for the order that puts troops aboard.`,
-    does: month === "dec" ? `A count, so we know whether ${R} has a second wave.` : `About two days’ warning in February, and whether troops are aboard when the ships sail.`,
-    cost: month === "dec" ? `We learn nothing about the fishing boats or the sailing date this month.` : `No sailing date unless we already have one, so ${BN} stays on duty until the ships sail.`,
-    question: `What should ${L} listen for in ${name}?`,
+    plan: month === "dec" ? `will keep ${L} on ${S}’s harbour net and count the landing craft by 27 December.` : `will keep ${L} on ${S}’s harbour net through January, listening for the order that puts troops aboard.`,
+    does: month === "dec" ? `A confirmed count, so we know whether ${R} has enough for a second wave.` : `About two days’ warning in February, and whether troops boarded.`,
+    cost: month === "dec" ? `Nothing on the fishing boats or the sailing date this month.` : `No sailing date unless we already have one, so ${BN} stays on duty until the ships sail.`,
+    question: `What should ${L} listen for in ${MONTH[month]}?`,
     options: qs, council: latticeCouncil(c, s, month), explain: LATTICE.nets,
     reply: Object.fromEntries(qs.map((q) => [q.id, ["halden", q.reply]])),
   };
@@ -291,27 +294,27 @@ export function latticeOrders(c, run, month) {
 // What the patrol boats do for us, so trading them is a real cost.
 let BOATS;
 
-// Marenna in January: wait for the vote, or act, depending on what the beacon order needs.
+// The ally in January: wait for the vote, or act, depending on what the station order needs.
 export function host(c, run) {
   const s = simulate(c, run).janOrders, jb = run.jan?.beacon ?? "quiet";
-  const count = ministersFor(s.support), shaky = s.support < 50;
+  const v = votes(s.support), shaky = s.support < 50;
   const answerDay = c.voteDay + 7;
   return {
     head: M,
     staff: ["sato", `will wait for the ${MA} cabinet’s vote on ${c.voteDay} January before we do anything in daylight.`],
-    why: `${B} stands on ${MA} land. We promised ${M}’s government we would ask before any move ${R} could see. ${c.hotline ? `We have a hotline to its ministers, so an answer can come within hours.` : `Without a hotline to its ministers, ${M}’s answer to a new request reaches us on ${answerDay} January.`}`,
-    vote: `I count ${count} of ${W.ministers} ministers with us. ${shaky ? `On those numbers the vote on ${c.voteDay} January fails, and ${M}’s navy stays in port in February.` : `On those numbers the vote passes, and ${M}’s navy will sail with ours if ${R} comes.`}`,
+    why: `${B} stands on ${MA} land, and we promised to ask before any move ${R} could see. ${c.hotline ? `We have a hotline to its ministers: an answer within hours.` : `Without a hotline, an answer to a new request reaches us on ${answerDay} January.`}`,
+    vote: `${v.for} for, ${v.against} against. ${shaky ? `On those numbers the vote on ${c.voteDay} January fails, and ${M}’s navy stays in port in February.` : `On those numbers the vote passes, and ${M}’s navy sails with ours in February.`}`,
     shaky, clash: needsApproval(c, s, jb),
     clashText: c.hotline
-      ? `A daylight reinforcement on the 16th needs ${M}’s approval. ${surname("sato")} can ask on the hotline today, but with ${count} of ${W.ministers} ministers with us, the answer would be no.`
-      : `A daylight reinforcement on the 16th needs ${M}’s approval, but ${M}’s answer only reaches us on ${answerDay} January. We never set up a hotline to its ministers.`,
+      ? `A daylight move on the 16th needs ${M}’s approval. ${surname("sato")} can ask on the hotline today, but at ${v.for} for, the answer is no.`
+      : `A daylight move on the 16th needs ${M}’s approval, and without a hotline the answer comes on ${answerDay} January: too late.`,
     ways: [
-      { id: "act", name: `Act on the 16th, tell ${M} after`, says: `Fast. ${c.minister === "hawk" ? `The defence minister will grumble, but she wants us to be seen. ${M}’s navy may still sail with us if the cabinet holds.` : `But ${M}’s defence minister has said that if we do, ${M} will not send its navy to help us in February.`}` },
-      { id: "buy", name: "Trade patrol boats for a fast approval", mark: { at: "lane", text: `Our 2 patrol boats go to ${M}’s navy`, tone: "warn" }, says: `Give ${M} our two spare patrol boats. In return, the ${MA} cabinet approves the move at once, in time for the 16th, and the navy for February with it. ${BOATS}` },
-      { id: "back", name: `Go back to reinforcing ${B} quietly`, says: `No clash with ${M}. ${B} is still reinforced, but ${R} doesn’t see it.`, gives: true },
+      { id: "act", name: `Act on the 16th, tell ${M} after`, says: `${c.minister === "hawk" ? `The defence minister will protest, but she wants us seen: ${M}’s navy may still sail if the cabinet holds.` : `${M}’s defence minister has said that if we do, ${M}’s navy stays in port in February.`} Costs the cabinet’s goodwill either way.` },
+      { id: "buy", name: "Trade patrol boats for the approval", mark: { at: "lane", text: `Our 2 patrol boats go to ${M}’s navy`, tone: "warn" }, says: `Give ${M} our two spare patrol boats. The ${MA} cabinet approves the move and the navy for February. ${BOATS}` },
+      { id: "back", name: `Go back to reinforcing ${B} quietly`, says: `No clash with ${M}. ${B} still reaches level ${s.def + 1}, by night.`, gives: true },
     ],
-    secure: { id: "buy", name: "Trade patrol boats for their votes", mark: { at: "lane", text: `Our 2 patrol boats go to ${M}’s navy`, tone: "warn" }, says: `Give ${M} our two spare patrol boats before the vote. ${surname("sato")} expects that to turn enough ministers. ${BOATS}` },
-    sato: `General, a frigate off ${B} on the 16th needs ${M}’s approval. ${c.hotline ? `I can ask on the hotline, but with ${count} of ${W.ministers} ministers with us, I will get a no.` : `Without a hotline, the ${MA} cabinet’s answer reaches us on ${answerDay} January. That is too late. I have asked for a hotline twice since October.`}`,
+    secure: { id: "buy", name: "Trade patrol boats for their votes", mark: { at: "lane", text: `Our 2 patrol boats go to ${M}’s navy`, tone: "warn" }, says: `Give ${M} our two spare patrol boats before the vote: the navy sails with ours in February. ${BOATS}` },
+    sato: `A frigate off ${B} on the 16th needs ${M}’s yes. ${c.hotline ? `I can call tonight, but at ${v.for} for, I get a no.` : `Without the hotline their answer comes on the ${ord(answerDay)}. Too late. I’ve asked for a hotline twice since October.`}`,
     blocked: `Settle the clash between ${B} and ${M} first. Your other orders are kept.`,
   };
 }
@@ -322,202 +325,173 @@ export function incident(c, run, month) {
   if (!id) return null;
   const inc = incidentById(id);
   const s = simulate(c, run)[month === "dec" ? "decStart" : "decEnd"];
-  return { ...inc, body: inc.text(c, s, c.D.severity), council: inc.council(c, s), staffId: inc.options.find((o) => o.staff).id, date: `${inc.day[month]} ${month === "dec" ? "December" : "January"}` };
+  return { ...inc, body: inc.text(c, s, c.D.severity), council: inc.council(c, s), staffId: inc.options.find((o) => o.staff).id, date: `${inc.day[month]} ${MONTH[month]}` };
 }
 
-// ── night reports ───────────────────────────────────────────────────────────
-// `staff` reports the month's staff business (handled without asking you) instead.
-const incidentBeat = (c, run, month, staff = false) => {
-  const id = staff ? (c.staffEvent?.month === month ? c.staffEvent.id : null) : c.incidents[month];
-  if (!id) return null;
-  const s = simulate(c, run)[month === "dec" ? "decEnd" : "janEnd"];
-  const pick = staff ? s.staffDone?.[month] : s.incident[month];
-  const day = incidentById(id).day[month], mon = month === "dec" ? "December" : "January";
-  const text = {
-    radar: pick === "fix" ? `${BN}’s engineers changed the waveguide in six days and went back on duty without their rest. ${B} can see 30 nautical miles again.` : `The main radar is running on its cracked waveguide. ${s.radarFails ? "The engineers report the crack is spreading." : "It has held so far."}`,
-    defector: pick === "talk"
-      ? `The lieutenant from ${S} says ${R} ${s.knows.claim.plan === "land" ? `means to land on the ${B} headland in early February` : s.knows.claim.plan === "bluff" ? `has no plan to land, and wants ${M} frightened into asking us to leave` : `will test ${B} first and land only if it looks weak`}. ${surname("halden")} says the story is consistent; whether it is true, he cannot yet say.`
-      : `${M}’s security service questioned the lieutenant and sent us a summary: he worked in ${S} and is frightened. The ${MA} ministers were pleased to be trusted.`,
-    leak: pick === "brief" ? `We confirmed our numbers on ${B} to the press. ${MA} papers ran our reasons the next morning. ${R} now knows exactly what defends ${B}.` : `We said nothing. The story ran for three days, quoted by ${R}’s embassy, and the ${MA} ministers asked ${surname("sato")} why they had read it in a newspaper.`,
-    collision: pick === "search" ? `The fishing boat carried a ${R} navy radio and a log of ${B}’s guns. ${R} called the search piracy; the ${MA} ministers were uneasy.` : `The fisherman and his boat went home by morning. ${R} state television ran the story for two days.`,
-    visit: pick === "open" ? `${M}’s defence minister visited ${B} in front of the cameras. ${MA} television led with it; so did ${R}’s.` : `${M}’s defence minister visited ${B} privately and saw everything. She told ${surname("sato")} she was satisfied.`,
-  }[id];
-  return { at: "beacon", cause: `${day} ${mon} · ${incidentById(id).title}${staff ? " · staff handled" : ""}`, text };
-};
+// ── the month's log, from the record ───────────────────────────────────────
+function eventBeat(c, run, e, rec) {
+  const sim = simulate(c, run), s = e.month === "dec" ? sim.decEnd : sim.janEnd, who = e.by === "you" ? "your order" : e.by === "staff-answer" ? "staff answer" : "staff";
+  switch (e.kind) {
+    case "beacon": {
+      const [d0, d1] = e.def, [f0, f1] = e.fatigue;
+      const text = {
+        quiet: `${e.month === "dec" ? "Two rifle companies and the air-defence battery dug in on the headland, by night." : `${B}’s air-defence battery reached full strength, by night.`} Defences level ${d0} to ${d1}. ${BN}: fatigue ${f0} to ${f1}.`,
+        show: `${e.month === "dec" ? "The frigate and two companies exercised off" : "The frigate and two companies arrived off"} ${B} in daylight. Defences level ${d0} to ${d1}. ${BN}: fatigue ${f0} to ${f1}.${e.month === "jan" && run.jan?.way === "act" ? ` We told ${M} the next morning.` : ""}`,
+        rest: `${BN} stood down from 18 to 31 December: fatigue ${f0} to ${f1}. ${B} stayed at level ${d1}.`,
+        hold: `${BN} stood down from 10 January: fatigue ${f0} to ${f1}. ${B} stayed at level ${d1}.`,
+      }[e.option];
+      return { at: "beacon", ring: e.option === "rest" || e.option === "hold" ? 190 : e.option === "show" ? 270 : 250, dashed: e.option === "rest" || e.option === "hold", cause: `${day(e)} · ${B}, ${who}`, text };
+    }
+    case "staff": {
+      const text = e.id === "radar" ? `${BN}’s engineers changed the main radar’s cracked waveguide in six days: ${e.fatigue} more fatigue on the battalion.`
+        : e.option === "hand" ? `${M}’s security service took the defector. Its summary says he served in ${S}; nothing in it we can check.` : `${surname("halden")}’s people questioned the defector.`;
+      return { at: "beacon", cause: `${day(e)} · ${incidentById(e.id).title} · staff handled`, text };
+    }
+    case "incident": {
+      const text = {
+        leak: e.option === "brief" ? `We confirmed our numbers to the press. ${MA} papers ran our reasons. ${R} now knows where our guns are: against a landing, ${B} counts one level lower.` : `We said nothing. The story ran for three days, quoted by ${R}’s embassy.`,
+        collision: e.option === "search" ? `The fishing boat carried a ${R} navy radio and a log of ${B}’s guns. ${R} called it piracy.` : `The fisherman and his boat went home by morning. ${R} television ran the story for two days.`,
+        visit: e.option === "open" ? `${M}’s defence minister toured ${B} in front of the cameras. ${R} has the pictures: against a landing, ${B} counts one level lower.` : `${M}’s defence minister toured ${B} privately. No pictures.`,
+      }[e.id];
+      return { at: "beacon", cause: `${day(e)} · ${incidentById(e.id).title}, ${who}`, text };
+    }
+    case "rival": {
+      const text = e.month === "dec" ? {
+        land: { quiet: `Six ${R} fishing boats came within 30 nautical miles of ${B} and turned back.`, rest: `Six ${R} fishing boats worked the shipping lane, inside our radar cover.`, show: `Two ${R} corvettes began patrolling 12 nautical miles off ${B}.` },
+        bluff: { quiet: `${R} television showed its landing craft loading in ${S}, with music.`, rest: `${R} television showed a map with ${B} circled.`, show: `${R}’s press called our exercise a provocation.` },
+        probe: { quiet: `A ${R} patrol boat ran along our coast at night with its lights off.`, rest: `A ${R} patrol boat ran along our coast at night and came close to ${B}.`, show: `Two ${R} corvettes began patrolling 12 nautical miles off ${B}.` },
+      }[c.plan][e.beacon] : `${R}’s warships and landing craft in ${S} are taking on fuel and stores. They could sail within days.`;
+      return { at: "lane", cause: `${day(e)} · ${R}`, text };
+    }
+    case "rotation":
+      return { at: "beacon", cause: `${day(e)} · ${BN}, staff`, text: `With the true date in hand, ${surname("okafor")} stood ${BN} down a company at a time until the last week: ${e.fatigue} less fatigue.${e.corrected ? " December’s date had been planted." : ""}` };
+    case "coalition": {
+      const text = {
+        trade: `${M}’s cabinet approved, as agreed. Our two spare patrol boats now serve in ${M}’s navy, and its navy will sail with ours in February.`,
+        hotline: `${surname("sato")} called the ${MA} ministers on the hotline. They approved within hours; ${M}’s navy will sail with ours.`,
+        acted: e.navy ? `${M}’s defence minister protested, then said its navy would still sail with ours.` : `${M}’s defence minister withdrew her support. ${M}’s navy stays in port in February.`,
+        vote: e.navy ? `The ${MA} cabinet voted ${e.for} for, ${e.against} against: its navy sails with ours in February.` : `The ${MA} cabinet voted ${e.for} for, ${e.against} against: its navy stays in port. We keep ${B}.`,
+      }[e.how];
+      return { at: "beacon", cause: `${day(e)} · ${M}`, text };
+    }
+    case "radar-failed":
+      return { at: "beacon", cause: `${day(e)} · ${B}`, text: `The main radar failed for good. Against a landing, ${B} now counts one level lower.` };
+    default: return null;
+  }
+}
 
-// The day troops would be ordered aboard: two days before the sailing.
-const boardDay = (c) => (c.sailDay > 2 ? `${c.sailDay - 2} February` : `${29 + c.sailDay} January`);
+function intelBeat(i) {
+  return { at: i.source.startsWith("lattice") ? "harbour" : "lane", cause: `${day(i)} · ${SOURCE()[i.source]}`, text: intelLine(i), marker: i.source.startsWith("lattice") ? `${L}: ${claimText(i).slice(0, 48)}` : null };
+}
 
-// Night reports read in date order: "9 December · …" sorts before "18 December · …".
-const MONTH_ORDER = { December: 0, January: 1, February: 2 };
-const dayKey = (b) => { const [d, m] = b.cause.split(" · ")[0].split(" "); return MONTH_ORDER[m] * 100 + Number(d); };
-const byDay = (a, b) => dayKey(a) - dayKey(b);
-
-// What a month changed, readout by readout, for the night report.
+// What a month changed, readout by readout.
 const changes = (c, before, after) => {
   const a = status(c, before), b = status(c, after);
   return b.map((x, i) => ({ label: x.label, term: x.term, before: a[i].value, after: x.value, tone: x.tone, same: a[i].value === x.value }));
 };
 
 export function night(c, run, month) {
-  const sim = simulate(c, run);
-  if (month === "dec") {
-    const s = sim.decEnd, b = run.dec?.beacon ?? "quiet", l = run.dec?.lattice ?? "boats";
-    const away = `We have no new count of the landing craft: ${L} was off ${S}’s harbour net.`;
-    const k = s.knows;
-    const answer = {
-      boats: () => `${L} counted ${k.count} landing craft in ${S}, up from ${c.craft.dec}. ${k.count >= 12 ? "That is a battalion and a second wave." : "Enough for one battalion, not a second wave."}`,
-      who: () => `${L} traced the orders for ${R}’s fishing fleet to its navy headquarters in ${S}, not its fisheries ministry. ${k.role === "screen" ? "The boats are working with the landing craft." : k.role === "swarm" ? "The boats are working the shipping lane in daylight." : `The boats are running along our coast at night.`} ${away}`,
-      when: () => `${L} picked up a ${R} navy signal: ${k.date.kind === "exercise" ? `a public exercise from ${k.date.day} February` : k.date.kind === "two-stage" ? `ships to sea on ${k.date.day} February, landing craft to follow on command` : `ships ready at sea by ${k.date.day} February`}. ${away}`,
-    }[l]();
-    const rival = {
-      land: { quiet: `Six ${R} fishing boats came within 30 nautical miles of ${B}, close enough to see the new guns, and turned back to ${S}. We should assume ${R} now knows ${B} has been reinforced.`, rest: `Six ${R} fishing boats moved onto the shipping lane, just inside the 20 nautical miles ${B}’s radar still covers. Anything further out, we did not see.`, show: `${R} answered our exercise. Two of its corvettes now patrol 12 nautical miles off ${B}, day and night.` },
-      bluff: { quiet: `${R} state television showed its landing craft loading in ${S}, with music. ${MA} papers reprinted the pictures.`, rest: `${R} state television showed its landing craft loading in ${S}, and a map with ${B} circled.`, show: `${R}’s press called our exercise a provocation. Two ${MA} ministers asked ${surname("sato")} why they had not been told.` },
-      probe: { quiet: `A ${R} patrol boat ran along our coast at night with its lights off, close enough to count ${B}’s guns, then went home.`, rest: `A ${R} patrol boat ran along our coast at night with its lights off, and found ${B} with only its own garrison.`, show: `${R} answered our exercise. Two corvettes now patrol 12 nautical miles off ${B}, day and night.` },
-    }[c.plan][b];
-    const beats = [
-      { at: "beacon", ring: { quiet: 250, rest: 190, show: 270 }[b], dashed: b === "rest", cause: `18 December · ${b === "quiet" ? "staff, under your direction" : "your order"}`,
-        text: { quiet: `Two rifle companies and the air-defence battery dug in on the headland. ${B}’s radar still covers 30 nautical miles. ${BN}’s fatigue is now ${s.fatigue}.`, rest: `${BN} stood down until the 31st and is resting. ${B} held with its own ${W.garrison} soldiers. Its radar now covers 20 nautical miles, down from 30, so ships between 20 and 30 miles out went unwatched.`, show: `The frigate and two companies exercised off ${B} in daylight. Radar cover held at 32 nautical miles. ${M}’s defence minister found out from the press, not from us.` }[b] },
-      { at: "harbour", cause: `27 December · ${L}, ${l === "boats" ? `${surname("halden")}’s question` : "your question"}`, text: answer, marker: `Answered: ${latticeQ(l).short}` },
-      incidentBeat(c, run, "dec"),
-      incidentBeat(c, run, "dec", true),
-      { at: "lane", cause: `30 December · ${R}`, text: rival },
-    ].filter(Boolean).sort(byDay);
-    return { title: "December log", sub: "Duty log, 9 to 31 December", beats, changes: changes(c, sim.decStart, s), still: null, next: `The ${MA} cabinet votes on ${c.voteDay} January on whether to keep backing us at ${B}. ${surname("sato")} needs your January orders before then.`, go: "Begin January" };
-  }
-  const s = sim.janEnd, jb = run.jan?.beacon ?? "quiet", way = run.jan?.way ?? null;
-  const troops = s.plan === "land" || s.plan === "turned";
-  const vote = s.approvedBy === "trade" ? `The ${MA} cabinet approved, as agreed. Our two spare patrol boats now serve in ${M}’s navy, and ${M}’s navy will sail with ours if ${R} comes.`
-    : s.actedAlone ? (s.navy ? `${M}’s defence minister protested, then said ${M}’s navy would still sail with ours.` : `${M}’s defence minister withdrew her support. ${M}’s navy will not sail with ours in February.`)
-      : s.approvedBy === "hotline" ? `${surname("sato")} called the ${MA} ministers on the hotline before the frigate sailed. They approved within hours, and ${M}’s navy will sail with ours.`
-        : s.navy ? `The ${MA} cabinet voted ${ministersFor(s.support)} to ${W.ministers - ministersFor(s.support)} to keep backing us. If ${R} comes, ${M}’s navy will sail with ours.`
-          : `The ${MA} cabinet voted ${ministersFor(s.support)} to ${W.ministers - ministersFor(s.support)} against sending its navy. ${M} still lets us use ${B}, but its ships stay in port.`;
-  const jq = run.jan?.lattice ?? "sarn", k = s.knows;
-  const listen = {
-    sarn: `${L} stayed on ${S}’s harbour net all month. No order to put troops aboard yet: if one comes, we hear it two days before they sail.`,
-    when: `By 8 January ${L} had the sailing date from the fleet command net: ${c.sailDay} February.${k.date?.corrected ? " December’s date was wrong; it had been planted." : ""} Knowing it, ${surname("okafor")} stood ${BN} down a company at a time until the last week: ${DATE_REST} less fatigue. ${L} was off ${S}’s harbour, so we did not hear whether troops went aboard.`,
-    who: `${L} followed ${R}’s fishing fleet: ${k.role === "screen" ? "the boats are screening the landing craft" : k.role === "swarm" ? "the boats are crowding the lane for the cameras" : `the boats are counting ${B}’s guns at night`}. ${L} was off ${S}’s harbour, so we did not hear whether troops went aboard.`,
-  }[jq];
+  const sim = simulate(c, run), rec = chronicle(c, run), end = rec.logEnd[month];
+  const start = { month, day: 1 };
+  const inMonth = (x) => x.month === month && dateKey(x) >= dateKey(start) && dateKey(x) <= dateKey(end) + 99;
   const beats = [
-    { at: "harbour", cause: `${jq === "sarn" ? "31 January" : jq === "when" ? "8 January" : "24 January"} · ${L}, ${jq === "sarn" ? `${surname("halden")}’s net` : "your question"}`, text: listen, marker: `Listening: ${latticeQ(jq, "jan").short}` },
-    { at: "beacon", ring: jb === "hold" ? 190 : 270, dashed: jb === "hold", cause: `${jb === "show" ? "16" : jb === "hold" ? "10" : "20"} January · ${jb === "quiet" ? "staff, under your direction" : "your order"}`,
-      text: { quiet: `${B}’s air-defence battery reached full strength. Its radar covers 32 nautical miles. ${BN}’s fatigue is ${s.fatigue}.`, hold: `${BN} stood down to rest and will be fit for February. ${B} kept its own guns.`, show: way === "act" ? `The frigate and two companies arrived off ${B} in daylight. We told ${M}’s government the next morning.` : `The frigate and two companies arrived off ${B} in daylight, with ${M}’s approval. ${R} saw them within hours.` }[jb] },
-    { at: "beacon", cause: `${s.approvedBy === "trade" ? c.voteDay : s.actedAlone ? 17 : s.approvedBy === "hotline" ? 15 : c.voteDay} January · ${M}`, text: vote },
-    incidentBeat(c, run, "jan"),
-    incidentBeat(c, run, "jan", true),
-    { at: "lane", cause: `30 January · ${R}`, text: `${R}’s warships and landing craft in ${S} are taking on fuel and stores. They could sail within days.${s.radarFails ? ` ${B}’s main radar failed for good on the 28th; its defences now count one level lower.` : ""}` },
-  ].filter(Boolean).sort(byDay);
-  // No separate "what we know" box: the Lattice beat above already says what we heard.
-  return { title: "January log", sub: "Duty log, 5 to 31 January", beats, changes: changes(c, sim.decEnd, s), still: null, next: `February: you decide how ${B} meets ${R}’s ships the moment we know they are moving.`, go: "Begin February" };
+    ...rec.events.filter((e) => inMonth(e) && !["exposed", "decision", "sailed", "contact"].includes(e.kind)).map((e) => ({ k: dateKey(e), b: eventBeat(c, run, e, rec) })),
+    ...rec.intel.filter((i) => inMonth(i) && !(i.month === "dec" && i.day === 1)).map((i) => ({ k: dateKey(i), b: intelBeat(i) })),
+  ].filter((x) => x.b).sort((a, b) => a.k - b.k).map((x) => x.b);
+  const s = month === "dec" ? sim.decEnd : sim.janEnd;
+  return {
+    title: `${MONTH[month]} log`, sub: `Duty log, 1 to ${day(end)}`, beats,
+    changes: changes(c, month === "dec" ? sim.decStart : sim.decEnd, s), still: null,
+    next: month === "dec" ? `The ${MA} cabinet votes on ${c.voteDay} January. ${surname("sato")} needs your January orders before then.` : `February: you decide how ${B} meets ${R}’s ships when we learn they are moving.`,
+    go: month === "dec" ? "Begin January" : "Begin February",
+  };
 }
 
 // ── February ────────────────────────────────────────────────────────────────
-// Good intelligence narrows February without settling it: knowing troops are aboard still
-// leaves how many waves, and what each way of meeting them costs the battalion and the ally.
-const fightAtSea = { dove: "some ministers will blame us for every sailor they lose", firm: "the cabinet will count its losses against us, a little", hawk: "the defence minister will make heroes of them, and the cabinet will rally" };
-
-// When the February decision comes: the moment we learn they are moving, which depends on
-// what is listening. Every decision is before they arrive; the showdown then starts at the sailing.
-function decisionMoment(c, s) {
-  const troops = s.plan === "land" || s.plan === "turned";
-  const sailEve = c.sailDay > 1 ? `${c.sailDay - 1} February` : "31 January";
-  if (s.warning === "fresh") return troops
-    ? { when: `${boardDay(c)}, 22:00`, text: `${L} has just heard ${R} order troops aboard the landing craft in ${S}. They sail in two days.` }
-    : { when: `${sailEve}, 22:00`, text: `${R}’s ships in ${S} are raising steam. ${L} has heard no order to put troops aboard.` };
-  if (s.knows.date && !s.knows.date.planted && s.boats >= 2) return { when: `${c.sailDay} February, 05:00`, text: `On the date we had, our patrol boats report ${R}’s ships leaving ${S}. We cannot tell whether troops are aboard.` };
-  return { when: `${c.sailDay} February, 07:00`, text: `${B}’s radar has ${R}’s ships coming out of ${S}. They will be off ${B} tonight. We cannot tell whether troops are aboard.` };
-}
-
-const DEF = ["lost", "garrison only", "reinforced", "fully reinforced", "fortified"];
-export const defenceLabel = (d) => `${DEF[Math.max(0, Math.min(4, d))]} (level ${Math.max(0, d)})`;
+const fightAtSea = { dove: "some ministers will blame us for every sailor lost", firm: "the cabinet will count its losses against us", hawk: "the defence minister will make heroes of them" };
 
 // One requirement, in words, for the risk table and the debrief.
 function requirementText(r, chk, s) {
-  if (r.key === "defences") return `${B}’s defences at level ${r.need} or more (now level ${chk.def}, ${DEF[Math.max(0, Math.min(4, chk.def))]}${s.radarFails ? ", one lower since the radar failed" : ""})`;
+  if (r.key === "defences") return `${B}’s defences at level ${r.need} or more (now level ${chk.def}${s.rivalKnows ? `, one lower because ${R} knows where our guns are` : ""}${s.radarFails ? ", one lower since the radar failed" : ""})`;
   if (r.key === "warning") return `${r.need} (${chk.warned ? "we have it" : "we have none"})`;
   if (r.key === "fit") return `${r.need} (fatigue ${s.fatigue})`;
   return r.need;
 }
 
 // The risk of each route for each case still open: one wave or two, troops or none.
-// Computed by the same check outcome() uses, so what you see is what will decide it.
-function riskRows(c, s, route) {
+function riskRows(c, s, route, boardingKnown) {
   const k = s.knows, rows = [];
   const waves = k.count ? [k.count >= 12] : [false, true];
-  const troopsKnown = s.warning === "fresh", troops = s.plan === "land" || s.plan === "turned";
-  if (!troopsKnown || troops) for (const big of waves) {
-    const chk = landingCheck(c, s, route, big), label = big ? "If two waves land" : "If one wave lands";
+  const troops = s.plan === "land";
+  if (!boardingKnown || troops) for (const big of waves) {
+    const chk = landingCheck(c, s, route, big);
+    const engaged = route !== "quiet" || chk.warned;
     if (route === "joint") rows.push({ label: big ? "If two waves come" : "If one wave comes", ok: true,
-      text: chk.holds ? "Stopped at sea." : `Holds, after a battle on the beach: the second wave gets past the navies. To stop it at sea needs ${requirementText(chk.failed[0], chk, s)}.` });
-    else rows.push({ label, ok: chk.holds, text: chk.holds
+      text: chk.holds ? "Stopped at sea." : `Holds after a battle on the beach: the second wave gets past the navies. To stop it at sea needs ${requirementText(chk.failed[0], chk, s)}.` });
+    else rows.push({ label: big ? "If two waves land" : "If one wave lands", ok: chk.holds, text: (chk.holds
       ? `Holds: ${chk.needs.map((r) => requirementText(r, chk, s)).join("; ")}.`
-      : `Falls. Needs ${chk.failed.map((r) => requirementText(r, chk, s)).join("; and ")}.` });
+      : `Falls. Needs ${chk.failed.map((r) => requirementText(r, chk, s)).join("; and ")}.`) + (engaged ? ` ${BN} fights: +${BATTLE_DAYS} fatigue.` : ` ${BN} arrives after the fight.`) });
   }
-  if (!troopsKnown || !troops) rows.push({ label: "If no troops are aboard", ok: route === "quiet", text: { quiet: "Costs nothing.", forward: `Costs ${DIG_DAYS} fatigue, and the ${MA} cabinet winces at the pictures.`, joint: `Costs 30 fatigue, and the ${MA} cabinet hears we escalated over nothing.` }[route] });
+  if (!boardingKnown || !troops) rows.push({ label: "If no troops are aboard", ok: route === "quiet", text: { quiet: "Costs nothing.", forward: `The ${MA} cabinet winces at the pictures of our trenches.`, joint: `The ${MA} cabinet hears we escalated over nothing.` }[route] });
   return rows;
 }
 
 export function february(c, run) {
-  const s = simulate(c, run).janEnd, k = s.knows;
-  const troops = s.plan === "land" || s.plan === "turned";
-  const days = s.fatigue, fit = (d) => (d > FATIGUE.unfit ? `unfit at fatigue ${d}` : `${fatigueWord(d)} at fatigue ${d}`);
+  const s = simulate(c, run).janEnd, rec = chronicle(c, run), d = rec.decision, k = s.knows;
+  const known = knownAt(rec, d);
+  const boardingKnown = known.boarding && dateKey(known.boarding) >= dateKey({ month: "jan", day: 25 }) && d.source.startsWith("lattice");
+  const f = s.fatigue;
   const routes = [{
-    id: "quiet", name: "Hold quietly", does: `${B}’s guns and garrison hold the headland. ${BN} waits in reserve and moves on the warning.`,
-    costs: `A battle adds 20 fatigue (${fit(days + 20)}) and costs soldiers.`,
-    voice: ["briggs", s.def >= 3 ? "The guns are dug in. One wave, we hold alone." : `${B} is thin. If they land, I need ${BN} on the headland inside a day.`],
+    id: "quiet", name: "Hold quietly", does: `${B}’s garrison holds the headland. ${BN} waits inland and moves ${warningState(s).key === "none" ? "when the ships are seen" : "on the warning"}.`,
+    costs: `If ${BN} fights: +${BATTLE_DAYS} fatigue (${fitText(f + BATTLE_DAYS)}) and casualties.`,
+    voice: ["briggs", effectiveDefence(s) >= 3 ? `Level ${effectiveDefence(s)}. One wave, we hold alone.` : `Level ${effectiveDefence(s)}. If they land, I need ${BN} on the headland inside a day.`],
   }, {
     id: "forward", name: `Dig ${BN} in on the headland now`, does: `${BN} goes onto the ${B} headland tonight and digs in before the ships arrive. It needs no warning.`,
-    costs: `Adds ${DIG_DAYS} fatigue whatever happens (${fit(days + DIG_DAYS)}); 20 more after a battle.`,
-    voice: ["okafor", days > FATIGUE.tired ? `They are tired, General. In a trench they will hold; I cannot promise for how long.` : `They are fit. Put them where the fight will be, and nobody has to run to it.`],
+    costs: `+${DIG_DAYS} fatigue whatever happens (${fitText(f + DIG_DAYS)}); +${BATTLE_DAYS} more if it fights.`,
+    voice: ["okafor", f > FATIGUE.tired ? `Fatigue ${f}. In a trench they’ll hold. I can’t promise for how long.` : `Fatigue ${f}. Put them where the fight will be, and nobody has to run to it.`],
   }];
   if (s.navy) routes.push({
     id: "joint", name: `Stand with ${M}’s navy`, does: `Our frigate and ${M}’s two corvettes block the approach. ${BN} goes in behind them.`,
-    costs: `Adds 30 fatigue (${fit(days + 30)}). If it comes to shooting, ${fightAtSea[c.minister]}.`,
-    voice: ["sato", c.minister === "dove" ? `The navy will sail, General. Whether the cabinet survives a funeral is another question.` : `Seen together on the water, we are much harder for ${R} to split apart.`],
+    costs: `+${JOINT_DAYS} fatigue (${fitText(f + JOINT_DAYS)}). If it comes to shooting, ${fightAtSea[c.minister]}.`,
+    voice: ["sato", c.minister === "dove" ? `The navy will sail. Whether the cabinet survives a funeral is another question.` : `Seen together on the water, we’re much harder for ${R} to split apart.`],
   });
-  for (const r of routes) r.risk = riskRows(c, s, r.id);
-  const moment = decisionMoment(c, s);
-  const waves = k.count ? (k.count >= 12 ? `${k.count} landing craft: a battalion and a second wave.` : `${k.count} landing craft: one battalion, no second wave.`) : "We never counted the landing craft, so I cannot tell you whether a second wave is behind the first.";
+  for (const r of routes) r.risk = riskRows(c, s, r.id, boardingKnown);
+  const moment = {
+    "lattice-boarding": `${L} has just heard ${R} order troops aboard the landing craft in ${S}. They sail in two days.`,
+    "lattice-no-boarding": `${R}’s ships in ${S} are raising steam. ${L} has heard no order to put troops aboard.`,
+    "patrol-boats": `On the date we had, our patrol boats report ${R}’s ships leaving ${S}. We have no word on whether troops are aboard.`,
+    radar: `${B}’s radar has ${R}’s ships coming out of ${S}. They will be off ${B} tonight. We have no word on whether troops are aboard.`,
+  }[d.source];
+  const waves = k.count ? `${k.count} landing craft, counted ${known.count ? day(known.count) : "earlier"}: ${k.count >= 12 ? "enough for a second wave" : "one wave"}.` : "We never counted the landing craft, so a second wave is possible.";
   return {
-    turn: 6, when: moment.when,
-    halden: `${moment.text} ${waves}`,
-    warning: [`${moment.when}`, `${moment.text} ${waves} ${B}’s defences: ${defenceLabel(s.def - (s.radarFails ? 1 : 0))}.`],
+    turn: 6, when: dayTime(d),
+    halden: `${moment} ${k.count ? `${k.count} craft${k.count >= 12 ? ", enough for a second wave" : ""}.` : "I don’t have a count, so I can’t rule out a second wave."}`,
+    warning: [dayTime(d), `${moment} ${waves} ${B}’s defences: ${defenceLabel(effectiveDefence(s))}.`],
     routes,
     notOffered: s.navy ? "" : s.actedAlone
-      ? `Standing with ${M}’s navy is off the table. You reinforced ${B} in January without ${M}’s approval, so ${M}’s defence minister has kept its navy in port.`
-      : `Standing with ${M}’s navy is off the table. The ${MA} cabinet voted against sending it, ${ministersFor(s.support)} to ${W.ministers - ministersFor(s.support)}.`,
+      ? `Standing with ${M}’s navy is off the table: you moved in January without ${M}’s approval, and its navy stays in port.`
+      : `Standing with ${M}’s navy is off the table: the ${MA} cabinet voted ${voteText(s.support)}.`,
   };
 }
 
-// ── the debrief ─────────────────────────────────────────────────────────────
-// Every sentence here is chosen from the facts outcome() computed, so the ending can't say
-// we kept watch when we didn't, or call a worn-out battalion fit.
-let HAPPENED;
-const GRADE = { success: "Success", costly: "Costly success", failure: "Failure" };
-let ORDER, ROUTE_ORDER, BELIEF;
-let PLAN_TRUTH;
-
-// The showdown, as the chart plays it: five short entries, each read in step with one move
-// on the map (TableScene.showdownSetup). Read from outcome(), so two campaigns that end
-// differently also play out differently, and the map ends where the words do.
+// ── the showdown ────────────────────────────────────────────────────────────
 export function showdown(c, run) {
   const o = outcome(c, run), s = o.s, a = o.after;
   const sail = c.sailDay, meet = `${sail + 1} February`;
   const turnedBack = !["held", "repelled", "landed", "lost"].includes(o.code);
   const move = {
-    quiet: `${BN} stands by inland${o.warned ? ", ready to move on the warning" : ", with no warning to move on"}.`,
+    quiet: `${BN} stands by inland, ${o.warned ? "ready to move on the warning" : "with no warning to move on"}.`,
     forward: `${BN} digs in above the beach overnight.`,
     joint: `Our frigate and ${M}’s corvettes form a line across the approach.`,
   }[o.route];
   const contact = {
     stopped: `Shots across the bows. One ${MA} corvette is hit. The landing force turns away.`,
     landed: `The first wave turns at the line. The second slips round it and lands south of ${B}.`,
-    held: `About 600 soldiers land below ${B}. ${BN} reaches them ${o.warned ? "in time" : "late"}; they are held on the beach.`,
-    // The first requirement that failed is what the chart shows going wrong.
-    lost: `They land below ${B}. ${{ defences: o.big ? `Two waves against defences at level ${o.def}: the second comes ashore${o.route === "forward" ? " round the trenches" : ""}.` : `${B}’s garrison alone can’t hold them.`, warning: `With no warning, ${BN} is still on the road.`, fit: `${BN} is there, but too worn to hold.`, strength: `${BN} is too few to hold a second wave.` }[o.failed[0]?.key] ?? ""}`,
+    held: `About 600 soldiers land below ${B}. ${o.engaged ? `${BN} reaches them on the warning; they are held on the beach.` : `${B}’s guns hold them on the beach; ${BN} arrives after the fight.`}`,
+    lost: `They land below ${B}. ${{ defences: o.big ? `Two waves against defences at level ${o.def}: the second comes ashore${o.route === "forward" ? " round the trenches" : ""}.` : `The garrison alone can’t hold them.`, warning: `With no warning, ${BN} is still on the road.`, fit: `${BN} is there, but too worn to hold.`, strength: `${BN} is too few to hold a second wave.` }[o.failed[0]?.key] ?? ""}`,
     repelled: `They land below ${B} and run into ${BN}’s trenches.`,
     faced: `The two navies meet them in daylight. Nobody fires.`,
-    waited: `They come within sight of ${B}, ${s.plan === "deterred" ? "carrying no troops" : "count its guns"}, and stop.`,
+    waited: `They come within sight of ${B}, look, and stop. Nobody fires.`,
     called: `The two navies meet them. The landing craft are empty.`,
     outlasted: `They sail up and down in front of their own cameras. The landing craft are empty.`,
     dugin: `They come close, see ${BN} in its trenches, and stop.`,
@@ -525,9 +499,11 @@ export function showdown(c, run) {
   const ended = turnedBack ? `${R}’s ships turn for home. By evening they are back in ${S}.`
     : o.code === "lost" ? `${R}’s flag is over ${B}. ${BN} falls back inland.`
       : `The landing craft that reached the beach never leave it. ${R}’s warships go home.`;
-  const backers = ministersFor(o.supportAfter), before = ministersFor(s.support);
-  const cabinet = `${MA} cabinet: ${backers} of ${W.ministers} with us${backers === before ? "" : `, ${backers > before ? "up" : "down"} from ${before}`}.`;
-  const unit = `${BN}: fatigue ${o.daysAfter}${o.casualties ? `, ${o.casualties} killed or wounded` : ""}.`;
+  const v0 = votes(s.support), v1 = votes(o.supportAfter);
+  const cabinet = `${MA} cabinet: ${v1.for} for, ${v1.against} against${v1.for === v0.for ? "" : `, ${v1.for > v0.for ? "up" : "down"} from ${v0.for}`}.`;
+  const lossText = [o.losses.garrison ? `garrison ${o.losses.garrison} killed or wounded` : "", o.losses.battalion ? `${BN} ${o.losses.battalion}` : ""].filter(Boolean).join("; ");
+  const unit = `${BN}: fatigue ${o.daysAfter}.${lossText ? ` Losses: ${lossText}.` : ""}`;
+  const strengthAfter = (c.strength ?? W.battalion) - o.losses.battalion;
   return {
     title: "The showdown", sub: `${sail} to ${sail + 2} February`,
     beats: [
@@ -537,96 +513,110 @@ export function showdown(c, run) {
       { cause: `${meet} · evening`, text: ended },
       { cause: `${sail + 2} February · the cost`, text: `${unit} ${cabinet}` },
     ],
-    // What the chart needs to play it, and the labels that explain it: the warning when they
-    // sail, our strength as we move, and the deciding comparison at contact.
     play: { callouts: [
       [0, "harbour", o.warned ? (o.listening ? `${L}: troops boarding, two days’ warning` : "Patrol boats: seen leaving, on the known date") : "No warning: seen only as they sail", o.warned ? "ok" : "bad"],
       [1, "beacon", `Defences: ${defenceLabel(o.def)}`, o.def >= 3 ? "ok" : o.def >= 2 ? "warn" : "bad"],
-      [1, "unit", `Fatigue ${s.fatigue}${o.fit ? "" : ": unfit"}`, o.fit ? "ok" : "bad"],
-      [2, "beacon", o.s.plan !== "land" ? "No troops aboard" : o.code === "stopped" ? (o.big ? "Warned: both waves met at sea" : "One wave: turned at sea")
+      [1, "unit", `Before: fatigue ${s.fatigue}${o.fit ? "" : ", unfit"}`, o.fit ? "ok" : "bad"],
+      [2, "beacon", !o.boarded ? "No troops aboard" : o.code === "stopped" ? (o.big ? "Warned: both waves met at sea" : "One wave: turned at sea")
         : o.code === "landed" ? "No warning: the second wave gets past"
           : o.failed.length ? `Needed: ${o.failed.map((r) => ({ defences: `defences ${r.need}`, warning: "warning", fit: "a fit battalion", strength: "full strength" })[r.key]).join(", ")}`
-            : o.code === "repelled" ? "Dug in before they landed" : o.def >= 3 && !o.big ? "Defences 3: hold one wave alone" : "Warned, fit, in time", o.code === "lost" || o.code === "landed" ? "bad" : "ok"],
-    ], code: o.code, route: o.route, warned: o.warned, craft: c.craft.jan, unitName: BN, unitTag: `Fatigue ${o.daysAfter}${o.casualties ? ` · −${o.casualties}` : ""}`, unitTone: o.kept.battalion ? "ok" : "bad" },
+            : o.code === "repelled" ? "Dug in before they landed" : !o.engaged ? "Level 3: held without the battalion" : "Warned, fit, in time", o.code === "lost" || o.code === "landed" ? "bad" : "ok"],
+    ], code: o.code, route: o.route, warned: o.warned, craft: c.craft.jan, unitName: BN,
+      unitTag: `After: fatigue ${o.daysAfter}${o.losses.battalion ? ` · ${strengthAfter} strong` : ""}`, unitTone: o.kept.battalion ? "ok" : "bad" },
     after: a, go: "To the debrief",
   };
 }
 
-// What a campaign leaves the task force: the condition it carries into the next sector,
-// and what each officer will remember. Specific, so the next campaign can quote it.
-function memories(c, run, o) {
-  const s = o.s, out = [];
-  // `line` is the debrief's note; `quote` is what the officer says about it in the next
-  // sector, with this sector's names already in it.
+// ── memories, from the record ──────────────────────────────────────────────
+// What each officer will say about this sector in the next one. Built only from dated events,
+// never inferred from a number.
+function memories(c, run, rec) {
+  const o = rec.outcome, ev = (kind, f = () => true) => rec.events.find((e) => e.kind === kind && f(e)), out = [];
   const add = (who, line, quote) => out.push({ who, line, quote });
-  const rested = run.dec?.beacon === "rest" || run.jan?.beacon === "hold" || run.jan?.lattice === "when";
-  if (rested) add("okafor", `You found ${BN} its rest${run.jan?.lattice === "when" ? " by buying the sailing date" : ""}. ${surname("okafor")} will trust your next promise about it.`, `You found them their rest at ${B}. I am asking you to do it again.`);
-  else if (o.daysAfter > FATIGUE.unfit) add("okafor", `You took ${BN}’s fatigue to ${o.daysAfter}. ${surname("okafor")} has written it down.`, `At ${B} you took their fatigue to ${o.daysAfter}. I would rather not watch that twice.`);
-  else add("okafor", `${BN} never rested, and got through. ${surname("okafor")} calls that luck.`, `They never rested at ${B} and got away with it. Luck is not a plan.`);
-  if ((run.jan?.lattice ?? "sarn") !== "sarn") {
-    const cost = o.code === "called" || o.code === "lost";
-    add("halden", `You took ${L} off ${S}’s harbour in January, and ${cost ? "it cost us" : "we got away with it"}. ${surname("halden")} will argue harder for the quay next time.`, cost ? `We left the quay at ${S} and paid for it. I would like my ears where the boarding order is.` : `We left the quay at ${S} and got away with it. I would not count on that twice.`);
-  } else if (s.knows.date?.corrected) add("halden", `${L} caught a planted date. ${surname("halden")} will remember that ${R} lies on its fleet net.`, `${R} lied to us on its fleet net at ${S}. I will not take its dates on one signal again.`);
-  else add("halden", `You kept ${L} on the quay. ${surname("halden")} heard what he needed when it mattered.`, `At ${S} the quay told us what we needed. Same again, if you will.`);
-  if (s.actedAlone) add("sato", `You told ${M} after, not before. ${surname("sato")} will need a month to repair it.`, `${M} heard about our move from the press. This government will have heard that story too.`);
-  else if (s.approvedBy === "trade") add("sato", `Our patrol boats bought ${M}’s vote. ${surname("sato")} will say so to the next ally, too.`, `We bought ${M}’s vote with boats. Word of that travels faster than we do.`);
-  else if (o.navyFought && c.minister === "dove") add("sato", `${M} lost sailors standing with us. ${surname("sato")} expects to be reminded.`, `${M} buried sailors for us. Allies remember who asks that of them.`);
-  else add("sato", `${M} was asked first, every time. ${surname("sato")} can build on that.`, `We asked ${M} first every time. I can say so to this government, and they will check.`);
-  if (s.radarFails) add("briggs", `The radar failed on the day. ${surname("briggs")} will not let you run equipment hot again without a fight.`, `The radar failed on the day at ${B}. I am not running anything hot again.`);
-  else if (o.code === "lost") add("briggs", `${B} fell on ${surname("briggs")}’s watch. She will not forget it.`, `We lost ${B}. I am not losing this one.`);
-  else if (o.battle) add("briggs", `${B} held a landing. ${surname("briggs")} knows what the headland can take.`, `${B} held a landing. I know what a dug-in headland can take now.`);
-  else add("briggs", `${B} was never tested. ${surname("briggs")} still does not know what it can take.`, `${B} was never tested. I still do not know what a headland like this can take.`);
+  const rest = rec.events.filter((e) => e.rested), rotation = ev("rotation");
+  if (rest.length || rotation) {
+    const when = [...rest.map((e) => `${day(e.rested.from)} to ${day(e.rested.to)}`), ...(rotation ? ["in rotation through January"] : [])].join(", and ");
+    add("okafor", `${BN} stood down ${when}. It ended at fatigue ${o.daysAfter}.`, `At ${B} you stood them down ${when}. I’m asking for the same here.`);
+  } else add("okafor", `${BN} never stood down. It ended at fatigue ${o.daysAfter}${o.daysAfter > FATIGUE.unfit ? ": unfit" : ""}.`, `At ${B} they never stood down, and ended at fatigue ${o.daysAfter}. I’d rather not repeat that.`);
+  const jq = run.jan?.lattice ?? "sarn", boarding = rec.intel.find((i) => i.claim.kind === "boarding" && i.claim.value === true);
+  if (jq !== "sarn") add("halden", `${L} left ${S}’s harbour net in January, so February came without the boarding order${o.boarded ? ", and troops were aboard" : ""}.`, `At ${S} we went into February without the boarding order. I want my ears on the quay.`);
+  else add("halden", boarding ? `${L} heard the boarding order on ${day(boarding)}.` : `${L} stayed on ${S}’s harbour net; no boarding order came, and none was given.`, boarding ? `At ${S} the quay gave us two days. Same again.` : `At ${S} the quay told us the truth: nobody boarded.`);
+  const coal = ev("coalition");
+  const satoLine = { trade: [`Our patrol boats bought ${M}’s approval.`, `We bought ${M}’s approval with boats. Word travels.`],
+    hotline: [`${M} approved on the hotline before we moved.`, `${M} approved before we moved. I can say so here.`],
+    acted: [`We moved first and told ${M} after.`, `${M} heard about our move after we made it. This government will know that story.`],
+    vote: coal.navy ? [`${M}’s cabinet voted ${coal.for} for, ${coal.against} against, and sent its navy.`, `${M} voted for us, ${coal.for} to ${coal.against}. I can build on that.`] : [`${M}’s cabinet voted ${coal.for} for, ${coal.against} against, and kept its navy in port.`, `${M} voted ${coal.for} to ${coal.against} against sending its navy. I don’t want that count again.`] }[coal.how];
+  add("sato", satoLine[0] + (o.navyFought && c.minister === "dove" ? ` ${M} lost sailors standing with us.` : ""), satoLine[1]);
+  if (ev("radar-failed")) add("briggs", `The radar failed on ${day(ev("radar-failed"))}.`, `The radar failed at ${B}. Not again.`);
+  else if (o.code === "lost") add("briggs", `${B} fell on ${day({ month: "feb", day: c.sailDay + 1 })}.`, `We lost ${B}. I’m not losing this one.`);
+  else if (["held", "repelled", "landed"].includes(o.code)) add("briggs", `${B} held a landing at level ${o.def}.`, `${B} held a landing at level ${o.def}. I know what a headland can take now.`);
+  else add("briggs", `${B} was never tested.`, `${B} was never tested. I still don’t know what a headland like this can take.`);
   return out;
 }
 
+// ── the debrief ─────────────────────────────────────────────────────────────
+let HAPPENED;
+const GRADE = { success: "Success", costly: "Costly success", failure: "Failure" };
+let PLAN_TRUTH, ROUTE_ORDER;
+
+function orderedLine(rec, month, run) {
+  const parts = rec.events.filter((e) => e.month === month && ["beacon", "incident"].includes(e.kind)).map((e) => {
+    const tag = e.by === "you" ? "" : " (staff)";
+    if (e.kind === "incident") return `${incidentById(e.id).options.find((o) => o.id === e.option).name}${tag}.`;
+    return `${{ quiet: `Strengthen ${B} quietly`, rest: `Rest ${BN}`, show: `Show force openly`, hold: "Hold as we are" }[e.option]}${month === "jan" && e.option === "quiet" ? "" : ""}${tag}.`;
+  });
+  const q = month === "dec" ? latticeQ(run.dec?.lattice ?? "boats") : latticeQ(run.jan?.lattice ?? "sarn", "jan");
+  parts.push(`${L}: ${q.short}${q.staff ? " (staff)" : ""}.`);
+  if (month === "jan") { const c = rec.events.find((e) => e.kind === "coalition"); if (c.how === "trade") parts.push("Patrol boats traded."); if (c.how === "acted") parts.push(`Told ${M} after.`); }
+  return parts.join(" ");
+}
+
+function believedLine(rec, month) {
+  const end = month === "dec" ? { month: "dec", day: 31 } : month === "jan" ? rec.logEnd.jan : rec.decision;
+  const known = knownAt(rec, end);
+  if (month === "feb") return known.boarding ? (known.boarding.claim.value ? `${L} heard troops ordered aboard.` : `${L} heard no boarding order.`) : "We could not tell whether troops were aboard.";
+  const items = ["count", "role", "date", "reaction", "plan"].filter((kk) => known[kk] && (month === "dec" || known[kk].month === "jan" || kk === "count")).map((kk) => `${claimText(known[kk])} (${CERTAINTY[known[kk].certainty]})`);
+  return items.length ? `${items.join("; ")}.`.replace(/^./, (x) => x.toUpperCase()) : "Nothing new.";
+}
+
 export function debrief(c, run) {
-  const o = outcome(c, run), s = o.s;
+  const rec = chronicle(c, run), o = rec.outcome, s = o.s;
   const [title, happened] = HAPPENED[o.code];
-  const q = run.dec?.lattice ?? "boats", jq = run.jan?.lattice ?? "sarn";
-  const troops = s.plan === "land" || s.plan === "turned";
-  const planted = (q === "who" && c.deceive === "who") || (q === "when" && c.deceive === "when" && !s.knows.date?.corrected) || s.knows.claim?.planted;
-  const backers = ministersFor(o.supportAfter);
-  const days = o.daysAfter;
-  const allyLine = o.kept.ally
-    ? (o.route === "joint" ? `${M}’s navy stood beside ours in public, and ${backers} of ${W.ministers} ministers back us going into the spring.` : `The ${MA} cabinet still backs us, ${backers} of ${W.ministers}.`)
-    : (o.code === "called" ? `Some ${MA} ministers say we escalated over nothing; only ${backers} of ${W.ministers} still back us.` : `Only ${backers} of ${W.ministers} ${MA} ministers still back us, so ${M}’s support is in doubt for the spring.`);
-  const battalionLine = o.kept.battalion
-    ? `${BN} ends the campaign fit${days === 0 ? " and rested" : `, at fatigue ${days}`}${o.casualties ? `, with ${o.casualties} killed or wounded` : ""}.`
-    : `${BN} ends the campaign unfit at fatigue ${days}${o.battle ? ` and a battle that cost ${o.casualties} killed or wounded` : ""}, a third of it is sick or injured. It needs most of March to recover.`;
-  const janTruth = s.shift === "bluff-to-land" ? `${R} saw ${M} wavering and turned its show of force into a real landing plan.`
-    : s.shift === "deterred" ? `After your frigate appeared on 16 January, ${R} cancelled its landing order. Its ships would sail without troops.`
-      : c.plan === "probe" ? (s.plan === "land" ? `${R}’s scouts found ${B} weak enough, so the landing order went out.` : `${R}’s scouts found ${B} too strong, and the landing order was held back.`)
-        : c.plan === "land" ? `${R}’s landing plan stayed in place.` : `${R} kept up the show, with no troops behind it.`;
-  const halden = o.listening
-    ? `${L} stayed on ${S}’s harbour net through January, so when ${R} sailed we knew ${troops ? "troops were aboard" : "no troops had boarded"}.${planted ? " One clue was planted, and I should have said so sooner." : ""}`
-    : o.dated
-      ? `We had ${R}’s true date. But ${L} was off ${S}’s harbour in January, so we could not tell whether troops were aboard. ${o.warned ? "The patrol boats saw them leave, which gave us time to move." : s.boats < 2 ? `With our patrol boats traded away, we didn’t see them leave until they were nearly at ${B}.` : ""}`.trim()
-      : `${L} was off ${S}’s harbour in January, so when ${R} sailed you chose without knowing if this was a landing or a show of force.${planted ? ` And one of our clues was planted: ${R} meant us to read it as a landing.` : ""}`;
-  // Why it went this way, in the rules' own terms: the requirements that held or failed.
+  const v = votes(o.supportAfter), f = o.daysAfter, strength = (c.strength ?? W.battalion) - o.losses.battalion;
+  const planted = rec.intel.some((i) => !i.truth && dateKey(i) <= dateKey(rec.decision));
+  const allyLine = o.kept.ally ? `The ${MA} cabinet backs us, ${v.for} for, ${v.against} against.` : `The ${MA} cabinet is against us, ${v.for} for, ${v.against} against: ${M}’s support is in doubt for the spring.`;
+  const battalionLine = `${BN} ends ${o.kept.battalion ? "fit" : "unfit"} at fatigue ${f}${strength < (c.strength ?? W.battalion) ? `, and ${strength} strong after its losses` : ""}.`;
   const req = (r) => requirementText(r, o.check, s);
   const why = o.code === "lost" ? `Why it fell: it needed ${o.failed.map(req).join("; and ")}.`
-    : o.code === "held" || o.code === "repelled" ? `Why it held: ${o.check.needs.map(req).join("; ")}.`
-      : o.code === "stopped" ? (o.big ? "Why they were stopped: we had warning, so the two navies met both waves at sea." : "Why they were stopped: one wave can be turned back at sea in a single meeting.")
-        : o.code === "landed" ? "Why they got ashore: with no warning, the two navies met only the first wave."
-          : o.code === "called" || o.code === "dugin" ? "Why it cost us: there were no troops aboard, so the show of strength was spent on a show."
-            : "Why no shots were fired: there were no troops aboard to land.";
+    : o.code === "held" ? (o.engaged ? `Why it held: ${o.check.needs.map(req).join("; ")}.` : `Why it held: ${B}’s defences at level ${o.def} hold one wave without ${BN}.`)
+      : o.code === "repelled" ? `Why it held: ${BN} was dug in before they landed; ${o.check.needs.map(req).join("; ")}.`
+        : o.code === "stopped" ? (o.big ? "Why they were stopped: we had warning, so the two navies met both waves at sea." : "Why they were stopped: one wave can be turned back at sea in a single meeting.")
+          : o.code === "landed" ? "Why they got ashore: with no warning, the two navies met only the first wave."
+            : o.code === "called" || o.code === "dugin" ? "Why it cost us: there were no troops aboard, so the show of strength was spent on a show."
+              : "Why no shots were fired: there were no troops aboard to land.";
+  const janTruth = s.shift === "bluff-to-land" ? `${R} saw ${M} wavering and turned its show into a real landing plan.`
+    : s.shift === "deterred" ? `After the frigate appeared on 16 January, ${R} cancelled its landing order. Its ships sailed without troops.`
+      : c.plan === "probe" ? (s.plan === "land" ? `${R}’s scouts found ${B} weak enough, so the landing order went out.` : `${R}’s scouts found ${B} too strong, and no troops boarded.`)
+        : c.plan === "land" ? `${R}’s landing plan stayed in place.` : `${R} kept up the show, with no troops behind it.`;
+  const halden = o.listening
+    ? `${L} stayed on ${S}’s harbour net through January, so when ${R} sailed we knew ${o.boarded ? "troops were aboard" : "no troops had boarded"}.${planted ? " One of our earlier clues was planted; I should have weighted it less." : ""}`
+    : `${L} was off ${S}’s harbour in January, so ${o.warned ? "we had the date and the patrol boats, but not the cargo" : "we had neither the boarding order nor the cargo"}.${planted ? " And one of our clues was planted." : ""}`;
   return {
     title, grade: o.grade, gradeName: GRADE[o.grade], after: o.after, why,
     line: `${happened} ${allyLine} ${battalionLine}`,
     score: [
       { label: ST, ok: o.kept.beacon, text: o.kept.beacon ? "Still ours" : "Lost" },
-      { label: M, ok: o.kept.ally, text: `${backers} of ${W.ministers} ministers with us` },
-      { label: BN, ok: o.kept.battalion, text: o.kept.battalion ? (days === 0 ? "Rested" : `Fit, fatigue ${days}`) : `Unfit, fatigue ${days}` },
+      { label: M, ok: o.kept.ally, text: `${v.for} for, ${v.against} against` },
+      { label: BN, ok: o.kept.battalion, text: `${o.kept.battalion ? "Fit" : "Unfit"}, fatigue ${f}${strength < W.battalion ? ` · ${strength} strong` : ""}` },
     ],
     rows: [
-      ["December", `${ORDER.dec[run.dec?.beacon ?? "quiet"]} ${L}: ${latticeQ(q).short}.`, `${c.craft.dec}${s.knows.count ? `, then ${s.knows.count}` : ""} landing craft loading in ${S}.`, planted ? `One of our clues was planted: ${R} wanted us to read it as a landing.` : PLAN_TRUTH[c.plan]],
-      ["January", `${ORDER.jan(run.jan ?? { beacon: "quiet" })} ${L}: ${latticeQ(jq, "jan").short}.`, BELIEF[januaryRead(simulate(c, run).janOrders) ?? "open"] + (s.knows.claim ? " (the defector’s word)" : ""), janTruth],
-      ["February", ROUTE_ORDER[o.route], o.listening ? `${L} heard ${troops ? "troops ordered aboard" : "no order to board troops"}.` : "We could not tell whether the landing craft carried troops.", happened.split(". ")[0].replace(/\.$/, "") + "."],
+      ["December", orderedLine(rec, "dec", run), believedLine(rec, "dec"), planted && rec.intel.some((i) => !i.truth && i.month === "dec") ? `One of our clues was planted: ${R} wanted us to read it as a landing.` : PLAN_TRUTH[c.plan]],
+      ["January", orderedLine(rec, "jan", run), `${januaryRead(simulate(c, run).janOrders) ? `We read it as ${READ()[januaryRead(simulate(c, run).janOrders)]}.` : "No reading yet."} ${believedLine(rec, "jan")}`, janTruth],
+      ["February", ROUTE_ORDER[o.route], believedLine(rec, "feb"), happened.split(". ")[0].replace(/\.$/, "") + "."],
     ],
-    // Where the campaign leaves the task force, for the next sector.
-    leaves: memories(c, run, o),
+    leaves: memories(c, run, rec),
     halden,
-    truth: [`Really: ${{ land: "a landing on " + B, bluff: "a bluff, no troops", probe: "a test, then a landing if " + B + " looked weak" }[c.plan]}`, `February: ${{ stopped: "turned back at sea", landed: "they landed; " + B + " held", held: "they landed; " + B + " held", repelled: "they landed; beaten on the beach", lost: "they landed; " + B + " fell", faced: "turned back without firing", waited: "turned back without firing", dugin: "turned back without landing", called: "no troops aboard", outlasted: "no troops aboard" }[o.code]}`],
+    truth: [],
   };
 }
 
@@ -635,59 +625,44 @@ export { PLAN_ORDER, OFFICERS };
 // Recomputed whenever the theatre changes (see setWorld in src/story/world.js).
 onWorld(() => {
   B = W.stationShort; ST = W.station; R = W.rival; M = W.host; MA = W.hostAdj; S = W.harbour; L = W.network; BN = W.reserve;
-  WARN = {
-    fresh: ["Warning before an attack: about two days", `While ${L} listens to ${S}’s harbour net, we hear the order that puts troops aboard two days before they sail: enough time to bring ${BN} to ${B}, and we will know whether this is a landing.`],
-    stale: ["Warning before an attack: less reliable", `${L} left ${S}’s harbour net in January. We would see the ships leave, but not whether troops went aboard, so we might get hours of warning instead of days.`],
-  };
   TITLE = {
     line: `On 1 December you take command of the defence of ${ST}, our radar post on the ${MA} coast. Across ${W.strait}, ${R} is loading landing craft in ${S}. You have three months.`,
     saved: "Saved this morning. Your December orders have not gone out.",
   };
   ORIENT = [
-    ["Your goal", `Keep ${B} in our hands, keep ${M} on our side, and bring ${BN} through fit to fight. All three is a success. Holding ${B} at the cost of one of the others is a costly success. Losing ${B} is a failure.`],
-    ["Each month", `A briefing, sometimes a signal that needs an answer, then your orders. Your staff draft every order; you can overrule them twice a month. The night report shows what happened.`],
-    ["Where you start", `Three months into the crisis. In September your predecessor reinforced ${B} quietly and set up ${L}, our listening posts. In November they ordered the closer look at ${S} that opens your first briefing.`],
+    ["Your goal", `Keep ${B} in our hands, keep ${M} on our side, and bring ${BN} through fit. All three is a success. Holding ${B} at the cost of one of the others is a costly success. Losing ${B} is a failure.`],
+    ["Each month", `A briefing, sometimes a signal that needs your answer, then your orders. Your staff draft every order and handle the rest; you can overrule them twice a month. The month’s log shows what happened.`],
+    ["Where you start", `In September your predecessor reinforced ${B} quietly and set up ${L}, our listening posts. In November they ordered the closer look at ${S} that opens your first briefing.`],
   ];
   LATTICE = {
     head: `${L} · radio intercepts`,
     what: `Twelve listening posts along the ${MA} coast that pick up ${R}’s military radio.`,
-    // Why a question has a price: the posts can follow one radio net properly at a time.
     nets: `Twelve posts can follow one radio net at a time: ${S}’s harbour net (the boarding order, our two days’ warning), the fleet command net (the sailing date) or the fishing fleet’s. Whatever ${L} listens to, it stops hearing the others.`,
     dec: [
-      { id: "boats", q: `How many landing craft are loading in ${S}?`, short: `landing craft in ${S}`, staff: true, mark: { at: "harbour", text: `${L}: counting the landing craft` }, means: `A count by the end of December, so we know whether ${R} can land a second wave. Nothing on the fishing boats or the sailing date.`, reply: `We stay on the quay. You will have a count by the 27th.` },
-      { id: "who", q: `Who gives orders to ${R}’s fishing fleet?`, short: "who runs the fishing fleet", mark: { at: "lane", text: `${L}: following the fishing fleet` }, means: `Tells us whether the fishing boats are screening a landing, staging a show or scouting ${B}. No new count of the landing craft.`, reply: `Then we follow the fishing boats. A trail can be laid for us to find; I will tell you how far I trust it.` },
-      { id: "when", q: `When does ${R} plan to sail?`, short: `${R}’s sailing date`, mark: { at: "harbour", text: `${L}: fleet net, for the date` }, means: `${R}’s planned date, from the fleet command net. One signal, which could be planted. No new count of the landing craft.`, reply: `The fleet net, then. One signal is one signal, General.` },
+      { id: "boats", q: `How many landing craft are loading in ${S}?`, short: `landing craft in ${S}`, staff: true, mark: { at: "harbour", text: `${L}: counting the landing craft` }, means: `A confirmed count by 27 December: whether ${R} has enough for a second wave. Nothing on the fishing boats or the sailing date.`, reply: `We stay on the quay. You’ll have a count by the 27th.` },
+      { id: "who", q: `Who gives orders to ${R}’s fishing fleet?`, short: "who runs the fishing fleet", mark: { at: "lane", text: `${L}: following the fishing fleet` }, means: `Whether the fishing boats are screening a landing, staging a show or scouting ${B}. Likely, not certain: a trail can be laid for us. No new count of the landing craft.`, reply: `Then we follow the fishing boats. I’ll tell you how far I trust what we find.` },
+      { id: "when", q: `When does ${R} plan to sail?`, short: `${R}’s sailing date`, mark: { at: "harbour", text: `${L}: fleet net, for the date` }, means: `${R}’s planned date, from one signal on the fleet command net. One signal can be planted. No new count of the landing craft.`, reply: `The fleet net, then. One signal is one signal, General.` },
     ],
     jan: [
-      { id: "sarn", q: `Stay on ${S}’s harbour net`, short: `${S}’s harbour net`, staff: true, mark: { at: "harbour", text: `${L}: listening for troops boarding` }, means: `Keeps the two days’ warning: if ${R} orders troops aboard, we hear it before the ships sail, so in February we know whether this is a landing or a show.`, reply: `My ears stay on the quay.` },
-      { id: "when", q: "Listen to the fleet command net for the sailing date", short: "the sailing date", mark: { at: "harbour", text: `${L}: fleet net · no boarding warning`, tone: "warn" }, means: (k) => `${k.date ? `Checks December’s date against a second source, so a planted date is caught. ` : `Gives the true sailing date. `}With the date by early January, ${surname("okafor")} can stand ${BN} down a company at a time until the last week: about ${DATE_REST} less fatigue. But ${L} stops hearing ${S}’s harbour, so in February we will not know whether troops are aboard.`, reply: `The fleet net. When they sail, I will know the day and not the cargo.` },
-      { id: "who", q: "Listen to the fishing fleet", short: "the fishing fleet", mark: { at: "lane", text: `${L}: fishing fleet · no boarding warning`, tone: "warn" }, means: (k) => `${k.role ? "We already know what the fishing boats are for; this only confirms it. " : `Tells us what the fishing boats are for: a screen for a landing, a show or scouting. `}${L} stops hearing ${S}’s harbour, so in February we will not know whether troops are aboard.`, reply: `The fishing boats, then. We give up the quay for it.` },
+      { id: "sarn", q: `Stay on ${S}’s harbour net`, short: `${S}’s harbour net`, staff: true, mark: { at: "harbour", text: `${L}: listening for troops boarding` }, means: `Keeps the two days’ warning: if ${R} orders troops aboard, we hear it before the ships sail, and we know whether this is a landing.`, reply: `My ears stay on the quay.` },
+      { id: "when", q: "Listen to the fleet command net for the sailing date", short: "the sailing date", mark: { at: "harbour", text: `${L}: fleet net · no boarding warning`, tone: "warn" }, means: (k) => `${k.date ? `Checks December’s date against a second source, so a planted date is caught. ` : `Gives the true sailing date by 8 January. `}With it, ${surname("okafor")} stands ${BN} down a company at a time: ${DATE_REST} less fatigue. But ${L} stops hearing ${S}’s harbour: in February we won’t know whether troops are aboard. The patrol boats would still see them sail on the date.`, reply: `The fleet net. When they sail, I’ll know the day and not the cargo.` },
+      { id: "who", q: "Listen to the fishing fleet", short: "the fishing fleet", mark: { at: "lane", text: `${L}: fishing fleet · no boarding warning`, tone: "warn" }, means: (k) => `${k.role ? "We already have a reading of the fishing boats; this would confirm it. " : `Confirms what the fishing boats are for: a screen for a landing, a show or scouting. `}${L} stops hearing ${S}’s harbour: in February we won’t know whether troops are aboard.`, reply: `The fishing boats, then. We give up the quay for it.` },
     ],
   };
-  BOATS = `Without the boats we can’t see ${R}’s ships leave ${S}, so only ${L} listening there would warn us in time.`;
+  BOATS = `Without the boats, only ${L} on ${S}’s harbour net would warn us before they arrive.`;
   HAPPENED = {
-    stopped: ["Stopped at sea", `${R}’s landing force turned back at sea when it met our frigate and ${M}’s corvettes together. No soldier reached the beach.`],
-    landed: ["Held, after a landing", `With no warning of the sailing, ${R}’s second wave slipped past the joint patrol and landed on the headland. ${B} held until ${BN} arrived, but it was a battle.`],
-    held: ["Held, after a battle", `${R} landed a battalion below ${B} and was held on the beach. It was a battle, and we lost soldiers.`],
-    lost: [`${B} lost`, `${R} landed a battalion on the ${B} headland and took the station. Without ${B}, we cannot watch the strait.`],
+    stopped: ["Stopped at sea", `${R}’s landing force turned back at sea when it met our frigate and ${M}’s corvettes. No soldier reached the beach.`],
+    landed: ["Held, after a landing", `${R}’s second wave slipped past the two navies and landed on the headland. ${B} held, after a battle.`],
+    held: ["Held, after a battle", `${R} landed a battalion below ${B} and was held on the beach.`],
+    lost: [`${B} lost`, `${R} landed a battalion on the ${B} headland and took the station. Without ${B}, we can’t watch the strait.`],
     faced: ["Faced them down", `${R}’s ships met our frigate and ${M}’s corvettes in daylight and turned back without firing.`],
-    waited: ["Held, quietly", `${R}’s ships came close enough to count our guns, found ${B} ready, and turned back. No shots were fired, so ${R} has nothing to call an act of war.`],
-    repelled: ["Repelled on the beach", `${R} landed a battalion below ${B} and ran into ${BN}, already dug in. The landing failed on the beach, and we lost soldiers holding it.`],
+    waited: ["Held, quietly", `${R}’s ships came within sight of ${B} and turned back. No shots were fired.`],
+    repelled: ["Repelled on the beach", `${R} landed a battalion below ${B} and ran into ${BN}, already dug in. The landing failed on the beach.`],
     dugin: ["Dug in, and they turned back", `${R}’s ships found ${BN} dug in on the headland and turned back without landing. ${R}’s press printed the pictures of our trenches.`],
     called: ["Called their bluff, loudly", `There were no troops aboard. We met an empty landing force with two navies, and ${R}’s press is calling it our escalation.`],
     outlasted: ["Waited them out", `There were no troops aboard, and ${R} went home. We never took the bait.`],
   };
-  BELIEF = {
-    land: "We read it as a landing.",
-    bluff: "We read it as a show of force.",
-    probe: `We read it as a test, then a landing if ${B} looked weak.`,
-    open: "Still open: the count said how big a force, not what it was for.",
-  };
   ROUTE_ORDER = { quiet: "Hold quietly.", forward: `Dig ${BN} in on the headland.`, joint: `Stand with ${M}’s navy.` };
-  ORDER = {
-    dec: { quiet: `${B} strengthened quietly (staff).`, rest: `Rest ${BN}.`, show: "Show force openly." },
-    jan: (j) => j.beacon === "show" ? `Reinforce ${B} openly, and ${j.way === "act" ? `tell ${M} after` : j.way === "buy" ? `trade patrol boats for ${M}’s approval` : `ask ${M} on the hotline`}.` : `${j.beacon === "hold" ? "Hold as we are." : `Reinforce ${B} quietly (staff).`}${j.way === "buy" ? " Patrol boats traded to secure the vote." : ""}`,
-  };
   PLAN_TRUTH = {
     land: `${R} had been planning a landing on the ${B} headland since September.`,
     bluff: `${R} never meant to land. The landing craft were for the cameras, to make ${M} ask us to leave.`,

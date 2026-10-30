@@ -437,7 +437,7 @@ export class DeskScene extends Phaser.Scene {
   briefing(turn, data, nextChapter, nextLabel, state) {
     this.hud(turn, { state });
     this.table.cameras.main.fadeIn(reducedMotion.on ? 0 : 600, 20, 18, 16);
-    const secs = data.sections.map(([l, b], i) => `${i === 1 ? this.warnBlock(data.warning) : ""}<div class="sec"><p class="lab">${l}</p><p class="body">${b}</p></div>`).join("");
+    const secs = data.sections.map(([l, b], i) => `${i === 1 && data.warning ? this.warnBlock(data.warning) : ""}<div class="sec"><p class="lab">${l}</p><p class="body">${b}</p></div>`).join("");
     const dissent = data.dissent ? `<div class="quote dissent"><span class="av" style="background-image:url(${portrait(data.dissent[0])})"></span><span><span class="attrib">${surname(data.dissent[0])} reads it differently:</span> “${data.dissent[1]}”</span></div>` : "";
     const sheet = this.dom(1150, 108, `<article class="paper sheet tall" style="width:680px" aria-label="${data.title}"><h2>${data.title}</h2><p class="from">${monthOf(turn)} · ${data.from}</p>${secs}${dissent}
       <div class="btns" style="margin-top:16px"><button class="b on" data-go>${nextLabel}</button></div></article>`);
@@ -1105,9 +1105,10 @@ export class DeskScene extends Phaser.Scene {
     this.table.setRing(this.ringAfter("jan"));
     this.table.showdownSetup(N.play);
     const rows = N.beats.map((b, i) => `<li data-beat="${i}" style="opacity:0"><p class="lab">${b.cause}</p><p class="body">${b.text}</p></li>`).join("");
-    const sheet = this.dom(...this.table.showdownCorner(560, 520), `<article class="paper sheet showdown" style="width:560px"><h2>${N.title}</h2><p class="from">${N.sub}</p><ol class="sd-log">${rows}</ol>
+    const corner = this.table.showdownCorner(560, 520), pw = this.table.sdPanelWidth ?? 560;
+    const sheet = this.dom(...corner, `<article class="paper sheet showdown" style="width:${pw}px"><h2>${N.title}</h2><p class="from">${N.sub}</p><ol class="sd-log">${rows}</ol>
       <div class="btns sd-controls"><button class="b" data-pause>Pause</button><button class="b" data-skip>Skip to the end</button></div>
-      <div class="btns" data-end hidden><button class="b on" data-go>${N.go}</button></div></article>`);
+      <div class="btns" data-end style="visibility:hidden"><button class="b on" data-go>${N.go}</button></div></article>`);
     if (sheet.y > 300) sheet.y = 1064 - sheet.node.offsetHeight; // a bottom corner sits on the bottom edge
     move(this, sheet, { alpha: [0, 1] }, { dur: T.ui });
     const node = sheet.node, go = node.querySelector("[data-go]");
@@ -1116,8 +1117,9 @@ export class DeskScene extends Phaser.Scene {
     const finish = () => {
       this.table.showdownJump(N.beats.length - 1);
       N.beats.forEach((_, k) => show(k));
-      node.querySelector(".sd-controls").hidden = true;
-      node.querySelector("[data-end]").hidden = false;
+      // The controls give way to the end button in the same space, so the report never grows.
+      node.querySelector(".sd-controls").style.display = "none";
+      node.querySelector("[data-end]").style.visibility = "visible";
       this.hud(6, { seals: 0, state: N.after }); // February is over: the bar now reads the final state
       go.focus({ preventScroll: true });
       this.next = () => this.go("debrief");
@@ -1142,7 +1144,7 @@ export class DeskScene extends Phaser.Scene {
       finish();
     };
     go.onclick = () => this.go("debrief");
-    this.skipFns.push(() => { if (node.querySelector("[data-end]").hidden) node.querySelector("[data-skip]").click(); });
+    this.skipFns.push(() => { if (node.querySelector("[data-end]").style.visibility === "hidden") node.querySelector("[data-skip]").click(); });
     this.later(500, step);
   }
 

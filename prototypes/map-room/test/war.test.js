@@ -42,8 +42,8 @@ test("the battalion's days and casualties carry into the next sector", () => {
       nextSector(war);
       const c = campaignFor(war);
       assert.equal(c.fatigue0, o.daysAfter);
-      assert.equal(c.strength, FULL_STRENGTH - o.casualties);
-      assert.equal(c.understrength, FULL_STRENGTH - o.casualties < 500);
+      assert.equal(c.strength, FULL_STRENGTH - o.losses.battalion);
+      assert.equal(c.understrength, FULL_STRENGTH - o.losses.battalion < 500);
     }
   } finally { setWorld(KESTREL); }
 });

@@ -50,7 +50,12 @@ export function simulate(c, run = {}) {
   const db = run.dec?.beacon ?? "quiet";
   if (db === "quiet") { s.def += 1; s.fatigue += 31; }
   if (db === "rest") { s.fatigue = 0; s.notes.push("rested-dec"); }
-  if (db === "show") { s.def += 1; s.fatigue += 31; s.ring = 32; s.rivalSaw = true; s.support -= n(MINISTER_PENALTY[c.minister], k); }
+  if (db === "show") {
+    s.def += 1; s.fatigue += 31; s.ring = 32; s.rivalSaw = true; s.support -= n(MINISTER_PENALTY[c.minister], k);
+    // What Halden argues for: a move Ravellan can see makes it react, and the reaction is a
+    // clue to its plan. One observation, so "likely", not confirmed.
+    s.knows.reaction = { land: "faster", bluff: "cameras", probe: "probing" }[c.plan];
+  }
   s.fatigue += s.eng; s.eng = 0;
   // December's question buys knowledge only. Lattice goes back to Sarn's harbour net in
   // January unless January's orders point it elsewhere, so the February warning is
@@ -103,10 +108,17 @@ export function simulate(c, run = {}) {
   let plan = c.plan;
   if (c.D.planShift && plan === "bluff" && s.support < 40) { plan = "land"; s.shift = "bluff-to-land"; }
   if (plan === "land" && jb === "show" && s.def >= 3) { plan = "deterred"; s.shift = s.shift ?? "deterred"; }
-  if (plan === "probe") plan = s.def < 3 || s.radarFails ? "land" : "turned";
+  if (plan === "probe") plan = effectiveDefence(s) < 3 ? "land" : "turned";
   s.plan = plan;
   snap.janEnd = take();
   return snap;
+}
+
+// Beacon's defence level as a landing meets it: one lower if the main radar failed, and one
+// lower if Ravellan knows where our guns are (a press briefing or a visit before the cameras),
+// because it lands where they are not.
+export function effectiveDefence(s) {
+  return s.def - (s.radarFails ? 1 : 0) - (s.rivalKnows ? 1 : 0);
 }
 
 // Support points Ravellan's press takes from the ally's cabinet each month of a bluff.
@@ -130,7 +142,6 @@ export const fatigueWord = (days) => (days === 0 ? "rested" : days > FATIGUE.unf
 export const JOINT_DAYS = 30, BATTLE_DAYS = 20, DIG_DAYS = 20;
 const OVERREACTION = 20, DUG_IN_FOR_NOTHING = 10, LOST_STATION = 10;
 const NAVY_IN_A_FIGHT = { dove: -12, firm: -6, hawk: 4 };
-const CASUALTIES = { held: 60, repelled: 40, landed: 80, lost: 140 };
 
 // What decides a landing, one requirement at a time. The February choice shows these before
 // you pick (for each size of landing still possible), and the debrief names the ones that
@@ -144,7 +155,7 @@ export function landingCheck(c, s, route, big) {
   const listening = s.warning === "fresh";
   const dated = Boolean(s.knows.date && !s.knows.date.planted);
   const warned = listening || (dated && s.boats >= 2);
-  const def = s.def - (s.radarFails ? 1 : 0);
+  const def = effectiveDefence(s);
   const strong = !c.understrength;
   const req = (key, ok, need) => ({ key, ok, need });
   let needs;
@@ -185,14 +196,24 @@ export function outcome(c, run) {
   else if (s.plan === "bluff") code = route === "joint" ? "called" : route === "forward" ? "dugin" : "outlasted";
   else code = route === "joint" ? "faced" : route === "forward" ? "dugin" : "waited";
 
-  // The three things you are asked to protect, and the grade they add up to.
+  // Whether troops were ever ordered aboard. A probe that found Beacon too strong, and a
+  // landing cancelled by a visible frigate, sail empty; so does a bluff.
+  const boarded = s.plan === "land";
   const battle = ["held", "landed", "repelled", "lost"].includes(code);
+  // Whether the battalion itself fought: it was dug in, it went ashore behind the navies, or
+  // it reached the headland on the warning. Without warning it arrives after the fight.
+  const engaged = battle && (route !== "quiet" || warned);
   const navyFought = code === "stopped" || code === "landed";
-  const daysAfter = s.fatigue + (route === "joint" ? JOINT_DAYS : 0) + (route === "forward" ? DIG_DAYS : 0) + (battle && code !== "lost" ? BATTLE_DAYS : 0);
+  const daysAfter = s.fatigue + (route === "joint" ? JOINT_DAYS : 0) + (route === "forward" ? DIG_DAYS : 0) + (engaged ? BATTLE_DAYS : 0);
   const supportAfter = s.support
     - (code === "called" ? OVERREACTION : 0) - (code === "dugin" ? DUG_IN_FOR_NOTHING : 0) - (code === "lost" ? LOST_STATION : 0)
     + (navyFought ? NAVY_IN_A_FIGHT[c.minister] : 0);
-  const casualties = CASUALTIES[code] ?? 0;
+  // Killed or wounded, by who took them: the station's own garrison, and the battalion.
+  const losses = {
+    garrison: { held: 40, repelled: 10, landed: 20, lost: 140 }[code] ?? 0,
+    battalion: engaged ? ({ held: 60, repelled: 40, landed: 60, lost: 120 }[code] ?? 0) : 0,
+  };
+  const casualties = losses.garrison + losses.battalion;
   // What the rival lost: a landing force beaten on the beach is gone; one turned back at sea
   // goes home to try again.
   const rivalLost = battle && code !== "lost" ? c.craft.jan : 0;
@@ -206,5 +227,5 @@ export function outcome(c, run) {
   // Why it went as it did: the requirements that failed (empty when the landing was held,
   // stopped or never came).
   const failed = s.plan === "land" ? check.failed : [];
-  return { code, route, s, after, check, failed, holdsDug, fit, listening, dated, warned, reinforced, def, big, intercept, battle, navyFought, daysAfter, supportAfter, casualties, rivalLost, kept, grade };
+  return { code, route, s, after, check, failed, boarded, engaged, losses, holdsDug, fit, listening, dated, warned, reinforced, def, big, intercept, battle, navyFought, daysAfter, supportAfter, casualties, rivalLost, kept, grade };
 }

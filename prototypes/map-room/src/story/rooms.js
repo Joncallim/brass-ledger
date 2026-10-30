@@ -4,8 +4,9 @@
 // they add no rules of their own.
 import { WORLD as W, onWorld } from "./world.js";
 import { OFFICERS } from "./officers.js";
-import { host, incident, latticeOrders, latticeQ, orders, status } from "./copy.js";
+import { host, incident, knownLines, latticeOrders, latticeQ, orders, status } from "./copy.js";
 import { ministersFor, simulate } from "./play.js";
+import { incidentById } from "./incidents.js";
 
 let MA, R, S, B;
 // Lower-case only the first letter, so names inside an option (Beacon, Marenna) keep theirs.
@@ -69,19 +70,15 @@ export function staffRoom(c, run, progress) {
 }
 
 // ── the ledger ──────────────────────────────────────────────────────────────
-const knowLines = (c, s) => {
-  const k = s.knows, out = [];
-  if (k.count) out.push(`${k.count} landing craft in ${S} at the end of December.`);
-  if (k.role) out.push({ screen: `${R}’s fishing boats are sailing with the landing craft, under navy orders.`, swarm: `${R}’s fishing boats crowd the shipping lane in daylight, under navy orders.`, scout: `${R}’s fishing boats are counting ${B}’s guns at night, under navy orders.` }[k.role]);
-  if (k.date) out.push((k.date.confirmed ? "Confirmed: " : "") + (k.date.kind === "exercise" ? `${R} has announced an exercise from ${k.date.day} February.` : `${R}’s ships are ordered to sea by ${k.date.day} February.`));
-  if (k.claim) out.push(`The defector says ${k.claim.plan === "land" ? "a landing is planned" : k.claim.plan === "bluff" ? "there is no landing, only a threat" : "they will test us first"}. Not yet confirmed.`);
-  return out;
-};
+// The moment each stage of the campaign has reached, for "what we knew then".
+const ASOF = [{ month: "dec", day: 1 }, { month: "dec", day: 17 }, { month: "dec", day: 31 }, { month: "jan", day: 15 }, { month: "jan", day: 31 }, { month: "feb", day: 28 }];
 
 export function ledger(c, run, progress) {
   const done = committed(run, progress), sim = simulate(c, done);
   const entries = [];
   const add = (when, title, lines, stateKey) => entries.push({ when, title, lines, after: stateKey && status(c, sim[stateKey]) });
+  if (progress >= 1 && c.staffEvent?.month === "dec") add(`${incidentById(c.staffEvent.id).day.dec} December`, incidentById(c.staffEvent.id).title, [`Staff handled: ${lower(incidentById(c.staffEvent.id).options.find((o) => o.staff).name)}.`], null);
+  if (progress >= 3 && c.staffEvent?.month === "jan") add(`${incidentById(c.staffEvent.id).day.jan} January`, incidentById(c.staffEvent.id).title, [`Staff handled: ${lower(incidentById(c.staffEvent.id).options.find((o) => o.staff).name)}.`], null);
   if (progress >= 1 && c.incidents.dec) {
     const I = incident(c, done, "dec"), pick = done.dec.incident ?? I.staffId, o = I.options.find((x) => x.id === pick);
     add(I.date, I.title, [`${o.staff ? "Staff answer" : "Your call, one personal order"}: ${lower(o.name)}.`], "decOrders");
@@ -104,8 +101,8 @@ export function ledger(c, run, progress) {
   const s = sim[POINT[progress]];
   return {
     code: c.seed, difficulty: c.D.name, entries,
-    knows: knowLines(c, s),
-    cabinet: `${ministersFor(s.support)} of ${W.ministers} ${MA} ministers with us.`,
+    knows: knownLines(c, done, ASOF[progress]),
+    cabinet: `${MA} cabinet: ${ministersFor(s.support)} for, ${W.ministers - ministersFor(s.support)} against.`,
     now: status(c, s),
   };
 }
