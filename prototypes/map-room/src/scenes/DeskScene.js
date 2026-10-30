@@ -156,8 +156,9 @@ export class DeskScene extends Phaser.Scene {
   // A sheet that would run off the bottom of the table takes its dense layout: tighter type
   // and spacing, never a scrollbar.
   fit(obj, sel = "article") {
-    const a = obj.node.querySelector(sel);
-    if (a && obj.y + obj.node.offsetHeight > 1064) a.classList.add("dense");
+    const a = obj.node.querySelector(sel), over = () => obj.y + obj.node.offsetHeight > 1064;
+    if (a && over()) a.classList.add("dense");
+    if (a && over()) a.classList.add("tight");
     return obj;
   }
 
@@ -562,6 +563,8 @@ export class DeskScene extends Phaser.Scene {
     const title = { staff: "Staff room", ledger: "The ledger", settings: "Settings" }[kind];
     const panel = this.dom(180, 96, `<section class="paper room room-${kind}" role="dialog" aria-label="${title}"><header><h2>${title}</h2><button class="b" data-close>Close <kbd>Esc</kbd></button></header>${body}</section>`);
     this.room = { kind, back, panel, opener: document.activeElement };
+    const sheet = panel.node.querySelector(".room");
+    if (sheet.scrollHeight > sheet.clientHeight + 1) sheet.classList.add("dense");
     panel.node.querySelector("[data-close]").onclick = () => this.closeRoom();
     this.wireRoom(kind, panel.node);
     move(this, panel, { alpha: [0, 1], y: [116, 96] }, { dur: T.ui });
@@ -954,7 +957,7 @@ export class DeskScene extends Phaser.Scene {
     this.table.setNight(true);
     const beats = N.beats.map((b, i) => `<div class="beat" data-beat="${i}" style="opacity:0"><b class="n">${i + 1}</b><div><p class="lab" style="color:var(--ink2)">${b.cause}</p><p class="body">${b.text}</p></div></div>`).join("");
     const sheet = this.dom(56, 104, `<article class="paper sheet tall night" style="width:800px" aria-label="${N.title}"><h2>${N.title}</h2><p class="from">${N.sub}</p>${beats}
-      <div data-end style="opacity:0">${N.changes ? `<div class="delta"><p class="lab">What changed this month</p><ul>${N.changes.map((x) => `<li class="${x.same ? "same" : `tone-${x.tone}`}"><b>${x.label}</b> ${x.same ? `${x.after}, unchanged` : `${x.before} <span aria-label="to">→</span> ${x.after}`}</li>`).join("")}</ul></div>` : ""}${N.still ? this.warnBlock(N.still, !warning) : ""}${N.next ? `<div class="sec" style="border:0"><p class="lab">Coming up</p><p class="body">${N.next}</p></div>` : ""}
+      <div data-end style="opacity:0">${N.changes ? `<div class="delta"><p class="lab">What changed this month</p><ul>${N.changes.map((x) => `<li class="${x.same ? "same" : `tone-${x.tone}`}"><b>${x.label}</b> ${x.same ? `${x.after}, unchanged` : `${x.before} <span aria-label="to">→</span> ${x.after}`}</li>`).join("")}</ul></div>` : ""}${N.still ? this.warnBlock(N.still, !warning) : ""}${N.next ? `<div class="sec next" style="border:0"><p class="lab">Coming up</p><p class="body">${N.next}</p></div>` : ""}
       <button class="b on" style="height:56px;font-size:20px;margin-top:8px" data-go>${N.go}</button></div></article>`);
     // Measured with every line in place, then emptied for the typing.
     this.fit(sheet);
