@@ -383,7 +383,7 @@ export function night(c, run, month) {
       incidentBeat(c, run, "dec", true),
       { at: "lane", cause: `30 December · ${R}`, text: rival },
     ].filter(Boolean).sort(byDay);
-    return { title: "December log", sub: "Duty log, 9 to 31 December", beats, changes: changes(c, sim.decStart, s), still: WARN[s.warning], next: `The ${MA} cabinet votes on ${c.voteDay} January on whether to keep backing us at ${B}. ${surname("sato")} needs your January orders before then.`, go: "Begin January" };
+    return { title: "December log", sub: "Duty log, 9 to 31 December", beats, changes: changes(c, sim.decStart, s), still: null, next: `The ${MA} cabinet votes on ${c.voteDay} January on whether to keep backing us at ${B}. ${surname("sato")} needs your January orders before then.`, go: "Begin January" };
   }
   const s = sim.janEnd, jb = run.jan?.beacon ?? "quiet", way = run.jan?.way ?? null;
   const troops = s.plan === "land" || s.plan === "turned";
