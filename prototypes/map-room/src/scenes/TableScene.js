@@ -266,7 +266,7 @@ export class TableScene extends Phaser.Scene {
     const [ix, iy] = this.sc.intel.at;
     const c = this.add.container(OX + ix, OY + iy);
     const sq = this.add.rectangle(0, 0, 22, 22, C.brass).setStrokeStyle(2, C.brassDeep);
-    const t1 = this.add.text(20, -14, this.sc.intel.title ?? "Intercepts are asking:", { ...LABEL, fontStyle: "600" });
+    const t1 = this.add.text(20, -14, this.sc.intel.title ?? "Intercepts report:", { ...LABEL, fontStyle: "600" });
     const t2 = this.add.text(20, 10, "", LABEL);
     c.add([sq, t1, t2]);
     c.q = t2;

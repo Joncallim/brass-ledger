@@ -111,6 +111,24 @@ test("every cabinet count adds up, for and against", () => {
   }
 });
 
+test("every move in the cabinet's count is logged where it happens, and the log ends on the real count", () => {
+  for (const { c, run } of sample()) {
+    const sim = simulate(c, run), count = (x) => Math.round((x.support / 100) * 11);
+    for (const [month, a, b] of [["dec", sim.decStart, sim.decEnd], ["jan", sim.decEnd, sim.janEnd]]) {
+      let now = Math.max(0, Math.min(11, count(a)));
+      for (const beat of story.night(c, run, month).beats) {
+        for (const m of beat.text.matchAll(/(\d+) for, (\d+) against, from (\d+) for/g)) {
+          assert.equal(Number(m[3]), now, `${c.seed}/${c.difficulty} ${month}: ${beat.text}`);
+          now = Number(m[1]);
+        }
+        const vote = beat.text.match(/voted (\d+) for/);
+        if (vote) assert.equal(Number(vote[1]), now, `${c.seed} ${month}: ${beat.text}`);
+      }
+      assert.equal(now, Math.max(0, Math.min(11, count(b))), `${c.seed}/${c.difficulty} ${month} ends on the real count`);
+    }
+  }
+});
+
 test("logs stay inside their month and before the decision; the decision comes before the sailing", () => {
   for (const { c, run } of sample()) {
     const rec = chronicle(c, run);

@@ -12,7 +12,7 @@
 // and no line promises an effect the rules do not deliver.
 import { WORLD as W, onWorld } from "./world.js";
 import { OFFICERS, fullName, surname } from "./officers.js";
-import { incidentById } from "./incidents.js";
+import { incidentById, incidentDay } from "./incidents.js";
 import { DATE_REST, DIG_DAYS, FATIGUE, JOINT_DAYS, BATTLE_DAYS, effectiveDefence, fatigueWord, landingCheck, ministersFor, needsApproval, outcome, simulate } from "./play.js";
 import { chronicle, dateKey, decisionAt, knownAt, logEnd } from "./chronicle.js";
 
@@ -30,6 +30,11 @@ const lower = (t) => t[0].toLowerCase() + t.slice(1);
 const DEF = ["lost", "garrison only", "reinforced", "fully reinforced", "fortified"];
 const defWord = (d) => DEF[Math.max(0, Math.min(4, d))];
 export const defenceLabel = (d) => `level ${Math.max(0, d)}, ${defWord(d)}`;
+// The level a landing would meet, and why it is lower than what stands on the headland.
+const defenceText = (s) => {
+  const eff = effectiveDefence(s), why = [s.rivalKnows ? `${R} knows where our guns are` : "", s.radarFails ? "the main radar has failed" : ""].filter(Boolean);
+  return eff < s.def ? `level ${eff} against a landing (${defWord(s.def)} on the headland, but ${why.join(" and ")})` : defenceLabel(eff);
+};
 const votes = (support) => { const f = ministersFor(support); return { for: f, against: W.ministers - f }; };
 const voteText = (support) => { const v = votes(support); return `${v.for} for, ${v.against} against`; };
 const fitText = (f) => (f > FATIGUE.unfit ? `unfit at fatigue ${f}` : `${fatigueWord(f)} at fatigue ${f}`);
@@ -79,6 +84,8 @@ function claimText(i) {
     default: return "";
   }
 }
+// Cut at a word, for a chart label.
+const clip = (t, n) => (t.length <= n ? t : `${t.slice(0, t.lastIndexOf(" ", n))}…`);
 const intelLine = (i) => `${claimText(i)[0].toUpperCase()}${claimText(i).slice(1)}. Source: ${SOURCE()[i.source]}, ${day(i)}. ${CERTAINTY[i.certainty][0].toUpperCase()}${CERTAINTY[i.certainty].slice(1)}.`;
 
 // Everything we knew at a moment, one line per item, with source and certainty: the ledger's
@@ -119,7 +126,7 @@ export function brief(c, run, month) {
   const sections = [
     ["What we know", known.map(intelLine).join(" ")],
     ["What we don’t know", `${unknown[0][0].toUpperCase()}${unknown.join(", ").slice(1)}. ${month === "dec" ? `What ${R} means to do: ${plans}.` : read ? `Our best reading is ${READ()[read]}; nothing has settled it.` : "Nothing yet points to one plan over another."}`],
-    ["What it means for your orders", `${RULE()} ${B} is at ${defenceLabel(effectiveDefence(s))} now; ${BN} is ${fitText(s.fatigue)}.${carried}`],
+    ["What it means for your orders", `${RULE()} ${B} is at ${defenceText(s)} now; ${BN} is ${fitText(s.fatigue)}.${carried}`],
   ];
   const memory = c.memories?.find((m) => m.who === "halden")?.quote;
   const halden = month === "dec"
@@ -325,21 +332,26 @@ export function incident(c, run, month) {
   if (!id) return null;
   const inc = incidentById(id);
   const s = simulate(c, run)[month === "dec" ? "decStart" : "decEnd"];
-  return { ...inc, body: inc.text(c, s, c.D.severity), council: inc.council(c, s), staffId: inc.options.find((o) => o.staff).id, date: `${inc.day[month]} ${MONTH[month]}` };
+  return { ...inc, body: inc.text(c, s, c.D.severity), council: inc.council(c, s), staffId: inc.options.find((o) => o.staff).id, date: `${incidentDay(c, id, month)} ${MONTH[month]}` };
 }
 
 // ── the month's log, from the record ───────────────────────────────────────
+// The cabinet count, added to any event that moved it.
+const cabinetTail = (e) => (e.cabinet ? ` ${MA} cabinet: ${e.cabinet.to.for} for, ${e.cabinet.to.against} against, from ${e.cabinet.from.for} for.` : "");
+
 function eventBeat(c, run, e, rec) {
   const sim = simulate(c, run), s = e.month === "dec" ? sim.decEnd : sim.janEnd, who = e.by === "you" ? "your order" : e.by === "staff-answer" ? "staff answer" : "staff";
   switch (e.kind) {
     case "beacon": {
       const [d0, d1] = e.def, [f0, f1] = e.fatigue;
+      const known = rec.events.some((x) => x.kind === "exposed" && dateKey(x) <= dateKey(e));
+      const exposed = known && (e.option === "quiet" || e.option === "show") ? ` Against a landing it counts as level ${d1 - 1}: ${R} knows where our guns are.` : "";
       const text = {
         quiet: `${e.month === "dec" ? "Two rifle companies and the air-defence battery dug in on the headland, by night." : `${B}’s air-defence battery reached full strength, by night.`} Defences level ${d0} to ${d1}. ${BN}: fatigue ${f0} to ${f1}.`,
         show: `${e.month === "dec" ? "The frigate and two companies exercised off" : "The frigate and two companies arrived off"} ${B} in daylight. Defences level ${d0} to ${d1}. ${BN}: fatigue ${f0} to ${f1}.${e.month === "jan" && run.jan?.way === "act" ? ` We told ${M} the next morning.` : ""}`,
         rest: `${BN} stood down from 18 to 31 December: fatigue ${f0} to ${f1}. ${B} stayed at level ${d1}.`,
         hold: `${BN} stood down from 10 January: fatigue ${f0} to ${f1}. ${B} stayed at level ${d1}.`,
-      }[e.option];
+      }[e.option] + exposed;
       return { at: "beacon", ring: e.option === "rest" || e.option === "hold" ? 190 : e.option === "show" ? 270 : 250, dashed: e.option === "rest" || e.option === "hold", cause: `${day(e)} · ${B}, ${who}`, text };
     }
     case "staff": {
@@ -363,6 +375,8 @@ function eventBeat(c, run, e, rec) {
       }[c.plan][e.beacon] : `${R}’s warships and landing craft in ${S} are taking on fuel and stores. They could sail within days.`;
       return { at: "lane", cause: `${day(e)} · ${R}`, text };
     }
+    case "cabinet":
+      return { at: "beacon", cause: `${day(e)} · ${MA} cabinet`, text: `${surname("sato")}’s count: ${e.to.for} for, ${e.to.against} against, from ${e.from.for} for, ${e.from.against} against. Ministers moved for reasons we can’t pin down.` };
     case "rotation":
       return { at: "beacon", cause: `${day(e)} · ${BN}, staff`, text: `With the true date in hand, ${surname("okafor")} stood ${BN} down a company at a time until the last week: ${e.fatigue} less fatigue.${e.corrected ? " December’s date had been planted." : ""}` };
     case "coalition": {
@@ -381,7 +395,7 @@ function eventBeat(c, run, e, rec) {
 }
 
 function intelBeat(i) {
-  return { at: i.source.startsWith("lattice") ? "harbour" : "lane", cause: `${day(i)} · ${SOURCE()[i.source]}`, text: intelLine(i), marker: i.source.startsWith("lattice") ? `${L}: ${claimText(i).slice(0, 48)}` : null };
+  return { at: i.source.startsWith("lattice") ? "harbour" : "lane", cause: `${day(i)} · ${SOURCE()[i.source]}`, text: intelLine(i), marker: i.source.startsWith("lattice") ? clip(claimText(i).replace(/^./, (x) => x.toUpperCase()), 52) : null };
 }
 
 // What a month changed, readout by readout.
@@ -395,7 +409,7 @@ export function night(c, run, month) {
   const start = { month, day: 1 };
   const inMonth = (x) => x.month === month && dateKey(x) >= dateKey(start) && dateKey(x) <= dateKey(end) + 99;
   const beats = [
-    ...rec.events.filter((e) => inMonth(e) && !["exposed", "decision", "sailed", "contact"].includes(e.kind)).map((e) => ({ k: dateKey(e), b: eventBeat(c, run, e, rec) })),
+    ...rec.events.filter((e) => inMonth(e) && !["exposed", "decision", "sailed", "contact"].includes(e.kind)).map((e) => { const b = eventBeat(c, run, e, rec); return { k: dateKey(e), b: b && { ...b, text: b.text + cabinetTail(e) } }; }),
     ...rec.intel.filter((i) => inMonth(i) && !(i.month === "dec" && i.day === 1)).map((i) => ({ k: dateKey(i), b: intelBeat(i) })),
   ].filter((x) => x.b).sort((a, b) => a.k - b.k).map((x) => x.b);
   const s = month === "dec" ? sim.decEnd : sim.janEnd;
@@ -411,10 +425,10 @@ export function night(c, run, month) {
 const fightAtSea = { dove: "some ministers will blame us for every sailor lost", firm: "the cabinet will count its losses against us", hawk: "the defence minister will make heroes of them" };
 
 // One requirement, in words, for the risk table and the debrief.
-function requirementText(r, chk, s) {
-  if (r.key === "defences") return `${B}’s defences at level ${r.need} or more (now level ${chk.def}${s.rivalKnows ? `, one lower because ${R} knows where our guns are` : ""}${s.radarFails ? ", one lower since the radar failed" : ""})`;
-  if (r.key === "warning") return `${r.need} (${chk.warned ? "we have it" : "we have none"})`;
-  if (r.key === "fit") return `${r.need} (fatigue ${s.fatigue})`;
+function requirementText(r, chk, s, past = false) {
+  if (r.key === "defences") return `${B}’s defences at level ${r.need} or more (${past ? "they were" : "now"} level ${chk.def}${s.rivalKnows ? `, one lower because ${R} knows where our guns are` : ""}${s.radarFails ? ", one lower since the radar failed" : ""})`;
+  if (r.key === "warning") return `${r.need} (${chk.warned ? (past ? "we had it" : "we have it") : (past ? "we had none" : "we have none")})`;
+  if (r.key === "fit") return `${r.need} (${BN} at fatigue ${s.fatigue})`;
   return r.need;
 }
 
@@ -466,7 +480,7 @@ export function february(c, run) {
   return {
     turn: 6, when: dayTime(d),
     halden: `${moment} ${k.count ? `${k.count} craft${k.count >= 12 ? ", enough for a second wave" : ""}.` : "I don’t have a count, so I can’t rule out a second wave."}`,
-    warning: [dayTime(d), `${moment} ${waves} ${B}’s defences: ${defenceLabel(effectiveDefence(s))}.`],
+    warning: [dayTime(d), `${moment} ${waves} ${B}’s defences: ${defenceText(s)}.`],
     routes,
     notOffered: s.navy ? "" : s.actedAlone
       ? `Standing with ${M}’s navy is off the table: you moved in January without ${M}’s approval, and its navy stays in port.`
@@ -515,7 +529,7 @@ export function showdown(c, run) {
     ],
     play: { callouts: [
       [0, "harbour", o.warned ? (o.listening ? `${L}: troops boarding, two days’ warning` : "Patrol boats: seen leaving, on the known date") : "No warning: seen only as they sail", o.warned ? "ok" : "bad"],
-      [1, "beacon", `Defences: ${defenceLabel(o.def)}`, o.def >= 3 ? "ok" : o.def >= 2 ? "warn" : "bad"],
+      [1, "beacon", `Defences: level ${o.def}${o.def < s.def ? " (they know our guns)" : `, ${defWord(o.def)}`}`, o.def >= 3 ? "ok" : o.def >= 2 ? "warn" : "bad"],
       [1, "unit", `Before: fatigue ${s.fatigue}${o.fit ? "" : ", unfit"}`, o.fit ? "ok" : "bad"],
       [2, "beacon", !o.boarded ? "No troops aboard" : o.code === "stopped" ? (o.big ? "Warned: both waves met at sea" : "One wave: turned at sea")
         : o.code === "landed" ? "No warning: the second wave gets past"
@@ -563,7 +577,8 @@ function orderedLine(rec, month, run) {
   const parts = rec.events.filter((e) => e.month === month && ["beacon", "incident"].includes(e.kind)).map((e) => {
     const tag = e.by === "you" ? "" : " (staff)";
     if (e.kind === "incident") return `${incidentById(e.id).options.find((o) => o.id === e.option).name}${tag}.`;
-    return `${{ quiet: `Strengthen ${B} quietly`, rest: `Rest ${BN}`, show: `Show force openly`, hold: "Hold as we are" }[e.option]}${month === "jan" && e.option === "quiet" ? "" : ""}${tag}.`;
+    const jan = month === "jan";
+    return `${{ quiet: `${jan ? "Reinforce" : "Strengthen"} ${B} quietly`, rest: `Rest ${BN}`, show: jan ? `Reinforce ${B} openly` : "Show force openly", hold: "Hold as we are" }[e.option]}${tag}.`;
   });
   const q = month === "dec" ? latticeQ(run.dec?.lattice ?? "boats") : latticeQ(run.jan?.lattice ?? "sarn", "jan");
   parts.push(`${L}: ${q.short}${q.staff ? " (staff)" : ""}.`);
@@ -575,7 +590,7 @@ function believedLine(rec, month) {
   const end = month === "dec" ? { month: "dec", day: 31 } : month === "jan" ? rec.logEnd.jan : rec.decision;
   const known = knownAt(rec, end);
   if (month === "feb") return known.boarding ? (known.boarding.claim.value ? `${L} heard troops ordered aboard.` : `${L} heard no boarding order.`) : "We could not tell whether troops were aboard.";
-  const items = ["count", "role", "date", "reaction", "plan"].filter((kk) => known[kk] && (month === "dec" || known[kk].month === "jan" || kk === "count")).map((kk) => `${claimText(known[kk])} (${CERTAINTY[known[kk].certainty]})`);
+  const items = ["count", "role", "date", "reaction", "plan", ...(month === "jan" ? ["boarding"] : [])].filter((kk) => known[kk] && (month === "dec" || known[kk].month === "jan")).map((kk) => `${claimText(known[kk])} (${CERTAINTY[known[kk].certainty]})`);
   return items.length ? `${items.join("; ")}.`.replace(/^./, (x) => x.toUpperCase()) : "Nothing new.";
 }
 
@@ -586,7 +601,7 @@ export function debrief(c, run) {
   const planted = rec.intel.some((i) => !i.truth && dateKey(i) <= dateKey(rec.decision));
   const allyLine = o.kept.ally ? `The ${MA} cabinet backs us, ${v.for} for, ${v.against} against.` : `The ${MA} cabinet is against us, ${v.for} for, ${v.against} against: ${M}’s support is in doubt for the spring.`;
   const battalionLine = `${BN} ends ${o.kept.battalion ? "fit" : "unfit"} at fatigue ${f}${strength < (c.strength ?? W.battalion) ? `, and ${strength} strong after its losses` : ""}.`;
-  const req = (r) => requirementText(r, o.check, s);
+  const req = (r) => requirementText(r, o.check, s, true);
   const why = o.code === "lost" ? `Why it fell: it needed ${o.failed.map(req).join("; and ")}.`
     : o.code === "held" ? (o.engaged ? `Why it held: ${o.check.needs.map(req).join("; ")}.` : `Why it held: ${B}’s defences at level ${o.def} hold one wave without ${BN}.`)
       : o.code === "repelled" ? `Why it held: ${BN} was dug in before they landed; ${o.check.needs.map(req).join("; ")}.`
@@ -646,7 +661,7 @@ onWorld(() => {
     jan: [
       { id: "sarn", q: `Stay on ${S}’s harbour net`, short: `${S}’s harbour net`, staff: true, mark: { at: "harbour", text: `${L}: listening for troops boarding` }, means: `Keeps the two days’ warning: if ${R} orders troops aboard, we hear it before the ships sail, and we know whether this is a landing.`, reply: `My ears stay on the quay.` },
       { id: "when", q: "Listen to the fleet command net for the sailing date", short: "the sailing date", mark: { at: "harbour", text: `${L}: fleet net · no boarding warning`, tone: "warn" }, means: (k) => `${k.date ? `Checks December’s date against a second source, so a planted date is caught. ` : `Gives the true sailing date by 8 January. `}With it, ${surname("okafor")} stands ${BN} down a company at a time: ${DATE_REST} less fatigue. But ${L} stops hearing ${S}’s harbour: in February we won’t know whether troops are aboard. The patrol boats would still see them sail on the date.`, reply: `The fleet net. When they sail, I’ll know the day and not the cargo.` },
-      { id: "who", q: "Listen to the fishing fleet", short: "the fishing fleet", mark: { at: "lane", text: `${L}: fishing fleet · no boarding warning`, tone: "warn" }, means: (k) => `${k.role ? "We already have a reading of the fishing boats; this would confirm it. " : `Confirms what the fishing boats are for: a screen for a landing, a show or scouting. `}${L} stops hearing ${S}’s harbour: in February we won’t know whether troops are aboard.`, reply: `The fishing boats, then. We give up the quay for it.` },
+      { id: "who", q: "Listen to the fishing fleet", short: "the fishing fleet", mark: { at: "lane", text: `${L}: fishing fleet · no boarding warning`, tone: "warn" }, means: (k) => `${k.roleSure ? "Our boarding party has already confirmed what the fishing boats are for: this adds nothing. " : k.role ? "We already have a reading of the fishing boats; this would confirm it. " : `Confirms what the fishing boats are for: a screen for a landing, a show or scouting. `}${L} stops hearing ${S}’s harbour: in February we won’t know whether troops are aboard.`, reply: `The fishing boats, then. We give up the quay for it.` },
     ],
   };
   BOATS = `Without the boats, only ${L} on ${S}’s harbour net would warn us before they arrive.`;

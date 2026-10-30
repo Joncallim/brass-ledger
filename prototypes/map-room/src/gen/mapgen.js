@@ -150,7 +150,7 @@ function attempt(world, r, tag) {
     },
     station: { place: "beacon", name: world.station, note: "our radar and radio post", side: "left", range: 250, term: "beacon" },
     base: { place: "harbour", craft: 9 },
-    intel: { at: [Math.round(laneAt(intelY) + 300), Math.round(intelY)], title: `${world.network} is asking:` },
+    intel: { at: [Math.round(laneAt(intelY) + 300), Math.round(intelY)], title: `${world.network} reports:` },
     fleets: {
       lane: { ships: lane, label: { text: `${world.rival} coastguard boats`, at: [Math.round(laneAt(ly) + 72), ly + 90] } },
       edge: { ships: edge, label: { text: `${world.rival} ships\nat ${world.stationShort}’s edge`, at: [station.x + 290, station.y - 100], tone: "danger" } },

@@ -61,7 +61,7 @@ export default {
   // Live (animated) objects and where they sit.
   station: { place: "beacon", name: "Beacon Station", note: "our radar and radio post", side: "left", range: 250, term: "beacon" },
   base: { place: "harbour", craft: 9 },
-  intel: { at: [1240, 470], title: "Lattice is asking:" },
+  intel: { at: [1240, 470], title: "Lattice reports:" },
   fleets: {
     lane: { ships: [[960, 400, 80], [990, 470, 95], [940, 545, 85]],
       label: { text: "Ravellan coastguard boats", at: [1012, 560] } },

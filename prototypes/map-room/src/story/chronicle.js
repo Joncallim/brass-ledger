@@ -5,7 +5,7 @@
 //
 // It holds facts only, no words; copy.js turns them into sentences with the theatre's names.
 // Pure: the same campaign and choices always give the same record.
-import { incidentById } from "./incidents.js";
+import { incidentById, incidentDay } from "./incidents.js";
 import { DATE_REST, effectiveDefence, ministersFor, outcome, simulate } from "./play.js";
 
 // A date as (month, day, hour), ordered: December, January, February.
@@ -39,6 +39,11 @@ export function chronicle(c, run = {}) {
   const ev = (date, kind, facts = {}) => events.push({ ...date, kind, ...facts });
   const know = (date, source, claim, certainty, truth) => intel.push({ ...date, source, claim, certainty, truth });
 
+  // The cabinet's count, and every move in it, logged against the event that moved it.
+  const count = (x) => ministersFor(x.support), tally = (x) => ({ for: count(x), against: 11 - count(x) });
+  const moved = (a, b) => (count(a) === count(b) ? null : { from: tally(a), to: tally(b) });
+  const movedBy = (key) => { const m = sim.janEnd.moved?.[key]; return m ? moved({ support: m[0] }, { support: m[1] }) : null; };
+
   // ── December ──
   know(at("dec", 1), "lattice-harbour", { kind: "count", value: c.craft.dec }, "confirmed", true);
   for (const month of ["dec", "jan"]) {
@@ -46,19 +51,23 @@ export function chronicle(c, run = {}) {
     const e = c.staffEvent;
     if (e?.month === month) {
       const inc = incidentById(e.id), pick = orders.staffDone?.[month];
-      ev(at(month, inc.day[month]), "staff", { id: e.id, option: pick, by: "staff", fatigue: e.id === "radar" ? 12 : 0 });
-      if (e.id === "defector" && orders.knows.claim) know(at(month, inc.day[month] + 7), "defector", { kind: "plan", value: orders.knows.claim.plan }, "claimed", !orders.knows.claim.planted);
+      ev(at(month, incidentDay(c, e.id, month)), "staff", { id: e.id, option: pick, by: "staff", fatigue: e.id === "radar" ? 12 : 0, cabinet: movedBy(`staff-${month}`) });
+      if (e.id === "defector" && orders.knows.claim) know(at(month, incidentDay(c, e.id, month) + 7), "defector", { kind: "plan", value: orders.knows.claim.plan }, "claimed", !orders.knows.claim.planted);
     }
     const id = c.incidents[month];
     if (id) {
       const inc = incidentById(id), pick = orders.incident[month];
-      ev(at(month, inc.day[month]), "incident", { id, option: pick, by: inc.options.find((x) => x.id === pick)?.staff ? "staff-answer" : "you" });
-      if (id === "collision" && pick === "search") know(at(month, inc.day[month]), "search", { kind: "role", value: c.fleetRole }, "confirmed", true);
-      if ((id === "leak" && pick === "brief") || (id === "visit" && pick === "open")) ev(at(month, inc.day[month] + 1), "exposed", { id });
+      ev(at(month, incidentDay(c, id, month)), "incident", { id, option: pick, by: inc.options.find((x) => x.id === pick)?.staff ? "staff-answer" : "you", cabinet: movedBy(`incident-${month}`) });
+      if (id === "collision" && pick === "search") know(at(month, incidentDay(c, id, month)), "search", { kind: "role", value: c.fleetRole }, "confirmed", true);
+      if ((id === "leak" && pick === "brief") || (id === "visit" && pick === "open")) ev(at(month, incidentDay(c, id, month) + 1), "exposed", { id });
     }
   }
   const db = run.dec?.beacon ?? "quiet";
-  ev(at("dec", 18), "beacon", { option: db, by: db === "quiet" ? "staff" : "you", def: [sim.decOrders.def, sim.decEnd.def], fatigue: [sim.decOrders.fatigue, sim.decEnd.fatigue], rested: db === "rest" ? { from: at("dec", 18), to: at("dec", 31) } : null });
+  // The day the order promised: in place by the 20th by night, the frigate from the 19th, rest from the 18th.
+  ev(at("dec", { quiet: 20, show: 19, rest: 18 }[db]), "beacon", { option: db, by: db === "quiet" ? "staff" : "you", def: [sim.decOrders.def, sim.decEnd.def], fatigue: [sim.decOrders.fatigue, sim.decEnd.fatigue], rested: db === "rest" ? { from: at("dec", 18), to: at("dec", 31) } : null, cabinet: moved(sim.decOrders, sim.decBeacon) });
+  // Ministers who move on their own (drift, or the rival's press): logged when the count changes.
+  const drift = [[sim.decBeacon, sim.decEnd, at("dec", 31, 9)], [sim.decEnd, sim.janDrift, at("jan", 2, 8)]];
+  for (const [a, b, date] of drift) { const m = moved(a, b); if (m) ev(date, "cabinet", m); }
   if (db === "show") know(at("dec", 21), "reaction", { kind: "reaction", value: sim.decEnd.knows.reaction }, "likely", true);
   const q = run.dec?.lattice ?? "boats";
   if (q === "boats") know(at("dec", 27), "lattice-harbour", { kind: "count", value: c.craft.jan }, "confirmed", true);
@@ -81,7 +90,7 @@ export function chronicle(c, run = {}) {
     : s.actedAlone ? { how: "acted", day: 17 }
       : s.approvedBy === "hotline" ? { how: "hotline", day: 15 }
         : { how: "vote", day: c.voteDay };
-  ev(at("jan", coalition.day), "coalition", { how: coalition.how, navy: s.navy, for: forUs, against: 11 - forUs });
+  ev(at("jan", coalition.day), "coalition", { how: coalition.how, navy: s.navy, for: forUs, against: 11 - forUs, cabinet: moved(sim.janOrders, s) });
   if (s.radarFails) ev(at("jan", Math.min(28, end.day)), "radar-failed", {});
   ev(at("jan", Math.min(30, end.day)), "rival", { plan: s.plan });
   if (jq === "sarn") know(at("jan", end.day), "lattice-harbour", { kind: "boarding", value: false, asOf: end }, "confirmed", true);

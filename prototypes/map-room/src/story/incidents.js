@@ -12,6 +12,13 @@ export const ENG_DAYS = 12;
 
 export let INCIDENTS;
 
+// The day an incident lands. January's come before the cabinet's vote (and any deal with
+// it), because the rules count them in it and the slip comes before January's orders.
+export function incidentDay(c, id, month) {
+  const d = incidentById(id).day[month];
+  return month === "jan" ? Math.min(d, Math.min(c.voteDay, 14) - 1) : d;
+}
+
 export const incidentById = (id) => INCIDENTS.find((x) => x.id === id);
 
 // Recomputed whenever the theatre changes (see setWorld in src/story/world.js).
@@ -84,7 +91,7 @@ onWorld(() => {
         { id: "return", name: "Apologise and return the crew", says: `Treat the fisherman and send boat and crew home by morning. ${R} gets its story; the cabinet loses a little patience.`, staff: true,
           effect: (s, c, k) => { s.support -= n(3, k); } },
         { id: "search", name: "Hold the boat and search it", says: `Board and search before releasing the crew: we learn, for certain, what ${R}’s fishing fleet is for. ${R} calls it piracy, and the cabinet takes it badly.`, seal: true,
-          effect: (s, c, k) => { s.knows.role = c.fleetRole; s.tension += 1; s.support -= n(c.minister === "dove" ? 8 : 4, k); } },
+          effect: (s, c, k) => { s.knows.role = c.fleetRole; s.knows.roleSure = true; s.tension += 1; s.support -= n(c.minister === "dove" ? 8 : 4, k); } },
       ],
       council: () => ({
         okafor: { prefers: "return", line: "A man with a broken arm on our deck is their picture, not ours. Send him home tonight.", because: "the injured fisherman", risk: `${R} gets a second story: we held an injured man.` },

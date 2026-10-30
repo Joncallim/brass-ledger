@@ -1,7 +1,7 @@
 // How the campaign state moves with your choices. Pure and deterministic: the same campaign
 // and the same choices always give the same state, which is what the copy and the map read.
 // Prototype rules awaiting sign-off; packages/sim stays the authority for the real game.
-import { incidentById } from "./incidents.js";
+import { incidentById, incidentDay } from "./incidents.js";
 
 const n = (x, k) => Math.round(x * k);
 const MINISTER_PENALTY = { dove: 20, firm: 12, hawk: 6 }; // a daylight move made without the cabinet
@@ -14,7 +14,9 @@ function applyStaffEvent(c, month, s) {
   const e = c.staffEvent;
   if (!e || e.month !== month) return;
   const opt = incidentById(e.id).options.find((o) => o.staff);
+  const was = s.support;
   opt.effect(s, c, c.D.severity);
+  s.moved = { ...(s.moved ?? {}), [`staff-${month}`]: [was, s.support] };
   s.staffDone = { ...(s.staffDone ?? {}), [month]: opt.id };
 }
 
@@ -23,8 +25,18 @@ function applyIncident(c, month, choice, s) {
   if (!id) return;
   const inc = incidentById(id);
   const opt = inc.options.find((o) => o.id === choice) ?? inc.options.find((o) => o.staff);
+  const was = s.support;
   opt.effect(s, c, c.D.severity);
+  s.moved = { ...(s.moved ?? {}), [`incident-${month}`]: [was, s.support] };
   s.incident[month] = opt.id;
+}
+
+// The month's staff business and incident, in the order of their dates.
+function applyMonthEvents(c, month, choice, s) {
+  const staffDay = c.staffEvent?.month === month ? incidentDay(c, c.staffEvent.id, month) : 99;
+  const incDay = c.incidents[month] ? incidentDay(c, c.incidents[month], month) : 99;
+  if (incDay < staffDay) { applyIncident(c, month, choice, s); applyStaffEvent(c, month, s); }
+  else { applyStaffEvent(c, month, s); applyIncident(c, month, choice, s); }
 }
 
 // Snapshots at each point the screens need: the start of a month, the moment orders are
@@ -44,8 +56,7 @@ export function simulate(c, run = {}) {
   const take = () => structuredClone(s);
   snap.decStart = take();
 
-  applyStaffEvent(c, "dec", s);
-  applyIncident(c, "dec", run.dec?.incident, s);
+  applyMonthEvents(c, "dec", run.dec?.incident, s);
   snap.decOrders = take();
   const db = run.dec?.beacon ?? "quiet";
   if (db === "quiet") { s.def += 1; s.fatigue += 31; }
@@ -57,6 +68,7 @@ export function simulate(c, run = {}) {
     s.knows.reaction = { land: "faster", bluff: "cameras", probe: "probing" }[c.plan];
   }
   s.fatigue += s.eng; s.eng = 0;
+  snap.decBeacon = take();
   // December's question buys knowledge only. Lattice goes back to Sarn's harbour net in
   // January unless January's orders point it elsewhere, so the February warning is
   // decided by the January question.
@@ -73,8 +85,12 @@ export function simulate(c, run = {}) {
   s.support += c.drift.dec;
   snap.decEnd = take();
 
-  applyStaffEvent(c, "jan", s);
-  applyIncident(c, "jan", run.jan?.incident, s);
+  // The cabinet's own drift and the rival's press land in early January, before your
+  // orders, so the count on the ally's slip is the count the vote will use unless you change it.
+  if (c.plan === "bluff") s.support -= n(BLUFF_PRESS, k);
+  s.support += c.drift.jan;
+  snap.janDrift = take();
+  applyMonthEvents(c, "jan", run.jan?.incident, s);
   snap.janOrders = take();
   const jb = run.jan?.beacon ?? "quiet", way = run.jan?.way ?? null;
   if (jb === "quiet") { s.def += 1; s.ring = Math.max(s.ring, 32); s.fatigue += 31; }
@@ -94,8 +110,6 @@ export function simulate(c, run = {}) {
     s.notes.push("rest-to-date");
   }
   if (jq === "who") s.knows.role = c.fleetRole;
-  if (c.plan === "bluff") s.support -= n(BLUFF_PRESS, k);
-  s.support += c.drift.jan;
   const hotlineYes = c.hotline && snap.janOrders.support >= 55;
   if (way === "buy") { s.boats -= 2; s.navy = true; s.approvedBy = "trade"; }
   else if (jb === "show" && way === "act") {

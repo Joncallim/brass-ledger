@@ -6,7 +6,7 @@ import { WORLD as W, onWorld } from "./world.js";
 import { OFFICERS } from "./officers.js";
 import { host, incident, knownLines, latticeOrders, latticeQ, orders, status } from "./copy.js";
 import { ministersFor, simulate } from "./play.js";
-import { incidentById } from "./incidents.js";
+import { incidentById, incidentDay } from "./incidents.js";
 
 let MA, R, S, B;
 // Lower-case only the first letter, so names inside an option (Beacon, Marenna) keep theirs.
@@ -78,7 +78,7 @@ export function ledger(c, run, progress) {
   const entries = [];
   const add = (when, title, lines, stateKey) => entries.push({ when, title, lines, after: stateKey && status(c, sim[stateKey]) });
   if (progress >= 1 && c.staffEvent?.month === "dec") add(`${incidentById(c.staffEvent.id).day.dec} December`, incidentById(c.staffEvent.id).title, [`Staff handled: ${lower(incidentById(c.staffEvent.id).options.find((o) => o.staff).name)}.`], null);
-  if (progress >= 3 && c.staffEvent?.month === "jan") add(`${incidentById(c.staffEvent.id).day.jan} January`, incidentById(c.staffEvent.id).title, [`Staff handled: ${lower(incidentById(c.staffEvent.id).options.find((o) => o.staff).name)}.`], null);
+  if (progress >= 3 && c.staffEvent?.month === "jan") add(`${incidentDay(c, c.staffEvent.id, "jan")} January`, incidentById(c.staffEvent.id).title, [`Staff handled: ${lower(incidentById(c.staffEvent.id).options.find((o) => o.staff).name)}.`], null);
   if (progress >= 1 && c.incidents.dec) {
     const I = incident(c, done, "dec"), pick = done.dec.incident ?? I.staffId, o = I.options.find((x) => x.id === pick);
     add(I.date, I.title, [`${o.staff ? "Staff answer" : "Your call, one personal order"}: ${lower(o.name)}.`], "decOrders");
