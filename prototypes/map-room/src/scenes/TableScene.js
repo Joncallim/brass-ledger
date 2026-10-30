@@ -385,15 +385,13 @@ export class TableScene extends Phaser.Scene {
     }
   }
 
-  // ── the showdown, played on the chart ─────────────────────────────────────
-  // February resolves as five steps the report reads in step with: they sail, we move,
-  // contact, how it ended, and the cost. Every step has an end state, so skipping, reduced
-  // motion and a full play all leave the chart showing what the report says.
-  showdownSetup(f) {
-    this.showdownClear();
-    this.setBoats("none");
-    this.boatLabel?.destroy(); this.boatLabel = null;
-    this.warning.setAlpha(0); this.landingBoats.setAlpha(0);
+  // ── battles, played on the chart ──────────────────────────────────────────
+  // A battle arrives as a plan (src/story/battle.js): actors, their moves along named anchors,
+  // effects and labels, in steps the report reads in step with. This scene resolves the
+  // anchors on whatever chart it has and plays the plan; it knows nothing about how a campaign
+  // is won or lost. Every step has an end state, so skipping, reduced motion and a full play
+  // all leave the chart showing what the report says.
+  anchors() {
     const toSheet = (p) => ({ x: p.x - OX, y: p.y - OY }), land = (p) => this.geo.isLand(p.x - OX, p.y - OY);
     const lane = this.sc.features.find((x) => x.type === "lane")?.path ?? [];
     const laneAt = (y) => OX + (lane.reduce((best, p) => (Math.abs(p[1] - (y - OY)) < Math.abs(best[1] - (y - OY)) ? p : best), lane[0] ?? [toSheet(this.at("lane")).x, 0])[0]);
@@ -401,33 +399,53 @@ export class TableScene extends Phaser.Scene {
     const B = this.at(this.sc.station.place), H = this.at(this.sc.base.place);
     const beach = seaward(B), approach = { x: beach.x + 170, y: beach.y };
     const flank = [130, -130, 180, -180].map((dy) => seaward({ x: B.x, y: B.y + dy })).find((p) => !land(p) && p.y > OY + 40 && p.y < OY + MH - 40) ?? beach;
-    const route = [H, { x: laneAt(H.y), y: H.y }, { x: laneAt((H.y + B.y) / 2) + 40, y: (H.y + B.y) / 2 }, approach];
     let reserve = { x: B.x - 170, y: B.y + 70 };
     if (!land(reserve)) reserve = { x: B.x - 90, y: B.y + 40 };
     let dug = { x: beach.x - 46, y: beach.y + 24 };
     if (!land(dug)) dug = { x: B.x - 10, y: B.y + 30 };
     const friendStart = seaward({ x: B.x - 60, y: Math.min(OY + MH - 60, B.y + 280) });
-    const lineX = approach.x + 70, line = [-80, 0, 80].map((dy) => ({ x: lineX, y: approach.y + dy }));
-    const P = this.sd = { f, beach, approach, flank, route, reserve, dug, friendStart, line, H, B, timers: [] };
-    // Where the explaining labels go: under the harbour, and above the station's seaward side.
-    P.callAt = { harbour: { x: H.x, y: H.y + 112 }, beacon: { x: B.x + 150, y: B.y - 70 }, contact: { x: B.x + 150, y: B.y - 112 } };
+    const line = { x: approach.x + 70, y: approach.y };
+    const home = { x: reserve.x - 120, y: reserve.y + 40 };
+    return { harbour: H, laneOut: { x: laneAt(H.y), y: H.y }, laneMid: { x: laneAt((H.y + B.y) / 2) + 40, y: (H.y + B.y) / 2 }, approach, station: B, beach, flank, reserve, dug, friendStart, line, home };
+  }
+
+  // Where a label sits: under the harbour, above the station's seaward side, or by a unit.
+  labelAt(l, P) {
+    const A = P.A;
+    if (l.at === "harbour") return { x: A.harbour.x, y: A.harbour.y + 112 };
+    if (l.at === "station") return { x: A.station.x + 150, y: A.station.y - 70 };
+    if (l.at === "contact") return { x: A.station.x + 150, y: A.station.y - 112 };
+    const u = P.actors.unit ?? Object.values(P.actors)[0];
+    return { x: u.x, y: u.y + (l.above ? -46 : 52) };
+  }
+
+  playPlan(plan) {
+    this.showdownClear();
+    this.setBoats("none");
+    this.boatLabel?.destroy(); this.boatLabel = null;
+    this.warning.setAlpha(0); this.landingBoats.setAlpha(0);
+    const A = this.anchors();
+    const P = this.sd = { plan, f: plan, A, actors: {}, timers: [], tags: [], fx: [], steps: [] };
     const later = (ms, fn) => P.timers.push(this.time.delayedCall(ms, fn));
-
     const ship = (key, x, y) => this.add.image(x, y, key).setScale(0.62);
-    P.escorts = this.add.container(H.x, H.y, [ship("boat", 18, -26), ship("boat", 18, 26), ship("boat", 46, 0), ship("boat", -14, 0)]);
-    const n = Math.min(8, f.craft);
-    P.craft = this.add.container(H.x, H.y, Array.from({ length: n }, (_, i) => this.add.image(-60 - (i % 4) * 26, -18 + Math.floor(i / 4) * 30, "landingcraft")));
-    P.friends = this.add.container(friendStart.x, friendStart.y, line.map((p, i) => ship("friend", 0, (i - 1) * 34)));
-    P.unit = this.add.container(reserve.x, reserve.y, [this.add.image(0, 0, "unit"), this.add.text(-80, 22, f.unitName, { ...MUTED, fontSize: "16px", fontStyle: "600", color: "#1B1A18", align: "center", fixedWidth: 160 })]);
+    const make = {
+      escort: (a) => [ship("boat", 18, -26), ship("boat", 18, 26), ship("boat", 46, 0), ship("boat", -14, 0)].slice(0, a.count ?? 4),
+      craft: (a) => Array.from({ length: a.count ?? 4 }, (_, i) => this.add.image(-60 - (i % 4) * 26, -18 + Math.floor(i / 4) * 30, "landingcraft")),
+      friend: (a) => Array.from({ length: a.count ?? 3 }, (_, i) => ship("friend", 0, (i - 1) * 34)),
+      transport: (a) => Array.from({ length: a.count ?? 2 }, (_, i) => ship("friend", -i * 30, i * 22)),
+      unit: (a) => [this.add.image(0, 0, "unit"), this.add.text(-80, 22, a.label ?? "", { ...MUTED, fontSize: "16px", fontStyle: "600", color: "#1B1A18", align: "center", fixedWidth: 160 })],
+    };
+    for (const a of plan.actors) {
+      const p = A[a.at];
+      const o = this.add.container(p.x, p.y, make[a.kind](a)).setAlpha(a.hidden ? 0 : 1);
+      if (a.kind !== "unit") o.rotation = Math.atan2(A.laneOut.y - p.y, A.laneOut.x - p.x);
+      P.actors[a.id] = o;
+    }
     P.trench = this.add.graphics();
-    P.fx = this.add.graphics();
-    P.tags = [];
-    for (const o of [P.escorts, P.craft, P.friends, P.unit]) o.setAlpha(0);
-    P.escorts.rotation = P.craft.rotation = Math.atan2(route[1].y - H.y, route[1].x - H.x);
-
-    const go = (obj, pts, dur, turn = obj !== P.unit) => {
-      // Along a polyline, bow first.
-      const segs = [], total = pts.slice(1).reduce((s, p, i) => s + Phaser.Math.Distance.BetweenPoints(pts[i], p), 0) || 1;
+    const pt = (name, off) => ({ x: A[name].x + (off?.x ?? 0), y: A[name].y + (off?.y ?? 0) });
+    const turns = (id) => plan.actors.find((a) => a.id === id)?.kind !== "unit";
+    const go = (obj, pts, dur, turn) => {
+      const total = pts.slice(1).reduce((sum, p, i) => sum + Phaser.Math.Distance.BetweenPoints(pts[i], p), 0) || 1;
       const t = { v: 0 };
       this.tweens.add({ targets: t, v: 1, duration: dur, ease: EASE.travel, onUpdate: () => {
         let d = t.v * total;
@@ -436,138 +454,114 @@ export class TableScene extends Phaser.Scene {
           if (d <= len || i === pts.length - 1) {
             const k = len ? Math.min(1, d / len) : 1;
             obj.setPosition(pts[i - 1].x + (pts[i].x - pts[i - 1].x) * k, pts[i - 1].y + (pts[i].y - pts[i - 1].y) * k);
-            if (turn) obj.rotation = Math.atan2(pts[i].y - pts[i - 1].y, pts[i].x - pts[i - 1].x);
+            if (turn && len) obj.rotation = Math.atan2(pts[i].y - pts[i - 1].y, pts[i].x - pts[i - 1].x);
             break;
           }
           d -= len;
         }
       } });
-      segs.push(t);
     };
-    const place = (obj, p, angleFrom) => { obj.setPosition(p.x, p.y); if (angleFrom) obj.rotation = Math.atan2(p.y - angleFrom.y, p.x - angleFrom.x); };
+    const place = (obj, path, turn, facing) => {
+      const pts = path, end = pts.at(-1), prev = pts.length > 1 ? pts.at(-2) : null;
+      obj.setPosition(end.x, end.y);
+      if (facing === "north") obj.rotation = -Math.PI / 2;
+      else if (turn && prev && (prev.x !== end.x || prev.y !== end.y)) obj.rotation = Math.atan2(end.y - prev.y, end.x - prev.x);
+      else if (!turn) obj.rotation = 0;
+    };
     const flash = (p, count = 6, dur = 1600) => {
-      const r = seeded(`fx-${p.x}-${p.y}`);
+      const r = seeded(`fx-${Math.round(p.x)}-${Math.round(p.y)}`);
       for (let i = 0; i < count; i++) {
         const c = this.add.circle(p.x + (r() - 0.5) * 70, p.y + (r() - 0.5) * 50, 6, i % 2 ? 0xe2702a : C.red).setAlpha(0);
         P.tags.push(c);
         this.tweens.add({ targets: c, alpha: { from: 0.95, to: 0 }, scale: { from: 0.6, to: 2.4 }, duration: 520, delay: (i * dur) / count });
       }
     };
-    const trench = () => {
+    const trench = (p) => {
       P.trench.clear().lineStyle(5, C.red, 0.9);
-      for (let i = 0; i < 7; i++) P.trench.lineBetween(dug.x - 30 + i * 9, dug.y - 30 + i * 9, dug.x - 22 + i * 9, dug.y - 18 + i * 9);
+      for (let i = 0; i < 7; i++) P.trench.lineBetween(p.x - 30 + i * 9, p.y - 30 + i * 9, p.x - 22 + i * 9, p.y - 18 + i * 9);
     };
-    const tag = (p, text, color = "#7E1A15") => P.tags.push(this.add.text(p.x, p.y, text, { ...LABEL, fontSize: "18px", fontStyle: "600", color, backgroundColor: "rgba(246,241,228,0.94)", padding: { x: 8, y: 4 } }).setOrigin(0.5));
-    const home = [approach, route[2], route[1], H];
-    const landed = ["held", "repelled", "landed", "lost"].includes(f.code);
-    const turned = !landed;
+    const effectEnd = (e) => {
+      if (e.kind === "trench") trench(A[e.at]);
+      if (e.kind === "flag" && !P.flag) P.flag = this.flag(A[e.at]);
+      if (e.kind === "fade" || e.kind === "hide") P.actors[e.actor].setAlpha(0);
+      if (e.kind === "show") P.actors[e.actor].setAlpha(1);
+    };
+    const effectPlay = (e) => later(e.delay ?? 0, () => {
+      if (e.kind === "flash") flash(A[e.at], e.count);
+      else if (e.kind === "fade") this.tweens.add({ targets: P.actors[e.actor], alpha: 0, duration: e.dur ?? 1400 });
+      else effectEnd(e);
+    });
+    P.steps = plan.steps.map((st) => ({
+      dur: st.dur ?? 2400,
+      play: () => {
+        for (const id of st.show ?? []) P.actors[id].setAlpha(1);
+        for (const m of st.moves ?? []) {
+          const obj = P.actors[m.actor], pts = m.path.map((n) => pt(n, m.offset));
+          later(m.delay ?? 0, () => { obj.setAlpha(1); if (m.facing === "north") obj.rotation = -Math.PI / 2; go(obj, pts, m.dur ?? 1600, turns(m.actor) && m.facing !== "north"); });
+        }
+        for (const e of st.effects ?? []) effectPlay(e);
+      },
+      end: () => {
+        for (const id of st.show ?? []) P.actors[id].setAlpha(1);
+        for (const m of st.moves ?? []) { const obj = P.actors[m.actor]; obj.setAlpha(1); place(obj, m.path.map((n) => pt(n, m.offset)), turns(m.actor), m.facing); }
+        for (const e of st.effects ?? []) if (e.kind !== "flash") effectEnd(e);
+      },
+      labels: st.labels ?? [],
+    }));
+    P.showdownTag = (p, text, color) => P.tags.push(this.add.text(p.x, p.y, text, { ...LABEL, fontSize: "18px", fontStyle: "600", color, backgroundColor: "rgba(246,241,228,0.94)", padding: { x: 8, y: 4 } }).setOrigin(0.5));
+  }
 
-    // Each step: what plays, and the state it leaves.
-    P.steps = [
-      { // 1 · they sail
-        play: () => { P.escorts.setAlpha(1); P.craft.setAlpha(1); go(P.escorts, route, 2600); later(250, () => go(P.craft, route.map((p) => ({ x: p.x - 10, y: p.y })), 2600)); },
-        end: () => { P.escorts.setAlpha(1); P.craft.setAlpha(1); place(P.escorts, approach, route[2]); place(P.craft, { x: approach.x - 10, y: approach.y }, route[2]); },
-        dur: 2900,
-      },
-      { // 2 · we move
-        play: () => {
-          if (f.route === "joint") { P.friends.setAlpha(1); go(P.friends, [friendStart, { x: lineX, y: friendStart.y }, line[1]], 2000); }
-          P.unit.setAlpha(1);
-          if (f.route === "forward") { go(P.unit, [reserve, dug], 1600); later(1500, trench); }
-        },
-        end: () => {
-          if (f.route === "joint") { P.friends.setAlpha(1); place(P.friends, line[1]); P.friends.rotation = -Math.PI / 2; }
-          P.unit.setAlpha(1); P.unit.rotation = 0;
-          if (f.route === "forward") { place(P.unit, dug); trench(); } else place(P.unit, reserve);
-        },
-        dur: 2200,
-      },
-      { // 3 · contact
-        play: () => {
-          if (f.code === "stopped") flash({ x: (line[1].x + approach.x) / 2 + 20, y: approach.y }, 5);
-          if (landed) {
-            const target = f.code === "landed" ? flank : beach;
-            go(P.craft, f.code === "landed" ? [approach, { x: approach.x, y: flank.y }, target] : [approach, target], 1800);
-            later(1500, () => flash(f.code === "repelled" ? dug : target, 8));
-            if (f.route !== "forward") later(f.warned ? 300 : 1900, () => go(P.unit, [reserve, dug], 900));
-            if (f.code === "lost") later(2000, () => { this.sd.flag = this.flag(B); });
-          }
-        },
-        end: () => {
-          P.unit.rotation = 0;
-          if (landed) {
-            place(P.craft, f.code === "landed" ? flank : beach);
-            if (f.route !== "forward") place(P.unit, dug);
-            if (f.code === "lost" && !P.flag) P.flag = this.flag(B);
-          }
-        },
-        dur: 2600,
-      },
-      { // 4 · how it ended
-        play: () => {
-          if (turned) { go(P.escorts, home, 2600); later(200, () => go(P.craft, home.map((p) => ({ x: p.x - 10, y: p.y })), 2600)); }
-          else if (f.code === "lost") { go(P.unit, [P.unit, reserve], 1400); go(P.escorts, [approach, { x: approach.x - 60, y: approach.y }], 1400); }
-          else { this.tweens.add({ targets: P.craft, alpha: 0, duration: 1400 }); flash(f.code === "landed" ? flank : beach, 4, 900); go(P.escorts, home, 2600); }
-        },
-        end: () => {
-          P.unit.rotation = 0;
-          if (turned) { place(P.escorts, H, home[2]); place(P.craft, { x: H.x - 10, y: H.y }, home[2]); }
-          else if (f.code === "lost") { place(P.unit, reserve); place(P.escorts, { x: approach.x - 60, y: approach.y }); }
-          else { P.craft.setAlpha(0); place(P.escorts, H, home[2]); }
-        },
-        dur: 2900,
-      },
-      { // 5 · the cost
-        play: () => this.showdownTags(),
-        end: () => this.showdownTags(),
-        dur: 900,
-      },
-    ];
-    P.tagged = false;
-    P.showdownTag = tag;
+  // Kept for the desk: the showdown is a plan like any other.
+  showdownSetup(plan) { this.playPlan(plan); }
+
+  // Every place a label or the battalion will be: the report must keep clear of all of them.
+  planPoints() {
+    const P = this.sd, A = P.A, pts = [], other = [];
+    const box = (p, text) => { const w = Math.min(560, 18 + text.length * 9.6); return [{ x: p.x - w / 2, y: p.y }, { x: p.x + w / 2, y: p.y }]; };
+    for (const a of P.plan.actors) (a.kind === "unit" ? pts : other).push(A[a.at]);
+    P.plan.steps.forEach((st) => {
+      for (const m of st.moves ?? []) for (const n of m.path) (P.plan.actors.find((a) => a.id === m.actor)?.kind === "unit" ? pts : other).push(A[n]);
+      for (const e of st.effects ?? []) if (e.at) pts.push(A[e.at]);
+    });
+    // Labels by a unit follow it to wherever its last move ends.
+    const unitEnd = (() => { let at = P.plan.actors.find((a) => a.kind === "unit")?.at; for (const st of P.plan.steps) for (const m of st.moves ?? []) if (P.plan.actors.find((a) => a.id === m.actor)?.kind === "unit") at = m.path.at(-1); return at; })();
+    const unitPts = [...new Set(P.plan.steps.flatMap((st) => (st.moves ?? []).filter((m) => P.plan.actors.find((a) => a.id === m.actor)?.kind === "unit").flatMap((m) => m.path)).concat(P.plan.actors.filter((a) => a.kind === "unit").map((a) => a.at)))];
+    for (const st of P.plan.steps) for (const l of st.labels ?? []) {
+      if (l.at === "unit") for (const n of unitPts.length ? unitPts : [unitEnd]) pts.push(...box({ x: A[n].x, y: A[n].y + (l.above ? -46 : 52) }, l.text));
+      else pts.push(...box(this.labelAt(l, P), l.text));
+    }
+    return { vital: pts.filter(Boolean), other: other.filter(Boolean) };
   }
 
   // Where the report can sit without covering the action: the first corner of the table
-  // whose box keeps clear of every place the showdown uses.
+  // whose box keeps clear of every place the plan uses, its labels included.
   showdownCorner(w, h) {
     const P = this.sd;
     if (!P) return [56, 108];
-    // The battalion's whole path and its labels must stay visible; ships and labels at sea
-    // matter too, but less.
-    const vital = [P.B, P.beach, P.flank, P.reserve, P.dug, { x: P.reserve.x, y: P.reserve.y - 60 }, { x: P.reserve.x, y: P.reserve.y + 60 }, { x: P.dug.x, y: P.dug.y - 60 }, P.callAt.beacon, P.callAt.contact];
-    const other = [P.H, P.approach, ...P.line, P.friendStart, ...P.route, P.callAt.harbour];
-    const covered = (pts, [x, y], ww) => pts.filter((p) => p.x > x - 80 && p.x < x + ww + 80 && p.y > y - 70 && p.y < y + h + 70).length;
-    for (const ww of [w, 460]) {
-      const corners = [[56, 108], [1864 - ww, 1040 - h], [56, 1040 - h], [1864 - ww, 108]];
-      const clear = corners.filter((c) => covered(vital, c, ww) === 0);
-      if (clear.length) { const best = clear.reduce((a, c) => (covered(other, c, ww) < covered(other, a, ww) ? c : a)); this.sdPanelWidth = ww; return best; }
+    const { vital, other } = this.planPoints();
+    const covered = (pts, [x, y], ww, hh) => pts.filter((p) => p.x > x - 24 && p.x < x + ww + 24 && p.y > y - 24 && p.y < y + hh + 24).length;
+    for (const [ww, hh] of [[w, h], [460, h], [400, h + 60]]) {
+      const corners = [[56, 108], [1864 - ww, 1064 - hh], [56, 1064 - hh], [1864 - ww, 108]];
+      const clear = corners.filter((c) => covered(vital, c, ww, hh) === 0);
+      if (clear.length) { const best = clear.reduce((a, c) => (covered(other, c, ww, hh) < covered(other, a, ww, hh) ? c : a)); this.sdPanelWidth = ww; return best; }
     }
-    this.sdPanelWidth = 460;
-    const corners = [[56, 108], [1404, 1040 - h], [56, 1040 - h], [1404, 108]];
-    return corners.reduce((a, c) => (covered(vital, c, 460) * 10 + covered(other, c, 460) < covered(vital, a, 460) * 10 + covered(other, a, 460) ? c : a));
-  }
-
-  showdownTags() {
-    const P = this.sd;
-    if (P.tagged) return;
-    P.tagged = true;
-    const u = P.unit;
-    P.showdownTag({ x: u.x, y: u.y - 46 }, P.f.unitTag, P.f.unitTone === "bad" ? "#7E1A15" : "#1B1A18");
+    this.sdPanelWidth = 400;
+    const corners = [[56, 108], [1464, 1064 - h - 60], [56, 1064 - h - 60], [1464, 108]];
+    return corners.reduce((a, c) => (covered(vital, c, 400, h + 60) * 10 + covered(other, c, 400, h + 60) < covered(vital, a, 400, h + 60) * 10 + covered(other, a, 400, h + 60) ? c : a));
   }
 
   flag(p) {
-    const g = this.add.container(p.x, p.y - 30, [this.add.rectangle(0, -10, 30, 20, C.red).setStrokeStyle(2, C.ink), this.add.rectangle(-15, 6, 3, 34, C.ink)]);
-    return g;
+    return this.add.container(p.x, p.y - 30, [this.add.rectangle(0, -10, 30, 20, C.red).setStrokeStyle(2, C.ink), this.add.rectangle(-15, 6, 3, 34, C.ink)]);
   }
 
-  // The labels that explain step i: pinned to the harbour, the station or the battalion.
+  // The labels for step i, once each.
   showdownCallouts(i) {
     const P = this.sd;
-    for (const [step, at, text, tone] of P.f.callouts ?? []) {
-      if (step !== i || P.called?.has(`${step}-${text}`)) continue;
-      (P.called ??= new Set()).add(`${step}-${text}`);
-      const where = at === "harbour" ? P.callAt.harbour : at === "unit" ? { x: P.unit.x, y: P.unit.y + 52 } : step === 2 ? P.callAt.contact : P.callAt.beacon;
-      P.showdownTag(where, text, tone === "bad" ? "#7E1A15" : tone === "warn" ? "#6B4508" : "#1F4A2E");
+    for (const l of P.steps[i]?.labels ?? []) {
+      const key = `${i}-${l.at}-${l.text}`;
+      if (P.called?.has(key)) continue;
+      (P.called ??= new Set()).add(key);
+      P.showdownTag(this.labelAt(l, P), l.text, l.tone === "bad" ? "#7E1A15" : l.tone === "warn" ? "#6B4508" : l.tone === "ok" ? "#1F4A2E" : "#1B1A18");
     }
   }
 
@@ -575,9 +569,10 @@ export class TableScene extends Phaser.Scene {
   showdownStep(i) {
     const s = this.sd?.steps[i];
     if (!s) return 0;
-    this.showdownCallouts(i);
-    if (reducedMotion.on) { s.end(); return 300; }
+    if (reducedMotion.on) { s.end(); this.showdownCallouts(i); return 300; }
     s.play();
+    // Labels by a moving unit wait for it to arrive.
+    this.sd.timers.push(this.time.delayedCall(s.labels.some((l) => l.at === "unit") ? Math.max(0, s.dur - 400) : 0, () => this.showdownCallouts(i)));
     return s.dur;
   }
 
@@ -586,9 +581,10 @@ export class TableScene extends Phaser.Scene {
     if (!this.sd) return;
     for (const t of this.sd.timers) t.remove(false);
     this.sd.timers = [];
-    for (const o of [this.sd.escorts, this.sd.craft, this.sd.friends, this.sd.unit]) this.tweens.killTweensOf(o);
+    this.tweens.killTweensOf(Object.values(this.sd.actors));
     this.tweens.getTweens().forEach((t) => { if (t.targets?.some?.((x) => x && typeof x.v === "number")) t.stop(); });
-    for (let k = 0; k <= i; k++) { this.sd.steps[k].end(); this.showdownCallouts(k); }
+    for (let k = 0; k <= i && k < this.sd.steps.length; k++) this.sd.steps[k].end();
+    for (let k = 0; k <= i && k < this.sd.steps.length; k++) this.showdownCallouts(k);
   }
 
   showdownPause(on) {
@@ -599,7 +595,7 @@ export class TableScene extends Phaser.Scene {
   showdownClear() {
     const P = this.sd;
     if (!P) return;
-    for (const o of [P.escorts, P.craft, P.friends, P.unit, P.trench, P.fx, P.flag, ...(P.tags ?? [])]) o?.destroy();
+    for (const o of [...Object.values(P.actors ?? {}), P.trench, P.flag, ...(P.tags ?? [])]) o?.destroy();
     this.sd = null;
     this.time.paused = false;
   }

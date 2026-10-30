@@ -6,7 +6,8 @@
 // Every number here is prototype dressing awaiting sign-off (see the README). None of it
 // is a sim rule; packages/sim stays the authority.
 import { seeded } from "../chart/random.js";
-import { INCIDENTS } from "./incidents.js";
+import { INCIDENT_RULES as INCIDENTS } from "./definition.js";
+import { KESTREL } from "./world.js";
 
 export const DIFFICULTY = {
   steady: {
@@ -35,7 +36,8 @@ export const DIFFICULTY = {
 // The fleet's real job under each plan, and what Lattice would find if asked.
 export const FLEET_ROLE = { land: "screen", bluff: "swarm", probe: "scout" };
 
-export function makeCampaign(seed, difficulty = "shifting") {
+// The world (names, distances) travels with the campaign: every screen reads it from here.
+export function makeCampaign(seed, difficulty = "shifting", world = KESTREL) {
   const D = DIFFICULTY[difficulty] ?? DIFFICULTY.shifting;
   const r = seeded(`campaign:${seed}:${difficulty}`);
   const pick = (list) => list[Math.floor(r() * list.length)];
@@ -67,7 +69,7 @@ export function makeCampaign(seed, difficulty = "shifting") {
   const staffEvent = { month: staffMonth, id: pick(INCIDENTS.filter((x) => !x.command && x.months.includes(staffMonth))).id };
 
   return {
-    seed: String(seed), difficulty: difficulty in DIFFICULTY ? difficulty : "shifting", D,
+    seed: String(seed), difficulty: difficulty in DIFFICULTY ? difficulty : "shifting", D, world,
     plan, sailDay: range(D.sailDays), craft: { dec: craftDec, jan: craftJan },
     fleetRole: FLEET_ROLE[plan], deceive,
     support0: range(D.support), minister: pick(D.ministers), voteDay: range(D.voteDays),

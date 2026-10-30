@@ -5,6 +5,7 @@
 import { generateWorld } from "../gen/factions.js";
 import { FLEET_ROLE, makeCampaign } from "./campaign.js";
 import { outcome } from "./play.js";
+import { FIXED } from "./definition.js";
 
 export const SECTORS = 2;
 
@@ -39,8 +40,8 @@ export function worldForSector(war, n = war.sector) {
 
 // The campaign for the current sector, with what the task force carries applied: the
 // battalion's days and strength, what the rival lost last time, and anything the refit bought.
-export function campaignFor(war) {
-  const c = makeCampaign(sectorCode(war), war.difficulty);
+export function campaignFor(war, world = worldForSector(war)) {
+  const c = makeCampaign(sectorCode(war), war.difficulty, world);
   const k = war.carry;
   if (!k) return c;
   vary(c, war.results.at(-1));
@@ -77,11 +78,11 @@ function vary(c, last) {
 
 // After a sector's debrief: record the result, pay the refit, and carry the task force's
 // condition and its officers' memories into the next sector.
-export function closeSector(war, c, run, memories, world) {
+export function closeSector(war, c, run, memories, world = c.world) {
   const o = outcome(c, run);
   const strength = Math.max(0, (c.strength ?? FULL_STRENGTH) - o.losses.battalion);
   war.results.push({ sector: war.sector, strait: world.strait, host: world.host, grade: o.grade, code: o.code, days: o.daysAfter, casualties: o.casualties, rivalLost: o.rivalLost,
-    plan: c.plan, big: c.craft.jan >= 12, minister: c.minister, hotline: c.hotline });
+    plan: c.plan, big: c.craft.jan >= FIXED.secondWave, minister: c.minister, hotline: c.hotline });
   war.funding += REFIT[o.grade];
   war.carry = { fatigue: o.daysAfter, strength, rivalLost: o.rivalLost, memories };
   war.keep = { rival: world.rival, network: world.network, reserve: world.reserve };

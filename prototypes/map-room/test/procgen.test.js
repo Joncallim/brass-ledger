@@ -52,7 +52,8 @@ function allCopy(c) {
     { dec: { beacon: "quiet", lattice: "boats" }, jan: { beacon: "quiet", way: null }, feb: { route: "quiet" } },
     { dec: { beacon: "show", lattice: "when" }, jan: { beacon: "show", way: "buy" }, feb: { route: "joint" } },
   ];
-  const out = [story.TITLE, story.ORIENT, story.LATTICE, story.GLOSSARY, story.OFFICERS];
+  const T = story.storyFor(c.world);
+  const out = [T.TITLE, T.ORIENT, T.LATTICE, story.glossaryFor(c.world), story.officersFor(c.world)];
   for (const run of runs) {
     for (const m of ["dec", "jan"]) {
       out.push(story.brief(c, run, m), story.orders(c, run, m), story.night(c, run, m));
@@ -64,19 +65,22 @@ function allCopy(c) {
   return JSON.stringify(out);
 }
 
+// Review 6: a campaign's world travels with it. The shared world (the chart on the table) is
+// never touched here, and two theatres worded in turn never borrow each other's names.
 test("the story speaks the generated theatre's names, and only those", () => {
   const authored = ["Kestrel", "Marenna", "Ravellan", "Sarn", "Beacon", "Lattice", "2nd Battalion"];
-  try {
-    for (const code of CODES.slice(0, 12)) {
-      setWorld(generateWorld(code));
-      for (const d of ["steady", "volatile"]) {
-        const text = allCopy(makeCampaign(code, d));
-        for (const name of authored) assert.ok(!text.includes(name), `${code}: "${name}" leaked into the copy`);
-        for (const k of ["host", "rival", "harbour", "network", "stationShort"]) assert.ok(text.includes(WORLD[k]), `${code}: ${k} never named`);
-        assert.ok(!/undefined|NaN/.test(text), `${code}: undefined or NaN in the copy`);
-      }
+  const before = JSON.stringify(WORLD);
+  for (const code of CODES.slice(0, 12)) {
+    const world = generateWorld(code), other = generateWorld(`${code}-other`);
+    for (const d of ["steady", "volatile"]) {
+      const c = makeCampaign(code, d, world), c2 = makeCampaign(`${code}-other`, d, other);
+      allCopy(c2); // word another theatre first: nothing may carry over
+      const text = allCopy(c);
+      for (const name of authored) assert.ok(!text.includes(name), `${code}: "${name}" leaked into the copy`);
+      for (const k of ["host", "rival", "harbour", "network", "stationShort"]) assert.ok(text.includes(world[k]), `${code}: ${k} never named`);
+      for (const k of ["host", "harbour"]) if (other[k] !== world[k]) assert.ok(!text.includes(other[k]), `${code}: the other theatre's ${k} leaked in`);
+      assert.ok(!/undefined|NaN/.test(text), `${code}: undefined or NaN in the copy`);
     }
-  } finally {
-    setWorld(KESTREL);
   }
+  assert.equal(JSON.stringify(WORLD), before, "the shared world was changed");
 });

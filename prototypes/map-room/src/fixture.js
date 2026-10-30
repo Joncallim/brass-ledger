@@ -1,13 +1,13 @@
-// The story's entry point. The campaign itself is generated (src/story/campaign.js) and
-// worded (src/story/copy.js) against the placeholders in src/story/world.js; this file
-// gathers what the scenes need and defines the glossary every highlighted word opens.
-import { WORLD as W, onWorld } from "./story/world.js";
-export { OFFICERS, fullName, plainName, surname } from "./story/officers.js";
-export { CALENDAR, monthOf, TITLE, ORIENT, LATTICE, latticeQ, latticeOrders, januaryRead, brief, orders, host, incident, night, february, showdown, debrief, split, status } from "./story/copy.js";
+// The story's entry point. The campaign is generated (src/story/campaign.js), resolved
+// (src/story/play.js, from src/story/definition.js) and worded (src/story/copy.js) for the
+// world it carries; this file gathers what the scenes need and defines the glossary every
+// highlighted word opens, worded for a world.
+import { KESTREL } from "./story/world.js";
+import { FIXED, TUNING } from "./story/definition.js";
+export { OFFICER_NAMES, officersFor, fullName, plainName, surname } from "./story/officers.js";
+export { TURN_MONTHS as CALENDAR, monthOf, januaryRead, split, storyFor, levels, status, brief, orders, latticeOrders, latticeQ, host, incident, night, february, showdown, debrief } from "./story/copy.js";
 export { makeCampaign, newSeed, DIFFICULTY } from "./story/campaign.js";
-export { simulate, needsApproval, outcome } from "./story/play.js";
-
-let B, R, M, MA, S, L, BN;
+export { simulate, needsApproval, outcome, forecast } from "./story/play.js";
 
 // The campaign a chapter jump starts from, and the choices assumed up to that point.
 export const DEFAULT_CAMPAIGN = { seed: "KESTREL", difficulty: "shifting" };
@@ -19,15 +19,16 @@ export const DEFAULT_RUN = () => ({
 
 // Every highlighted name or term opens one of these on hover or focus. `match` lists the
 // exact words that link to it; `kind` sets the style (a proper noun, or jargon).
-export let GLOSSARY;
+const cache = new WeakMap();
 
 // Where the debrief's truth lines sit on the chart; the words come from debrief().truth.
 export const TRUTH = [{ near: "harbour", dx: -160, dy: -55 }, { near: "beacon", dx: 450, dy: 80 }];
 
-// Recomputed whenever the theatre changes (see setWorld in src/story/world.js).
-onWorld(() => {
-  B = W.stationShort; R = W.rival; M = W.host; MA = W.hostAdj; S = W.harbour; L = W.network; BN = W.reserve;
-  GLOSSARY = {
+export function glossaryFor(W = KESTREL) {
+  if (cache.has(W)) return cache.get(W);
+  const B = W.stationShort, R = W.rival, M = W.host, MA = W.hostAdj, S = W.harbour, L = W.network, BN = W.reserve;
+  const F = TUNING.fatigue, DEF = FIXED.defence;
+  const GLOSSARY = {
     beacon: { title: W.station, kind: "name", tag: "Our post", match: [W.station, B],
       body: `Our radar and radio post on a headland on the ${MA} coast. From it we can watch ships in ${W.strait} up to 30 nautical miles away. Its own garrison is ${W.garrison} soldiers. Whoever holds ${B} can watch the whole strait, which is why ${R} wants it.` },
     sarn: { title: S, kind: "name", tag: `${R}’s main naval harbour`, match: [S],
@@ -41,13 +42,13 @@ onWorld(() => {
     kestrel: { title: W.strait, kind: "name", tag: "The sea between", match: [W.strait],
       body: `The stretch of sea between ${M} and ${R}, about ${W.straitNm} nautical miles wide. A busy shipping lane runs through the middle of it.` },
     battalion: { title: BN, kind: "name", tag: "Our reserve", match: [BN],
-      body: `Our reserve infantry battalion, about ${W.battalion} soldiers, based a day’s move from ${B}. It reinforces ${B} when needed. It has been on duty without rest since the autumn; Rear Admiral Okafor watches its fatigue.` },
+      body: `Our reserve infantry battalion, about ${W.battalion} soldiers, based a day’s move from ${B}. It reinforces ${B} when needed. It has been on duty without rest since the autumn; Rear Admiral Okafor watches its fatigue. Below ${TUNING.underStrength} soldiers it is under strength and can’t hold a second wave.` },
     fatigue: { title: "Fatigue", kind: "term", tag: "How worn a unit is", match: ["fatigue"],
-      body: `A point for each day a unit is on duty without rest, plus more for hard work: digging in (+20), a battle it fights in (+20), a month at sea (+30), the radar repair (+12). It is not a count of days. Rest brings it down. Past 100 the battalion is tired; past 120 it is unfit, and an unfit battalion can’t hold a landing.` },
+      body: `A point for each day a unit is on duty without rest, plus more for hard work: digging in (+${F.dig}), a battle it fights in (+${F.battle}), a month at sea (+${F.joint}), the radar repair (+${F.engineers}). It is not a count of days. Rest brings it down. Past ${F.tired} the battalion is tired; past ${F.unfit} it is unfit, and an unfit battalion can’t hold a landing.` },
     defence: { title: "Defence level", kind: "term", tag: `How strong ${B} is against a landing`, match: ["defence level", "defences"],
-      body: `1 is the garrison alone; each reinforcement adds a level. Against a landing, it counts one lower if ${R} knows where our guns are, and one lower if the main radar has failed. Against one wave, ${B} holds at level 3, or at level 2 if ${BN} is warned and fit. Against two waves it needs level 3, warning, and ${BN} fit and at full strength.` },
+      body: `The level built on the headland: 1 is the garrison alone, and each reinforcement adds one, up to ${DEF.max}. A landing meets one level lower if ${R} knows where our guns are, and one lower if the main radar has failed; screens show both when they differ, as “level 2 against a landing (3 built)”. Against one wave, ${B} holds at level ${DEF.holdsAlone} against a landing, or at level ${DEF.holdsWithReserve} if ${BN} is warned and fit. Against two waves it needs level ${DEF.holdsAlone}, warning, and ${BN} fit and at full strength.` },
     craft: { title: "Landing craft", kind: "term", tag: "Ships", match: ["landing craft"],
-      body: "Flat-bottomed boats built to carry soldiers and vehicles from the sea straight onto a beach. Nine of them can put one battalion, about 600 soldiers, ashore at once. A country loads them when it is preparing an amphibious landing, or wants others to think it is." },
+      body: `Flat-bottomed boats built to carry soldiers and vehicles from the sea straight onto a beach. However many there are, they cross together as one wave. ${FIXED.secondWave} or more are enough for a second wave behind the first. A country loads them when it is preparing an amphibious landing, or wants others to think it is.` },
     landing: { title: "Amphibious landing", kind: "term", tag: "An attack from the sea", match: ["amphibious landing", "landing"],
       body: `Putting soldiers ashore from ships to seize ground. Here, it would mean ${R} landing a battalion on the ${B} headland to take the station. The other possibility is that ${R} only wants us and ${M} to believe a landing is coming, to frighten ${M} into asking us to leave.` },
     warning: { title: "Warning before an attack", kind: "term", tag: "How much notice we would get", match: ["Warning before an attack", "warning before an attack"],
@@ -63,4 +64,7 @@ onWorld(() => {
     order: { title: "Personal order", kind: "term", tag: "Your intervention", match: ["personal orders", "personal order"],
       body: "Your staff handle every order unless you step in. Each time you change their plan, you spend one personal order. You have two a month, and changing back returns it. Some incidents also cost one." },
   };
-});
+  cache.set(W, GLOSSARY);
+  return GLOSSARY;
+}
+

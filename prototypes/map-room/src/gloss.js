@@ -1,9 +1,11 @@
 // Names and terms you can ask about. Every proper noun and piece of jargon in the story is
 // wrapped in a highlighted span that opens a short profile on hover or keyboard focus.
 // Officers are already wrapped by fullName()/surname(); this finds everything else.
-import { GLOSSARY, OFFICERS } from "./fixture.js";
+import { glossaryFor, officersFor } from "./fixture.js";
 import { onWorld } from "./story/world.js";
 
+// The highlighter works on the page, so it follows the world on the table (the campaign's).
+let GLOSSARY, OFFICERS;
 const portrait = (id) => `./portraits/${OFFICERS[id].portrait}.jpg`;
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -13,7 +15,9 @@ const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 let byText, pattern;
 // Jargon may open a sentence, so its first letter matches either case.
 const loose = (t) => `[${t[0].toUpperCase()}${t[0].toLowerCase()}]${esc(t.slice(1))}`;
-onWorld(() => {
+onWorld((W) => {
+  const world = { ...W }; // a snapshot: the shared world object changes in place
+  GLOSSARY = glossaryFor(world); OFFICERS = officersFor(world);
   const aliases = Object.entries(GLOSSARY)
     .flatMap(([id, g]) => g.match.map((text) => ({ id, text, kind: g.kind })))
     .sort((a, b) => b.text.length - a.text.length);

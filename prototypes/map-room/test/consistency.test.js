@@ -14,7 +14,11 @@ for (const beacon of ["quiet", "rest", "show"]) for (const lattice of ["boats", 
 function* everyEnding() {
   for (const d of ["steady", "shifting", "volatile"]) for (let i = 0; i < 12; i++) {
     const c = makeCampaign(`K${i}`, d);
-    for (const run of PATHS) yield { c, run, o: outcome(c, run), D: story.debrief(c, run) };
+    for (const path of PATHS) {
+      // The joint stand is only offered when the host's navy sails; otherwise the plan holds quietly.
+      const run = !simulate(c, path).janEnd.navy && path.feb.route === "joint" ? { ...path, feb: { route: "quiet" } } : path;
+      yield { c, run, o: outcome(c, run), D: story.debrief(c, run) };
+    }
   }
 }
 
@@ -81,15 +85,18 @@ test("the debrief's January belief is what January's orders were argued from", (
 // defence level the screen never mentioned; the debrief then blamed the reserve. The risk
 // shown before the choice must be the rule that decides it, and the cause given after must
 // be a requirement that actually failed.
-test("February's risk table predicts the result for the case that happens", () => {
+// Since review 6 the forecast is the resolver itself, run on every case still open: the row
+// for the case that happens must be the result, number for number.
+test("February's forecast row for the case that happens is the result, number for number", () => {
   for (const { c, run, o } of everyEnding()) {
-    if (o.s.plan !== "land") continue;
     const F = story.february(c, run), route = F.routes.find((r) => r.id === o.route);
-    if (!route) continue;
-    const row = route.risk.find((r) => r.label.includes(o.big ? "two waves" : "one wave"));
-    if (!row) continue; // that case was ruled out by what we knew (e.g. a known count)
-    if (o.route === "joint") assert.equal(row.text.startsWith("Stopped"), o.code === "stopped", row.text);
-    else assert.equal(row.ok, o.code !== "lost", `${row.label}: ${row.text} but ${o.code}`);
+    assert.ok(route, `${o.route} not offered`);
+    const id = o.boarded ? (o.big ? "two" : "one") : o.s.plan === "bluff" ? "empty-show" : "empty-turned";
+    const row = route.risk.find((r) => r.id === id) ?? route.risk.find((r) => r.id === "empty-show" && !o.boarded);
+    assert.ok(row, `${c.seed}: no row for ${id} in ${route.risk.map((r) => r.id)}`);
+    assert.ok(row.codes.includes(o.code), `${row.codes} / ${o.code}`);
+    assert.deepEqual([row.daysAfter, row.supportAfter, row.losses, row.engaged], [o.daysAfter, o.supportAfter, o.losses, o.engaged], row.text);
+    assert.ok(route.costs.includes(`fatigue ${o.daysAfter}`), `${route.costs} / ${o.daysAfter}`);
   }
 });
 

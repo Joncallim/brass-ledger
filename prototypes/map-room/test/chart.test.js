@@ -43,7 +43,7 @@ test("validator catches a misplaced place", () => {
 });
 
 test("every chart term links to a story profile", async () => {
-  const { GLOSSARY } = await import("../src/fixture.js");
+  const GLOSSARY = (await import("../src/fixture.js")).glossaryFor();
   const sc = SCENARIOS[STORY_SCENARIO];
   const terms = [...(sc.labels ?? []), ...sc.land, ...sc.features, sc.station].map((x) => x?.term).filter(Boolean);
   assert.ok(terms.length >= 5);

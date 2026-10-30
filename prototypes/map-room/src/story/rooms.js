@@ -2,13 +2,12 @@
 // often you have taken their advice) and the ledger (every decision committed so far and
 // what it changed). Pure: both are read from the campaign and the committed choices, so
 // they add no rules of their own.
-import { WORLD as W, onWorld } from "./world.js";
-import { OFFICERS } from "./officers.js";
+import { officersFor } from "./officers.js";
 import { host, incident, knownLines, latticeOrders, latticeQ, orders, status } from "./copy.js";
 import { ministersFor, simulate } from "./play.js";
-import { incidentById, incidentDay } from "./incidents.js";
+import { incidentsFor } from "./incidents.js";
+import { CALENDAR, FIXED, incidentDay } from "./definition.js";
 
-let MA, R, S, B;
 // Lower-case only the first letter, so names inside an option (Beacon, Marenna) keep theirs.
 const lower = (t) => t[0].toLowerCase() + t.slice(1);
 export const STAFF = ["halden", "briggs", "okafor", "sato"];
@@ -33,7 +32,7 @@ export function committed(run, progress) {
 
 // Every decision taken so far that at least one officer argued about.
 function decisions(c, run, progress) {
-  const done = committed(run, progress), out = [];
+  const W = c.world, B = W.stationShort, done = committed(run, progress), out = [];
   const inc = (month, at) => {
     if (progress < at || !c.incidents[month]) return;
     const I = incident(c, done, month), pick = done[month].incident ?? I.staffId;
@@ -42,9 +41,9 @@ function decisions(c, run, progress) {
   const ord = (month, at) => {
     if (progress < at) return;
     const o = orders(c, done, month), pick = done[month].beacon;
-    out.push({ when: month === "dec" ? "18 December" : "January", what: `${B}’s ${month === "dec" ? "December" : "January"} orders`, chose: o.options.find((x) => x.id === pick).name, staff: pick === o.staffId, council: o.council, pick });
+    out.push({ when: `${CALENDAR[month].orders} ${month === "dec" ? "December" : "January"}`, what: `${B}’s ${month === "dec" ? "December" : "January"} orders`, chose: o.options.find((x) => x.id === pick).name, staff: pick === o.staffId, council: o.council, pick });
     const l = latticeOrders(c, done, month), q = done[month].lattice;
-    out.push({ when: month === "dec" ? "December" : "January", what: `${W.network}’s ${month === "dec" ? "December" : "January"} question`, chose: l.options.find((x) => x.id === q).name, staff: q === l.staffId, council: l.council, pick: q });
+    out.push({ when: `${CALENDAR[month].orders} ${month === "dec" ? "December" : "January"}`, what: `${W.network}’s ${month === "dec" ? "December" : "January"} question`, chose: l.options.find((x) => x.id === q).name, staff: q === l.staffId, council: l.council, pick: q });
   };
   inc("dec", 1); ord("dec", 2); inc("jan", 3); ord("jan", 4);
   return out;
@@ -56,6 +55,7 @@ export function staffRoom(c, run, progress) {
   const month = progress < 2 ? "dec" : progress < 4 ? "jan" : null;
   const now = month ? orders(c, done, month) : null;
   const chips = status(c, s), past = decisions(c, run, progress);
+  const OFFICERS = officersFor(c.world);
   return STAFF.map((id) => {
     const o = OFFICERS[id], view = now?.council[id];
     const heard = past.filter((d) => d.council[id]);
@@ -71,21 +71,23 @@ export function staffRoom(c, run, progress) {
 
 // ── the ledger ──────────────────────────────────────────────────────────────
 // The moment each stage of the campaign has reached, for "what we knew then".
-const ASOF = [{ month: "dec", day: 1 }, { month: "dec", day: 17 }, { month: "dec", day: 31 }, { month: "jan", day: 15 }, { month: "jan", day: 31 }, { month: "feb", day: 28 }];
+const ASOF = [{ month: "dec", day: 1 }, { month: "dec", day: CALENDAR.dec.orders - 1 }, { month: "dec", day: 31 }, { month: "jan", day: CALENDAR.jan.orders - 1 }, { month: "jan", day: 31 }, { month: "feb", day: 28 }];
 
 export function ledger(c, run, progress) {
+  const W = c.world, B = W.stationShort, MA = W.hostAdj, INC = incidentsFor(W);
   const done = committed(run, progress), sim = simulate(c, done);
   const entries = [];
   const add = (when, title, lines, stateKey) => entries.push({ when, title, lines, after: stateKey && status(c, sim[stateKey]) });
-  if (progress >= 1 && c.staffEvent?.month === "dec") add(`${incidentById(c.staffEvent.id).day.dec} December`, incidentById(c.staffEvent.id).title, [`Staff handled: ${lower(incidentById(c.staffEvent.id).options.find((o) => o.staff).name)}.`], null);
-  if (progress >= 3 && c.staffEvent?.month === "jan") add(`${incidentDay(c, c.staffEvent.id, "jan")} January`, incidentById(c.staffEvent.id).title, [`Staff handled: ${lower(incidentById(c.staffEvent.id).options.find((o) => o.staff).name)}.`], null);
+  const staffBusiness = (month, name) => { const e = INC.byId(c.staffEvent.id); add(`${incidentDay(e.id, month)} ${name}`, e.title, [`Staff handled: ${lower(e.options.find((o) => o.staff).name)}.`], null); };
+  if (progress >= 1 && c.staffEvent?.month === "dec") staffBusiness("dec", "December");
+  if (progress >= 3 && c.staffEvent?.month === "jan") staffBusiness("jan", "January");
   if (progress >= 1 && c.incidents.dec) {
     const I = incident(c, done, "dec"), pick = done.dec.incident ?? I.staffId, o = I.options.find((x) => x.id === pick);
     add(I.date, I.title, [`${o.staff ? "Staff answer" : "Your call, one personal order"}: ${lower(o.name)}.`], "decOrders");
   }
   if (progress >= 2) {
-    const o = orders(c, done, "dec"), b = o.options.find((x) => x.id === done.dec.beacon), q = latticeQ(done.dec.lattice);
-    add("December", "December orders", [`${B}: ${lower(b.name)}${b.staff ? " (staff plan)" : " (your order)"}.`, `${W.network}: ${q.q}${q.staff ? " (staff plan)" : " (your order)"}`], "decEnd");
+    const o = orders(c, done, "dec"), b = o.options.find((x) => x.id === done.dec.beacon), q = latticeQ(c, done.dec.lattice, "dec");
+    add(`${CALENDAR.dec.orders} December`, "December orders", [`${B}: ${lower(b.name)}${b.staff ? " (staff plan)" : " (your order)"}.`, `${W.network}: ${q.q}${q.staff ? " (staff plan)" : " (your order)"}`], "decEnd");
   }
   if (progress >= 3 && c.incidents.jan) {
     const I = incident(c, done, "jan"), pick = done.jan.incident ?? I.staffId, o = I.options.find((x) => x.id === pick);
@@ -94,20 +96,15 @@ export function ledger(c, run, progress) {
   if (progress >= 4) {
     const o = orders(c, done, "jan"), b = o.options.find((x) => x.id === done.jan.beacon), H = host(c, done);
     const way = done.jan.way && [...H.ways, H.secure].find((x) => x.id === done.jan.way);
-    const jq = latticeQ(done.jan.lattice, "jan");
-    add("January", "January orders", [`${B}: ${lower(b.name)}${b.staff ? " (staff plan)" : " (your order)"}.`, `${W.network}: ${lower(jq.q)}${jq.staff ? " (staff plan)" : " (your order)"}.`, `${W.host}: ${way ? lower(way.name) : "wait for the cabinet’s vote"}${way ? " (your order)" : " (staff plan)"}.`], "janEnd");
+    const jq = latticeQ(c, done.jan.lattice, "jan");
+    add(`${CALENDAR.jan.orders} January`, "January orders", [`${B}: ${lower(b.name)}${b.staff ? " (staff plan)" : " (your order)"}.`, `${W.network}: ${lower(jq.q)}${jq.staff ? " (staff plan)" : " (your order)"}.`, `${W.host}: ${way ? lower(way.name) : "wait for the cabinet’s vote"}${way ? " (your order)" : " (staff plan)"}.`], "janEnd");
   }
   if (progress >= 5) add("February", "The showdown", [{ joint: `Stood with ${W.host}’s navy.`, forward: `Dug ${W.reserve} in on the headland.`, quiet: "Held quietly." }[done.feb.route]], null);
   const s = sim[POINT[progress]];
   return {
     code: c.seed, difficulty: c.D.name, entries,
     knows: knownLines(c, done, ASOF[progress]),
-    cabinet: `${MA} cabinet: ${ministersFor(s.support)} for, ${W.ministers - ministersFor(s.support)} against.`,
+    cabinet: `${MA} cabinet: ${ministersFor(s.support)} for, ${FIXED.ministers - ministersFor(s.support)} against.`,
     now: status(c, s),
   };
 }
-
-// Recomputed whenever the theatre changes (see setWorld in src/story/world.js).
-onWorld(() => {
-  MA = W.hostAdj; R = W.rival; S = W.harbour; B = W.stationShort;
-});

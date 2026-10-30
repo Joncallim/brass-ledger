@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { EASE, T, STAGGER, move, prefs, reducedMotion, savePrefs, seeded } from "../motion.js";
 import {
-  CALENDAR, DEFAULT_CAMPAIGN, DEFAULT_RUN, DIFFICULTY, LATTICE, OFFICERS, ORIENT, TITLE, brief, debrief, february, fullName, host,
+  CALENDAR, DEFAULT_CAMPAIGN, DEFAULT_RUN, DIFFICULTY, OFFICER_NAMES, officersFor, storyFor, brief, debrief, february, fullName, host,
   incident, latticeOrders, latticeQ, makeCampaign, monthOf, newSeed, night, orders, outcome, plainName, showdown, simulate, split, status, surname,
 } from "../fixture.js";
 import { OX, OY } from "./TableScene.js";
@@ -17,7 +17,7 @@ import { FULL_STRENGTH, REFIT, SECTORS, SPEND, UNDER_STRENGTH, campaignFor, clos
 const GRADES = { success: "Success", costly: "Costly success", failure: "Failure" };
 
 const TRAY = { x: 1640, y: 1000 }; // where slips are dealt from and gathered to
-const portrait = (id) => `./portraits/${OFFICERS[id].portrait}.jpg`;
+const portrait = (id) => `./portraits/${OFFICER_NAMES[id].portrait}.jpg`;
 // Lower-case only the first letter, so names like Beacon keep their capital.
 const lower = (s) => s[0].toLowerCase() + s.slice(1);
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
@@ -60,12 +60,19 @@ export class DeskScene extends Phaser.Scene {
   }
 
   // A campaign is rolled from a seed: same seed and difficulty, same campaign.
+  // The campaign carries its world; the table's world (the chart and the glossary) follows it.
+  // A new campaign on the theatre already on the table keeps that theatre; a new theatre
+  // comes through newTheatre, which restarts the chart.
   newCampaign(seed, difficulty) {
-    const w = this.game.war;
-    this.campaign = w && sectorCode(w) === seed ? campaignFor(w) : makeCampaign(seed, difficulty);
+    this.game.theatre ??= { seed, world: { ...WORLD } };
+    const w = this.game.war, world = this.game.theatre.world;
+    this.campaign = w && sectorCode(w) === seed ? campaignFor(w, world) : makeCampaign(seed, difficulty, world);
     this.run = DEFAULT_RUN();
-    log("campaign", { code: this.campaign.seed, difficulty: this.campaign.difficulty, theatre: WORLD.strait });
+    log("campaign", { code: this.campaign.seed, difficulty: this.campaign.difficulty, theatre: world.strait });
   }
+
+  // The words for this campaign's world.
+  get words() { return storyFor(this.campaign.world); }
 
   // A new code is a new theatre: new countries, new names, a new chart, and a campaign
   // rolled on them. The world changes in place and both scenes restart on it, so this works
@@ -74,7 +81,9 @@ export class DeskScene extends Phaser.Scene {
   newTheatre(seed, difficulty, chapter = "dec-brief", world = null) {
     this.clear();
     if (!world) this.game.war = null;
-    setWorld(world ?? worldFor(seed));
+    const w = world ?? worldFor(seed);
+    this.game.theatre = { seed, world: w };
+    setWorld(w);
     const table = this.table;
     this.scene.stop();
     table.scene.restart({ seed, difficulty, chapter });
@@ -291,7 +300,7 @@ export class DeskScene extends Phaser.Scene {
   }
 
   talk(id, line, { x = 80, y = 812, w = 1100, delay = 600 } = {}) {
-    const o = OFFICERS[id];
+    const o = officersFor(this.campaign.world)[id];
     const t = this.dom(x, y, `<div class="talk" style="width:${w}px" role="group" aria-label="${plainName(id)}">
       <div class="face" style="background-image:url(${portrait(id)})"></div>
       <div><div class="who" data-term="officer:${id}"><span class="rank">${o.rank}</span> ${o.name}<span class="post">${o.post}</span></div>
@@ -416,13 +425,13 @@ export class DeskScene extends Phaser.Scene {
     this.table.showWarning(true, { pulse: false });
     this.dom(OX, OY, `<div style="width:1500px;height:944px;background:linear-gradient(90deg,rgba(20,18,16,.95) 58%,rgba(20,18,16,0))"></div>`);
     const c = this.campaign;
-    const t = this.dom(150, 150, `<div class="title"><h1>Brass Ledger</h1><p>${TITLE.line}</p>
-      <dl class="orient" data-orient>${ORIENT.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
+    const t = this.dom(150, 150, `<div class="title"><h1>Brass Ledger</h1><p>${this.words.TITLE.line}</p>
+      <dl class="orient" data-orient>${this.words.ORIENT.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
       <p class="campaign-code">Campaign <b>${esc(c.seed)}</b> · ${c.D.name}</p>
       <div data-start style="display:flex;gap:16px;margin-top:32px"><button class="go" data-go>Continue in December</button><button class="ghost" data-new>New campaign</button><button class="ghost" data-war>Start a two-sector war</button></div>
       <div data-setup hidden><p class="setup-q" data-setup-q>How much should change from one campaign to the next?</p><div class="levels">${Object.entries(DIFFICULTY).map(([id, d]) => `<button class="level ${id === c.difficulty ? "sel" : ""}" data-level="${id}"><b>${d.name}</b><span>${d.line}</span></button>`).join("")}</div>
         <p class="help" style="margin-top:14px">Each new campaign is set in a new theatre: a new strait, new countries and a new chart. A fresh code also rolls the hidden enemy plan, the ally’s politics, your staff’s starting state and the month’s incidents. Replaying a code replays the same theatre and campaign.</p></div>
-      <p style="font-size:18px;color:var(--room-muted);margin-top:20px" data-saved>${TITLE.saved}</p></div>`);
+      <p style="font-size:18px;color:var(--room-muted);margin-top:20px" data-saved>${this.words.TITLE.saved}</p></div>`);
     move(this, t, { alpha: [0, 1], y: [174, 150] }, { dur: T.reveal });
     const go = t.node.querySelector("[data-go]");
     go.onclick = () => { this.run = DEFAULT_RUN(); this.go("dec-brief"); };
@@ -472,7 +481,7 @@ export class DeskScene extends Phaser.Scene {
     this.table.setBoats("lane");
     this.table.showWarning(true, { pulse: false });
     this.table.setRing(this.ringAfter("dec"));
-    this.table.showLattice(`Answered: ${lower(latticeQ(this.run.dec.lattice).q)}`);
+    this.table.showLattice(`Answered: ${lower(latticeQ(this.campaign, this.run.dec.lattice, "dec").q)}`);
     this.briefing(5, brief(this.campaign, this.run, "jan"), ...this.afterBrief("jan"), this.at("decEnd"));
   }
 
@@ -483,12 +492,12 @@ export class DeskScene extends Phaser.Scene {
     const sp = split(council, staffId);
     const optName = (id) => options.find((o) => o.id === id)?.name ?? id;
     const side = ([opt, who]) => {
-      const lead = who[0], p = council[lead], o = OFFICERS[lead];
+      const lead = who[0], p = council[lead], o = OFFICER_NAMES[lead];
       const also = who.slice(1).map((w) => surname(w)).join(" and ");
       return `<div class="side"><div class="side-head"><span class="av" style="background-image:url(${portrait(lead)})"></span><span><span class="vname">${surname(lead)}</span><span class="focus">${o.post}</span></span></div>
         <p class="wants">Advises: <b>${optName(opt)}</b>${also ? `<span class="also">, backed by ${also}</span>` : ""}</p>
         <p class="case"><b>Protecting</b> ${p.because}.</p>
-        <details class="more"><summary>If you overrule ${OFFICERS[lead].name.split(" ").pop()}</summary><p class="case risk">${p.risk}</p><button class="b sm" data-voice="${lead}">Hear the case</button></details></div>`;
+        <details class="more"><summary>If you overrule ${OFFICER_NAMES[lead].name.split(" ").pop()}</summary><p class="case risk">${p.risk}</p><button class="b sm" data-voice="${lead}">Hear the case</button></details></div>`;
     };
     // Anyone with a third view still gets a line, so no position is hidden.
     const others = (sp.rest ?? []).map(([opt, who]) => `<p class="other"><span class="av sm" style="background-image:url(${portrait(who[0])})"></span><span>${who.map((w) => surname(w)).join(" and ")} ${who.length > 1 ? "advise" : "advises"} <b>${lower(optName(opt))}</b>: ${council[who[0]].because}.</span><button class="b sm" data-voice="${who[0]}">Hear</button></p>`).join("");
@@ -599,7 +608,7 @@ export class DeskScene extends Phaser.Scene {
       : `<li class="empty"><p class="entry-title">Nothing decided yet.</p><p class="entry-line">Every incident answer and every month’s orders will be written here once you commit them, with where things stood afterwards.</p></li>`;
     return `<div class="ledger-cols"><ol class="ledger-list">${entries}</ol>
       <aside><p class="lab">Where things stand</p>${chips(L.now)}<p class="entry-line">${L.cabinet}</p>
-      <p class="lab" style="margin-top:18px">What we know</p>${L.knows.length ? `<ul class="knows">${L.knows.map((k) => `<li>${k}</li>`).join("")}</ul>` : `<p class="entry-line">Only what the December briefing told us. ${WORLD.network}’s answers will be added here.</p>`}
+      <p class="lab" style="margin-top:18px">What we know</p>${L.knows.length ? `<ul class="knows">${L.knows.map((k) => `<li>${k}</li>`).join("")}</ul>` : `<p class="entry-line">Only what the December briefing told us. ${this.campaign.world.network}’s answers will be added here.</p>`}
       <p class="lab" style="margin-top:18px">Campaign</p><p class="entry-line">Code <b class="code">${esc(L.code)}</b> · ${L.difficulty}</p></aside></div>`;
   }
 
@@ -848,7 +857,7 @@ export class DeskScene extends Phaser.Scene {
     this.refreshNotes();
     this.orderPanel(() => {
       const b = B.options.find((p) => p.id === this.run.dec.beacon), q = L.options.find((p) => p.id === this.run.dec.lattice);
-      return [this.sentLine("dec"), { mine: !b.staff, text: `${WORLD.stationShort}: ${lower(b.name)}.` }, { mine: !q.staff, text: `${WORLD.network}: ${q.short}.` }].filter(Boolean);
+      return [this.sentLine("dec"), { mine: !b.staff, text: `${this.campaign.world.stationShort}: ${lower(b.name)}.` }, { mine: !q.staff, text: `${this.campaign.world.network}: ${q.short}.` }].filter(Boolean);
     });
     const go = this.disp.node.querySelector(".go");
     go.addEventListener("click", () => this.send([beacon.slip, lattice.slip], () => this.go("dec-night")));
@@ -897,7 +906,7 @@ export class DeskScene extends Phaser.Scene {
     this.refreshNotes();
     this.orderPanel(() => {
       const b = J.options.find((p) => p.id === this.run.jan.beacon), q = L.options.find((p) => p.id === this.run.jan.lattice), w = this.run.jan.way, h = H();
-      const lines = [this.sentLine("jan"), { mine: !b.staff, text: `${WORLD.stationShort}: ${lower(b.name)}.` }, { mine: !q.staff, text: `${WORLD.network}: ${q.short}.` }].filter(Boolean);
+      const lines = [this.sentLine("jan"), { mine: !b.staff, text: `${this.campaign.world.stationShort}: ${lower(b.name)}.` }, { mine: !q.staff, text: `${this.campaign.world.network}: ${q.short}.` }].filter(Boolean);
       const all = [...h.ways, h.secure];
       lines.push(w ? { mine: true, text: `${h.head}: ${lower(all.find((x) => x.id === w).name)}.` } : { mine: false, text: `${h.head}: wait for the cabinet’s vote.` });
       return lines;
@@ -1037,13 +1046,13 @@ export class DeskScene extends Phaser.Scene {
       const days = bought.has("rest") ? 0 : k.fatigue, strength = bought.has("replace") ? FULL_STRENGTH : k.strength;
       sheet.node.innerHTML = `<article class="paper sheet redeploy" style="width:1600px"><p class="lab">The war · ${esc(w.code)} · ${DIFFICULTY[w.difficulty].name}</p>
         <h2>Redeployment: sector ${w.sector} to sector ${w.sector + 1}</h2>
-        <p class="from">${last.strait} is behind you: ${GRADES[last.grade].toLowerCase()}. The task force sails for a new strait. ${WORLD.rival} is still the enemy.</p>
+        <p class="from">${last.strait} is behind you: ${GRADES[last.grade].toLowerCase()}. The task force sails for a new strait. ${this.campaign.world.rival} is still the enemy.</p>
         <div class="redeploy-cols">
           <section><p class="lab">What the task force carries</p>
             <ul class="carry">
-              <li class="${days > 120 ? "bad" : days > 100 ? "warn" : ""}"><b>${WORLD.reserve}</b>${days === 0 ? "rested" : `fatigue ${days}`}${bought.has("rest") ? " (after two weeks ashore)" : ""}</li>
+              <li class="${days > 120 ? "bad" : days > 100 ? "warn" : ""}"><b>${this.campaign.world.reserve}</b>${days === 0 ? "rested" : `fatigue ${days}`}${bought.has("rest") ? " (after two weeks ashore)" : ""}</li>
               <li class="${strength < UNDER_STRENGTH ? "bad" : ""}"><b>Strength</b>${strength} of ${FULL_STRENGTH}${strength < UNDER_STRENGTH ? ": under strength, it can’t hold a second wave" : ""}${bought.has("replace") ? " (casualties replaced)" : last.casualties ? ` (${last.casualties} killed or wounded)` : ""}</li>
-              <li><b>${WORLD.rival}</b>${k.rivalLost ? `lost ${k.rivalLost} landing craft; it starts the next sector with fewer` : "lost nothing it can’t replace"}</li>
+              <li><b>${this.campaign.world.rival}</b>${k.rivalLost ? `lost ${k.rivalLost} landing craft; it starts the next sector with fewer` : "lost nothing it can’t replace"}</li>
             </ul>
             <p class="lab" style="margin-top:20px">Refit money: ${w.funding} left</p>
             <p class="set-help">Every result pays a refit: ${REFIT.failure} after a failure, ${REFIT.costly} after a costly success, ${REFIT.success} after a success. This sector paid ${REFIT[last.grade]}.</p>
@@ -1083,7 +1092,7 @@ export class DeskScene extends Phaser.Scene {
     let first;
     const cards = F.routes.map((r, i) => {
       const c = this.dom(x0 + i * (cw + 16), 1080, `<article class="paper sheet route" style="width:${cw}px"><h2>${r.name}</h2><p class="body">${r.does}</p>
-        <table class="risk">${r.risk.map((x) => `<tr class="${x.ok ? "ok" : "bad"}"><th>${x.label}</th><td><i aria-hidden="true">${x.ok ? "✓" : "✗"}</i>${x.text}</td></tr>`).join("")}</table>
+        <table class="risk">${r.risk.map((x) => `<tr class="${x.tone}"><th>${x.label}</th><td><i aria-hidden="true">${{ ok: "✓", warn: "!", bad: "✗" }[x.tone]}</i><span class="sr">${{ ok: "Success.", warn: "Costly.", bad: "Failure." }[x.tone]} </span>${x.text}</td></tr>`).join("")}</table>
         <div class="row"><b>Costs</b><span>${r.costs}</span></div>
         <div class="quote"><span class="av" style="background-image:url(${portrait(r.voice[0])})"></span><span><span class="attrib">${surname(r.voice[0])}:</span> “${r.voice[1]}”</span></div>
         <div class="btns"><button class="b on" data-route="${r.id}">Choose: ${lower(r.name)}</button></div></article>`);
@@ -1193,7 +1202,7 @@ export class DeskScene extends Phaser.Scene {
     const w = this.game.war;
     if (w) {
       // A war has no replays. The sector closes once, and the task force moves on.
-      if (w.results.length < w.sector) closeSector(w, this.campaign, this.run, D.leaves, WORLD);
+      if (w.results.length < w.sector) closeSector(w, this.campaign, this.run, D.leaves);
       const btns = s.node.querySelector(".btns");
       if (w.sector < SECTORS) {
         btns.innerHTML = `<button class="b on" style="height:56px;font-size:20px" data-redeploy>To the redeployment</button>`;

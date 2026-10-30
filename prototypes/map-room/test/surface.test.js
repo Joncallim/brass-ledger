@@ -96,10 +96,10 @@ test("February's cost forecast matches the result: fatigue added and who fought"
     const o = outcome(c, run), s = o.s;
     const expected = s.fatigue + (o.route === "joint" ? JOINT_DAYS : 0) + (o.route === "forward" ? DIG_DAYS : 0) + (o.engaged ? BATTLE_DAYS : 0);
     assert.equal(o.daysAfter, expected);
-    if (!o.boarded) continue;
-    const F = story.february(c, run), row = F.routes.find((r) => r.id === o.route)?.risk.find((r) => r.label.includes(o.big ? "two waves" : "one wave"));
-    if (!row || o.route === "joint") continue;
-    assert.equal(/fights: \+20 fatigue/.test(row.text), o.engaged, `${row.text} / engaged ${o.engaged}`);
+    // The route's cost line lists every fatigue its rows can leave, including the fight.
+    const route = story.february(c, run).routes.find((r) => r.id === o.route);
+    for (const r of route.risk) assert.ok(route.costs.includes(`fatigue ${r.daysAfter}`), `${route.costs} / ${r.text}`);
+    if (o.engaged) assert.match(route.costs, /if it fights|fights and ends/, route.costs);
   }
 });
 
