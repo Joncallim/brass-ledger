@@ -53,7 +53,6 @@ export class DeskScene extends Phaser.Scene {
       theatre: (seed, d, chapter) => this.newTheatre(seed, d, chapter), war: (code, d) => this.startWar(code, d), getWar: () => structuredClone(this.game.war ?? null),
       // Plays any battle plan on the chart (src/story/battle.js), e.g. the withdrawal sketch.
       playPlan: (plan) => { this.clear(); this.table.playPlan(plan); return plan.steps.length; },
-      sketch: () => import("../story/sketch.js"),
     };
     Object.defineProperty(window.mapRoom, "c", { get: () => this.campaign });
     window.mapRoomTable = this.table; // test hook: the chart's showdown state
@@ -169,9 +168,9 @@ export class DeskScene extends Phaser.Scene {
   // A sheet that would run off the bottom of the table takes its dense layout: tighter type
   // and spacing, never a scrollbar.
   fit(obj, sel = "article") {
-    const a = obj.node.querySelector(sel), over = () => obj.y + obj.node.offsetHeight > 1064;
-    if (a && over()) a.classList.add("dense");
-    if (a && over()) a.classList.add("tight");
+    // Measured before the glossary marks names and terms, which can nudge a line: keep 20 px spare.
+    const a = obj.node.querySelector(sel), over = () => obj.y + obj.node.offsetHeight > 1044;
+    for (const step of ["dense", "tight", "tighter"]) if (a && over()) a.classList.add(step);
     return obj;
   }
 
@@ -1113,7 +1112,8 @@ export class DeskScene extends Phaser.Scene {
     });
     // All cards share the tallest card's top edge, so they read as one row.
     const h = Math.max(...cards.map((c) => c.node.offsetHeight));
-    cards.forEach((c, i) => { c.node.firstChild.style.minHeight = `${h}px`; move(this, c, { alpha: [0, 1], y: [1080, 1064 - h] }, { dur: 520, delay: 900 + i * STAGGER.slip }); });
+    // A little spare at the bottom: the glossary marks terms after this measurement.
+    cards.forEach((c, i) => { c.node.firstChild.style.minHeight = `${h}px`; move(this, c, { alpha: [0, 1], y: [1080, 1052 - h] }, { dur: 520, delay: 900 + i * STAGGER.slip }); });
     if (F.notOffered) {
       const n = this.dom(56, 108 + w.node.offsetHeight + 14, `<div class="paper sheet" style="width:560px;padding:16px 26px"><p class="lab" style="color:var(--ink2)">Not on the table</p><p class="body" style="font-size:19px;line-height:27px">${F.notOffered}</p></div>`);
       move(this, n, { alpha: [0, 1] }, { dur: T.paper, delay: 1100 });
