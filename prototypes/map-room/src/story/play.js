@@ -9,6 +9,15 @@ const ACT_PENALTY = { dove: 25, firm: 15, hawk: 8 }; // acting first and telling
 
 export const ministersFor = (support, total = 11) => Math.max(0, Math.min(total, Math.round((support / 100) * total)));
 
+// Staff business for the month: the staff answer, applied without asking you.
+function applyStaffEvent(c, month, s) {
+  const e = c.staffEvent;
+  if (!e || e.month !== month) return;
+  const opt = incidentById(e.id).options.find((o) => o.staff);
+  opt.effect(s, c, c.D.severity);
+  s.staffDone = { ...(s.staffDone ?? {}), [month]: opt.id };
+}
+
 function applyIncident(c, month, choice, s) {
   const id = c.incidents[month];
   if (!id) return;
@@ -35,6 +44,7 @@ export function simulate(c, run = {}) {
   const take = () => structuredClone(s);
   snap.decStart = take();
 
+  applyStaffEvent(c, "dec", s);
   applyIncident(c, "dec", run.dec?.incident, s);
   snap.decOrders = take();
   const db = run.dec?.beacon ?? "quiet";
@@ -58,6 +68,7 @@ export function simulate(c, run = {}) {
   s.support += c.drift.dec;
   snap.decEnd = take();
 
+  applyStaffEvent(c, "jan", s);
   applyIncident(c, "jan", run.jan?.incident, s);
   snap.janOrders = take();
   const jb = run.jan?.beacon ?? "quiet", way = run.jan?.way ?? null;
@@ -121,6 +132,41 @@ const OVERREACTION = 20, DUG_IN_FOR_NOTHING = 10, LOST_STATION = 10;
 const NAVY_IN_A_FIGHT = { dove: -12, firm: -6, hawk: 4 };
 const CASUALTIES = { held: 60, repelled: 40, landed: 80, lost: 140 };
 
+// What decides a landing, one requirement at a time. The February choice shows these before
+// you pick (for each size of landing still possible), and the debrief names the ones that
+// failed, so the cause it gives is the cause the rules used.
+//   defences: Beacon's defence level (1 garrison only … 4 fortified), one lower if the radar failed
+//   warning:  two days' notice (Lattice on the quay, or a true date and patrol boats to see them go)
+//   fit:      the battalion's fatigue at or under 120
+//   strength: the battalion at 500 soldiers or more
+export function landingCheck(c, s, route, big) {
+  const fit = s.fatigue <= FATIGUE.unfit;
+  const listening = s.warning === "fresh";
+  const dated = Boolean(s.knows.date && !s.knows.date.planted);
+  const warned = listening || (dated && s.boats >= 2);
+  const def = s.def - (s.radarFails ? 1 : 0);
+  const strong = !c.understrength;
+  const req = (key, ok, need) => ({ key, ok, need });
+  let needs;
+  if (route === "joint") {
+    // Two navies stop a landing at sea if they know when it sails, or if it is one wave. A
+    // second wave that gets past them lands, and Beacon holds it only behind the battalion.
+    needs = big ? [req("warning", warned, "warning, to meet both waves at sea")] : [];
+  } else if (route === "forward") {
+    needs = big ? [req("fit", fit, "a fit battalion"), req("defences", def >= 3, 3), req("strength", strong, "a battalion at full strength")]
+      // Dug in, a fit battalion holds one wave on almost anything; a worn-out one needs defences 2.
+      : [req("defences", def >= (fit ? 1 : 2), fit ? 1 : 2)];
+  } else if (big) {
+    needs = [req("defences", def >= 3, 3), req("warning", warned, "warning, so the battalion arrives in time"), req("fit", fit, "a fit battalion"), req("strength", strong, "a battalion at full strength")];
+  } else if (def >= 3) {
+    needs = [req("defences", true, 3)]; // full defences hold one wave alone
+  } else {
+    needs = [req("defences", def >= 2, 2), req("warning", warned, "warning, so the battalion arrives in time"), req("fit", fit, "a fit battalion")];
+  }
+  const holds = needs.every((r) => r.ok);
+  return { holds, needs, failed: needs.filter((r) => !r.ok), def, warned, fit, strong, listening, dated, intercepted: route === "joint" && holds };
+}
+
 // The February result. Route is "quiet" (hold on Beacon, battalion in reserve), "forward"
 // (the battalion digs in on the headland before the ships arrive) or "joint" (with
 // Marenna's navy). Every fact the debrief states is computed here once, so the words can't
@@ -128,30 +174,14 @@ const CASUALTIES = { held: 60, repelled: 40, landed: 80, lost: 140 };
 export function outcome(c, run) {
   const s = simulate(c, run).janEnd;
   const route = run.feb?.route ?? "quiet";
-  const fit = s.fatigue <= FATIGUE.unfit;
-  // Two separate things: Lattice listening to Sarn in January (hears troops ordered aboard),
-  // and knowing the true sailing date. A date alone only helps if the patrol boats are still
-  // ours to see the ships actually leave.
-  const listening = s.warning === "fresh";
-  const dated = Boolean(s.knows.date && !s.knows.date.planted);
-  const warned = listening || (dated && s.boats >= 2);
-  const reinforced = fit && warned;
-  const def = s.def - (s.radarFails ? 1 : 0);
-  // A landing force of 12 or more craft is a battalion and a second wave: Beacon alone
-  // cannot hold it, so a worn-out or unwarned battalion loses the headland.
   const big = c.craft.jan >= 12;
-  // An under-strength battalion (casualties carried from an earlier sector) can't hold a
-  // second wave, wherever it stands.
-  const strong = !c.understrength;
-  const holds = big ? def >= 3 && reinforced && strong : def >= 3 || (def >= 2 && reinforced);
-  // Dug in beforehand, the battalion needs no warning, but it holds one beach: a second
-  // wave lands round it unless Beacon's own guns are strong. A worn-out battalion holds less.
-  const holdsDug = fit ? (big ? def >= 3 && strong : def >= 1) : (big ? false : def >= 2);
-  // Two navies stop a landing at sea only if they know when it sails, or if it is small enough
-  // to turn back in one meeting. Otherwise it lands, and Beacon has to hold.
-  const intercept = warned || !big;
+  const check = landingCheck(c, s, route, big);
+  const { fit, listening, dated, warned, def } = check;
+  const reinforced = fit && warned;
+  const holdsDug = route === "forward" && check.holds;
+  const intercept = route === "joint" && check.holds;
   let code;
-  if (s.plan === "land") code = route === "joint" ? (intercept ? "stopped" : "landed") : route === "forward" ? (holdsDug ? "repelled" : "lost") : holds ? "held" : "lost";
+  if (s.plan === "land") code = route === "joint" ? (intercept ? "stopped" : "landed") : check.holds ? (route === "forward" ? "repelled" : "held") : "lost";
   else if (s.plan === "bluff") code = route === "joint" ? "called" : route === "forward" ? "dugin" : "outlasted";
   else code = route === "joint" ? "faced" : route === "forward" ? "dugin" : "waited";
 
@@ -173,5 +203,8 @@ export function outcome(c, run) {
   };
   const grade = !kept.beacon ? "failure" : kept.ally && kept.battalion ? "success" : "costly";
   const after = { ...structuredClone(s), fatigue: daysAfter, support: supportAfter, def: code === "lost" ? 0 : def, warning: s.warning };
-  return { code, route, s, after, holdsDug, fit, listening, dated, warned, reinforced, def, big, intercept, battle, navyFought, daysAfter, supportAfter, casualties, rivalLost, kept, grade };
+  // Why it went as it did: the requirements that failed (empty when the landing was held,
+  // stopped or never came).
+  const failed = s.plan === "land" ? check.failed : [];
+  return { code, route, s, after, check, failed, holdsDug, fit, listening, dated, warned, reinforced, def, big, intercept, battle, navyFought, daysAfter, supportAfter, casualties, rivalLost, kept, grade };
 }

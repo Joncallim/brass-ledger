@@ -54,11 +54,17 @@ export function makeCampaign(seed, difficulty = "shifting") {
   const incidents = { dec: null, jan: null };
   const used = new Set();
   for (const m of months) {
-    const pool = INCIDENTS.filter((x) => x.months.includes(m) && !used.has(x.id));
+    // Only command decisions reach your desk; the rest is staff business (below).
+    const pool = INCIDENTS.filter((x) => x.command && x.months.includes(m) && !used.has(x.id));
     const inc = pick(pool);
     used.add(inc.id);
     incidents[m] = inc.id;
   }
+
+  const luck = { radar: r(), defector: r(), collision: r() };
+  // One piece of staff business a campaign: handled by the staff, reported in the month's log.
+  const staffMonth = pick(["dec", "jan"]);
+  const staffEvent = { month: staffMonth, id: pick(INCIDENTS.filter((x) => !x.command && x.months.includes(staffMonth))).id };
 
   return {
     seed: String(seed), difficulty: difficulty in DIFFICULTY ? difficulty : "shifting", D,
@@ -68,7 +74,7 @@ export function makeCampaign(seed, difficulty = "shifting") {
     hotline: r() < D.hotline, drift: { dec: swing(D.drift), jan: swing(D.drift) },
     fatigue0: range(D.fatigue), incidents,
     // A coin per incident, rolled now so outcomes never depend on when you look.
-    luck: { radar: r(), defector: r(), collision: r() },
+    luck, staffEvent,
   };
 }
 

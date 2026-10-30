@@ -58,6 +58,15 @@ Product owner direction, 29 October 2026, after the second playtest:
 **Built (prototype):** the two-sector war, on the title screen. The README lists its
 amounts for sign-off.
 
+**The commander's level** (product owner, after the fourth playtest):
+- The player decides coalition support, reserves and intelligence. Staff handle execution,
+  such as repairs or how a defector is questioned, unless it creates a real command
+  decision.
+- Monthly preparation turns stay. Dated crisis decisions come when events speed up, as
+  February now does.
+- The battle should show how positioning, warning and reinforcements led to the result
+  before any new controls are added.
+
 **On hold** (product owner, after the third playtest): no more systems or sectors until
 one campaign is satisfying to watch, understand and resolve. The visual resolution of
 February and the tension of each decision come first. The four-sector test waits until then.

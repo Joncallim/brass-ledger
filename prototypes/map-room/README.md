@@ -375,10 +375,39 @@ in the scenario and open the same profiles.
   under strength; the rival losing one craft in its next sector for every four beaten on a
   beach, up to three; and the second sector reusing the December to February calendar. That
   calendar is a stand-in: a real war needs dates that don't depend on the season.
+- **Playtest 4 rules:**
+  - **The decision comes when we learn they are moving.** That is when Lattice hears the
+    boarding order (two days out), when the patrol boats see the ships leave on a known
+    date, or when the radar picks them up that morning. The month's logs end on the last
+    day of the month, and the showdown starts at the sailing.
+  - **Each February option shows its risk, case by case** (one wave, two waves, no troops),
+    from the same requirements that decide the result (`landingCheck` in `play.js`):
+    defence level, warning, a fit battalion, a battalion at full strength. Cases already
+    ruled out by what we know are not shown. A test checks the table predicts the result
+    for every path.
+  - **The debrief names the cause.** It lists the requirements that failed (or held), and a
+    test checks it never blames anything that didn't fail. The defence level is shown
+    everywhere, on the top bar too.
+  - **Staff business stays with the staff.** The radar repair and the defector are handled
+    by the staff and reported in the month's log. Only command decisions (the press, an
+    incident at sea, the ally's minister) come to your desk.
+  - **The cracked radar fails in January,** so a lower defence level is known before February.
+  - **The showdown labels its own cause** on the chart: the warning as they sail, our
+    defence level and fatigue as we move, and the deciding requirement at contact.
+- **Balance, playtest 4.** The Shifting guard on campaigns that can't be won outright
+  stays at 20%. Today it is about 12% (18 of 150 seeds). `node scripts/diagnose.mjs
+  shifting` lists them:
+  - In 13 of the 18, the closest plans lose only the ally. They are mostly bluffs that
+    start with the cabinet at 46–53: the rival's press takes about 7 support over two
+    months, and no order you control reliably wins it back.
+  - The other five are landings or probes with two waves, a dovish or firm minister, and a
+    cabinet near the line.
+  - Whether these campaigns are fair needs players' judgment first. Ways to change them
+    are design decisions to sign off, not made here: a coalition order for the ally, a
+    softer press, or a cabinet floor.
 - **Playtest 3 rules:**
   - A bluff costs the ally's cabinet 3 support a month (scaled by difficulty) from the
-    rival's press, so even a campaign with no landing needs orders spent on the ally. The
-    Shifting cap on campaigns that can't be won outright moved from 20% to 25% because of it.
+    rival's press, so even a campaign with no landing needs orders spent on the ally.
   - The second sector varies as above.
   - Fatigue replaces "days" everywhere.
 - **Playtest 2 rules:**

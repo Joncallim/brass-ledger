@@ -19,7 +19,8 @@ onWorld(() => {
   B = W.stationShort; R = W.rival; M = W.host; MA = W.hostAdj; S = W.harbour; L = W.network; BN = W.reserve;
   INCIDENTS = [
     {
-      id: "radar", months: ["dec", "jan"], day: { dec: 9, jan: 7 }, from: "briggs",
+      // Staff business: the engineers repair it and report. It still costs the battalion.
+      id: "radar", command: false, months: ["dec", "jan"], day: { dec: 9, jan: 7 }, from: "briggs",
       title: `${B}’s main radar is failing`,
       text: (c, s, k) => `The main radar on ${B} has a cracked waveguide. Only ${BN}’s engineer company can change it, and the work keeps them from resting: ${ENG_DAYS} more fatigue for the battalion. Left running, the engineers give it a one in ${k > 1.3 ? "three" : "four"} chance of failing for good before the end of February, and ${B} would fight blind on that side.`,
       options: [
@@ -38,7 +39,8 @@ onWorld(() => {
       reply: { fix: ["briggs", "Engineers start tonight. Spare radar up by midnight."], run: ["briggs", "Then we run it and watch it. If it goes, it goes on the worst day, and I will be short a gun line."] },
     },
     {
-      id: "defector", months: ["dec", "jan"], day: { dec: 11, jan: 9 }, from: "halden",
+      // Staff business: who questions him is a procedure, not a command decision.
+      id: "defector", command: false, months: ["dec", "jan"], day: { dec: 11, jan: 9 }, from: "halden",
       title: `A ${R} navy officer wants to defect`,
       text: () => `A lieutenant from ${R}’s navy came ashore in a fishing port in ${M} last night and asked for us by name. He says he served on the staff in ${S} and knows what the landing craft are for. ${MA} police are holding him and want an answer by noon.`,
       options: [
@@ -58,7 +60,7 @@ onWorld(() => {
       reply: { talk: ["halden", "He is in a car to us now. I will tell you what he says, and how far I believe it."], hand: ["sato", "The minister thanks you. She has promised us a summary within the week."] },
     },
     {
-      id: "leak", months: ["dec", "jan"], day: { dec: 13, jan: 10 }, from: "sato",
+      id: "leak", command: true, months: ["dec", "jan"], day: { dec: 13, jan: 10 }, from: "sato",
       title: `${MA} paper prints our numbers on ${B}`,
       text: () => `A ${MA} newspaper has printed how many troops and guns we have on ${B}, nearly right. ${R}’s embassy has already quoted it. Reporters are asking us to confirm or deny by tonight.`,
       options: [
@@ -75,7 +77,7 @@ onWorld(() => {
       reply: { silent: ["sato", "No comment, then. I will spend the evening calling ministers."], brief: ["sato", "We brief at six. I will write it so the ministers recognise their own words."] },
     },
     {
-      id: "collision", months: ["dec", "jan"], day: { dec: 15, jan: 12 }, from: "briggs",
+      id: "collision", command: true, months: ["dec", "jan"], day: { dec: 15, jan: 12 }, from: "briggs",
       title: "Collision on the shipping lane",
       text: () => `One of our patrol boats collided with a ${R} fishing boat on the shipping lane at 0300. One fisherman has a broken arm. Our crew says the fishing boat had no lights and a navy radio mast. ${R} state television is already calling it an attack on fishermen.`,
       options: [
@@ -92,7 +94,7 @@ onWorld(() => {
       reply: { return: ["okafor", "Boat and crew home by first light. The fisherman’s arm is set."], search: ["halden", "My people are aboard. Four hours, General."] },
     },
     {
-      id: "visit", months: ["jan"], day: { jan: 5 }, from: "sato",
+      id: "visit", command: true, months: ["jan"], day: { jan: 5 }, from: "sato",
       title: `${M}’s defence minister wants to visit ${B}`,
       text: (c) => `${M}’s defence minister asks to visit ${B} on 8 January, ${c.voteDay - 8 === 1 ? "the day" : `${c.voteDay - 8} days`} before the cabinet votes on the ${c.voteDay}${[11, 12, 13].includes(c.voteDay) ? "th" : ["th", "st", "nd", "rd"][c.voteDay % 10] ?? "th"}. She is ${c.minister === "dove" ? "the cabinet’s loudest voice for staying out of this" : c.minister === "hawk" ? "the cabinet’s strongest supporter of standing with us" : "undecided, and the cabinet follows her"}. She wants cameras.`,
       options: [

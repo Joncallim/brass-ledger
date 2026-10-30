@@ -20,10 +20,10 @@ test("Shifting and Volatile: January's two personal orders often both matter", (
   for (const d of ["shifting", "volatile"]) assert.ok(r[d].januaryLimitBinds >= 0.3, `${d}: ${(r[d].januaryLimitBinds * 100).toFixed(0)}%`);
 });
 
-// Volatile is allowed more campaigns that can only be survived, not won. Bluffs now press
-// the ally every month (playtest 3), so a few more Shifting campaigns end costly at best.
+// Volatile is allowed more campaigns that can only be survived, not won. The Shifting guard
+// stays at 20% (product owner, playtest 4): diagnose the unwinnable campaigns before moving it.
 test("most campaigns can still be won outright", () => {
-  for (const [d, cap] of [["steady", 0.05], ["shifting", 0.25], ["volatile", 0.3]]) assert.ok(r[d].unwinnable <= cap, `${d}: ${(r[d].unwinnable * 100).toFixed(0)}% unwinnable`);
+  for (const [d, cap] of [["steady", 0.05], ["shifting", 0.2], ["volatile", 0.3]]) assert.ok(r[d].unwinnable <= cap, `${d}: ${(r[d].unwinnable * 100).toFixed(0)}% unwinnable`);
 });
 
 test("following the staff plan every month never wins outright", () => {

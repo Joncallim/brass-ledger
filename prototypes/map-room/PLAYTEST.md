@@ -17,10 +17,10 @@ Give every tester the same seeds, in this order, so results can be compared:
 
 | Run | Code | Difficulty | Why this one |
 | --- | --- | --- | --- |
-| 1 | `KESTREL` | Shifting | The authored theatre, and everyone's first run. It is a real landing, so February ends in a fight |
-| 2 | `B6` | Shifting | A real landing with a second wave (13 craft) |
-| 3 | `B5` | Shifting | A bluff, with the cabinet already below a majority |
-| 4 | `B4` | Volatile | A bluff that turns into a landing if the cabinet wavers |
+| 1 | `KESTREL` | Shifting | The authored theatre, and everyone's first run. It is a real landing with a second wave (12 craft), so February ends in a fight |
+| 2 | `B6` | Shifting | A real landing with a second wave (13 craft) and a hawkish ally |
+| 3 | `B13` | Shifting | A bluff, with the cabinet already below a majority (5 of 11) |
+| 4 | `B4` | Volatile | A bluff with a dovish ally; it turns into a landing if the cabinet drops below 40 |
 | 5 | the tester's own new code | the tester's choice | Free play |
 
 Each code also generates its own theatre, so testers see a different sea for each run.

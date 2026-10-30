@@ -996,7 +996,8 @@ export class DeskScene extends Phaser.Scene {
 
   ch_jan_night() {
     this.table.setRing(this.ringAfter("dec"));
-    this.night(night(this.campaign, this.run, "jan"), 5, "feb-showdown", { ravellan: "edge", warning: false, state: this.at("janEnd") });
+    // January ends with their ships still in harbour; only the coastguard is on the lane.
+    this.night(night(this.campaign, this.run, "jan"), 5, "feb-showdown", { ravellan: "lane", warning: false, state: this.at("janEnd") });
   }
 
   // ── the war: two sectors, one task force ─────────────────────────────────
@@ -1056,17 +1057,20 @@ export class DeskScene extends Phaser.Scene {
   ch_feb_showdown() {
     const F = february(this.campaign, this.run);
     this.hud(F.turn, { seals: 0, state: this.at("janEnd") });
-    this.table.setBoats("edge");
+    // The decision comes as they start to move: the ships are still in their harbour.
+    this.table.setBoats("none");
+    this.table.showWarning(true, { pulse: false });
     this.table.setRing(this.ringAfter("jan"));
     this.later(500, () => this.table.revealPaths(F.routes.map((r) => r.id)));
-    const w = this.dom(56, 108, `<div class="paper sheet" style="width:560px;padding:18px 26px">${this.warnBlock(F.warning, true)}</div>`);
+    const w = this.dom(56, 108, `<div class="paper sheet" style="width:560px;padding:18px 26px"><div class="warn none" role="status"><p class="lab">${F.warning[0]}: the decision</p><p class="body" style="font-size:20px;line-height:28px">${F.warning[1]}</p></div></div>`);
     move(this, w, { alpha: [0, 1], y: [84, 108] }, { dur: T.paper, delay: 300 });
     // Cards share the bottom edge, right-aligned, at most 600 wide, so the station stays in view.
     const n = F.routes.length, cw = Math.min(600, Math.floor((1808 - 16 * (n - 1)) / n)), x0 = 1864 - n * cw - (n - 1) * 16;
     let first;
     const cards = F.routes.map((r, i) => {
       const c = this.dom(x0 + i * (cw + 16), 1080, `<article class="paper sheet route" style="width:${cw}px"><h2>${r.name}</h2><p class="body">${r.does}</p>
-        <div class="row"><b>Costs</b><span>${r.costs}</span></div><div class="row"><b>Needs</b><span>${r.needs}</span></div>
+        <table class="risk">${r.risk.map((x) => `<tr class="${x.ok ? "ok" : "bad"}"><th>${x.label}</th><td><i aria-hidden="true">${x.ok ? "✓" : "✗"}</i>${x.text}</td></tr>`).join("")}</table>
+        <div class="row"><b>Costs</b><span>${r.costs}</span></div>
         <div class="quote"><span class="av" style="background-image:url(${portrait(r.voice[0])})"></span><span><span class="attrib">${surname(r.voice[0])}:</span> “${r.voice[1]}”</span></div>
         <div class="btns"><button class="b on" data-route="${r.id}">Choose: ${lower(r.name)}</button></div></article>`);
       const btn = c.node.querySelector("[data-route]");
@@ -1152,7 +1156,7 @@ export class DeskScene extends Phaser.Scene {
     this.table.revealTruth([]); // the real route only; the words are in the debrief's last column
     const rows = D.rows.map((r) => `<div class="dt" style="opacity:0"><b>${r[0]}</b><span>${r[1]}</span><span>${r[2]}</span><span style="color:var(--red-ink)">${r[3]}</span></div>`).join("");
     const s = this.dom(56, 108, `<article class="paper sheet" style="width:1060px;box-sizing:border-box;padding:28px 42px 26px"><p class="lab">Campaign ${esc(this.campaign.seed)} · ${this.campaign.D.name}</p><div class="verdict"><h2 style="font-size:44px;line-height:50px">${D.title}</h2><span class="grade grade-${D.grade}">${D.gradeName}</span></div>
-      <ul class="score">${D.score.map((x) => `<li class="${x.ok ? "ok" : "bad"}"><i aria-hidden="true">${x.ok ? "✓" : "✗"}</i><span><b>${x.label}</b>${x.text}</span></li>`).join("")}</ul><p class="body" style="margin-top:8px">${D.line}</p>
+      <ul class="score">${D.score.map((x) => `<li class="${x.ok ? "ok" : "bad"}"><i aria-hidden="true">${x.ok ? "✓" : "✗"}</i><span><b>${x.label}</b>${x.text}</span></li>`).join("")}</ul><p class="body" style="margin-top:8px">${D.line}</p><p class="why-line">${D.why}</p>
       <div class="dt" style="border:0;font-size:16px;font-weight:600;color:var(--ink2);margin-top:12px"><span></span><span>Ordered</span><span>We believed</span><span style="color:var(--red-ink)">What was really happening</span></div>${rows}
       <p class="body" style="margin-top:14px;font-size:19px;line-height:27px"><b>${surname("halden")}:</b> ${D.halden}</p>
       <div class="btns" style="margin-top:18px"><button class="b on" style="height:56px;font-size:20px" data-again>Replay this campaign</button><button class="b" style="height:56px;font-size:20px" data-new>New campaign</button></div></article>`);

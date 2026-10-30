@@ -409,6 +409,8 @@ export class TableScene extends Phaser.Scene {
     const friendStart = seaward({ x: B.x - 60, y: Math.min(OY + MH - 60, B.y + 280) });
     const lineX = approach.x + 70, line = [-80, 0, 80].map((dy) => ({ x: lineX, y: approach.y + dy }));
     const P = this.sd = { f, beach, approach, flank, route, reserve, dug, friendStart, line, H, B, timers: [] };
+    // Where the explaining labels go: under the harbour, and above the station's seaward side.
+    P.callAt = { harbour: { x: H.x, y: H.y + 112 }, beacon: { x: B.x + 150, y: B.y - 70 }, contact: { x: B.x + 150, y: B.y - 112 } };
     const later = (ms, fn) => P.timers.push(this.time.delayedCall(ms, fn));
 
     const ship = (key, x, y) => this.add.image(x, y, key).setScale(0.62);
@@ -423,7 +425,7 @@ export class TableScene extends Phaser.Scene {
     for (const o of [P.escorts, P.craft, P.friends, P.unit]) o.setAlpha(0);
     P.escorts.rotation = P.craft.rotation = Math.atan2(route[1].y - H.y, route[1].x - H.x);
 
-    const go = (obj, pts, dur) => {
+    const go = (obj, pts, dur, turn = obj !== P.unit) => {
       // Along a polyline, bow first.
       const segs = [], total = pts.slice(1).reduce((s, p, i) => s + Phaser.Math.Distance.BetweenPoints(pts[i], p), 0) || 1;
       const t = { v: 0 };
@@ -434,7 +436,7 @@ export class TableScene extends Phaser.Scene {
           if (d <= len || i === pts.length - 1) {
             const k = len ? Math.min(1, d / len) : 1;
             obj.setPosition(pts[i - 1].x + (pts[i].x - pts[i - 1].x) * k, pts[i - 1].y + (pts[i].y - pts[i - 1].y) * k);
-            obj.rotation = Math.atan2(pts[i].y - pts[i - 1].y, pts[i].x - pts[i - 1].x);
+            if (turn) obj.rotation = Math.atan2(pts[i].y - pts[i - 1].y, pts[i].x - pts[i - 1].x);
             break;
           }
           d -= len;
@@ -529,7 +531,7 @@ export class TableScene extends Phaser.Scene {
   // whose box keeps clear of every place the showdown uses.
   showdownCorner(w, h) {
     const P = this.sd;
-    const pts = P ? [P.H, P.B, P.beach, P.approach, P.flank, P.reserve, P.dug, ...P.line, P.friendStart, ...P.route] : [];
+    const pts = P ? [P.H, P.B, P.beach, P.approach, P.flank, P.reserve, P.dug, ...P.line, P.friendStart, ...P.route, ...Object.values(P.callAt)] : [];
     const corners = [[56, 108], [1864 - w, 1040 - h], [56, 1040 - h], [1864 - w, 108]];
     const covered = ([x, y]) => pts.filter((p) => p.x > x - 70 && p.x < x + w + 70 && p.y > y - 60 && p.y < y + h + 60).length;
     return corners.reduce((best, c) => (covered(c) < covered(best) ? c : best));
@@ -548,10 +550,22 @@ export class TableScene extends Phaser.Scene {
     return g;
   }
 
+  // The labels that explain step i: pinned to the harbour, the station or the battalion.
+  showdownCallouts(i) {
+    const P = this.sd;
+    for (const [step, at, text, tone] of P.f.callouts ?? []) {
+      if (step !== i || P.called?.has(`${step}-${text}`)) continue;
+      (P.called ??= new Set()).add(`${step}-${text}`);
+      const where = at === "harbour" ? P.callAt.harbour : at === "unit" ? { x: P.unit.x, y: P.unit.y + 52 } : step === 2 ? P.callAt.contact : P.callAt.beacon;
+      P.showdownTag(where, text, tone === "bad" ? "#7E1A15" : tone === "warn" ? "#6B4508" : "#1F4A2E");
+    }
+  }
+
   // Play step i; returns its length in ms. With reduced motion it jumps to its end state.
   showdownStep(i) {
     const s = this.sd?.steps[i];
     if (!s) return 0;
+    this.showdownCallouts(i);
     if (reducedMotion.on) { s.end(); return 300; }
     s.play();
     return s.dur;
@@ -564,7 +578,7 @@ export class TableScene extends Phaser.Scene {
     this.sd.timers = [];
     for (const o of [this.sd.escorts, this.sd.craft, this.sd.friends, this.sd.unit]) this.tweens.killTweensOf(o);
     this.tweens.getTweens().forEach((t) => { if (t.targets?.some?.((x) => x && typeof x.v === "number")) t.stop(); });
-    for (let k = 0; k <= i; k++) this.sd.steps[k].end();
+    for (let k = 0; k <= i; k++) { this.sd.steps[k].end(); this.showdownCallouts(k); }
   }
 
   showdownPause(on) {

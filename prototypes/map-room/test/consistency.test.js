@@ -76,3 +76,28 @@ test("the debrief's January belief is what January's orders were argued from", (
     assert.match(D.rows[1][2], WORDS[read], D.rows[1][2]);
   }
 });
+
+// Playtest 4: a player met every requirement February showed them and still lost, to a
+// defence level the screen never mentioned; the debrief then blamed the reserve. The risk
+// shown before the choice must be the rule that decides it, and the cause given after must
+// be a requirement that actually failed.
+test("February's risk table predicts the result for the case that happens", () => {
+  for (const { c, run, o } of everyEnding()) {
+    if (o.s.plan !== "land") continue;
+    const F = story.february(c, run), route = F.routes.find((r) => r.id === o.route);
+    if (!route) continue;
+    const row = route.risk.find((r) => r.label.includes(o.big ? "two waves" : "one wave"));
+    if (!row) continue; // that case was ruled out by what we knew (e.g. a known count)
+    if (o.route === "joint") assert.equal(row.text.startsWith("Stopped"), o.code === "stopped", row.text);
+    else assert.equal(row.ok, o.code !== "lost", `${row.label}: ${row.text} but ${o.code}`);
+  }
+});
+
+test("a fallen station's debrief names a requirement that failed", () => {
+  const WORDS = { defences: /defences at level/, warning: /warning/, fit: /fit battalion/, strength: /full strength/ };
+  for (const { o, D } of everyEnding()) {
+    if (o.code !== "lost") continue;
+    assert.ok(o.failed.length > 0, "lost with nothing failed");
+    for (const r of o.failed) assert.match(D.why, WORDS[r.key], D.why);
+  }
+});
