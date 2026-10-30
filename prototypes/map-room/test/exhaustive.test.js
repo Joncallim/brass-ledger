@@ -14,7 +14,7 @@ import * as story from "../src/fixture.js";
 const CAMPAIGNS = [["X0", "steady"], ["X1", "steady"], ["X0", "shifting"], ["X1", "shifting"], ["X2", "shifting"], ["X0", "volatile"], ["X1", "volatile"], ["X2", "volatile"]];
 
 test("every legal plan: forecast, result, chart, top bar and debrief agree", () => {
-  const seen = { source: new Set(), code: new Set(), count: new Set(), boarding: new Set(), route: new Set() };
+  const seen = { source: new Set(), code: new Set(), count: new Set(), boarding: new Set(), route: new Set(), naval: new Set() };
   let n = 0;
   for (const [seed, d] of CAMPAIGNS) {
     const c = makeCampaign(seed, d), done = new Set();
@@ -29,6 +29,7 @@ test("every legal plan: forecast, result, chart, top bar and debrief agree", () 
       const where = `${seed}/${d} ${key}`;
       seen.source.add(F.source); seen.code.add(o.code); seen.route.add(o.route);
       seen.count.add(o.s.knows.count != null); seen.boarding.add(F.source.startsWith("lattice"));
+      if (o.route === "joint" && o.boarded) seen.naval.add(o.code);
       // Forecast: the true case's row is the result.
       const route = F.routes.find((r) => r.id === o.route);
       assert.ok(route, `${where}: route not offered`);
@@ -54,4 +55,7 @@ test("every legal plan: forecast, result, chart, top bar and debrief agree", () 
   assert.equal(seen.count.size, 2, "count known and unknown");
   assert.equal(seen.boarding.size, 2, "boarding known and unknown");
   assert.equal(seen.route.size, 3);
+  // The naval route's three ends: stopped at sea, a breakthrough held on the beach, and a
+  // breakthrough the ground defence can't hold.
+  for (const code of ["stopped", "landed", "lost"]) assert.ok(seen.naval.has(code), `naval route never ended ${code}`);
 });

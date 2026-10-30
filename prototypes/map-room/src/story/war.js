@@ -5,7 +5,7 @@
 import { generateWorld } from "../gen/factions.js";
 import { FLEET_ROLE, makeCampaign } from "./campaign.js";
 import { outcome } from "./play.js";
-import { FIXED } from "./definition.js";
+import { CALENDAR, FIXED } from "./definition.js";
 
 export const SECTORS = 2;
 
@@ -14,12 +14,18 @@ export const SECTORS = 2;
 export const REFIT = { failure: 3, costly: 4, success: 5 };
 
 // What refit money buys before the next sector. Costs in the same units as REFIT.
-export const SPEND = [
-  { id: "rest", cost: 2, name: "Rest the battalion", says: "Two weeks ashore between sectors: its fatigue goes back to zero." },
-  { id: "replace", cost: 2, name: "Replace casualties", says: "Drafts from home bring the battalion back to full strength." },
-  { id: "order", cost: 2, name: "An extra personal order in the first month", says: "Three personal orders instead of two in the first month of the next sector." },
-  { id: "count", cost: 1, name: "Lattice in place early", says: "The posts are listening before you arrive: the first briefing already has a count of the landing craft." },
-];
+// What each buys, worded for the task force (its network and reserve keep their names from
+// sector to sector), and promising exactly what campaignFor applies.
+export const spendFor = (world = {}) => {
+  const L = world.network ?? "the network", BN = world.reserve ?? "the battalion";
+  return [
+    { id: "rest", cost: 2, name: `Rest ${BN}`, says: `Two weeks ashore between sectors: its fatigue goes back to zero.` },
+    { id: "replace", cost: 2, name: "Replace casualties", says: `Drafts from home bring ${BN} back to full strength.` },
+    { id: "order", cost: 2, name: "An extra personal order in the first month", says: "Three personal orders instead of two in the first month of the next sector." },
+    { id: "count", cost: 1, name: `A second ${L} team on the harbour`, says: `It keeps counting the landing craft through December: a fresh count by ${CALENDAR.dec.lattice} December, whatever ${L} is asked that month.` },
+  ];
+};
+export const SPEND = spendFor();
 
 // Below this many soldiers the battalion is under strength: it can't hold a second wave.
 export const FULL_STRENGTH = 600, UNDER_STRENGTH = 500;

@@ -151,7 +151,7 @@ force against one rival (`src/story/war.js`; see ROADMAP, phase 2):
   - rest for the battalion (2);
   - replacing its casualties (2);
   - an extra personal order in the first month (2);
-  - Lattice in place early, with a known count (1).
+  - a second network team on the harbour, with a fresh count of the landing craft by 27 December whatever the network is asked (1).
   A failure adds no penalty of its own.
 - The second sector poses a different problem from the first:
   - a different enemy plan;
@@ -296,11 +296,16 @@ including any spent on the month's incident.
   - `sketch.js` is a deliberately small second scenario, a garrison withdrawal, to prove
     the interfaces. It has a different objective (bring the soldiers and the guns out), its
     own resolver, its own battle plan, and a decision driven by geography read from the
-    chart (`geographyOf`: how far the rival's harbour and our anchorage are). Across 200
-    generated charts plus the two authored ones, the best decision is two lifts under
-    frigate cover on 174 charts, two lifts with no cover needed on 21, and on 5 charts
-    (and Harrow Sound) the guns can't come out in time. It is not a campaign: one decision,
-    invented numbers, no words beyond its labels.
+    chart (`geographyOf`: how far the rival's harbour and our anchorage are). One context
+    (`sketchContext`: the chart, its distances, the hours of warning) feeds the
+    calculation, the plan and the table. The transports start at the same anchorage the
+    distance is measured to (`anchorageOf`, shared with the table), and a lift that is
+    caught stays on the beach with whoever was waiting. With six hours' warning, the best
+    decision is two lifts under frigate cover on 174 of 200 generated charts, two lifts with
+    no cover on 21, and on 5 (and Harrow Sound) the guns can't come out in time. With three
+    hours' warning, the same choice gets the garrison out on Kestrel Strait and loses it on
+    Harrow Sound, whose anchorage is three times as far. It is not a campaign: one
+    decision, invented numbers, no words beyond its labels.
 - `TableScene` loads the scenario, bakes the chart once into one Canvas 2D texture, and
   animates only live things: the station's coverage ring and radar sweep, boats, the
   harbour sighting, the intel marker, showdown paths and the debrief's truth layer, all
@@ -409,7 +414,7 @@ in the scenario and open the same profiles.
   `node scripts/balance.mjs` reports them over every legal plan within two personal orders
   a month):
   - On Shifting, no single fixed plan wins more than 60% of campaigns. Today the best
-    one wins about 52%, Volatile's best about 56%. Steady stays easy on purpose: about 89%
+    one wins about 55%, Volatile’s best about 55%. Steady stays easy on purpose: about 91%
     for its best plan.
   - The best result for a campaign usually needs a different plan: 75–86% of campaigns.
   - About half of Shifting and Volatile campaigns need both January personal orders for
@@ -421,9 +426,26 @@ in the scenario and open the same profiles.
   under strength; the rival losing one craft in its next sector for every four beaten on a
   beach, up to three; and the second sector reusing the December to February calendar. That
   calendar is a stand-in: a real war needs dates that don't depend on the season.
-- **Review 6.** The rules review is in [RULES-REVIEW.md](RULES-REVIEW.md): exposure,
-  the staff's camera default and the naval route each have a recommendation awaiting your
-  decision, and none has been applied. Also proposed here:
+- **Review 7.** Rules now in play (see [RULES-REVIEW.md](RULES-REVIEW.md) for what they
+  changed, and the open question on redeployment):
+  - The staff answer to the minister's visit is **no cameras**. Exposing our positions is a
+    personal order, explained on the slip.
+  - **Exposure lasts until the guns are redeployed.** No order in a campaign is defined as a
+    redeployment, so today it lasts the sector. Whether a night move counts needs a decision.
+  - **A second wave past the navies meets the normal one-wave ground defence**: level 3
+    holds it alone, and level 2 holds it with a fit battalion. Otherwise the station falls.
+    The naval route no longer saves the station automatically.
+  - **Permission is not support.** Trading the patrol boats buys the host's permission and
+    its navy, not its cabinet's votes. The slip, the log, the debrief and Sato's memory all
+    say so, and keeping the ally is judged on the cabinet's count.
+  - **February's dates come from the record.** Orders go out within the hour of the
+    decision, so a dig-in ordered on a boarding report two days ahead happens two days
+    before the sailing. The report and the chart play it in that order.
+  - **The war's intelligence refit** promises what it delivers: a second team counting the
+    landing craft, with a fresh count by 27 December whatever the network is asked. It is
+    worded with the task force's own names.
+- **Review 6.** Exposure, the staff's camera default and the naval route were measured
+  here and decided in review 7 (above). Also proposed here:
   - **The calendar is causal.** Incidents land before the month's orders: in December on
     4 to 8 December, with orders on the 10th; in January on 2 to 6 January, with orders on
     the 7th. Everything an order causes comes after: in December, the companies in place

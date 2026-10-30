@@ -113,6 +113,20 @@ the interfaces, not the second campaign. That still needs its own phases, incide
 officers' advice, words and human testing, and should wait for the V2 gate and the answer
 to question 4.
 
+**What is still fixed in the station-defence campaign.** These are fixed by structure, not
+made configurable, and a second type would need its own:
+
+- **Phases:** December and January are preparation months (briefing, an incident,
+  orders, the log), and February is one decision. The desk's chapters, the month seals and
+  the calendar's dates are written for exactly this shape.
+- **Map-independent rules:** the defence levels and thresholds, the second wave at twelve
+  craft, the cabinet of eleven with a majority at six, a month on duty costing 31 fatigue,
+  the warning sources, and how each February route resolves. None of them reads the chart:
+  a generated theatre changes names and geography, not the outcome. Only the sketch has a
+  decision geography changes.
+- **Roles:** one station, one host, one rival harbour, one network and one reserve. The
+  generator fills them with names, but never adds or removes one.
+
 **Still single-type.** The desk screens (orders slips, the host's slip, February's cards)
 are written for station defence. A second type needs its own screens, or a desk that reads
 the order slots from the definition. That is the next piece of work once a type is chosen.

@@ -13,16 +13,17 @@ export const ministersFor = (support, total = FIXED.ministers) => Math.max(0, Ma
 // Beacon's defence level as a landing meets it: one lower if the main radar has failed, and
 // one lower if the rival knows where our guns are (it lands where they are not).
 export function effectiveDefence(s) {
-  const exposed = s.rivalKnows && !(s.variant?.exposure === "none") && !(s.variant?.exposure === "fades" && s.exposedIn === "dec");
-  return s.def - (s.radarFails ? FIXED.radarFailure : 0) - (exposed ? FIXED.exposure : 0);
+  // Exposure lasts while the rival's picture still describes our positions. Only a
+  // redeployment would make it stale, and no order in a campaign redeploys the guns (see
+  // RULES-REVIEW.md: whether a night move counts is not defined), so it lasts the sector.
+  return s.def - (s.radarFails ? FIXED.radarFailure : 0) - (s.rivalKnows ? FIXED.exposure : 0);
 }
 
-// Rules variants, for RULES-REVIEW.md only (scripts/rules-review.mjs sets c.variant). The game
-// never sets one; every screen and test plays the rules above. Each is an alternative the
-// product owner is asked to choose between, not a setting.
-//   exposure: "none"  (no level lost for exposure) | "fades" (December's exposure is stale by February)
-//   visit:    "quiet" (the staff answer to the minister's visit is no cameras)
-//   naval:    "check" (a second wave that slips past the navies must still be held on the beach)
+// The rules before review 7, kept only so scripts/rules-review.mjs can measure what the
+// decisions changed (c.variant = PREVIOUS_RULES). The game never sets a variant.
+//   visit: "open"  the staff answer to the minister's visit was cameras
+//   naval: "auto"  a second wave that slipped past the navies was always held
+export const PREVIOUS_RULES = Object.freeze({ visit: "open", naval: "auto" });
 
 // Kept for the copy and tests: the same numbers, by their old names.
 export const BLUFF_PRESS = CAB.bluffPress, DATE_REST = FT.dateRest;
@@ -79,7 +80,7 @@ export function simulate(c, run = {}) {
     list.sort((a, b) => effectDay(a.id, month) - effectDay(b.id, month));
     for (const e of list) {
       const rule = incidentRule(e.id);
-      const staffAnswer = c.variant?.visit === "quiet" && e.id === "visit" ? rule.options.find((o) => o.id === "quiet") : rule.options.find((o) => o.staff);
+      const staffAnswer = c.variant?.visit === "open" && e.id === "visit" ? rule.options.find((o) => o.id === "open") : rule.options.find((o) => o.staff);
       const opt = e.staffBusiness ? staffAnswer : rule.options.find((o) => o.id === choice) ?? staffAnswer;
       const was = { support: s.support, rivalKnows: s.rivalKnows, fatigue: s.eng };
       opt.effect(s, c, k);
@@ -257,13 +258,16 @@ export function landingCheck(c, s, route, big) {
   const req = (key, ok, need) => ({ key, ok, need });
   let needs;
   if (route === "joint") {
-    // Two navies stop a landing at sea if they know when it sails, or if it is one wave. A
-    // second wave that gets past them lands. (Under review: RULES-REVIEW.md.)
+    // Two navies stop a landing at sea if they know when it sails, or if it is one wave.
     needs = big ? [req("warning", warned, "warning, to meet both waves at sea")] : [];
-    if (big && !warned && s.variant?.naval === "check") {
-      // The variant: the battalion, already behind the navies, must hold the second wave.
-      const second = [req("defences", def >= D.holdsWithReserve, D.holdsWithReserve), req("fit", fit, "a fit battalion")];
-      return { holds: false, needs, failed: needs, def, warned, fit, strong, listening, dated, intercepted: false, second, secondHolds: second.every((r) => r.ok) };
+    if (big && !warned) {
+      // A second wave that gets past them lands, and meets the normal ground defence for one
+      // wave: level 3 holds it alone; level 2 holds it with the battalion, which is already in
+      // place behind the navies, if the battalion is fit (review 7).
+      const second = def >= D.holdsAlone ? [req("defences", true, D.holdsAlone)]
+        : [req("defences", def >= D.holdsWithReserve, D.holdsWithReserve), req("fit", fit, "a fit battalion")];
+      const secondHolds = s.variant?.naval === "auto" || second.every((r) => r.ok);
+      return { holds: false, needs: [...needs, ...second], failed: [needs[0], ...(secondHolds ? [] : second.filter((r) => !r.ok))], def, warned, fit, strong, listening, dated, intercepted: false, second, secondHolds };
     }
   } else if (route === "forward") {
     needs = big ? [req("fit", fit, "a fit battalion"), req("defences", def >= D.holdsAlone, D.holdsAlone), req("strength", strong, "a battalion at full strength")]
@@ -295,7 +299,8 @@ export function resolve(c, s, route, hyp) {
   // Whether the battalion itself fought: it was dug in, it went ashore behind the navies, or it
   // reached the headland on the warning. Without warning it arrives after the fight.
   const engaged = battle && (route !== "quiet" || warned);
-  const navyFought = code === "stopped" || code === "landed";
+  // The navies fought whenever they met a landing force with troops aboard.
+  const navyFought = route === "joint" && hyp.troops;
   const daysAfter = s.fatigue + (route === "joint" ? FT.joint : 0) + (route === "forward" ? FT.dig : 0) + (engaged ? FT.battle : 0);
   const supportAfter = s.support
     - (code === "called" ? CAB.overreaction : 0) - (code === "dugin" ? CAB.dugInForNothing : 0) - (code === "lost" ? CAB.lostStation : 0)
@@ -330,12 +335,17 @@ export function outcome(c, run) {
   // goes home to try again.
   const rivalLost = r.battle && r.code !== "lost" ? c.craft.jan : 0;
   const after = { ...structuredClone(s), fatigue: r.daysAfter, support: r.supportAfter, def: r.code === "lost" ? 0 : s.def, warning: s.warning };
-  const sail = c.sailDay;
+  // February's facts, dated: the ships sail at dawn (seen at 05:00 by the patrol boats or the
+  // radar, which is when they leave); our orders go out within the hour of the decision, so a
+  // move ordered on a boarding report two days out happens two days before the sailing.
+  const sail = c.sailDay, d = sim.decision;
+  const sailedAt = at("feb", sail, d.source === "radar" || d.source === "patrol-boats" ? 5 : 6);
+  const movedAt = { month: d.month, day: d.day, hour: d.hour + 1 };
   const feb = [
-    { ...at("feb", sail, 6), kind: "sailed", boarded: hyp.troops },
-    { ...at("feb", sail, 9), kind: "moved", route },
+    { ...sailedAt, kind: "sailed", boarded: hyp.troops },
+    { ...movedAt, kind: "moved", route },
     { ...at("feb", sail + 1, 6), kind: "contact", code: r.code, route, failed: r.failed.map((x) => x.key), engaged: r.engaged, losses: r.losses },
-  ];
+  ].sort((a, b) => dateKey(a) - dateKey(b));
   return {
     ...r, route, s, after, boarded: hyp.troops, big: hyp.big, def: check.def, fit: check.fit, listening: check.listening, dated: check.dated, warned: check.warned,
     intercept: route === "joint" && check.holds, holdsDug: route === "forward" && check.holds, reinforced: check.fit && check.warned,

@@ -1,16 +1,15 @@
-// The measurements behind RULES-REVIEW.md: each rule under review, against its alternatives,
-// over the same campaigns and every legal plan. Run: node scripts/rules-review.mjs [seeds]
+// The measurements behind RULES-REVIEW.md: the rules decided in review 7 against the rules
+// before them, over the same campaigns and every legal plan. Run: node scripts/rules-review.mjs [seeds]
 import { DIFFICULTY, makeCampaign } from "../src/story/campaign.js";
-import { effectiveDefence, outcome, simulate } from "../src/story/play.js";
+import { PREVIOUS_RULES, effectiveDefence, outcome } from "../src/story/play.js";
 import { plans, report, runFor } from "./balance.mjs";
 
 const SEEDS = Number(process.argv[2] ?? 100);
 const VARIANTS = {
-  "current rules": null,
-  "exposure: no level lost": { exposure: "none" },
-  "exposure: December's is stale by February": { exposure: "fades" },
-  "visit: staff answer is no cameras": { visit: "quiet" },
-  "naval: a second wave that slips past must be held": { naval: "check" },
+  "review 7 rules (the game)": null,
+  "previous: the staff host the visit with cameras": { visit: PREVIOUS_RULES.visit },
+  "previous: a second wave past the navies is always held": { naval: PREVIOUS_RULES.naval },
+  "previous rules (both)": PREVIOUS_RULES,
 };
 
 const pct = (x) => `${(x * 100).toFixed(0)}%`;
@@ -52,21 +51,20 @@ for (const d of Object.keys(DIFFICULTY)) for (let i = 0; i < SEEDS; i++) {
     if (s.rivalKnows) {
       tally.exposed++;
       if (c.incidents.jan === "visit" && run.jan.incident === "open") tally.staffCameras++;
-      const n = outcome({ ...c, variant: { exposure: "none" } }, run);
-      if (n.grade !== o.grade) tally.exposureDecides++;
+      if (o.s.rivalKnows && effectiveDefence({ ...o.s, rivalKnows: false }) >= 3 && o.code === "lost") tally.exposureDecides++;
     }
     if (o.route === "joint" && o.boarded) {
       tally.joint++;
-      if (o.code === "landed") {
+      if (o.big && !o.warned) {
         tally.jointSlip++;
-        if (effectiveDefence(s) < 2) tally.slipWeak++;
-        if (!o.fit) tally.slipUnfit++;
+        if (o.code === "lost") tally.slipWeak++;
+        if (o.code === "landed" && !o.fit) tally.slipUnfit++;
       }
     }
   }
 }
 console.log(`\nLegal plan-campaign runs: ${tally.runs}`);
-console.log(`Exposure: Ravellan knows our guns in ${pct(tally.exposed / tally.runs)} of runs; it changes the grade in ${pct(tally.exposureDecides / Math.max(1, tally.exposed))} of those.`);
-console.log(`  The staff answer to the minister's visit (cameras) is the source in ${pct(tally.staffCameras / Math.max(1, tally.exposed))} of exposed runs; the visit comes up in ${pct(tally.visitCampaigns / (SEEDS * 3))} of campaigns.`);
+console.log(`Exposure: Ravellan knows our guns in ${pct(tally.exposed / tally.runs)} of runs; in ${pct(tally.exposureDecides / Math.max(1, tally.exposed))} of those the station fell with level 3 or more built.`);
+console.log(`  Cameras at the minister's visit (now a personal order) are the source in ${pct(tally.staffCameras / Math.max(1, tally.exposed))} of exposed runs; the visit comes up in ${pct(tally.visitCampaigns / (SEEDS * 3))} of campaigns.`);
 console.log(`Naval route, with troops aboard: ${tally.joint} runs; a second wave slipped past in ${tally.jointSlip} (${pct(tally.jointSlip / Math.max(1, tally.joint))}).`);
-console.log(`  Of those, the station was kept with defences under level 2 against a landing in ${pct(tally.slipWeak / Math.max(1, tally.jointSlip))}, and with an unfit battalion in ${pct(tally.slipUnfit / Math.max(1, tally.jointSlip))}.`);
+console.log(`  Of those, the ground defence lost the station in ${pct(tally.slipWeak / Math.max(1, tally.jointSlip))}; it was held by an unfit battalion in ${pct(tally.slipUnfit / Math.max(1, tally.jointSlip))} (only possible at level 3 against a landing).`);

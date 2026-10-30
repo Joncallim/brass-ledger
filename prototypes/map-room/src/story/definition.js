@@ -94,9 +94,10 @@ export const INCIDENT_RULES = [
     ] },
   { id: "visit", command: true, months: ["jan"], day: { jan: 2 }, from: "sato",
     options: [
+      // The staff answer is no cameras (review 7): exposing our positions is a choice you make.
+      { id: "quiet", staff: true, effect: (s, c, k) => { s.support += n(c.minister === "dove" ? 8 : 3, k); } },
       // Cameras on the headland show the rival where our guns are, as a press briefing does.
-      { id: "open", staff: true, effect: (s, c, k) => { s.support += n(c.minister === "dove" ? 4 : 8, k); s.rivalKnows = true; } },
-      { id: "quiet", seal: true, effect: (s, c, k) => { s.support += n(c.minister === "dove" ? 8 : 3, k); } },
+      { id: "open", seal: true, effect: (s, c, k) => { s.support += n(c.minister === "dove" ? 4 : 8, k); s.rivalKnows = true; } },
     ] },
 ];
 export const incidentRule = (id) => INCIDENT_RULES.find((x) => x.id === id);

@@ -13,7 +13,7 @@ import { WORLD, setWorld } from "../story/world.js";
 import { worldFor } from "../gen/factions.js";
 import { PROGRESS, ledger, staffRoom } from "../story/rooms.js";
 import { clearLog, log, rawLog, summary } from "../playlog.js";
-import { FULL_STRENGTH, REFIT, SECTORS, SPEND, UNDER_STRENGTH, campaignFor, closeSector, newWar, nextSector, sectorCode, toggleSpend, worldForSector } from "../story/war.js";
+import { FULL_STRENGTH, REFIT, SECTORS, UNDER_STRENGTH, spendFor, campaignFor, closeSector, newWar, nextSector, sectorCode, toggleSpend, worldForSector } from "../story/war.js";
 
 const GRADES = { success: "Success", costly: "Costly success", failure: "Failure" };
 
@@ -1059,7 +1059,7 @@ export class DeskScene extends Phaser.Scene {
             </ul>
             <p class="lab" style="margin-top:20px">Refit money: ${w.funding} left</p>
             <p class="set-help">Every result pays a refit: ${REFIT.failure} after a failure, ${REFIT.costly} after a costly success, ${REFIT.success} after a success. This sector paid ${REFIT[last.grade]}.</p>
-            <div class="spend">${SPEND.map((x) => `<button class="opt ${bought.has(x.id) ? "sel" : ""}" data-spend="${x.id}" role="checkbox" aria-checked="${bought.has(x.id)}" ${!bought.has(x.id) && w.funding < x.cost ? "disabled" : ""}><span class="r"></span><span><b>${x.name}</b><span class="s">${x.says}</span><span class="cost">${x.cost} of refit money</span></span></button>`).join("")}</div>
+            <div class="spend">${spendFor(this.campaign.world).map((x) => `<button class="opt ${bought.has(x.id) ? "sel" : ""}" data-spend="${x.id}" role="checkbox" aria-checked="${bought.has(x.id)}" ${!bought.has(x.id) && w.funding < x.cost ? "disabled" : ""}><span class="r"></span><span><b>${x.name}</b><span class="s">${x.says}</span><span class="cost">${x.cost} of refit money</span></span></button>`).join("")}</div>
           </section>
           <section><p class="lab">What your staff remember</p>
             ${k.memories.map((m) => `<p class="memory"><span class="av" style="background-image:url(${portrait(m.who)})"></span><span>${m.line}</span></p>`).join("")}

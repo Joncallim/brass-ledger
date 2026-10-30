@@ -1,107 +1,75 @@
-# Map room: rules under review
+# Map room: rules review
 
-For Jonathan. Four rules came in with playtest 5. Review 6 asked for each to be reviewed
-rather than locked in. Nothing below has been changed in the game: every screen and test
-still plays the current rules. The alternatives exist only as review variants
-(`c.variant` in `src/story/play.js`, which the game never sets). Each needs your decision.
+Review 6 measured four rules from playtest 5 against alternatives. Review 7 agreed a direction,
+and the game now plays it. This page records what was decided, what it changed, and one rule
+that still needs a definition.
 
-Numbers come from `npm run rules-review` (60 seeds per difficulty, every legal plan: 145,926
-plan-campaign runs). Two measures matter, and they say different things:
+Numbers come from `npm run rules-review` (100 seeds per difficulty, every legal plan: 243,240
+plan-campaign runs). The script compares the review 7 rules with the rules before them (kept
+only as `PREVIOUS_RULES` in `src/story/play.js`, which the game never sets).
 
-- **Best plans.** These are what a player who already knows the answer does: the best fixed
-  plan's success rate, the share of campaigns that can't be won outright, and how many
-  different best plans there are.
-- **All plans.** This is closer to a first-time player: the average result over every legal
-  plan (success 2, costly 1, failure 0) and the share of plans that lose the station.
+## Decided
 
-| Variant | Best plan wins (Steady / Shifting / Volatile) | Can't be won outright (Shifting / Volatile) | All plans: average (Steady / Shifting / Volatile) | All plans: station lost (Steady / Shifting / Volatile) |
+| Rule | Before | Now (review 7) |
+| --- | --- | --- |
+| Fatigue | Battle fatigue only for a battalion that fought | Unchanged |
+| Incidents | In date order | Unchanged |
+| The minister's visit | The staff answer was cameras, which exposed our guns | The staff answer is **no cameras**. Cameras are a personal order, and the slip says what they cost |
+| Exposure | One level lower against a landing, for the rest of the campaign | One level lower **while Ravellan's picture still describes our positions**: until the guns are redeployed. A new month alone doesn't end it. See the open question below |
+| Naval breakthrough | A second wave past the navies was always held | It meets the **normal ground defence for one wave**: level 3 against a landing holds it alone, and level 2 holds it if the battalion (already behind the navies) is fit. Otherwise the station falls |
+
+## What it changed
+
+| Rules | Best fixed plan wins (Steady / Shifting / Volatile) | Can't be won outright (Shifting / Volatile) | All plans: average (Steady / Shifting / Volatile) | All plans: station lost (Steady / Shifting / Volatile) |
 | --- | --- | --- | --- | --- |
-| Current rules | 87% / 58% / 55% | 8% / 13% | 1.21 / 0.79 / 0.72 | 14% / 34% / 40% |
-| Exposure: no level lost | 88% / 58% / 55% | 8% / 13% | 1.26 / 0.88 / 0.82 | 10% / 26% / 31% |
-| Exposure: December's is stale by February | 87% / 58% / 55% | 8% / 13% | 1.22 / 0.81 / 0.75 | 13% / 32% / 37% |
-| Visit: the staff answer is no cameras | 88% / 60% / 55% | 8% / 13% | 1.23 / 0.81 / 0.74 | 13% / 32% / 38% |
-| Naval: a second wave that slips past must be held | 87% / 58% / 55% | 8% / 13% | 1.20 / 0.76 / 0.68 | 14% / 36% / 43% |
+| Review 7 (the game) | 90% / 57% / 52% | 11% / 14% | 1.23 / 0.81 / 0.73 | 11% / 32% / 39% |
+| Previous: cameras by default | 89% / 56% / 53% | 11% / 14% | 1.22 / 0.78 / 0.69 | 12% / 34% / 42% |
+| Previous: a breakthrough always held | 90% / 57% / 52% | 11% / 14% | 1.23 / 0.83 / 0.75 | 11% / 31% / 37% |
+| Previous rules (both) | 89% / 56% / 53% | 11% / 14% | 1.23 / 0.80 / 0.72 | 11% / 33% / 40% |
 
-None of the variants moves the Shifting guard on campaigns that can't be won outright (it
-stays at 20%; today 8–12% depending on the seeds). None of them changes what an expert does;
-all of them change what a newcomer meets.
+- **The 20% Shifting guard holds.** Shifting campaigns that can't be won outright stay at 11%
+  of 100 seeds; the guard is unchanged.
+- **The two changes pull in opposite directions** for a typical player:
+  - No cameras by default removes most accidental exposure. Ravellan knows our guns in 31% of
+    runs, down from about 43% when the staff used cameras (review 6, 60 seeds). Cameras, now a personal order, cause 36% of the exposures
+    that remain.
+  - The naval ground check takes away the naval route's free save. Of the 14% of naval stands
+    where a second wave slips past, the ground defence now loses the station in 42%.
 
-## 1. Fatigue counts only when the battalion fought
+  Net, on Shifting, a typical plan loses the station slightly less often than before: 32%
+  against 33%.
+- **What an expert does is unchanged.** Best plans already avoided cameras and the
+  unwarned naval stand. The breakthrough is still held by an unfit battalion in 26% of
+  cases, but only where the defences are at level 3 against a landing, which holds one wave
+  alone under the normal rule.
 
-**Recommendation: keep.** A battalion that arrives after the fight hasn't fought, so it
-shouldn't pay battle fatigue. February's forecast and the result now come from the same
-function, so the cost shown is the cost paid.
+## Open: what counts as redeployment
 
-## 2. Incidents in date order
+Review 7 says redeployment ends exposure, and a new month doesn't. Within a campaign, no order
+is defined as a redeployment:
 
-**Recommendation: keep.** The order is now causal on every path. Incidents land before the
-month's orders, and everything an order causes falls after them. The effects add up
-regardless of order, so this changed no result: 48,519 legal runs were compared with the
-previous rules, and none differ.
+- December's staff plan moves two rifle companies and the air-defence battery onto the
+  headland by night.
+- January's brings the battery up to full strength.
 
-## 3. Exposure costs a level against a landing, permanently
+Either could be read as moving the guns Ravellan saw, or as adding to them. Rather than invent
+a rule, the game treats neither as a redeployment, so exposure lasts the sector. Between
+sectors of a war the task force does redeploy (a new strait and a new station), and exposure
+doesn't carry over.
 
-**The rule today.** Two things tell Ravellan where our guns are: briefing the press openly,
-and hosting the minister's visit with cameras. Either one means Beacon counts one level lower
-against a landing for the rest of the campaign. A failed radar does the same.
+**Needs a decision.** Should a night move of the guns (December's staff plan, or a new
+"redeploy the battery" order) end exposure, and at what cost? Until then, the slips and the
+glossary say: "until our guns are redeployed. No order in this campaign redeploys them, so it
+lasts the sector."
 
-**Evidence.**
-- Ravellan knows our guns in 43% of runs, and that changes the grade in 16% of those.
-- The staff's default answer to the minister's visit (cameras) causes 60% of all exposures.
-  The visit comes up in 38% of campaigns.
-- Without the penalty, plans lose the station far less often: on Shifting, 26% instead of 34%.
-- Best plans are unaffected, because an expert never exposes the station.
-- A December exposure also puts Beacon at "level 0 against a landing" if it was then left at
-  level 1, which reads oddly.
+## Also found: decisions that rarely decide
 
-**Trade-off.** The penalty gives the press and visit choices teeth: Sato's support against
-Briggs's defence level. Without it, briefing openly is free support. Permanent, though, it
-punishes a December choice in February, after six weeks in which we could have moved the
-guns. It is also mostly paid by players who let the staff decide.
+The decision-diversity measure (`npm run balance`) is unchanged by review 7:
 
-**Recommendation.**
-1. **Change the staff answer to the visit to "no cameras".** The staff should not spend the
-   commander's defence level on politics without being told to.
-2. **Keep the penalty, but let a December exposure go stale by February** (the "stale"
-   variant). The trade-off stays real in the month it is made.
+- December's Lattice question never changes the best result.
+- December's and January's station orders have almost no spread.
+- Most of the variety comes from the incident answers and the February route.
 
-Together they leave expert play unchanged and bring the newcomer's average up slightly. These
-are design decisions, so neither is applied.
-
-## 4. The naval route keeps the station when a second wave slips past
-
-**The rule today.** Standing with the host's navy without warning: the navies meet only the
-first wave, and the second lands. The station is then always held, after a battle on the
-beach. That holds whatever the defence level, and whether or not the battalion is fit.
-
-**Evidence.**
-- When a second wave slips past, the station is kept with an unfit battalion in 53% of cases.
-- It is kept with defences under level 2 against a landing in 26%.
-- Everywhere else the game says an unfit battalion can't hold a landing.
-
-**Trade-off.** The rule makes the naval route a safe harbour: it can never lose the station.
-That keeps the ally's navy valuable, but it contradicts the rule the briefings state. The
-forecast and debrief now say it plainly ("Under this campaign's rule, 2nd Battalion holds a
-second wave that gets past the navies"). Saying it plainly doesn't make it consistent.
-
-**Recommendation: the "must be held" variant.** A second wave that slips past the navies
-needs what one wave needs when the battalion is on hand: level 2 against a landing and a fit
-battalion. The cost is small: plans lose the station on Shifting 36% of the time instead of
-34%, and best plans don't change. It isn't applied without your decision.
-
-## Also found: two decisions that rarely decide anything
-
-The new decision-diversity measure (`npm run balance`) looks at what each order slot does to
-the best result, across campaigns:
-
-- December's Lattice question **never** changes the best result.
-- December's and January's station orders have almost no spread: the same option is nearly
-  always best.
-
-Most of the variety comes from the incident answers and the February route. This matches
-the playtest verdict that the game is "more like choosing an answer than weighing competing
-plans".
-
-One caveat: this measure scores plans that already know the hidden truth, so it can't value
-information. December's Lattice question may still matter to a player who has to guess. The
-uncoached human sessions in `PLAYTEST.md` are the way to find out; the numbers can't.
+The measure scores plans that already know the hidden truth, so it can't value information.
+It matches the playtest verdict ("more like choosing an answer than weighing competing plans")
+but can't settle it. That is for the uncoached sessions in `PLAYTEST.md`.

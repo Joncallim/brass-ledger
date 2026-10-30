@@ -19,14 +19,14 @@ export function* plans() {
       }
 }
 
-const STAFF_ANSWER = { radar: "fix", defector: "hand", leak: "silent", collision: "return", visit: "open" };
-const OWN_ANSWER = { radar: "run", defector: "talk", leak: "brief", collision: "search", visit: "quiet" };
+const STAFF_ANSWER = { radar: "fix", defector: "hand", leak: "silent", collision: "return", visit: "quiet" };
+const OWN_ANSWER = { radar: "run", defector: "talk", leak: "brief", collision: "search", visit: "open" };
 
 // The run a plan gives in one campaign, or null if it breaks the two-orders rule there.
 export function runFor(c, p) {
-  // Under the review's visit variant the staff answer is no cameras, and cameras cost the order.
-  const swap = c.variant?.visit === "quiet";
-  const staff = swap ? { ...STAFF_ANSWER, visit: "quiet" } : STAFF_ANSWER, own = swap ? { ...OWN_ANSWER, visit: "open" } : OWN_ANSWER;
+  // Under the previous rules (rules-review.mjs) the staff answer was cameras.
+  const swap = c.variant?.visit === "open";
+  const staff = swap ? { ...STAFF_ANSWER, visit: "open" } : STAFF_ANSWER, own = swap ? { ...OWN_ANSWER, visit: "quiet" } : OWN_ANSWER;
   const inc = (m, x) => (c.incidents[m] ? (x === "own" ? own : staff)[c.incidents[m]] : null);
   const run = { dec: { beacon: p.db, lattice: p.dl, incident: inc("dec", p.di) }, jan: { beacon: p.jb, lattice: p.jl, way: p.way, incident: inc("jan", p.ji) }, feb: { route: p.route } };
   const decSeals = (p.db !== "quiet") + (p.dl !== "boats") + (c.incidents.dec && p.di === "own" ? 1 : 0);

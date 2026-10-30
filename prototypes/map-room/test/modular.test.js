@@ -6,7 +6,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { CALENDAR, FIXED, INCIDENT_RULES, SLOTS, STATION_DEFENCE, TUNING, effectDay, incidentDay } from "../src/story/definition.js";
 import { checkPlan, stateAfter } from "../src/story/battle.js";
-import { CHOICES, WITHDRAWAL, bestChoices, geographyOf, resolveWithdrawal, withdrawalPlan } from "../src/story/sketch.js";
+import { CHOICES, WITHDRAWAL, bestChoices, geographyOf, resolveWithdrawal, sketchContext, withdrawalPlan } from "../src/story/sketch.js";
 import { makeCampaign } from "../src/story/campaign.js";
 import { outcome } from "../src/story/play.js";
 import { generateWorld } from "../src/gen/factions.js";
@@ -57,26 +57,40 @@ test("the renderer's plan check catches unknown anchors, actors and effects", ()
 });
 
 test("a different small scenario fits the same interfaces", () => {
-  for (const sc of Object.values(SCENARIOS)) {
-    const geo = geographyOf(sc);
+  for (const sc of Object.values(SCENARIOS)) for (const w of WITHDRAWAL.situation.warningHours) {
+    const ctx = sketchContext(sc, w);
     for (const choice of CHOICES) {
-      const { plan, result } = withdrawalPlan(geo, choice);
+      const { plan, result } = withdrawalPlan(ctx, choice);
       assert.deepEqual(checkPlan(plan), []);
-      assert.deepEqual(result, resolveWithdrawal(geo, choice));
+      // One context: the plan carries it, and the result is the resolver's for it.
+      assert.equal(plan.context, ctx);
+      assert.deepEqual(result, resolveWithdrawal(ctx, choice));
+      // The transports start and (if they get away) end at the anchorage the distance is measured to.
+      assert.equal(plan.actors.find((a) => a.id === "transports").at, "anchorage");
       const end = stateAfter(plan, plan.steps.length - 1);
-      assert.equal(end.actors.garrison.visible, false, "the garrison has embarked");
-      assert.equal(end.actors.transports.at, "friendStart");
+      // The garrison leaves the chart only if the first lift got away; a caught lift stays on the beach.
+      assert.equal(end.actors.garrison.visible, !result.kept.garrison ? true : false, `${sc.id} w${w} ${choice.lift}/${choice.cover}`);
+      if (!result.kept.garrison) assert.equal(end.actors.garrison.at, "beach");
+      assert.equal(end.actors.transports.at, result.caught ? "beach" : "anchorage");
+      assert.equal(end.effects.some((e) => e.kind === "flash" && e.at === "beach"), result.caught);
     }
   }
   assert.notDeepEqual(WITHDRAWAL.objectives.map((o) => o.id), STATION_DEFENCE.objectives.map((o) => o.id));
 });
 
-// Geography read from the chart must change which decision is best on some charts, or the
-// interfaces haven't shown that it can.
-test("geography from the chart changes the sketch's best decision", () => {
+// Geography read from the chart must change which decision is best on some charts, and the
+// outcome of the same decision, or the interfaces haven't shown that it can.
+test("geography from the chart changes the sketch's best decision and its outcome", () => {
   const tally = new Map();
   const charts = [...Array.from({ length: 200 }, (_, i) => generateWorld(`G${i}`).layout), ...Object.values(SCENARIOS)];
-  for (const sc of charts) { const k = bestChoices(geographyOf(sc)).join(" | "); tally.set(k, (tally.get(k) ?? 0) + 1); }
+  for (const sc of charts) { const k = bestChoices(sketchContext(sc, 6)).join(" | "); tally.set(k, (tally.get(k) ?? 0) + 1); }
   assert.ok(tally.size >= 3, [...tally].join("; "));
   for (const n of tally.values()) assert.ok(n < charts.length * 0.95, "one answer for almost every chart");
+  // The same choice with the same three hours' warning: out on Kestrel Strait, taken on Harrow
+  // Sound, whose anchorage is three times as far.
+  const kestrel = sketchContext(SCENARIOS["kestrel-strait"], 3), harrow = sketchContext(SCENARIOS["harrow-sound"], 3);
+  for (const choice of CHOICES) {
+    assert.equal(resolveWithdrawal(kestrel, choice).kept.garrison, true, `Kestrel ${choice.lift}/${choice.cover}`);
+    assert.equal(resolveWithdrawal(harrow, choice).grade, "failure", `Harrow ${choice.lift}/${choice.cover}`);
+  }
 });

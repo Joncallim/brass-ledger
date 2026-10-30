@@ -103,3 +103,27 @@ The human fun gate is the product owner's call. These are proposed signals, not 
 report show that the screens agree with the rules and that no fixed plan wins everywhere.
 They can't show that the game is understood or fun. That needs the uncoached comprehension
 check and the sessions above, with people.
+
+## Review 7: questions for the next sessions
+
+The review played the campaign and found the finale clearer, but "still like solving a table
+and watching the answer", and the command structure "oversized for one battalion and a
+radar station". These are questions for players, not instructions to add units or content.
+
+Ask after the debrief, without leading:
+
+1. **Solving or deciding.** "When you chose in February, were you working out the right
+   answer, or weighing things you cared about?" Note whether they mention the forecast
+   table as the answer.
+2. **Watching or taking part.** "During the showdown, was there anything you wished you
+   could do?" Note whether the animation felt like a consequence or a replay.
+3. **Scale.** "Did four senior officers feel right for what you were commanding?" Note any
+   word like "overkill", "bureaucracy" or "too many people".
+4. **The ally.** "What did the patrol boats buy you?" Right answer: the navy and permission,
+   not the cabinet's votes.
+5. **Exposure.** "What did briefing the press, or the minister's cameras, cost you, and for
+   how long?" Right answer: one level against a landing, for the rest of the sector.
+
+**Status.** No human participant has played the review 6 or review 7 builds. The uncoached
+comprehension check and the fun sessions above have not been run. Every result so far comes
+from automated checks and from the product owner's own reviews.

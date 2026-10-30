@@ -16,8 +16,8 @@ import { ledger, staffRoom } from "../src/story/rooms.js";
 import * as story from "../src/fixture.js";
 import { seeded } from "../src/chart/random.js";
 
-const OWN = { radar: "run", defector: "talk", leak: "brief", collision: "search", visit: "quiet" };
-const STAFF = { radar: "fix", defector: "hand", leak: "silent", collision: "return", visit: "open" };
+const OWN = { radar: "run", defector: "talk", leak: "brief", collision: "search", visit: "open" };
+const STAFF = { radar: "fix", defector: "hand", leak: "silent", collision: "return", visit: "quiet" };
 const pick = (r, list) => list[Math.floor(r() * list.length)];
 
 // A deterministic sample of legal runs for a campaign: every option of every slip appears.
@@ -280,5 +280,72 @@ test("built level and level against a landing are distinguished wherever they di
       assert.match(bar, /built/, bar);
       assert.match(F, /against a landing \(\d built/, F);
     } else assert.doesNotMatch(bar, /built/, bar);
+  }
+});
+
+// ── Review 7 ─────────────────────────────────────────────────────────────────
+import { INCIDENT_RULES, FIXED } from "../src/story/definition.js";
+import { landingCheck } from "../src/story/play.js";
+import { spendFor } from "../src/story/war.js";
+
+test("review 7 rules: no cameras by default, exposure lasts, a second wave meets the ground defence", () => {
+  assert.equal(INCIDENT_RULES.find((x) => x.id === "visit").options.find((o) => o.staff).id, "quiet");
+  for (const { c, run } of sample()) {
+    const sim = simulate(c, run), o = outcome(c, run);
+    // Exposure, once made, still counts in February: no order in a campaign redeploys the guns.
+    if (sim.decEnd.rivalKnows) assert.equal(o.s.rivalKnows, true);
+    // A staff answer never exposes the station.
+    const exposing = chronicle(c, run).events.filter((e) => e.exposed);
+    for (const e of exposing) assert.equal(e.by === "you" || e.kind === "visit", true, `${c.seed}: exposed by ${e.by}`);
+    if (c.incidents.jan === "visit" && !run.jan.incident) assert.notEqual(o.s.incident.jan, "open");
+    // The naval breakthrough: the same check one wave meets with the battalion on hand.
+    if (o.route === "joint" && o.boarded && o.big && !o.warned) {
+      const ground = landingCheck(c, { ...o.s, warning: "fresh" }, "quiet", false);
+      assert.equal(o.code === "landed", ground.holds, `${c.seed}: ${o.code} vs ground ${ground.holds}`);
+    }
+  }
+});
+
+test("the patrol-boat trade says it buys permission and the navy, not the cabinet's support", () => {
+  for (const { c, run } of sample()) {
+    const rec = chronicle(c, run), co = rec.events.find((e) => e.kind === "coalition");
+    if (co.how !== "trade") continue;
+    const log = story.night(c, run, "jan").beats.map((b) => b.text).join(" ");
+    assert.match(log, new RegExp(`count is unchanged: ${co.for} for, ${co.against} against`), log);
+    const H = story.host(c, run), offer = [...H.ways, H.secure].filter((w) => w.id === "buy").map((w) => w.says).join(" ");
+    assert.match(offer, /not support/);
+    const D = story.debrief(c, run);
+    if (!outcome(c, run).kept.ally) assert.match(D.line, /bought its navy, not its votes/);
+  }
+});
+
+test("February runs in the record's order: the move is dated by the order, before or after the sailing", () => {
+  for (const { c, run } of sample()) {
+    const o = outcome(c, run), S = story.showdown(c, run), F = Object.fromEntries(o.feb.map((f) => [f.kind, f]));
+    assert.ok(dateKey(F.moved) > dateKey(o.decision), "the move follows the decision");
+    assert.ok(dateKey(F.moved) < dateKey(F.contact) && dateKey(F.sailed) < dateKey(F.contact));
+    // The report's first two entries and the chart's first two steps come in the record's order.
+    const moveFirst = dateKey(F.moved) < dateKey(F.sailed);
+    assert.equal(/leave .* at dawn/.test(S.beats[0].text), !moveFirst, S.beats[0].text);
+    assert.equal(S.play.steps[0].show?.includes("escorts") ?? false, !moveFirst);
+    // "Tonight" only for a decision made at night.
+    const card = story.february(c, run).routes.find((r) => r.id === "forward");
+    assert.equal(/tonight/.test(card.does), o.decision.hour >= 18, `${card.does} at ${o.decision.hour}:00`);
+  }
+});
+
+test("the refit's intelligence offer promises what it delivers, in the task force's own names", () => {
+  for (let i = 0; i < 12; i++) {
+    const war = newWar(`RF${i}`, "shifting"), w1 = worldForSector(war), c1 = campaignFor(war, w1);
+    closeSector(war, c1, { dec: { beacon: "quiet", lattice: "boats" }, jan: { beacon: "quiet", lattice: "sarn", way: null }, feb: { route: "quiet" } }, []);
+    nextSector(war); war.spent = ["count"];
+    const c2 = campaignFor(war), offer = spendFor(c2.world).find((x) => x.id === "count");
+    assert.ok(offer.name.includes(c2.world.network) && !/Lattice/.test(offer.name + offer.says) || c2.world.network === "Lattice");
+    assert.match(offer.says, new RegExp(`by ${CALENDAR.dec.lattice} December`));
+    // Delivered: a fresh count on that day whatever December's question was.
+    for (const lattice of ["who", "when"]) {
+      const rec = chronicle(c2, { dec: { beacon: "quiet", lattice }, jan: { beacon: "quiet", lattice: "sarn" }, feb: { route: "quiet" } });
+      assert.ok(rec.intel.some((x) => x.claim.kind === "count" && x.month === "dec" && x.day === CALENDAR.dec.lattice), `${c2.seed}: no count on the ${CALENDAR.dec.lattice}th`);
+    }
   }
 });

@@ -10,7 +10,15 @@
 //   reserve, dug                         where our reserve waits, and the trench line
 //   friendStart, line                    where allied ships start, and their blocking line
 //   home                                 our side's rear (used by withdrawals)
-export const ANCHORS = ["harbour", "laneOut", "laneMid", "approach", "station", "beach", "flank", "reserve", "dug", "friendStart", "line", "home"];
+export const ANCHORS = ["harbour", "laneOut", "laneMid", "approach", "station", "beach", "flank", "reserve", "dug", "friendStart", "line", "home", "anchorage"];
+
+// Our anchorage on a chart, in sheet units: the scenario's anchorage mark, or a point off our
+// coast below the station if the chart has none. The table's "anchorage" anchor and every
+// calculation that measures distance to it use this one function.
+export function anchorageOf(sc) {
+  const post = sc.places[sc.station.place], a = sc.features.find((f) => f.type === "anchorage")?.at;
+  return a ? { x: a[0], y: a[1] } : { x: post.x - 80, y: post.y + 340 };
+}
 export const ACTOR_KINDS = ["escort", "craft", "friend", "unit", "transport"];
 export const EFFECTS = ["flash", "trench", "flag", "fade", "show", "hide"];
 export const LABEL_PLACES = ["harbour", "station", "contact", "unit"];
@@ -62,7 +70,8 @@ const HOME = ["approach", "laneMid", "laneOut", "harbour"];
 // The station-defence showdown: they sail, we move, contact, how it ended, the cost. `o` is
 // the outcome from play.js; `words` carries every label (copy.js writes them).
 export function stationDefencePlan(o, words) {
-  const landed = o.battle, at = o.code === "landed" ? "flank" : "beach";
+  // A wave that slipped past the navies comes ashore on the flank.
+  const landed = o.battle, at = o.route === "joint" ? "flank" : "beach";
   const actors = [
     { id: "escorts", kind: "escort", count: 4, at: "harbour", hidden: true },
     { id: "craft", kind: "craft", count: Math.min(8, words.craft), at: "harbour", hidden: true },
@@ -111,5 +120,8 @@ export function stationDefencePlan(o, words) {
       labels: [{ at: "unit", text: words.unitTag, tone: words.unitTone, above: true }, ...lab(4)], dur: 900,
     },
   ];
+  // When our orders go out before they sail (a boarding report two days ahead), our move
+  // plays first, as the report reads it.
+  if (words.moveFirst) [steps[0], steps[1]] = [steps[1], steps[0]];
   return { actors, steps };
 }

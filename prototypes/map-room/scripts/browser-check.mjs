@@ -22,7 +22,7 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const QUICK = process.argv.includes("--quick");
 const failures = [];
 const fail = (area, msg) => { failures.push(`${area}: ${msg}`); };
-const SEAL = { radar: "run", defector: "talk", leak: "brief", collision: "search", visit: "quiet" };
+const SEAL = { radar: "run", defector: "talk", leak: "brief", collision: "search", visit: "open" };
 
 const server = await preview({ root: ROOT, preview: { port: 0, strictPort: false }, logLevel: "error" });
 const base = server.resolvedUrls.local[0];
@@ -258,35 +258,96 @@ async function showdowns() {
   return `${n} showdowns`;
 }
 
+// ── names: a generated theatre and a war speak only their own names ──────────
+const AUTHORED = ["Kestrel", "Marenna", "Ravellan", "Sarn", "Beacon", "Lattice", "2nd Battalion"];
+async function scanNames(p, area, where) {
+  const text = await p.evaluate(() => {
+    const T = window.mapRoomTable, canvas = [...T.children.list, ...(T.sd?.tags ?? [])].filter((o) => o.type === "Text").map((o) => o.text).join(" | ");
+    const attrs = [...document.querySelectorAll("[aria-label],[title]")].map((e) => `${e.getAttribute("aria-label") ?? ""} ${e.getAttribute("title") ?? ""}`).join(" ");
+    return `${document.body.innerText} || ${canvas} || ${attrs}`;
+  });
+  for (const n of AUTHORED) if (text.includes(n)) { const i = text.indexOf(n); fail(area, `${where}: "${n}" in "${text.slice(Math.max(0, i - 50), i + 30).replace(/\s+/g, " ")}"`); }
+  return text;
+}
+async function names() {
+  const p = await page({ width: 1920, height: 1080 }, "seed=Q7XK&difficulty=shifting");
+  let n = 0;
+  for (const ch of ["title", "dec-brief", "dec-signal", "dec-orders", "dec-night", "jan-brief", "jan-signal", "jan-orders", "jan-night", "feb-showdown", "feb-night", "debrief"]) for (const room of [null, "staff", "ledger"]) {
+    await p.evaluate(({ ch, room }) => { window.mapRoom.go(ch); if (room) document.querySelector(`[data-room="${room}"]`)?.click(); }, { ch, room });
+    await p.waitForTimeout(room ? 60 : 200);
+    const text = await scanNames(p, "names Q7XK", `${ch}${room ? `/${room}` : ""}`);
+    const w = await p.evaluate(() => window.mapRoom.c.world);
+    if (ch === "dec-brief" && !room) for (const k of ["host", "rival", "harbour", "network", "stationShort"]) if (!text.includes(w[k])) fail("names Q7XK", `dec-brief never names the ${k} (${w[k]})`);
+    await p.evaluate(() => document.querySelector("[data-close]")?.click());
+    n++;
+  }
+  // A war, through to the redeploy screen between sectors.
+  await p.evaluate(() => window.mapRoom.war("WN1", "shifting"));
+  await p.waitForTimeout(1500);
+  await p.waitForFunction(() => window.mapRoom?.getWar());
+  await p.evaluate(() => { window.mapRoom.reduced.on = true; window.mapRoom.go("debrief"); });
+  await p.waitForTimeout(800);
+  const btn = await p.$("[data-redeploy]");
+  if (!btn) fail("names war", "no redeploy button after the first sector");
+  else {
+    await btn.click(); await p.waitForTimeout(600);
+    const text = await scanNames(p, "names war", "redeploy");
+    const w = await p.evaluate(() => window.mapRoom.c.world);
+    if (!text.includes(w.network)) fail("names war", `the refit list never names the network (${w.network})`);
+    n++;
+  }
+  pageErrors("names", p);
+  await p.close();
+  return `${n} views`;
+}
+
 // ── the sketch, on the real chart ────────────────────────────────────────────
 async function sketch() {
-  const p = await page();
   const S = await import("../src/story/sketch.js");
   const { SCENARIOS } = await import("../src/scenarios/index.js");
-  const geo = S.geographyOf(SCENARIOS["kestrel-strait"]);
-  for (const choice of S.CHOICES) {
-    const { plan } = S.withdrawalPlan(geo, choice), end = stateAfter(plan, plan.steps.length - 1);
-    const r = await p.evaluate(async (plan) => {
-      window.mapRoom.reduced.on = true;
-      const n = window.mapRoom.playPlan(plan), T = window.mapRoomTable;
-      for (let i = 0; i < n; i++) T.showdownStep(i);
-      T.showdownJump(n - 1);
-      return { actors: Object.fromEntries(Object.entries(T.sd.actors).map(([id, a]) => [id, { x: a.x, y: a.y, visible: a.alpha > 0.5 }])), anchors: T.sd.A };
-    }, plan);
-    for (const [id, s] of Object.entries(end.actors)) {
-      const a = r.actors[id], at = r.anchors[s.at];
-      if (a.visible !== s.visible) fail(`sketch ${choice.lift}/${choice.cover}`, `${id} visibility differs from the plan`);
-      if (s.visible && Math.hypot(a.x - at.x, a.y - at.y) > 80) fail(`sketch ${choice.lift}/${choice.cover}`, `${id} ended away from ${s.at}`);
+  const { anchorageOf } = await import("../src/story/battle.js");
+  let n = 0;
+  // Kestrel Strait: with three hours' warning the garrison gets out. Harrow Sound: its anchorage
+  // is so far that the same warning loses the garrison, whatever is chosen.
+  for (const [id, warning] of [["kestrel-strait", 3], ["harrow-sound", 3], ["kestrel-strait", 6]]) {
+    const sc = SCENARIOS[id], ctx = S.sketchContext(sc, warning);
+    const p = await page({ width: 1920, height: 1080 }, `scenario=${id}&chapter=chart`);
+    for (const choice of S.CHOICES) {
+      const { plan, result } = S.withdrawalPlan(ctx, choice), end = stateAfter(plan, plan.steps.length - 1);
+      const area = `sketch ${id} ${warning}h ${choice.lift}/${choice.cover} (${result.code})`;
+      const r = await p.evaluate(async (plan) => {
+        window.mapRoom.reduced.on = true;
+        const n = window.mapRoom.playPlan(plan), T = window.mapRoomTable;
+        const start = { x: T.sd.actors.transports.x, y: T.sd.actors.transports.y };
+        for (let i = 0; i < n; i++) T.showdownStep(i);
+        T.showdownJump(n - 1);
+        return { scenario: T.sc.id, place: T.sc.places[T.sc.station.place], start, labels: T.sd.tags.filter((t) => t.type === "Text").map((t) => t.text),
+          actors: Object.fromEntries(Object.entries(T.sd.actors).map(([k, a]) => [k, { x: a.x, y: a.y, visible: a.alpha > 0.5 }])), anchors: T.sd.A };
+      }, plan);
+      n++;
+      // One context: the chart on the table is the one the distances were measured on, and the
+      // transports start at the anchorage those distances were measured to.
+      if (r.scenario !== ctx.scenario) fail(area, `chart ${r.scenario}, calculated on ${ctx.scenario}`);
+      const off = { x: r.anchors.station.x - r.place.x, y: r.anchors.station.y - r.place.y }, anc = anchorageOf(sc);
+      if (Math.hypot(r.start.x - (anc.x + off.x), r.start.y - (anc.y + off.y)) > 2) fail(area, "transports did not start at the calculation's anchorage");
+      for (const [k, st] of Object.entries(end.actors)) {
+        const a = r.actors[k], at = r.anchors[st.at];
+        if (a.visible !== st.visible) fail(area, `${k} ${a.visible ? "shown" : "hidden"}, plan says ${st.visible ? "shown" : "hidden"}`);
+        if (st.visible && Math.hypot(a.x - at.x, a.y - at.y) > 80) fail(area, `${k} ended away from ${st.at}`);
+      }
+      if (!result.kept.garrison && !r.actors.garrison.visible) fail(area, "a failed evacuation removed the garrison");
+      const want = plan.steps.flatMap((st) => st.labels ?? []).map((l) => l.text);
+      for (const t of want) if (!r.labels.includes(t)) fail(area, `label missing: ${t}`);
     }
+    pageErrors(`sketch ${id}`, p);
+    await p.close();
   }
-  pageErrors("sketch", p);
-  await p.close();
-  return `${S.CHOICES.length} sketch plans`;
+  return `${n} sketch plans`;
 }
 
 try {
   const only = process.argv.find((x) => x.startsWith("--only="))?.slice(7).split(",");
-  for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["sketch", sketch]]) {
+  for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["names", names], ["sketch", sketch]]) {
     if (only && !only.some((o) => name.startsWith(o))) continue;
     const t = Date.now(), said = await fn();
     console.log(`${name.padEnd(16)} ${said} (${((Date.now() - t) / 1000).toFixed(0)} s)`);

@@ -4,6 +4,7 @@ import { TRUTH } from "../fixture.js";
 import { buildGeometry, validateScenario } from "../chart/geometry.js";
 import { paintChart } from "../chart/paint.js";
 import { getScenario } from "../scenarios/index.js";
+import { anchorageOf } from "../story/battle.js";
 
 // The chart sheet sits on the table at OX, OY and is MW × MH. World = screen until the
 // night camera moves, so the desk layer can pin slips by world coordinates.
@@ -406,7 +407,8 @@ export class TableScene extends Phaser.Scene {
     const friendStart = seaward({ x: B.x - 60, y: Math.min(OY + MH - 60, B.y + 280) });
     const line = { x: approach.x + 70, y: approach.y };
     const home = { x: reserve.x - 120, y: reserve.y + 40 };
-    return { harbour: H, laneOut: { x: laneAt(H.y), y: H.y }, laneMid: { x: laneAt((H.y + B.y) / 2) + 40, y: (H.y + B.y) / 2 }, approach, station: B, beach, flank, reserve, dug, friendStart, line, home };
+    const anc = anchorageOf(this.sc), anchorage = { x: OX + anc.x, y: OY + anc.y };
+    return { harbour: H, laneOut: { x: laneAt(H.y), y: H.y }, laneMid: { x: laneAt((H.y + B.y) / 2) + 40, y: (H.y + B.y) / 2 }, approach, station: B, beach, flank, reserve, dug, friendStart, line, home, anchorage };
   }
 
   // Where a label sits: under the harbour, above the station's seaward side, or by a unit.
