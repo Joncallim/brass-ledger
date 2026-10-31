@@ -426,44 +426,69 @@ async function layout() {
 }
 
 // ── zoom ─────────────────────────────────────────────────────────────────────
-// Browser zoom on an open page, measured against the page at 100%. Chromium zooms by keeping
-// the window's device pixels and raising devicePixelRatio, so the window has fewer CSS pixels;
-// the DevTools protocol's device-metrics override drives exactly that on the live page (the
-// same resize and resolution events). The size is measured from the rendered text itself:
-// the height of a line's box in device pixels.
+// Browser zoom on an open page, measured against the same page at 100%. Chromium zooms by
+// keeping the window's device pixels and raising devicePixelRatio, so the window has fewer CSS
+// pixels. Headless Chromium can't drive its zoom controls, so this uses the DevTools protocol's
+// device-metrics override, which changes the same two things on the live page (and fires the
+// same resize and resolution events). It is an emulation of zoom, not the zoom UI itself.
+// Measured from what is rendered, in device pixels, on five screens: the smallest line of text
+// (the height of its first line box) and the smallest control.
+const ZOOM_SCREENS = ["dec-brief", "dec-signal", "jan-orders", "feb-showdown", "debrief"];
 async function zoom() {
   const p = await page({ width: 1920, height: 1080 }, "chapter=title");
   const cdp = await p.context().newCDPSession(p);
-  const set = async (z, screen = 1) => {
-    await cdp.send("Emulation.setDeviceMetricsOverride", { width: Math.round(1920 / z), height: Math.round(1080 / z), deviceScaleFactor: z * screen, mobile: false });
+  const set = async (z, dpr = z) => {
+    await cdp.send("Emulation.setDeviceMetricsOverride", { width: Math.round(1920 / z), height: Math.round(1080 / z), deviceScaleFactor: dpr, mobile: false });
     await p.waitForTimeout(300);
   };
-  const measure = () => p.evaluate(() => {
-    const el = [...document.querySelectorAll(".sheet .body, .sheet p")].find((e) => e.textContent.trim().length > 60);
-    const r = document.createRange(); r.selectNodeContents(el.firstChild ?? el);
-    const line = [...r.getClientRects()][0];
-    return { px: line.height * devicePixelRatio, compact: document.body.classList.contains("compact"), zoom: window.mapRoomView.zoom };
-  });
-  await p.evaluate(() => { window.mapRoom.campaign("Z1", "shifting"); window.mapRoom.go("dec-brief"); });
-  await p.waitForTimeout(300);
-  const base = await measure();
-  if (base.compact) fail("zoom", "1920x1080 at 100% is not the table layout");
+  const measure = (ch) => p.evaluate(async (ch) => {
+    window.mapRoom.campaign("Z1", "shifting");
+    const c = window.mapRoom.c, seal = { radar: "run", defector: "talk", leak: "brief", collision: "search", visit: "open" };
+    window.mapRoom.setRun({ dec: { beacon: "rest", lattice: "boats", incident: c.incidents.dec ? seal[c.incidents.dec] : null }, jan: { beacon: "quiet", lattice: "sarn", way: null, incident: c.incidents.jan ? seal[c.incidents.jan] : null }, feb: { route: "joint" } });
+    window.mapRoom.go(ch);
+    await new Promise((r) => setTimeout(r, 300));
+    const box = document.querySelector("#stage > div"), dpr = devicePixelRatio;
+    let text = Infinity, control = Infinity;
+    const walk = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+    for (let t; (t = walk.nextNode()); ) {
+      const el = t.parentElement;
+      if (!t.textContent.trim() || el.closest(".tip, [aria-hidden=true], .fx") || getComputedStyle(el).visibility === "hidden") continue;
+      const r = document.createRange(); r.selectNodeContents(t);
+      const line = [...r.getClientRects()].find((x) => x.width > 0);
+      if (line) text = Math.min(text, line.height * dpr);
+    }
+    for (const b of box.querySelectorAll("button")) { const r = b.getBoundingClientRect(); if (r.width && getComputedStyle(b).visibility !== "hidden") control = Math.min(control, r.width * dpr, r.height * dpr); }
+    return { text, control, compact: document.body.classList.contains("compact") };
+  }, ch);
   let n = 0;
+  const base = {};
+  for (const ch of ZOOM_SCREENS) base[ch] = await measure(ch);
+  for (const ch of ZOOM_SCREENS) if (base[ch].compact) fail("zoom", `${ch}: 1920x1080 at 100% is not the table layout`);
   for (const z of [1.1, 1.25, 1.5, 2]) {
     await set(z);
-    const m = await measure();
-    n++;
-    if (!m.compact) fail("zoom", `zoomed to ${z * 100}%: still the table layout, which cancels zoom`);
-    if (m.px < base.px * z * 0.95) fail("zoom", `zoomed to ${z * 100}%: a line is ${m.px.toFixed(1)} device px, ${(m.px / base.px).toFixed(2)}x the 100% page`);
+    for (const ch of ZOOM_SCREENS) {
+      const m = await measure(ch), b = base[ch], where = `zoom ${Math.round(z * 100)}% ${ch}`;
+      n++;
+      if (!m.compact) fail(where, "still the table layout, which cancels zoom");
+      if (m.text < b.text * z * 0.95) fail(where, `smallest line ${m.text.toFixed(1)} device px, ${(m.text / b.text).toFixed(2)}x the 100% page`);
+      if (m.control < b.control * z * 0.95) fail(where, `smallest control ${m.control.toFixed(0)} device px, ${(m.control / b.control).toFixed(2)}x the 100% page`);
+    }
   }
+  // Back to 100%: the table again, at the same sizes.
   await set(1);
-  const back = await measure();
-  if (back.compact || Math.abs(back.px - base.px) > 0.5) fail("zoom", `back at 100%: ${back.compact ? "compact" : "table"}, ${back.px.toFixed(1)} px against ${base.px.toFixed(1)}`);
+  for (const ch of ZOOM_SCREENS) {
+    const m = await measure(ch), b = base[ch];
+    if (m.compact || Math.abs(m.text - b.text) > 0.5) fail(`zoom back to 100% ${ch}`, `${m.compact ? "compact" : "table"}, smallest line ${m.text.toFixed(1)} against ${b.text.toFixed(1)}`);
+  }
+  // Zooming out leaves a bigger CSS window: the table stays, and the words shrink with it.
+  await set(0.9);
+  const out = await measure("dec-brief");
+  if (out.compact) fail("zoom 90%", "zooming out switched to compact");
   // Moving to a screen twice as dense is not zoom: same CSS window, the table stays.
+  await set(1);
   await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1920, height: 1080, deviceScaleFactor: 2, mobile: false });
   await p.waitForTimeout(300);
-  const dense = await measure();
-  if (dense.compact) fail("zoom", "a denser screen was taken for zoom");
+  if ((await measure("dec-brief")).compact) fail("zoom", "a denser screen was taken for zoom");
   pageErrors("zoom", p);
   await p.close();
   // The known limit: a page that LOADS at 110% can't be told from a 1745x982 window on a
@@ -471,10 +496,9 @@ async function zoom() {
   const q = await page({ width: 1745, height: 982 }, "chapter=title", 1.1);
   await q.evaluate(() => { window.mapRoom.campaign("Z1", "shifting"); window.mapRoom.go("dec-brief"); });
   await q.waitForTimeout(300);
-  const loaded = await q.evaluate(() => ({ compact: document.body.classList.contains("compact") }));
-  if (loaded.compact) fail("zoom", "a page loaded at 110% went compact: the README's stated limit is out of date");
+  if (await q.evaluate(() => document.body.classList.contains("compact"))) fail("zoom", "a page loaded at 110% went compact: the README's stated limit is out of date");
   await q.close();
-  return `${n + 2} zoom levels against 100%`;
+  return `${n} screens at 4 zoom levels against 100%, plus return, zoom-out, dense screen and load-zoomed`;
 }
 
 // The rooms are modal dialogs: focus goes in and stays in, everything behind is inert and

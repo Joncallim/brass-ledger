@@ -4,7 +4,9 @@
 // often. Run with `npm test`; the full report is `node scripts/balance.mjs`.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { decisionDiversity, report } from "../scripts/balance.mjs";
+import { POLICIES, decisionDiversity, playPolicy, report } from "../scripts/balance.mjs";
+import { makeCampaign } from "../src/story/campaign.js";
+import { latticeOrders, orders } from "../src/fixture.js";
 
 const r = report(100);
 
@@ -52,4 +54,18 @@ test("decision diversity counts every tied best plan, with overlapping ties", ()
   const all = decisionDiversity([[A, B, C], [A, B, C]]);
   assert.equal(all.commonestShare, 1);
   assert.equal(all.distinctBestPlans, 3);
+});
+
+// Review 9: a policy named after an officer plays that officer's actual advice on each slip,
+// read as the plan stood when the month was decided (within the personal orders it has).
+test("each 'follow' policy plays what that officer advises", () => {
+  for (const who of ["okafor", "briggs", "sato", "halden"]) for (const d of ["shifting", "volatile"]) for (let i = 0; i < 15; i++) {
+    const c = makeCampaign(`F${i}`, d), run = playPolicy(c, POLICIES[`follow ${who[0].toUpperCase()}${who.slice(1)}`]);
+    const before = { dec: { beacon: "quiet", lattice: "boats", incident: null }, jan: { beacon: "quiet", lattice: "sarn", way: null, incident: null }, feb: {} };
+    const decB = orders(c, before, "dec").council[who]?.prefers;
+    if (decB) assert.equal(run.dec.beacon, decB, `${who} ${d} F${i}: December's station order`);
+    const decL = latticeOrders(c, { ...before, dec: { ...before.dec, beacon: run.dec.beacon } }, "dec").council[who]?.prefers;
+    const used = run.dec.beacon !== "quiet" ? 1 : 0;
+    if (decL && (decL === "boats" || used < (c.seals?.dec ?? 2))) assert.equal(run.dec.lattice, decL, `${who} ${d} F${i}: December's Lattice question`);
+  }
 });

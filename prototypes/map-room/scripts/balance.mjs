@@ -141,11 +141,22 @@ const majority = (council, staffId) => {
   for (const p of Object.values(council)) n[p.prefers] = (n[p.prefers] ?? 0) + 1;
   return Object.entries(n).sort((a, b) => b[1] - a[1] || (a[0] === staffId ? -1 : b[0] === staffId ? 1 : 0))[0][0];
 };
+// Following an officer means taking what that officer actually advises on each slip, read
+// from the desk as the plan stands (an officer with no view on a slip leaves the staff plan).
+// "Rest both months" is a fixed plan, not anyone's advice: Okafor advises rest only when the
+// plan leaves the battalion unfit (review 9).
+const follow = (who) => (c, run, month) => ({
+  beacon: orders(c, run, month).council[who]?.prefers,
+  lattice: latticeOrders(c, run, month).council[who]?.prefers,
+});
 export const POLICIES = {
   "staff plan": () => ({}),
+  "rest both months": (c, run, month) => ({ beacon: month === "dec" ? "rest" : "hold" }),
   "majority of the staff": (c, run, month) => ({ beacon: majority(orders(c, run, month).council, "quiet"), lattice: majority(latticeOrders(c, run, month).council, month === "dec" ? "boats" : "sarn") }),
-  "Okafor (rest)": (c, run, month) => ({ beacon: month === "dec" ? "rest" : "hold" }),
-  "Halden (intelligence)": (c, run, month) => ({ beacon: orders(c, run, month).council.halden.prefers, lattice: latticeOrders(c, run, month).council.halden.prefers }),
+  "follow Okafor": follow("okafor"),
+  "follow Briggs": follow("briggs"),
+  "follow Sato": follow("sato"),
+  "follow Halden": follow("halden"),
 };
 export function playPolicy(c, policy) {
   const run = { dec: { beacon: "quiet", lattice: "boats", incident: null }, jan: { beacon: "quiet", lattice: "sarn", way: null, incident: null }, feb: { route: "quiet" } };

@@ -213,11 +213,18 @@ The prototype is built for desktop browsers. It makes no claim about phones or t
   - `layout`: at eight sizes and pixel densities, the rendered text, the smallest control
     (24 px or more) and the compact column (no sideways scroll, nothing wider than the
     column).
-  - `zoom`: zooms an open page to 110%, 125%, 150% and 200%. This uses Chromium's
-    device-metrics override, which changes the CSS window and the pixel ratio together as
-    zoom does. Each time, it measures a line of text's rendered height in device pixels
-    against the same page at 100%. It also checks the return to 100%, the denser-screen case
-    and the load-zoomed limit above.
+  - `zoom`: zooms an open page to 110%, 125%, 150% and 200%, on five screens.
+    - **What it measures:** each time, the smallest rendered line of text and the smallest
+      control, in device pixels, against the same screen at 100%. Both must grow with the
+      zoom.
+    - **Other cases:** the return to 100% (back to the table, same sizes), zooming out to
+      90% (the table stays), a denser screen (not taken for zoom) and the load-zoomed limit
+      above.
+    - **Limit:** headless Chromium can't drive its own zoom controls. The check uses the
+      DevTools protocol's device-metrics override, which changes the CSS window and the pixel
+      ratio together as zoom does, with the same resize and resolution events. It emulates
+      zoom; it is not the zoom UI.
+    - **Shown to work:** with zoom detection switched off, every zoomed screen fails.
 
 ### Keyboard and dialogs
 
@@ -550,15 +557,25 @@ in the scenario and open the same profiles.
   - **Policies that see only what the player sees** are scored separately from the
     omniscient balance (`npm run balance`). Over 150 seeds:
 
+    Full success:
+
     | Policy | Steady | Shifting | Volatile |
     | --- | --- | --- | --- |
-    | Rest the battalion both months (Okafor) | 100% | 53% | 54% |
+    | Rest the battalion both months (a fixed plan) | 100% | 53% | 54% |
+    | Follow Okafor's actual advice | 100% | 53% | 54% |
     | Follow the staff plan | 0% | 0% | 0% |
     | Follow the majority | 0% | 3% | 5% |
+    | Follow Briggs | 0% | 2% | 5% |
+    | Follow Sato | 0% | 0% | 0% |
     | Follow Halden | 6% | 1% | 1% |
 
-    Resting both months matches the best fixed omniscient plan's rate of full success. That
-    is not the whole picture: see review 9, below.
+    - Resting both months matches the best fixed omniscient plan's rate of full success.
+      That is not the whole picture: see review 9, below.
+    - Following Okafor plays out exactly like resting both months. His advice is
+      conditional, but starting from the staff plan the battalion is always heading for
+      unfit, so he always advises rest.
+    - Corrected after review 9: an earlier version of this table labelled the fixed rest
+      plan "Okafor".
   - **An independent oracle** (`test/oracle.test.js`) is written from the stated rules,
     not from the resolver. It covers:
     - the warning and defence tables;

@@ -81,13 +81,22 @@ but can't settle it. That is for the uncoached sessions in `PLAYTEST.md`.
 ## Review 8: what a player who sees only the board would do
 
 `npm run balance` now also scores policies that use only what the player can see, kept
-apart from the omniscient measure above. The policies are: follow the staff plan, follow
-the majority, follow one officer, and pick the cautious February route from the forecast.
-Over 150 seeds, resting the battalion both months (Okafor's advice) wins 100% of Steady,
-53% of Shifting and 54% of Volatile campaigns. That matches the best fixed omniscient plan.
-Following the staff plan never wins outright. No rule was changed in response. Whether
-"always rest" is a strategy players find, and whether it feels like a decision, is for the
-sessions in `PLAYTEST.md`.
+apart from the omniscient measure above:
+
+- follow the staff plan;
+- rest both months (a fixed plan);
+- follow the majority;
+- follow each officer's actual advice.
+
+Every policy picks the cautious February route from the forecast.
+
+- Over 150 seeds, resting both months wins 100% of Steady, 53% of Shifting and 54% of
+  Volatile campaigns, matching the best fixed omniscient plan.
+- Following Okafor's actual advice gives the same results. It is conditional, but from the
+  staff plan it always calls for rest.
+- Following the staff plan never wins outright.
+
+No rule was changed in response. Review 9 below shows what each of these gives up.
 
 ## Review 9: resting is a trade, not the answer (needs a design decision)
 

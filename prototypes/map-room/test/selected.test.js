@@ -70,6 +70,10 @@ test("the host and Lattice cards describe the plan as it stands", () => {
     const sarn = at(c, run, "jan", "lattice", "sarn").s.fatigue, when = at(c, run, "jan", "lattice", "when").s.fatigue;
     if (sarn > when) assert.match(cost, new RegExp(`fatigue ${sarn}, against ${when}`), cost);
     else assert.match(cost, /no rest this month/, cost);
+    // "No sailing date" only when there is none; a December date is named as one signal.
+    const dated = Boolean(simulate(c, run).janOrders.knows.date);
+    assert.equal(/No sailing date/.test(cost), !dated, cost);
+    if (dated) assert.match(cost, /date is one signal/, cost);
     const w = strip(L.options.find((o) => o.id === "when").says);
     assert.equal(/(\d+) less fatigue/.exec(w)?.[1] ?? "0", String(sarn - when), w);
   }

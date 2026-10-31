@@ -407,8 +407,10 @@ function build(W) {
     // The rest a true date buys, with the station order as it now stands.
     const rest = month === "jan" ? out.sarn.fatigue - out.when.fatigue : 0;
     const qs = LATTICE[month].map((q) => ({ ...q, name: q.q, says: q.means({ k, rest, counted: Boolean(c.knownCount), boats: out[q.id].boats }) }));
-    const janCost = rest > 0 ? `No sailing date, so no rotation: ${BN} ends January at fatigue ${out.sarn.fatigue}, against ${out.when.fatigue} with the date.`
-      : `No sailing date. That costs ${BN} no rest this month: it is already standing down.`;
+    // A date from December is one signal: Okafor rotates the battalion only on a confirmed one.
+    const noDate = k.date ? `${MONTH.dec}’s date is one signal, and ${surname("okafor")} won’t stand companies down on it` : "No sailing date";
+    const janCost = rest > 0 ? `${noDate}, so no rotation: ${BN} ends January at fatigue ${out.sarn.fatigue}, against ${out.when.fatigue} with a confirmed date.`
+      : `${noDate}. That costs ${BN} no rest this month: it is already standing down.`;
     return {
       head: LATTICE.head, lead: "halden", staffId: qs.find((q) => q.staff).id,
       plan: month === "dec" ? `will keep ${L} on ${S}’s harbour net and count the landing craft by ${DEC.lattice} December.` : `will keep ${L} on ${S}’s harbour net through January, listening for the order that puts troops aboard.`,
