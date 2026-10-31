@@ -776,7 +776,7 @@ export class DeskScene extends Phaser.Scene {
         ? `<h3>${cfg.head} · staff plan</h3><p class="will">Your staff ${cfg.plan}</p>
            <div class="row"><b>Costs</b><span>${cfg.cost}</span></div><div class="row"><b>Gives</b><span>${cfg.does}</span></div>`
         : `<h3>${cfg.head} · your order</h3><p class="will">${/[?.]$/.test(p.name) ? p.name : `${p.name}.`}</p><div class="row"><b>Means</b><span>${p.says}</span></div>`;
-      return `<article class="paper slip" style="width:${w}px" aria-label="${cfg.head}"><span class="pin"></span>${top}${this.advice(cfg.council, cfg.options, p.id)}
+      return `<article class="paper slip ${o.fit ?? ""}" style="width:${w}px" aria-label="${cfg.head}"><span class="pin"></span>${top}${this.advice(cfg.council, cfg.options, p.id)}
         <div class="btns"><button class="b" data-change>${p.staff ? "Change this order" : "Change again"}</button>${p.staff ? "" : '<button class="b" data-staffplan>Back to the staff plan</button>'}</div></article>`;
     };
     const backers = (id) => Object.entries(cfg.council ?? {}).filter(([, c]) => c.prefers === id).map(([who]) => `<span class="av sm" title="${plainName(who)}" style="background-image:url(${portrait(who)})"></span>`).join("");
@@ -818,12 +818,34 @@ export class DeskScene extends Phaser.Scene {
     (this.slips ??= []).push(o);
     if (y + slip.node.offsetHeight > 1064) o.y = y = Math.max(108, 1064 - slip.node.offsetHeight);
     this.deal(slip, x, y, i, seed);
+    if (column) { o.top = y; this.later(0, () => this.restack()); this.later(1500, () => this.restack()); }
     return o;
   }
 
   // Every slip's words depend on the whole plan: after any change, closed slips are re-read.
   renderSlips(except = null) {
     for (const other of this.slips ?? []) if (other !== except && !other.isOpen) other.render();
+    this.restack();
+  }
+
+  // A slip's words follow the plan, so its height changes with every choice. The slips in a
+  // column stack again from the first slip's place, each below the last. If the column
+  // would run off the table, the faces shorten in steps: first the officers' reasons, then
+  // what overruling them costs. Both stay on the open slip and in the staff room.
+  restack() {
+    const col = (this.slips ?? []).filter((o) => o.column && o.slip.active);
+    if (!col.length || col.some((o) => o.isOpen) || compact()) return;
+    const top = col[0].top ?? col[0].y;
+    for (const fit of [null, "brief", "terse"]) {
+      for (const o of col) if ((o.fit ?? null) !== fit) { o.fit = fit; o.render(); }
+      let y = top;
+      for (const o of col) { o.y = y; y += o.slip.node.offsetHeight + 18; }
+      if (y - 18 <= 1064) break;
+    }
+    for (const o of col) {
+      if (!this.tweens.isTweening(o.slip)) o.slip.y = o.y;
+      if (o.slip.seal && !this.tweens.isTweening(o.slip.seal)) o.slip.seal.y = o.y - 22;
+    }
   }
 
   // One line per officer who advises something other than the current choice.
@@ -833,7 +855,7 @@ export class DeskScene extends Phaser.Scene {
     if (!differ.length) return `<p class="advice agree">Your staff all advise this.</p>`;
     // Two lines at most on the face; the rest are one click away.
     const more = differ.length > 2 ? `<p class="more-advice">${differ.slice(2).map(([w]) => surname(w)).join(" and ")} also ${differ.length > 3 ? "advise" : "advises"} otherwise.</p>` : "";
-    return `<div class="advice">${differ.slice(0, 2).map(([who, p]) => `<p><span class="av sm" style="background-image:url(${portrait(who)})"></span><span>${surname(who)} advises <b>${name(p.prefers)}</b>: ${p.because}.${p.risks?.[current] ? ` <span class="against">Against ${name(current)}: ${lower(p.risks[current])}</span>` : ""}</span></p>`).join("")}${more}</div>`;
+    return `<div class="advice">${differ.slice(0, 2).map(([who, p]) => `<p><span class="av sm" style="background-image:url(${portrait(who)})"></span><span>${surname(who)} advises <b>${name(p.prefers)}</b><span class="why">: ${p.because}</span>.${p.risks?.[current] ? ` <span class="against">Against ${name(current)}: ${lower(p.risks[current])}</span>` : ""}</span></p>`).join("")}${more}</div>`;
   }
 
   // Open a slip to its choices. Others in its column step aside until it closes.
@@ -863,6 +885,7 @@ export class DeskScene extends Phaser.Scene {
       other.slip.node.style.pointerEvents = "";
       move(this, other.slip, { alpha: 1 }, { dur: T.ui });
     }
+    this.later(T.ui + 50, () => this.restack()); // the choice made while open may have changed every face
   }
 
   // The chart shows what every slip on the desk would do.
