@@ -551,9 +551,11 @@ async function selected() {
       const area = `selected ${month} ${d} ${seed} → ${id}`;
       const b = (await p.$$("[data-change]"))[Number(slot)];
       if (!b) continue;
-      await b.click(); await p.waitForTimeout(60);
+      // A covered button is a failure to report, not a reason to stop the whole run.
+      if (!(await b.click({ timeout: 3000 }).then(() => true, () => false))) { fail(area, "Change this order is covered"); continue; }
+      await p.waitForTimeout(60);
       const opt = await p.$(`[data-opt="${id}"]`);
-      if (opt) await opt.click();
+      if (opt) await opt.click({ timeout: 3000 }).catch(() => fail(area, `option ${id} is covered`));
       await p.waitForTimeout(60);
       await (await p.$("[data-done]"))?.click(); await p.waitForTimeout(80);
       const run = await p.evaluate(() => window.mapRoom.getRun());
