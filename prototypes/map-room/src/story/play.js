@@ -13,9 +13,10 @@ export const ministersFor = (support, total = FIXED.ministers) => Math.max(0, Ma
 // Beacon's defence level as a landing meets it: one lower if the main radar has failed, and
 // one lower if the rival knows where our guns are (it lands where they are not).
 export function effectiveDefence(s) {
-  // Exposure lasts while the rival's picture still describes our positions. Only a
-  // redeployment would make it stale, and no order in a campaign redeploys the guns (see
-  // RULES-REVIEW.md: whether a night move counts is not defined), so it lasts the sector.
+  // Exposure lasts while the rival's picture still describes our positions. Decided (Jon,
+  // review 9): it clears only when the exposed guns actually move to new positions; night can
+  // hide a move but doesn't erase what the rival knows. No order does that yet (its design and
+  // cost are open, RULES-REVIEW.md), so it lasts the sector.
   return s.def - (s.radarFails ? FIXED.radarFailure : 0) - (s.rivalKnows ? FIXED.exposure : 0);
 }
 

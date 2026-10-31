@@ -189,17 +189,17 @@ what the task force has and remembers, and the officers quote only that.
 2. ~~Reward shape and the floor?~~ Decided: a minimum refit allocation every time, a bonus
    for success, no extra penalty after failure. The amounts are still open.
 3. ~~War length?~~ Decided: two campaigns first, then a fixed four if that works.
-4. Which second campaign type comes first? (The withdrawal sketch shows the interfaces fit
-   one; it is not a recommendation.)
-6. ~~The rules under review in RULES-REVIEW.md~~ Decided in review 7. Still open: **what
-   counts as redeployment** (exact rule and cost). The reviewer recommends that exposure
-   clears only when the exposed guns actually move to new positions, and that night is a
-   way to conceal a move, not enough by itself.
-7. The rest-or-reinforce trade (RULES-REVIEW.md, review 9). Resting both months gives
-   the most full successes but loses the station about twice as often. The staff plan
-   rarely loses the station but always wears out the battalion. Is that the intended shape,
-   and if not, which side moves?
-8. The withdrawal sketch's rule that a lift has escaped once its last boat clears the
-   beach (a sketch rule, needs sign-off if the sketch becomes a campaign).
+4. ~~Which second campaign type comes first?~~ Leaning: **evacuation**, after the
+   station-defence playtest. It changes the objective meaningfully. The withdrawal sketch is
+   not yet a full campaign: it has no months, staff, incidents or desk screens of its own.
+6. ~~What counts as redeployment?~~ Decided in review 9: exposure clears when the exposed
+   guns actually change positions; night can conceal a move but doesn't erase what the
+   enemy knows. Still open: **the order that moves them, and its cost**.
+7. ~~The rest-or-reinforce trade~~ Decided in review 9: keep the current balance for blind
+   playtesting, and find out whether players understand and care about the trade
+   (RULES-REVIEW.md).
+8. ~~The withdrawal sketch's escape rule~~ Accepted in review 9 as a simplified rule: a lift
+   escapes if it clears the beach no later than the rival reaches the post, and there is no
+   interception at sea.
 5. Who reviews generated art, and what licence bar must it meet before it leaves
    prototype-only?

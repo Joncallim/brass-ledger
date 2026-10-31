@@ -48,7 +48,7 @@ export function incidentsFor(W = KESTREL) {
       text: () => `A ${MA} newspaper has printed how many troops and guns we have on ${B}, nearly right. ${R}’s embassy has already quoted it. Reporters want us to confirm or deny by tonight.`,
       options: {
         silent: { name: "Say nothing", says: "No comment. The numbers stay a guess, and the story runs without our side. The cabinet loses a little patience." },
-        brief: { name: "Brief the press openly", says: `Confirm our strength and explain why: the cabinet hears it from us. ${R} learns where our guns are, so a landing would go where they aren’t: ${B} counts one level lower against a landing than what is built, until our guns are redeployed. No order in this campaign redeploys them, so it lasts the sector.` },
+        brief: { name: "Brief the press openly", says: `Confirm our strength and explain why: the cabinet hears it from us. ${R} learns where our guns are, so a landing would go where they aren’t: ${B} counts one level lower against a landing than what is built, until the guns it saw move to new positions: guns added by night don’t change what it knows. No order in this campaign moves them, so it lasts the sector.` },
       },
       council: () => ({
         sato: { prefers: "brief", line: `The ministers are reading this over breakfast. Better they hear the numbers from us, with our reasons.`, because: `the ${MA} cabinet hearing our side first`, risk: `the story is told by the paper and ${R}’s embassy.` },
@@ -78,7 +78,7 @@ export function incidentsFor(W = KESTREL) {
         return `${M}’s defence minister asks to visit ${B} on ${v} January, ${gap === 1 ? "the day" : `${gap} days`} before the cabinet votes on the ${ord(c.voteDay)}. She is ${c.minister === "dove" ? "the cabinet’s loudest voice for staying out of this" : c.minister === "hawk" ? "the cabinet’s strongest supporter of standing with us" : "undecided, and the cabinet follows her"}. She wants cameras.`;
       },
       options: {
-        open: { name: "Host her, with cameras", says: `A public visit: the ${MA} public sees its minister with our troops. ${R} gets the pictures, and with them where our guns are: ${B} counts one level lower against a landing than what is built, until our guns are redeployed. No order in this campaign redeploys them, so it lasts the sector. A personal order: the staff would not expose the station without your say.` },
+        open: { name: "Host her, with cameras", says: `A public visit: the ${MA} public sees its minister with our troops. ${R} gets the pictures, and with them where our guns are: ${B} counts one level lower against a landing than what is built, until the guns it saw move to new positions: guns added by night don’t change what it knows. No order in this campaign moves them, so it lasts the sector. A personal order: the staff would not expose the station without your say.` },
         quiet: { name: "Host her, no cameras", says: "A private visit. She sees everything; nobody photographs it, and our positions stay ours. Wins her over more if she is wary of us, less if she wanted the cameras." },
       },
       council: (c) => ({

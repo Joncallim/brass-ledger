@@ -486,7 +486,7 @@ in the scenario and open the same profiles.
         see the enemy sail.
       - Okafor asks for the date only when it buys rest the plan doesn't already give.
       - With a refit's second team, no option says there is no fresh count.
-    - Two advice judgements changed with this, for sign-off:
+    - Two advice judgements changed with this, accepted by Jon in review 9:
       - Okafor advises standing the battalion down only when the plan as it stands sends
         them into February unfit.
       - With a refit's count, Halden asks for the fishing fleet instead of a count he will
@@ -528,8 +528,10 @@ in the scenario and open the same profiles.
     level 3 station that holds a breakthrough with an unfit battalion says the defences held
     it. The glossary no longer says an unfit battalion can't hold a landing: it can't hold
     one alone, except dug in against one wave at level 2.
-  - **The withdrawal sketch draws its causal line explicitly.** A lift has escaped once its
-    last boat clears the beach (a sketch rule, flagged for sign-off). Each lift has a
+  - **The withdrawal sketch draws its causal line explicitly.** A lift has escaped once it
+    has finished loading and cleared the beach no later than the rival reaches the post: a
+    tie goes to the lift. There is no interception at sea. Jon accepted this in review 9 as
+    a simplified rule; exact-equality cases are tested. Each lift has a
     timeline: leaves, at the beach, loaded, clears, home. The review's case (Harrow Sound,
     3 hours' warning, one lift, no frigate) loads by 5.47 h, against the rival's 6.33 h, and
     escapes.
@@ -568,8 +570,9 @@ in the scenario and open the same profiles.
   changed, and the open question on redeployment):
   - The staff answer to the minister's visit is **no cameras**. Exposing our positions is a
     personal order, explained on the slip.
-  - **Exposure lasts until the guns are redeployed.** No order in a campaign is defined as a
-    redeployment, so today it lasts the sector. Whether a night move counts needs a decision.
+  - **Exposure lasts until the guns are redeployed.** Decided in review 9: that means the
+    exposed guns actually change positions; night alone doesn't clear it. No order does that
+    yet (its design and cost are open), so today it lasts the sector.
   - **A second wave past the navies meets the normal one-wave ground defence**: level 3
     holds it alone, and level 2 holds it with a fit battalion. Otherwise the station falls.
     The naval route no longer saves the station automatically.

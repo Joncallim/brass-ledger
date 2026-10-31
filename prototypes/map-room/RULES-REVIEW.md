@@ -15,7 +15,7 @@ only as `PREVIOUS_RULES` in `src/story/play.js`, which the game never sets).
 | Fatigue | Battle fatigue only for a battalion that fought | Unchanged |
 | Incidents | In date order | Unchanged |
 | The minister's visit | The staff answer was cameras, which exposed our guns | The staff answer is **no cameras**. Cameras are a personal order, and the slip says what they cost |
-| Exposure | One level lower against a landing, for the rest of the campaign | One level lower **while Ravellan's picture still describes our positions**: until the guns are redeployed. A new month alone doesn't end it. See the open question below |
+| Exposure | One level lower against a landing, for the rest of the campaign | One level lower **while Ravellan's picture still describes our positions**: until the exposed guns change positions (night alone doesn’t count). A new month alone doesn’t end it. See "Redeployment" below |
 | Naval breakthrough | A second wave past the navies was always held | It meets the **normal ground defence for one wave**: level 3 against a landing holds it alone, and level 2 holds it if the battalion (already behind the navies) is fit. Otherwise the station falls |
 
 ## What it changed
@@ -43,33 +43,28 @@ only as `PREVIOUS_RULES` in `src/story/play.js`, which the game never sets).
   cases, but only where the defences are at level 3 against a landing, which holds one wave
   alone under the normal rule.
 
-## Open: what counts as redeployment
+## Redeployment: the rule is decided, the order is not
 
-Review 7 says redeployment ends exposure, and a new month doesn't. Within a campaign, no order
-is defined as a redeployment:
+**Decided (Jon, review 9):** exposure clears only when the exposed guns actually change
+positions. Night can conceal a move, but night alone doesn't erase what the enemy knows.
+
+So neither of today's orders clears exposure; both add guns rather than move the ones
+Ravellan saw:
 
 - December's staff plan moves two rifle companies and the air-defence battery onto the
   headland by night.
 - January's brings the battery up to full strength.
 
-Either could be read as moving the guns Ravellan saw, or as adding to them. Rather than invent
-a rule, the game treats neither as a redeployment, so exposure lasts the sector. Between
-sectors of a war the task force does redeploy (a new strait and a new station), and exposure
-doesn't carry over.
+Exposure therefore lasts the sector, as the game already plays it. Between sectors of a war
+the task force does redeploy (a new strait and a new station), and exposure doesn't carry
+over.
 
-**Reviewer's recommendation (review 8), pending Jon's decision:** exposure clears only when
-the previously exposed guns actually move to new positions. Night is a way to conceal a
-move, not enough by itself. Read that way:
+The slips and the glossary now say: "until the guns it saw move to new positions: guns added
+by night don't change what it knows. No order in this campaign moves them, so it lasts the
+sector."
 
-- December's staff plan, which brings new guns up by night, would not clear exposure.
-- A move of the battery Ravellan saw would, at a cost still to be set.
-
-Nothing in the game implements this yet.
-
-**Needs a decision.** Should a night move of the guns (December's staff plan, or a new
-"redeploy the battery" order) end exposure, and at what cost? Until then, the slips and the
-glossary say: "until our guns are redeployed. No order in this campaign redeploys them, so it
-lasts the sector."
+**Still to design:** an order that moves the exposed guns, and what it costs (time, the
+level while they move, fatigue, a personal order). Nothing in the game implements it yet.
 
 ## Also found: decisions that rarely decide
 
@@ -111,14 +106,11 @@ Full success alone overstates "rest both months". Over 150 seeds:
 - **The staff plan** almost never loses the station. It ends in costly success, with the
   battalion worn out.
 
-Neither is universally best; they trade the station's safety against the battalion. That is
-a design question for Jon:
+Neither is universally best; they trade the station's safety against the battalion.
 
-- whether this trade is the intended shape of the campaign;
-- if not, which side should move.
-
-Until then, the playtests should present both strategies and ask which players prefer and
-why (`PLAYTEST.md`). The balance test that the staff plan never wins outright records a
+**Decided (Jon, review 9):** keep the current balance for blind playtesting. Rest gives more
+full successes in the sample, but also more station losses. The sessions should find out
+whether players understand that trade and care about it (`PLAYTEST.md`). The balance test that the staff plan never wins outright records a
 proposed target. Passing it says nothing about whether the advice is credible or the choice
 is interesting.
 

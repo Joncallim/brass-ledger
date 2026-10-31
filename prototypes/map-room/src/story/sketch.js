@@ -23,11 +23,12 @@ export const WITHDRAWAL = Object.freeze({
   fixed: { rivalKnots: 12, transportKnots: 15, loadHours: 2, coverHours: 2 },
   // The situation varies like the main campaign's sailing date: how many hours' warning.
   situation: { warningHours: [2, 6] },
-  // The causal boundary, a sketch rule (review 8; flagged in README, not signed off): a lift
-  // escapes when it has loaded and cleared the beach before the rival reaches the post. The
-  // rival makes for the post, not the transports, so a lift that has cleared is not
-  // intercepted at sea. A lift still loading when they arrive is caught on the beach; one
-  // still on its way in turns back.
+  // The causal boundary (accepted, review 9, as a simplified rule): a lift escapes if it has
+  // finished loading and cleared the beach no later than the moment the rival reaches the
+  // post; a tie goes to the lift. There is no interception at sea: the rival makes for the
+  // post, so a lift that has cleared gets home. A lift that reached the beach no later than
+  // the rival but hadn't finished loading is caught there; one still on its way in turns back.
+  // The frigate fights only if the last lift would otherwise finish loading after they arrive.
   escape: "clears the beach",
 });
 

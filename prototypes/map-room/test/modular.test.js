@@ -101,7 +101,7 @@ test("the sketch's timeline: loading, clearing the beach, the rival's arrival, h
     for (const L of r.timeline) {
       assert.equal(L.leaves, t);
       assert.ok(Math.abs(L.atBeach - (t + T)) < 1e-9 && Math.abs(L.loaded - (L.atBeach + F.loadHours)) < 1e-9);
-      // Clears (and gets home) exactly when it finishes loading before they reach the post.
+      // Clears (and gets home) exactly when it finishes loading no later than they reach the post.
       assert.equal(L.fate === "cleared", L.loaded <= r.arrives);
       assert.equal(L.fate === "caught", L.loaded > r.arrives && L.atBeach <= r.arrives);
       if (L.fate === "cleared") { assert.equal(L.clears, L.loaded); assert.ok(Math.abs(L.home - (L.loaded + T)) < 1e-9); t = L.home; }
@@ -110,6 +110,20 @@ test("the sketch's timeline: loading, clearing the beach, the rival's arrival, h
     assert.ok(Math.abs(r.arrives - (w + ctx.geo.harbourNm / F.rivalKnots + (choice.cover === "frigate" ? F.coverHours : 0))) < 1e-9);
     assert.equal(r.kept.frigate, !(choice.cover === "frigate" && r.timeline.at(-1).loaded > r.unopposed));
   }
+  // The equality boundary, on a made-up chart where the times are exact: finishing loading at
+  // the very moment they reach the post escapes (a tie goes to the lift), and needs no frigate;
+  // reaching the beach at that moment, still to load, is caught.
+  const exact = (harbourNm, homeNm, warningHours, choice) => resolveWithdrawal({ geo: { harbourNm, homeNm }, warningHours }, choice);
+  const tie = exact(24, 15, 1, { lift: "one", cover: "none" }); // loaded at 1 + 2 = 3; they arrive at 1 + 2 = 3
+  assert.equal(tie.timeline[0].loaded, tie.arrives);
+  assert.equal(tie.timeline[0].fate, "cleared");
+  assert.equal(exact(24, 15, 1, { lift: "one", cover: "frigate" }).kept.frigate, true, "no fight is needed at a tie");
+  const late = exact(24, 15, 0.999, { lift: "one", cover: "none" });
+  assert.equal(late.timeline[0].fate, "caught");
+  const atBeach = exact(0, 15, 1, { lift: "one", cover: "none" }); // at the beach at 1, they arrive at 1
+  assert.equal(atBeach.timeline[0].atBeach, atBeach.arrives);
+  assert.equal(atBeach.timeline[0].fate, "caught");
+  assert.equal(exact(0, 15, 0.999, { lift: "one", cover: "none" }).timeline[0].fate, "turned back");
   // The review's case: Harrow Sound, three hours' warning, one lift, no frigate. Loaded at
   // about 5.47 hours, before they reach the post at 6.33: the garrison is out.
   const harrow = resolveWithdrawal(sketchContext(SCENARIOS["harrow-sound"], 3), { lift: "one", cover: "none" });
