@@ -18,6 +18,8 @@ test("every legal plan: forecast, result, chart, top bar and debrief agree", () 
   let n = 0;
   for (const [seed, d] of CAMPAIGNS) {
     const c = makeCampaign(seed, d), done = new Set();
+    // One campaign with the war refit's third December order, so those plans are played too.
+    if (seed === "X2" && d === "volatile") c.seals = { dec: 3, jan: 2 };
     for (const p of plans()) {
       const run = runFor(c, p);
       if (!run) continue;

@@ -3,7 +3,8 @@
 // per difficulty, how often the staff plan and the best fixed plans succeed, and how often
 // the best plan for a campaign is a different plan. Run: node scripts/balance.mjs [seeds]
 import { DIFFICULTY, makeCampaign } from "../src/story/campaign.js";
-import { outcome, simulate, needsApproval } from "../src/story/play.js";
+import { forecast, outcome, simulate, needsApproval } from "../src/story/play.js";
+import { latticeOrders, orders } from "../src/story/copy.js";
 
 const SEEDS = Number(process.argv[2] ?? 150);
 const STAFF = { dec: { beacon: "quiet", lattice: "boats" }, jan: { beacon: "quiet", lattice: "sarn", way: null } };
@@ -31,7 +32,8 @@ export function runFor(c, p) {
   const run = { dec: { beacon: p.db, lattice: p.dl, incident: inc("dec", p.di) }, jan: { beacon: p.jb, lattice: p.jl, way: p.way, incident: inc("jan", p.ji) }, feb: { route: p.route } };
   const decSeals = (p.db !== "quiet") + (p.dl !== "boats") + (c.incidents.dec && p.di === "own" ? 1 : 0);
   const janSeals = (p.jb !== "quiet") + (p.jl !== "sarn") + (p.way ? 1 : 0) + (c.incidents.jan && p.ji === "own" ? 1 : 0);
-  if (decSeals > 2 || janSeals > 2) return null;
+  // Two personal orders a month, or what the campaign grants (a war's refit can buy a third in December).
+  if (decSeals > (c.seals?.dec ?? 2) || janSeals > (c.seals?.jan ?? 2)) return null;
   const s = simulate(c, run);
   if (p.way === "act" && !needsApproval(c, s.janOrders, "show")) return null;
   if (p.jb === "show" && needsApproval(c, s.janOrders, "show") && !p.way) return null; // the send button stays blocked
@@ -122,6 +124,58 @@ export function report(seeds = SEEDS, variant = null) {
   return out;
 }
 
+// ── playing on what you can see ────────────────────────────────────────────
+// The report above is omniscient: each campaign's best plan is found knowing the hidden truth.
+// These policies see only what the desk shows: the officers' advice, and in February the
+// forecast's open cases. February is chosen cautiously: the route whose worst open case is
+// best, then the best average.
+const G = { success: 2, costly: 1, failure: 0 };
+function cautiousRoute(c, run) {
+  const F = forecast(c, run);
+  return F.routes.map((rt) => ({ route: rt.route, worst: Math.min(...rt.cases.map((h) => G[h.r.grade])), mean: rt.cases.reduce((n, h) => n + G[h.r.grade], 0) / rt.cases.length }))
+    .sort((a, b) => b.worst - a.worst || b.mean - a.mean)[0].route;
+}
+const majority = (council, staffId) => {
+  const n = {};
+  for (const p of Object.values(council)) n[p.prefers] = (n[p.prefers] ?? 0) + 1;
+  return Object.entries(n).sort((a, b) => b[1] - a[1] || (a[0] === staffId ? -1 : b[0] === staffId ? 1 : 0))[0][0];
+};
+export const POLICIES = {
+  "staff plan": () => ({}),
+  "majority of the staff": (c, run, month) => ({ beacon: majority(orders(c, run, month).council, "quiet"), lattice: majority(latticeOrders(c, run, month).council, month === "dec" ? "boats" : "sarn") }),
+  "Okafor (rest)": (c, run, month) => ({ beacon: month === "dec" ? "rest" : "hold" }),
+  "Halden (intelligence)": (c, run, month) => ({ beacon: orders(c, run, month).council.halden.prefers, lattice: latticeOrders(c, run, month).council.halden.prefers }),
+};
+export function playPolicy(c, policy) {
+  const run = { dec: { beacon: "quiet", lattice: "boats", incident: null }, jan: { beacon: "quiet", lattice: "sarn", way: null, incident: null }, feb: { route: "quiet" } };
+  for (const month of ["dec", "jan"]) {
+    const want = policy(c, run, month), limit = c.seals?.[month] ?? 2;
+    let used = 0;
+    for (const slot of ["beacon", "lattice"]) {
+      const v = want[slot], staff = slot === "beacon" ? "quiet" : month === "dec" ? "boats" : "sarn";
+      if (v && v !== staff && used < limit) { run[month][slot] = v; used++; }
+    }
+    // A January daylight move that needs the host's answer in time gets it by trading the boats.
+    if (month === "jan" && run.jan.beacon === "show" && needsApproval(c, simulate(c, run).janOrders, "show")) {
+      if (used < limit) run.jan.way = "buy"; else run.jan.beacon = "quiet";
+    }
+  }
+  run.feb.route = cautiousRoute(c, run);
+  return run;
+}
+export function policyReport(seeds = SEEDS) {
+  const out = {};
+  for (const d of Object.keys(DIFFICULTY)) {
+    out[d] = {};
+    for (const [name, policy] of Object.entries(POLICIES)) {
+      const t = { success: 0, costly: 0, failure: 0 };
+      for (let i = 0; i < seeds; i++) { const c = makeCampaign(`B${i}`, d); t[outcome(c, playPolicy(c, policy)).grade]++; }
+      out[d][name] = Object.fromEntries(Object.entries(t).map(([k, v]) => [k, v / seeds]));
+    }
+  }
+  return out;
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const r = report();
   for (const [d, x] of Object.entries(r)) {
@@ -137,5 +191,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.log(`  decision diversity: ${v.distinctBestPlans} different best plans; the commonest covers ${(v.commonestShare * 100).toFixed(0)}% of campaigns`);
     console.log(`    slot      decisive  spread`);
     for (const [k, y] of Object.entries(v.slots)) console.log(`    ${k.padEnd(9)} ${(y.decisive * 100).toFixed(0).padStart(6)}%   ${y.spread.toFixed(2)}`);
+  }
+  console.log(`\nPlaying on what you can see (officers' advice; February chosen cautiously from the forecast's open cases)`);
+  for (const [d, row] of Object.entries(policyReport())) {
+    console.log(`  ${d}`);
+    for (const [name, t] of Object.entries(row)) console.log(`    ${name.padEnd(24)} success ${(t.success * 100).toFixed(0).padStart(3)}%  costly ${(t.costly * 100).toFixed(0).padStart(3)}%  failure ${(t.failure * 100).toFixed(0).padStart(3)}%`);
   }
 }
