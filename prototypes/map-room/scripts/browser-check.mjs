@@ -10,8 +10,10 @@
 //   showdowns  the end state is the plan's; every label stays on the table and clear of the
 //              report, at 1920x1080 and 1728x972 (table) and 1180x712 (compact); pause and skip work
 //   keyboard   February chosen with Tab and Enter
-//   layout     supported sizes: which layout each window gets, rendered text and control sizes
-//              (browser zoom included), the compact column; the room dialogs' focus contract;
+//   layout     supported sizes: which layout each window gets, rendered text and control sizes,
+//              the compact column
+//   zoom       browser zoom on an open page against the 100% page, in device pixels
+//   dialogs    the room dialogs' focus contract;
 //              radio groups by arrow key; slips, host card and staff room follow the plan
 //   sketch     the withdrawal sketch's plan plays on the real chart
 import { preview } from "vite";
@@ -354,9 +356,9 @@ async function sketch() {
 
 // ── layout, dialogs, radios and the selected plan ─────────────────────────────
 // Supported sizes (README): the table layout at a scale of 0.9 or more, the compact layout
-// below. Rendered sizes are CSS pixels times the layer's scale; device pixels multiply by the
-// zoom (deviceScaleFactor stands in for browser zoom: 1280x720 at 1.5 is a 1920x1080 screen
-// at 150%).
+// below. Rendered sizes are CSS pixels times the layer's scale. These pages LOAD at each size
+// and pixel density (a page that loads already zoomed looks like a denser screen); zooming a
+// page that is already open is the `zoom` section below.
 const SIZES = [
   { width: 1920, height: 1080, zoom: 1, layout: "table" },
   { width: 1745, height: 982, zoom: 1.1, layout: "table" }, // 1920x1080 at 110%
@@ -416,12 +418,63 @@ async function layout() {
       if (r.minReading < MIN_READING) fail(area, `reading text renders at ${r.minReading.toFixed(1)} px (minimum ${MIN_READING})`);
       if (r.minControl < MIN_CONTROL) fail(area, `a control renders ${r.minControl.toFixed(0)} px across (minimum ${MIN_CONTROL})`);
       for (const x of r.out.slice(0, 4)) fail(area, x);
-      if (size.zoom !== 1 && r.minText * size.zoom < r.minText + 1) fail(area, "browser zoom did not enlarge the words");
     }
     pageErrors(`layout ${tag}`, p);
     await p.close();
   }
   return `${n} screens at ${SIZES.length} sizes`;
+}
+
+// ── zoom ─────────────────────────────────────────────────────────────────────
+// Browser zoom on an open page, measured against the page at 100%. Chromium zooms by keeping
+// the window's device pixels and raising devicePixelRatio, so the window has fewer CSS pixels;
+// the DevTools protocol's device-metrics override drives exactly that on the live page (the
+// same resize and resolution events). The size is measured from the rendered text itself:
+// the height of a line's box in device pixels.
+async function zoom() {
+  const p = await page({ width: 1920, height: 1080 }, "chapter=title");
+  const cdp = await p.context().newCDPSession(p);
+  const set = async (z, screen = 1) => {
+    await cdp.send("Emulation.setDeviceMetricsOverride", { width: Math.round(1920 / z), height: Math.round(1080 / z), deviceScaleFactor: z * screen, mobile: false });
+    await p.waitForTimeout(300);
+  };
+  const measure = () => p.evaluate(() => {
+    const el = [...document.querySelectorAll(".sheet .body, .sheet p")].find((e) => e.textContent.trim().length > 60);
+    const r = document.createRange(); r.selectNodeContents(el.firstChild ?? el);
+    const line = [...r.getClientRects()][0];
+    return { px: line.height * devicePixelRatio, compact: document.body.classList.contains("compact"), zoom: window.mapRoomView.zoom };
+  });
+  await p.evaluate(() => { window.mapRoom.campaign("Z1", "shifting"); window.mapRoom.go("dec-brief"); });
+  await p.waitForTimeout(300);
+  const base = await measure();
+  if (base.compact) fail("zoom", "1920x1080 at 100% is not the table layout");
+  let n = 0;
+  for (const z of [1.1, 1.25, 1.5, 2]) {
+    await set(z);
+    const m = await measure();
+    n++;
+    if (!m.compact) fail("zoom", `zoomed to ${z * 100}%: still the table layout, which cancels zoom`);
+    if (m.px < base.px * z * 0.95) fail("zoom", `zoomed to ${z * 100}%: a line is ${m.px.toFixed(1)} device px, ${(m.px / base.px).toFixed(2)}x the 100% page`);
+  }
+  await set(1);
+  const back = await measure();
+  if (back.compact || Math.abs(back.px - base.px) > 0.5) fail("zoom", `back at 100%: ${back.compact ? "compact" : "table"}, ${back.px.toFixed(1)} px against ${base.px.toFixed(1)}`);
+  // Moving to a screen twice as dense is not zoom: same CSS window, the table stays.
+  await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1920, height: 1080, deviceScaleFactor: 2, mobile: false });
+  await p.waitForTimeout(300);
+  const dense = await measure();
+  if (dense.compact) fail("zoom", "a denser screen was taken for zoom");
+  pageErrors("zoom", p);
+  await p.close();
+  // The known limit: a page that LOADS at 110% can't be told from a 1745x982 window on a
+  // denser screen, so the table layout fits it and the words are no bigger than at 100%.
+  const q = await page({ width: 1745, height: 982 }, "chapter=title", 1.1);
+  await q.evaluate(() => { window.mapRoom.campaign("Z1", "shifting"); window.mapRoom.go("dec-brief"); });
+  await q.waitForTimeout(300);
+  const loaded = await q.evaluate(() => ({ compact: document.body.classList.contains("compact") }));
+  if (loaded.compact) fail("zoom", "a page loaded at 110% went compact: the README's stated limit is out of date");
+  await q.close();
+  return `${n + 2} zoom levels against 100%`;
 }
 
 // The rooms are modal dialogs: focus goes in and stays in, everything behind is inert and
@@ -590,7 +643,7 @@ async function selected() {
 
 try {
   const only = process.argv.find((x) => x.startsWith("--only="))?.slice(7).split(",");
-  for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["names", names], ["sketch", sketch], ["layout", layout], ["dialogs", dialogs], ["radios", radios], ["selected", selected]]) {
+  for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["names", names], ["sketch", sketch], ["layout", layout], ["zoom", zoom], ["dialogs", dialogs], ["radios", radios], ["selected", selected]]) {
     if (only && !only.some((o) => name.startsWith(o))) continue;
     const t = Date.now(), said = await fn();
     console.log(`${name.padEnd(16)} ${said} (${((Date.now() - t) / 1000).toFixed(0)} s)`);

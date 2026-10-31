@@ -79,6 +79,13 @@ test("a different small scenario fits the same interfaces", () => {
       if (!result.kept.garrison) assert.equal(end.actors.garrison.at, "beach");
       assert.equal(end.actors.transports.at, result.interruption === "caught" ? "beach" : "anchorage", where);
       assert.equal(end.effects.some((e) => e.kind === "flash" && e.at === "beach"), result.interruption === "caught", where);
+      // Frigate damage is shown when it happens, before the lift it was covering, and only then.
+      const hit = plan.steps.findIndex((st) => (st.labels ?? []).some((l) => /is hit/.test(l.text)));
+      assert.equal(hit >= 0, !result.kept.frigate, where);
+      if (hit >= 0) {
+        assert.ok(plan.steps[hit].effects.some((e) => e.kind === "flash" && e.at === "line"), where);
+        assert.equal(hit, plan.steps.length - 2 - 1, `${where}: the hit comes just before the last lift`);
+      }
     }
   }
   assert.notDeepEqual(WITHDRAWAL.objectives.map((o) => o.id), STATION_DEFENCE.objectives.map((o) => o.id));
@@ -117,15 +124,53 @@ test("the sketch's timeline: loading, clearing the beach, the rival's arrival, h
 // one choice is optimal on almost every chart, and the README says so.
 const VALUE = { garrison: 4, guns: 2, frigate: 1 };
 const value = (r) => Object.entries(r.kept).reduce((n, [k, v]) => n + (v ? VALUE[k] : 0), 0);
+// For each chart, every choice whose value equals the best is optimal there (ties included).
+export function optimalShare(charts) {
+  const count = {};
+  for (const vals of charts) {
+    const best = Math.max(...vals.map((x) => x.v));
+    for (const x of vals) count[x.k] = (count[x.k] ?? 0) + (x.v === best ? 1 : 0);
+  }
+  return Object.fromEntries(Object.entries(count).map(([k, v]) => [k, v / charts.length]));
+}
 export function sketchDiversity(charts, warning) {
-  const optimal = Object.fromEntries(CHOICES.map((c) => [`${c.lift}/${c.cover}`, 0])), regret = { ...optimal }, grades = Object.fromEntries(Object.keys(optimal).map((k) => [k, new Set()]));
+  const optimal = Object.fromEntries(CHOICES.map((c) => [`${c.lift}/${c.cover}`, 0])), regret = { ...optimal }, perChart = [], grades = Object.fromEntries(Object.keys(optimal).map((k) => [k, new Set()]));
   for (const sc of charts) {
     const ctx = sketchContext(sc, warning), vals = CHOICES.map((c) => ({ k: `${c.lift}/${c.cover}`, r: resolveWithdrawal(ctx, c) })), best = Math.max(...vals.map((x) => value(x.r)));
-    for (const x of vals) { if (value(x.r) === best) optimal[x.k]++; regret[x.k] += best - value(x.r); grades[x.k].add(x.r.grade); }
+    for (const x of vals) { regret[x.k] += best - value(x.r); grades[x.k].add(x.r.grade); }
+    perChart.push(vals.map((x) => ({ k: x.k, v: value(x.r) })));
   }
   const n = charts.length;
-  return { n, optimal: Object.fromEntries(Object.entries(optimal).map(([k, v]) => [k, v / n])), regret: Object.fromEntries(Object.entries(regret).map(([k, v]) => [k, v / n])), grades };
+  return { n, optimal: optimalShare(perChart), regret: Object.fromEntries(Object.entries(regret).map(([k, v]) => [k, v / n])), grades };
 }
+
+// Review 9: grades hide differences. At two hours every choice is graded "costly", but two lifts
+// with the frigate also lose the frigate for nothing: its score is lower and it is never best.
+test("at two hours' warning, the frigate is wasted: same grade, lower score", () => {
+  const held = Array.from({ length: 200 }, (_, i) => generateWorld(`G${200 + i}`).layout);
+  const d = sketchDiversity(held, 2);
+  for (const k of Object.keys(d.grades)) assert.deepEqual([...d.grades[k]], ["costly"], k);
+  assert.equal(d.optimal["two/frigate"], 0);
+  assert.equal(d.regret["two/frigate"], VALUE.frigate);
+  for (const k of ["two/none", "one/none", "one/frigate"]) { assert.equal(d.optimal[k], 1, k); assert.equal(d.regret[k], 0, k); }
+  for (const sc of held) {
+    const ctx = sketchContext(sc, 2), r = resolveWithdrawal(ctx, { lift: "two", cover: "frigate" }), n = resolveWithdrawal(ctx, { lift: "two", cover: "none" });
+    assert.equal(r.grade, n.grade);
+    assert.equal(value(r), value(n) - VALUE.frigate);
+    assert.equal(r.kept.frigate, false);
+  }
+});
+
+// Ties: a chart where several choices are best counts for each of them, so the shares can add
+// up to more than 1. Checked on hand-made results, including overlapping ties.
+test("the optimal-share measure counts every tied best choice", () => {
+  const share = (charts) => optimalShare(charts.map((vals) => Object.entries(vals).map(([k, v]) => ({ k, v }))));
+  // Chart 1: A and B tie; chart 2: B and C tie; chart 3: A alone.
+  const s3 = share([{ A: 5, B: 5, C: 1 }, { A: 1, B: 4, C: 4 }, { A: 3, B: 2, C: 2 }]);
+  assert.deepEqual(s3, { A: 2 / 3, B: 2 / 3, C: 1 / 3 });
+  // Every choice ties on every chart: each is optimal everywhere, not "a third each".
+  assert.deepEqual(share([{ A: 1, B: 1, C: 1 }, { A: 0, B: 0, C: 0 }]), { A: 1, B: 1, C: 1 });
+});
 
 test("geography reaches the sketch's resolver: the same choice ends differently on different charts", () => {
   const held = Array.from({ length: 200 }, (_, i) => generateWorld(`G${200 + i}`).layout);

@@ -94,3 +94,32 @@ Following the staff plan never wins outright. No rule was changed in response. W
 "always rest" is a strategy players find, and whether it feels like a decision, is for the
 sessions in `PLAYTEST.md`.
 
+## Review 9: resting is a trade, not the answer (needs a design decision)
+
+Full success alone overstates "rest both months". Over 150 seeds:
+
+| Policy (sees only the board) | Full success | Costly | Station lost | Ally lost | Battalion unfit |
+| --- | --- | --- | --- | --- | --- |
+| Rest both months, Shifting | 53% | 33% | 13% | 47% | 0% |
+| Staff plan, Shifting | 0% | 93% | 7% | 45% | 100% |
+| Rest both months, Volatile | 54% | 32% | 14% | 46% | 0% |
+| Staff plan, Volatile | 0% | 94% | 6% | 41% | 100% |
+
+- **Resting** buys a fit battalion, and with it most full successes. It also loses the
+  station about twice as often, because Beacon goes without its December and January
+  reinforcement.
+- **The staff plan** almost never loses the station. It ends in costly success, with the
+  battalion worn out.
+
+Neither is universally best; they trade the station's safety against the battalion. That is
+a design question for Jon:
+
+- whether this trade is the intended shape of the campaign;
+- if not, which side should move.
+
+Until then, the playtests should present both strategies and ask which players prefer and
+why (`PLAYTEST.md`). The balance test that the staff plan never wins outright records a
+proposed target. Passing it says nothing about whether the advice is credible or the choice
+is interesting.
+
+

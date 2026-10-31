@@ -195,17 +195,29 @@ The prototype is built for desktop browsers. It makes no claim about phones or t
 | 1728×972 and larger (a scale of 0.9 or more) | **Table**: the whole 1920×1080 table, words and all, scaled to fit | 12.6 / 13.5 px at the smallest scale; 14 / 15 px at full size |
 | Smaller, down to 1024×640 | **Compact**: the chart scales into the space on the left. Every sheet, slip and voice sits in a column on the right at its own size, reflows to the column's width and scrolls on its own | 14 / 15 px at any size |
 
-- **Browser zoom.** Zoom makes the CSS window smaller. In the compact layout it enlarges the
-  words. In the table layout it only brings the switch to compact nearer: a 1920×1080 screen
-  at 110% stays on the table, and at 125% or more it goes compact.
+- **Browser zoom.** Zooming in on an open page switches to the compact layout, where zoom
+  enlarges the words. The table layout would cancel zoom, because it fits the table to the
+  window's CSS pixels. Zooming back to 100% returns to the table.
+  - Zoom is told apart from moving to a denser screen: zoom keeps the window's width in
+    device pixels and raises the pixel ratio, while a new screen changes both.
+  - **Limit:** a page that *loads* already zoomed (the browser remembers a site's zoom)
+    looks the same as a smaller window on a denser screen. It gets the layout its CSS window
+    size calls for. At 110% on a 1920×1080 screen that is the table, with words no bigger
+    than at 100%; from 125% it is compact.
 - **Hidden in compact.** Decorative pieces anchored to the table stay hidden: the seals
   flying to a slip, the ORDERED stamp, and the dimming behind sheets. The invisible
   glossary zones over the chart's labels are hidden too; their terms are still explained
   wherever they appear in the text.
 - **Forcing a layout.** `?layout=table` or `?layout=compact` fixes the choice.
-- **What the browser checks measure.** At eight sizes, including 110%, 125% and 150% zoom,
-  they measure rendered text, the smallest control (24 px or more) and the compact column
-  (no sideways scroll, nothing wider than the column).
+- **What the browser checks measure.**
+  - `layout`: at eight sizes and pixel densities, the rendered text, the smallest control
+    (24 px or more) and the compact column (no sideways scroll, nothing wider than the
+    column).
+  - `zoom`: zooms an open page to 110%, 125%, 150% and 200%. This uses Chromium's
+    device-metrics override, which changes the CSS window and the pixel ratio together as
+    zoom does. Each time, it measures a line of text's rendered height in device pixels
+    against the same page at 100%. It also checks the return to 100%, the denser-screen case
+    and the load-zoomed limit above.
 
 ### Keyboard and dialogs
 
@@ -458,10 +470,44 @@ in the scenario and open the same profiles.
   - At most 20% of Shifting and 30% of Volatile campaigns can't be won outright (today
     about 12% and 13% over 150 seeds).
   - Following the staff plan every month never wins outright (it never rests the battalion).
+    This is a proposed target, not evidence that the advice is credible: see RULES-REVIEW.md,
+    review 9, for what the staff plan and resting each trade away.
 - **The war** (all proposed): the refit amounts and prices; 500 soldiers as the line for
   under strength; the rival losing one craft in its next sector for every four beaten on a
   beach, up to three; and the second sector reusing the December to February calendar. That
   calendar is a stand-in: a real war needs dates that don't depend on the season.
+- **Review 9.** No rule changed.
+  - **Every figure and promise in the advice comes from one simulated plan.**
+    - Each option's description, the staff plan's cost and the officers' lines and
+      counterfactuals are read from what that option does with the rest of the current plan.
+    - The four reported cases are fixed:
+      - B18 Shifting now reads fatigue 120 and fit, not 140.
+      - With both patrol boats traded, the sailing-date option no longer promises they will
+        see the enemy sail.
+      - Okafor asks for the date only when it buys rest the plan doesn't already give.
+      - With a refit's second team, no option says there is no fresh count.
+    - Two advice judgements changed with this, for sign-off:
+      - Okafor advises standing the battalion down only when the plan as it stands sends
+        them into February unfit.
+      - With a refit's count, Halden asks for the fishing fleet instead of a count he will
+        get anyway.
+  - **The withdrawal sketch shows frigate damage.** When the frigate fights, a step before
+    the last lift shows it hit. The 2-hour analysis is corrected above.
+  - **Ties are counted everywhere.** The campaign's decision-diversity measure counted only
+    the first best plan per campaign. Now every plan and option scores in every campaign
+    whose set of best plans contains it, so shares can add up to more than 1. Overlapping
+    ties are tested explicitly. With ties counted, over 150 seeds:
+    - The commonest best plan is best in 31% / 26% / 28% of campaigns (Steady / Shifting /
+      Volatile). That is more concentrated than the first-found count suggested (19–25%).
+    - 180 / 127 / 118 different plans are ever best, because many plans tie.
+    - December's Lattice question never decides: every option is in a best plan in 100% of
+      campaigns.
+    - January's "hold" is in a best plan in 99–100% of campaigns.
+  - **Zoom is verified, not simulated**, and the table layout honours zoom-in (above).
+  - **The oracle checks causes on failures too.** For every one of the 240 combinations it
+    checks the named cause, the full list of what was missing, who fought and when the
+    battalion arrived. It also runs named boundary cases through the battle plan the chart
+    plays.
 - **Review 8.** No rule changed (19,632 plan-campaign runs compared with review 7: none
   differ). What changed is what the screens say and how it is checked:
   - **Advice answers the plan as it stands.** Every officer's "if you overrule" line names
@@ -491,7 +537,10 @@ in the scenario and open the same profiles.
     (G200–G399), counting ties:
     - At 6 hours' warning, two lifts with the frigate are optimal on 100% of charts, and
       two without on 86% (regret 0.14). One-lift plans have regret 1.86.
-    - At 2 hours, every choice ties: no guns are out anywhere.
+    - At 2 hours, every choice gets the same *grade* (costly: no guns out anywhere), but not
+      the same score. Two lifts with the frigate is optimal on **0** of 200 charts: the
+      frigate is damaged for nothing (regret 1). The other three choices tie on all 200.
+      (Corrected in review 9: review 8 said every choice tied.)
     - At Harrow Sound with 2 hours, only the frigate saves the garrison.
 
     So geography changes the answer only at the margins; the test states that, and nothing
@@ -506,9 +555,8 @@ in the scenario and open the same profiles.
     | Follow the majority | 0% | 3% | 5% |
     | Follow Halden | 6% | 1% | 1% |
 
-    Resting both months matches the best fixed omniscient plan. This is reported as a
-    finding, not tuned away: whether "always rest" is a dominant strategy players find is
-    a question for the sessions.
+    Resting both months matches the best fixed omniscient plan's rate of full success. That
+    is not the whole picture: see review 9, below.
   - **An independent oracle** (`test/oracle.test.js`) is written from the stated rules,
     not from the resolver. It covers:
     - the warning and defence tables;
@@ -553,8 +601,9 @@ in the scenario and open the same profiles.
   - **Decision diversity** (`npm run balance`) is measured per order slot. Today:
     - December's Lattice question never changes the best result.
     - The December and January station orders have almost no spread.
-    - The incident answers and the February route carry most of the variety: 13 to 16
-      different best plans, the commonest covering 19 to 25% of campaigns.
+    - The incident answers and the February route carry most of the variety. (Review 6
+      reported "13 to 16 different best plans, the commonest covering 19 to 25%". That
+      counted only the first best plan per campaign; see review 9 for the tie-aware figures.)
 
     See RULES-REVIEW.md for what this means and its limits.
 - **Playtest 5 rules and architecture:**

@@ -103,7 +103,11 @@ export function withdrawalPlan(ctx, choice, labels = {}) {
       moves: [{ actor: "garrison", path: ["station", "beach"], dur: 1200 }, { actor: "rival", path: ["harbour", "laneOut", "laneMid"], dur: 2400 },
         ...(choice.cover === "frigate" ? [{ actor: "cover", path: ["friendStart", "line"], dur: 1800, facing: "north" }] : [])],
       labels: [{ at: "harbour", text: `${ctx.geo.harbourNm} nm away: at the post in ${r.arrives.toFixed(1)} hours`, tone: "warn" }], dur: 2600 },
-    ...r.timeline.map(liftStep),
+    // The frigate fights only if they would otherwise have reached the post while the last lift
+    // was still loading: it stands in their way and is hit, while that lift loads.
+    ...r.timeline.flatMap((L, i) => (!r.kept.frigate && i === r.timeline.length - 1
+      ? [{ effects: [{ kind: "flash", at: "line", count: 5 }], labels: [{ at: "contact", text: `The frigate holds them off for ${WITHDRAWAL.fixed.coverHours} hours, and is hit`, tone: "bad" }], dur: 2200 }, liftStep(L)]
+      : [liftStep(L)])),
     { moves: [{ actor: "rival", path: ["laneMid", "approach"], dur: 1800 }],
       effects: caughtOnBeach ? [{ kind: "flash", at: "beach", count: 6, delay: 1200 }] : [],
       labels: [{ at: "contact", text: !r.kept.garrison ? (caughtOnBeach ? "Caught on the beach while loading: the garrison is taken" : "No lift got away: the garrison is taken") : r.caught ? (caughtOnBeach ? "Caught loading the last lift: the guns are lost" : "The last lift turned back: the guns are left") : r.lifts === 2 ? "All out, guns too" : "Soldiers out; the guns left behind", tone: !r.kept.garrison ? "bad" : r.caught || r.lifts === 1 ? "warn" : "ok" }], dur: 2400 },

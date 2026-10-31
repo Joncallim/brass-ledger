@@ -196,15 +196,17 @@ function build(W) {
   const next = (s) => levels(s.def + 1, effectiveDefence(s) + 1);
   const nowLevel = (s) => levels(s.def, effectiveDefence(s));
 
-  function decemberCouncil(c, s) {
-    const tired = s.fatigue >= 90, solid = s.support >= 66 && c.minister !== "dove", v = votes(s.support);
+  // `out` is what each station option leads to with the rest of the plan as it stands
+  // (outcomes): every number an officer quotes comes from it, never from a fixed month's duty.
+  function decemberCouncil(c, s, out) {
+    const duty = out.quiet.fatigue, tired = duty > FT.unfit, solid = s.support >= 66 && c.minister !== "dove", v = votes(s.support);
     return {
       briggs: pos("quiet", `${cap(MOVE[s.def + 1])} by the ${ord(DEC.quiet)}, by night. That takes ${B} to ${next(s)}.`,
         `${B} at ${next(s)} by ${DEC.quiet} December`, `${B} stays at ${nowLevel(s)}: the garrison alone.`),
       okafor: tired
-        ? pos("rest", `Fatigue ${s.fatigue}. Another month on the headland takes them to ${s.fatigue + FIXED.monthOnDuty + s.eng}. Past ${FT.unfit} they’re unfit: they can’t reinforce ${B} in time to matter. Give me ${DEC.rest} to 31 December.`,
-          `${BN} fit in February`, `${BN} reaches fatigue ${s.fatigue + FIXED.monthOnDuty + s.eng} by New Year.`)
-        : pos("quiet", `Fatigue ${s.fatigue}. They have one more month in them. Not two.`, `using ${BN} while it is fit`, "we rest a battalion that can still work."),
+        ? pos("rest", `Fatigue ${s.fatigue}. Another month on the headland takes them to ${duty}. Past ${FT.unfit} they’re unfit: they can’t reinforce ${B} in time to matter. Give me ${DEC.rest} to 31 December.`,
+          `${BN} fit in February`, `${BN} reaches fatigue ${duty} by New Year.`)
+        : pos("quiet", `Fatigue ${s.fatigue}, ${duty} by New Year on this plan. They have one more month in them. Not two.`, `using ${BN} while it is fit`, "we rest a battalion that can still work."),
       sato: solid
         ? pos("show", `${v.for} of ${FIXED.ministers} ministers are with us, and the defence minister ${c.minister === "hawk" ? "wants us seen" : "is content"}. A frigate in daylight costs us phone calls, not the vote.`,
           `${M} seeing us defend its coast`, `${M}’s ministers wonder whether we would fight for them.`)
@@ -217,18 +219,19 @@ function build(W) {
     };
   }
 
-  function januaryCouncil(c, s) {
-    const read = januaryRead(s), v = votes(s.support), eff = effectiveDefence(s);
+  function januaryCouncil(c, s, out) {
+    const duty = out.quiet.fatigue, read = januaryRead(s), v = votes(s.support), eff = effectiveDefence(s);
     return {
       briggs: (read === "land" || read === "probe") && eff + 1 >= D.holdsAlone
         ? pos("show", `A frigate and two companies off ${B} on the ${ord(JAN.show)}, in daylight. At ${next(s)}, a landing they can see coming may not come at all.`,
           `${R} seeing a ${B} too strong to attack`, `${R} plans against a ${B} it thinks is thin.`)
         : pos("quiet", `${cap(MOVE[s.def + 1])} by the ${ord(JAN.quiet)}, by night. That takes ${B} to ${next(s)}. ${R} sees nothing.`,
           `${B} at ${next(s)} without a show`, `${B} stays at ${nowLevel(s)}.`),
-      okafor: s.fatigue > 90
-        ? pos("hold", `Fatigue ${s.fatigue}. Another month takes them to ${s.fatigue + FIXED.monthOnDuty + s.eng}. Stand them down from the ${ord(JAN.hold)} and I can give you a fit battalion in February.`,
-          `${BN} fit in February`, `${BN} goes into February at fatigue ${s.fatigue + FIXED.monthOnDuty + s.eng}.`)
-        : pos("quiet", `Fatigue ${s.fatigue}. They can carry January.`, `using ${BN} while it is fit`, "we rest troops who can still work."),
+      // Advises the stand-down only when the plan as it stands sends them into February unfit.
+      okafor: duty > FT.unfit
+        ? pos("hold", `Fatigue ${s.fatigue}. On this plan, January takes them to ${duty}. Stand them down from the ${ord(JAN.hold)} and I can give you a fit battalion in February.`,
+          `${BN} fit in February`, `${BN} goes into February at fatigue ${duty}.`)
+        : pos("quiet", `Fatigue ${s.fatigue}, ${duty} by February on this plan. They can carry January.`, `using ${BN} while it is fit`, "we rest troops who can still work."),
       sato: s.support >= 60 && (c.hotline || c.minister === "hawk")
         ? pos("show", c.hotline ? `We have the hotline. With ${v.for} for, I can have their yes within hours.` : `The defence minister wants us seen, and ${v.for} of ${FIXED.ministers} are with us.`,
           `${M} seeing us stand with it`, `${M}’s ministers start to doubt we would fight for them.`)
@@ -257,8 +260,9 @@ function build(W) {
       const daylight = slot === "beacon" && id === "show";
       return [id, { id, def: s.def, eff: effectiveDefence(s), fatigue: s.fatigue, ministers: ministersFor(s.support), daylight,
         approved: daylight && month === "jan" && (r.jan.way === "buy" || !needsApproval(c, sim.janOrders, "show")),
-        clue: Boolean(s.knows.reaction), count: (s.knows.count ?? null) !== null && month === "dec" && (id === "boats" || slot !== "lattice"),
-        role: Boolean(s.knows.role), date: Boolean(s.knows.date), warning: s.warning === "fresh", navy: Boolean(s.navy) }];
+        // A fresh count is December's: Lattice on the quay, or a refit's second team whatever Lattice is asked.
+        clue: Boolean(s.knows.reaction), count: month === "dec" && (s.knows.count ?? null) !== null,
+        role: Boolean(s.knows.role), date: Boolean(s.knows.date), warning: s.warning === "fresh", navy: Boolean(s.navy), boats: s.boats }];
     }));
   }
   // What `pick` costs, against `pref`, in one officer's terms. Empty if nothing they watch is worse.
@@ -288,8 +292,7 @@ function build(W) {
   }
   // Every officer's view of every option they don't advise, named by option. A slip shows the
   // one for the current choice; the hard call lists them all.
-  function withRisks(c, run, month, slot, council, ids) {
-    const out = outcomes(c, run, month, slot, ids);
+  function withRisks(c, run, month, slot, council, ids, out = outcomes(c, run, month, slot, ids)) {
     for (const [who, p] of Object.entries(council)) {
       p.risks = Object.fromEntries(ids.filter((id) => id !== p.prefers).map((id) => {
         const w = worseFor(who, out[p.prefers], out[id], month, slot);
@@ -301,11 +304,13 @@ function build(W) {
 
   function orders(c, run, month) {
     const sim = simulate(c, run), s = month === "dec" ? sim.decOrders : sim.janOrders;
-    const f = s.fatigue, eng = s.eng ?? 0, onDuty = f + FIXED.monthOnDuty + eng, C = CALENDAR[month], mon = MONTH[month];
+    const f = s.fatigue, C = CALENDAR[month], mon = MONTH[month];
+    const ids = month === "dec" ? ["quiet", "rest", "show"] : ["quiet", "show", "hold"], out = outcomes(c, run, month, "beacon", ids);
+    const ft = (id) => out[id].fatigue, onDuty = ft("quiet");
     const staffPlan = `will ${MOVE[s.def + 1]} by night, in place by ${C.quiet} ${mon}.`;
     // The full rule is in the briefing; the slip keeps the line this order bears on.
     const does = `${B} goes from ${nowLevel(s)} to ${next(s)}. Level ${D.holdsAlone} against a landing holds one wave without ${BN}.`;
-    const council = withRisks(c, run, month, "beacon", month === "dec" ? remembered(c, decemberCouncil(c, s)) : januaryCouncil(c, s), month === "dec" ? ["quiet", "rest", "show"] : ["quiet", "show", "hold"]);
+    const council = withRisks(c, run, month, "beacon", month === "dec" ? remembered(c, decemberCouncil(c, s, out)) : januaryCouncil(c, s, out), ids, out);
     if (month === "dec") {
       return {
         head: ST, lead: "briggs", staffId: "quiet", plan: staffPlan, does,
@@ -313,8 +318,8 @@ function build(W) {
         question: `What should ${B} do in December?`,
         options: [
           { id: "quiet", name: `Strengthen ${B} quietly`, short: `strengthen ${B} quietly`, says: `${B} to ${next(s)} by ${C.quiet} December, moved by night. ${BN} stays on duty: fatigue ${onDuty} by New Year.`, staff: true, mark: { at: "beacon", text: `Level ${s.def + 1} by ${C.quiet} Dec, by night` } },
-          { id: "rest", name: `Rest ${BN}`, short: `rest ${BN}`, says: `${BN} stands down from ${C.rest} to 31 December: fatigue ${f} to ${eng}. ${B} gets nothing new and stays at ${nowLevel(s)}.`, mark: { at: "beacon", text: `${BN} rests · ${B} stays level ${s.def}`, tone: "bad" } },
-          { id: "show", name: "Show force openly", short: "show force openly", says: `${B} to ${next(s)}, in daylight from ${C.show} December, with the frigate. ${R} sees it, and how it reacts is a clue to its plan. ${M} has not approved it: ${voteText(s.support)} today, and some will turn. Fatigue ${onDuty}.`, mark: { at: "beacon", text: `Level ${s.def + 1} · frigate in daylight`, tone: "warn" } },
+          { id: "rest", name: `Rest ${BN}`, short: `rest ${BN}`, says: `${BN} stands down from ${C.rest} to 31 December: fatigue ${f} to ${ft("rest")}. ${B} gets nothing new and stays at ${nowLevel(s)}.`, mark: { at: "beacon", text: `${BN} rests · ${B} stays level ${s.def}`, tone: "bad" } },
+          { id: "show", name: "Show force openly", short: "show force openly", says: `${B} to ${next(s)}, in daylight from ${C.show} December, with the frigate. ${R} sees it, and how it reacts is a clue to its plan. ${M} has not approved it: ${voteText(s.support)} today, and some will turn. Fatigue ${ft("show")}.`, mark: { at: "beacon", text: `Level ${s.def + 1} · frigate in daylight`, tone: "warn" } },
         ],
         council,
         reply: {
@@ -331,8 +336,8 @@ function build(W) {
       question: `What should ${B} do in January?`,
       options: [
         { id: "quiet", name: `Reinforce ${B} quietly`, short: `reinforce ${B} quietly`, says: `${B} to ${next(s)} by ${C.quiet} January, moved by night. Fatigue ${onDuty} by the end of January.`, staff: true, mark: { at: "beacon", text: `Level ${s.def + 1} by ${C.quiet} Jan, by night` } },
-        { id: "show", name: `Reinforce ${B} openly`, short: `reinforce ${B} openly`, says: `${B} to ${next(s)}, in daylight from ${C.show} January, with the frigate. If ${R} means to land and the built level reaches ${D.holdsAlone}, it may call the landing off. ${needsApproval(c, s, "show") ? `${M} must approve it first, and the answer is slow.` : `${surname("sato")} can get ${M}’s answer the same day on the hotline.`} Fatigue ${onDuty}.`, mark: { at: "beacon", text: `Level ${s.def + 1} · frigate, ${C.show} Jan`, tone: "warn" } },
-        { id: "hold", name: "Hold as we are", short: "hold as we are", says: `${BN} stands down from ${C.hold} January: fatigue ${f} to ${eng}. ${B} gets nothing new and stays at ${nowLevel(s)}.`, mark: { at: "beacon", text: `${BN} rests from ${C.hold} Jan · ${B} stays level ${s.def}`, tone: "warn" } },
+        { id: "show", name: `Reinforce ${B} openly`, short: `reinforce ${B} openly`, says: `${B} to ${next(s)}, in daylight from ${C.show} January, with the frigate. If ${R} means to land and the built level reaches ${D.holdsAlone}, it may call the landing off. ${needsApproval(c, s, "show") ? `${M} must approve it first, and the answer is slow.` : `${surname("sato")} can get ${M}’s answer the same day on the hotline.`} Fatigue ${ft("show")}.`, mark: { at: "beacon", text: `Level ${s.def + 1} · frigate, ${C.show} Jan`, tone: "warn" } },
+        { id: "hold", name: "Hold as we are", short: "hold as we are", says: `${BN} stands down from ${C.hold} January: fatigue ${f} to ${ft("hold")}. ${B} gets nothing new and stays at ${nowLevel(s)}.`, mark: { at: "beacon", text: `${BN} rests from ${C.hold} Jan · ${B} stays level ${s.def}`, tone: "warn" } },
       ],
       council,
       reply: {
@@ -350,25 +355,31 @@ function build(W) {
     what: `Twelve listening posts along the ${MA} coast that pick up ${R}’s military radio.`,
     nets: `Twelve posts can follow one radio net at a time: ${S}’s harbour net (the boarding order, our two days’ warning), the fleet command net (the sailing date) or the fishing fleet’s. Whatever ${L} listens to, it stops hearing the others.`,
     dec: [
-      { id: "boats", q: `How many landing craft are loading in ${S}?`, short: `landing craft in ${S}`, staff: true, mark: { at: "harbour", text: `${L}: counting the landing craft` }, means: `A confirmed count by ${DEC.lattice} December: whether ${R} has enough for a second wave. Nothing on the fishing boats or the sailing date.`, reply: `We stay on the quay. You’ll have a count by the ${ord(DEC.lattice)}.` },
-      { id: "who", q: `Who gives orders to ${R}’s fishing fleet?`, short: "who runs the fishing fleet", mark: { at: "lane", text: `${L}: following the fishing fleet` }, means: `Whether the fishing boats are screening a landing, staging a show or scouting ${B}, by ${DEC.lattice} December. Likely, not certain: a trail can be laid for us. No new count of the landing craft.`, reply: `Then we follow the fishing boats. I’ll tell you how far I trust what we find.` },
-      { id: "when", q: `When does ${R} plan to sail?`, short: `${R}’s sailing date`, mark: { at: "harbour", text: `${L}: fleet net, for the date` }, means: `${R}’s planned date, from one signal on the fleet command net, by ${DEC.lattice} December. One signal can be planted. No new count of the landing craft.`, reply: `The fleet net, then. One signal is one signal, General.` },
+      { id: "boats", q: `How many landing craft are loading in ${S}?`, short: `landing craft in ${S}`, staff: true, mark: { at: "harbour", text: `${L}: counting the landing craft` }, means: () => `A confirmed count by ${DEC.lattice} December: whether ${R} has enough for a second wave. Nothing on the fishing boats or the sailing date.`, reply: `We stay on the quay. You’ll have a count by the ${ord(DEC.lattice)}.` },
+      { id: "who", q: `Who gives orders to ${R}’s fishing fleet?`, short: "who runs the fishing fleet", mark: { at: "lane", text: `${L}: following the fishing fleet` }, means: (x) => `Whether the fishing boats are screening a landing, staging a show or scouting ${B}, by ${DEC.lattice} December. Likely, not certain: a trail can be laid for us. ${countLine(x)}`, reply: `Then we follow the fishing boats. I’ll tell you how far I trust what we find.` },
+      { id: "when", q: `When does ${R} plan to sail?`, short: `${R}’s sailing date`, mark: { at: "harbour", text: `${L}: fleet net, for the date` }, means: (x) => `${R}’s planned date, from one signal on the fleet command net, by ${DEC.lattice} December. One signal can be planted. ${countLine(x)}`, reply: `The fleet net, then. One signal is one signal, General.` },
     ],
     jan: [
-      { id: "sarn", q: `Stay on ${S}’s harbour net`, short: `${S}’s harbour net`, staff: true, mark: { at: "harbour", text: `${L}: listening for troops boarding` }, means: `Keeps the two days’ warning: if ${R} orders troops aboard, we hear it before the ships sail, and we know whether this is a landing.`, reply: `My ears stay on the quay.` },
-      { id: "when", q: "Listen to the fleet command net for the sailing date", short: "the sailing date", mark: { at: "harbour", text: `${L}: fleet net · no boarding warning`, tone: "warn" }, means: (k, rest) => `${k.date ? `Checks December’s date against a second source by ${JAN.date} January, so a planted date is caught. ` : `Gives the true sailing date by ${JAN.date} January. `}${rest > 0 ? `With it, ${surname("okafor")} stands ${BN} down a company at a time: ${rest} less fatigue.` : `It buys ${BN} no rest this month: it is already standing down.`} But ${L} stops hearing ${S}’s harbour: in February we won’t know whether troops are aboard. The patrol boats would still see them sail on the date.`, reply: `The fleet net. When they sail, I’ll know the day and not the cargo.` },
-      { id: "who", q: "Listen to the fishing fleet", short: "the fishing fleet", mark: { at: "lane", text: `${L}: fishing fleet · no boarding warning`, tone: "warn" }, means: (k) => `${k.roleSure ? "Our boarding party has already confirmed what the fishing boats are for: this adds nothing. " : k.role ? `We already have a reading of the fishing boats; this would confirm it by ${JAN.fishing} January. ` : `Confirms what the fishing boats are for by ${JAN.fishing} January: a screen for a landing, a show or scouting. `}${L} stops hearing ${S}’s harbour: in February we won’t know whether troops are aboard.`, reply: `The fishing boats, then. We give up the quay for it.` },
+      { id: "sarn", q: `Stay on ${S}’s harbour net`, short: `${S}’s harbour net`, staff: true, mark: { at: "harbour", text: `${L}: listening for troops boarding` }, means: () => `Keeps the two days’ warning: if ${R} orders troops aboard, we hear it before the ships sail, and we know whether this is a landing.`, reply: `My ears stay on the quay.` },
+      { id: "when", q: "Listen to the fleet command net for the sailing date", short: "the sailing date", mark: { at: "harbour", text: `${L}: fleet net · no boarding warning`, tone: "warn" }, means: ({ k, rest, boats }) => `${k.date ? `Checks December’s date against a second source by ${JAN.date} January, so a planted date is caught. ` : `Gives the true sailing date by ${JAN.date} January. `}${rest > 0 ? `With it, ${surname("okafor")} stands ${BN} down a company at a time: ${rest} less fatigue.` : `It buys ${BN} no rest this month: it is already standing down.`} But ${L} stops hearing ${S}’s harbour: in February we won’t know whether troops are aboard. ${boats >= 2 ? "The patrol boats would still see them sail on the date." : `The patrol boats have been traded away: nothing would see them sail, so there would be no warning at all.`}`, reply: `The fleet net. When they sail, I’ll know the day and not the cargo.` },
+      { id: "who", q: "Listen to the fishing fleet", short: "the fishing fleet", mark: { at: "lane", text: `${L}: fishing fleet · no boarding warning`, tone: "warn" }, means: ({ k }) => `${k.roleSure ? "Our boarding party has already confirmed what the fishing boats are for: this adds nothing. " : k.role ? `We already have a reading of the fishing boats; this would confirm it by ${JAN.fishing} January. ` : `Confirms what the fishing boats are for by ${JAN.fishing} January: a screen for a landing, a show or scouting. `}${L} stops hearing ${S}’s harbour: in February we won’t know whether troops are aboard.`, reply: `The fishing boats, then. We give up the quay for it.` },
     ],
   };
+  // A war's refit can keep a second team on the harbour: then the count comes whatever Lattice is asked.
+  const countLine = (x) => (x.counted ? `The second team on the harbour still brings a fresh count of the landing craft by ${DEC.lattice} December.` : "No new count of the landing craft.");
   const latticeQ = (id, month = "dec") => LATTICE[month].find((x) => x.id === id);
 
-  function latticeCouncil(c, s, month) {
+  function latticeCouncil(c, s, month, out) {
     const k = s.knows;
     if (month === "dec") {
       const three = c.D.plans.includes("probe");
       return {
-        halden: pos("boats", `Twelve craft or more is a second wave, and that changes what ${B} needs. I want the count.`,
-          `knowing whether a second wave is coming`, `we plan ${B}’s defence without knowing how many waves.`),
+        // With a refit's second team on the harbour the count comes anyway: he asks for what's missing.
+        halden: c.knownCount
+          ? pos("who", `The second team on the quay gives us the count whatever I ask. Put the posts on the fishing fleet: that is the tell we don’t have.`,
+            `knowing what the fishing boats are for`, `we have the count twice and still can’t tell a landing from a show.`)
+          : pos("boats", `Twelve craft or more is a second wave, and that changes what ${B} needs. I want the count.`,
+            `knowing whether a second wave is coming`, `we plan ${B}’s defence without knowing how many waves.`),
         briggs: three
           ? pos("who", `Three plans fit what we have. The fishing boats are the tell. Tell me which plan I am digging against.`, `knowing which plan ${R} is following`, `we count boats and still can’t tell a landing from a show.`)
           : pos(c.craft.dec >= 9 ? "when" : "boats", c.craft.dec >= 9 ? `They have the craft for one wave already. I need a date.` : `Count them. Then I know how much headland to dig.`,
@@ -379,8 +390,9 @@ function build(W) {
     return {
       halden: pos("sarn", `The boarding order is the one thing that tells a landing from a show. It comes over ${S}’s harbour net, two days before they sail. Keep my ears on the quay.`,
         `hearing whether troops board`, `when the ships sail, we can’t tell a landing from a show.`),
-      okafor: s.fatigue >= 90
-        ? pos("when", `Get me the true date early and I stand them down a company at a time until the last week. Twenty fatigue I can’t take off any other way.`, `${BN} rested before February`, `${BN} carries fatigue ${s.fatigue} into February.`)
+      // The date only matters to him if it buys rest the plan as it stands doesn't already give.
+      okafor: out.sarn.fatigue - out.when.fatigue > 0 && out.sarn.fatigue >= 90
+        ? pos("when", `Get me the true date early and I stand them down a company at a time until the last week. That is ${out.sarn.fatigue - out.when.fatigue} fatigue I can’t take off any other way.`, `${BN} rested before February`, `${BN} carries fatigue ${out.sarn.fatigue} into February.`)
         : pos("sarn", `${BN} can carry January. I’d rather know whether to send them.`, `${BN} sent only when needed`, "we move the battalion on a guess."),
       // On what we hold, not on whether it is true: a date from one signal needs a second source.
       briggs: !k.date || !k.date.confirmed
@@ -394,16 +406,16 @@ function build(W) {
     const ids = LATTICE[month].map((q) => q.id), out = outcomes(c, run, month, "lattice", ids);
     // The rest a true date buys, with the station order as it now stands.
     const rest = month === "jan" ? out.sarn.fatigue - out.when.fatigue : 0;
-    const qs = LATTICE[month].map((q) => ({ ...q, name: q.q, says: typeof q.means === "function" ? q.means(k, rest) : q.means }));
+    const qs = LATTICE[month].map((q) => ({ ...q, name: q.q, says: q.means({ k, rest, counted: Boolean(c.knownCount), boats: out[q.id].boats }) }));
     const janCost = rest > 0 ? `No sailing date, so no rotation: ${BN} ends January at fatigue ${out.sarn.fatigue}, against ${out.when.fatigue} with the date.`
       : `No sailing date. That costs ${BN} no rest this month: it is already standing down.`;
     return {
       head: LATTICE.head, lead: "halden", staffId: qs.find((q) => q.staff).id,
       plan: month === "dec" ? `will keep ${L} on ${S}’s harbour net and count the landing craft by ${DEC.lattice} December.` : `will keep ${L} on ${S}’s harbour net through January, listening for the order that puts troops aboard.`,
-      does: month === "dec" ? `A confirmed count, so we know whether ${R} has enough for a second wave.` : `About two days’ warning in February, and whether troops boarded.`,
+      does: month === "dec" ? (c.knownCount ? `Nothing new: the second team on the harbour brings the count anyway.` : `A confirmed count, so we know whether ${R} has enough for a second wave.`) : `About two days’ warning in February, and whether troops boarded.`,
       cost: month === "dec" ? `Nothing on the fishing boats or the sailing date this month.` : janCost,
       question: `What should ${L} listen for in ${MONTH[month]}?`,
-      options: qs, council: withRisks(c, run, month, "lattice", latticeCouncil(c, s, month), ids), explain: LATTICE.nets,
+      options: qs, council: withRisks(c, run, month, "lattice", latticeCouncil(c, s, month, out), ids, out), explain: LATTICE.nets,
       reply: Object.fromEntries(qs.map((q) => [q.id, ["halden", q.reply]])),
     };
   }

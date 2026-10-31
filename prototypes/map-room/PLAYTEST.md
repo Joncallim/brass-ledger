@@ -162,3 +162,23 @@ Record for each player:
 comprehension check and the fun sessions have not been run. Passing automated checks, and
 the product owner's own reviews, are not evidence of comprehension or fun.
 
+## Review 9: the rest-or-reinforce trade
+
+The balance report shows a trade, not a best strategy:
+
+- Resting the battalion both months wins outright about half the time, and loses the
+  station about twice as often as the staff plan.
+- The staff plan almost always ends in a costly success, with a worn-out battalion.
+
+Don't tell players this. After the debrief, ask:
+
+1. "Did you rest the battalion, reinforce the station, or mix them? Why?"
+2. "What did you think you were risking by doing that?" Note whether they name the station
+   (for resting) or the battalion (for reinforcing).
+3. "Did the staff's advice seem believable? Was there a moment you stopped trusting it?"
+   Note the figure or promise they mention.
+4. "Was that a real choice, or did one answer seem obviously right?"
+
+If most players find one answer obvious, record which. That is input to Jon's decision in
+RULES-REVIEW.md, not a reason to rebalance by script.
+

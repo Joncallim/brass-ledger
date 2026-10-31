@@ -195,9 +195,10 @@ what the task force has and remembers, and the officers quote only that.
    counts as redeployment** (exact rule and cost). The reviewer recommends that exposure
    clears only when the exposed guns actually move to new positions, and that night is a
    way to conceal a move, not enough by itself.
-7. Is "rest the battalion both months" acceptable as a strong default, given that a
-   visible-information policy doing only that matches the best fixed plan (RULES-REVIEW.md,
-   review 8)?
+7. The rest-or-reinforce trade (RULES-REVIEW.md, review 9). Resting both months gives
+   the most full successes but loses the station about twice as often. The staff plan
+   rarely loses the station but always wears out the battalion. Is that the intended shape,
+   and if not, which side moves?
 8. The withdrawal sketch's rule that a lift has escaped once its last boat clears the
    beach (a sketch rule, needs sign-off if the sketch becomes a campaign).
 5. Who reviews generated art, and what licence bar must it meet before it leaves

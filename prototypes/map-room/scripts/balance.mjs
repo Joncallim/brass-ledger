@@ -47,31 +47,32 @@ const SCORE = { success: 2, costly: 1, failure: 0 };
 // ministers: what the task force carries into its next sector.
 const fine = (o) => SCORE[o.grade] * 10000 - o.casualties * 4 - o.daysAfter + Math.round(o.supportAfter) * 3;
 
-// Decision diversity, measured on the decisions rather than the seeds. For each order slot:
+// Decision diversity, measured on the decisions rather than the seeds. Each campaign has a SET
+// of best plans (ties included); every measure counts membership of that set, never just the
+// first best plan found, which would make ties look like variety. For each order slot:
 //   decisive  share of campaigns where some option of that slot can't reach the best result
-//   spread    how evenly the best option is spread across campaigns (normalised entropy:
-//             0 = the same option is always best, 1 = every option is best equally often)
-// and for whole plans: how many different best plans the campaigns ask for, and the share of
-// campaigns the single most common best plan covers.
+//   share     for each option, the share of campaigns where it is in some best plan
+//   spread    how evenly those memberships spread over the options (normalised entropy:
+//             0 = one option only, 1 = every option equally often)
+// and for whole plans: how many different plans are ever best, and the largest share of
+// campaigns any one plan is best for (with ties, shares can add up to more than 1).
 export const SLOTS_MEASURED = { db: ["quiet", "rest", "show"], dl: ["boats", "who", "when"], di: ["staff", "own"], jb: ["quiet", "hold", "show"], jl: ["sarn", "when", "who"], way: [null, "buy", "act"], ji: ["staff", "own"], route: ["quiet", "forward", "joint"] };
 const entropy = (counts) => { const n = counts.reduce((a, b) => a + b, 0), k = counts.length; if (!n || k < 2) return 0; return -counts.filter(Boolean).reduce((h, x) => h + (x / n) * Math.log(x / n), 0) / Math.log(k); };
-export function decisionDiversity(bestPlans) {
-  const slots = {};
+export function decisionDiversity(bestPlans, keyOf = key) {
+  const n = bestPlans.length, slots = {};
   for (const [slot, options] of Object.entries(SLOTS_MEASURED)) {
     let decisive = 0;
-    const preferred = new Map(options.map((o) => [o, 0]));
+    const member = new Map(options.map((o) => [o, 0]));
     for (const best of bestPlans) {
-      const seen = new Map(options.map((o) => [o, 0]));
-      for (const p of best) seen.set(p[slot], seen.get(p[slot]) + 1);
-      if ([...seen.values()].some((x) => x === 0)) decisive++;
-      const top = [...seen.entries()].sort((a, b) => b[1] - a[1])[0][0];
-      preferred.set(top, preferred.get(top) + 1);
+      const used = new Set(best.map((p) => p[slot]));
+      if (options.some((o) => !used.has(o))) decisive++;
+      for (const o of used) if (member.has(o)) member.set(o, member.get(o) + 1);
     }
-    slots[slot] = { decisive: decisive / bestPlans.length, spread: entropy([...preferred.values()]) };
+    slots[slot] = { decisive: decisive / n, share: Object.fromEntries([...member].map(([o, x]) => [String(o), x / n])), spread: entropy([...member.values()]) };
   }
-  const modal = new Map();
-  for (const best of bestPlans) { const k = best.map(key).sort()[0]; modal.set(k, (modal.get(k) ?? 0) + 1); }
-  return { slots, distinctBestPlans: modal.size, commonestShare: Math.max(...modal.values()) / bestPlans.length };
+  const member = new Map();
+  for (const best of bestPlans) for (const k of new Set(best.map(keyOf))) member.set(k, (member.get(k) ?? 0) + 1);
+  return { slots, distinctBestPlans: member.size, commonestShare: Math.max(...member.values()) / n, planShare: member };
 }
 
 export function report(seeds = SEEDS, variant = null) {
@@ -168,8 +169,15 @@ export function policyReport(seeds = SEEDS) {
   for (const d of Object.keys(DIFFICULTY)) {
     out[d] = {};
     for (const [name, policy] of Object.entries(POLICIES)) {
-      const t = { success: 0, costly: 0, failure: 0 };
-      for (let i = 0; i < seeds; i++) { const c = makeCampaign(`B${i}`, d); t[outcome(c, playPolicy(c, policy)).grade]++; }
+      // The grade, and what was given up: a full success is not the only thing a plan can be for.
+      const t = { success: 0, costly: 0, failure: 0, stationLost: 0, allyLost: 0, battalionLost: 0 };
+      for (let i = 0; i < seeds; i++) {
+        const c = makeCampaign(`B${i}`, d), o = outcome(c, playPolicy(c, policy));
+        t[o.grade]++;
+        if (!o.kept.beacon) t.stationLost++;
+        if (!o.kept.ally) t.allyLost++;
+        if (!o.kept.battalion) t.battalionLost++;
+      }
       out[d][name] = Object.fromEntries(Object.entries(t).map(([k, v]) => [k, v / seeds]));
     }
   }
@@ -188,13 +196,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.log(`  personal orders the best answer needs, average: ${x.fewestOrdersForBest.toFixed(2)} of 4`);
     console.log(`  campaigns where the best answer needs both January orders: ${(x.januaryLimitBinds * 100).toFixed(0)}%`);
     const v = x.diversity;
-    console.log(`  decision diversity: ${v.distinctBestPlans} different best plans; the commonest covers ${(v.commonestShare * 100).toFixed(0)}% of campaigns`);
-    console.log(`    slot      decisive  spread`);
-    for (const [k, y] of Object.entries(v.slots)) console.log(`    ${k.padEnd(9)} ${(y.decisive * 100).toFixed(0).padStart(6)}%   ${y.spread.toFixed(2)}`);
+    console.log(`  decision diversity (ties counted for every tied plan): ${v.distinctBestPlans} plans are ever best; the commonest is best in ${(v.commonestShare * 100).toFixed(0)}% of campaigns`);
+    console.log(`    slot      decisive  spread  in a best plan`);
+    for (const [k, y] of Object.entries(v.slots)) console.log(`    ${k.padEnd(9)} ${(y.decisive * 100).toFixed(0).padStart(6)}%   ${y.spread.toFixed(2)}    ${Object.entries(y.share).map(([o, x]) => `${o === "null" ? "none" : o} ${(x * 100).toFixed(0)}%`).join(", ")}`);
   }
   console.log(`\nPlaying on what you can see (officers' advice; February chosen cautiously from the forecast's open cases)`);
   for (const [d, row] of Object.entries(policyReport())) {
     console.log(`  ${d}`);
-    for (const [name, t] of Object.entries(row)) console.log(`    ${name.padEnd(24)} success ${(t.success * 100).toFixed(0).padStart(3)}%  costly ${(t.costly * 100).toFixed(0).padStart(3)}%  failure ${(t.failure * 100).toFixed(0).padStart(3)}%`);
+    for (const [name, t] of Object.entries(row)) console.log(`    ${name.padEnd(24)} success ${(t.success * 100).toFixed(0).padStart(3)}%  costly ${(t.costly * 100).toFixed(0).padStart(3)}%  failure ${(t.failure * 100).toFixed(0).padStart(3)}%   station lost ${(t.stationLost * 100).toFixed(0).padStart(3)}%  ally lost ${(t.allyLost * 100).toFixed(0).padStart(3)}%  battalion unfit ${(t.battalionLost * 100).toFixed(0).padStart(3)}%`);
   }
 }
