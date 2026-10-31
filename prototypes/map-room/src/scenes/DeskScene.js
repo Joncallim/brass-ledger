@@ -835,6 +835,8 @@ export class DeskScene extends Phaser.Scene {
   restack() {
     const col = (this.slips ?? []).filter((o) => o.column && o.slip.active);
     if (!col.length || col.some((o) => o.isOpen) || compact()) return;
+    // Phaser hides a DOM element at alpha 0, so a slip mid-fade has no height: measure later.
+    if (col.some((o) => !o.slip.node.offsetHeight)) { this.later(150, () => this.restack()); return; }
     const top = col[0].top ?? col[0].y;
     for (const fit of [null, "brief", "terse"]) {
       for (const o of col) if ((o.fit ?? null) !== fit) { o.fit = fit; o.render(); }
