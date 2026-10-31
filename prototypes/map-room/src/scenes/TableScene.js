@@ -1,0 +1,684 @@
+import Phaser from "phaser";
+import { EASE, T, move, reducedMotion, seeded } from "../motion.js";
+import { TRUTH } from "../fixture.js";
+import { buildGeometry, validateScenario } from "../chart/geometry.js";
+import { paintChart } from "../chart/paint.js";
+import { getScenario } from "../scenarios/index.js";
+import { anchorageOf } from "../story/battle.js";
+
+// The chart sheet sits on the table at OX, OY and is MW × MH. World = screen until the
+// night camera moves, so the desk layer can pin slips by world coordinates.
+export const OX = 40, OY = 96, MW = 1840, MH = 944;
+const C = {
+  table: 0x221a14, paper: 0xeee9dc, land: 0xddd4c0, landEdge: 0x8c826f, contour: 0xc9bfa9,
+  ink: 0x1b1a18, ink2: 0x4d4a44, brass: 0xc99a3e, brassDeep: 0x7a4f0c, red: 0xb4261f,
+};
+const LABEL = { fontFamily: "IBM Plex Sans", fontSize: "20px", color: "#1B1A18" };
+const MUTED = { ...LABEL, color: "#4D4A44" };
+
+export class TableScene extends Phaser.Scene {
+  constructor() {
+    super("table");
+  }
+
+  // Everything about the sea comes from the scenario (`?scenario=<id>`); this scene only
+  // knows how to animate a station, a base, fleets and intel on whatever chart it gets.
+  // `data` comes from a theatre change (DeskScene.newTheatre) and is passed on to the desk.
+  create(data = {}) {
+    this.sc = getScenario(new URLSearchParams(location.search).get("scenario"));
+    this.geo = buildGeometry(this.sc);
+    const { width, height } = this.sc.sheet;
+    if (width !== MW || height !== MH) throw new Error(`Scenario sheet must be ${MW} × ${MH} to fit the table`);
+    for (const problem of validateScenario(this.sc, this.geo)) console.warn(`[chart ${this.sc.id}] ${problem}`);
+    this.rand = seeded(this.sc.id);
+    this.makeTextures();
+    this.bakeBase();
+    this.ring = { r: this.range(), dashed: false, alpha: 1, preview: null };
+    this.ringG = this.add.graphics();
+    this.ringLabel = this.add.text(0, 0, `How far ${this.sc.station.name.split(" ")[0]} can see`, MUTED);
+    this.drawBeacon();
+    this.boats = [];
+    this.landingBoats = this.add.container(0, 0);
+    this.drawHarbourBoats();
+    this.warning = this.makeWarning();
+    this.lattice = this.makeLattice();
+    this.paths = this.add.graphics();
+    this.pathT = { quiet: 0, joint: 0 };
+    this.pathLabels = [];
+    this.truth = this.makeTruth();
+    this.night = this.add.rectangle(OX, OY, MW, MH, 0x0a1424, 1).setOrigin(0).setAlpha(0);
+    this.drawLight();
+    this.redrawRing();
+    this.scene.launch("desk", data);
+  }
+
+  // ── textures ──────────────────────────────────────────────────────────────
+  makeTextures() {
+    // A theatre change restarts this scene; the old chart's textures go first.
+    for (const key of ["grain", "wood", "lamp", "vignette", "hatch", "boat", "friend", "unit", "landingcraft", "sweep", "base"]) if (this.textures.exists(key)) this.textures.remove(key);
+    const grain = this.textures.createCanvas("grain", 256, 256);
+    const g = grain.getContext();
+    const img = g.createImageData(256, 256);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = 120 + this.rand() * 80;
+      img.data[i] = v; img.data[i + 1] = v * 0.94; img.data[i + 2] = v * 0.82; img.data[i + 3] = 22;
+    }
+    g.putImageData(img, 0, 0);
+    grain.refresh();
+
+    const wood = this.textures.createCanvas("wood", 512, 512);
+    const w = wood.getContext();
+    w.fillStyle = "#221A14"; w.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 140; i++) {
+      w.strokeStyle = `rgba(${60 + this.rand() * 30},${42 + this.rand() * 20},${28},${0.25 + this.rand() * 0.3})`;
+      w.lineWidth = 1 + this.rand() * 2;
+      const y = this.rand() * 512;
+      w.beginPath(); w.moveTo(0, y);
+      for (let x = 0; x <= 512; x += 32) w.lineTo(x, y + Math.sin(x / 70 + i) * 4);
+      w.stroke();
+    }
+    wood.refresh();
+
+    const lamp = this.textures.createCanvas("lamp", 1920, 1080);
+    const l = lamp.getContext();
+    const warm = l.createRadialGradient(760, 300, 80, 760, 420, 1300);
+    warm.addColorStop(0, "rgba(255,226,170,0.09)"); warm.addColorStop(1, "rgba(255,226,170,0)");
+    l.fillStyle = warm; l.fillRect(0, 0, 1920, 1080);
+    lamp.refresh();
+    const vig = this.textures.createCanvas("vignette", 1920, 1080);
+    const v = vig.getContext();
+    const vg = v.createRadialGradient(960, 520, 520, 960, 540, 1250);
+    vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.55)");
+    v.fillStyle = vg; v.fillRect(0, 0, 1920, 1080);
+    vig.refresh();
+
+    const hatch = this.textures.createCanvas("hatch", 24, 24);
+    const h = hatch.getContext();
+    h.strokeStyle = "rgba(120,108,86,0.22)"; h.lineWidth = 1.2;
+    h.beginPath(); h.moveTo(0, 24); h.lineTo(24, 0); h.moveTo(-6, 6); h.lineTo(6, -6); h.moveTo(18, 30); h.lineTo(30, 18); h.stroke();
+    hatch.refresh();
+
+    // A patrol vessel with its wake trailing astern (bow to the right).
+    const boat = this.textures.createCanvas("boat", 110, 30);
+    const b = boat.getContext();
+    for (let k = 0; k < 4; k++) {
+      b.strokeStyle = `rgba(255,255,255,${0.8 - k * 0.18})`; b.lineWidth = 2 - k * 0.3;
+      b.beginPath(); b.moveTo(44 - k * 2, 11); b.lineTo(4 + k * 6, 3 + k); b.moveTo(44 - k * 2, 19); b.lineTo(4 + k * 6, 27 - k); b.stroke();
+    }
+    b.fillStyle = "rgba(255,255,255,.55)"; b.fillRect(14, 13, 32, 4);
+    b.fillStyle = "#2A2523";
+    b.beginPath(); b.moveTo(46, 8); b.lineTo(92, 8); b.lineTo(106, 15); b.lineTo(92, 22); b.lineTo(46, 22); b.closePath(); b.fill();
+    b.fillStyle = "#7E1A15"; b.fillRect(46, 13, 46, 2);
+    b.fillStyle = "#6E655C"; b.fillRect(60, 11, 18, 8); b.fillStyle = "#2A2523"; b.fillRect(68, 9, 3, 3);
+    boat.refresh();
+
+    // Our ships and the ally's: the same hull in navy grey with a brass band, so the two
+    // sides read apart at a glance.
+    const fr = this.textures.createCanvas("friend", 110, 30);
+    const f = fr.getContext();
+    for (let k = 0; k < 3; k++) {
+      f.strokeStyle = `rgba(255,255,255,${0.7 - k * 0.2})`; f.lineWidth = 2 - k * 0.4;
+      f.beginPath(); f.moveTo(44 - k * 2, 11); f.lineTo(8 + k * 6, 4 + k); f.moveTo(44 - k * 2, 19); f.lineTo(8 + k * 6, 26 - k); f.stroke();
+    }
+    f.fillStyle = "#3E4F5E";
+    f.beginPath(); f.moveTo(46, 8); f.lineTo(92, 8); f.lineTo(106, 15); f.lineTo(92, 22); f.lineTo(46, 22); f.closePath(); f.fill();
+    f.fillStyle = "#C99A3E"; f.fillRect(46, 13, 46, 3);
+    f.fillStyle = "#8C9AA6"; f.fillRect(60, 11, 18, 8);
+    fr.refresh();
+
+    // The battalion as a map symbol: an infantry box (a cross inside a rectangle), in brass.
+    const un = this.textures.createCanvas("unit", 52, 36);
+    const u = un.getContext();
+    u.fillStyle = "#F3E6C4"; u.fillRect(2, 2, 48, 32);
+    u.strokeStyle = "#1B1A18"; u.lineWidth = 3; u.strokeRect(2, 2, 48, 32);
+    u.beginPath(); u.moveTo(2, 2); u.lineTo(50, 34); u.moveTo(50, 2); u.lineTo(2, 34); u.stroke();
+    u.fillStyle = "#C99A3E"; u.fillRect(20, -1, 12, 5);
+    un.refresh();
+
+    // landing craft: blunt bow ramp, square stern, drawn small and in ink
+    const lc = this.textures.createCanvas("landingcraft", 30, 12);
+    const c = lc.getContext();
+    c.fillStyle = "#2B2522";
+    c.beginPath(); c.moveTo(2, 2); c.lineTo(24, 2); c.lineTo(28, 4); c.lineTo(28, 8); c.lineTo(24, 10); c.lineTo(2, 10); c.closePath(); c.fill();
+    c.fillStyle = "#6A5F55"; c.fillRect(5, 4, 15, 4);
+    lc.refresh();
+
+    const sweep = this.textures.createCanvas("sweep", 520, 520);
+    const s = sweep.getContext();
+    for (let a = 0; a < 40; a++) {
+      s.fillStyle = `rgba(122,79,12,${0.16 * (1 - a / 40)})`;
+      s.beginPath(); s.moveTo(260, 260);
+      s.arc(260, 260, 250, -Math.PI / 2 - (a + 1) * 0.012, -Math.PI / 2 - a * 0.012); s.closePath(); s.fill();
+    }
+    sweep.refresh();
+  }
+
+  // ── room and chart: everything static is drawn once with Canvas 2D into one texture ──
+  bakeBase() {
+    const tex = this.textures.createCanvas("base", 1920, 1080);
+    paintChart(tex.getContext(), this.sc, this.geo, {
+      ox: OX, oy: OY,
+      wood: this.textures.get("wood").getSourceImage(),
+      grain: this.textures.get("grain").getSourceImage(),
+    });
+    tex.refresh();
+    this.add.image(0, 0, "base").setOrigin(0);
+  }
+
+  // Sheet position of a named place, in world coordinates.
+  at(place) {
+    const p = this.sc.places[place];
+    return { x: OX + p.x, y: OY + p.y };
+  }
+
+  ellipsePts(cx, cy, rx, ry) {
+    const pts = [];
+    for (let a = 0; a <= Math.PI * 2 + 0.01; a += 0.05) pts.push({ x: cx + Math.cos(a) * rx, y: cy + Math.sin(a) * ry });
+    return pts;
+  }
+
+  // Phaser graphics have no dash; walk the polyline and draw every other segment.
+  dashed(g, pts, dash, gap, width, color, alpha = 1, closed = false, upto = 1) {
+    g.lineStyle(width, color, alpha);
+    const list = closed ? [...pts, pts[0]] : pts;
+    let total = 0;
+    for (let i = 1; i < list.length; i++) total += Phaser.Math.Distance.BetweenPoints(list[i - 1], list[i]);
+    const limit = total * upto;
+    let run = 0, on = true, left = dash, walked = 0;
+    for (let i = 1; i < list.length && walked < limit; i++) {
+      let a = list[i - 1];
+      const b = list[i];
+      let seg = Phaser.Math.Distance.BetweenPoints(a, b);
+      while (seg > 0 && walked < limit) {
+        const step = Math.min(seg, left, limit - walked);
+        const t = step / seg;
+        const p = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+        if (on) g.lineBetween(a.x, a.y, p.x, p.y);
+        a = p; seg -= step; left -= step; walked += step; run += step;
+        if (left <= 0) { on = !on; left = on ? dash : gap; }
+      }
+    }
+  }
+
+  range() {
+    return this.sc.station.range ?? 250;
+  }
+
+  drawBeacon() {
+    const st = this.sc.station, { x, y } = this.at(st.place);
+    this.sweep = this.add.image(x, y, "sweep").setAlpha(0.9);
+    const g = this.add.graphics();
+    g.fillStyle(C.ink, 1).fillRect(x - 15, y - 15, 30, 30);
+    g.fillStyle(C.brass, 1).fillRect(x - 7, y - 7, 14, 14);
+    g.lineStyle(2, C.ink, 1).lineBetween(x, y - 15, x, y - 40);
+    g.fillStyle(C.ink, 1).fillCircle(x, y - 42, 4);
+    const lx = st.side === "right" ? x + 40 : x - 330;
+    this.add.text(lx, y - 34, st.name, { ...LABEL, fontStyle: "600" });
+    this.add.text(lx, y - 8, st.note, MUTED);
+    // ambient loop 1 of 2: the radar sweep, 6 s a turn
+    if (!reducedMotion.on) this.tweens.add({ targets: this.sweep, angle: 360, duration: 6000, repeat: -1 });
+  }
+
+  redrawRing() {
+    const g = this.ringG.clear();
+    const { x: cx, y: cy } = this.at(this.sc.station.place);
+    const draw = (r, dashed, alpha, width) => {
+      g.fillStyle(C.brassDeep, 0.05 * alpha).fillCircle(cx, cy, r);
+      if (dashed) this.dashed(g, this.ellipsePts(cx, cy, r, r), 12, 9, width, C.brassDeep, alpha, true);
+      else g.lineStyle(width, C.brassDeep, alpha).strokeCircle(cx, cy, r);
+      g.lineStyle(1.5, C.brassDeep, alpha * 0.8);
+      for (let a = 0; a < 360; a += 10) {
+        const rad = Phaser.Math.DegToRad(a), k = a % 30 === 0 ? 12 : 6;
+        g.lineBetween(cx + Math.cos(rad) * r, cy + Math.sin(rad) * r, cx + Math.cos(rad) * (r - k), cy + Math.sin(rad) * (r - k));
+      }
+    };
+    if (this.ring.preview) draw(this.ring.preview, true, 1, 3);
+    draw(this.ring.r, this.ring.dashed, this.ring.preview ? 0.35 : this.ring.alpha, 3);
+    this.ringLabel.setPosition(cx - 120, cy - (this.ring.preview || this.ring.r) - 34);
+    this.sweep.setScale((this.ring.preview || this.ring.r) / 250); // the sweep texture is 250 px
+  }
+
+  // ── markers ───────────────────────────────────────────────────────────────
+  drawHarbourBoats() {
+    const r = seeded("landing-craft-december");
+    const h = this.at(this.sc.base.place);
+    for (let i = 0; i < this.sc.base.craft; i++) {
+      const s = this.add.image(h.x - 74 + (i % 3) * 40 + r() * 6, h.y - 36 + Math.floor(i / 3) * 24 + r() * 4, "landingcraft");
+      s.setAngle(-14 + r() * 6);
+      this.landingBoats.add(s);
+    }
+    this.landingBoats.setAlpha(0);
+  }
+
+  makeWarning() {
+    const h = this.at(this.sc.base.place);
+    const c = this.add.container(h.x - 10, h.y + 4);
+    const dot = this.add.circle(0, 0, 15, C.red);
+    const halo = this.add.circle(0, 0, 15, C.red, 0).setStrokeStyle(3, C.red, 1);
+    const card = this.add.rectangle(30, 34, 300, 60, 0xf6ddd8).setOrigin(0).setStrokeStyle(2, C.red);
+    const t1 = this.add.text(44, 42, "Landing boats sighted", { ...LABEL, color: "#7E1A15", fontStyle: "600" });
+    const t2 = this.add.text(44, 66, "our early warning", { ...LABEL, color: "#7E1A15", fontSize: "18px" });
+    c.add([halo, dot, card, t1, t2]);
+    c.halo = halo;
+    return c.setAlpha(0);
+  }
+
+  makeLattice() {
+    const [ix, iy] = this.sc.intel.at;
+    const c = this.add.container(OX + ix, OY + iy);
+    const sq = this.add.rectangle(0, 0, 22, 22, C.brass).setStrokeStyle(2, C.brassDeep);
+    const t1 = this.add.text(20, -14, this.sc.intel.title ?? "Intercepts report:", { ...LABEL, fontStyle: "600" });
+    const t2 = this.add.text(20, 10, "", LABEL);
+    c.add([sq, t1, t2]);
+    c.q = t2;
+    return c.setAlpha(0);
+  }
+
+  makeTruth() {
+    const c = this.add.container(0, 0);
+    const g = this.add.graphics();
+    // the route they really planned: from their base towards our station, bowed north
+    const from = this.at(this.sc.base.place), to = this.at(this.sc.station.place), pts = [];
+    for (let t = 0.08; t <= 0.92; t += 0.02) pts.push({ x: Phaser.Math.Linear(from.x, to.x, t), y: Phaser.Math.Linear(from.y, to.y, t) + Math.sin(t * Math.PI) * -60 });
+    this.dashed(g, pts, 5, 9, 3, C.red, 1);
+    c.add(g);
+    // Anchors come from the story; the words arrive with revealTruth(), from the debrief.
+    c.lines = TRUTH.map((tr) => {
+      const p = this.at(tr.near);
+      const t = this.add.text(p.x + tr.dx, p.y + tr.dy, "", { fontFamily: "Newsreader", fontStyle: "italic", fontSize: "26px", color: "#B4261F" });
+      t.home = { x: t.x, y: t.y };
+      c.add(t);
+      return t;
+    });
+    const mask = this.make.graphics({ add: false });
+    c.setMask(mask.createGeometryMask());
+    c.maskG = mask;
+    c.reveal = { w: 0 };
+    c.setAlpha(0);
+    return c;
+  }
+
+  drawLight() {
+    this.add.image(0, 0, "lamp").setOrigin(0).setBlendMode(Phaser.BlendModes.ADD);
+    this.add.image(0, 0, "vignette").setOrigin(0);
+  }
+
+  // ── commands used by the desk ─────────────────────────────────────────────
+  setBoats(mode) {
+    for (const b of this.boats) b.destroy();
+    this.boats = [];
+    const fleet = this.sc.fleets[mode];
+    const r = seeded(`boats-${mode}`);
+    (fleet?.ships ?? []).forEach(([x, y, a], i) => {
+      const b = this.add.image(OX + x, OY + y, "boat").setAngle(a).setAlpha(0);
+      this.boats.push(b);
+      move(this, b, { alpha: 1 }, { dur: T.ui, delay: i * 80 });
+      // ambient loop 2 of 2: a 2 px drift, seeded so replays match
+      if (!reducedMotion.on) this.tweens.add({ targets: b, y: b.y + 2 + r(), duration: 4000 + r() * 600, yoyo: true, repeat: -1, ease: EASE.fade });
+    });
+    this.boatLabel?.destroy();
+    this.boatLabel = null;
+    if (fleet?.label) {
+      const { text, at: [lx, ly], tone } = fleet.label;
+      this.boatLabel = this.add.text(OX + lx, OY + ly, text, tone === "danger" ? { ...LABEL, color: "#7E1A15", fontStyle: "600" } : MUTED);
+    }
+  }
+
+  showWarning(on, { pulse = true, delay = 0 } = {}) {
+    move(this, [this.warning, this.landingBoats], { alpha: on ? 1 : 0 }, { dur: T.ui, delay });
+    if (on && pulse && !reducedMotion.on) {
+      this.warning.halo.setScale(1).setStrokeStyle(3, C.red, 1);
+      this.tweens.add({ targets: this.warning.halo, scale: 2.6, alpha: { from: 1, to: 0 }, duration: 900, delay: delay + 200, ease: EASE.fade });
+    }
+  }
+
+  showLattice(text, delay = 0) {
+    if (!text) return move(this, this.lattice, { alpha: 0 }, { dur: T.ui });
+    this.lattice.q.setText(text);
+    const x = OX + this.sc.intel.at[0];
+    move(this, this.lattice, { alpha: 1, x: [x + 40, x] }, { dur: T.paper, delay });
+  }
+
+  tweenRing(props, dur = T.scene) {
+    if (reducedMotion.on) {
+      Object.assign(this.ring, props);
+      return this.redrawRing();
+    }
+    this.tweens.add({ targets: this.ring, ...props, duration: dur, ease: EASE.travel, onUpdate: () => this.redrawRing() });
+  }
+
+  setRing(props) {
+    Object.assign(this.ring, props);
+    this.redrawRing();
+  }
+
+  setNight(on, dur = 800) {
+    move(this, this.night, { alpha: on ? 0.45 : 0 }, { dur, ease: EASE.fade });
+  }
+
+  panTo(place, zoom = 1.15) {
+    const cam = this.cameras.main;
+    const p = place ? this.at(place) : { x: 960, y: 540 };
+    if (reducedMotion.on) {
+      cam.centerOn(p.x, p.y);
+      return cam.setZoom(place ? zoom : 1);
+    }
+    cam.pan(p.x, p.y, 900, EASE.travel, true);
+    cam.zoomTo(place ? zoom : 1, 900, EASE.travel, true);
+  }
+
+  // What the orders on the desk would do, pinned to the place they act on: each slip's current
+  // choice puts one note on the chart, so the map shows the plan as it is being made.
+  setNotes(list = []) {
+    for (const n of this.noteObjs ?? []) n.destroy();
+    this.noteObjs = [];
+    const OFF = { beacon: [46, 30], harbour: [-560, 60], lane: [46, -70] };
+    const INK = { ok: "#1B1A18", warn: "#6B4508", bad: "#7E1A15" };
+    const stack = {};
+    for (const n of list) {
+      const p = this.at(n.at), [dx, dy] = OFF[n.at] ?? [40, 0], k = (stack[n.at] = (stack[n.at] ?? -1) + 1);
+      const t = this.add.text(p.x + dx, p.y + dy + k * 38, n.text, {
+        fontFamily: "IBM Plex Sans", fontSize: "19px", fontStyle: "600", color: INK[n.tone ?? "ok"],
+        backgroundColor: "rgba(246,241,228,0.94)", padding: { x: 10, y: 5 },
+      });
+      t.setX(Math.min(t.x, OX + MW - 16 - t.width));
+      this.noteObjs.push(t);
+    }
+  }
+
+  // ── battles, played on the chart ──────────────────────────────────────────
+  // A battle arrives as a plan (src/story/battle.js): actors, their moves along named anchors,
+  // effects and labels, in steps the report reads in step with. This scene resolves the
+  // anchors on whatever chart it has and plays the plan; it knows nothing about how a campaign
+  // is won or lost. Every step has an end state, so skipping, reduced motion and a full play
+  // all leave the chart showing what the report says.
+  anchors() {
+    const toSheet = (p) => ({ x: p.x - OX, y: p.y - OY }), land = (p) => this.geo.isLand(p.x - OX, p.y - OY);
+    const lane = this.sc.features.find((x) => x.type === "lane")?.path ?? [];
+    const laneAt = (y) => OX + (lane.reduce((best, p) => (Math.abs(p[1] - (y - OY)) < Math.abs(best[1] - (y - OY)) ? p : best), lane[0] ?? [toSheet(this.at("lane")).x, 0])[0]);
+    const seaward = (p, step = 6) => { const q = { ...p }; for (let i = 0; i < 120 && land(q); i++) q.x += step; return { x: q.x + 20, y: q.y }; };
+    const B = this.at(this.sc.station.place), H = this.at(this.sc.base.place);
+    const beach = seaward(B), approach = { x: beach.x + 170, y: beach.y };
+    const flank = [130, -130, 180, -180].map((dy) => seaward({ x: B.x, y: B.y + dy })).find((p) => !land(p) && p.y > OY + 40 && p.y < OY + MH - 40) ?? beach;
+    let reserve = { x: B.x - 170, y: B.y + 70 };
+    if (!land(reserve)) reserve = { x: B.x - 90, y: B.y + 40 };
+    let dug = { x: beach.x - 46, y: beach.y + 24 };
+    if (!land(dug)) dug = { x: B.x - 10, y: B.y + 30 };
+    const friendStart = seaward({ x: B.x - 60, y: Math.min(OY + MH - 60, B.y + 280) });
+    const line = { x: approach.x + 70, y: approach.y };
+    const home = { x: reserve.x - 120, y: reserve.y + 40 };
+    const anc = anchorageOf(this.sc), anchorage = { x: OX + anc.x, y: OY + anc.y };
+    return { harbour: H, laneOut: { x: laneAt(H.y), y: H.y }, laneMid: { x: laneAt((H.y + B.y) / 2) + 40, y: (H.y + B.y) / 2 }, approach, station: B, beach, flank, reserve, dug, friendStart, line, home, anchorage };
+  }
+
+  // Where a label sits: under the harbour, above the station's seaward side, or by a unit.
+  labelAt(l, P) {
+    const A = P.A;
+    if (l.at === "harbour") return { x: A.harbour.x, y: A.harbour.y + 112 };
+    if (l.at === "station") return { x: A.station.x + 150, y: A.station.y - 70 };
+    if (l.at === "contact") return { x: A.station.x + 150, y: A.station.y - 112 };
+    const u = P.actors.unit ?? Object.values(P.actors)[0];
+    return { x: u.x, y: u.y + (l.above ? -46 : 52) };
+  }
+
+  playPlan(plan) {
+    this.showdownClear();
+    this.setBoats("none");
+    this.boatLabel?.destroy(); this.boatLabel = null;
+    this.warning.setAlpha(0); this.landingBoats.setAlpha(0);
+    const A = this.anchors();
+    const P = this.sd = { plan, f: plan, A, actors: {}, timers: [], tags: [], fx: [], steps: [] };
+    const later = (ms, fn) => P.timers.push(this.time.delayedCall(ms, fn));
+    const ship = (key, x, y) => this.add.image(x, y, key).setScale(0.62);
+    const make = {
+      escort: (a) => [ship("boat", 18, -26), ship("boat", 18, 26), ship("boat", 46, 0), ship("boat", -14, 0)].slice(0, a.count ?? 4),
+      craft: (a) => Array.from({ length: a.count ?? 4 }, (_, i) => this.add.image(-60 - (i % 4) * 26, -18 + Math.floor(i / 4) * 30, "landingcraft")),
+      friend: (a) => Array.from({ length: a.count ?? 3 }, (_, i) => ship("friend", 0, (i - 1) * 34)),
+      transport: (a) => Array.from({ length: a.count ?? 2 }, (_, i) => ship("friend", -i * 30, i * 22)),
+      unit: (a) => [this.add.image(0, 0, "unit"), this.add.text(-80, 22, a.label ?? "", { ...MUTED, fontSize: "16px", fontStyle: "600", color: "#1B1A18", align: "center", fixedWidth: 160 })],
+    };
+    for (const a of plan.actors) {
+      const p = A[a.at];
+      const o = this.add.container(p.x, p.y, make[a.kind](a)).setAlpha(a.hidden ? 0 : 1);
+      if (a.kind !== "unit") o.rotation = Math.atan2(A.laneOut.y - p.y, A.laneOut.x - p.x);
+      P.actors[a.id] = o;
+    }
+    P.trench = this.add.graphics();
+    const pt = (name, off) => ({ x: A[name].x + (off?.x ?? 0), y: A[name].y + (off?.y ?? 0) });
+    const turns = (id) => plan.actors.find((a) => a.id === id)?.kind !== "unit";
+    const go = (obj, pts, dur, turn) => {
+      const total = pts.slice(1).reduce((sum, p, i) => sum + Phaser.Math.Distance.BetweenPoints(pts[i], p), 0) || 1;
+      const t = { v: 0 };
+      this.tweens.add({ targets: t, v: 1, duration: dur, ease: EASE.travel, onUpdate: () => {
+        let d = t.v * total;
+        for (let i = 1; i < pts.length; i++) {
+          const len = Phaser.Math.Distance.BetweenPoints(pts[i - 1], pts[i]);
+          if (d <= len || i === pts.length - 1) {
+            const k = len ? Math.min(1, d / len) : 1;
+            obj.setPosition(pts[i - 1].x + (pts[i].x - pts[i - 1].x) * k, pts[i - 1].y + (pts[i].y - pts[i - 1].y) * k);
+            if (turn && len) obj.rotation = Math.atan2(pts[i].y - pts[i - 1].y, pts[i].x - pts[i - 1].x);
+            break;
+          }
+          d -= len;
+        }
+      } });
+    };
+    const place = (obj, path, turn, facing) => {
+      const pts = path, end = pts.at(-1), prev = pts.length > 1 ? pts.at(-2) : null;
+      obj.setPosition(end.x, end.y);
+      if (facing === "north") obj.rotation = -Math.PI / 2;
+      else if (turn && prev && (prev.x !== end.x || prev.y !== end.y)) obj.rotation = Math.atan2(end.y - prev.y, end.x - prev.x);
+      else if (!turn) obj.rotation = 0;
+    };
+    const flash = (p, count = 6, dur = 1600) => {
+      const r = seeded(`fx-${Math.round(p.x)}-${Math.round(p.y)}`);
+      for (let i = 0; i < count; i++) {
+        const c = this.add.circle(p.x + (r() - 0.5) * 70, p.y + (r() - 0.5) * 50, 6, i % 2 ? 0xe2702a : C.red).setAlpha(0);
+        P.tags.push(c);
+        this.tweens.add({ targets: c, alpha: { from: 0.95, to: 0 }, scale: { from: 0.6, to: 2.4 }, duration: 520, delay: (i * dur) / count });
+      }
+    };
+    const trench = (p) => {
+      P.trench.clear().lineStyle(5, C.red, 0.9);
+      for (let i = 0; i < 7; i++) P.trench.lineBetween(p.x - 30 + i * 9, p.y - 30 + i * 9, p.x - 22 + i * 9, p.y - 18 + i * 9);
+    };
+    const effectEnd = (e) => {
+      if (e.kind === "trench") trench(A[e.at]);
+      if (e.kind === "flag" && !P.flag) P.flag = this.flag(A[e.at]);
+      if (e.kind === "fade" || e.kind === "hide") P.actors[e.actor].setAlpha(0);
+      if (e.kind === "show") P.actors[e.actor].setAlpha(1);
+    };
+    const effectPlay = (e) => later(e.delay ?? 0, () => {
+      if (e.kind === "flash") flash(A[e.at], e.count);
+      else if (e.kind === "fade") this.tweens.add({ targets: P.actors[e.actor], alpha: 0, duration: e.dur ?? 1400 });
+      else effectEnd(e);
+    });
+    P.steps = plan.steps.map((st) => ({
+      dur: st.dur ?? 2400,
+      play: () => {
+        for (const id of st.show ?? []) P.actors[id].setAlpha(1);
+        for (const m of st.moves ?? []) {
+          const obj = P.actors[m.actor], pts = m.path.map((n) => pt(n, m.offset));
+          later(m.delay ?? 0, () => { obj.setAlpha(1); if (m.facing === "north") obj.rotation = -Math.PI / 2; go(obj, pts, m.dur ?? 1600, turns(m.actor) && m.facing !== "north"); });
+        }
+        for (const e of st.effects ?? []) effectPlay(e);
+      },
+      end: () => {
+        for (const id of st.show ?? []) P.actors[id].setAlpha(1);
+        for (const m of st.moves ?? []) { const obj = P.actors[m.actor]; obj.setAlpha(1); place(obj, m.path.map((n) => pt(n, m.offset)), turns(m.actor), m.facing); }
+        for (const e of st.effects ?? []) if (e.kind !== "flash") effectEnd(e);
+      },
+      labels: st.labels ?? [],
+    }));
+    // A label starts at its anchor and steps aside, as little as it can, until it is on the
+    // table, clear of the report and clear of the labels already shown.
+    P.showdownTag = (p, text, color) => {
+      const t = this.add.text(p.x, p.y, text, { ...LABEL, fontSize: "18px", fontStyle: "600", color, backgroundColor: "rgba(246,241,228,0.94)", padding: { x: 8, y: 4 } }).setOrigin(0.5);
+      const w = t.width, h = t.height, others = P.tags.filter((x) => x.type === "Text").map((x) => x.getBounds());
+      const hit = (r, q) => r && q.x < r.x + r.width + 8 && q.x + w > r.x - 8 && q.y < r.y + r.height + 4 && q.y + h > r.y - 4;
+      const ok = (x, y) => { const q = { x: x - w / 2, y: y - h / 2 }; return q.x >= OX + 8 && q.x + w <= OX + MW - 8 && q.y >= OY + 8 && q.y + h <= OY + MH - 8 && !hit(P.avoid, q) && !others.some((r) => hit(r, q)); };
+      // Up and down first, so a label stays in its place's column; sideways only if it must.
+      const vertical = [0, -44, 44, -88, 88, -132, 132, -176, 176, -220, 220, -264, -308, -352];
+      const steps = [...vertical.map((dy) => [0, dy]), ...[-220, 220, -330, 330].flatMap((dx) => [0, -44, 44, -88, 88].map((dy) => [dx, dy]))];
+      const at = steps.map(([dx, dy]) => [p.x + dx, p.y + dy]).find(([x, y]) => ok(x, y)) ?? [Math.max(OX + 8 + w / 2, Math.min(p.x, OX + MW - 8 - w / 2)), p.y];
+      t.setPosition(at[0], at[1]);
+      P.tags.push(t);
+    };
+  }
+
+  // Kept for the desk: the showdown is a plan like any other.
+  showdownSetup(plan) { this.playPlan(plan); }
+
+  // Where the report sits, in table coordinates: labels step aside from it.
+  setReportRect(x, y, w, h) { if (this.sd) this.sd.avoid = { x, y, width: w, height: h }; }
+
+  // The battalion's path and every effect must stay in view (vital); the rival's moves and
+  // the labels' anchors are better in view too (labels can step aside, so they are not vital).
+  planPoints() {
+    const P = this.sd, A = P.A, pts = [], other = [];
+    const box = (p, text) => { const w = Math.min(560, 18 + text.length * 9.6); return [{ x: p.x - w / 2, y: p.y }, { x: p.x + w / 2, y: p.y }]; };
+    for (const a of P.plan.actors) (a.kind === "unit" ? pts : other).push(A[a.at]);
+    P.plan.steps.forEach((st) => {
+      for (const m of st.moves ?? []) for (const n of m.path) (P.plan.actors.find((a) => a.id === m.actor)?.kind === "unit" ? pts : other).push(A[n]);
+      for (const e of st.effects ?? []) if (e.at) pts.push(A[e.at]);
+    });
+    // Labels by a unit follow it to wherever its last move ends.
+    const unitEnd = (() => { let at = P.plan.actors.find((a) => a.kind === "unit")?.at; for (const st of P.plan.steps) for (const m of st.moves ?? []) if (P.plan.actors.find((a) => a.id === m.actor)?.kind === "unit") at = m.path.at(-1); return at; })();
+    const unitPts = [...new Set(P.plan.steps.flatMap((st) => (st.moves ?? []).filter((m) => P.plan.actors.find((a) => a.id === m.actor)?.kind === "unit").flatMap((m) => m.path)).concat(P.plan.actors.filter((a) => a.kind === "unit").map((a) => a.at)))];
+    for (const st of P.plan.steps) for (const l of st.labels ?? []) {
+      if (l.at === "unit") for (const n of unitPts.length ? unitPts : [unitEnd]) other.push(...box({ x: A[n].x, y: A[n].y + (l.above ? -46 : 52) }, l.text));
+      else other.push(...box(this.labelAt(l, P), l.text));
+    }
+    return { vital: pts.filter(Boolean), other: other.filter(Boolean) };
+  }
+
+  // Where a report of this size can sit without covering the action: the corner of the table
+  // whose box keeps clear of every place the plan uses, its labels included. `clear` asks for
+  // a corner that covers nothing vital (or null); otherwise the least-covered corner is given.
+  showdownCorner(w, h, { clear = false } = {}) {
+    const P = this.sd;
+    if (!P) return [56, 108];
+    const { vital, other } = this.planPoints();
+    const covered = (pts, [x, y]) => pts.filter((p) => p.x > x - 24 && p.x < x + w + 24 && p.y > y - 24 && p.y < y + h + 24).length;
+    const corners = [[56, 108], [1864 - w, 1064 - h], [56, 1064 - h], [1864 - w, 108]];
+    const free = corners.filter((c) => covered(vital, c) === 0);
+    if (free.length) return free.reduce((a, c) => (covered(other, c) < covered(other, a) ? c : a));
+    if (clear) return null;
+    return corners.reduce((a, c) => (covered(vital, c) * 10 + covered(other, c) < covered(vital, a) * 10 + covered(other, a) ? c : a));
+  }
+
+  flag(p) {
+    return this.add.container(p.x, p.y - 30, [this.add.rectangle(0, -10, 30, 20, C.red).setStrokeStyle(2, C.ink), this.add.rectangle(-15, 6, 3, 34, C.ink)]);
+  }
+
+  // The labels for step i, once each.
+  showdownCallouts(i) {
+    const P = this.sd;
+    for (const l of P.steps[i]?.labels ?? []) {
+      const key = `${i}-${l.at}-${l.text}`;
+      if (P.called?.has(key)) continue;
+      (P.called ??= new Set()).add(key);
+      P.showdownTag(this.labelAt(l, P), l.text, l.tone === "bad" ? "#7E1A15" : l.tone === "warn" ? "#6B4508" : l.tone === "ok" ? "#1F4A2E" : "#1B1A18");
+    }
+  }
+
+  // Play step i; returns its length in ms. With reduced motion it jumps to its end state.
+  showdownStep(i) {
+    const s = this.sd?.steps[i];
+    if (!s) return 0;
+    if (reducedMotion.on) { s.end(); this.showdownCallouts(i); return 300; }
+    s.play();
+    // Labels by a moving unit wait for it to arrive.
+    this.sd.timers.push(this.time.delayedCall(s.labels.some((l) => l.at === "unit") ? Math.max(0, s.dur - 400) : 0, () => this.showdownCallouts(i)));
+    return s.dur;
+  }
+
+  // Jump to the end of step i (and every step before it), killing what is still moving.
+  showdownJump(i) {
+    if (!this.sd) return;
+    for (const t of this.sd.timers) t.remove(false);
+    this.sd.timers = [];
+    this.tweens.killTweensOf(Object.values(this.sd.actors));
+    this.tweens.getTweens().forEach((t) => { if (t.targets?.some?.((x) => x && typeof x.v === "number")) t.stop(); });
+    for (let k = 0; k <= i && k < this.sd.steps.length; k++) this.sd.steps[k].end();
+    for (let k = 0; k <= i && k < this.sd.steps.length; k++) this.showdownCallouts(k);
+  }
+
+  showdownPause(on) {
+    if (on) this.tweens.pauseAll(); else this.tweens.resumeAll();
+    this.time.paused = on;
+  }
+
+  showdownClear() {
+    const P = this.sd;
+    if (!P) return;
+    for (const o of [...Object.values(P.actors ?? {}), P.trench, P.flag, ...(P.tags ?? [])]) o?.destroy();
+    this.sd = null;
+    this.time.paused = false;
+  }
+
+  // Only routes that are actually on the table get drawn.
+  drawPaths(t = 1, which = ["quiet", "joint"]) {
+    const g = this.paths.clear();
+    const b = this.at(this.sc.station.place);
+    const quiet = [], joint = [];
+    for (let s = 0; s <= 1; s += 0.02) {
+      quiet.push({ x: b.x + 20 + s * 150, y: b.y + 20 + Math.sin(s * 1.6) * 120 });
+      joint.push({ x: b.x + 20 + s * 190, y: b.y - 20 - Math.sin(s * 1.6) * 110 });
+    }
+    if (which.includes("quiet")) this.dashed(g, quiet, 12, 9, 4, C.ink, 1, false, t);
+    if (which.includes("forward")) {
+      // the battalion's trench line across the headland, facing the sea
+      g.lineStyle(5, C.red, 0.85);
+      const n = Math.max(2, Math.round(8 * t));
+      for (let i = 0; i < n; i++) g.lineBetween(b.x + 26 + i * 4, b.y - 70 + i * 18, b.x + 34 + i * 4, b.y - 60 + i * 18);
+    }
+    if (which.includes("joint")) {
+      g.lineStyle(8, C.brass, 1);
+      g.strokePoints(joint.slice(0, Math.max(2, Math.round(joint.length * t))), false);
+    }
+    if (t >= 1 && !this.pathLabels.length) {
+      if (which.includes("quiet")) this.pathLabels.push(this.add.text(b.x + 70, b.y + 150, "Hold quietly", { ...LABEL, fontStyle: "600" }));
+      if (which.includes("joint")) this.pathLabels.push(this.add.text(b.x + 120, b.y - 160, "Stand with the navy", { ...LABEL, fontStyle: "600", color: "#7A4F0C" }));
+      if (which.includes("forward")) this.pathLabels.push(this.add.text(b.x + 70, b.y - 104, "Dig in on the headland", { ...LABEL, fontStyle: "600", color: "#7E1A15" }));
+    }
+  }
+
+  revealPaths(which) {
+    const o = { t: 0 };
+    if (reducedMotion.on) return this.drawPaths(1, which);
+    this.tweens.add({ targets: o, t: 1, duration: 1200, ease: EASE.travel, onUpdate: () => this.drawPaths(o.t, which), onComplete: () => this.drawPaths(1, which) });
+  }
+
+  revealTruth(lines = []) {
+    const c = this.truth;
+    // Keep each line on the sheet, wherever this chart put its anchor.
+    c.lines.forEach((t, i) => {
+      t.setText(lines[i] ?? "");
+      t.setX(Math.max(OX + 16, Math.min(t.home.x, OX + MW - 16 - t.width)));
+      t.setY(Math.max(OY + 16, Math.min(t.home.y, OY + MH - 16 - t.height)));
+    });
+    c.setAlpha(1);
+    const draw = () => c.maskG.clear().fillStyle(0xffffff).fillRect(OX, OY, MW * c.reveal.w, MH);
+    if (reducedMotion.on) { c.reveal.w = 1; return draw(); }
+    this.tweens.add({ targets: c.reveal, w: 1, duration: 1500, ease: EASE.travel, onUpdate: draw });
+  }
+
+  reset() {
+    this.tweens.killTweensOf([this.warning, this.landingBoats, this.lattice]);
+    this.setNotes([]);
+    this.showdownClear();
+    this.cameras.main.setZoom(1).centerOn(960, 540);
+    this.paths.clear();
+    for (const l of this.pathLabels) l.destroy();
+    this.pathLabels = [];
+    this.truth.setAlpha(0);
+    this.truth.reveal.w = 0;
+    this.truth.maskG.clear();
+    this.night.setAlpha(0);
+    this.warning.setAlpha(0);
+    this.landingBoats.setAlpha(0);
+    this.lattice.setAlpha(0);
+    this.setRing({ r: this.range(), dashed: false, alpha: 1, preview: null });
+  }
+}
