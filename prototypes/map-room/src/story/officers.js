@@ -35,7 +35,7 @@ export function officersFor(W = KESTREL) {
     okafor: { ...N.okafor,
       focus: "Whether our troops can fight, and what it costs them",
       pushes: `rest for ${W.reserve} before it is unfit`,
-      role: `Head of logistics. Keeps the battalion’s fatigue (a point a day on duty, more for hard work) and its strength. Past 120 fatigue the battalion is unfit, and an unfit battalion can’t hold a landing.` },
+      role: `Head of logistics. Keeps the battalion’s fatigue (a point a day on duty, more for hard work) and its strength. Past 120 fatigue the battalion is unfit: it no longer counts towards holding a landing, except dug in on the headland against one wave, behind defences at level 2.` },
     sato: { ...N.sato, post: `Plans and ${W.host}`,
       focus: `What ${W.host} has agreed to, and what moves its votes`,
       pushes: `nothing visible before the ${W.hostAdj} cabinet has agreed to it`,

@@ -309,13 +309,31 @@ export function resolve(c, s, route, hyp) {
     garrison: TUNING.losses.garrison[code] ?? 0,
     battalion: engaged ? (TUNING.losses.battalion[code] ?? 0) : 0,
   };
+  // What decided it, who took part, and when the battalion got there: facts the forecast, the
+  // report, the chart's labels and the animation all read, so none of them guesses a cause.
+  //   sea        the navies turned the landing back
+  //   defences   the station's guns held a single wave alone (level 3 against a landing)
+  //   battalion  the battalion, with the defences, held it on the beach
+  //   trenches   the battalion, dug in before they came, held it
+  //   <key>      the station fell for want of this requirement
+  let decider = null;
+  if (hyp.troops) {
+    if (code === "stopped") decider = "sea";
+    else if (code === "lost") decider = (route === "joint" ? check.failed.find((x) => x.key !== "warning") : check.failed[0])?.key ?? "defences";
+    else if (code === "repelled") decider = "trenches";
+    else decider = (!hyp.big || route === "joint") && check.def >= FIXED.defence.holdsAlone ? "defences" : "battalion";
+  }
+  // The battalion moves before the landing if it digs in, goes in behind the navies, or has
+  // warning; otherwise it arrives after the fight, if there is one.
+  const deploy = route !== "quiet" || warned ? "before" : battle ? "late" : "none";
+  const participants = { garrison: battle, battalion: engaged, navies: route === "joint" && hyp.troops };
   const kept = {
     beacon: code !== "lost",
     ally: ministersFor(supportAfter) >= FIXED.majority,
     battalion: daysAfter <= FT.unfit,
   };
   const grade = !kept.beacon ? "failure" : kept.ally && kept.battalion ? "success" : "costly";
-  return { code, check, battle, engaged, navyFought, daysAfter, supportAfter, losses, kept, grade, failed: hyp.troops ? check.failed : [] };
+  return { code, check, battle, engaged, navyFought, daysAfter, supportAfter, losses, kept, grade, failed: hyp.troops ? check.failed : [], decider, deploy, participants };
 }
 
 // The true case.

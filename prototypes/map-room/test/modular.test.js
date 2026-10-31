@@ -42,10 +42,16 @@ test("every station-defence plan is well formed, and its end state is the report
       else assert.ok(!end.effects.some((e) => e.kind === "flag"));
       // The battalion ends where the report puts it: dug in if it fought or dug in, back
       // inland if the station fell.
+      // The battalion ends where the resolver put it: on the headland if it deployed (before
+      // the landing or late), back inland if the station fell, at the reserve if it never moved.
       const unit = end.actors.unit.at;
       if (o.code === "lost") assert.equal(unit, "reserve");
-      else if (route === "forward" || o.battle) assert.equal(unit, "dug");
-      else assert.equal(unit, "reserve");
+      else assert.equal(unit, o.deploy === "none" ? "reserve" : "dug", `${o.code}/${o.deploy}`);
+      // And it moved in the step the resolver gives: before contact, or during it.
+      const moveStep = plan.steps.findIndex((st) => (st.moves ?? []).some((m) => m.actor === "unit" && m.path.at(-1) === "dug"));
+      const contactStep = plan.steps.findIndex((st) => (st.moves ?? []).some((m) => m.actor === "craft" && m.path[0] === "approach"));
+      if (o.deploy === "before") assert.ok(moveStep >= 0 && (contactStep < 0 || moveStep < contactStep), `deployed before, moved in step ${moveStep}, contact ${contactStep}`);
+      if (o.deploy === "late") assert.equal(moveStep, contactStep);
       assert.equal(end.actors.friends?.at ?? null, route === "joint" ? "line" : null);
     }
   }

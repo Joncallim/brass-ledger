@@ -491,16 +491,20 @@ export class DeskScene extends Phaser.Scene {
   // ── the hard call ─────────────────────────────────────────────────────────
   // Every decision shows where the staff stand: the two strongest opposing views side by
   // side, each with what that officer is protecting and what happens if you overrule them.
-  debate(council, options, staffId) {
+  debate(council, options, staffId, current = null) {
     const sp = split(council, staffId);
     const optName = (id) => options.find((o) => o.id === id)?.name ?? id;
+    // What overruling an officer costs, option by option, the current choice first: never a
+    // risk written for an alternative you haven't picked.
+    const overrule = (p) => options.filter((o) => o.id !== p.prefers).sort((a, b) => (b.id === current) - (a.id === current))
+      .map((o) => `<p class="case risk"><b>${o.id === current ? `Your choice, ${lower(o.name)}` : o.name}</b> ${p.risks?.[o.id] ?? ""}</p>`).join("");
     const side = ([opt, who]) => {
       const lead = who[0], p = council[lead], o = OFFICER_NAMES[lead];
       const also = who.slice(1).map((w) => surname(w)).join(" and ");
       return `<div class="side"><div class="side-head"><span class="av" style="background-image:url(${portrait(lead)})"></span><span><span class="vname">${surname(lead)}</span><span class="focus">${o.post}</span></span></div>
         <p class="wants">Advises: <b>${optName(opt)}</b>${also ? `<span class="also">, backed by ${also}</span>` : ""}</p>
         <p class="case"><b>Protecting</b> ${p.because}.</p>
-        <details class="more"><summary>If you overrule ${OFFICER_NAMES[lead].name.split(" ").pop()}</summary><p class="case risk">${p.risk}</p><button class="b sm" data-voice="${lead}">Hear the case</button></details></div>`;
+        <details class="more"><summary>If you overrule ${OFFICER_NAMES[lead].name.split(" ").pop()}</summary>${overrule(p)}<button class="b sm" data-voice="${lead}">Hear the case</button></details></div>`;
     };
     // Anyone with a third view still gets a line, so no position is hidden.
     const others = (sp.rest ?? []).map(([opt, who]) => `<p class="other"><span class="av sm" style="background-image:url(${portrait(who[0])})"></span><span>${who.map((w) => surname(w)).join(" and ")} ${who.length > 1 ? "advise" : "advises"} <b>${lower(optName(opt))}</b>: ${council[who[0]].because}.</span><button class="b sm" data-voice="${who[0]}">Hear</button></p>`).join("");
@@ -535,7 +539,7 @@ export class DeskScene extends Phaser.Scene {
     let spent = false;
     const render = () => {
       sheet.node.innerHTML = `<article class="paper sheet signal" aria-label="${I.title}"><p class="lab">Signal · ${I.date} · from ${surname(I.from)}</p><h2>${I.title}</h2>
-        <p class="body" style="margin-top:6px">${I.body}</p>${this.debate(I.council, I.options, I.staffId)}
+        <p class="body" style="margin-top:6px">${I.body}</p>${this.debate(I.council, I.options, I.staffId, pick())}
         <div role="radiogroup" style="margin-top:10px">${I.options.map((o) => `<button class="opt ${pick() === o.id ? "sel" : ""}" data-pick="${o.id}" role="radio" aria-checked="${pick() === o.id}"><span class="r"></span><span><b>${o.name}</b><span class="s">${o.says}</span><span class="cost ${o.staff ? "free" : ""}">${o.staff ? "Staff answer · free" : "Uses 1 personal order"}</span></span></button>`).join("")}</div>
         <div class="btns commit"><button class="b on" data-go>Confirm answer and go to ${name} orders</button><p class="commit-note">Your answer goes out when you continue. You can’t change it afterwards.</p></div></article>`;
       this.wireVoices(sheet.node, I.council, { x: 1176, w: 650 });
@@ -598,7 +602,7 @@ export class DeskScene extends Phaser.Scene {
       <dl><dt>Job</dt><dd>${o.focus}.</dd><dt>Usually argues for</dt><dd>${o.pushes}.</dd>
       ${o.watching ? `<dt>Watching</dt><dd><span class="chip tone-${o.watching.tone}"><i></i><span><small>${o.watching.label}</small>${o.watching.value}</span></span></dd>` : ""}</dl>
       ${o.now ? `<div class="ofc-now"><p class="lab">Advises for ${o.now.month}</p><p class="wants-big">${o.now.wants}${o.now.staffPlan ? ` <span class="tag">staff plan</span>` : ` <span class="tag differs">against the staff plan</span>`}</p>
-        <p class="case"><b>Protecting</b> ${o.now.because}.</p><p class="case risk"><b>If you overrule</b> ${o.now.risk}</p>
+        <p class="case"><b>Protecting</b> ${o.now.because}.</p><p class="case ${o.now.following ? "" : "risk"}"><b>Your current choice: ${lower(o.now.chosen)}</b> ${o.now.following ? "You are following this advice." : o.now.risk}</p>
         <button class="b sm" data-hear="${o.id}">Hear the case</button></div>` : `<div class="ofc-now"><p class="lab">This month</p><p class="case">No order left to argue over.</p></div>`}
       <p class="ofc-record">${o.record ? `You have taken their advice <b>${o.record.followed} of ${o.record.of}</b> times. Last: ${o.record.last.agreed ? "you agreed on" : "you overruled them on"} ${lower(o.record.last.what)}.` : "No decisions yet on which they gave advice."}</p></article>`).join("");
     return `<p class="room-intro">Your four staff officers. Each argues from one job, so they will disagree. You never have to remember who cares about what: it is all here, and under their name wherever they speak.</p><div class="staff-grid">${cards}</div>`;
@@ -685,8 +689,11 @@ export class DeskScene extends Phaser.Scene {
   // officer who advises otherwise; "Change this order" opens the full hard call and the
   // choices. Seals are spent and returned here, never more than two a month including any
   // spent on the incident. Slips in one column make room for each other while open.
-  orderSlip(cfg, { get, set, x, y, i, seed, onPicked, w = 560, column = null }) {
-    const o = { cfg, get, set, x, y, column };
+  orderSlip(source, { get, set, x, y, i, seed, onPicked, w = 560, column = null }) {
+    // The slip's words are read again on every render, from the plan as it now stands.
+    const live = typeof source === "function" ? source : () => source;
+    let cfg = live();
+    const o = { get cfg() { return cfg; }, get, set, x, y, column };
     const slip = this.dom(0, 0, "");
     o.slip = slip;
     const opt = () => cfg.options.find((p) => p.id === get());
@@ -698,6 +705,7 @@ export class DeskScene extends Phaser.Scene {
       this.wireVoices(slip.node, cfg.council, () => this.talkAt);
     };
     const face = () => {
+      cfg = live();
       const p = opt();
       const top = p.staff
         ? `<h3>${cfg.head} · staff plan</h3><p class="will">Your staff ${cfg.plan}</p>
@@ -707,8 +715,9 @@ export class DeskScene extends Phaser.Scene {
         <div class="btns"><button class="b" data-change>${p.staff ? "Change this order" : "Change again"}</button>${p.staff ? "" : '<button class="b" data-staffplan>Back to the staff plan</button>'}</div></article>`;
     };
     const backers = (id) => Object.entries(cfg.council ?? {}).filter(([, c]) => c.prefers === id).map(([who]) => `<span class="av sm" title="${plainName(who)}" style="background-image:url(${portrait(who)})"></span>`).join("");
-    const choices = () => `<article class="paper slip open" style="width:${Math.max(w, 780)}px" aria-label="${cfg.head}, choose an order"><span class="pin"></span><h3>${cfg.head} · your order</h3>
-      <p class="will">${cfg.question}</p>${cfg.explain ? `<div class="row"><b>Why</b><span>${cfg.explain}</span></div>` : ""}${this.debate(cfg.council, cfg.options, cfg.staffId)}
+    const choices = () => { cfg = live(); return choicesHTML(); };
+    const choicesHTML = () => `<article class="paper slip open" style="width:${Math.max(w, 780)}px" aria-label="${cfg.head}, choose an order"><span class="pin"></span><h3>${cfg.head} · your order</h3>
+      <p class="will">${cfg.question}</p>${cfg.explain ? `<div class="row"><b>Why</b><span>${cfg.explain}</span></div>` : ""}${this.debate(cfg.council, cfg.options, cfg.staffId, get())}
       <div role="radiogroup">${cfg.options.map((p) => `<button class="opt ${get() === p.id ? "sel" : ""}" data-opt="${p.id}" role="radio" aria-checked="${get() === p.id}">
       <span class="r"></span><span><b>${p.name}</b><span class="s">${p.says}</span><span class="opt-foot"><span class="cost ${p.staff ? "free" : ""}">${p.staff ? "Staff plan · free" : "Uses 1 personal order"}</span>${backers(p.id) ? `<span class="backed">Advised by ${backers(p.id)}</span>` : ""}</span></span></button>`).join("")}</div>
       <p class="why-note" style="font-size:16px;color:var(--red-ink);margin-top:8px" aria-live="polite"></p>
@@ -733,6 +742,7 @@ export class DeskScene extends Phaser.Scene {
       if (!fromFace) slip.node.querySelector(`[data-opt="${id}"]`)?.focus({ preventScroll: true });
       if (cfg.reply?.[id]) { this.drop(this.talkObj); this.talkObj = this.talk(...cfg.reply[id], { delay: 0, ...this.talkAt }); }
       onPicked?.(id, before);
+      this.renderSlips(o);
       this.refreshNotes();
       this.refreshDispatch();
     };
@@ -746,6 +756,11 @@ export class DeskScene extends Phaser.Scene {
     return o;
   }
 
+  // Every slip's words depend on the whole plan: after any change, closed slips are re-read.
+  renderSlips(except = null) {
+    for (const other of this.slips ?? []) if (other !== except && !other.isOpen) other.render();
+  }
+
   // One line per officer who advises something other than the current choice.
   advice(council, options, current) {
     const name = (id) => { const o = options.find((x) => x.id === id); return o?.short ?? lower(o?.name ?? id); };
@@ -753,11 +768,12 @@ export class DeskScene extends Phaser.Scene {
     if (!differ.length) return `<p class="advice agree">Your staff all advise this.</p>`;
     // Two lines at most on the face; the rest are one click away.
     const more = differ.length > 2 ? `<p class="more-advice">${differ.slice(2).map(([w]) => surname(w)).join(" and ")} also ${differ.length > 3 ? "advise" : "advises"} otherwise.</p>` : "";
-    return `<div class="advice">${differ.slice(0, 2).map(([who, p]) => `<p><span class="av sm" style="background-image:url(${portrait(who)})"></span><span>${surname(who)} advises <b>${name(p.prefers)}</b>: ${p.because}.</span></p>`).join("")}${more}</div>`;
+    return `<div class="advice">${differ.slice(0, 2).map(([who, p]) => `<p><span class="av sm" style="background-image:url(${portrait(who)})"></span><span>${surname(who)} advises <b>${name(p.prefers)}</b>: ${p.because}.${p.risks?.[current] ? ` <span class="against">Against ${name(current)}: ${lower(p.risks[current])}</span>` : ""}</span></p>`).join("")}${more}</div>`;
   }
 
   // Open a slip to its choices. Others in its column step aside until it closes.
   openSlip(o, swap) {
+    o.isOpen = true;
     log("open", { slip: o.cfg.head.replace(/<[^>]+>/g, "") });
     for (const other of this.slips ?? []) if (other !== o && other.column && other.column === o.column) {
       other.slip.node.style.pointerEvents = "none";
@@ -770,6 +786,7 @@ export class DeskScene extends Phaser.Scene {
   }
 
   closeSlip(o, swap) {
+    o.isOpen = false;
     this.flipTo(o.slip, swap);
     if (o.column) move(this, o.slip, { y: o.y }, { dur: T.ui });
     this.talkAt = this.talkBase;
@@ -851,12 +868,12 @@ export class DeskScene extends Phaser.Scene {
     this.table.showWarning(true, { pulse: false });
     this.talkAt = this.talkBase = { x: 664, y: 108, w: 590 }; // between the columns, clear of the send panel
     const B = orders(this.campaign, this.run, "dec");
-    const beacon = this.orderSlip(B, {
+    const beacon = this.orderSlip(() => orders(this.campaign, this.run, "dec"), {
       get: () => this.run.dec.beacon, set: (v) => (this.run.dec.beacon = v), x: 40, y: 108, i: 0, seed: "dec", column: "left",
       onPicked: (id) => this.table.tweenRing({ preview: B.ring[id] ?? null }, 700),
     });
     const L = latticeOrders(this.campaign, this.run, "dec");
-    const lattice = this.orderSlip(L, { get: () => this.run.dec.lattice, set: (v) => (this.run.dec.lattice = v), x: 40, y: this.below(beacon), i: 1, seed: "dec", column: "left" });
+    const lattice = this.orderSlip(() => latticeOrders(this.campaign, this.run, "dec"), { get: () => this.run.dec.lattice, set: (v) => (this.run.dec.lattice = v), x: 40, y: this.below(beacon), i: 1, seed: "dec", column: "left" });
     this.refreshNotes();
     this.orderPanel(() => {
       const b = B.options.find((p) => p.id === this.run.dec.beacon), q = L.options.find((p) => p.id === this.run.dec.lattice);
@@ -891,7 +908,7 @@ export class DeskScene extends Phaser.Scene {
       this.talkObj = this.talk("sato", H().sato, { ...this.talkAt, delay: 300 });
       if (!reducedMotion.on) [beacon.slip, hostSlip.slip].forEach((s, i) => this.tweens.add({ targets: s, x: s.x + (i ? 4 : -4), duration: 60, yoyo: true, repeat: 1, delay: 300 }));
     };
-    const beacon = this.orderSlip(J, {
+    const beacon = this.orderSlip(() => orders(this.campaign, this.run, "jan"), {
       get: () => this.run.jan.beacon, set: (v) => (this.run.jan.beacon = v), x: 40, y: 108, i: 0, seed: "jan", column: "left",
       onPicked: (id, before) => {
         // Acting without Marenna only makes sense alongside an open move; undo it otherwise.
@@ -900,7 +917,7 @@ export class DeskScene extends Phaser.Scene {
       },
     });
     const L = latticeOrders(this.campaign, this.run, "jan");
-    const lattice = this.orderSlip(L, { get: () => this.run.jan.lattice, set: (v) => (this.run.jan.lattice = v), x: 40, y: this.below(beacon), i: 1, seed: "jan", column: "left" });
+    const lattice = this.orderSlip(() => latticeOrders(this.campaign, this.run, "jan"), { get: () => this.run.jan.lattice, set: (v) => (this.run.jan.lattice = v), x: 40, y: this.below(beacon), i: 1, seed: "jan", column: "left" });
     hostSlip = this.hostSlip(beacon, () => showThread());
     this.extraNotes = () => {
       const h = H(), w = this.run.jan.way;
@@ -952,7 +969,7 @@ export class DeskScene extends Phaser.Scene {
         if (before && !id) this.returnSeal(slip, --this.used);
         this.run.jan.way = id;
         render(); slip.node.querySelector(`[data-way="${id ?? "wait"}"]`)?.focus({ preventScroll: true });
-        onChange(); this.refreshNotes(); this.refreshDispatch();
+        onChange(); this.renderSlips(); this.refreshNotes(); this.refreshDispatch();
       });
     };
     render();

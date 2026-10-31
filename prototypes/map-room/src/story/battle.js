@@ -89,7 +89,9 @@ export function stationDefencePlan(o, words) {
       show: ["unit", ...(o.route === "joint" ? ["friends"] : [])],
       moves: [
         ...(o.route === "joint" ? [{ actor: "friends", path: ["friendStart", "line"], dur: 2000, facing: "north" }] : []),
-        ...(o.route === "forward" ? [{ actor: "unit", path: ["reserve", "dug"], dur: 1600 }] : []),
+        // The battalion deploys when the resolver says it did: before the landing (dug in, behind
+        // the navies, or on the warning), or late, after the fight has started.
+        ...(o.deploy === "before" ? [{ actor: "unit", path: ["reserve", "dug"], dur: 1600 }] : []),
       ],
       effects: o.route === "forward" ? [{ kind: "trench", at: "dug", delay: 1500 }] : [],
       labels: lab(1), dur: 2200,
@@ -97,8 +99,7 @@ export function stationDefencePlan(o, words) {
     { // 3 · contact
       moves: [
         ...(landed ? [{ actor: "craft", path: at === "flank" ? ["approach", "flank"] : ["approach", "beach"], dur: 1800 }] : []),
-        // The battalion goes to the trench line: at once on warning, late without it.
-        ...(landed && o.route !== "forward" ? [{ actor: "unit", path: ["reserve", "dug"], dur: 900, delay: o.warned ? 300 : 1900 }] : []),
+        ...(o.deploy === "late" ? [{ actor: "unit", path: ["reserve", "dug"], dur: 900, delay: 1900 }] : []),
       ],
       effects: [
         ...(o.code === "stopped" ? [{ kind: "flash", at: "line", count: 5 }] : []),

@@ -53,7 +53,10 @@ function decisions(c, run, progress) {
 export function staffRoom(c, run, progress) {
   const done = committed(run, progress), s = simulate(c, done)[POINT[progress]];
   const month = progress < 2 ? "dec" : progress < 4 ? "jan" : null;
-  const now = month ? orders(c, done, month) : null;
+  // The month being decided is read as it now stands on the desk, so advice answers the plan
+  // you have, not the staff default.
+  const live = month ? { ...done, [month]: { ...done[month], ...(run[month] ?? {}) } } : done;
+  const now = month ? orders(c, live, month) : null, pick = month ? live[month].beacon ?? "quiet" : null;
   const chips = status(c, s), past = decisions(c, run, progress);
   const OFFICERS = officersFor(c.world);
   return STAFF.map((id) => {
@@ -63,7 +66,8 @@ export function staffRoom(c, run, progress) {
     return {
       id, rank: o.rank, name: o.name, post: o.post, from: o.from, focus: o.focus, pushes: o.pushes, role: o.role,
       watching: chips.find((x) => x.who === id),
-      now: view && { month: month === "dec" ? "December" : "January", wants: now.options.find((x) => x.id === view.prefers).name, staffPlan: view.prefers === now.staffId, because: view.because, risk: view.risk, line: view.line },
+      now: view && { month: month === "dec" ? "December" : "January", wants: now.options.find((x) => x.id === view.prefers).name, staffPlan: view.prefers === now.staffId, because: view.because, line: view.line,
+        chosen: now.options.find((x) => x.id === pick).name, following: view.prefers === pick, risk: view.prefers === pick ? null : view.risks[pick] },
       record: heard.length ? { followed, of: heard.length, last: heard.at(-1) && { what: heard.at(-1).what, agreed: heard.at(-1).council[id].prefers === heard.at(-1).pick } } : null,
     };
   });
