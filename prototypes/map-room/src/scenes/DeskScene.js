@@ -842,10 +842,15 @@ export class DeskScene extends Phaser.Scene {
       for (const o of col) { o.y = y; y += o.slip.node.offsetHeight + 18; }
       if (y - 18 <= 1064) break;
     }
+    // A slip still being dealt or put back is moving to its place: leave its y to that tween
+    // (a fade alone doesn't count), and look again once it lands.
+    const movingY = (obj) => this.tweens.getTweensOf(obj).some((t) => t.isPlaying() && t.data?.some((d) => d.key === "y"));
+    let later = false;
     for (const o of col) {
-      if (!this.tweens.isTweening(o.slip)) o.slip.y = o.y;
-      if (o.slip.seal && !this.tweens.isTweening(o.slip.seal)) o.slip.seal.y = o.y - 22;
+      if (movingY(o.slip)) later = true; else o.slip.y = o.y;
+      if (o.slip.seal) { if (movingY(o.slip.seal)) later = true; else o.slip.seal.y = o.y - 22; }
     }
+    if (later) this.later(300, () => this.restack());
   }
 
   // One line per officer who advises something other than the current choice.
