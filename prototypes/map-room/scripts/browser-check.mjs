@@ -307,9 +307,9 @@ async function sketch() {
   const { SCENARIOS } = await import("../src/scenarios/index.js");
   const { anchorageOf } = await import("../src/story/battle.js");
   let n = 0;
-  // Kestrel Strait: with three hours' warning the garrison gets out. Harrow Sound: its anchorage
-  // is so far that the same warning loses the garrison, whatever is chosen.
-  for (const [id, warning] of [["kestrel-strait", 3], ["harrow-sound", 3], ["kestrel-strait", 6]]) {
+  // Two hours' warning: Kestrel Strait gets the garrison out whatever is chosen; Harrow Sound only
+  // with the frigate (the failure case). Three hours on Harrow: the review's one-lift case escapes.
+  for (const [id, warning] of [["kestrel-strait", 2], ["harrow-sound", 2], ["harrow-sound", 3], ["kestrel-strait", 6]]) {
     const sc = SCENARIOS[id], ctx = S.sketchContext(sc, warning);
     const p = await page({ width: 1920, height: 1080 }, `scenario=${id}&chapter=chart`);
     for (const choice of S.CHOICES) {

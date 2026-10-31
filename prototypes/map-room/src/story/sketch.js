@@ -22,7 +22,13 @@ export const WITHDRAWAL = Object.freeze({
   // Invented: sketch numbers, not tuned and not for sign-off.
   fixed: { rivalKnots: 12, transportKnots: 15, loadHours: 2, coverHours: 2 },
   // The situation varies like the main campaign's sailing date: how many hours' warning.
-  situation: { warningHours: [3, 6] },
+  situation: { warningHours: [2, 6] },
+  // The causal boundary, a sketch rule (review 8; flagged in README, not signed off): a lift
+  // escapes when it has loaded and cleared the beach before the rival reaches the post. The
+  // rival makes for the post, not the transports, so a lift that has cleared is not
+  // intercepted at sea. A lift still loading when they arrive is caught on the beach; one
+  // still on its way in turns back.
+  escape: "clears the beach",
 });
 
 // Geography, from the chart: distances in nautical miles (the scale bar gives pixels per mile).
@@ -39,21 +45,32 @@ export function geographyOf(sc) {
 // calculation, the plan and the table all take this one object.
 export const sketchContext = (sc, warningHours = 6) => ({ scenario: sc.id, geo: geographyOf(sc), warningHours });
 
-// The resolver: when the rival arrives, and which lifts are done by then.
+// The resolver: a timeline for each lift (in hours from the warning), and what the rival's
+// arrival at the post catches. Lift k leaves the anchorage, reaches the beach, loads, clears
+// the beach and arrives back; the next lift leaves when it is back.
 export function resolveWithdrawal(ctx, choice) {
   const F = WITHDRAWAL.fixed, { geo } = ctx;
   const covered = choice.cover === "frigate";
   const unopposed = ctx.warningHours + geo.harbourNm / F.rivalKnots;
   // The frigate buys time only by fighting: it stands between them and the beach, and is hit.
   const arrives = unopposed + (covered ? F.coverHours : 0);
-  const lift = (2 * geo.homeNm) / F.transportKnots + F.loadHours;
+  const transit = geo.homeNm / F.transportKnots;
   const lifts = choice.lift === "two" ? 2 : 1;
-  // How many lifts finish before they arrive. The soldiers go on the first; the guns on the second.
-  const done = Math.min(lifts, Math.floor(arrives / lift));
-  const caught = done < lifts;
-  const kept = { garrison: done >= 1, guns: lifts === 2 && done === 2, frigate: !(covered && lifts * lift > unopposed) };
+  const timeline = [];
+  let t = 0, done = 0, caught = null;
+  for (let k = 1; k <= lifts; k++) {
+    const atBeach = t + transit, loaded = atBeach + F.loadHours, home = loaded + transit;
+    const fate = loaded <= arrives ? "cleared" : atBeach <= arrives ? "caught" : "turned back";
+    timeline.push({ lift: k, leaves: t, atBeach, loaded, clears: fate === "cleared" ? loaded : null, home: fate === "cleared" ? home : null, fate });
+    if (fate !== "cleared") { caught = fate; break; }
+    done = k; t = home;
+  }
+  // The frigate fights if, without it, they would have reached the post before the last lift cleared.
+  const lastNeeded = timeline.at(-1).loaded;
+  const kept = { garrison: done >= 1, guns: lifts === 2 && done === 2, frigate: !(covered && lastNeeded > unopposed) };
   const grade = !kept.garrison ? "failure" : kept.guns && kept.frigate ? "success" : "costly";
-  return { arrives, lift, lifts, done, caught, kept, grade, code: !kept.garrison ? "lost" : caught ? "caught" : lifts === 2 ? "all-out" : "men-out" };
+  return { arrives, unopposed, transit, lifts, done, caught: done < lifts, interruption: caught, timeline, kept, grade,
+    code: !kept.garrison ? "lost" : done < lifts ? "caught" : lifts === 2 ? "all-out" : "men-out" };
 }
 
 // How much each kept objective is worth, for "best": soldiers first, then the guns, then the
@@ -73,24 +90,23 @@ export function bestChoices(ctx) {
 // doesn't is caught on the beach, and whoever was waiting there stays there.
 export function withdrawalPlan(ctx, choice, labels = {}) {
   const r = resolveWithdrawal(ctx, choice);
-  const liftStep = (n) => {
-    const made = n <= r.done;
-    return {
-      moves: [{ actor: "transports", path: ["anchorage", "beach"], dur: 1400 }, ...(made ? [{ actor: "transports", path: ["beach", "anchorage"], dur: 1400, delay: 1500 }] : [])],
-      // The soldiers board the first lift only if it gets away.
-      effects: n === 1 && made ? [{ kind: "hide", actor: "garrison", delay: 1400 }] : [],
-      labels: [], dur: 3000,
-    };
-  };
+  const liftStep = (L) => ({
+    // Out to the beach unless they turned back before getting there; back to the anchorage if the lift cleared.
+    moves: L.fate === "turned back" ? [] : [{ actor: "transports", path: ["anchorage", "beach"], dur: 1400 }, ...(L.fate === "cleared" ? [{ actor: "transports", path: ["beach", "anchorage"], dur: 1400, delay: 1500 }] : [])],
+    // The soldiers are aboard the first lift only once it has loaded and cleared the beach.
+    effects: L.lift === 1 && L.fate === "cleared" ? [{ kind: "hide", actor: "garrison", delay: 1400 }] : [],
+    labels: L.fate === "turned back" ? [{ at: "contact", text: `Lift ${L.lift} turned back: they reached the post first`, tone: "warn" }] : [], dur: 3000,
+  });
+  const caughtOnBeach = r.interruption === "caught";
   const steps = [
     { show: ["transports", "rival", ...(choice.cover === "frigate" ? ["cover"] : [])],
       moves: [{ actor: "garrison", path: ["station", "beach"], dur: 1200 }, { actor: "rival", path: ["harbour", "laneOut", "laneMid"], dur: 2400 },
         ...(choice.cover === "frigate" ? [{ actor: "cover", path: ["friendStart", "line"], dur: 1800, facing: "north" }] : [])],
-      labels: [{ at: "harbour", text: `${ctx.geo.harbourNm} nm away: here in ${r.arrives.toFixed(1)} hours`, tone: "warn" }], dur: 2600 },
-    ...Array.from({ length: Math.min(r.lifts, r.done + 1) }, (_, i) => liftStep(i + 1)),
+      labels: [{ at: "harbour", text: `${ctx.geo.harbourNm} nm away: at the post in ${r.arrives.toFixed(1)} hours`, tone: "warn" }], dur: 2600 },
+    ...r.timeline.map(liftStep),
     { moves: [{ actor: "rival", path: ["laneMid", "approach"], dur: 1800 }],
-      effects: r.caught ? [{ kind: "flash", at: "beach", count: 6, delay: 1200 }] : [],
-      labels: [{ at: "contact", text: !r.kept.garrison ? "Caught on the beach: the garrison is taken" : r.caught ? "Caught on the last lift: the guns are lost" : r.lifts === 2 ? "All out, guns too" : "Soldiers out; the guns left behind", tone: !r.kept.garrison ? "bad" : r.caught || r.lifts === 1 ? "warn" : "ok" }], dur: 2400 },
+      effects: caughtOnBeach ? [{ kind: "flash", at: "beach", count: 6, delay: 1200 }] : [],
+      labels: [{ at: "contact", text: !r.kept.garrison ? (caughtOnBeach ? "Caught on the beach while loading: the garrison is taken" : "No lift got away: the garrison is taken") : r.caught ? (caughtOnBeach ? "Caught loading the last lift: the guns are lost" : "The last lift turned back: the guns are left") : r.lifts === 2 ? "All out, guns too" : "Soldiers out; the guns left behind", tone: !r.kept.garrison ? "bad" : r.caught || r.lifts === 1 ? "warn" : "ok" }], dur: 2400 },
   ];
   const plan = {
     context: ctx,
