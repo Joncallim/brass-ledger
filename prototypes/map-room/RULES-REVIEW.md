@@ -57,6 +57,15 @@ a rule, the game treats neither as a redeployment, so exposure lasts the sector.
 sectors of a war the task force does redeploy (a new strait and a new station), and exposure
 doesn't carry over.
 
+**Reviewer's recommendation (review 8), pending Jon's decision:** exposure clears only when
+the previously exposed guns actually move to new positions. Night is a way to conceal a
+move, not enough by itself. Read that way:
+
+- December's staff plan, which brings new guns up by night, would not clear exposure.
+- A move of the battery Ravellan saw would, at a cost still to be set.
+
+Nothing in the game implements this yet.
+
 **Needs a decision.** Should a night move of the guns (December's staff plan, or a new
 "redeploy the battery" order) end exposure, and at what cost? Until then, the slips and the
 glossary say: "until our guns are redeployed. No order in this campaign redeploys them, so it
@@ -73,3 +82,15 @@ The decision-diversity measure (`npm run balance`) is unchanged by review 7:
 The measure scores plans that already know the hidden truth, so it can't value information.
 It matches the playtest verdict ("more like choosing an answer than weighing competing plans")
 but can't settle it. That is for the uncoached sessions in `PLAYTEST.md`.
+
+## Review 8: what a player who sees only the board would do
+
+`npm run balance` now also scores policies that use only what the player can see, kept
+apart from the omniscient measure above. The policies are: follow the staff plan, follow
+the majority, follow one officer, and pick the cautious February route from the forecast.
+Over 150 seeds, resting the battalion both months (Okafor's advice) wins 100% of Steady,
+53% of Shifting and 54% of Volatile campaigns. That matches the best fixed omniscient plan.
+Following the staff plan never wins outright. No rule was changed in response. Whether
+"always rest" is a strategy players find, and whether it feels like a decision, is for the
+sessions in `PLAYTEST.md`.
+

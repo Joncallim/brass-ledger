@@ -191,7 +191,14 @@ what the task force has and remembers, and the officers quote only that.
 3. ~~War length?~~ Decided: two campaigns first, then a fixed four if that works.
 4. Which second campaign type comes first? (The withdrawal sketch shows the interfaces fit
    one; it is not a recommendation.)
-6. The rules under review in RULES-REVIEW.md: exposure, the staff's camera default, and
-   the naval route when a second wave slips past.
+6. ~~The rules under review in RULES-REVIEW.md~~ Decided in review 7. Still open: **what
+   counts as redeployment** (exact rule and cost). The reviewer recommends that exposure
+   clears only when the exposed guns actually move to new positions, and that night is a
+   way to conceal a move, not enough by itself.
+7. Is "rest the battalion both months" acceptable as a strong default, given that a
+   visible-information policy doing only that matches the best fixed plan (RULES-REVIEW.md,
+   review 8)?
+8. The withdrawal sketch's rule that a lift has escaped once its last boat clears the
+   beach (a sketch rule, needs sign-off if the sketch becomes a campaign).
 5. Who reviews generated art, and what licence bar must it meet before it leaves
    prototype-only?

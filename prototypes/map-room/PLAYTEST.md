@@ -127,3 +127,38 @@ Ask after the debrief, without leading:
 **Status.** No human participant has played the review 6 or review 7 builds. The uncoached
 comprehension check and the fun sessions above have not been run. Every result so far comes
 from automated checks and from the product owner's own reviews.
+
+## Review 8: questions for the next sessions
+
+Run these after the review 8 fixes, uncoached. Don't explain the staff room, the forecast or
+the dialogs beforehand. Ask after the debrief, without leading, and write down the player's
+own words:
+
+1. **What did you protect?** "What were you trying to keep safe this campaign, and what did
+   you give up for it?"
+2. **Which intelligence did you trust?** "Which reports did you believe, and which did you
+   doubt? Why?" Note whether they distinguish a confirmed count from an old one.
+3. **Why did you overrule the staff?** For each personal order: "Why did you go against the
+   staff plan here?" Note whether the reason matches what the officer's "if you overrule"
+   line said would happen.
+4. **What did you give up?** "When you chose X, what did you lose?" Right answer: the
+   counterfactual the slip names for the plan they actually had.
+5. **Why did it happen?** After the showdown: "Why did the station hold (or fall)?" Right
+   answer: the deciding cause the report names (the navies, the defences, the battalion,
+   the trenches, or the requirement that failed).
+6. **Coalition HQ.** "Did you need to know more about who sits above you, or beside you, in
+   the coalition?" Note any confusion about who gives the task force orders.
+
+Record for each player:
+
+- **Adviser obedience.** For each officer, how often the player took their advice (the
+  staff room's "taken their advice N of M"). Also record how often they took the staff plan
+  and how often they rested the battalion. Compare these with the visible-information
+  policies in RULES-REVIEW.md: a player who always rests is playing the dominant policy.
+- **Window size and zoom**, and whether they used the keyboard. Note any word the player
+  found hard to read.
+
+**Status.** No human participant has played the review 6, 7 or 8 builds. The uncoached
+comprehension check and the fun sessions have not been run. Passing automated checks, and
+the product owner's own reviews, are not evidence of comprehension or fun.
+

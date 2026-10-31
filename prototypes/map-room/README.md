@@ -186,6 +186,42 @@ readiness bar along the top shows the four things they argue about (2nd Battalio
 on duty, the cabinet count, Beacon's defences, our warning before an attack), each owned
 by one officer.
 
+### Supported sizes
+
+The prototype is built for desktop browsers. It makes no claim about phones or tablets.
+
+| Window (CSS px) | Layout | Smallest text / reading text, as rendered |
+| --- | --- | --- |
+| 1728×972 and larger (a scale of 0.9 or more) | **Table**: the whole 1920×1080 table, words and all, scaled to fit | 12.6 / 13.5 px at the smallest scale; 14 / 15 px at full size |
+| Smaller, down to 1024×640 | **Compact**: the chart scales into the space on the left. Every sheet, slip and voice sits in a column on the right at its own size, reflows to the column's width and scrolls on its own | 14 / 15 px at any size |
+
+- **Browser zoom.** Zoom makes the CSS window smaller. In the compact layout it enlarges the
+  words. In the table layout it only brings the switch to compact nearer: a 1920×1080 screen
+  at 110% stays on the table, and at 125% or more it goes compact.
+- **Hidden in compact.** Decorative pieces anchored to the table stay hidden: the seals
+  flying to a slip, the ORDERED stamp, and the dimming behind sheets. The invisible
+  glossary zones over the chart's labels are hidden too; their terms are still explained
+  wherever they appear in the text.
+- **Forcing a layout.** `?layout=table` or `?layout=compact` fixes the choice.
+- **What the browser checks measure.** At eight sizes, including 110%, 125% and 150% zoom,
+  they measure rendered text, the smallest control (24 px or more) and the compact column
+  (no sideways scroll, nothing wider than the column).
+
+### Keyboard and dialogs
+
+- **The rooms are modal dialogs.** This covers the staff room, the ledger and settings:
+  - Focus goes to Close when a room opens, and Tab and Shift-Tab stay inside it.
+  - Everything behind is inert: the chart and every other sheet. A glossary term behind
+    the room shows no card over it.
+  - Escape closes the room, and focus returns to whatever opened it.
+- **Radio groups follow the WAI-ARIA radio pattern.** These are the incident answers,
+  every order slip's options, the host card and the settings:
+  - Each group is labelled and is one Tab stop, the chosen option.
+  - The arrow keys move to the next option and choose it, wrapping at the ends. Home and
+    End jump to the first and last.
+  - A choice that needs a personal order you no longer have is refused, as it is with
+    the mouse, and focus still moves.
+
 ## Staff room, ledger and settings
 
 Three panels open over any chapter without resetting it (`src/story/rooms.js` works out
@@ -426,6 +462,60 @@ in the scenario and open the same profiles.
   under strength; the rival losing one craft in its next sector for every four beaten on a
   beach, up to three; and the second sector reusing the December to February calendar. That
   calendar is a stand-in: a real war needs dates that don't depend on the season.
+- **Review 8.** No rule changed (19,632 plan-campaign runs compared with review 7: none
+  differ). What changed is what the screens say and how it is checked:
+  - **Advice answers the plan as it stands.** Every officer's "if you overrule" line names
+    the option it is about and describes it with every other current choice held fixed.
+    It is worked out by simulating that option, not written for the staff default. The
+    staff room, the slips, the host card's vote line and Lattice's January cost all read
+    the current plan, and undoing a change restores exactly the words it replaced
+    (`test/selected.test.js`, and the browser's `selected` section).
+  - **A battle names what decided it.** The resolver returns the deciding cause:
+    - the navies at sea;
+    - the defences alone;
+    - the battalion;
+    - the trenches;
+    - or the requirement that failed.
+
+    It also returns who took part, and whether the battalion deployed before contact or
+    after. The forecast, the report, the debrief and the chart's animation use those, so a
+    level 3 station that holds a breakthrough with an unfit battalion says the defences held
+    it. The glossary no longer says an unfit battalion can't hold a landing: it can't hold
+    one alone, except dug in against one wave at level 2.
+  - **The withdrawal sketch draws its causal line explicitly.** A lift has escaped once its
+    last boat clears the beach (a sketch rule, flagged for sign-off). Each lift has a
+    timeline: leaves, at the beach, loaded, clears, home. The review's case (Harrow Sound,
+    3 hours' warning, one lift, no frigate) loads by 5.47 h, against the rival's 6.33 h, and
+    escapes.
+  - **Geography diversity is measured, not assumed.** Measured on held-out charts
+    (G200–G399), counting ties:
+    - At 6 hours' warning, two lifts with the frigate are optimal on 100% of charts, and
+      two without on 86% (regret 0.14). One-lift plans have regret 1.86.
+    - At 2 hours, every choice ties: no guns are out anywhere.
+    - At Harrow Sound with 2 hours, only the frigate saves the garrison.
+
+    So geography changes the answer only at the margins; the test states that, and nothing
+    was tuned to pass it.
+  - **Policies that see only what the player sees** are scored separately from the
+    omniscient balance (`npm run balance`). Over 150 seeds:
+
+    | Policy | Steady | Shifting | Volatile |
+    | --- | --- | --- | --- |
+    | Rest the battalion both months (Okafor) | 100% | 53% | 54% |
+    | Follow the staff plan | 0% | 0% | 0% |
+    | Follow the majority | 0% | 3% | 5% |
+    | Follow Halden | 6% | 1% | 1% |
+
+    Resting both months matches the best fixed omniscient plan. This is reported as a
+    finding, not tuned away: whether "always rest" is a dominant strategy players find is
+    a question for the sessions.
+  - **An independent oracle** (`test/oracle.test.js`) is written from the stated rules,
+    not from the resolver. It covers:
+    - the warning and defence tables;
+    - the fitness boundary at 120/121;
+    - all 240 route, size, level, fitness, warning and strength combinations, with their
+      deciding cause;
+    - the third December order the refit can buy.
 - **Review 7.** Rules now in play (see [RULES-REVIEW.md](RULES-REVIEW.md) for what they
   changed, and the open question on redeployment):
   - The staff answer to the minister's visit is **no cameras**. Exposing our positions is a

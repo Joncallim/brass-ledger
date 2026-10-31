@@ -8,8 +8,11 @@
 //   rooms      staff room, ledger and settings at several points
 //   campaigns  whole campaigns played by clicking, checked against the story module
 //   showdowns  the end state is the plan's; every label stays on the table and clear of the
-//              report, at 1920x1080, 1280x720 and 1024x640; pause and skip work
+//              report, at 1920x1080 and 1728x972 (table) and 1180x712 (compact); pause and skip work
 //   keyboard   February chosen with Tab and Enter
+//   layout     supported sizes: which layout each window gets, rendered text and control sizes
+//              (browser zoom included), the compact column; the room dialogs' focus contract;
+//              radio groups by arrow key; slips, host card and staff room follow the plan
 //   sketch     the withdrawal sketch's plan plays on the real chart
 import { preview } from "vite";
 import { chromium } from "playwright";
@@ -28,8 +31,8 @@ const server = await preview({ root: ROOT, preview: { port: 0, strictPort: false
 const base = server.resolvedUrls.local[0];
 const browser = await chromium.launch();
 
-async function page(viewport = { width: 1920, height: 1080 }, query = "chapter=title") {
-  const p = await browser.newPage({ viewport });
+async function page(viewport = { width: 1920, height: 1080 }, query = "chapter=title", deviceScaleFactor = 1) {
+  const p = await (await browser.newContext({ viewport, deviceScaleFactor })).newPage();
   // THROTTLE=4 slows the CPU as a slow CI runner would, to find timing assumptions.
   if (process.env.THROTTLE) { const cdp = await p.context().newCDPSession(p); await cdp.send("Emulation.setCPUThrottlingRate", { rate: Number(process.env.THROTTLE) }); }
   p.errors = [];
@@ -195,8 +198,10 @@ async function campaigns() {
 // ── showdowns: end state, labels, small windows, pause, skip ─────────────────
 async function showdowns() {
   let n = 0;
-  for (const viewport of [{ width: 1920, height: 1080 }, { width: 1280, height: 720 }, { width: 1024, height: 640 }]) {
+  // The table layout at full size and at its smallest scale; the compact layout below that.
+  for (const viewport of [{ width: 1920, height: 1080 }, { width: 1728, height: 972 }, { width: 1180, height: 712 }]) {
     const p = await page(viewport);
+    const compact = await p.evaluate(() => document.body.classList.contains("compact"));
     const size = `${viewport.width}x${viewport.height}`;
     for (const d of ["shifting", "volatile"]) for (let i = 0; i < (QUICK ? 3 : 8); i++) for (const route of ["quiet", "forward", "joint"]) for (const jl of ["sarn", "when"]) {
       const seed = `U${i}`, c = story.makeCampaign(seed, d);
@@ -233,10 +238,11 @@ async function showdowns() {
       for (const t of want) if (!r.labels.some((l) => l.text === t)) fail(area, `label missing: ${t}`);
       for (const l of r.labels) {
         if (l.x0 < 40 || l.x1 > 1880 || l.y0 < 96 || l.y1 > 1040) fail(area, `label off the table: ${l.text}`);
+        if (compact) continue; // the report is in the column, beside the chart
         const over = Math.max(0, Math.min(l.x1, r.pg.x1) - Math.max(l.x0, r.pg.x0)) * Math.max(0, Math.min(l.y1, r.pg.y1) - Math.max(l.y0, r.pg.y0));
         if (over > 0) fail(area, `the report covers the label "${l.text}"`);
       }
-      if (r.pg.y1 > 1080.5 || r.pg.x1 > 1920.5) fail(area, "report off the table");
+      if (!compact && (r.pg.y1 > 1080.5 || r.pg.x1 > 1920.5)) fail(area, "report off the table");
       for (const [id, s] of Object.entries(end.actors)) {
         const a = r.actors[id], at = r.anchors[s.at];
         if (!a) { fail(area, `actor ${id} missing`); continue; }
@@ -345,9 +351,244 @@ async function sketch() {
   return `${n} sketch plans`;
 }
 
+
+// ── layout, dialogs, radios and the selected plan ─────────────────────────────
+// Supported sizes (README): the table layout at a scale of 0.9 or more, the compact layout
+// below. Rendered sizes are CSS pixels times the layer's scale; device pixels multiply by the
+// zoom (deviceScaleFactor stands in for browser zoom: 1280x720 at 1.5 is a 1920x1080 screen
+// at 150%).
+const SIZES = [
+  { width: 1920, height: 1080, zoom: 1, layout: "table" },
+  { width: 1745, height: 982, zoom: 1.1, layout: "table" }, // 1920x1080 at 110%
+  { width: 1728, height: 972, zoom: 1, layout: "table" },
+  { width: 1700, height: 960, zoom: 1, layout: "compact" },
+  { width: 1536, height: 864, zoom: 1.25, layout: "compact" }, // 1920x1080 at 125%
+  { width: 1280, height: 720, zoom: 1.5, layout: "compact" }, // 1920x1080 at 150%
+  { width: 1180, height: 712, zoom: 1, layout: "compact" },
+  { width: 1024, height: 640, zoom: 1, layout: "compact" },
+];
+const MIN_TEXT = 12.5, MIN_READING = 13.5, MIN_CONTROL = 24;
+
+async function layout() {
+  let n = 0;
+  const chapters = ["title", "dec-brief", "dec-signal", "dec-orders", "dec-night", "jan-brief", "jan-signal", "jan-orders", "jan-night", "feb-showdown", "feb-night", "debrief"];
+  for (const size of SIZES) {
+    const tag = `${size.width}x${size.height}@${size.zoom}`;
+    const p = await page({ width: size.width, height: size.height }, "chapter=title", size.zoom);
+    for (const d of QUICK ? ["volatile"] : ["shifting", "volatile"]) for (const ch of chapters) {
+      const r = await p.evaluate(async ({ d, ch }) => {
+        window.mapRoom.campaign("Z1", d);
+        const c = window.mapRoom.c, seal = { radar: "run", defector: "talk", leak: "brief", collision: "search", visit: "open" };
+        window.mapRoom.setRun({ dec: { beacon: "rest", lattice: "who", incident: c.incidents.dec ? seal[c.incidents.dec] : null }, jan: { beacon: "show", lattice: "sarn", way: "buy", incident: c.incidents.jan ? seal[c.incidents.jan] : null }, feb: { route: "joint" } });
+        window.mapRoom.go(ch);
+        await new Promise((res) => setTimeout(res, ch.endsWith("night") ? 900 : 250));
+        const box = document.querySelector("#stage > div"), k = box.getBoundingClientRect().width / box.offsetWidth, out = [];
+        const compact = document.body.classList.contains("compact");
+        let minText = 99, minReading = 99, minControl = 99;
+        const walk = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+        for (let t; (t = walk.nextNode()); ) {
+          const s = t.textContent.trim(), el = t.parentElement;
+          if (!s || el.closest(".tip, [aria-hidden=true], .fx") || getComputedStyle(el).visibility === "hidden") continue;
+          const rg = document.createRange(); rg.selectNodeContents(t); const rc = rg.getBoundingClientRect(); if (!rc.width) continue;
+          const px = parseFloat(getComputedStyle(el).fontSize) * k;
+          if (px < minText) minText = px;
+          if (s.length >= 60 && px < minReading) minReading = px;
+          if (px < 12.5) out.push(`text at ${px.toFixed(1)} px: "${s.slice(0, 30)}"`);
+        }
+        for (const b of box.querySelectorAll("button")) {
+          const rc = b.getBoundingClientRect(); if (!rc.width || getComputedStyle(b).visibility === "hidden") continue;
+          minControl = Math.min(minControl, rc.width, rc.height);
+        }
+        if (compact) {
+          const col = box.getBoundingClientRect(), cv = document.querySelector("canvas").getBoundingClientRect();
+          if (box.scrollWidth > box.clientWidth + 1) out.push(`the column scrolls sideways by ${box.scrollWidth - box.clientWidth} px`);
+          if (cv.right > col.left + 1) out.push("the chart runs under the column");
+          for (const e of box.querySelectorAll(".ui > *")) { const rc = e.getBoundingClientRect(); if (rc.width && (rc.left < col.left - 1 || rc.right > col.right + 1)) out.push(`${e.className || e.tagName} is wider than the column`); }
+          for (const e of box.querySelectorAll(".ui.fx")) if (getComputedStyle(e).display !== "none") out.push("a table-only piece shows in the column");
+        }
+        if (/undefined|NaN|\[object/.test(document.body.innerText)) out.push("undefined/NaN on screen");
+        return { compact, k, minText, minReading, minControl, out };
+      }, { d, ch });
+      n++;
+      const area = `layout ${tag} ${ch} ${d}`;
+      if (r.compact !== (size.layout === "compact")) fail(area, `${r.compact ? "compact" : "table"} layout, expected ${size.layout}`);
+      if (r.minText < MIN_TEXT) fail(area, `smallest text renders at ${r.minText.toFixed(1)} px (minimum ${MIN_TEXT})`);
+      if (r.minReading < MIN_READING) fail(area, `reading text renders at ${r.minReading.toFixed(1)} px (minimum ${MIN_READING})`);
+      if (r.minControl < MIN_CONTROL) fail(area, `a control renders ${r.minControl.toFixed(0)} px across (minimum ${MIN_CONTROL})`);
+      for (const x of r.out.slice(0, 4)) fail(area, x);
+      if (size.zoom !== 1 && r.minText * size.zoom < r.minText + 1) fail(area, "browser zoom did not enlarge the words");
+    }
+    pageErrors(`layout ${tag}`, p);
+    await p.close();
+  }
+  return `${n} screens at ${SIZES.length} sizes`;
+}
+
+// The rooms are modal dialogs: focus goes in and stays in, everything behind is inert and
+// shows no glossary card, Escape closes, and focus goes back to the opener.
+async function dialogs() {
+  let n = 0;
+  for (const viewport of [{ width: 1920, height: 1080 }, { width: 1180, height: 712 }]) {
+    const p = await page(viewport);
+    for (const room of ["staff", "ledger", "settings"]) for (const how of ["click", "key"]) {
+      await p.evaluate(() => { window.mapRoom.campaign("M1", "volatile"); window.mapRoom.go("jan-orders"); });
+      await p.waitForTimeout(250);
+      const area = `dialog ${room} by ${how} ${viewport.width}`;
+      // The opener: the room's HUD button, or (by key) the first slip's Change button.
+      if (how === "click") await p.click(`[data-room="${room}"]`);
+      else { await p.focus("[data-change]"); await p.keyboard.press({ staff: "s", ledger: "l", settings: "o" }[room]); }
+      await p.waitForTimeout(200);
+      const opened = await p.evaluate(() => {
+        const panel = document.querySelector("[role=dialog]"), box = document.querySelector("#stage > div");
+        if (!panel) return null;
+        const behind = [...box.children].filter((x) => !x.contains(panel) && !x.classList.contains("fx") && !x.classList.contains("tip"));
+        // Hovering a term behind the room shows nothing over it.
+        const term = behind.map((x) => x.querySelector("[data-term]")).find(Boolean);
+        term?.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+        const tip = document.getElementById("profile-tip");
+        return { inside: panel.contains(document.activeElement), modal: panel.getAttribute("aria-modal"), label: panel.getAttribute("aria-label"),
+          allInert: behind.every((x) => x.inert) && document.querySelector("canvas").inert, tipShown: !!tip && getComputedStyle(tip).display !== "none" && tip.offsetParent !== null && !!term };
+      });
+      if (!opened) { fail(area, "did not open"); continue; }
+      if (!opened.inside) fail(area, "focus did not go into the room");
+      if (opened.modal !== "true" || !opened.label) fail(area, "not labelled as a modal dialog");
+      if (!opened.allInert) fail(area, "something behind the room is not inert");
+      if (opened.tipShown) fail(area, "a glossary card from behind the room showed over it");
+      for (const key of ["Tab", "Shift+Tab"]) for (let t = 0; t < 40; t++) {
+        await p.keyboard.press(key);
+        if (!(await p.evaluate(() => document.querySelector("[role=dialog]")?.contains(document.activeElement)))) { fail(area, `${key} left the room`); break; }
+      }
+      if (room === "settings") {
+        // Choosing a setting re-renders the room: still modal, focus on the choice, same opener.
+        await p.click('[data-speed="80"]'); await p.waitForTimeout(150);
+        const again = await p.evaluate(() => ({ on: document.activeElement?.dataset?.speed, inside: !!document.querySelector("[role=dialog]")?.contains(document.activeElement) }));
+        if (again.on !== "80" || !again.inside) fail(area, "focus left the setting just chosen");
+        await p.keyboard.press("ArrowRight"); await p.waitForTimeout(150);
+        if ((await p.evaluate(() => document.activeElement?.dataset?.speed)) !== "0") fail(area, "arrow key did not move to the next text speed");
+        await p.click('[data-speed="40"]'); await p.waitForTimeout(150);
+      }
+      await p.keyboard.press("Escape"); await p.waitForTimeout(150);
+      const closed = await p.evaluate((how) => ({ gone: !document.querySelector("[role=dialog]"), back: how === "click" ? document.activeElement?.dataset?.room : document.activeElement?.hasAttribute?.("data-change") ? "change" : null,
+        inert: [...document.querySelectorAll("#stage > div > *")].some((x) => x.inert) || document.querySelector("canvas").inert }), how);
+      if (!closed.gone) fail(area, "Escape did not close it");
+      if (closed.back !== (how === "click" ? room : "change")) fail(area, "focus did not return to the opener");
+      if (closed.inert) fail(area, "the desk stayed inert after closing");
+      n++;
+    }
+    pageErrors(`dialogs ${viewport.width}`, p);
+    await p.close();
+  }
+  return `${n} dialogs`;
+}
+
+// Every radio group: labelled, one Tab stop on the chosen option, arrows move and choose.
+async function radios() {
+  const p = await page();
+  let n = 0;
+  const groups = await p.evaluate(() => {
+    // An incident sheet; every order slip opened; the host card in its clash and its vote.
+    const found = [];
+    for (const d of ["volatile", "shifting"]) for (let i = 0; i < 12 && found.length < 40; i++) {
+      window.mapRoom.campaign(`R${i}`, d);
+      if (window.mapRoom.c.incidents.dec) found.push({ seed: `R${i}`, d, ch: "dec-signal", sel: "[data-pick]" });
+      if (window.mapRoom.c.incidents.jan) found.push({ seed: `R${i}`, d, ch: "jan-signal", sel: "[data-pick]" });
+      found.push({ seed: `R${i}`, d, ch: "dec-orders", sel: "[data-opt]", open: 0 }, { seed: `R${i}`, d, ch: "jan-orders", sel: "[data-opt]", open: 1 });
+      found.push({ seed: `R${i}`, d, ch: "jan-orders", sel: "[data-way]", show: true });
+    }
+    return found;
+  });
+  for (const g of groups.slice(0, QUICK ? 12 : 40)) {
+    const area = `radios ${g.ch} ${g.sel} ${g.d} ${g.seed}`;
+    await p.evaluate(({ seed, d, ch, show }) => {
+      window.mapRoom.campaign(seed, d);
+      if (show) window.mapRoom.setRun({ dec: { beacon: "quiet", lattice: "boats", incident: null }, jan: { beacon: "show", lattice: "sarn", way: null, incident: null }, feb: {} });
+      window.mapRoom.go(ch);
+    }, g);
+    await p.waitForTimeout(250);
+    if (g.open !== undefined) { const b = await p.$$("[data-change]"); if (!b[g.open]) continue; await b[g.open].click(); await p.waitForTimeout(100); }
+    const r = await p.evaluate(async (sel) => {
+      const first = document.querySelector(sel);
+      if (!first) return null;
+      const group = () => document.querySelector(sel).closest("[role=radiogroup]");
+      const state = () => [...group().querySelectorAll("[role=radio]")].map((b) => ({ id: Object.values(b.dataset)[0], on: b.getAttribute("aria-checked") === "true", tab: b.tabIndex, focus: b === document.activeElement }));
+      const label = group().getAttribute("aria-label") || group().getAttribute("aria-labelledby");
+      const start = state();
+      (group().querySelector("[aria-checked=true]") ?? first).focus();
+      const press = async (key) => { document.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true })); await new Promise((r) => setTimeout(r, 60)); return state(); };
+      return { label, start, down: await press("ArrowDown"), up: await press("ArrowUp"), end: await press("End"), home: await press("Home"), left: await press("ArrowLeft") };
+    }, g.sel);
+    if (!r) continue;
+    n++;
+    if (!r.label) fail(area, "radio group has no label");
+    const stops = (st) => st.filter((x) => x.tab === 0).length;
+    for (const [k, st] of Object.entries(r)) if (k !== "label" && stops(st) !== 1) fail(area, `${k}: ${stops(st)} Tab stops in the group`);
+    if (r.start.find((x) => x.tab === 0) !== r.start.find((x) => x.on)) fail(area, "the Tab stop is not the chosen option");
+    const at = (st) => st.findIndex((x) => x.focus), on = (st) => st.findIndex((x) => x.on), len = r.start.length, i0 = on(r.start);
+    // A choice can be refused (no personal order left); focus still moves, the chosen option is unchanged.
+    if (at(r.down) !== (i0 + 1) % len) fail(area, "ArrowDown did not move to the next option");
+    if (on(r.down) !== at(r.down) && on(r.down) !== i0) fail(area, "ArrowDown chose an option it did not move to");
+    if (at(r.up) !== i0) fail(area, "ArrowUp did not come back");
+    if (at(r.end) !== len - 1 || at(r.home) !== 0) fail(area, "Home and End did not reach the ends");
+    if (at(r.left) !== len - 1) fail(area, "ArrowLeft from the first option did not wrap to the last");
+  }
+  pageErrors("radios", p);
+  await p.close();
+  return `${n} radio groups`;
+}
+
+// Change, combine and undo choices on the desk; the slips, the host card and the staff room
+// always say what the story module says for the plan as it now stands.
+async function selected() {
+  const p = await page();
+  let n = 0;
+  const strip = (t) => String(t ?? "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+  for (const d of ["volatile", "shifting"]) for (let i = 0; i < (QUICK ? 2 : 5); i++) for (const month of ["dec", "jan"]) {
+    const seed = `P${i}`, c = story.makeCampaign(seed, d);
+    await p.evaluate(({ seed, d, month }) => { window.mapRoom.campaign(seed, d); window.mapRoom.go(`${month}-orders`); }, { seed, d, month });
+    await p.waitForTimeout(250);
+    const opts = month === "dec" ? [["0", "rest"], ["1", "who"], ["0", "show"], ["1", "boats"], ["0", "quiet"]] : [["0", "hold"], ["1", "when"], ["0", "show"], ["1", "who"], ["0", "quiet"], ["1", "sarn"]];
+    for (const [slot, id] of opts) {
+      const area = `selected ${month} ${d} ${seed} → ${id}`;
+      const b = (await p.$$("[data-change]"))[Number(slot)];
+      if (!b) continue;
+      await b.click(); await p.waitForTimeout(60);
+      const opt = await p.$(`[data-opt="${id}"]`);
+      if (opt) await opt.click();
+      await p.waitForTimeout(60);
+      await (await p.$("[data-done]"))?.click(); await p.waitForTimeout(80);
+      const run = await p.evaluate(() => window.mapRoom.getRun());
+      const seen = await p.evaluate(() => Object.fromEntries([...document.querySelectorAll(".slip")].map((s) => [s.getAttribute("aria-label"), [...s.querySelectorAll(".row")].map((r) => [r.querySelector("b")?.textContent, r.querySelector("span")?.textContent])])));
+      const L = story.latticeOrders(c, run, month), O = story.orders(c, run, month), norm = (x) => strip(x).replace(/\s+/g, " ");
+      const face = (head, cfg, pickId) => {
+        const rows = Object.fromEntries((seen[strip(head)] ?? []).map(([k, v]) => [k, norm(v)])), o = cfg.options.find((x) => x.id === pickId);
+        if (!seen[strip(head)]) return fail(area, `no slip for ${strip(head)}`);
+        if (o.staff) { if (rows.Costs !== norm(cfg.cost)) fail(area, `${strip(head)} costs "${rows.Costs}", plan says "${norm(cfg.cost)}"`); }
+        else if (rows.Means !== norm(o.says)) fail(area, `${strip(head)} means "${rows.Means}", plan says "${norm(o.says)}"`);
+      };
+      face(O.head, O, run[month].beacon);
+      face(L.head, L, run[month].lattice);
+      if (month === "jan") {
+        const H = story.host(c, run), vote = (seen[strip(H.head)] ?? []).find(([k]) => k === "Vote")?.[1];
+        if (vote !== undefined && norm(vote) !== norm(H.vote)) fail(area, `host card vote "${norm(vote)}", plan says "${norm(H.vote)}"`);
+      }
+      // The staff room answers the current choice.
+      await p.keyboard.press("s"); await p.waitForTimeout(120);
+      const room = await p.evaluate(() => [...document.querySelectorAll(".officer-card-full .ofc-now")].map((x) => x.innerText));
+      const chosen = strip(O.options.find((x) => x.id === run[month].beacon).name).toLowerCase();
+      for (const t of room) if (!t.includes("No order left") && !t.toLowerCase().includes(`your current choice: ${chosen}`)) fail(area, `staff room does not answer the current choice (${chosen})`);
+      if (run[month].beacon === "rest" && room.some((t) => /photographs/.test(t))) fail(area, "photographs of troops that stood down");
+      await p.keyboard.press("Escape"); await p.waitForTimeout(80);
+      n++;
+    }
+  }
+  pageErrors("selected", p);
+  await p.close();
+  return `${n} plan changes`;
+}
+
 try {
   const only = process.argv.find((x) => x.startsWith("--only="))?.slice(7).split(",");
-  for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["names", names], ["sketch", sketch]]) {
+  for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["names", names], ["sketch", sketch], ["layout", layout], ["dialogs", dialogs], ["radios", radios], ["selected", selected]]) {
     if (only && !only.some((o) => name.startsWith(o))) continue;
     const t = Date.now(), said = await fn();
     console.log(`${name.padEnd(16)} ${said} (${((Date.now() - t) / 1000).toFixed(0)} s)`);

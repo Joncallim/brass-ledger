@@ -22,6 +22,34 @@ const portrait = (id) => `./portraits/${OFFICER_NAMES[id].portrait}.jpg`;
 // Lower-case only the first letter, so names like Beacon keep their capital.
 const lower = (s) => s[0].toLowerCase() + s.slice(1);
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+const compact = () => document.body.classList.contains("compact"); // see src/main.js
+const attr = (s) => String(s).replace(/<[^>]+>/g, "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+
+// Radio groups follow the WAI-ARIA radio pattern: the group is one Tab stop (the chosen
+// option, or the first), and the arrow keys move to the next option and choose it, wrapping
+// at the ends; Home and End go to the first and last. Space and Enter choose too (they are
+// buttons). A group re-renders when it changes, so focus follows the new node.
+function rove(node) {
+  const groups = node.matches?.('[role="radiogroup"]') ? [node] : [...(node.querySelectorAll?.('[role="radiogroup"]') ?? [])];
+  for (const g of groups) {
+    const radios = [...g.querySelectorAll('[role="radio"]')];
+    const on = radios.find((r) => r.getAttribute("aria-checked") === "true") ?? radios.find((r) => !r.disabled);
+    for (const r of radios) r.tabIndex = r === on ? 0 : -1;
+  }
+}
+function arrowRadio(e, root) {
+  const r = e.target.closest?.('[role="radio"]'), g = r?.closest('[role="radiogroup"]');
+  if (!g || !["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft", "Home", "End"].includes(e.key)) return;
+  e.preventDefault();
+  e.stopPropagation(); // the desk's own keys never see an arrow meant for a group
+  const radios = [...g.querySelectorAll('[role="radio"]')].filter((x) => !x.disabled), i = radios.indexOf(r), n = radios.length;
+  const to = radios[{ Home: 0, End: n - 1 }[e.key] ?? (i + (e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : -1) + n) % n];
+  const key = [...to.attributes].find((a) => a.name.startsWith("data-"));
+  const sel = key ? `[${key.name}="${key.value}"]` : null;
+  to.click();
+  const now = to.isConnected ? to : sel && root.querySelector(sel);
+  if (now) { rove(now.closest('[role="radiogroup"]')); now.focus({ preventScroll: true }); }
+}
 
 // Number keys jump to these. The incident signals sit between briefing and orders.
 export const CHAPTERS = ["title", "dec-brief", "dec-orders", "dec-night", "jan-brief", "jan-orders", "jan-night", "feb-showdown", "debrief"];
@@ -114,11 +142,22 @@ export class DeskScene extends Phaser.Scene {
     this.showTip = (t) => {
       const key = t.dataset.term;
       if (!hasTerm(key)) return;
+      // A term behind an open room never shows its card over the room.
+      if (this.room && !this.room.panel.node.contains(t)) return;
       el.innerHTML = profileHTML(key);
       root.appendChild(el); // always on top of whatever was added since
       el.style.display = "block"; // measure now; Phaser only applies visibility on its next frame
       this.tip.setVisible(true);
-      const stage = this.game.canvas.getBoundingClientRect(), r = t.getBoundingClientRect(), k = 1920 / stage.width;
+      const r = t.getBoundingClientRect();
+      if (compact()) { // the column is unscaled: place the card in the window's own pixels
+        const w = el.offsetWidth, h = el.offsetHeight, below = r.bottom + 8 + h <= innerHeight;
+        el.style.left = `${Math.max(8, Math.min(r.left, innerWidth - w - 8))}px`;
+        el.style.top = `${Math.max(8, below ? r.bottom + 8 : r.top - h - 8)}px`;
+        t.setAttribute("aria-describedby", "profile-tip");
+        return;
+      }
+      el.style.left = el.style.top = "";
+      const stage = this.game.canvas.getBoundingClientRect(), k = 1920 / stage.width;
       const w = el.offsetWidth, h = el.offsetHeight;
       let y = (r.bottom - stage.top) * k + 10;
       if (y + h > 1064) y = (r.top - stage.top) * k - h - 10;
@@ -135,10 +174,15 @@ export class DeskScene extends Phaser.Scene {
     root.addEventListener("mouseout", (e) => { const t = termOf(e); if (t && !t.contains(e.relatedTarget)) desk().hideTip(); });
     root.addEventListener("focusin", (e) => { const t = termOf(e); if (t) desk().showTip(t); else desk().hideTip(); });
     root.addEventListener("focusout", (e) => { if (termOf(e)) desk().hideTip(); });
+    // Focus is often moved with preventScroll (the table never scrolls); the compact column
+    // does, so bring whatever took focus into view there.
+    root.addEventListener("focusin", (e) => { if (compact()) e.target.scrollIntoView?.({ block: "nearest" }); });
     new MutationObserver((records) => {
       const tip = desk().tipEl;
-      for (const r of records) for (const n of r.addedNodes) if (n.nodeType === 1 && n !== tip && !tip.contains(n)) glossNode(n);
+      for (const r of records) for (const n of r.addedNodes) if (n.nodeType === 1 && n !== tip && !tip.contains(n)) { glossNode(n); rove(n); }
     }).observe(root, { childList: true, subtree: true });
+    // Every radio group on the desk: one Tab stop, arrow keys move and choose (see rove).
+    root.addEventListener("keydown", (e) => arrowRadio(e, root));
   }
 
   // Invisible hover zones over the chart's own labels, so "Sarn" on the map explains itself
@@ -149,7 +193,7 @@ export class DeskScene extends Phaser.Scene {
       if (!hasTerm(term)) return;
       ctx.font = font;
       const w = width ?? Math.max(...String(text).split("\n").map((l) => ctx.measureText(l).width));
-      const hot = this.dom(OX + x - 4, OY + y - 4, `<span class="hot" data-term="${term}" aria-hidden="true" style="width:${w + 8}px;height:${h + 8}px"></span>`);
+      const hot = this.dom(OX + x - 4, OY + y - 4, `<span class="hot" data-term="${term}" aria-hidden="true" style="width:${w + 8}px;height:${h + 8}px"></span>`, "fx");
       this.game.domContainer.prepend(hot.node); // beneath every sheet and slip
       this.hot.push(hot);
     };
@@ -168,6 +212,7 @@ export class DeskScene extends Phaser.Scene {
   // A sheet that would run off the bottom of the table takes its dense layout: tighter type
   // and spacing, never a scrollbar.
   fit(obj, sel = "article") {
+    if (compact()) return obj; // the column scrolls: words keep their size
     // Measured before the glossary marks names and terms, which can nudge a line: keep 20 px spare.
     const a = obj.node.querySelector(sel), over = () => obj.y + obj.node.offsetHeight > 1044;
     for (const step of ["dense", "tight", "tighter"]) if (a && over()) a.classList.add(step);
@@ -179,6 +224,7 @@ export class DeskScene extends Phaser.Scene {
     el.className = `ui ${cls}`;
     el.innerHTML = html;
     const obj = this.add.dom(x, y, el).setOrigin(0, 0);
+    if (this.room) { el.inert = true; this.room.behind.push(el); } // the chapter carries on behind a room
     this.items.push(obj);
     return obj;
   }
@@ -336,7 +382,7 @@ export class DeskScene extends Phaser.Scene {
     const k = 1920 / stage.width;
     const sx = (from.left - stage.left) * k, sy = (from.top - stage.top) * k;
     socket.classList.add("empty");
-    const seal = this.dom(sx, sy, `<span class="seal" aria-hidden="true">BL</span>`);
+    const seal = this.dom(sx, sy, `<span class="seal" aria-hidden="true">BL</span>`, "fx");
     const tx = slipObj.x + slipObj.node.offsetWidth - 30, ty = slipObj.y - 22;
     slipObj.seal = seal;
     move(this, seal, { x: tx, y: ty }, { dur: 480, ease: EASE.arrive, onComplete: () => {
@@ -354,7 +400,7 @@ export class DeskScene extends Phaser.Scene {
   }
 
   stamp(slipObj, delay = 0) {
-    const s = this.dom(slipObj.x + 70, slipObj.y + 40, `<div class="stamp">ORDERED</div>`);
+    const s = this.dom(slipObj.x + 70, slipObj.y + 40, `<div class="stamp">ORDERED</div>`, "fx");
     s.setAngle(-8).setAlpha(0);
     if (reducedMotion.on) return s.setAlpha(1);
     s.setScale(1.3).y -= 120;
@@ -426,7 +472,7 @@ export class DeskScene extends Phaser.Scene {
     this.hud(4, { seals: 0 });
     this.table.setBoats("lane");
     this.table.showWarning(true, { pulse: false });
-    this.dom(OX, OY, `<div style="width:1500px;height:944px;background:linear-gradient(90deg,rgba(20,18,16,.95) 58%,rgba(20,18,16,0))"></div>`);
+    this.dom(OX, OY, `<div style="width:1500px;height:944px;background:linear-gradient(90deg,rgba(20,18,16,.95) 58%,rgba(20,18,16,0))"></div>`, "fx");
     const c = this.campaign;
     const t = this.dom(150, 150, `<div class="title"><h1>Brass Ledger</h1><p>${this.words.TITLE.line}</p>
       <dl class="orient" data-orient>${this.words.ORIENT.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
@@ -533,14 +579,14 @@ export class DeskScene extends Phaser.Scene {
     this.table.setBoats("lane");
     this.table.showWarning(true, { pulse: false });
     if (month === "jan") this.table.setRing(this.ringAfter("dec"));
-    this.dom(OX, OY, `<div style="width:1840px;height:944px;background:rgba(20,18,16,.55)"></div>`);
+    this.dom(OX, OY, `<div style="width:1840px;height:944px;background:rgba(20,18,16,.55)"></div>`, "fx");
     const pick = () => this.run[month].incident ?? I.staffId;
     const sheet = this.dom(250, 110, "");
     let spent = false;
     const render = () => {
       sheet.node.innerHTML = `<article class="paper sheet signal" aria-label="${I.title}"><p class="lab">Signal · ${I.date} · from ${surname(I.from)}</p><h2>${I.title}</h2>
         <p class="body" style="margin-top:6px">${I.body}</p>${this.debate(I.council, I.options, I.staffId, pick())}
-        <div role="radiogroup" style="margin-top:10px">${I.options.map((o) => `<button class="opt ${pick() === o.id ? "sel" : ""}" data-pick="${o.id}" role="radio" aria-checked="${pick() === o.id}"><span class="r"></span><span><b>${o.name}</b><span class="s">${o.says}</span><span class="cost ${o.staff ? "free" : ""}">${o.staff ? "Staff answer · free" : "Uses 1 personal order"}</span></span></button>`).join("")}</div>
+        <div role="radiogroup" aria-label="Your answer: ${attr(I.title)}" style="margin-top:10px">${I.options.map((o) => `<button class="opt ${pick() === o.id ? "sel" : ""}" data-pick="${o.id}" role="radio" aria-checked="${pick() === o.id}"><span class="r"></span><span><b>${o.name}</b><span class="s">${o.says}</span><span class="cost ${o.staff ? "free" : ""}">${o.staff ? "Staff answer · free" : "Uses 1 personal order"}</span></span></button>`).join("")}</div>
         <div class="btns commit"><button class="b on" data-go>Confirm answer and go to ${name} orders</button><p class="commit-note">Your answer goes out when you continue. You can’t change it afterwards.</p></div></article>`;
       this.wireVoices(sheet.node, I.council, { x: 1176, w: 650 });
       for (const b of sheet.node.querySelectorAll("[data-pick]")) b.onclick = () => {
@@ -570,29 +616,47 @@ export class DeskScene extends Phaser.Scene {
   // ── side rooms ────────────────────────────────────────────────────────────
   // Staff room, ledger and settings open over the current chapter without resetting it.
   // They read only what has been committed so far (PROGRESS), never choices in progress.
-  openRoom(kind) {
+  // A room is a modal dialog: focus goes in, Tab and Shift-Tab stay in, everything behind it
+  // is inert (the canvas and every other desk element), Escape closes it, and focus goes
+  // back to whatever opened it. Settings re-renders by reopening and keeps the first opener.
+  openRoom(kind, focus = null) {
+    const opener = this.room?.opener ?? document.activeElement;
     this.closeRoom(false);
+    this.hideTip();
     const progress = PROGRESS[this.chapter] ?? 0;
-    const back = this.dom(0, 0, `<div class="room-back"></div>`);
+    const back = this.dom(0, 0, `<div class="room-back"></div>`, "fx");
     back.node.onclick = () => this.closeRoom();
     const body = { staff: () => this.staffHTML(progress), ledger: () => this.ledgerHTML(progress), settings: () => this.settingsHTML() }[kind]();
     const title = { staff: "Staff room", ledger: "The ledger", settings: "Settings" }[kind];
     const panel = this.dom(180, 96, `<section class="paper room room-${kind}" role="dialog" aria-label="${title}"><header><h2>${title}</h2><button class="b" data-close>Close <kbd>Esc</kbd></button></header>${body}</section>`);
-    this.room = { kind, back, panel, opener: document.activeElement };
+    const behind = [...this.game.domContainer.children, this.game.canvas].filter((n) => n !== back.node && n !== panel.node && n !== this.tipEl && !n.inert);
+    for (const n of behind) n.inert = true;
+    panel.node.querySelector("[role=dialog]").setAttribute("aria-modal", "true");
+    this.room = { kind, back, panel, opener, behind };
     const sheet = panel.node.querySelector(".room");
-    if (sheet.scrollHeight > sheet.clientHeight + 1) sheet.classList.add("dense");
+    if (!compact() && sheet.scrollHeight > sheet.clientHeight + 1) sheet.classList.add("dense");
     panel.node.querySelector("[data-close]").onclick = () => this.closeRoom();
     this.wireRoom(kind, panel.node);
-    move(this, panel, { alpha: [0, 1], y: [116, 96] }, { dur: T.ui });
-    panel.node.querySelector("[data-close]").focus({ preventScroll: true });
+    panel.node.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      const all = [...panel.node.querySelectorAll("button:not([disabled]), textarea, [href], [tabindex]:not([tabindex='-1'])")].filter((n) => n.offsetParent !== null && n.tabIndex >= 0);
+      const first = all[0], last = all.at(-1);
+      if (!first) return;
+      if (e.shiftKey && (document.activeElement === first || !panel.node.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (document.activeElement === last || !panel.node.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+    });
+    // From 0.01, not 0: Phaser hides a DOM element at alpha 0, which would drop the focus.
+    move(this, panel, { alpha: [0.01, 1], y: [116, 96] }, { dur: T.ui });
+    (focus && panel.node.querySelector(focus) || panel.node.querySelector("[data-close]")).focus({ preventScroll: true });
   }
 
   closeRoom(refocus = true) {
     if (!this.room) return;
-    const { back, panel, opener } = this.room;
+    const { back, panel, opener, behind } = this.room;
     this.room = null;
     this.drop(back); this.drop(panel);
-    if (refocus) opener?.focus?.({ preventScroll: true });
+    for (const n of behind) n.inert = false;
+    if (refocus && opener?.isConnected) opener.focus?.({ preventScroll: true });
   }
 
   staffHTML(progress) {
@@ -651,11 +715,12 @@ export class DeskScene extends Phaser.Scene {
       const line = orders(this.campaign, this.run, month).council[b.dataset.hear].line;
       this.drop(this.talkObj);
       this.talkObj = this.talk(b.dataset.hear, line, { delay: 0, w: 1000 });
+      this.talkObj.node.inert = false; // the room asked for this voice: it is read out over the room
     };
     if (kind !== "settings") return;
-    const reopen = () => { this.openRoom("settings"); };
-    for (const b of node.querySelectorAll("[data-speed]")) b.onclick = () => { prefs.typeRate = Number(b.dataset.speed); savePrefs(); reopen(); };
-    for (const b of node.querySelectorAll("[data-motion]")) b.onclick = () => { reducedMotion.on = b.dataset.motion === "reduced"; savePrefs(); reopen(); };
+    const reopen = (focus) => { this.openRoom("settings", focus); };
+    for (const b of node.querySelectorAll("[data-speed]")) b.onclick = () => { prefs.typeRate = Number(b.dataset.speed); savePrefs(); reopen(`[data-speed="${b.dataset.speed}"]`); };
+    for (const b of node.querySelectorAll("[data-motion]")) b.onclick = () => { reducedMotion.on = b.dataset.motion === "reduced"; savePrefs(); reopen(`[data-motion="${b.dataset.motion}"]`); };
     node.querySelector("[data-copy]").onclick = (e) => {
       const btn = e.currentTarget, text = `${this.campaign.seed} · ${this.campaign.D.name}`;
       navigator.clipboard?.writeText(text).then(() => { btn.textContent = "Copied"; }, () => { btn.textContent = "Select and copy the code"; });
@@ -718,7 +783,7 @@ export class DeskScene extends Phaser.Scene {
     const choices = () => { cfg = live(); return choicesHTML(); };
     const choicesHTML = () => `<article class="paper slip open" style="width:${Math.max(w, 780)}px" aria-label="${cfg.head}, choose an order"><span class="pin"></span><h3>${cfg.head} · your order</h3>
       <p class="will">${cfg.question}</p>${cfg.explain ? `<div class="row"><b>Why</b><span>${cfg.explain}</span></div>` : ""}${this.debate(cfg.council, cfg.options, cfg.staffId, get())}
-      <div role="radiogroup">${cfg.options.map((p) => `<button class="opt ${get() === p.id ? "sel" : ""}" data-opt="${p.id}" role="radio" aria-checked="${get() === p.id}">
+      <div role="radiogroup" aria-label="${attr(cfg.head)}: your order">${cfg.options.map((p) => `<button class="opt ${get() === p.id ? "sel" : ""}" data-opt="${p.id}" role="radio" aria-checked="${get() === p.id}">
       <span class="r"></span><span><b>${p.name}</b><span class="s">${p.says}</span><span class="opt-foot"><span class="cost ${p.staff ? "free" : ""}">${p.staff ? "Staff plan · free" : "Uses 1 personal order"}</span>${backers(p.id) ? `<span class="backed">Advised by ${backers(p.id)}</span>` : ""}</span></span></button>`).join("")}</div>
       <p class="why-note" style="font-size:16px;color:var(--red-ink);margin-top:8px" aria-live="polite"></p>
       <div class="btns"><button class="b on" data-done>Done</button></div></article>`;
@@ -945,10 +1010,10 @@ export class DeskScene extends Phaser.Scene {
       let body;
       if (H.clash || (show && w)) body = `<div class="row"><b>Clash</b><span>${H.clashText}</span></div>
         <p style="font-size:18px;font-weight:600;margin-top:14px">${w ? "You settled it:" : "Three ways out. Nothing changes until you pick."}</p>
-        <div role="radiogroup">${H.ways.map((x) => opt(x, w)).join("")}</div>`;
+        <div role="radiogroup" aria-label="${attr(H.head)}: settle the clash">${H.ways.map((x) => opt(x, w)).join("")}</div>`;
       else if (show) body = `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row"><b>Vote</b><span>${H.vote}</span></div>`;
       else if (H.shaky || w === "buy") body = `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row warnrow"><b>Vote</b><span>${H.vote}</span></div>
-        <div role="radiogroup" style="margin-top:8px">${opt({ id: "wait", name: "Let the vote run", says: `${surname("sato")} keeps lobbying. If the vote fails, ${H.head}’s navy stays in port in February.`, staff: true }, w ?? "wait")}${opt(H.secure, w)}</div>`;
+        <div role="radiogroup" aria-label="${attr(H.head)}: the vote" style="margin-top:8px">${opt({ id: "wait", name: "Let the vote run", says: `${surname("sato")} keeps lobbying. If the vote fails, ${H.head}’s navy stays in port in February.`, staff: true }, w ?? "wait")}${opt(H.secure, w)}</div>`;
       else body = `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row"><b>Vote</b><span>${H.vote}</span></div>`;
       slip.node.innerHTML = `<article class="paper slip" style="width:580px" aria-label="${H.head}"><span class="pin"></span><h3>${H.head} · ${w && w !== "back" ? "your order" : "staff plan"}</h3>
         <p class="will">Your staff ${H.staff[1]}</p>${body}</article>`;
@@ -1058,7 +1123,7 @@ export class DeskScene extends Phaser.Scene {
     const w = this.game.war;
     this.hud(6, { seals: 0 });
     this.table.setBoats("none");
-    this.dom(OX, OY, `<div style="width:1840px;height:944px;background:rgba(20,18,16,.6)"></div>`);
+    this.dom(OX, OY, `<div style="width:1840px;height:944px;background:rgba(20,18,16,.6)"></div>`, "fx");
     const last = w.results.at(-1), k = w.carry;
     const sheet = this.dom(160, 120, "");
     const render = () => {

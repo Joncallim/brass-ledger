@@ -21,7 +21,7 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .hud{width:1840px;height:72px;display:flex;align-items:center;gap:28px}
 .mark{display:flex;align-items:center;gap:12px;font-weight:600;font-size:20px}
 .month{display:flex;align-items:baseline;gap:10px}.month b{font-size:24px;font-weight:600}.month span{font-size:15px;color:var(--room-muted)}
-.track{display:flex;gap:6px}.track i{font-style:normal;width:30px;height:30px;border-radius:50%;border:2px solid #57514A;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--room-muted)}
+.track{display:flex;gap:6px}.track i{font-style:normal;width:30px;height:30px;border-radius:50%;border:2px solid #57514A;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--room-muted)}
 .track i.done{background:#57514A;color:var(--room-ink)}.track i.now{border-color:var(--brass);color:var(--room-ink)}
 .seals{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:17px;color:var(--room-muted)}
 .seal{width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#E6C277,#C99A3E 55%,#94701F);box-shadow:inset 0 0 0 4px #A87E2C,0 3px 8px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:var(--brass-ink);font-weight:600;font-size:15px}
@@ -30,7 +30,7 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .talk .face{width:170px;height:180px;border-radius:4px;background-size:cover;background-position:center 15%;flex:none}
 .talk .who{font-size:21px;font-weight:600}.talk .who .rank{color:#E4BE6A;font-weight:500}
 /* Officer names are their own type everywhere: sans, brass, rank lighter than the name. */
-.officer{font-family:'IBM Plex Sans',sans-serif;font-weight:600;color:var(--brass-deep);white-space:nowrap;font-size:.92em}
+.officer{font-family:'IBM Plex Sans',sans-serif;font-weight:600;color:var(--brass-deep);white-space:nowrap;font-size:max(.92em,14px)}
 .officer .rank{font-weight:400}
 .talk .officer{color:#E4BE6A;font-size:1em}
 .attrib{font-family:'IBM Plex Sans',sans-serif;font-size:16px;color:var(--ink2)}.talk .post{font-size:18px;color:var(--room-muted);margin-left:10px;font-weight:400}
@@ -50,16 +50,16 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .chips{display:flex;gap:10px;margin-left:12px}
 .chip{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 9px;border:1px solid #3A3530;border-radius:6px;background:#1E1B18;cursor:help;line-height:17px}
 .chip i{width:9px;height:9px;border-radius:50%;flex:none;background:#7FB08A}.chip.tone-warn i{background:#E2B04A}.chip.tone-bad i{background:#E06A5F}
-.chip span{font-size:17px;font-weight:500;white-space:nowrap}.chip small{display:block;font-size:13px;color:var(--room-muted);font-weight:400}
+.chip span{font-size:17px;font-weight:500;white-space:nowrap}.chip small{display:block;font-size:14px;color:var(--room-muted);font-weight:400}
 /* The hard call: the two strongest opposing views on a decision, side by side. */
 .debate{margin-top:14px;padding-top:12px;border-top:1px solid #DCD4C3}
 .debate .sides{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
 .side{background:#EFE8D8;border-radius:6px;padding:12px 12px 10px;display:flex;flex-direction:column}
 .debate.agree .side{margin-top:6px}
 .side-head{display:flex;gap:10px;align-items:center}.side-head .av{width:44px;height:44px}
-.side .focus{display:block;font-size:13px;line-height:17px;color:var(--ink2)}
+.side .focus{display:block;font-size:14px;line-height:17px;color:var(--ink2)}
 .side .wants{font-size:16px;line-height:22px;margin-top:8px}.side .also{font-size:14px;color:var(--ink2)}
-.side .case{font-size:15px;line-height:21px;margin-top:6px}.side .case b{display:block;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--brass-deep)}
+.side .case{font-size:15px;line-height:21px;margin-top:6px}.side .case b{display:block;font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--brass-deep)}
 .side .case.risk b{color:var(--red-ink)}
 .side .b.sm{height:34px;padding:0 12px;font-size:14px;margin-top:auto;align-self:flex-start;margin-top:10px}
 .row.warnrow span{color:var(--red-ink)}
@@ -67,7 +67,7 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .debate .other{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:15px;line-height:21px}.debate .other .b.sm{margin:0 0 0 auto;flex:none}
 .hud.compact .mark{font-size:0;gap:0}.hud.compact{gap:16px}.hud.compact .month span{font-size:14px;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
 /* The top bar never spills: the orders label shortens, the seals shrink a little. */
-.hud.compact .seals{gap:8px;white-space:nowrap}.hud.compact .seals .seal{width:40px;height:40px;font-size:13px}.hud .chips{flex:none}.hud .month{flex:none}
+.hud.compact .seals{gap:8px;white-space:nowrap}.hud.compact .seals .seal{width:40px;height:40px;font-size:14px}.hud .chips{flex:none}.hud .month{flex:none}
 /* Title: campaign code and the difficulty picker. */
 .title .campaign-code{font-size:18px;color:var(--room-muted);margin-top:14px}.campaign-code b{color:var(--brass);letter-spacing:.08em}
 .title .setup-q{font-size:22px;margin-top:30px}
@@ -83,7 +83,7 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .room{width:1560px;max-height:960px;overflow-y:auto;padding:24px 34px 30px;box-sizing:border-box}
 .room header{display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #DCD4C3;padding-bottom:12px}
 .room h2{font-family:'Newsreader',serif;font-weight:400;font-size:40px;line-height:46px;margin:0}
-.room kbd{font:600 12px 'IBM Plex Sans',sans-serif;border:1px solid #B8B0A0;border-radius:4px;padding:1px 5px;margin-left:6px;color:var(--ink2)}
+.room kbd{font:600 14px 'IBM Plex Sans',sans-serif;border:1px solid #B8B0A0;border-radius:4px;padding:1px 5px;margin-left:6px;color:var(--ink2)}
 .room-intro{font-size:18px;line-height:26px;color:var(--ink2);margin-top:12px!important;max-width:980px}
 .staff-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px}
 .officer-card-full{background:#EFE8D8;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
@@ -91,12 +91,12 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .ofc-name{font-size:20px;line-height:26px;font-weight:600}.ofc-name .rank{font-weight:400;color:var(--brass-deep)}
 .ofc-post{font-size:14px;color:var(--ink2)}
 .officer-card-full dl{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;margin:0;font-size:15px;line-height:21px}
-.officer-card-full dt{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink2);padding-top:2px}.officer-card-full dd{margin:0}
+.officer-card-full dt{font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink2);padding-top:2px}.officer-card-full dd{margin:0}
 .officer-card-full .chip{background:#26221E;border-color:#3A3530;color:var(--room-ink);display:inline-flex}
 .ofc-now{border-top:1px solid #D7CDB8;padding-top:8px;display:flex;flex-direction:column;gap:4px}
 .wants-big{font-size:18px;line-height:24px;font-weight:600}
-.tag{font-size:12px;font-weight:600;padding:1px 7px;border-radius:4px;background:var(--green-tint);color:var(--green-ink);white-space:nowrap}.tag.differs{background:#EADBB8;color:var(--brass-deep)}
-.ofc-now .case{font-size:15px;line-height:21px}.ofc-now .case b{display:block;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--brass-deep)}.ofc-now .case.risk b{color:var(--red-ink)}
+.tag{font-size:14px;font-weight:600;padding:1px 7px;border-radius:4px;background:var(--green-tint);color:var(--green-ink);white-space:nowrap}.tag.differs{background:#EADBB8;color:var(--brass-deep)}
+.ofc-now .case{font-size:15px;line-height:21px}.ofc-now .case b{display:block;font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--brass-deep)}.ofc-now .case.risk b{color:var(--red-ink)}
 .ofc-now .b.sm{align-self:flex-start;margin-top:4px}
 .ofc-record{font-size:15px;line-height:21px;border-top:1px solid #D7CDB8;padding-top:8px}
 .ofc-role{font-size:14px;line-height:20px;color:var(--ink2);margin-top:auto!important}
@@ -106,7 +106,7 @@ html,body{margin:0;height:100%;background:#0B0A09;overflow:hidden}
 .entry-title{font-family:'Newsreader',serif;font-size:24px;line-height:30px}
 .entry-line{font-size:17px;line-height:25px}
 .after-row{display:flex;align-items:center;gap:10px;margin-top:6px}.after-row .chips.mini{margin:0}
-.after{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink2)}
+.after{font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink2)}
 .chips.mini{flex-wrap:wrap;margin:6px 0 0;gap:6px}.chips.mini .chip{background:#26221E;color:var(--room-ink)}
 .ledger-cols aside{background:#EFE8D8;border-radius:8px;padding:16px 18px;align-self:start}
 .knows{margin:6px 0 0;padding-left:18px;font-size:16px;line-height:23px}
@@ -135,7 +135,7 @@ details.more[open] summary{margin-bottom:4px}
 .score{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .score li{display:flex;gap:10px;align-items:center;background:#EFE8D8;border-radius:6px;padding:5px 12px;font-size:15px;line-height:20px}
 .score li i{font-style:normal;font-weight:700;font-size:18px}.score li.ok i{color:var(--green-ink)}.score li.bad i{color:var(--red-ink)}
-.score li b{display:block;font-size:13px;letter-spacing:.03em;color:var(--ink2)}
+.score li b{display:block;font-size:14px;letter-spacing:.03em;color:var(--ink2)}
 /* An incident signal: one sheet with the situation, the hard call and the answers. */
 .sheet.signal{width:760px;padding:26px 34px 22px}.sheet.signal h2{font-size:34px;line-height:40px}
 .sheet.tall{max-height:950px;overflow-y:auto;padding:26px 34px 24px}
@@ -146,7 +146,7 @@ details.more[open] summary{margin-bottom:4px}
 .profile{width:440px;background:#F7F2E6;color:var(--ink);border-radius:6px;box-shadow:0 18px 44px rgba(0,0,0,.55);padding:16px 20px 18px;border-top:4px solid #1D5C6A;font-family:'IBM Plex Sans',sans-serif}
 .profile.officer-card{display:grid;grid-template-columns:84px 1fr;gap:16px;border-top-color:var(--brass)}
 .pf-face{width:84px;height:96px;border-radius:4px;background-size:cover;background-position:center 15%}
-.pf-tag{font-size:13px;line-height:18px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+.pf-tag{font-size:14px;line-height:18px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
 .pf-title{font-family:'Newsreader',serif;font-size:27px;line-height:32px;margin:2px 0 6px}
 .pf-title .rank{font-family:'IBM Plex Sans',sans-serif;font-size:17px;color:var(--brass-deep)}
 .pf-body{font-size:16px;line-height:23px}
@@ -170,7 +170,7 @@ details.more[open] summary{margin-bottom:4px}
 .advice.agree{font-size:16px;color:var(--ink2);margin-top:12px}.more-advice{font-size:15px;color:var(--ink2);margin:0}
 /* Order slips: the face is compact so two fit in a column; an open slip never runs off the table. */
 .slip .will{font-size:23px;line-height:30px}.slip .row{font-size:17px;line-height:23px;margin-top:8px}
-.set-row.log{display:block}.set-row.log[hidden]{display:none}.logtable{width:100%;border-collapse:collapse;font-size:15px;margin-bottom:10px}.logtable th,.logtable td{text-align:left;padding:4px 8px;border-bottom:1px solid #DCD4C3}.set-row.log textarea{width:100%;box-sizing:border-box;font:13px/18px 'IBM Plex Mono',monospace}
+.set-row.log{display:block}.set-row.log[hidden]{display:none}.logtable{width:100%;border-collapse:collapse;font-size:15px;margin-bottom:10px}.logtable th,.logtable td{text-align:left;padding:4px 8px;border-bottom:1px solid #DCD4C3}.set-row.log textarea{width:100%;box-sizing:border-box;font:14px/19px 'IBM Plex Mono',monospace}
 .slip.open{max-height:960px;overflow-y:auto;box-sizing:border-box}.slip.open>.btns{position:sticky;bottom:-24px;background:var(--sheet);padding:12px 0 6px;margin-bottom:-6px;box-shadow:0 -10px 14px -10px rgba(0,0,0,.25)}.slip.open .opt .s{font-size:16px;line-height:22px}
 /* February: three routes side by side along the bottom edge. */
 .route{padding:22px 24px 20px;box-sizing:border-box}.route h2{font-size:28px;line-height:33px}.route .body{font-size:18px;line-height:25px;margin-top:6px}
@@ -221,11 +221,11 @@ details.more[open] summary{margin-bottom:4px}
 .voice-btn{display:flex;gap:10px;align-items:center;text-align:left;background:none;border:1.5px solid transparent;border-radius:6px;padding:6px;color:var(--ink)}
 .voice-btn:hover{border-color:#D4CCBC}
 .vname{display:block;font-size:15px;line-height:20px}
-.stance{display:inline-block;font-size:13px;font-weight:600;padding:1px 7px;border-radius:4px;margin-top:2px}
+.stance{display:inline-block;font-size:14px;font-weight:600;padding:1px 7px;border-radius:4px;margin-top:2px}
 .stance.backs{background:var(--green-tint);color:var(--green-ink)}.stance.differs{background:#EADBB8;color:var(--brass-deep)}
 .av.sm{width:24px;height:24px;display:inline-block;vertical-align:middle;margin-left:4px;border:2px solid var(--sheet)}
 .opt-foot{display:flex;align-items:center;gap:10px;margin-top:5px}.opt-foot .cost{margin-top:0}
-.backed{font-size:13px;color:var(--ink2);display:flex;align-items:center}
+.backed{font-size:14px;color:var(--ink2);display:flex;align-items:center}
 .sheet.dense .dt{font-size:15.5px;line-height:21px;padding:6px 0}.sheet.dense .body{font-size:18px;line-height:25px}.sheet.dense .why-line{font-size:16.5px;line-height:23px}.sheet.dense h2{margin-bottom:4px}
 .sheet.night.tight{width:960px!important}.sheet.night.dense.tighter .body{font-size:17px;line-height:22px}.sheet.night.dense.tighter .beat{padding:3px 0}.sheet.tighter .dt{font-size:15px;line-height:20px;padding:4px 0}.sheet.tight .next{display:none}.sheet.tight .delta{margin-top:2px}
 .room.dense .ledger-list li{padding:5px 0}.room.dense .entry-title{font-size:20px;line-height:25px}.room.dense .entry-line{font-size:15.5px;line-height:21px}.room.dense .knows{font-size:15px;line-height:21px}
@@ -233,6 +233,33 @@ details.more[open] summary{margin-bottom:4px}
 .dt{display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:16px;padding:8px 0;border-top:1px solid #DCD4C3;font-size:17px;line-height:24px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .help{font-size:14px;color:#8F887B}
+/* Compact layout (see src/main.js): the chart fits the space on the left; the DOM layer is a
+   column on the right at 1:1, where every sheet, slip and voice reflows to the column's width
+   and the column scrolls on its own. Decorative and chart-anchored pieces (.fx) stay hidden. */
+body.compact{--col:clamp(440px,46vw,640px)}
+body.compact #stage{width:calc(100vw - var(--col))}
+body.compact #stage>div{position:fixed!important;top:0!important;right:0!important;left:auto!important;width:var(--col)!important;height:100vh!important;margin:0!important;transform:none!important;overflow-x:hidden!important;overflow-y:auto!important;pointer-events:auto!important;background:#141210;display:flex!important;flex-direction:column;gap:12px;padding:12px 14px 40px;box-sizing:border-box;border-left:1px solid var(--panel-line)}
+body.compact #stage>div>.ui{position:relative!important;transform:none!important;flex:none;max-width:100%;opacity:1!important}
+body.compact #stage>div>.ui.fx{display:none!important}
+body.compact #stage>div>.ui>*{width:auto!important;max-width:100%;box-sizing:border-box}
+body.compact #stage>div>.ui:has(>.hud){order:-1}
+body.compact .hud{height:auto;flex-wrap:wrap;gap:8px 16px}
+body.compact .hud .seals{margin-left:0}
+body.compact .hud .chips{flex:1 1 100%;flex-wrap:wrap}
+body.compact .talk{min-height:0;gap:14px;padding:14px 16px 18px 14px}
+body.compact .talk .face{width:72px;height:78px}
+body.compact .talk .hint{display:none}
+body.compact .sheet,body.compact .slip{padding:20px 20px 18px}
+body.compact .slip.open{max-height:none}
+body.compact .title h1{font-size:56px;line-height:60px}
+body.compact .title p{font-size:22px;line-height:31px}
+body.compact .title .orient{grid-template-columns:1fr;gap:2px 0}
+body.compact .title [data-start],body.compact .levels{flex-wrap:wrap}
+body.compact #stage>div>.ui:has(>section.room){position:fixed!important;inset:0;z-index:50!important;overflow-y:auto;background:rgba(12,10,9,.85);padding:12px}
+body.compact .room{max-height:none}
+body.compact .staff-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+body.compact .ledger-cols{grid-template-columns:1fr}
+body.compact #stage>div>.ui.tip{position:fixed!important;z-index:60!important;max-width:min(440px,90vw)}
 </style>
 </head>
 <body>
