@@ -154,10 +154,15 @@ Record for each player:
 - **Adviser obedience.** For each officer, how often the player took their advice (the
   staff room's "taken their advice N of M"). Also record how often they took the staff plan
   and how often they rested the battalion. Compare these with the visible-information
-  policies in RULES-REVIEW.md. A player who always rests (which is also what following
-  Okafor amounts to) is choosing the trade with the most full successes and the most lost
-  stations. That is not a dominant strategy: note whether they knew they were risking the
-  station.
+  policies in RULES-REVIEW.md. Those compare a handful of fixed ways of playing over 150
+  seeds, not every way.
+  - Among them, resting both months gives the most full successes (about half on Shifting
+    and Volatile). It loses the station about twice as often as the staff plan (13% against
+    7% on Shifting), but less often than following Halden (16%).
+  - Following Okafor rests once, not twice, and reaches the same rates in that sample.
+
+  Don't treat any of these as the right answer. Note whether the player knew what they
+  were risking with the choices they made.
 - **Window size and zoom**, and whether they used the keyboard. Note any word the player
   found hard to read.
 

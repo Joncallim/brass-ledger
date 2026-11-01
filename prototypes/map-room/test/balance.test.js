@@ -6,6 +6,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { POLICIES, decisionDiversity, playPolicy, report } from "../scripts/balance.mjs";
 import { makeCampaign } from "../src/story/campaign.js";
+import { needsApproval, simulate } from "../src/story/play.js";
 import { latticeOrders, orders } from "../src/fixture.js";
 
 const r = report(100);
@@ -56,16 +57,55 @@ test("decision diversity counts every tied best plan, with overlapping ties", ()
   assert.equal(all.distinctBestPlans, 3);
 });
 
-// Review 9: a policy named after an officer plays that officer's actual advice on each slip,
-// read as the plan stood when the month was decided (within the personal orders it has).
-test("each 'follow' policy plays what that officer advises", () => {
-  for (const who of ["okafor", "briggs", "sato", "halden"]) for (const d of ["shifting", "volatile"]) for (let i = 0; i < 15; i++) {
-    const c = makeCampaign(`F${i}`, d), run = playPolicy(c, POLICIES[`follow ${who[0].toUpperCase()}${who.slice(1)}`]);
-    const before = { dec: { beacon: "quiet", lattice: "boats", incident: null }, jan: { beacon: "quiet", lattice: "sarn", way: null, incident: null }, feb: {} };
-    const decB = orders(c, before, "dec").council[who]?.prefers;
-    if (decB) assert.equal(run.dec.beacon, decB, `${who} ${d} F${i}: December's station order`);
-    const decL = latticeOrders(c, { ...before, dec: { ...before.dec, beacon: run.dec.beacon } }, "dec").council[who]?.prefers;
-    const used = run.dec.beacon !== "quiet" ? 1 : 0;
-    if (decL && (decL === "boats" || used < (c.seals?.dec ?? 2))) assert.equal(run.dec.lattice, decL, `${who} ${d} F${i}: December's Lattice question`);
+// Review 9: a policy named after an officer plays that officer's advice on each slip, read
+// again after every choice is applied, within the month's personal orders. Checked by replaying
+// the run slip by slip and asking the desk (orders / latticeOrders) directly at each step.
+const STAFF = { beacon: "quiet", lattice: { dec: "boats", jan: "sarn" } };
+function replay(c, who, run) {
+  const partial = { dec: { beacon: "quiet", lattice: "boats", incident: null }, jan: { beacon: "quiet", lattice: "sarn", way: null, incident: null }, feb: {} }, steps = [];
+  for (const month of ["dec", "jan"]) {
+    const limit = c.seals?.[month] ?? 2;
+    let used = 0;
+    for (const slot of ["beacon", "lattice"]) {
+      const staff = slot === "beacon" ? STAFF.beacon : STAFF.lattice[month];
+      const advice = (slot === "beacon" ? orders : latticeOrders)(c, partial, month).council[who]?.prefers ?? staff;
+      const expect = advice !== staff && used < limit ? advice : staff;
+      steps.push({ month, slot, advice, expect, got: run[month][slot], used, limit });
+      if (expect !== staff) used++;
+      partial[month][slot] = expect;
+      // The shared daylight rule: a move that needs the host's answer in time trades the boats if
+      // an order is left, or falls back to the quiet move and returns its order.
+      if (month === "jan" && slot === "beacon" && expect === "show" && needsApproval(c, simulate(c, partial).janOrders, "show")) {
+        if (used < limit) { partial.jan.way = "buy"; used++; }
+        else { partial.jan.beacon = "quiet"; used--; steps.at(-1).expect = "quiet"; }
+        steps.push({ month, slot: "way", advice: "buy", expect: partial.jan.way, got: run.jan.way, used, limit });
+      }
+    }
   }
+  return steps;
+}
+const NAMES = { okafor: "follow Okafor", briggs: "follow Briggs", sato: "follow Sato", halden: "follow Halden" };
+
+test("each 'follow' policy plays that officer's advice as it stands after every choice, both months", () => {
+  let jan = 0, limited = 0;
+  for (const who of Object.keys(NAMES)) for (const d of ["shifting", "volatile"]) for (let i = 0; i < 20; i++) for (const tight of [false, true]) {
+    const c = makeCampaign(`B${i}`, d);
+    if (tight) c.seals = { dec: 1, jan: 1 }; // one order a month: the budget binds
+    const run = playPolicy(c, POLICIES[NAMES[who]]);
+    for (const st of replay(c, who, run)) {
+      assert.equal(st.got, st.expect, `${who} ${d} B${i}${tight ? " (one order)" : ""}: ${st.month} ${st.slot} is ${st.got}, advice ${st.advice} with ${st.used} of ${st.limit} orders used`);
+      if (st.month === "jan") jan++;
+      if (st.advice !== st.expect) limited++;
+    }
+  }
+  assert.ok(jan > 0 && limited > 0, "the budget limit was never exercised");
+});
+
+test("B3 Shifting: after Hold, following Okafor keeps Lattice on Sarn (his advice then)", () => {
+  const c = makeCampaign("B3", "shifting"), trace = [], run = playPolicy(c, POLICIES["follow Okafor"], trace);
+  assert.equal(run.jan.beacon, "hold");
+  const after = latticeOrders(c, { ...run, jan: { ...run.jan, lattice: "sarn" } }, "jan").council.okafor.prefers;
+  assert.equal(after, "sarn");
+  assert.equal(run.jan.lattice, "sarn");
+  assert.deepEqual(trace.find((t) => t.month === "jan" && t.slot === "lattice"), { month: "jan", slot: "lattice", advised: "sarn", applied: "sarn", used: 1, limit: 2 });
 });

@@ -141,35 +141,50 @@ const majority = (council, staffId) => {
   for (const p of Object.values(council)) n[p.prefers] = (n[p.prefers] ?? 0) + 1;
   return Object.entries(n).sort((a, b) => b[1] - a[1] || (a[0] === staffId ? -1 : b[0] === staffId ? 1 : 0))[0][0];
 };
-// Following an officer means taking what that officer actually advises on each slip, read
-// from the desk as the plan stands (an officer with no view on a slip leaves the staff plan).
-// "Rest both months" is a fixed plan, not anyone's advice: Okafor advises rest only when the
-// plan leaves the battalion unfit (review 9).
-const follow = (who) => (c, run, month) => ({
-  beacon: orders(c, run, month).council[who]?.prefers,
-  lattice: latticeOrders(c, run, month).council[who]?.prefers,
+// Following an officer means taking what that officer advises on each slip, read again after
+// every choice is applied (advice depends on the whole plan: after Hold, Okafor no longer
+// wants the sailing date). An officer with no view on a slip leaves the staff plan.
+// "Rest both months" is a fixed plan, not anyone's advice.
+//
+// What every policy shares: incident answers are the staff answer; February is the cautious
+// route from the forecast (below); a January daylight move that needs the host's approval in
+// time gets it by trading the boats if an order is left, or falls back to the quiet move.
+const follow = (who) => ({
+  beacon: (c, run, month) => orders(c, run, month).council[who]?.prefers,
+  lattice: (c, run, month) => latticeOrders(c, run, month).council[who]?.prefers,
 });
 export const POLICIES = {
-  "staff plan": () => ({}),
-  "rest both months": (c, run, month) => ({ beacon: month === "dec" ? "rest" : "hold" }),
-  "majority of the staff": (c, run, month) => ({ beacon: majority(orders(c, run, month).council, "quiet"), lattice: majority(latticeOrders(c, run, month).council, month === "dec" ? "boats" : "sarn") }),
+  "staff plan": {},
+  "rest both months": { beacon: (c, run, month) => (month === "dec" ? "rest" : "hold") },
+  "majority of the staff": {
+    beacon: (c, run, month) => majority(orders(c, run, month).council, "quiet"),
+    lattice: (c, run, month) => majority(latticeOrders(c, run, month).council, month === "dec" ? "boats" : "sarn"),
+  },
   "follow Okafor": follow("okafor"),
   "follow Briggs": follow("briggs"),
   "follow Sato": follow("sato"),
   "follow Halden": follow("halden"),
 };
-export function playPolicy(c, policy) {
-  const run = { dec: { beacon: "quiet", lattice: "boats", incident: null }, jan: { beacon: "quiet", lattice: "sarn", way: null, incident: null }, feb: { route: "quiet" } };
+export const STAFF_RUN = () => ({ dec: { beacon: "quiet", lattice: "boats", incident: null }, jan: { beacon: "quiet", lattice: "sarn", way: null, incident: null }, feb: { route: "quiet" } });
+const STAFF_SLOT = { beacon: "quiet", lattice: { dec: "boats", jan: "sarn" } };
+// Plays a policy slip by slip, in desk order. `trace` records, for each slip, what the policy
+// advised on the plan as it then stood and what was applied (the tests check it).
+export function playPolicy(c, policy, trace = null) {
+  const run = STAFF_RUN();
   for (const month of ["dec", "jan"]) {
-    const want = policy(c, run, month), limit = c.seals?.[month] ?? 2;
+    const limit = c.seals?.[month] ?? 2;
     let used = 0;
     for (const slot of ["beacon", "lattice"]) {
-      const v = want[slot], staff = slot === "beacon" ? "quiet" : month === "dec" ? "boats" : "sarn";
-      if (v && v !== staff && used < limit) { run[month][slot] = v; used++; }
-    }
-    // A January daylight move that needs the host's answer in time gets it by trading the boats.
-    if (month === "jan" && run.jan.beacon === "show" && needsApproval(c, simulate(c, run).janOrders, "show")) {
-      if (used < limit) run.jan.way = "buy"; else run.jan.beacon = "quiet";
+      const staff = slot === "beacon" ? STAFF_SLOT.beacon : STAFF_SLOT.lattice[month];
+      const advised = policy[slot]?.(c, run, month) ?? staff;
+      const applied = advised !== staff && used < limit ? advised : staff;
+      if (applied !== staff) { run[month][slot] = applied; used++; }
+      trace?.push({ month, slot, advised, applied, used, limit });
+      // A January daylight move that needs the host's answer in time gets it by trading the boats.
+      if (month === "jan" && slot === "beacon" && run.jan.beacon === "show" && needsApproval(c, simulate(c, run).janOrders, "show")) {
+        if (used < limit) { run.jan.way = "buy"; used++; } else { run.jan.beacon = "quiet"; used--; } // the order comes back
+        trace?.push({ month, slot: "way", advised: "buy", applied: run.jan.way, used, limit });
+      }
     }
   }
   run.feb.route = cautiousRoute(c, run);

@@ -86,14 +86,17 @@ apart from the omniscient measure above:
 - follow the staff plan;
 - rest both months (a fixed plan);
 - follow the majority;
-- follow each officer's actual advice.
+- follow each officer's advice, read again after every choice.
 
-Every policy picks the cautious February route from the forecast.
+They share the rest of the handling: staff answers to incidents, the month's personal-order
+limit, the trade of the boats for a daylight move that needs approval, and the cautious
+February route from the forecast.
 
 - Over 150 seeds, resting both months wins 100% of Steady, 53% of Shifting and 54% of
   Volatile campaigns, matching the best fixed omniscient plan.
-- Following Okafor's actual advice gives the same results. It is conditional, but from the
-  staff plan it always calls for rest.
+- Following Okafor gets the same rates with different choices. He rests the battalion
+  once: in December (93 of 150 Shifting seeds), or in January with Hold. In this sample
+  the grades match rest-both-months seed by seed; the plans never do.
 - Following the staff plan never wins outright.
 
 No rule was changed in response. Review 9 below shows what each of these gives up.
@@ -110,8 +113,11 @@ Full success alone overstates "rest both months". Over 150 seeds:
 | Staff plan, Volatile | 0% | 94% | 6% | 41% | 100% |
 
 - **Resting** buys a fit battalion, and with it most full successes. It also loses the
-  station about twice as often, because Beacon goes without its December and January
+  station about twice as often as the staff plan, because Beacon goes without its
   reinforcement.
+- **It is not the riskiest policy measured for the station.** Following Halden loses it
+  more often: 16% on Shifting and 21% on Volatile. Following Briggs loses it least (0%),
+  but nearly always ends with the battalion unfit.
 - **The staff plan** almost never loses the station. It ends in costly success, with the
   battalion worn out.
 

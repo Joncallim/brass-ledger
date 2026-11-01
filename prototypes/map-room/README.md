@@ -557,25 +557,40 @@ in the scenario and open the same profiles.
   - **Policies that see only what the player sees** are scored separately from the
     omniscient balance (`npm run balance`). Over 150 seeds:
 
-    Full success:
+    What every policy shares:
+    - each slip is decided in desk order, and advice is read again after every choice (the
+      runner once read both of a month's slips first, so after Hold it still asked for the
+      sailing date);
+    - the month's personal orders limit what is applied;
+    - incident answers are the staff answer;
+    - a January daylight move that needs the host's answer trades the boats if an order is
+      left, or falls back to the quiet move;
+    - February is the cautious route from the forecast (best worst case, then best average).
 
-    | Policy | Steady | Shifting | Volatile |
-    | --- | --- | --- | --- |
-    | Rest the battalion both months (a fixed plan) | 100% | 53% | 54% |
-    | Follow Okafor's actual advice | 100% | 53% | 54% |
-    | Follow the staff plan | 0% | 0% | 0% |
-    | Follow the majority | 0% | 3% | 5% |
-    | Follow Briggs | 0% | 2% | 5% |
-    | Follow Sato | 0% | 0% | 0% |
-    | Follow Halden | 6% | 1% | 1% |
+    Full success, and station lost:
 
-    - Resting both months matches the best fixed omniscient plan's rate of full success.
-      That is not the whole picture: see review 9, below.
-    - Following Okafor plays out exactly like resting both months. His advice is
-      conditional, but starting from the staff plan the battalion is always heading for
-      unfit, so he always advises rest.
-    - Corrected after review 9: an earlier version of this table labelled the fixed rest
-      plan "Okafor".
+    | Policy | Steady | Shifting | Volatile | Station lost, Shifting / Volatile |
+    | --- | --- | --- | --- | --- |
+    | Rest the battalion both months (a fixed plan, two orders) | 100% | 53% | 54% | 13% / 14% |
+    | Follow Okafor's advice | 100% | 53% | 54% | 13% / 14% |
+    | Follow the staff plan | 0% | 0% | 0% | 7% / 6% |
+    | Follow the majority | 0% | 4% | 5% | 7% / 6% |
+    | Follow Briggs | 0% | 1% | 3% | 0% / 0% |
+    | Follow Sato | 0% | 0% | 0% | 7% / 6% |
+    | Follow Halden | 6% | 1% | 1% | 16% / 21% |
+
+    - **Resting both months** matches the best fixed omniscient plan's rate of full
+      success. That is not the whole picture: see review 9, below.
+    - **Following Okafor is not the same plan.** He advises rest when the plan leaves the
+      battalion unfit, and after one rest it doesn't, so he rests exactly once:
+      - December rest, then January quiet: 93 of 150 Shifting seeds and 86 of Volatile;
+      - December quiet, then January Hold: the rest.
+
+      It never plays rest-both-months, and it spends one order where that spends two. In
+      this 150-seed sample its grades happen to match rest-both-months on every seed, so the
+      rates are equal. The choices are not.
+    - Corrected after review 9: an earlier version labelled the fixed rest plan "Okafor",
+      and then said following him "always advises rest".
   - **An independent oracle** (`test/oracle.test.js`) is written from the stated rules,
     not from the resolver. It covers:
     - the warning and defence tables;
