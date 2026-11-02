@@ -203,3 +203,40 @@ test("undo restores the words, refits and every slot included", () => {
     }
   }
 });
+
+// Playtest 6: an officer never advises a change without a reason in their own terms, never
+// warns about a fresh battalion, and never reassures beside a forecast that loses the station.
+import { forecast } from "../src/story/play.js";
+test("advice to change names a cost in the officer's terms; otherwise they don't object", () => {
+  for (const { c, run, month } of walks()) for (const O of [story.orders(c, run, month), story.latticeOrders(c, run, month)]) {
+    for (const [who, p] of Object.entries(O.council)) for (const [id, t] of Object.entries(p.risks)) {
+      assert.equal(p.objects[id], !/^Nothing /.test(strip(t)), `${who} on ${id}: ${strip(t)}`);
+    }
+  }
+});
+
+test("Okafor only warns about a battalion heading for tired or worse", () => {
+  for (const d of ["steady", "shifting", "volatile"]) for (let i = 0; i < 30; i++) for (const f0 of [null, 0]) {
+    const c = makeCampaign(`O${i}`, d); if (f0 !== null) c.fatigue0 = f0;
+    const run = { dec: { beacon: "quiet", lattice: "boats", incident: null }, jan: {}, feb: {} };
+    const ok = story.orders(c, run, "dec").council.okafor, duty = at(c, run, "dec", "beacon", "quiet").s.fatigue;
+    if (duty <= 100) assert.doesNotMatch(strip(ok.line), /Not two|unfit/, strip(ok.line));
+  }
+});
+
+test("a February voice never reassures where the forecast loses the station", () => {
+  const WHY = { defences: /short of what holds it/, warning: /no warning/, fit: /unfit at fatigue/, strength: /under strength/ };
+  let lost = 0;
+  for (const { c, run } of walks()) {
+    const r = { ...run, feb: {} }, F = story.february(c, r), fc = forecast(c, r);
+    for (const rt of fc.routes) {
+      const v = strip(F.routes.find((x) => x.id === rt.route).voice[1]), falls = rt.cases.filter((h) => h.r.code === "lost");
+      if (!falls.length) { assert.doesNotMatch(v, /we lose/, v); continue; }
+      lost++;
+      assert.match(v, /we lose/, `${rt.route}: ${v}`);
+      assert.doesNotMatch(v, /we hold alone|they’ll hold|inside a day/, v);
+      for (const k of new Set(falls.flatMap((h) => h.r.failed.map((x) => x.key)))) assert.match(v, WHY[k], `${rt.route} misses ${k}: ${v}`);
+    }
+  }
+  assert.ok(lost > 0);
+});

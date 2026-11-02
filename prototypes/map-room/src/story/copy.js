@@ -206,7 +206,7 @@ function build(W) {
       okafor: tired
         ? pos("rest", `Fatigue ${s.fatigue}. Another month on the headland takes them to ${duty}. Past ${FT.unfit} they’re unfit: they can’t reinforce ${B} in time to matter. Give me ${DEC.rest} to 31 December.`,
           `${BN} fit in February`, `${BN} reaches fatigue ${duty} by New Year.`)
-        : pos("quiet", `Fatigue ${s.fatigue}, ${duty} by New Year on this plan. They have one more month in them. Not two.`, `using ${BN} while it is fit`, "we rest a battalion that can still work."),
+        : pos("quiet", duty > FT.tired ? `Fatigue ${s.fatigue}, ${duty} by New Year on this plan. They have one more month in them. Not two.` : `Fatigue ${s.fatigue}, ${duty} by New Year on this plan. They’re fresh: use them.`, `using ${BN} while it is fit`, "we rest a battalion that can still work."),
       sato: solid
         ? pos("show", `${v.for} of ${FIXED.ministers} ministers are with us, and the defence minister ${c.minister === "hawk" ? "wants us seen" : "is content"}. A frigate in daylight costs us phone calls, not the vote.`,
           `${M} seeing us defend its coast`, `${M}’s ministers wonder whether we would fight for them.`)
@@ -294,10 +294,16 @@ function build(W) {
   // one for the current choice; the hard call lists them all.
   function withRisks(c, run, month, slot, council, ids, out = outcomes(c, run, month, slot, ids)) {
     for (const [who, p] of Object.entries(council)) {
+      // objects[id]: whether anything this officer watches is worse with `id` than with their
+      // own choice. An officer who doesn't object to the current choice isn't shown advising
+      // against it: a preference with no cost in their terms isn't a reason to change.
+      p.objects = {};
       p.risks = Object.fromEntries(ids.filter((id) => id !== p.prefers).map((id) => {
         const w = worseFor(who, out[p.prefers], out[id], month, slot);
+        p.objects[id] = w.length > 0;
         return [id, w.length ? `${cap(w.join("; "))}.` : `Nothing ${surname(who)} watches gets worse.`];
       }));
+      p.objects[p.prefers] = false;
     }
     return council;
   }
@@ -618,7 +624,22 @@ function build(W) {
       joint: { name: `Stand with ${M}’s navy`, does: `Our frigate and ${M}’s two corvettes block the approach. ${BN} goes in behind them: +${FT.joint} fatigue. If it comes to shooting, ${fightAtSea[c.minister]}.`,
         voice: ["sato", c.minister === "dove" ? `The navy will sail. Whether the cabinet survives a funeral is another question.` : `Seen together on the water, we’re much harder for ${R} to split apart.`] },
     };
-    const routes = F.routes.map((rt) => { const risk = routeRows(c, s, rt); return { id: rt.route, ...base[rt.route], risk, costs: costLine(risk) }; });
+    // An officer's line never reassures where the forecast loses the station: if any open case
+    // on this route falls, the voice names what that case is missing (the requirements the
+    // forecast and the debrief use), instead of the route's usual argument.
+    const falls = (rt) => {
+      const lost = rt.cases.filter((h) => h.r.code === "lost");
+      if (!lost.length) return "";
+      const keys = [...new Set(lost.flatMap((h) => h.r.failed.map((x) => x.key)))];
+      const why = { defences: `${B} is at ${nowLevel(s)}, short of what holds it`, warning: `we would have no warning to move ${BN} in time`, fit: `${BN} is unfit at fatigue ${s.fatigue}`, strength: `${BN} is under strength` };
+      const which = lost.every((h) => h.big) ? "If two waves land" : lost.length < rt.cases.filter((h) => h.troops).length ? "In some cases" : "If they land";
+      return `${which}, we lose ${B}: ${keys.map((k) => why[k]).join(", and ")}.`;
+    };
+    const routes = F.routes.map((rt) => {
+      const risk = routeRows(c, s, rt), lost = falls(rt), b = base[rt.route];
+      const voice = lost ? [b.voice[0], rt.route === "joint" ? `${b.voice[1]} ${lost}` : lost] : b.voice;
+      return { id: rt.route, ...b, voice, risk, costs: costLine(risk) };
+    });
     const moment = {
       "lattice-boarding": `${L} has just heard ${R} order troops aboard the landing craft in ${S}. They sail in two days.`,
       "lattice-no-boarding": `${R}’s ships in ${S} are raising steam. ${L} has heard no order to put troops aboard.`,

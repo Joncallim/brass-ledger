@@ -8,10 +8,10 @@ import { OX, OY } from "./TableScene.js";
 import { FATIGUE } from "../story/play.js";
 import { SCENARIOS, STORY_SCENARIO } from "../scenarios/index.js";
 import { validateScenario } from "../chart/geometry.js";
-import { glossNode, hasTerm, profileHTML } from "../gloss.js";
+import { glossNode, hasTerm, profileHTML, setLive } from "../gloss.js";
 import { WORLD, setWorld } from "../story/world.js";
 import { worldFor } from "../gen/factions.js";
-import { PROGRESS, ledger, staffRoom } from "../story/rooms.js";
+import { PROGRESS, battalionNow, ledger, staffRoom } from "../story/rooms.js";
 import { clearLog, log, rawLog, summary } from "../playlog.js";
 import { FULL_STRENGTH, REFIT, SECTORS, UNDER_STRENGTH, spendFor, campaignFor, closeSector, newWar, nextSector, sectorCode, toggleSpend, worldForSector } from "../story/war.js";
 
@@ -23,6 +23,16 @@ const portrait = (id) => `./portraits/${OFFICER_NAMES[id].portrait}.jpg`;
 const lower = (s) => s[0].toLowerCase() + s.slice(1);
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
 const compact = () => document.body.classList.contains("compact"); // see src/main.js
+const strip = (t) => String(t).replace(/<[^>]+>/g, "");
+// "KX4P2 · Volatile", "kx4p2 volatile" or "KX4P2": the code, and a difficulty if one is named.
+export function parseCode(raw, fallback) {
+  const m = /^([A-Za-z0-9-]{3,16})(?:\s*[·.,:/-]?\s*([A-Za-z]+))?$/.exec(String(raw).trim());
+  if (!m) return null;
+  const d = m[2]?.toLowerCase();
+  if (d && !DIFFICULTY[d]) return null;
+  return { seed: m[1].toUpperCase(), difficulty: d ?? fallback };
+}
+const cap = (t) => t[0].toUpperCase() + t.slice(1);
 const attr = (s) => String(s).replace(/<[^>]+>/g, "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
 // Radio groups follow the WAI-ARIA radio pattern: the group is one Tab stop (the chosen
@@ -166,6 +176,8 @@ export class DeskScene extends Phaser.Scene {
       t.setAttribute("aria-describedby", "profile-tip");
     };
     this.hideTip = () => this.tip.setVisible(false);
+    // The battalion's card says what has happened to it, from what has been committed.
+    setLive((key) => (key === "battalion" && this.campaign ? battalionNow(this.campaign, this.run, PROGRESS[this.chapter] ?? 0) : ""));
     if (this.game.profilesWired) return;
     this.game.profilesWired = true;
     const desk = () => this.game.desk;
@@ -180,6 +192,7 @@ export class DeskScene extends Phaser.Scene {
     new MutationObserver((records) => {
       const tip = desk().tipEl;
       for (const r of records) for (const n of r.addedNodes) if (n.nodeType === 1 && n !== tip && !tip.contains(n)) { glossNode(n); rove(n); }
+      desk().markOrderLimit?.();
     }).observe(root, { childList: true, subtree: true });
     // Every radio group on the desk: one Tab stop, arrow keys move and choose (see rove).
     root.addEventListener("keydown", (e) => arrowRadio(e, root));
@@ -417,8 +430,12 @@ export class DeskScene extends Phaser.Scene {
   }
 
   // The send panel sits on the bottom edge; whenever its rows change height, it stays there.
+  // If a slip in the right-hand column reaches down to it (the host card in a clash), it moves
+  // to the gap between the two columns rather than cover that slip's options.
   settleDispatch(arrive = false) {
     const d = this.disp, y = 1036 - d.node.offsetHeight;
+    const right = [...(this.slips ?? []).map((o) => o.slip), this.hostObj].filter((o) => o?.active && o.x > 1000);
+    d.x = right.some((o) => o.y + o.node.offsetHeight > y - 12) ? 620 : 1222;
     if (arrive) move(this, d, { y: [1080, y], alpha: [0, 1] }, { dur: 420, delay: 1000 });
     else if (!this.tweens.isTweening(d)) d.y = y;
   }
@@ -550,6 +567,7 @@ export class DeskScene extends Phaser.Scene {
       return `<div class="side"><div class="side-head"><span class="av" style="background-image:url(${portrait(lead)})"></span><span><span class="vname">${surname(lead)}</span><span class="focus">${o.post}</span></span></div>
         <p class="wants">Advises: <b>${optName(opt)}</b>${also ? `<span class="also">, backed by ${also}</span>` : ""}</p>
         <p class="case"><b>Protecting</b> ${p.because}.</p>
+        ${current && current !== p.prefers && p.objects?.[current] === false ? `<p class="case">Content with your choice too: nothing ${surname(lead)} watches is worse with ${lower(optName(current))}.</p>` : ""}
         <details class="more"><summary>If you overrule ${OFFICER_NAMES[lead].name.split(" ").pop()}</summary>${overrule(p)}<button class="b sm" data-voice="${lead}">Hear the case</button></details></div>`;
     };
     // Anyone with a third view still gets a line, so no position is hidden.
@@ -639,7 +657,7 @@ export class DeskScene extends Phaser.Scene {
     this.wireRoom(kind, panel.node);
     panel.node.addEventListener("keydown", (e) => {
       if (e.key !== "Tab") return;
-      const all = [...panel.node.querySelectorAll("button:not([disabled]), textarea, [href], [tabindex]:not([tabindex='-1'])")].filter((n) => n.offsetParent !== null && n.tabIndex >= 0);
+      const all = [...panel.node.querySelectorAll("button:not([disabled]), input, textarea, [href], [tabindex]:not([tabindex='-1'])")].filter((n) => n.offsetParent !== null && n.tabIndex >= 0);
       const first = all[0], last = all.at(-1);
       if (!first) return;
       if (e.shiftKey && (document.activeElement === first || !panel.node.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
@@ -666,7 +684,7 @@ export class DeskScene extends Phaser.Scene {
       <dl><dt>Job</dt><dd>${o.focus}.</dd><dt>Usually argues for</dt><dd>${o.pushes}.</dd>
       ${o.watching ? `<dt>Watching</dt><dd><span class="chip tone-${o.watching.tone}"><i></i><span><small>${o.watching.label}</small>${o.watching.value}</span></span></dd>` : ""}</dl>
       ${o.now ? `<div class="ofc-now"><p class="lab">Advises for ${o.now.month}</p><p class="wants-big">${o.now.wants}${o.now.staffPlan ? ` <span class="tag">staff plan</span>` : ` <span class="tag differs">against the staff plan</span>`}</p>
-        <p class="case"><b>Protecting</b> ${o.now.because}.</p><p class="case ${o.now.following ? "" : "risk"}"><b>Your current choice: ${lower(o.now.chosen)}</b> ${o.now.following ? "You are following this advice." : o.now.risk}</p>
+        <p class="case"><b>Protecting</b> ${o.now.because}.</p><p class="case ${o.now.following || o.now.content ? "" : "risk"}"><b>Your current choice: ${lower(o.now.chosen)}</b> ${o.now.following ? "You are following this advice." : o.now.content ? "Not their choice, but nothing they watch is worse with it." : o.now.risk}</p>
         <button class="b sm" data-hear="${o.id}">Hear the case</button></div>` : `<div class="ofc-now"><p class="lab">This month</p><p class="case">No order left to argue over.</p></div>`}
       <p class="ofc-record">${o.record ? `You have taken their advice <b>${o.record.followed} of ${o.record.of}</b> times. Last: ${o.record.last.agreed ? "you agreed on" : "you overruled them on"} ${lower(o.record.last.what)}.` : "No decisions yet on which they gave advice."}</p></article>`).join("");
     return `<p class="room-intro">Your four staff officers. Each argues from one job, so they will disagree. You never have to remember who cares about what: it is all here, and under their name wherever they speak.</p><div class="staff-grid">${cards}</div>`;
@@ -693,6 +711,8 @@ export class DeskScene extends Phaser.Scene {
         <div class="seg" role="radiogroup" aria-label="Motion"><button role="radio" aria-checked="${!reducedMotion.on}" class="${reducedMotion.on ? "" : "sel"}" data-motion="full">Full</button><button role="radio" aria-checked="${reducedMotion.on}" class="${reducedMotion.on ? "sel" : ""}" data-motion="reduced">Reduced</button></div></div>
       <div class="set-row"><div><p class="set-name">This campaign</p><p class="set-help">The same code and difficulty always replay the same campaign: the same hidden plan, politics and incidents.</p></div>
         <div class="set-actions"><span class="code-box">${esc(c.seed)} · ${c.D.name}</span><button class="b" data-copy>Copy code</button><button class="b" data-replay>Replay from December</button></div></div>
+      <div class="set-row"><div><p class="set-name">Play a campaign code</p><p class="set-help">Type a code someone gave you, such as “KX4P2 · Volatile”. Without a difficulty it plays at ${c.D.name}. A code always opens its own theatre.</p></div>
+        <div class="set-actions"><input class="code-in" data-code-in aria-label="Campaign code" placeholder="Code · difficulty" spellcheck="false" autocomplete="off"><button class="b" data-code-go>Play this code</button><p class="set-help" data-code-why role="status"></p></div></div>
       <div class="set-row"><div><p class="set-name">New campaign</p><p class="set-help">Roll a fresh code: a new theatre and a new campaign. Difficulty sets how far each element can vary.</p></div>
         <div class="set-actions">${Object.entries(DIFFICULTY).map(([id, d]) => `<button class="b" data-level="${id}">${d.name}</button>`).join("")}</div></div>
       <div class="set-row"><div><p class="set-name">Playtest log</p><p class="set-help">Kept in this browser only. Copy it into the playtest sheet after a session.</p></div>
@@ -729,6 +749,19 @@ export class DeskScene extends Phaser.Scene {
     node.querySelector("[data-log]").onclick = () => { const box = node.querySelector("[data-logbox]"); box.hidden = !box.hidden; };
     node.querySelector("[data-clearlog]").onclick = () => { clearLog(); node.querySelector("[data-logbox]").innerHTML = this.logHTML(); };
     for (const b of node.querySelectorAll("[data-level]")) b.onclick = () => { this.newTheatre(newSeed(), b.dataset.level); };
+    // A supplied code, as Settings shows it ("KX4P2 · Volatile") or the code alone.
+    const play = () => {
+      const raw = node.querySelector("[data-code-in]").value.trim(), parsed = parseCode(raw, this.campaign.difficulty);
+      if (!parsed) { node.querySelector("[data-code-why]").textContent = "That isn’t a campaign code: letters and digits, like KX4P2, then a difficulty if you want one."; return; }
+      this.closeRoom(false);
+      this.newTheatre(parsed.seed, parsed.difficulty);
+    };
+    node.querySelector("[data-code-go]").onclick = play;
+    // Typed letters stay in the field (S, L, O and the digits are desk keys); Tab and Escape still
+    // reach the dialog.
+    node.querySelector("[data-code-in]").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.stopPropagation(); play(); } else if (e.key.length === 1 || e.key === "Backspace" || e.key.startsWith("Arrow")) e.stopPropagation();
+    });
   }
 
   ch_dec_signal() { this.signal("dec"); }
@@ -783,7 +816,7 @@ export class DeskScene extends Phaser.Scene {
     const choices = () => { cfg = live(); return choicesHTML(); };
     const choicesHTML = () => `<article class="paper slip open" style="width:${Math.max(w, 780)}px" aria-label="${cfg.head}, choose an order"><span class="pin"></span><h3>${cfg.head} · your order</h3>
       <p class="will">${cfg.question}</p>${cfg.explain ? `<div class="row"><b>Why</b><span>${cfg.explain}</span></div>` : ""}${this.debate(cfg.council, cfg.options, cfg.staffId, get())}
-      <div role="radiogroup" aria-label="${attr(cfg.head)}: your order">${cfg.options.map((p) => `<button class="opt ${get() === p.id ? "sel" : ""}" data-opt="${p.id}" role="radio" aria-checked="${get() === p.id}">
+      <div role="radiogroup" aria-label="${attr(cfg.head)}: your order">${cfg.options.map((p) => `<button class="opt ${get() === p.id ? "sel" : ""}" data-opt="${p.id}" ${p.staff ? "" : 'data-needs="order"'} role="radio" aria-checked="${get() === p.id}">
       <span class="r"></span><span><b>${p.name}</b><span class="s">${p.says}</span><span class="opt-foot"><span class="cost ${p.staff ? "free" : ""}">${p.staff ? "Staff plan · free" : "Uses 1 personal order"}</span>${backers(p.id) ? `<span class="backed">Advised by ${backers(p.id)}</span>` : ""}</span></span></button>`).join("")}</div>
       <p class="why-note" style="font-size:16px;color:var(--red-ink);margin-top:8px" aria-live="polite"></p>
       <div class="btns"><button class="b on" data-done>Done</button></div></article>`;
@@ -794,7 +827,7 @@ export class DeskScene extends Phaser.Scene {
       if (wasStaff && !isStaff) {
         if (this.used >= this.limit) {
           const note = slip.node.querySelector(".why-note");
-          if (note) note.textContent = "You have used all your personal orders this month. Give one back first.";
+          if (note) note.textContent = `You have used all ${this.limit} personal orders this month. ${cap(this.freeHint())}`;
           return;
         }
         this.spendSeal(slip, ++this.used);
@@ -820,6 +853,25 @@ export class DeskScene extends Phaser.Scene {
     this.deal(slip, x, y, i, seed);
     if (column) { o.top = y; this.later(0, () => this.restack()); this.later(1500, () => this.restack()); }
     return o;
+  }
+
+  // What to give back to free a personal order: the slips (and the host card) holding one this
+  // month. An incident answer already sent can't be taken back, so it isn't offered.
+  freeHint() {
+    const held = [...(this.slips ?? []).filter((o) => o.slip.active && !o.cfg.options.find((p) => p.id === o.get())?.staff).map((o) => strip(o.cfg.head)), this.hostHolds?.()].filter(Boolean);
+    return held.length ? `put ${held.join(" or ")} back to the staff plan to free one.` : "this month’s orders are already committed: an incident answer can’t be taken back.";
+  }
+
+  // Options that need a personal order say so when none is left, instead of looking free.
+  markOrderLimit() {
+    if (this.used == null || this.limit == null) return;
+    const none = this.used >= this.limit;
+    for (const b of this.game.domContainer.querySelectorAll('[data-needs="order"]')) {
+      const off = none && b.getAttribute("aria-checked") !== "true", cost = b.querySelector(".cost");
+      b.classList.toggle("no-order", off);
+      const text = off ? `No personal order left: ${this.freeHint()}` : "Uses 1 personal order";
+      if (cost && cost.textContent !== text) cost.textContent = text; // only on change: the observer below calls this
+    }
   }
 
   // Every slip's words depend on the whole plan: after any change, closed slips are re-read.
@@ -858,11 +910,15 @@ export class DeskScene extends Phaser.Scene {
   // One line per officer who advises something other than the current choice.
   advice(council, options, current) {
     const name = (id) => { const o = options.find((x) => x.id === id); return o?.short ?? lower(o?.name ?? id); };
-    const differ = Object.entries(council ?? {}).filter(([, p]) => p.prefers !== current);
-    if (!differ.length) return `<p class="advice agree">Your staff all advise this.</p>`;
+    // Only officers who object (something they watch is worse) are shown advising otherwise.
+    const objects = (p) => p.prefers !== current && p.objects?.[current] !== false;
+    const differ = Object.entries(council ?? {}).filter(([, p]) => objects(p));
+    const content = Object.entries(council ?? {}).filter(([, p]) => p.prefers !== current && !objects(p)).map(([w]) => surname(w));
+    const contentLine = content.length ? `<p class="more-advice">${content.join(" and ")} ${content.length > 1 ? "prefer" : "prefers"} another order, but nothing they watch is worse with this.</p>` : "";
+    if (!differ.length) return content.length ? `<div class="advice">${contentLine}</div>` : `<p class="advice agree">Your staff all advise this.</p>`;
     // Two lines at most on the face; the rest are one click away.
     const more = differ.length > 2 ? `<p class="more-advice">${differ.slice(2).map(([w]) => surname(w)).join(" and ")} also ${differ.length > 3 ? "advise" : "advises"} otherwise.</p>` : "";
-    return `<div class="advice">${differ.slice(0, 2).map(([who, p]) => `<p><span class="av sm" style="background-image:url(${portrait(who)})"></span><span>${surname(who)} advises <b>${name(p.prefers)}</b><span class="why">: ${p.because}</span>.${p.risks?.[current] ? ` <span class="against">Against ${name(current)}: ${lower(p.risks[current])}</span>` : ""}</span></p>`).join("")}${more}</div>`;
+    return `<div class="advice">${differ.slice(0, 2).map(([who, p]) => `<p><span class="av sm" style="background-image:url(${portrait(who)})"></span><span>${surname(who)} advises <b>${name(p.prefers)}</b><span class="why">: ${p.because}</span>.${p.risks?.[current] ? ` <span class="against">Against ${name(current)}: ${lower(p.risks[current])}</span>` : ""}</span></p>`).join("")}${more}${contentLine}</div>`;
   }
 
   // Open a slip to its choices. Others in its column step aside until it closes.
@@ -929,6 +985,7 @@ export class DeskScene extends Phaser.Scene {
     const go = this.disp.node.querySelector(".go");
     go.disabled = Boolean(why);
     this.disp.node.querySelector("[data-why]").textContent = why;
+    this.markOrderLimit();
     this.settleDispatch();
   }
 
@@ -1034,19 +1091,20 @@ export class DeskScene extends Phaser.Scene {
   // with three ways out), a shaky vote you can choose to secure, or nothing to decide.
   hostSlip(beacon, onChange) {
     const slip = this.dom(0, 0, "");
-    const opt = (x, w) => `<button class="opt ${w === x.id ? "sel" : ""}" data-way="${x.id}" role="radio" aria-checked="${w === x.id}"><span class="r"></span><span><b>${x.name}</b><span class="s">${x.says}</span><span class="cost ${x.gives || x.staff ? "free" : ""}">${x.gives ? "Returns your personal order" : x.staff ? "Staff plan · free" : "Uses 1 personal order"}</span></span></button>`;
+    const opt = (x, w) => `<button class="opt ${w === x.id ? "sel" : ""}" data-way="${x.id}" ${x.gives || x.staff ? "" : 'data-needs="order"'} role="radio" aria-checked="${w === x.id}"><span class="r"></span><span><b>${x.name}</b><span class="s">${x.says}</span><span class="cost ${x.gives || x.staff ? "free" : ""}">${x.gives ? "Returns your personal order" : x.staff ? "Staff plan · free" : "Uses 1 personal order"}</span></span></button>`;
     const render = () => {
       const H = host(this.campaign, this.run), show = this.run.jan.beacon === "show", w = this.run.jan.way;
       let body;
       if (H.clash || (show && w)) body = `<div class="row"><b>Clash</b><span>${H.clashText}</span></div>
-        <p style="font-size:18px;font-weight:600;margin-top:14px">${w ? "You settled it:" : "Three ways out. Nothing changes until you pick."}</p>
+        <p style="font-size:18px;font-weight:600;margin-top:14px">${w ? "You settled it:" : this.used >= this.limit ? "Three ways out, but no personal order left: go back, or free an order first." : "Three ways out. Nothing changes until you pick."}</p>
         <div role="radiogroup" aria-label="${attr(H.head)}: settle the clash">${H.ways.map((x) => opt(x, w)).join("")}</div>`;
       else if (show) body = `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row"><b>Vote</b><span>${H.vote}</span></div>`;
       else if (H.shaky || w === "buy") body = `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row warnrow"><b>Vote</b><span>${H.vote}</span></div>
         <div role="radiogroup" aria-label="${attr(H.head)}: the vote" style="margin-top:8px">${opt({ id: "wait", name: "Let the vote run", says: `${surname("sato")} keeps lobbying. If the vote fails, ${H.head}’s navy stays in port in February.`, staff: true }, w ?? "wait")}${opt(H.secure, w)}</div>`;
       else body = `<div class="row"><b>Why</b><span>${H.why}</span></div><div class="row"><b>Vote</b><span>${H.vote}</span></div>`;
       slip.node.innerHTML = `<article class="paper slip" style="width:580px" aria-label="${H.head}"><span class="pin"></span><h3>${H.head} · ${w && w !== "back" ? "your order" : "staff plan"}</h3>
-        <p class="will">Your staff ${H.staff[1]}</p>${body}</article>`;
+        <p class="will">Your staff ${H.staff[1]}</p>${body}<p class="why-note" style="font-size:16px;color:var(--red-ink);margin-top:8px" aria-live="polite"></p></article>`;
+      this.hostHolds = () => (this.run.jan.way && this.run.jan.way !== "back" ? strip(H.head) : null);
       for (const b of slip.node.querySelectorAll("[data-way]")) b.addEventListener("click", () => {
         const id = b.dataset.way === "wait" ? null : b.dataset.way, before = this.run.jan.way;
         if (id === before) return;
@@ -1058,7 +1116,11 @@ export class DeskScene extends Phaser.Scene {
           return;
         }
         if (!before && id) {
-          if (this.used >= this.limit) return;
+          if (this.used >= this.limit) {
+            const note = slip.node.querySelector(".why-note");
+            if (note) note.textContent = `That needs a personal order, and you have used all ${this.limit} this month. ${cap(this.freeHint())}`;
+            return;
+          }
           this.spendSeal(slip, ++this.used);
         }
         if (before && !id) this.returnSeal(slip, --this.used);
@@ -1069,6 +1131,7 @@ export class DeskScene extends Phaser.Scene {
     };
     render();
     this.deal(slip, 1270, 108, 2, "jan");
+    this.hostObj = slip;
     return { slip, render };
   }
 

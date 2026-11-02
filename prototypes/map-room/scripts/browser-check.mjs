@@ -13,6 +13,7 @@
 //   layout     supported sizes: which layout each window gets, rendered text and control sizes,
 //              the compact column
 //   zoom       browser zoom on an open page against the 100% page, in device pixels
+//   order limit  no personal order left: options say so, clicks explain, the way back is clear
 //   dialogs    the room dialogs' focus contract;
 //              radio groups by arrow key; slips, host card and staff room follow the plan
 //   sketch     the withdrawal sketch's plan plays on the real chart
@@ -425,6 +426,53 @@ async function layout() {
   return `${n} screens at ${SIZES.length} sizes`;
 }
 
+// ── the order limit ─────────────────────────────────────────────────────────
+// Playtest 6: in January an incident answer and a daylight move used both orders; the ways
+// out of the clash then refused a third order silently and Send stayed disabled. Every
+// option needing an order must say none is left and what to give back, a click must explain,
+// nothing may cover the way back, and going back must free Send.
+async function orderLimit() {
+  const p = await page();
+  const SEALS = { radar: "run", defector: "talk", leak: "brief", collision: "search", visit: "open" };
+  let n = 0;
+  for (const d of ["shifting", "volatile"]) for (let i = 0; i < (QUICK ? 8 : 24); i++) {
+    const seed = `B${i}`, c = story.makeCampaign(seed, d);
+    if (!c.incidents.jan) continue;
+    const pre = { dec: { beacon: "quiet", lattice: "boats", incident: null }, jan: { beacon: "show", lattice: "sarn", way: null, incident: SEALS[c.incidents.jan] }, feb: {} };
+    if (!story.host(c, pre).clash) continue;
+    const area = `order limit ${d} ${seed}`;
+    await p.evaluate(({ seed, d, inc }) => { window.mapRoom.campaign(seed, d); window.mapRoom.setRun({ dec: { beacon: "quiet", lattice: "boats", incident: null }, jan: { beacon: "quiet", lattice: "sarn", way: null, incident: inc }, feb: {} }); window.mapRoom.go("jan-orders"); }, { seed, d, inc: SEALS[c.incidents.jan] });
+    await p.waitForTimeout(300);
+    await (await p.$$("[data-change]"))[0].click(); await p.waitForTimeout(60);
+    await p.click('[data-opt="show"]'); await p.waitForTimeout(60);
+    await p.click("[data-done]"); await p.waitForTimeout(150);
+    const st = await p.evaluate(() => {
+      const ways = [...document.querySelectorAll("[data-way]")], go = document.querySelector(".dispatch .go");
+      const covered = [...ways, go].filter((x) => { const r = x.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return t && !x.contains(t); }).map((x) => x.dataset.way ?? "send");
+      return { needs: ways.filter((w) => w.dataset.needs === "order").map((w) => [w.classList.contains("no-order"), w.querySelector(".cost").textContent]), covered, sendOff: go.disabled };
+    });
+    n++;
+    if (!st.needs.length) fail(area, "no option on the host card needs an order");
+    for (const [off, text] of st.needs) if (!off || !/No personal order left: put .* back to the staff plan/.test(text)) fail(area, `an option needing an order says "${text}"`);
+    if (st.covered.length) fail(area, `covered: ${st.covered.join(", ")}`);
+    if (!st.sendOff) fail(area, "Send is enabled with the clash unsettled");
+    await p.click('[data-way="buy"]').catch(() => {}); await p.waitForTimeout(80);
+    if (!(await p.evaluate(() => [...document.querySelectorAll(".why-note")].some((x) => /personal order/.test(x.textContent))))) fail(area, "clicking a way that needs an order explains nothing");
+    // Another slip that needs an order says so too.
+    await (await p.$$("[data-change]")).at(-1).click(); await p.waitForTimeout(80);
+    const slipOpts = await p.evaluate(() => [...document.querySelectorAll('.slip.open [data-needs="order"]')].filter((b) => b.getAttribute("aria-checked") !== "true").map((b) => b.classList.contains("no-order")));
+    if (!slipOpts.length || slipOpts.some((x) => !x)) fail(area, "an order slip's option needing an order looks free");
+    await p.click("[data-done]"); await p.waitForTimeout(120);
+    const back = await p.click('[data-way="back"]', { timeout: 2000 }).then(() => true, () => false);
+    await p.waitForTimeout(150);
+    if (!back) { fail(area, "the way back can't be clicked"); continue; }
+    if (await p.evaluate(() => document.querySelector(".dispatch .go").disabled)) fail(area, "Send stays disabled after going back");
+  }
+  pageErrors("order limit", p);
+  await p.close();
+  return `${n} January clashes with no order left`;
+}
+
 // ── zoom ─────────────────────────────────────────────────────────────────────
 // Browser zoom on an open page, measured against the same page at 100%. Chromium zooms by
 // keeping the window's device pixels and raising devicePixelRatio, so the window has fewer CSS
@@ -534,6 +582,18 @@ async function dialogs() {
       for (const key of ["Tab", "Shift+Tab"]) for (let t = 0; t < 40; t++) {
         await p.keyboard.press(key);
         if (!(await p.evaluate(() => document.querySelector("[role=dialog]")?.contains(document.activeElement)))) { fail(area, `${key} left the room`); break; }
+      }
+      if (room === "settings" && how === "click") {
+        // A supplied code: typing it doesn't trigger desk keys, and it opens that campaign.
+        await p.fill("[data-code-in]", "zz9 nonsense"); await p.click("[data-code-go]"); await p.waitForTimeout(80);
+        if (!(await p.evaluate(() => /isn’t a campaign code/.test(document.querySelector("[data-code-why]")?.textContent ?? "")))) fail(area, "a bad code was not explained");
+        await p.fill("[data-code-in]", ""); await p.focus("[data-code-in]"); await p.keyboard.type("kx4p2 · Volatile"); await p.waitForTimeout(80);
+        if (!(await p.evaluate(() => document.querySelector("[role=dialog]")))) fail(area, "typing a code closed the room");
+        await p.keyboard.press("Enter"); await p.waitForTimeout(400);
+        const played = await p.evaluate(() => ({ seed: window.mapRoom.c.seed, d: window.mapRoom.c.difficulty, room: !!document.querySelector("[role=dialog]") }));
+        if (played.seed !== "KX4P2" || played.d !== "volatile" || played.room) fail(area, `the code opened ${played.seed} ${played.d}${played.room ? " with the room still open" : ""}`);
+        n++;
+        continue;
       }
       if (room === "settings") {
         // Choosing a setting re-renders the room: still modal, focus on the choice, same opener.
@@ -667,7 +727,7 @@ async function selected() {
 
 try {
   const only = process.argv.find((x) => x.startsWith("--only="))?.slice(7).split(",");
-  for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["names", names], ["sketch", sketch], ["layout", layout], ["zoom", zoom], ["dialogs", dialogs], ["radios", radios], ["selected", selected]]) {
+  for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["names", names], ["sketch", sketch], ["layout", layout], ["zoom", zoom], ["order limit", orderLimit], ["dialogs", dialogs], ["radios", radios], ["selected", selected]]) {
     if (only && !only.some((o) => name.startsWith(o))) continue;
     const t = Date.now(), said = await fn();
     console.log(`${name.padEnd(16)} ${said} (${((Date.now() - t) / 1000).toFixed(0)} s)`);

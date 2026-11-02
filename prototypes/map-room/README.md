@@ -483,6 +483,31 @@ in the scenario and open the same profiles.
   under strength; the rival losing one craft in its next sector for every four beaten on a
   beach, up to three; and the second sector reusing the December to February calendar. That
   calendar is a stand-in: a real war needs dates that don't depend on the season.
+- **Playtest 6 (an agent's playthrough, not a human session).** No rule changed.
+  - **Fixed, with tests and replayed paths:**
+    - **The battalion's card tells its real rest history.** It said "on duty without rest
+      since the autumn" after a December stand-down. Its history now comes from the
+      committed plan, as the top bar's does: how it began the campaign or sector, each
+      stand-down, and where it stands now.
+    - **Running out of personal orders is explained.** Every option that needs an order
+      says "No personal order left" and names what to put back to free one, and clicking it
+      explains the same. In a January clash the host card says so too, and the send panel
+      moves out of the way so "Go back" can't be covered. The new browser `order limit`
+      check covers 38 such clashes.
+    - **Advisers explain their preference.**
+      - An officer is shown advising a change only if something they watch is worse
+        without it; otherwise the slip and the staff room say they don't object.
+      - Okafor only warns about a battalion heading for tired or worse.
+      - A February voice whose route can lose the station names what is missing (level,
+        warning, fitness, strength) instead of reassuring.
+    - **Incident previews are provisional:** "Confirm it and my people go aboard", not "My
+      people are aboard".
+    - **A supplied campaign code can be played** from Settings ("KX4P2 · Volatile").
+  - **Not done yet, from the same playtest:**
+    - every forecast row showing the station, cabinet and battalion effects, with an
+      explicit "under strength" label;
+    - stating up front what the intelligence proves (coverage and confidence);
+    - larger chart labels, and hover cards that don't cover the text around them.
 - **Review 9.** No rule changed.
   - **Every figure and promise in the advice comes from one simulated plan.**
     - Each option's description, the staff plan's cost and the officers' lines and

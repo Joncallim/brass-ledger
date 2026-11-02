@@ -170,6 +170,24 @@ Record for each player:
 comprehension check and the fun sessions have not been run. Passing automated checks, and
 the product owner's own reviews, are not evidence of comprehension or fun.
 
+## Playtest 6 (an agent's playthrough)
+
+An automated agent played the build and reported seven issues. Fixed and replayed:
+
+- the battalion's rest history;
+- running out of personal orders;
+- advisers without a reason;
+- provisional incident previews;
+- entering a campaign code.
+
+Still open:
+
+- complete forecast rows, with "under strength";
+- what the intelligence proves;
+- chart label size and hover-card placement.
+
+This was not a human session: comprehension and fun still need the uncoached sessions above.
+
 ## Review 9: the rest-or-reinforce trade
 
 The balance report shows a trade, not a best strategy:

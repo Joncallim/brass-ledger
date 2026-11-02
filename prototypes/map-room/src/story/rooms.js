@@ -4,7 +4,7 @@
 // they add no rules of their own.
 import { officersFor } from "./officers.js";
 import { host, incident, knownLines, latticeOrders, latticeQ, orders, status } from "./copy.js";
-import { ministersFor, simulate } from "./play.js";
+import { fatigueWord, ministersFor, simulate } from "./play.js";
 import { incidentsFor } from "./incidents.js";
 import { CALENDAR, FIXED, incidentDay } from "./definition.js";
 
@@ -17,7 +17,7 @@ export const STAFF = ["halden", "briggs", "okafor", "sato"];
 // sent, 5 February decided. Choices beyond this point are still being made and don't count.
 export const PROGRESS = {
   title: 0, chart: 0, "dec-brief": 0, "dec-signal": 0, "dec-orders": 1, "dec-night": 2,
-  "jan-brief": 2, "jan-signal": 2, "jan-orders": 3, "jan-night": 4, "feb-showdown": 4, debrief: 5,
+  "jan-brief": 2, "jan-signal": 2, "jan-orders": 3, "jan-night": 4, "feb-showdown": 4, "feb-night": 5, debrief: 5,
 };
 const POINT = ["decStart", "decOrders", "decEnd", "janOrders", "janEnd", "janEnd"];
 
@@ -28,6 +28,21 @@ export function committed(run, progress) {
     jan: { beacon: progress >= 4 ? run.jan?.beacon ?? "quiet" : "quiet", lattice: progress >= 4 ? run.jan?.lattice ?? "sarn" : "sarn", way: progress >= 4 ? run.jan?.way ?? null : null, incident: progress >= 3 ? run.jan?.incident ?? null : null },
     feb: { route: progress >= 5 ? run.feb?.route ?? "quiet" : null },
   };
+}
+
+// The battalion's rest history and state, as committed by `progress`: the glossary card adds
+// it to the fixed description, so the card never contradicts the top bar.
+export function battalionNow(c, run, progress) {
+  const done = committed(run, progress), sim = simulate(c, done), s = sim[POINT[progress]], BN = c.world.reserve;
+  const start = c.fatigue0 === 0 ? `It began this campaign rested, at fatigue 0.`
+    : c.war?.sector > 1 ? `It began this sector at fatigue ${c.fatigue0}, carried from the last one.`
+    : `It began this campaign at fatigue ${c.fatigue0}, on duty without rest since the autumn.`;
+  const rests = [];
+  if (progress >= 2 && done.dec.beacon === "rest") rests.push(`stood down from ${CALENDAR.dec.rest} to 31 December`);
+  if (progress >= 4 && done.jan.beacon === "hold") rests.push(`stood down from ${CALENDAR.jan.hold} January`);
+  if (progress >= 4 && s.notes?.includes("rest-to-date")) rests.push("companies stood down in turn on the confirmed sailing date");
+  const since = rests.length ? ` Since then: ${rests.join("; ")}.` : progress >= 2 ? ` It has not been stood down since.` : "";
+  return `${start}${since} Now: ${s.fatigue === 0 ? "rested" : `fatigue ${s.fatigue}, ${fatigueWord(s.fatigue)}`}${c.understrength ? `, under strength (${c.strength} soldiers)` : ""}.`;
 }
 
 // Every decision taken so far that at least one officer argued about.
@@ -67,7 +82,7 @@ export function staffRoom(c, run, progress) {
       id, rank: o.rank, name: o.name, post: o.post, from: o.from, focus: o.focus, pushes: o.pushes, role: o.role,
       watching: chips.find((x) => x.who === id),
       now: view && { month: month === "dec" ? "December" : "January", wants: now.options.find((x) => x.id === view.prefers).name, staffPlan: view.prefers === now.staffId, because: view.because, line: view.line,
-        chosen: now.options.find((x) => x.id === pick).name, following: view.prefers === pick, risk: view.prefers === pick ? null : view.risks[pick] },
+        chosen: now.options.find((x) => x.id === pick).name, following: view.prefers === pick, content: view.prefers !== pick && view.objects?.[pick] === false, risk: view.prefers === pick ? null : view.risks[pick] },
       record: heard.length ? { followed, of: heard.length, last: heard.at(-1) && { what: heard.at(-1).what, agreed: heard.at(-1).council[id].prefers === heard.at(-1).pick } } : null,
     };
   });

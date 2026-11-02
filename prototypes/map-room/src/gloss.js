@@ -65,6 +65,9 @@ export function glossNode(root) {
 }
 
 // The profile card for a term id ("sarn") or an officer ("officer:halden").
+// Live lines for a term (the desk sets this): what is true now, from the committed plan.
+let live = () => "";
+export const setLive = (fn) => { live = fn ?? (() => ""); };
 export function profileHTML(key) {
   if (key.startsWith("officer:")) {
     const id = key.slice(8), o = OFFICERS[id];
@@ -75,7 +78,8 @@ export function profileHTML(key) {
   }
   const g = GLOSSARY[key];
   if (!g) return "";
-  return `<div class="profile"><p class="pf-tag">${g.tag}</p><p class="pf-title">${g.title}</p><p class="pf-body">${g.body}</p></div>`;
+  const now = live(key);
+  return `<div class="profile"><p class="pf-tag">${g.tag}</p><p class="pf-title">${g.title}</p><p class="pf-body">${g.body}</p>${now ? `<p class="pf-body pf-now">${now}</p>` : ""}</div>`;
 }
 
 export const hasTerm = (key) => Boolean(key && (GLOSSARY[key] || (key.startsWith("officer:") && OFFICERS[key.slice(8)])));

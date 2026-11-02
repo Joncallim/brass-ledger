@@ -45,3 +45,26 @@ test("rooms read cleanly at every point of every campaign", () => {
     }
   }
 });
+
+// Playtest 6: the battalion's card said "on duty without rest since the autumn" after a
+// December stand-down. Its history now comes from the committed plan, like the top bar.
+import { battalionNow } from "../src/story/rooms.js";
+import { glossaryFor } from "../src/fixture.js";
+import { simulate } from "../src/story/play.js";
+test("the battalion's card tells its rest history as committed, and agrees with the top bar", () => {
+  for (const d of ["steady", "shifting", "volatile"]) for (let i = 0; i < 12; i++) {
+    const c = makeCampaign(`R${i}`, d);
+    assert.doesNotMatch(glossaryFor(c.world).battalion.body, /without rest since/);
+    for (const dec of ["quiet", "rest", "show"]) for (const jan of ["quiet", "hold"]) for (const progress of [0, 2, 4, 5]) {
+      const run = { dec: { beacon: dec, lattice: "boats", incident: null }, jan: { beacon: jan, lattice: "sarn", way: null, incident: null }, feb: { route: "quiet" } };
+      const t = battalionNow(c, run, progress), s = simulate(c, committed(run, progress));
+      const rested = (progress >= 2 && dec === "rest") || (progress >= 4 && jan === "hold");
+      assert.equal(/stood down/.test(t) && !/not been stood down/.test(t), rested, t);
+      if (rested) assert.doesNotMatch(t, /has not been stood down/);
+      const f = s[["decStart", "decOrders", "decEnd", "janOrders", "janEnd", "janEnd"][progress]].fatigue;
+      assert.match(t, f === 0 ? /Now: rested/ : new RegExp(`Now: fatigue ${f},`), t);
+    }
+  }
+  const war = makeCampaign("R1", "shifting"); war.fatigue0 = 0;
+  assert.match(battalionNow(war, { dec: {}, jan: {}, feb: {} }, 0), /began this campaign rested/);
+});

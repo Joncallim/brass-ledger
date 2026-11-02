@@ -28,7 +28,7 @@ export function incidentsFor(W = KESTREL) {
         halden: { prefers: "run", line: `Six days on the spare is six days I cannot see what leaves ${S}. That is the week I most need to watch.`, because: `watching ${R} through its build-up`, risk: `six days in which a sailing from ${S} could go unseen.` },
         briggs: { prefers: "fix", line: "I would rather lose six days now than lose the radar in February.", because: `${B} being able to see an attack coming`, risk: "a radar failure at the worst possible moment." },
       }),
-      reply: { fix: ["briggs", "Engineers start tonight. Spare radar up by midnight."], run: ["briggs", "Then we run it and watch it. If it goes, it goes on the worst day, and I am a level short."] },
+      reply: { fix: ["briggs", "On your word, engineers start tonight. Spare radar up by midnight."], run: ["briggs", "Then we’d run it and watch it. If it goes, it goes on the worst day, and I’d be a level short."] },
     },
     defector: {
       title: `A ${R} navy officer wants to defect`,
@@ -41,7 +41,7 @@ export function incidentsFor(W = KESTREL) {
         halden: { prefers: "talk", line: `A staff officer from ${S} is worth more than a month of radio. I want him in my room, not theirs.`, because: `knowing what ${R} really plans`, risk: `whatever he knows reaches us late and filtered, if at all.` },
         sato: { prefers: "hand", line: `He walked into a ${MA} police station. If we take him, the ${MA} ministers will ask what else we take without asking.`, because: `${M}’s trust in us`, risk: `the ${MA} cabinet feels pushed aside a month before it votes.` },
       }),
-      reply: { talk: ["halden", "He is in a car to us now. I will tell you what he says, and how far I believe it."], hand: ["sato", "The minister thanks you. She has promised us a summary within the week."] },
+      reply: { talk: ["halden", "Say the word and he’s in a car to us tonight. I’ll tell you what he says, and how far I believe it."], hand: ["sato", "If we hand him over, the minister will thank us and promise a summary within the week."] },
     },
     leak: {
       title: `${MA} paper prints our numbers on ${B}`,
@@ -55,7 +55,7 @@ export function incidentsFor(W = KESTREL) {
         halden: { prefers: "silent", line: `Right now ${R} has a newspaper’s guess. Confirm it and they have a fact.`, because: `keeping ${R} guessing about ${B}`, risk: `${R} knows where our guns are.` },
         briggs: { prefers: "silent", line: "If they know where the guns are, they land where the guns aren’t. That costs us a level.", because: `${B}’s full defence level against a landing`, risk: `${B} counts one level lower against a landing.` },
       }),
-      reply: { silent: ["sato", "No comment, then. I will spend the evening calling ministers."], brief: ["sato", "We brief at six. I will write it so the ministers recognise their own words."] },
+      reply: { silent: ["sato", "No comment, then, once you confirm. I’ll spend the evening calling ministers."], brief: ["sato", "If you confirm, we brief at six. I’ll write it so the ministers recognise their own words."] },
     },
     collision: {
       title: "Collision on the shipping lane",
@@ -69,7 +69,7 @@ export function incidentsFor(W = KESTREL) {
         halden: { prefers: "search", line: "No lights and a navy mast. Four hours aboard and I can tell you what their fishing fleet is for. Not likely: certain.", because: `certainty about the fishing fleet`, risk: "we hand back the best evidence we will get." },
         sato: { prefers: "return", line: `Every hour we hold them, the ministers hear ${R} call us pirates.`, because: `the ${MA} cabinet’s patience`, risk: "the cabinet sees us escalate on its doorstep." },
       }),
-      reply: { return: ["okafor", "Boat and crew home by first light. The fisherman’s arm is set."], search: ["halden", "My people are aboard. Four hours, General."] },
+      reply: { return: ["okafor", "Once you confirm, boat and crew are home by first light, and the fisherman’s arm is set."], search: ["halden", "Confirm it and my people go aboard. Four hours, General."] },
     },
     visit: {
       title: `${M}’s defence minister wants to visit ${B}`,
@@ -85,7 +85,7 @@ export function incidentsFor(W = KESTREL) {
         sato: { prefers: c.minister === "dove" ? "quiet" : "open", line: c.minister === "dove" ? "She is looking for a reason to vote no. Show her everything, privately. No cameras to frown for." : "Let her be photographed with our troops. A minister doesn’t vote against a picture of herself.", because: `the vote on ${c.voteDay} January`, risk: c.minister === "dove" ? "she uses the cameras to look reluctant." : "we waste a minister who wants to be seen with us." },
         briggs: { prefers: "quiet", line: `Cameras on ${B} show ${R} where the guns are. That costs us a level against a landing.`, because: `${B}’s full defence level against a landing`, risk: `${B} counts one level lower against a landing.` },
       }),
-      reply: { open: ["sato", `She arrives on the ${ord(CALENDAR.jan.visit)}. I have asked the troops to shave.`], quiet: ["sato", "She has accepted, without enthusiasm. No cameras."] },
+      reply: { open: ["sato", `If you confirm, she arrives on the ${ord(CALENDAR.jan.visit)}. I’ll ask the troops to shave.`], quiet: ["sato", "If you confirm, I’ll tell her: no cameras. She’ll accept, without enthusiasm."] },
     },
   };
   const list = INCIDENT_RULES.map((rule) => {
