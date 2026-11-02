@@ -458,8 +458,8 @@ async function orderLimit() {
     if (!st.sendOff) fail(area, "Send is enabled with the clash unsettled");
     await p.click('[data-way="buy"]').catch(() => {}); await p.waitForTimeout(80);
     if (!(await p.evaluate(() => [...document.querySelectorAll(".why-note")].some((x) => /personal order/.test(x.textContent))))) fail(area, "clicking a way that needs an order explains nothing");
-    // Another slip that needs an order says so too.
-    await (await p.$$("[data-change]")).at(-1).click(); await p.waitForTimeout(80);
+    // Another slip that needs an order says so too (Lattice: nothing paid on it).
+    await p.click(`.slip[aria-label^="${c.world.network}"] [data-change]`); await p.waitForTimeout(80);
     const slipOpts = await p.evaluate(() => [...document.querySelectorAll('.slip.open [data-needs="order"]')].filter((b) => b.getAttribute("aria-checked") !== "true").map((b) => b.classList.contains("no-order")));
     if (!slipOpts.length || slipOpts.some((x) => !x)) fail(area, "an order slip's option needing an order looks free");
     await p.click("[data-done]"); await p.waitForTimeout(120);
@@ -468,9 +468,32 @@ async function orderLimit() {
     if (!back) { fail(area, "the way back can't be clicked"); continue; }
     if (await p.evaluate(() => document.querySelector(".dispatch .go").disabled)) fail(area, "Send stays disabled after going back");
   }
+  // Playtest 7: with both December orders used (the incident and a paid station order),
+  // switching that slip to another paid option costs nothing extra and must not look refused.
+  let swaps = 0;
+  for (const d of ["shifting", "volatile"]) for (let i = 0; i < (QUICK ? 6 : 16); i++) {
+    const seed = `B${i}`, c = story.makeCampaign(seed, d), inc = c.incidents.dec && SEALS[c.incidents.dec];
+    if (!inc) continue;
+    const area = `order swap ${d} ${seed}`;
+    await p.evaluate(({ seed, d, inc }) => { window.mapRoom.campaign(seed, d); window.mapRoom.setRun({ dec: { beacon: "quiet", lattice: "boats", incident: inc }, jan: {}, feb: {} }); window.mapRoom.go("dec-orders"); }, { seed, d, inc });
+    await p.waitForTimeout(250);
+    await (await p.$$("[data-change]"))[0].click(); await p.waitForTimeout(60);
+    await p.click('[data-opt="rest"]'); await p.waitForTimeout(80);
+    const show = await p.evaluate(() => { const b = document.querySelector('.slip.open [data-opt="show"]'); return { off: b.classList.contains("no-order"), cost: b.querySelector(".cost").textContent }; });
+    if (show.off || /No personal order left/.test(show.cost)) fail(area, `a paid swap looks refused: "${show.cost}"`);
+    await p.click('[data-opt="show"]'); await p.waitForTimeout(80);
+    if ((await p.evaluate(() => window.mapRoom.getRun().dec.beacon)) !== "show") fail(area, "the swap to another paid order did not take");
+    // The Lattice slip's paid options, with no order left and nothing paid on it, do look refused.
+    await p.click("[data-done]"); await p.waitForTimeout(80);
+    await p.click(`.slip[aria-label^="${c.world.network}"] [data-change]`); await p.waitForTimeout(80);
+    const lat = await p.evaluate(() => [...document.querySelectorAll('.slip.open [data-needs="order"]')].map((b) => b.classList.contains("no-order")));
+    if (!lat.length || lat.some((x) => !x)) fail(area, "Lattice's paid options look free with no order left");
+    await p.click("[data-done]"); await p.waitForTimeout(60);
+    swaps++;
+  }
   pageErrors("order limit", p);
   await p.close();
-  return `${n} January clashes with no order left`;
+  return `${n} January clashes with no order left, ${swaps} paid swaps in December`;
 }
 
 // ── zoom ─────────────────────────────────────────────────────────────────────

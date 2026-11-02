@@ -182,8 +182,11 @@ function build(W) {
       ? (count >= 9 ? ["briggs", `${count} craft carry a landing whatever they are for. I plan for the landing until someone shows me an empty quay.`] : ["sato", `If this is theatre, the audience is the ${MA} cabinet. They will see our response before ${R} does.`])
       : { land: ["sato", `If we read this as a landing and we are wrong, the ${MA} cabinet will remember who frightened it. They vote on the ${ord(c.voteDay)}.`],
         bluff: ["briggs", `A show can turn into a landing in one night. I want the guns dug in regardless.`],
-        probe: ["okafor", `A test goes for whatever looks weakest. That may be my battalion, at fatigue ${s.fatigue}.`],
-        open: ["okafor", `Whatever it is, ${BN} has to be fit for it. It is at fatigue ${s.fatigue}.`] }[read ?? "open"];
+        // Okafor worries about the battalion only when it is tired or worse; rested, he says so.
+        probe: ["okafor", s.fatigue > FT.tired ? `A test goes for whatever looks weakest. That may be my battalion, at fatigue ${s.fatigue}.`
+          : `A test goes for whatever looks weakest. It won’t be my battalion: it is ${s.fatigue === 0 ? "rested" : `fit, at fatigue ${s.fatigue}`}. Look at ${B}’s defences.`],
+        open: ["okafor", s.fatigue > FT.tired ? `Whatever it is, ${BN} has to be fit for it. It is at fatigue ${s.fatigue}.`
+          : `Whatever it is, ${BN} is ready for it: ${s.fatigue === 0 ? "rested" : `fit, at fatigue ${s.fatigue}`}. I mean to keep it that way.`] }[read ?? "open"];
     return { title: "Intelligence summary", from: `${fullName("halden")}, Intelligence`, sections, warning: null, dissent, halden };
   }
 

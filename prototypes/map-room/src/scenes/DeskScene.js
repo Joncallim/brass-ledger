@@ -863,13 +863,17 @@ export class DeskScene extends Phaser.Scene {
   }
 
   // Options that need a personal order say so when none is left, instead of looking free.
+  // What counts is the extra cost: on a slip whose current choice already holds an order,
+  // another paid option just moves that order (the pick logic charges nothing more).
   markOrderLimit() {
     if (this.used == null || this.limit == null) return;
     const none = this.used >= this.limit;
     for (const b of this.game.domContainer.querySelectorAll('[data-needs="order"]')) {
-      const off = none && b.getAttribute("aria-checked") !== "true", cost = b.querySelector(".cost");
+      const checked = b.getAttribute("aria-checked") === "true";
+      const held = b.closest('[role="radiogroup"]')?.querySelector('[role="radio"][aria-checked="true"]')?.dataset.needs === "order";
+      const off = none && !checked && !held, cost = b.querySelector(".cost");
       b.classList.toggle("no-order", off);
-      const text = off ? `No personal order left: ${this.freeHint()}` : "Uses 1 personal order";
+      const text = off ? `No personal order left: ${this.freeHint()}` : held && !checked ? "Uses this slip’s personal order instead" : "Uses 1 personal order";
       if (cost && cost.textContent !== text) cost.textContent = text; // only on change: the observer below calls this
     }
   }

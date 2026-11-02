@@ -240,3 +240,17 @@ test("a February voice never reassures where the forecast loses the station", ()
   }
   assert.ok(lost > 0);
 });
+
+test("Okafor's briefing doesn't call a rested or fit battalion the weak point", () => {
+  let checked = 0;
+  for (const d of ["steady", "shifting", "volatile"]) for (let i = 0; i < 40; i++) for (const dec of ["quiet", "rest"]) {
+    const c = makeCampaign(`K${i}`, d), run = { dec: { beacon: dec, lattice: "boats", incident: null }, jan: {}, feb: {} };
+    const B = story.brief(c, run, "jan"), f = simulate(c, run).decEnd.fatigue;
+    if (B.dissent?.[0] !== "okafor") continue;
+    checked++;
+    const t = strip(B.dissent[1]);
+    if (f <= 100) assert.doesNotMatch(t, /may be my battalion|has to be fit for it/, `fatigue ${f}: ${t}`);
+    else assert.match(t, new RegExp(`fatigue ${f}`), t);
+  }
+  assert.ok(checked > 0);
+});

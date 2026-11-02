@@ -4,9 +4,9 @@
 // they add no rules of their own.
 import { officersFor } from "./officers.js";
 import { host, incident, knownLines, latticeOrders, latticeQ, orders, status } from "./copy.js";
-import { fatigueWord, ministersFor, simulate } from "./play.js";
+import { fatigueWord, ministersFor, outcome, simulate } from "./play.js";
 import { incidentsFor } from "./incidents.js";
-import { CALENDAR, FIXED, incidentDay } from "./definition.js";
+import { CALENDAR, FIXED, TUNING, incidentDay } from "./definition.js";
 
 // Lower-case only the first letter, so names inside an option (Beacon, Marenna) keep theirs.
 const lower = (t) => t[0].toLowerCase() + t.slice(1);
@@ -42,7 +42,14 @@ export function battalionNow(c, run, progress) {
   if (progress >= 4 && done.jan.beacon === "hold") rests.push(`stood down from ${CALENDAR.jan.hold} January`);
   if (progress >= 4 && s.notes?.includes("rest-to-date")) rests.push("companies stood down in turn on the confirmed sailing date");
   const since = rests.length ? ` Since then: ${rests.join("; ")}.` : progress >= 2 ? ` It has not been stood down since.` : "";
-  return `${start}${since} Now: ${s.fatigue === 0 ? "rested" : `fatigue ${s.fatigue}, ${fatigueWord(s.fatigue)}`}${c.understrength ? `, under strength (${c.strength} soldiers)` : ""}.`;
+  // After February is decided, "now" is the resolved outcome (as the debrief has it): fatigue
+  // after the fight and strength after its losses, not where January left it.
+  const full = c.strength ?? c.world.battalion;
+  const o = progress >= 5 ? outcome(c, done) : null;
+  const f = o ? o.daysAfter : s.fatigue, strength = o ? full - o.losses.battalion : full;
+  const fight = o ? (o.engaged ? " after the February fight" : o.battle ? " after February (it arrived after the fight)" : " after February") : "";
+  const men = strength < TUNING.underStrength ? `, under strength (${strength} soldiers)` : strength < c.world.battalion ? `, ${strength} strong` : "";
+  return `${start}${since} Now${fight}: ${f === 0 ? "rested" : `fatigue ${f}, ${fatigueWord(f)}`}${men}.`;
 }
 
 // Every decision taken so far that at least one officer argued about.

@@ -50,19 +50,27 @@ test("rooms read cleanly at every point of every campaign", () => {
 // December stand-down. Its history now comes from the committed plan, like the top bar.
 import { battalionNow } from "../src/story/rooms.js";
 import { glossaryFor } from "../src/fixture.js";
-import { simulate } from "../src/story/play.js";
+import { outcome, simulate } from "../src/story/play.js";
 test("the battalion's card tells its rest history as committed, and agrees with the top bar", () => {
   for (const d of ["steady", "shifting", "volatile"]) for (let i = 0; i < 12; i++) {
     const c = makeCampaign(`R${i}`, d);
     assert.doesNotMatch(glossaryFor(c.world).battalion.body, /without rest since/);
-    for (const dec of ["quiet", "rest", "show"]) for (const jan of ["quiet", "hold"]) for (const progress of [0, 2, 4, 5]) {
-      const run = { dec: { beacon: dec, lattice: "boats", incident: null }, jan: { beacon: jan, lattice: "sarn", way: null, incident: null }, feb: { route: "quiet" } };
+    for (const dec of ["quiet", "rest", "show"]) for (const jan of ["quiet", "hold"]) for (const progress of [0, 2, 4, 5]) for (const route of ["quiet", "forward", "joint"]) {
+      const run = { dec: { beacon: dec, lattice: "boats", incident: null }, jan: { beacon: jan, lattice: "sarn", way: "buy", incident: null }, feb: { route } };
       const t = battalionNow(c, run, progress), s = simulate(c, committed(run, progress));
       const rested = (progress >= 2 && dec === "rest") || (progress >= 4 && jan === "hold");
       assert.equal(/stood down/.test(t) && !/not been stood down/.test(t), rested, t);
       if (rested) assert.doesNotMatch(t, /has not been stood down/);
-      const f = s[["decStart", "decOrders", "decEnd", "janOrders", "janEnd", "janEnd"][progress]].fatigue;
-      assert.match(t, f === 0 ? /Now: rested/ : new RegExp(`Now: fatigue ${f},`), t);
+      // After February is decided, the card follows the resolved outcome, as the debrief does.
+      const o = progress >= 5 ? outcome(c, committed(run, progress)) : null;
+      const f = o ? o.daysAfter : s[["decStart", "decOrders", "decEnd", "janOrders", "janEnd", "janEnd"][progress]].fatigue;
+      if (o) {
+        const left = (c.strength ?? c.world.battalion) - o.losses.battalion;
+        if (left < 500) assert.match(t, new RegExp(`under strength \\(${left} soldiers\\)`), t);
+        else if (left < c.world.battalion) assert.match(t, new RegExp(`${left} strong`), t);
+        assert.match(t, /Now after (the )?February/, t);
+      }
+      assert.match(t, f === 0 ? /Now[^:]*: rested/ : new RegExp(`Now[^:]*: fatigue ${f},`), t);
     }
   }
   const war = makeCampaign("R1", "shifting"); war.fatigue0 = 0;
