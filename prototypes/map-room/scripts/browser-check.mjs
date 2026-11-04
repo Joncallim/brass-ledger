@@ -576,6 +576,42 @@ async function zoom() {
   return `${n} screens at 4 zoom levels against 100%, plus return, zoom-out, dense screen and load-zoomed`;
 }
 
+// ── the reposition order ────────────────────────────────────────────────────
+// Review 10: with the guns exposed in January (cameras at the minister's visit), the station
+// slip offers "Reinforce and reposition the guns"; picked and sent, the January log records
+// the move and February meets the level built. Without exposure it isn't offered.
+async function reposition() {
+  const p = await page();
+  let n = 0;
+  for (let i = 0; i < 40 && n < (QUICK ? 2 : 5); i++) {
+    const seed = `B${i}`, c = story.makeCampaign(seed, "shifting");
+    if (c.incidents.jan !== "visit") continue;
+    const area = `reposition shifting ${seed}`;
+    for (const inc of ["quiet", "open"]) {
+      await p.evaluate(({ seed, inc }) => { window.mapRoom.campaign(seed, "shifting"); window.mapRoom.setRun({ dec: { beacon: "quiet", lattice: "boats", incident: null }, jan: { beacon: "quiet", lattice: "sarn", way: null, incident: inc }, feb: {} }); window.mapRoom.go("jan-orders"); }, { seed, inc });
+      await p.waitForTimeout(300);
+      await (await p.$$("[data-change]"))[0].click(); await p.waitForTimeout(80);
+      const offered = !!(await p.$('[data-opt="reposition"]'));
+      if (offered !== (inc === "open")) { fail(area, `offered ${offered} with ${inc === "open" ? "" : "no "}exposure`); continue; }
+      if (!offered) { await p.click("[data-done]"); continue; }
+      await p.click('[data-opt="reposition"]'); await p.waitForTimeout(80);
+      await p.click("[data-done]"); await p.waitForTimeout(120);
+      const run = await p.evaluate(() => window.mapRoom.getRun());
+      if (run.jan.beacon !== "reposition") { fail(area, "the order didn't take"); continue; }
+      await p.click(".dispatch .go"); await p.waitForTimeout(1500);
+      if ((await p.evaluate(() => window.mapRoom.getRun().jan.beacon)) !== "reposition") fail(area, "the sent plan lost the order");
+      const night = story.night(c, run, "jan").beats.map((b) => b.text.replace(/<[^>]+>/g, "")).join(" ");
+      if (!/moved to new positions/.test(night)) fail(area, "the January log doesn't record the move");
+      const feb = story.february(c, { ...run, feb: {} }).warning[1].replace(/<[^>]+>/g, "");
+      if (/knows where our guns are/.test(feb)) fail(area, `February still counts the exposure: ${feb.slice(-90)}`);
+      n++;
+    }
+  }
+  pageErrors("reposition", p);
+  await p.close();
+  return `${n} exposed Januaries repositioned`;
+}
+
 // ── cards ───────────────────────────────────────────────────────────────────
 // Review 10: a hover card keeps to the essentials (what it is, where it stands now); the full
 // card, with the history, opens only on a click or Enter: a dialog on the table, a panel below
@@ -799,7 +835,7 @@ async function selected() {
 
 try {
   const only = process.argv.find((x) => x.startsWith("--only="))?.slice(7).split(",");
-  for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["names", names], ["sketch", sketch], ["layout", layout], ["zoom", zoom], ["order limit", orderLimit], ["cards", cards], ["dialogs", dialogs], ["radios", radios], ["selected", selected]]) {
+  for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["names", names], ["sketch", sketch], ["layout", layout], ["zoom", zoom], ["order limit", orderLimit], ["cards", cards], ["reposition", reposition], ["dialogs", dialogs], ["radios", radios], ["selected", selected]]) {
     if (only && !only.some((o) => name.startsWith(o))) continue;
     const t = Date.now(), said = await fn();
     console.log(`${name.padEnd(16)} ${said} (${((Date.now() - t) / 1000).toFixed(0)} s)`);
