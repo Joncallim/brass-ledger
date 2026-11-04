@@ -14,6 +14,7 @@ const C = {
   ink: 0x1b1a18, ink2: 0x4d4a44, brass: 0xc99a3e, brassDeep: 0x7a4f0c, red: 0xb4261f,
 };
 const LABEL = { fontFamily: "IBM Plex Sans", fontSize: "20px", color: "#1B1A18" };
+const READABLE = 12; // px, as rendered, for units, the station and the battle's callouts
 const MUTED = { ...LABEL, color: "#4D4A44" };
 
 export class TableScene extends Phaser.Scene {
@@ -24,7 +25,24 @@ export class TableScene extends Phaser.Scene {
   // Everything about the sea comes from the scenario (`?scenario=<id>`); this scene only
   // knows how to animate a station, a base, fleets and intel on whatever chart it gets.
   // `data` comes from a theatre change (DeskScene.newTheatre) and is passed on to the desk.
+  // Key labels (units, the station, the plan's notes and the battle's callouts) keep a size
+  // players can read when the board scales down: at least READABLE px as rendered, by scaling
+  // the label, never the board, up to 2.5 times. At the table layout's scales they are already
+  // larger and stay as they are; the compact layout's small chart is where this matters.
+  readable(px) {
+    const k = this.scale.displaySize.width / 1920;
+    return Math.min(2.5, Math.max(1, READABLE / (px * k)));
+  }
+  keyLabel(t, px) {
+    t.basePx = px;
+    t.setScale(this.readable(px));
+    (this.keyLabels ??= []).push(t);
+    return t;
+  }
+
   create(data = {}) {
+    // When the layout changes, the key labels rescale with it.
+    this.scale.on("resize", () => { this.keyLabels = (this.keyLabels ?? []).filter((t) => t.active); for (const t of this.keyLabels) t.setScale(this.readable(t.basePx)); this.stationNote?.active && this.stationNote.setVisible(this.readable(20) === 1); });
     this.sc = getScenario(new URLSearchParams(location.search).get("scenario"));
     this.geo = buildGeometry(this.sc);
     const { width, height } = this.sc.sheet;
@@ -213,8 +231,10 @@ export class TableScene extends Phaser.Scene {
     g.lineStyle(2, C.ink, 1).lineBetween(x, y - 15, x, y - 40);
     g.fillStyle(C.ink, 1).fillCircle(x, y - 42, 4);
     const lx = st.side === "right" ? x + 40 : x - 330;
-    this.add.text(lx, y - 34, st.name, { ...LABEL, fontStyle: "600" });
-    this.add.text(lx, y - 8, st.note, MUTED);
+    this.keyLabel(this.add.text(lx, y - 34, st.name, { ...LABEL, fontStyle: "600" }), 20);
+    // The station's note is context, not a label to act on: when the name is scaled up to stay
+    // readable, the note gives way rather than sit under it.
+    this.stationNote = this.add.text(lx, y - 8, st.note, MUTED).setVisible(this.readable(20) === 1);
     // ambient loop 1 of 2: the radar sweep, 6 s a turn
     if (!reducedMotion.on) this.tweens.add({ targets: this.sweep, angle: 360, duration: 6000, repeat: -1 });
   }
@@ -377,11 +397,12 @@ export class TableScene extends Phaser.Scene {
     const stack = {};
     for (const n of list) {
       const p = this.at(n.at), [dx, dy] = OFF[n.at] ?? [40, 0], k = (stack[n.at] = (stack[n.at] ?? -1) + 1);
-      const t = this.add.text(p.x + dx, p.y + dy + k * 38, n.text, {
+      const sc = this.readable(19);
+      const t = this.keyLabel(this.add.text(p.x + dx, p.y + dy + k * 38 * sc, n.text, {
         fontFamily: "IBM Plex Sans", fontSize: "19px", fontStyle: "600", color: INK[n.tone ?? "ok"],
         backgroundColor: "rgba(246,241,228,0.94)", padding: { x: 10, y: 5 },
-      });
-      t.setX(Math.min(t.x, OX + MW - 16 - t.width));
+      }), 19);
+      t.setX(Math.max(OX + 8, Math.min(t.x, OX + MW - 16 - t.displayWidth)));
       this.noteObjs.push(t);
     }
   }
@@ -435,7 +456,7 @@ export class TableScene extends Phaser.Scene {
       craft: (a) => Array.from({ length: a.count ?? 4 }, (_, i) => this.add.image(-60 - (i % 4) * 26, -18 + Math.floor(i / 4) * 30, "landingcraft")),
       friend: (a) => Array.from({ length: a.count ?? 3 }, (_, i) => ship("friend", 0, (i - 1) * 34)),
       transport: (a) => Array.from({ length: a.count ?? 2 }, (_, i) => ship("friend", -i * 30, i * 22)),
-      unit: (a) => [this.add.image(0, 0, "unit"), this.add.text(-80, 22, a.label ?? "", { ...MUTED, fontSize: "16px", fontStyle: "600", color: "#1B1A18", align: "center", fixedWidth: 160 })],
+      unit: (a) => [this.add.image(0, 0, "unit"), this.keyLabel(this.add.text(0, 22, a.label ?? "", { ...MUTED, fontSize: "16px", fontStyle: "600", color: "#1B1A18", align: "center" }).setOrigin(0.5, 0), 16)],
     };
     for (const a of plan.actors) {
       const p = A[a.at];
@@ -513,8 +534,9 @@ export class TableScene extends Phaser.Scene {
     // A label starts at its anchor and steps aside, as little as it can, until it is on the
     // table, clear of the report and clear of the labels already shown.
     P.showdownTag = (p, text, color) => {
-      const t = this.add.text(p.x, p.y, text, { ...LABEL, fontSize: "18px", fontStyle: "600", color, backgroundColor: "rgba(246,241,228,0.94)", padding: { x: 8, y: 4 } }).setOrigin(0.5);
-      const w = t.width, h = t.height, others = P.tags.filter((x) => x.type === "Text").map((x) => x.getBounds());
+      const sc = this.readable(18);
+      const t = this.keyLabel(this.add.text(p.x, p.y, text, { ...LABEL, fontSize: "18px", fontStyle: "600", color, backgroundColor: "rgba(246,241,228,0.94)", padding: { x: 8, y: 4 }, wordWrap: sc > 1 ? { width: Math.round(MW * 0.42 / sc) } : undefined }).setOrigin(0.5), 18);
+      const w = t.displayWidth, h = t.displayHeight, others = P.tags.filter((x) => x.type === "Text").map((x) => x.getBounds());
       const hit = (r, q) => r && q.x < r.x + r.width + 8 && q.x + w > r.x - 8 && q.y < r.y + r.height + 4 && q.y + h > r.y - 4;
       const ok = (x, y) => { const q = { x: x - w / 2, y: y - h / 2 }; return q.x >= OX + 8 && q.x + w <= OX + MW - 8 && q.y >= OY + 8 && q.y + h <= OY + MH - 8 && !hit(P.avoid, q) && !others.some((r) => hit(r, q)); };
       // Up and down first, so a label stays in its place's column; sideways only if it must.

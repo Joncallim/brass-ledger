@@ -483,6 +483,49 @@ in the scenario and open the same profiles.
   under strength; the rival losing one craft in its next sector for every four beaten on a
   beach, up to three; and the second sector reusing the December to February calendar. That
   calendar is a stand-in: a real war needs dates that don't depend on the season.
+- **Review 10 (Jon).** One rule added for testing; the rest is clarity.
+  - **Reinforce and reposition the guns** (a new January order, Jon's preferred option to
+    test).
+    - **When:** offered only while Ravellan knows where our guns are, for one personal order.
+    - **What it does:** the quiet reinforcement with its normal fatigue, plus the exposed
+      guns moved by night. Exposure clears once the move is done on 20 January.
+    - **What it doesn't do:** repair the radar, restore soldiers or rest the battalion. No
+      extra fatigue for now.
+    - **Measured over 100 seeds, every legal plan:**
+      - The average result rises slightly. Station losses go from 32% to 31% on Shifting,
+        and from 39% to 38% on Volatile.
+      - With the guns exposed at January's orders, runs that move them lose the station in
+        18%, against 40% for runs that reinforce quietly.
+      - No omniscient best plan uses it, because the best plans never expose the guns (only
+        your own press-briefing or camera answers do). It is a recovery order.
+
+      It needs uncoached playtesting.
+  - **Forecasts are consistent.** Every case ends with three effects in the same order: the
+    station, the cabinet, and the battalion. The battalion gets two separate labels: how
+    worn ("rested", "fatigue 141, unfit") and how many soldiers ("full strength", "540
+    soldiers", "under strength: 480 soldiers"). The same wording is used by:
+    - the top bar (under strength in amber; unfit in red);
+    - the showdown's end tag;
+    - the debrief;
+    - the battalion's card.
+
+    All of them read the same post-battle values.
+  - **Intelligence says what it proves.**
+    - Every report in the ledger states what it doesn't establish. For example, a sailing
+      sighting: "That establishes they are sailing on this date. We don't know whether
+      troops are aboard."
+    - Silence on the harbour net is explained as the coverage assumption the rules make:
+      Lattice was on the net throughout, and we count on it to carry the order. The rule
+      itself is unchanged.
+  - **Hover cards keep to the essentials:** what it is, in one sentence, and where it stands
+    now. The full card with the history opens on a click or Enter:
+    - on the table, as a small dialog with the rooms' focus contract;
+    - in the compact column, or inside an open room, as a panel below the paragraph,
+      covering nothing.
+  - **Chart labels stay readable.** Units, the station, the plan's notes and the battle's
+    callouts render at least 12 px at any supported size. The label is scaled up, never the
+    board, and a scaled callout wraps narrower. The station's small note gives way rather
+    than overlap. At the table layout's scales nothing changes.
 - **Playtest 6 (an agent's playthrough, not a human session).** No rule changed.
   - **Fixed, with tests and replayed paths:**
     - **The battalion's card tells its real rest history.** It said "on duty without rest

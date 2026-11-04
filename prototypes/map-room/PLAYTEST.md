@@ -188,6 +188,23 @@ Still open:
 
 This was not a human session: comprehension and fun still need the uncoached sessions above.
 
+## Review 10: what to watch for
+
+Don't explain any of these beforehand. Afterwards, ask:
+
+1. **The reposition order.** For a player who exposed the guns (cameras at the visit, or
+   briefing the press):
+   - "Did you notice a way to undo what Ravellan knew?"
+   - If they used it: "What did it cost you?"
+   - If they didn't: "Why not?"
+2. **Silence on the harbour net.** For a February with no boarding order heard: "How sure
+   were you that no troops were aboard? Why?" Note whether they mention Lattice covering the
+   harbour, the assumption the game now states.
+3. **The forecast rows.** "Before you chose, what did you expect to happen to the battalion?"
+   Note whether they read "under strength" separately from fatigue.
+4. **The cards.** Note whether they open a full card (click or Enter), and whether any hover
+   card got in their way.
+
 ## Review 9: the rest-or-reinforce trade
 
 The balance report shows a trade, not a best strategy:

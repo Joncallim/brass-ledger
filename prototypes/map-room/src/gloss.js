@@ -66,20 +66,29 @@ export function glossNode(root) {
 
 // The profile card for a term id ("sarn") or an officer ("officer:halden").
 // Live lines for a term (the desk sets this): what is true now, from the committed plan.
+// fn(key, full) gives a one-line state for the hover card, and the full history for the card
+// opened deliberately.
 let live = () => "";
 export const setLive = (fn) => { live = fn ?? (() => ""); };
-export function profileHTML(key) {
+const first = (t) => String(t).split(/(?<=[.!?])\s+/)[0];
+export const termTitle = (key) => (key.startsWith("officer:") ? OFFICERS[key.slice(8)]?.name : GLOSSARY[key]?.title) ?? "";
+
+// The card for a term id ("sarn") or an officer ("officer:halden"). The hover card keeps to
+// what a decision needs: what it is, in one sentence, and where it stands now. The full card
+// (opened by click or Enter) has the whole description and the history.
+export function profileHTML(key, { full = false } = {}) {
+  const more = full ? "" : `<p class="pf-more">Click or press Enter for the full card.</p>`;
   if (key.startsWith("officer:")) {
     const id = key.slice(8), o = OFFICERS[id];
     if (!o) return "";
     return `<div class="profile officer-card"><div class="pf-face" style="background-image:url(${portrait(id)})"></div>
       <div><p class="pf-tag">${o.post}${o.from ? ` · ${o.from}` : ""}</p><p class="pf-title"><span class="rank">${o.rank}</span> ${o.name}</p>
-      <p class="pf-body">${o.role ?? ""}</p></div></div>`;
+      <p class="pf-body">${full ? o.role ?? "" : first(o.role ?? "")}</p>${more}</div></div>`;
   }
   const g = GLOSSARY[key];
   if (!g) return "";
-  const now = live(key);
-  return `<div class="profile"><p class="pf-tag">${g.tag}</p><p class="pf-title">${g.title}</p><p class="pf-body">${g.body}</p>${now ? `<p class="pf-body pf-now">${now}</p>` : ""}</div>`;
+  const now = live(key, full);
+  return `<div class="profile"><p class="pf-tag">${g.tag}</p><p class="pf-title">${g.title}</p><p class="pf-body">${full ? g.body : first(g.body)}</p>${now ? `<p class="pf-body pf-now">${now}</p>` : ""}${more}</div>`;
 }
 
 export const hasTerm = (key) => Boolean(key && (GLOSSARY[key] || (key.startsWith("officer:") && OFFICERS[key.slice(8)])));

@@ -194,7 +194,9 @@ what the task force has and remembers, and the officers quote only that.
    not yet a full campaign: it has no months, staff, incidents or desk screens of its own.
 6. ~~What counts as redeployment?~~ Decided in review 9: exposure clears when the exposed
    guns actually change positions; night can conceal a move but doesn't erase what the
-   enemy knows. Still open: **the order that moves them, and its cost**.
+   enemy knows. The order in review 10 is "Reinforce and reposition the guns": January, one
+   personal order, offered while exposed. It is **in play for testing**: its price (one order,
+   no extra fatigue) is to be confirmed by uncoached playtests and the balance report.
 7. ~~The rest-or-reinforce trade~~ Decided in review 9: keep the current balance for blind
    playtesting, and find out whether players understand and care about the trade
    (RULES-REVIEW.md).

@@ -8,7 +8,7 @@ import { OX, OY } from "./TableScene.js";
 import { FATIGUE } from "../story/play.js";
 import { SCENARIOS, STORY_SCENARIO } from "../scenarios/index.js";
 import { validateScenario } from "../chart/geometry.js";
-import { glossNode, hasTerm, profileHTML, setLive } from "../gloss.js";
+import { glossNode, hasTerm, profileHTML, setLive, termTitle } from "../gloss.js";
 import { WORLD, setWorld } from "../story/world.js";
 import { worldFor } from "../gen/factions.js";
 import { PROGRESS, battalionNow, ledger, staffRoom } from "../story/rooms.js";
@@ -177,7 +177,12 @@ export class DeskScene extends Phaser.Scene {
     };
     this.hideTip = () => this.tip.setVisible(false);
     // The battalion's card says what has happened to it, from what has been committed.
-    setLive((key) => (key === "battalion" && this.campaign ? battalionNow(this.campaign, this.run, PROGRESS[this.chapter] ?? 0) : ""));
+    // The hover card gets its state now; the full card the whole history.
+    setLive((key, full) => {
+      if (key !== "battalion" || !this.campaign) return "";
+      const t = battalionNow(this.campaign, this.run, PROGRESS[this.chapter] ?? 0);
+      return full ? t : t.slice(t.lastIndexOf("Now"));
+    });
     if (this.game.profilesWired) return;
     this.game.profilesWired = true;
     const desk = () => this.game.desk;
@@ -196,6 +201,9 @@ export class DeskScene extends Phaser.Scene {
     }).observe(root, { childList: true, subtree: true });
     // Every radio group on the desk: one Tab stop, arrow keys move and choose (see rove).
     root.addEventListener("keydown", (e) => arrowRadio(e, root));
+    // The full card opens deliberately: a click or Enter on a term.
+    root.addEventListener("click", (e) => { const t = termOf(e); if (t && hasTerm(t.dataset.term) && !e.target.closest("button")) { e.stopPropagation(); desk().openTerm(t); } }, true);
+    root.addEventListener("keydown", (e) => { const t = termOf(e); if (t && e.key === "Enter" && hasTerm(t.dataset.term)) { e.preventDefault(); e.stopPropagation(); desk().openTerm(t); } });
   }
 
   // Invisible hover zones over the chart's own labels, so "Sarn" on the map explains itself
@@ -634,19 +642,42 @@ export class DeskScene extends Phaser.Scene {
   // ── side rooms ────────────────────────────────────────────────────────────
   // Staff room, ledger and settings open over the current chapter without resetting it.
   // They read only what has been committed so far (PROGRESS), never choices in progress.
+  // The full card for a term. On the table it opens as a small dialog (the room contract:
+  // focus in, contained, inert behind, Escape, focus back). In the compact column it expands
+  // below the paragraph it was asked from, pushing the text down rather than covering it.
+  openTerm(t) {
+    const key = t.dataset.term;
+    this.hideTip();
+    // Inside an open room (an officer's name in the staff room) it expands in place too.
+    if (!compact() && !this.room) return this.openRoom("term", null, key, t);
+    const block = t.closest("p, li, dd, .row, .case, .chips, .who, h2, h3") ?? t.parentElement;
+    const open = block.nextElementSibling?.classList.contains("term-full") ? block.nextElementSibling : null;
+    if (open) { const same = open.dataset.term === key; open.remove(); if (same) return; }
+    const panel = document.createElement("div");
+    panel.className = "term-full paper";
+    panel.dataset.term = key;
+    panel.setAttribute("role", "region");
+    panel.setAttribute("aria-label", termTitle(key));
+    panel.innerHTML = `${profileHTML(key, { full: true })}<button class="b sm" data-term-close>Close</button>`;
+    block.after(panel);
+    panel.querySelector("[data-term-close]").onclick = () => { panel.remove(); t.focus({ preventScroll: true }); };
+    panel.querySelector("[data-term-close]").focus({ preventScroll: true });
+    panel.scrollIntoView({ block: "nearest" });
+  }
+
   // A room is a modal dialog: focus goes in, Tab and Shift-Tab stay in, everything behind it
   // is inert (the canvas and every other desk element), Escape closes it, and focus goes
   // back to whatever opened it. Settings re-renders by reopening and keeps the first opener.
-  openRoom(kind, focus = null) {
-    const opener = this.room?.opener ?? document.activeElement;
+  openRoom(kind, focus = null, term = null, from = null) {
+    const opener = from ?? this.room?.opener ?? document.activeElement;
     this.closeRoom(false);
     this.hideTip();
     const progress = PROGRESS[this.chapter] ?? 0;
     const back = this.dom(0, 0, `<div class="room-back"></div>`, "fx");
     back.node.onclick = () => this.closeRoom();
-    const body = { staff: () => this.staffHTML(progress), ledger: () => this.ledgerHTML(progress), settings: () => this.settingsHTML() }[kind]();
-    const title = { staff: "Staff room", ledger: "The ledger", settings: "Settings" }[kind];
-    const panel = this.dom(180, 96, `<section class="paper room room-${kind}" role="dialog" aria-label="${title}"><header><h2>${title}</h2><button class="b" data-close>Close <kbd>Esc</kbd></button></header>${body}</section>`);
+    const body = { staff: () => this.staffHTML(progress), ledger: () => this.ledgerHTML(progress), settings: () => this.settingsHTML(), term: () => profileHTML(term, { full: true }) }[kind]();
+    const title = { staff: "Staff room", ledger: "The ledger", settings: "Settings", term: termTitle(term ?? "") }[kind];
+    const panel = this.dom(kind === "term" ? 600 : 180, kind === "term" ? 180 : 96, `<section class="paper room room-${kind}" role="dialog" aria-label="${title}"><header><h2>${title}</h2><button class="b" data-close>Close <kbd>Esc</kbd></button></header>${body}</section>`);
     const behind = [...this.game.domContainer.children, this.game.canvas].filter((n) => n !== back.node && n !== panel.node && n !== this.tipEl && !n.inert);
     for (const n of behind) n.inert = true;
     panel.node.querySelector("[role=dialog]").setAttribute("aria-modal", "true");

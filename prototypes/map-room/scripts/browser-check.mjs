@@ -231,11 +231,15 @@ async function showdowns() {
         const labels = T.sd.tags.filter((t) => t.type === "Text").map((t) => { const b = t.getBounds(); return { text: t.text, x0: b.x, y0: b.y, x1: b.x + b.width, y1: b.y + b.height }; });
         const actors = Object.fromEntries(Object.entries(T.sd.actors).map(([id, a]) => [id, { x: a.x, y: a.y, visible: a.alpha > 0.5 }]));
         const anchors = T.sd.A, endVisible = !!document.querySelector("[data-end]") && document.querySelector("[data-end]").style.visibility === "visible";
-        return { pg, labels, actors, anchors, still, endVisible, flag: !!T.sd.flag };
+        // Key labels (units, station, callouts) as rendered: at least 12 px at any supported size.
+        const kk = T.scale.displaySize.width / 1920;
+        const keySizes = (T.keyLabels ?? []).filter((t) => t.active && t.visible && t.text).map((t) => t.basePx * t.scaleX * kk);
+        return { pg, labels, actors, anchors, still, endVisible, flag: !!T.sd.flag, keyMin: Math.min(99, ...keySizes) };
       }, { seed, d, run, reduced });
       n++;
       const area = `showdown ${size} ${d} ${seed} ${route}/${jl}${reduced ? " reduced" : ""}`;
       if (!r.still) fail(area, "the chart kept moving while paused");
+      if (r.keyMin < 11.9) fail(area, `a unit, station or callout label renders at ${r.keyMin.toFixed(1)} px`);
       if (!r.endVisible) fail(area, "skip did not reach the end");
       const want = plan.steps.flatMap((s) => s.labels ?? []).map((l) => l.text);
       for (const t of want) if (!r.labels.some((l) => l.text === t)) fail(area, `label missing: ${t}`);
@@ -572,6 +576,51 @@ async function zoom() {
   return `${n} screens at 4 zoom levels against 100%, plus return, zoom-out, dense screen and load-zoomed`;
 }
 
+// ── cards ───────────────────────────────────────────────────────────────────
+// Review 10: a hover card keeps to the essentials (what it is, where it stands now); the full
+// card, with the history, opens only on a click or Enter: a dialog on the table, a panel below
+// the paragraph in the compact column, never covering the text around it.
+async function cards() {
+  let n = 0;
+  for (const viewport of [{ width: 1920, height: 1080 }, { width: 1180, height: 712 }]) {
+    const p = await page(viewport);
+    const area = `cards ${viewport.width}`;
+    await p.evaluate(() => { window.mapRoom.campaign("C1", "shifting"); window.mapRoom.setRun({ dec: { beacon: "rest", lattice: "boats", incident: null }, jan: {}, feb: {} }); window.mapRoom.go("jan-brief"); });
+    await p.waitForTimeout(400);
+    const term = '.sheet [data-term="battalion"]';
+    if (!(await p.$(term))) { fail(area, "no battalion term on the January briefing"); await p.close(); continue; }
+    await p.hover(term); await p.waitForTimeout(120);
+    const tip = await p.evaluate(() => document.getElementById("profile-tip")?.innerText ?? "");
+    if (!/Now/.test(tip) || /Since then|began this campaign/.test(tip)) fail(area, `the hover card should be short, with the state now: "${tip.slice(0, 120)}"`);
+    if (!/Enter for the full card/.test(tip)) fail(area, "the hover card doesn't say how to open the full card");
+    await p.focus(term); await p.keyboard.press("Enter"); await p.waitForTimeout(250);
+    const opened = await p.evaluate((term) => {
+      const dialog = document.querySelector("[role=dialog]"), panel = document.querySelector(".term-full");
+      const host = dialog ?? panel;
+      if (!host) return null;
+      const out = { kind: dialog ? "dialog" : "panel", text: host.innerText, focusInside: host.contains(document.activeElement) };
+      if (panel) {
+        const block = panel.previousElementSibling.getBoundingClientRect(), r = panel.getBoundingClientRect(), next = panel.nextElementSibling?.getBoundingClientRect();
+        out.clear = r.top >= block.bottom - 1 && (!next || next.top >= r.bottom - 1);
+      }
+      return out;
+    }, term);
+    n++;
+    if (!opened) { fail(area, "Enter on a term opened nothing"); await p.close(); continue; }
+    if (opened.kind !== (viewport.width === 1920 ? "dialog" : "panel")) fail(area, `opened a ${opened.kind}`);
+    if (!/began this campaign|Since then/.test(opened.text)) fail(area, "the full card has no history");
+    if (!opened.focusInside) fail(area, "focus did not go into the full card");
+    if (opened.kind === "panel" && !opened.clear) fail(area, "the panel covers the text around it");
+    if (opened.kind === "dialog") { await p.keyboard.press("Escape"); await p.waitForTimeout(150); }
+    else { await p.click("[data-term-close]"); await p.waitForTimeout(100); }
+    const back = await p.evaluate(() => ({ gone: !document.querySelector("[role=dialog], .term-full"), onTerm: document.activeElement?.dataset?.term }));
+    if (!back.gone || back.onTerm !== "battalion") fail(area, "closing the full card didn't return to the term");
+    pageErrors(area, p);
+    await p.close();
+  }
+  return `${n} full cards`;
+}
+
 // The rooms are modal dialogs: focus goes in and stays in, everything behind is inert and
 // shows no glossary card, Escape closes, and focus goes back to the opener.
 async function dialogs() {
@@ -750,7 +799,7 @@ async function selected() {
 
 try {
   const only = process.argv.find((x) => x.startsWith("--only="))?.slice(7).split(",");
-  for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["names", names], ["sketch", sketch], ["layout", layout], ["zoom", zoom], ["order limit", orderLimit], ["dialogs", dialogs], ["radios", radios], ["selected", selected]]) {
+  for (const [name, fn] of [["screens", screens], ["slips and rooms", slipsAndRooms], ["campaigns", campaigns], ["showdowns", showdowns], ["names", names], ["sketch", sketch], ["layout", layout], ["zoom", zoom], ["order limit", orderLimit], ["cards", cards], ["dialogs", dialogs], ["radios", radios], ["selected", selected]]) {
     if (only && !only.some((o) => name.startsWith(o))) continue;
     const t = Date.now(), said = await fn();
     console.log(`${name.padEnd(16)} ${said} (${((Date.now() - t) / 1000).toFixed(0)} s)`);

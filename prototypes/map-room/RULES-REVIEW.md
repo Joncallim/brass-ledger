@@ -63,8 +63,33 @@ The slips and the glossary now say: "until the guns it saw move to new positions
 by night don't change what it knows. No order in this campaign moves them, so it lasts the
 sector."
 
-**Still to design:** an order that moves the exposed guns, and what it costs (time, the
-level while they move, fatigue, a personal order). Nothing in the game implements it yet.
+**Review 10 (Jon's preferred option, in play for testing):** in January, while the guns are
+exposed, "Reinforce and reposition the guns" is offered as one personal order.
+
+- **Effect:** the normal reinforcement and its normal fatigue, and exposure clears once the
+  move is done on 20 January.
+- **Not included:** no radar repair, no soldiers restored, no rest, and no extra fatigue
+  until playtests show whether the order's cost is enough. Offering a plain "move instead of
+  reinforcing" would have been a weak choice, since it would cost an order for the same +1.
+
+Measured with `npm run rules-review` (100 seeds a difficulty, every legal plan; the game
+against `variant: { reposition: "off" }`):
+
+| Rules | Station lost, Shifting / Volatile | Average result, Shifting / Volatile |
+| --- | --- | --- |
+| Review 10 (with the order) | 31% / 38% | 0.82 / 0.74 |
+| Review 9 (without) | 32% / 39% | 0.81 / 0.73 |
+
+- **Where it applies:** in runs with the guns exposed at January's orders, moving them loses
+  the station in 18%, against 40% for reinforcing quietly.
+- **What the omniscient balance doesn't show:** the best fixed plans and the best plans per
+  campaign don't change, because best plans never expose the guns. The order is a recovery
+  for players who did.
+- **The visible-information policies are unchanged.** None of them answers an incident with
+  cameras or a briefing.
+
+It needs uncoached playtesting: whether players see it, and whether one order is the right
+price.
 
 ## Also found: decisions that rarely decide
 
