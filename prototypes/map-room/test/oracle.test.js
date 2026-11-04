@@ -147,3 +147,42 @@ test("a third December order is a legal plan when the campaign grants it", () =>
   const two = makeCampaign("THIRD", "shifting");
   assert.ok(![...plans()].some((p) => runFor(two, p) && (p.db !== "quiet") + (p.dl !== "boats") + (two.incidents.dec && p.di === "own" ? 1 : 0) === 3));
 });
+
+// Review 10 (Jon): "Reinforce and reposition the guns", January, one personal order, only
+// while Ravellan knows where our guns are. It is the quiet reinforcement plus a move that
+// clears exposure once done; it repairs no radar, restores no soldiers and rests nobody.
+import { simulate } from "../src/story/play.js";
+import * as story from "../src/fixture.js";
+test("reinforce and reposition: offered only when exposed, the quiet reinforcement plus a cleared exposure", () => {
+  let exposedSeen = 0, radarSeen = 0;
+  for (const d of ["steady", "shifting", "volatile"]) for (let i = 0; i < 60; i++) {
+    const c = makeCampaign(`R${i}`, d);
+    for (const inc of [null, "open", "brief", "run"]) {
+      const decInc = c.incidents.dec === "leak" && inc === "brief" ? "brief" : c.incidents.dec === "radar" && inc === "run" ? "run" : null;
+      const janInc = c.incidents.jan === "visit" && inc === "open" ? "open" : c.incidents.jan === "radar" && inc === "run" ? "run" : null;
+      const base = { dec: { beacon: "quiet", lattice: "boats", incident: decInc }, jan: { beacon: "quiet", lattice: "sarn", way: null, incident: janInc }, feb: { route: "quiet" } };
+      const q = simulate(c, base), exposed = q.janOrders.rivalKnows;
+      const offered = story.orders(c, base, "jan").options.some((o) => o.id === "reposition");
+      assert.equal(offered, exposed, `${d} R${i} ${inc}: offered ${offered}, exposed ${exposed}`);
+      if (!exposed) continue;
+      exposedSeen++;
+      const r = simulate(c, { ...base, jan: { ...base.jan, beacon: "reposition" } });
+      assert.equal(r.janEnd.def, q.janEnd.def, "same reinforcement as the quiet order");
+      assert.equal(r.janEnd.fatigue, q.janEnd.fatigue, "same fatigue as the quiet order");
+      assert.equal(r.janEnd.rivalKnows, false, "the move clears exposure");
+      assert.equal(q.janEnd.rivalKnows, true);
+      assert.equal(r.janEnd.radarFails, q.janEnd.radarFails, "no radar repair");
+      if (q.janEnd.radarFails) { radarSeen++; assert.equal(effectiveDefence(r.janEnd), r.janEnd.def - 1, "a failed radar still counts"); }
+      else assert.equal(effectiveDefence(r.janEnd), r.janEnd.def);
+      // The previous rules (no such order) leave it exposed.
+      const off = simulate({ ...c, variant: { reposition: "off" } }, { ...base, jan: { ...base.jan, beacon: "reposition" } });
+      assert.equal(off.janEnd.rivalKnows, true);
+    }
+  }
+  assert.ok(exposedSeen > 10, `only ${exposedSeen} exposed January cases`);
+  // It uses a personal order, and a plan using it when nothing is exposed is not legal.
+  const c = makeCampaign("R1", "shifting");
+  const p = { db: "quiet", dl: "boats", di: "staff", jb: "reposition", jl: "sarn", way: null, ji: "staff", route: "quiet" };
+  if (!simulate(c, runFor(c, { ...p, jb: "quiet" })).janOrders.rivalKnows) assert.equal(runFor(c, p), null);
+  assert.equal(runFor(c, { ...p, jl: "when", ji: c.incidents.jan ? "own" : "staff", way: "buy" }), null, "three January orders");
+});

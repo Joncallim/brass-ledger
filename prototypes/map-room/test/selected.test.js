@@ -254,3 +254,44 @@ test("Okafor's briefing doesn't call a rested or fit battalion the weak point", 
   }
   assert.ok(checked > 0);
 });
+
+// Jon, review 10: every forecast case shows the station, the cabinet, and the battalion's
+// fatigue and soldiers as separate labels; the true case's row matches the debrief.
+import { outcome, truthOf } from "../src/story/play.js";
+test("every forecast row shows station, cabinet and battalion; the true case matches the debrief", () => {
+  let n = 0;
+  for (const { c, run } of walks()) for (const route of ["quiet", "forward", "joint"]) {
+    const r = { ...run, feb: { route } }, F = story.february(c, r), fc = forecast(c, r);
+    if (!fc.routes.some((x) => x.route === route)) continue;
+    for (const row of F.routes.find((x) => x.id === route).risk) {
+      const e = row.effects, t = strip(row.text);
+      assert.ok(e && e.station && e.cabinet && e.battalion, t);
+      assert.match(t, /(lost|held|untouched)\. Cabinet \d+ for, \d+ against/, t);
+      assert.match(e.battalion, /(rested|fatigue \d+, \w+).* · (full strength|under strength: \d+ soldiers|\d+ soldiers)$/, e.battalion);
+      n++;
+    }
+    const o = outcome(c, r), truth = truthOf(c, o.s), h = fc.routes.find((x) => x.route === route).cases.find((x) => x.troops === truth.troops && (!x.troops || x.big === truth.big) && (x.troops || x.show === truth.show));
+    if (!h) continue;
+    const bs = story.battalionState(c, o.daysAfter, (c.strength ?? 600) - o.losses.battalion), D = story.debrief(c, r);
+    assert.equal(h.r.daysAfter, o.daysAfter);
+    assert.equal(strip(D.score[2].text).toLowerCase(), `${bs.worn} · ${bs.men}`.toLowerCase());
+  }
+  assert.ok(n > 100);
+});
+
+// Jon, review 10: each report says what it establishes and what it doesn't; silence on the
+// harbour net is explained as a coverage assumption.
+import { ledger } from "../src/story/rooms.js";
+test("intelligence says what it establishes and what it doesn't", () => {
+  const seen = new Set();
+  for (const { c, run } of walks()) {
+    // Every line in the ledger's "what we know" carries what it doesn't establish.
+    for (const line of ledger(c, run, 4).knows) assert.match(strip(line), /doesn’t|don’t know|not whether|not an order|not a pattern|assumption about coverage|can be planted|not when/, strip(line));
+    const r = { ...run, feb: {} }, F = story.february(c, r), w = strip(F.warning[1]);
+    seen.add(F.source);
+    if (F.source === "lattice-no-boarding") assert.match(w, /assumption about coverage/, w);
+    if (F.source === "patrol-boats" || F.source === "radar") assert.match(w, /We don’t know whether troops are aboard/, w);
+    if (F.source === "lattice-boarding") assert.match(w, /establishes a landing/, w);
+  }
+  assert.ok(seen.size >= 2, [...seen].join());
+});

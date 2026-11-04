@@ -13,7 +13,7 @@ const STAFF = { dec: { beacon: "quiet", lattice: "boats" }, jan: { beacon: "quie
 // "staff" or "own" so a plan applies to whichever incident a campaign rolls.
 export function* plans() {
   for (const db of ["quiet", "rest", "show"]) for (const dl of ["boats", "who", "when"]) for (const di of ["staff", "own"])
-    for (const jb of ["quiet", "hold", "show"]) for (const jl of ["sarn", "when", "who"]) for (const way of [null, "buy", "act"]) for (const ji of ["staff", "own"])
+    for (const jb of ["quiet", "hold", "show", "reposition"]) for (const jl of ["sarn", "when", "who"]) for (const way of [null, "buy", "act"]) for (const ji of ["staff", "own"])
       for (const route of ["quiet", "forward", "joint"]) {
         if (way === "act" && jb !== "show") continue;
         yield { db, dl, di, jb, jl, way, ji, route };
@@ -36,6 +36,8 @@ export function runFor(c, p) {
   if (decSeals > (c.seals?.dec ?? 2) || janSeals > (c.seals?.jan ?? 2)) return null;
   const s = simulate(c, run);
   if (p.way === "act" && !needsApproval(c, s.janOrders, "show")) return null;
+  // Reinforce and reposition is offered only while Ravellan knows where our guns are.
+  if (p.jb === "reposition" && (!s.janOrders.rivalKnows || c.variant?.reposition === "off")) return null;
   if (p.jb === "show" && needsApproval(c, s.janOrders, "show") && !p.way) return null; // the send button stays blocked
   if (p.route === "joint" && !s.janEnd.navy) run.feb.route = "quiet"; // not offered: the plan falls back
   return run;
@@ -56,7 +58,7 @@ const fine = (o) => SCORE[o.grade] * 10000 - o.casualties * 4 - o.daysAfter + Ma
 //             0 = one option only, 1 = every option equally often)
 // and for whole plans: how many different plans are ever best, and the largest share of
 // campaigns any one plan is best for (with ties, shares can add up to more than 1).
-export const SLOTS_MEASURED = { db: ["quiet", "rest", "show"], dl: ["boats", "who", "when"], di: ["staff", "own"], jb: ["quiet", "hold", "show"], jl: ["sarn", "when", "who"], way: [null, "buy", "act"], ji: ["staff", "own"], route: ["quiet", "forward", "joint"] };
+export const SLOTS_MEASURED = { db: ["quiet", "rest", "show"], dl: ["boats", "who", "when"], di: ["staff", "own"], jb: ["quiet", "hold", "show", "reposition"], jl: ["sarn", "when", "who"], way: [null, "buy", "act"], ji: ["staff", "own"], route: ["quiet", "forward", "joint"] };
 const entropy = (counts) => { const n = counts.reduce((a, b) => a + b, 0), k = counts.length; if (!n || k < 2) return 0; return -counts.filter(Boolean).reduce((h, x) => h + (x / n) * Math.log(x / n), 0) / Math.log(k); };
 export function decisionDiversity(bestPlans, keyOf = key) {
   const n = bestPlans.length, slots = {};

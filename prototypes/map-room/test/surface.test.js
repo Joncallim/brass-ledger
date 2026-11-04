@@ -160,8 +160,11 @@ test("exposure to the rival is claimed exactly when the rules apply it", () => {
 test("unfit and under strength are separate, and each is said only when true", () => {
   for (const { c, run } of sample()) {
     const o = outcome(c, run), D = story.debrief(c, run);
-    assert.equal(D.score[2].text.startsWith("Unfit"), o.daysAfter > 120);
-    assert.equal(/strong/.test(D.score[2].text), o.losses.battalion > 0);
+    // Two labels: how worn ("unfit" only past 120), and soldiers ("under strength" only below 500).
+    const left = (c.strength ?? 600) - o.losses.battalion;
+    assert.equal(/unfit/.test(D.score[2].text), o.daysAfter > 120, D.score[2].text);
+    assert.equal(/under strength/.test(D.score[2].text), left < 500, D.score[2].text);
+    assert.equal(/full strength/.test(D.score[2].text), left >= 600, D.score[2].text);
   }
 });
 

@@ -66,8 +66,9 @@ test("the battalion's card tells its rest history as committed, and agrees with 
       const f = o ? o.daysAfter : s[["decStart", "decOrders", "decEnd", "janOrders", "janEnd", "janEnd"][progress]].fatigue;
       if (o) {
         const left = (c.strength ?? c.world.battalion) - o.losses.battalion;
-        if (left < 500) assert.match(t, new RegExp(`under strength \\(${left} soldiers\\)`), t);
-        else if (left < c.world.battalion) assert.match(t, new RegExp(`${left} strong`), t);
+        if (left < 500) assert.match(t, new RegExp(`under strength: ${left} soldiers`), t);
+        else if (left < c.world.battalion) assert.match(t, new RegExp(`· ${left} soldiers`), t);
+        else assert.match(t, /full strength/, t);
         assert.match(t, /Now after (the )?February/, t);
       }
       assert.match(t, f === 0 ? /Now[^:]*: rested/ : new RegExp(`Now[^:]*: fatigue ${f},`), t);

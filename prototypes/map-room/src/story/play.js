@@ -15,8 +15,8 @@ export const ministersFor = (support, total = FIXED.ministers) => Math.max(0, Ma
 export function effectiveDefence(s) {
   // Exposure lasts while the rival's picture still describes our positions. Decided (Jon,
   // review 9): it clears only when the exposed guns actually move to new positions; night can
-  // hide a move but doesn't erase what the rival knows. No order does that yet (its design and
-  // cost are open, RULES-REVIEW.md), so it lasts the sector.
+  // hide a move but doesn't erase what the rival knows. January's "reinforce and reposition"
+  // order moves them (review 10); otherwise it lasts the sector.
   return s.def - (s.radarFails ? FIXED.radarFailure : 0) - (s.rivalKnows ? FIXED.exposure : 0);
 }
 
@@ -175,6 +175,15 @@ export function simulate(c, run = {}) {
     if (jb === "quiet") { s.def += 1; s.ring = Math.max(s.ring, 32); s.fatigue += FIXED.monthOnDuty; }
     if (jb === "hold") { s.fatigue = 0; s.notes.push("rested-jan"); }
     if (jb === "show") { s.def += 1; s.ring = 32; s.fatigue += FIXED.monthOnDuty; s.rivalSaw = true; }
+    // Reinforce and reposition (review 10): the quiet reinforcement, and the guns the rival saw
+    // move to new positions by night, so its picture is out of date once the move is done. Only
+    // offered while exposed; the variant turns it off for the rules review. It repairs no radar,
+    // restores no soldiers and rests nobody.
+    let moved = null;
+    if (jb === "reposition") {
+      s.def += 1; s.ring = Math.max(s.ring, 32); s.fatigue += FIXED.monthOnDuty;
+      if (s.rivalKnows && s.variant?.reposition !== "off") { s.rivalKnows = false; moved = true; }
+    }
     s.fatigue += s.eng; s.eng = 0;
     let rotation = null;
     if (jq === "when") {
@@ -190,7 +199,7 @@ export function simulate(c, run = {}) {
     }
     // The battalion's month, net of any rotation, so the log adds up.
     fact(at("jan", CALENDAR.jan[jb]), "beacon", { option: jb, by: jb === "quiet" ? "staff" : "you", def: [was.def, s.def], fatigue: [was.fatigue, s.fatigue], rotated: Boolean(rotation?.fatigue),
-      rested: jb === "hold" ? { from: at("jan", CALENDAR.jan.hold), to: null } : null, exposedBefore: s.rivalKnows, actedAlone: jb === "show" && way === "act" });
+      rested: jb === "hold" ? { from: at("jan", CALENDAR.jan.hold), to: null } : null, exposedBefore: moved ? true : s.rivalKnows, repositioned: Boolean(moved), actedAlone: jb === "show" && way === "act" });
   }
   if (jq === "who") {
     s.knows.role = c.fleetRole;
@@ -353,7 +362,9 @@ export function outcome(c, run) {
   // What the rival lost: a landing force beaten on the beach is gone; one turned back at sea
   // goes home to try again.
   const rivalLost = r.battle && r.code !== "lost" ? c.craft.jan : 0;
-  const after = { ...structuredClone(s), fatigue: r.daysAfter, support: r.supportAfter, def: r.code === "lost" ? 0 : s.def, warning: s.warning };
+  // The battalion's strength after its losses travels with the after-state, so every screen
+  // reading it (the top bar, the debrief, the battalion's card) shows the same soldiers.
+  const after = { ...structuredClone(s), fatigue: r.daysAfter, support: r.supportAfter, def: r.code === "lost" ? 0 : s.def, warning: s.warning, strength: (c.strength ?? c.world?.battalion ?? 600) - r.losses.battalion };
   // February's facts, dated: the ships sail at dawn (seen at 05:00 by the patrol boats or the
   // radar, which is when they leave); our orders go out within the hour of the decision, so a
   // move ordered on a boarding report two days out happens two days before the sailing.

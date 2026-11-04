@@ -31,7 +31,7 @@ test("Halden only claims we kept watch on Sarn when Lattice was listening", () =
 
 test("the ending never calls an unfit battalion fit", () => {
   for (const { o, D } of everyEnding()) {
-    assert.equal(/ends fit at fatigue/.test(D.line), o.kept.battalion, D.line);
+    assert.equal(/ends fit:/.test(D.line), o.kept.battalion, D.line);
     if (!o.kept.battalion) assert.match(D.line, /unfit/);
   }
 });

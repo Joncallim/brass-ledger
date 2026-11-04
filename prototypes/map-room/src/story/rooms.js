@@ -3,7 +3,7 @@
 // what it changed). Pure: both are read from the campaign and the committed choices, so
 // they add no rules of their own.
 import { officersFor } from "./officers.js";
-import { host, incident, knownLines, latticeOrders, latticeQ, orders, status } from "./copy.js";
+import { battalionState, host, incident, knownLines, latticeOrders, latticeQ, orders, status } from "./copy.js";
 import { fatigueWord, ministersFor, outcome, simulate } from "./play.js";
 import { incidentsFor } from "./incidents.js";
 import { CALENDAR, FIXED, TUNING, incidentDay } from "./definition.js";
@@ -48,8 +48,8 @@ export function battalionNow(c, run, progress) {
   const o = progress >= 5 ? outcome(c, done) : null;
   const f = o ? o.daysAfter : s.fatigue, strength = o ? full - o.losses.battalion : full;
   const fight = o ? (o.engaged ? " after the February fight" : o.battle ? " after February (it arrived after the fight)" : " after February") : "";
-  const men = strength < TUNING.underStrength ? `, under strength (${strength} soldiers)` : strength < c.world.battalion ? `, ${strength} strong` : "";
-  return `${start}${since} Now${fight}: ${f === 0 ? "rested" : `fatigue ${f}, ${fatigueWord(f)}`}${men}.`;
+  // The same two labels as the top bar, the forecast and the debrief: worn, and soldiers.
+  return `${start}${since} Now${fight}: ${battalionState(c, f, strength).text}.`;
 }
 
 // Every decision taken so far that at least one officer argued about.

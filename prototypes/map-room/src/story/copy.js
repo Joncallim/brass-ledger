@@ -100,11 +100,18 @@ function build(W) {
   const RULE = `Against one wave, ${B} holds at defence level ${D.holdsAlone}, or at level ${D.holdsWithReserve} if ${BN} is warned and fit. Against two waves it needs level ${D.holdsAlone}, warning, and ${BN} fit and at full strength. Those are levels against a landing: one lower than what is built if ${R} knows where our guns are, and one lower if the main radar fails.`;
 
   // The readiness bar along the top. Each value belongs to one officer.
+  // The battalion in two separate labels: how worn it is, and how many soldiers it has. A
+  // rested battalion can still be under strength. Every screen uses this one wording.
+  function battalionState(c, fatigue, strength = c.strength ?? W.battalion) {
+    const worn = fatigue === 0 ? "rested" : `fatigue ${fatigue}, ${fatigueWord(fatigue)}`;
+    const men = strength < TUNING.underStrength ? `under strength: ${strength} soldiers` : strength < W.battalion ? `${strength} soldiers` : "full strength";
+    return { worn, men, under: strength < TUNING.underStrength, text: `${worn} · ${men}` };
+  }
   function status(c, s) {
     const f = s.fatigue, v = votes(s.support), w = warningState(s), eff = s.def <= 0 ? 0 : effectiveDefence(s);
-    const strength = c.strength ?? W.battalion;
+    const strength = s.strength ?? c.strength ?? W.battalion, bs = battalionState(c, f, strength);
     return [
-      { term: "battalion", label: BN, value: `${f === 0 ? "rested" : `fatigue ${f} · ${fatigueWord(f)}`}${strength < W.battalion ? ` · ${strength} strong` : ""}`, tone: f > FT.unfit || c.understrength ? "bad" : f > FT.tired ? "warn" : "ok", who: "okafor" },
+      { term: "battalion", label: BN, value: `${f === 0 ? "rested" : `fatigue ${f} · ${fatigueWord(f)}`}${strength < W.battalion ? ` · ${bs.under ? "under strength, " : ""}${strength} soldiers` : ""}`, tone: f > FT.unfit ? "bad" : bs.under || f > FT.tired ? "warn" : "ok", who: "okafor" },
       { term: "marenna", label: `${MA} cabinet`, value: `${v.for} for · ${v.against} against`, tone: v.for < FIXED.majority ? "bad" : v.for < FIXED.majority + 1 ? "warn" : "ok", who: "sato" },
       { term: "defence", label: `${B} defences`, value: s.def <= 0 ? "lost" : eff < s.def ? `level ${eff} · ${s.def} built` : `level ${eff}`, tone: eff >= D.holdsAlone ? "ok" : eff === D.holdsWithReserve ? "warn" : "bad", who: "briggs" },
       { term: "warning", label: "Warning", value: w.label, tone: w.tone, who: "halden" },
@@ -142,7 +149,24 @@ function build(W) {
   }
   // Cut at a word, for a chart label.
   const clip = (t, n) => (t.length <= n ? t : `${t.slice(0, t.lastIndexOf(" ", n))}…`);
-  const intelLine = (i) => `${cap(claimText(i))}. Source: ${SOURCE[i.source]}, ${day(i)}. ${cap(CERTAINTY[i.certainty])}.`;
+  // What a report does not establish, beside what it does (review 10). "No boarding order
+  // heard" is evidence of no troops aboard only because Lattice covers Sarn's harbour net
+  // completely while it listens: the rules assume that coverage, and the line says so.
+  const COVERAGE = `${L} was on ${S}’s harbour net throughout, and we count on that net to carry the order: had it been given, we would have heard it. So silence on that net counts as no troops aboard. That is an assumption about coverage, not a sighting.`;
+  function notEstablished(i) {
+    const v = i.claim.value;
+    switch (i.claim.kind) {
+      case "count": return "It doesn’t say whether they will sail, or whether troops will board.";
+      case "role": return "It says what the fishing boats are for, not when the ships sail or whether troops board.";
+      case "date": return `It gives a date, not whether troops are aboard.${i.certainty === "single" ? " One signal can be planted." : ""}`;
+      case "plan": return "It is a reading of intent, not an order we have heard.";
+      case "reaction": return "One reaction, not a pattern.";
+      case "boarding": return v ? "It doesn’t say how many waves: that is the count." : COVERAGE;
+      case "sailing": return "We don’t know whether troops are aboard.";
+      default: return "";
+    }
+  }
+  const intelLine = (i) => `${cap(claimText(i))}. ${notEstablished(i)} Source: ${SOURCE[i.source]}, ${day(i)}. ${cap(CERTAINTY[i.certainty])}.`;
   const knownLines = (c, run, date) => Object.values(knownAt(chronicle(c, run), date)).map(intelLine);
   const READ = { land: "a landing", bluff: "a show of force", probe: `a test, then a landing if ${B} looks weak` };
 
@@ -225,7 +249,11 @@ function build(W) {
   function januaryCouncil(c, s, out) {
     const duty = out.quiet.fatigue, read = januaryRead(s), v = votes(s.support), eff = effectiveDefence(s);
     return {
-      briggs: (read === "land" || read === "probe") && eff + 1 >= D.holdsAlone
+      // With our positions known, the move is the only order that raises what a landing meets by two.
+      briggs: out.reposition
+        ? pos("reposition", `${R} has our gun positions. Reinforce by the ${ord(JAN.quiet)} and move the guns it saw while we do it: a landing meets ${levels(out.reposition.def, out.reposition.eff)}, not ${levels(out.quiet.def, out.quiet.eff)}.`,
+          `${B} at ${levels(out.reposition.def, out.reposition.eff)}, with ${R}’s picture out of date`)
+        : (read === "land" || read === "probe") && eff + 1 >= D.holdsAlone
         ? pos("show", `A frigate and two companies off ${B} on the ${ord(JAN.show)}, in daylight. At ${next(s)}, a landing they can see coming may not come at all.`,
           `${R} seeing a ${B} too strong to attack`, `${R} plans against a ${B} it thinks is thin.`)
         : pos("quiet", `${cap(MOVE[s.def + 1])} by the ${ord(JAN.quiet)}, by night. That takes ${B} to ${next(s)}. ${R} sees nothing.`,
@@ -314,7 +342,9 @@ function build(W) {
   function orders(c, run, month) {
     const sim = simulate(c, run), s = month === "dec" ? sim.decOrders : sim.janOrders;
     const f = s.fatigue, C = CALENDAR[month], mon = MONTH[month];
-    const ids = month === "dec" ? ["quiet", "rest", "show"] : ["quiet", "show", "hold"], out = outcomes(c, run, month, "beacon", ids);
+    // January's fourth option exists only while Ravellan knows where our guns are (review 10).
+    const canMove = month === "jan" && s.rivalKnows && s.variant?.reposition !== "off";
+    const ids = month === "dec" ? ["quiet", "rest", "show"] : ["quiet", "show", "hold", ...(canMove ? ["reposition"] : [])], out = outcomes(c, run, month, "beacon", ids);
     const ft = (id) => out[id].fatigue, onDuty = ft("quiet");
     const staffPlan = `will ${MOVE[s.def + 1]} by night, in place by ${C.quiet} ${mon}.`;
     // The full rule is in the briefing; the slip keeps the line this order bears on.
@@ -347,12 +377,16 @@ function build(W) {
         { id: "quiet", name: `Reinforce ${B} quietly`, short: `reinforce ${B} quietly`, says: `${B} to ${next(s)} by ${C.quiet} January, moved by night. Fatigue ${onDuty} by the end of January.`, staff: true, mark: { at: "beacon", text: `Level ${s.def + 1} by ${C.quiet} Jan, by night` } },
         { id: "show", name: `Reinforce ${B} openly`, short: `reinforce ${B} openly`, says: `${B} to ${next(s)}, in daylight from ${C.show} January, with the frigate. If ${R} means to land and the built level reaches ${D.holdsAlone}, it may call the landing off. ${needsApproval(c, s, "show") ? `${M} must approve it first, and the answer is slow.` : `${surname("sato")} can get ${M}’s answer the same day on the hotline.`} Fatigue ${ft("show")}.`, mark: { at: "beacon", text: `Level ${s.def + 1} · frigate, ${C.show} Jan`, tone: "warn" } },
         { id: "hold", name: "Hold as we are", short: "hold as we are", says: `${BN} stands down from ${C.hold} January: fatigue ${f} to ${ft("hold")}. ${B} gets nothing new and stays at ${nowLevel(s)}.`, mark: { at: "beacon", text: `${BN} rests from ${C.hold} Jan · ${B} stays level ${s.def}`, tone: "warn" } },
+        ...(canMove ? [{ id: "reposition", name: "Reinforce and reposition the guns", short: "reinforce and reposition the guns",
+          says: `${B} to ${levels(out.reposition.def, out.reposition.def)} built by ${C.quiet} January, by night, and the guns ${R} saw move to new positions. Once the move is done, ${R}’s picture is out of date: a landing meets ${levels(out.reposition.def, out.reposition.eff)}, not ${levels(out.quiet.def, out.quiet.eff)}. It repairs no radar and rests nobody. Fatigue ${ft("reposition")}.`,
+          mark: { at: "beacon", text: `Level ${s.def + 1} · guns moved by ${C.quiet} Jan` } }] : []),
       ],
       council,
       reply: {
         quiet: ["briggs", `Done by the ${ord(C.quiet)}, by night. ${R} won’t see it happen.`],
         show: ["briggs", `Frigate sails on the ${ord(C.show)}. ${needsApproval(c, s, "show") ? `Not without ${M}’s yes. Talk to ${surname("sato")}.` : `${surname("sato")} is on the hotline now.`}`],
         hold: ["briggs", `We hold at ${nowLevel(s)}. If they come, ${B} fights with what it has.`],
+        reposition: ["briggs", `By the ${ord(C.quiet)}, by night. ${R} will be planning against guns that aren’t there any more.`],
       },
     };
   }
@@ -496,6 +530,10 @@ function build(W) {
           show: `The frigate and two companies ${e.month === "dec" ? "exercised" : "arrived"} off ${B} in daylight. ${lv} ${bn}${e.actedAlone ? ` We told ${M} the next morning.` : ""}`,
           rest: `${BN} stood down from ${day(e.rested?.from ?? e)} to ${day(e.rested?.to ?? e)}: fatigue ${f0} to ${f1}. ${lv}`,
           hold: `${BN} stood down from ${day(e.rested?.from ?? e)}: fatigue ${f0} to ${f1}. ${lv}`,
+          // The radar, if it failed, still counts: only the exposure is cleared.
+          reposition: e.repositioned
+            ? `${MOVED[d1]}, by night, and the guns ${R} saw moved to new positions: its picture of ${B} is out of date. Defences level ${d0} to ${d1} built; against a landing, ${d0 - x} to ${d1}. ${bn}`
+            : `${MOVED[d1]}, by night. ${lv} ${bn}`,
         }[e.option];
         return { at: "beacon", ring: e.option === "rest" || e.option === "hold" ? 190 : e.option === "show" ? 270 : 250, dashed: e.option === "rest" || e.option === "hold", cause: `${day(e)} · ${B}, ${who}`, text };
       }
@@ -592,10 +630,15 @@ function build(W) {
     const reqs = h.troops && route !== "joint" ? (r.check.holds ? ` Needs ${r.check.needs.map((x) => requirementText(x, r.check, s)).join("; ")}: met.` : ` Needs ${r.failed.map((x) => requirementText(x, r.check, s)).join("; and ")}.`)
       : h.troops && route === "joint" && !r.check.holds ? ` To stop both at sea needs ${requirementText(r.check.needs[0], r.check, s)}. On the beach it needs ${r.check.second.map((x) => requirementText(x, r.check, s)).join("; ")}${r.check.secondHolds ? ": met" : ""}.` : "";
     const loss = [r.losses.garrison ? `garrison ${r.losses.garrison} killed or wounded` : "", r.losses.battalion ? `${BN} ${r.losses.battalion}` : ""].filter(Boolean).join(", ");
-    const bn = `${BN} ends ${fitText(r.daysAfter)}${r.engaged ? ", after fighting" : r.battle ? ", arriving after the fight" : ""}.`;
-    const cab = v1.for !== v0.for ? ` ${MA} cabinet: ${v1.for} for, ${v1.against} against.` : !h.troops && route !== "quiet" ? ` ${MA} cabinet unmoved.` : "";
+    // Every case ends with the same three effects, in the same order: the station, the
+    // cabinet, the battalion (worn and soldiers, as separate labels). The debrief shows the same.
+    const bs = battalionState(c, r.daysAfter, (c.strength ?? W.battalion) - r.losses.battalion);
+    const station = r.code === "lost" ? `${B} lost` : r.battle ? `${B} held` : `${B} untouched`;
+    const cabinet = `cabinet ${v1.for} for, ${v1.against} against${v1.for !== v0.for ? ` (now ${v0.for} for)` : ", unchanged"}`;
+    const battalion = `${BN} ${bs.worn}${r.engaged ? " after fighting" : r.battle ? ", arriving after the fight" : ""} · ${bs.men}`;
+    const effects = { station, cabinet, battalion, under: bs.under };
     return { id: h.id, label: caseLabel(h, route, merged), ok: r.grade === "success", tone: r.grade === "success" ? "ok" : r.grade === "costly" ? "warn" : "bad",
-      text: `${result}.${reqs} ${bn}${loss ? ` Losses: ${loss}.` : ""}${cab}`, code: r.code, daysAfter: r.daysAfter, supportAfter: r.supportAfter, losses: r.losses, engaged: r.engaged };
+      text: `${result}.${reqs}${loss ? ` Losses: ${loss}.` : ""} <span class="effects">${cap(station)}. ${cap(cabinet)}. ${battalion}.</span>`, effects, code: r.code, daysAfter: r.daysAfter, supportAfter: r.supportAfter, losses: r.losses, engaged: r.engaged };
   }
   // The rows for one route: the empty cases merge when they come to the same thing.
   function routeRows(c, s, rt) {
@@ -644,10 +687,10 @@ function build(W) {
       return { id: rt.route, ...b, voice, risk, costs: costLine(risk) };
     });
     const moment = {
-      "lattice-boarding": `${L} has just heard ${R} order troops aboard the landing craft in ${S}. They sail in two days.`,
-      "lattice-no-boarding": `${R}’s ships in ${S} are raising steam. ${L} has heard no order to put troops aboard.`,
-      "patrol-boats": `On the date we had, our patrol boats report ${R}’s ships leaving ${S}. We have no word on whether troops are aboard.`,
-      radar: `${B}’s radar has ${R}’s ships coming out of ${S}. They will be off ${B} tonight. We have no word on whether troops are aboard.`,
+      "lattice-boarding": `${L} has just heard ${R} order troops aboard the landing craft in ${S}. They sail in two days. That establishes a landing; the count, not this order, says how many waves.`,
+      "lattice-no-boarding": `${R}’s ships in ${S} are raising steam. ${L} has heard no order to put troops aboard. ${COVERAGE}`,
+      "patrol-boats": `On the date we had, our patrol boats report ${R}’s ships leaving ${S}. That establishes they are sailing on this date. We don’t know whether troops are aboard.`,
+      radar: `${B}’s radar has ${R}’s ships coming out of ${S}. They will be off ${B} tonight. That establishes they are coming. We don’t know whether troops are aboard.`,
     }[d.source];
     const waves = countRecent ? `${count} landing craft, counted ${day(known.count)}: ${craftWord(count)}.` : `Our last count is ${count} landing craft, on 1 December: there may be more now, so a second wave is possible.`;
     return {
@@ -706,7 +749,7 @@ function build(W) {
       [1, "unit", `Before: fatigue ${s.fatigue}${o.fit ? "" : ", unfit"}`, o.fit ? "ok" : "bad"],
       [2, "contact", deciding, o.code === "lost" ? "bad" : o.code === "landed" ? "warn" : "ok"],
     ];
-    const unitTag = `After: fatigue ${o.daysAfter}${o.losses.battalion ? ` · ${strengthAfter} strong` : ""}`, unitTone = o.kept.battalion ? "ok" : "bad";
+    const unitTag = `After: ${battalionState(c, o.daysAfter, strengthAfter).text}`, unitTone = o.kept.battalion ? "ok" : "bad";
     return {
       title: "The showdown", sub: `${day(moveFirst ? F.moved : F.sailed)} to ${sail + 2} February`,
       beats: [
@@ -770,7 +813,7 @@ function build(W) {
     bluff: `${R} never meant to land. The landing craft were for the cameras, to make ${M} ask us to leave.`,
     probe: `${R} planned to test ${B} first and land only if it looked weak.`,
   };
-  const ORDER_NAME = { dec: { quiet: `Strengthen ${B} quietly`, rest: `Rest ${BN}`, show: "Show force openly" }, jan: { quiet: `Reinforce ${B} quietly`, show: `Reinforce ${B} openly`, hold: "Hold as we are" } };
+  const ORDER_NAME = { dec: { quiet: `Strengthen ${B} quietly`, rest: `Rest ${BN}`, show: "Show force openly" }, jan: { quiet: `Reinforce ${B} quietly`, show: `Reinforce ${B} openly`, hold: "Hold as we are", reposition: "Reinforce and reposition the guns" } };
 
   function orderedLine(rec, month, run) {
     const parts = rec.events.filter((e) => e.month === month && ["beacon", "incident"].includes(e.kind)).map((e) => {
@@ -805,7 +848,8 @@ function build(W) {
     const planted = rec.intel.some((i) => !i.truth && dateKey(i) <= dateKey(rec.decision));
     const traded = rec.events.find((e) => e.kind === "coalition")?.how === "trade";
     const allyLine = o.kept.ally ? `The ${MA} cabinet backs us, ${v.for} for, ${v.against} against.` : `The ${MA} cabinet is against us, ${v.for} for, ${v.against} against: ${M}’s support is in doubt for the spring.${traded ? " The patrol boats bought its navy, not its votes." : ""}`;
-    const battalionLine = `${BN} ends ${o.kept.battalion ? "fit" : "unfit"} at fatigue ${f}${strength < (c.strength ?? W.battalion) ? `, and ${strength} strong after its losses` : ""}.`;
+    const bsAfter = battalionState(c, f, strength);
+    const battalionLine = `${BN} ends ${o.kept.battalion ? "fit" : "unfit"}: ${bsAfter.worn} · ${bsAfter.men}${o.losses.battalion ? `, after losing ${o.losses.battalion}` : ""}.`;
     const req = (r) => requirementText(r, o.check, s, true);
     const lv = levels(s.def, o.def);
     const whyLine = o.code === "lost" && o.route === "joint" ? `Why it fell: with no warning, the two navies met only the first wave, and the second needed ${o.failed.filter((r) => r.key !== "warning").map(req).join("; and ")}.`
@@ -830,7 +874,7 @@ function build(W) {
       score: [
         { label: ST, ok: o.kept.beacon, text: o.kept.beacon ? "Still ours" : "Lost" },
         { label: M, ok: o.kept.ally, text: `${v.for} for, ${v.against} against` },
-        { label: BN, ok: o.kept.battalion, text: `${o.kept.battalion ? "Fit" : "Unfit"}, fatigue ${f}${strength < W.battalion ? ` · ${strength} strong` : ""}` },
+        { label: BN, ok: o.kept.battalion, text: `${cap(bsAfter.worn)} · ${bsAfter.men}` },
       ],
       rows: [
         ["December", orderedLine(rec, "dec", run), believedLine(rec, "dec"), planted && rec.intel.some((i) => !i.truth && i.month === "dec") ? `One of our clues was planted: ${R} wanted us to read it as a landing.` : PLAN_TRUTH[c.plan]],
@@ -842,12 +886,13 @@ function build(W) {
     };
   }
 
-  return { W, TITLE, ORIENT, LATTICE, RULE, latticeQ, status, brief, orders, latticeOrders, host, incident, night, february, showdown, debrief, knownLines, defenceText, intelLine, claimText };
+  return { battalionState, W, TITLE, ORIENT, LATTICE, RULE, latticeQ, status, brief, orders, latticeOrders, host, incident, night, february, showdown, debrief, knownLines, defenceText, intelLine, claimText };
 }
 
 // ── the public API: each takes the campaign and speaks in its world ─────────
 const of = (c) => storyFor(c.world);
 export const status = (c, s) => of(c).status(c, s);
+export const battalionState = (c, fatigue, strength) => of(c).battalionState(c, fatigue, strength);
 export const brief = (c, run, month) => of(c).brief(c, run, month);
 export const orders = (c, run, month) => of(c).orders(c, run, month);
 export const latticeOrders = (c, run, month) => of(c).latticeOrders(c, run, month);

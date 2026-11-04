@@ -39,7 +39,8 @@ export const PHASES = [
 // legalRun).
 export const SLOTS = {
   dec: { beacon: ["quiet", "rest", "show"], lattice: ["boats", "who", "when"] },
-  jan: { beacon: ["quiet", "show", "hold"], lattice: ["sarn", "when", "who"], way: [null, "buy", "act"] },
+  // "reposition" is offered only while Ravellan knows where our guns are (Jon, review 10).
+  jan: { beacon: ["quiet", "show", "hold", "reposition"], lattice: ["sarn", "when", "who"], way: [null, "buy", "act"] },
   feb: { route: ["quiet", "forward", "joint"] },
 };
 
@@ -56,7 +57,7 @@ export const CALENDAR = Object.freeze({
   jan: {
     brief: 1, drift: 2, orders: 7,
     visit: 6, // the minister's visit itself; she asks on the visit incident's day
-    date: 9, rotation: 10, hold: 10, hotline: 15, show: 16, acted: 17, quiet: 20,
+    date: 9, rotation: 10, hold: 10, hotline: 15, show: 16, acted: 17, quiet: 20, reposition: 20,
     fishing: 24, radarFails: 28, rival: 30,
     tradeBy: 14, // a patrol-boat trade is settled by the 14th, or at the vote if sooner
   },
