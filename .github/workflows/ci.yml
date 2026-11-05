@@ -30,3 +30,23 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
+
+  # The isolated map-room prototype (prototypes/map-room): not an npm workspace, so it has
+  # its own install, tests, build and browser checks.
+  map-room:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototypes/map-room
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: prototypes/map-room/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
