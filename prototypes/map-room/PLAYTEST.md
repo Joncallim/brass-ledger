@@ -205,6 +205,42 @@ Don't explain any of these beforehand. Afterwards, ask:
 4. **The cards.** Note whether they open a full card (click or Enter), and whether any hover
    card got in their way.
 
+## Review 10: is the exposure warning, and the way back, clear?
+
+A focused session for the reposition order. The rule is kept as it is. Don't steer anyone
+into exposing the guns: note only those who do it themselves (cameras at the minister's
+visit, or briefing the press). If nobody does, that is a finding too: record it, and don't
+coach.
+
+**Where the game says it** (screens to watch, in order):
+
+1. **The incident answer.** The camera or press option says what exposure costs (one level
+   against a landing), how long it lasts, and that January's "Reinforce and reposition the
+   guns" can end it for a personal order.
+2. **The top bar and the log.** The defences chip reads "level N · M built", and the log
+   records the day Ravellan learned the positions.
+3. **January's station slip.** The fourth option appears, Briggs advises it, and its text
+   says what a landing meets with and without the move.
+
+**Ask after the debrief, without leading:**
+
+1. "Did anything you chose make the station weaker? When did you notice?" Note which screen
+   they name, or whether they noticed at all.
+2. "Was there a way to undo it? What would it have cost?" Right answer: one personal order
+   in January. With an incident answer already sent, that is the second order, so it rules
+   out resting the battalion.
+3. If they moved the guns: "What did you give up for it?" If they didn't: "Why not?" Note
+   whether they weighed the move against Hold, the choice the paired comparison says is
+   usually better with hindsight.
+4. "Was the move worth an order?" Note their reason, not only yes or no.
+
+**Record:**
+
+- whether they exposed the guns, and by which answer;
+- whether they saw the "built" figure on the bar;
+- whether they opened the January slip's options;
+- what they chose for the station in January, and whether the station held in February.
+
 ## Review 9: the rest-or-reinforce trade
 
 The balance report shows a trade, not a best strategy:

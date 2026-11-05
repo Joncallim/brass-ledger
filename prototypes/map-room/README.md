@@ -500,6 +500,13 @@ in the scenario and open the same profiles.
         your own press-briefing or camera answers do). It is a recovery order.
 
       It needs uncoached playtesting.
+    - **Paired comparison** (`npm run reposition-compare -- 150`, RULES-REVIEW.md). In the
+      same exposed situations, against the best legal alternative, the best play without
+      the move (almost always Hold) loses no stations and wins outright more often (67–99%).
+      The move's best is better in 4–6% of situations on Shifting and Volatile.
+      - Held against the quiet reinforcement, it cuts station losses from 9% to 3% on
+        Shifting and from 13% to 4% on Volatile, for one more personal order.
+      - The rule is unchanged, and exposure is not made more common.
   - **Forecasts are consistent.** Every case ends with three effects in the same order: the
     station, the cabinet, and the battalion. The battalion gets two separate labels: how
     worn ("rested", "fatigue 141, unfit") and how many soldiers ("full strength", "540

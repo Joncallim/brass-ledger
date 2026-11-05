@@ -11,7 +11,8 @@
     "test": "node --test test/*.test.js",
     "test:browser": "node scripts/browser-check.mjs",
     "balance": "node scripts/balance.mjs",
-    "rules-review": "node scripts/rules-review.mjs"
+    "rules-review": "node scripts/rules-review.mjs",
+    "reposition-compare": "node scripts/reposition-compare.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

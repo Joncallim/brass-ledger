@@ -953,7 +953,7 @@ export class DeskScene extends Phaser.Scene {
     if (!differ.length) return content.length ? `<div class="advice">${contentLine}</div>` : `<p class="advice agree">Your staff all advise this.</p>`;
     // Two lines at most on the face; the rest are one click away.
     const more = differ.length > 2 ? `<p class="more-advice">${differ.slice(2).map(([w]) => surname(w)).join(" and ")} also ${differ.length > 3 ? "advise" : "advises"} otherwise.</p>` : "";
-    return `<div class="advice">${differ.slice(0, 2).map(([who, p]) => `<p><span class="av sm" style="background-image:url(${portrait(who)})"></span><span>${surname(who)} advises <b>${name(p.prefers)}</b><span class="why">: ${p.because}</span>.${p.risks?.[current] ? ` <span class="against">Against ${name(current)}: ${lower(p.risks[current])}</span>` : ""}</span></p>`).join("")}${more}${contentLine}</div>`;
+    return `<div class="advice">${differ.slice(0, 2).map(([who, p]) => `<p><span class="av sm" style="background-image:url(${portrait(who)})"></span><span>${surname(who)} advises <b>${name(p.prefers)}</b><span class="why">: ${p.because}</span>.${p.risks?.[current] ? ` <span class="against">Against ${name(current)}: ${p.risks[current]}</span>` : ""}</span></p>`).join("")}${more}${contentLine}</div>`;
   }
 
   // Open a slip to its choices. Others in its column step aside until it closes.

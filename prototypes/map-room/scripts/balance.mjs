@@ -47,7 +47,7 @@ const key = (p) => `${p.db}/${p.dl}/${p.di} · ${p.jb}/${p.jl}/${p.way ?? "-"}/$
 const SCORE = { success: 2, costly: 1, failure: 0 };
 // Within a grade, a better result is fewer casualties, fewer days on the battalion and more
 // ministers: what the task force carries into its next sector.
-const fine = (o) => SCORE[o.grade] * 10000 - o.casualties * 4 - o.daysAfter + Math.round(o.supportAfter) * 3;
+export const fine = (o) => SCORE[o.grade] * 10000 - o.casualties * 4 - o.daysAfter + Math.round(o.supportAfter) * 3;
 
 // Decision diversity, measured on the decisions rather than the seeds. Each campaign has a SET
 // of best plans (ties included); every measure counts membership of that set, never just the
@@ -133,7 +133,7 @@ export function report(seeds = SEEDS, variant = null) {
 // forecast's open cases. February is chosen cautiously: the route whose worst open case is
 // best, then the best average.
 const G = { success: 2, costly: 1, failure: 0 };
-function cautiousRoute(c, run) {
+export function cautiousRoute(c, run) {
   const F = forecast(c, run);
   return F.routes.map((rt) => ({ route: rt.route, worst: Math.min(...rt.cases.map((h) => G[h.r.grade])), mean: rt.cases.reduce((n, h) => n + G[h.r.grade], 0) / rt.cases.length }))
     .sort((a, b) => b.worst - a.worst || b.mean - a.mean)[0].route;

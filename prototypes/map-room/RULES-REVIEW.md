@@ -91,6 +91,56 @@ against `variant: { reposition: "off" }`):
 It needs uncoached playtesting: whether players see it, and whether one order is the right
 price.
 
+### Review 10: paired comparison against the best legal alternative
+
+`npm run reposition-compare -- 150` (150 seeds a difficulty). The rule is kept as it is, and
+exposure is never added: it comes only from the player's own answers, as in the game.
+
+**How it compares.** A situation is one campaign with the choices made before January's
+orders: December's orders, and both incident answers. It counts only when the guns are
+exposed at January's orders, the only time the move is offered. From each situation, every
+legal way to finish (January's station order, Lattice question and dealing with the host, then
+February's route) is played. The best that moves the guns is compared with the best that
+doesn't. "Best" knows the hidden truth: it is an upper bound on play, not a player.
+
+| | Steady | Shifting | Volatile |
+| --- | --- | --- | --- |
+| Exposed situations | 691 | 2,173 | 2,107 |
+| Best with the move: station lost | 0% | 3% | 5% |
+| Best with the move: success / costly / failure | 30 / 70 / 0% | 22 / 75 / 3% | 21 / 74 / 5% |
+| Best legal alternative: station lost | 0% | 0% | 0% |
+| Best legal alternative: success / costly / failure | 99 / 1 / 0% | 70 / 30 / 0% | 67 / 33 / 0% |
+| The move's best is the better | 0 | 89 (4%) | 117 (6%) |
+| The alternative's station order | Hold in all | Hold 1,918, quiet 255 | Hold 1,748, quiet 359 |
+| January personal orders: with the move / best alternative | 2.00 / 1.83 | 2.00 / 1.88 | 2.00 / 1.87 |
+
+**A second comparison holds everything else fixed.** It compares the move with the quiet
+reinforcement, keeping the same Lattice question and dealing with the host. February is
+chosen cautiously from the forecast, as a player who sees only the board would choose it.
+
+| Held fixed, cautious February | Steady | Shifting | Volatile |
+| --- | --- | --- | --- |
+| Pairs | 1,171 | 3,418 | 3,262 |
+| Station lost: reposition / reinforce quietly | 0% / 1% | 3% / 9% | 4% / 13% |
+| Success: reposition / reinforce quietly | 26% / 26% | 19% / 18% | 20% / 18% |
+| January personal orders: reposition / reinforce quietly | 1.86 / 0.86 | 1.88 / 0.88 | 1.88 / 0.88 |
+
+**What it says:**
+
+- **The move's real competitor is Hold, not the quiet reinforcement.** When exposure came
+  from a January answer, that answer already used one of the two orders, so moving the guns
+  takes the second and rules out Hold. With hindsight, Hold and the right February route
+  never lose the station here, and win outright far more often (67–99%).
+- **Against the quiet reinforcement it does what it says.** For one more personal order, it
+  cuts station losses by about two-thirds (9% to 3% on Shifting, 13% to 4% on Volatile), with
+  about the same rate of outright wins.
+- **It is the better choice in 4–6% of exposed situations** on Shifting and Volatile, and in
+  none on Steady.
+
+So the order works as a recovery when a player won't rest the battalion. It competes for the
+same order as Hold, and with full knowledge Hold is usually better. Whether players see
+either of those, without hindsight, is for the playtests.
+
 ## Also found: decisions that rarely decide
 
 The decision-diversity measure (`npm run balance`) is unchanged by review 7:
