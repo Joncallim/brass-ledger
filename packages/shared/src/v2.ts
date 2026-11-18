@@ -10,8 +10,11 @@ export const v2RulesetTag = "v2" as const;
 /**
  * #97 changes the persisted bootstrap state. Earlier V2 skeleton saves are
  * intentionally not parsed as this format: no migration has been authored.
+ * #101 adds the persistent campaign records (25-KESTREL-CONSEQUENCE-MATRIX
+ * section 2) and moves the format from 0.4.0-prototype to the next prototype
+ * minor. Earlier prototype payloads are rejected, never migrated.
  */
-export const v2CurrentRulesetVersion = "0.4.0-prototype" as const;
+export const v2CurrentRulesetVersion = "0.5.0-prototype" as const;
 export const sha256DigestSchema = z.string().regex(/^[a-f0-9]{64}$/, "must be a lowercase SHA-256 digest");
 
 export const v2IdentitySchema = z.object({
@@ -72,6 +75,8 @@ export const v2BootstrapStateSchema = z.object({
   cycle: z.number().int().min(1),
   seed: z.string().min(1),
   ravellan: v2RavellanStateSchema,
+  /** #101 persistent campaign records; see {@link v2CampaignRecordsSchema}. */
+  campaign: z.lazy(() => v2CampaignRecordsSchema),
   /** Null until the one opening declaration has been authoritatively recorded. */
   standingIntent: z.lazy(() => v2StandingIntentSchema).nullable(),
 }).strict();
@@ -602,3 +607,107 @@ export const v2ResolvedHqBeliefModelSchema = z.object({
   semanticDigest: v2HqBeliefModelDigestSchema,
 }).strict();
 export type V2ResolvedHqBeliefModel = z.infer<typeof v2ResolvedHqBeliefModelSchema>;
+
+// ============================================================
+// #101 — persistent Kestrel campaign records and consequence facts
+// ============================================================
+// Authority: 25-KESTREL-CONSEQUENCE-MATRIX section 2 (exact persistent state),
+// section 4 (derived consequence facts), section 3 (derived availability).
+// Ordered enums list best to worst. There is deliberately no persisted
+// public-case mirror and no generic trust/morality score.
+
+export const v2BeaconExposureSchema = z.enum(["contained", "thin", "open"]);
+export type V2BeaconExposure = z.infer<typeof v2BeaconExposureSchema>;
+export const v2BeaconPreparationSchema = z.enum(["routine", "prepared"]);
+export type V2BeaconPreparation = z.infer<typeof v2BeaconPreparationSchema>;
+export const v2ReserveConditionSchema = z.enum(["usable", "strained", "brittle"]);
+export type V2ReserveCondition = z.infer<typeof v2ReserveConditionSchema>;
+export const v2PartnerConsentSchema = z.enum(["cooperative", "uneasy", "conditional", "withdrawn"]);
+export type V2PartnerConsent = z.infer<typeof v2PartnerConsentSchema>;
+export const v2ConsultationPromiseSchema = z.enum(["none", "active", "honoured", "breached"]);
+export type V2ConsultationPromise = z.infer<typeof v2ConsultationPromiseSchema>;
+export const v2PartnerAuthoritySchema = z.enum(["pending", "none", "joint", "unilateral", "concession"]);
+export type V2PartnerAuthority = z.infer<typeof v2PartnerAuthoritySchema>;
+export const v2PoliticalConcessionSchema = z.enum(["none", "active"]);
+export type V2PoliticalConcession = z.infer<typeof v2PoliticalConcessionSchema>;
+export const v2LiaisonObligationSchema = z.enum(["none", "active", "fulfilled", "breached"]);
+export type V2LiaisonObligation = z.infer<typeof v2LiaisonObligationSchema>;
+
+/** Exact discriminated Lattice investment state (25 section 2). */
+export const v2LatticeInvestmentSchema = z.discriminatedUnion("state", [
+  z.object({ state: z.literal("on-track"), protectedThroughCycle: z.union([z.literal(0), z.literal(1), z.literal(2)]) }).strict(),
+  z.object({ state: z.literal("operational") }).strict(),
+  z.object({ state: z.literal("unreachable"), missedAtCycle: z.union([z.literal(1), z.literal(2), z.literal(3)]) }).strict(),
+]);
+export type V2LatticeInvestment = z.infer<typeof v2LatticeInvestmentSchema>;
+
+/**
+ * Irreversible attribution source use (25 section 2). The two corroboration
+ * groups are distinct and correspond positionally to the two evidence IDs.
+ */
+export const v2AttributionSourceUseSchema = z.discriminatedUnion("state", [
+  z.object({ state: z.literal("unspent") }).strict(),
+  z.object({
+    state: z.literal("used"),
+    usedAtCycle: z.union([z.literal(5), z.literal(6)]),
+    direction: z.enum(["preparation", "coercion"]),
+    supportingEvidenceInstanceIds: z.tuple([z.string().min(1), z.string().min(1)]),
+    supportingCorroborationGroupIds: z.tuple([v2HqCorroborationGroupIdSchema, v2HqCorroborationGroupIdSchema]),
+  }).strict().refine(
+    (record) => record.supportingCorroborationGroupIds[0] !== record.supportingCorroborationGroupIds[1],
+    { message: "a used source records two distinct corroboration groups", path: ["supportingCorroborationGroupIds"] },
+  ),
+]);
+export type V2AttributionSourceUse = z.infer<typeof v2AttributionSourceUseSchema>;
+
+/** The complete #101 persistent campaign record set. */
+export const v2CampaignRecordsSchema = z.object({
+  beaconExposure: v2BeaconExposureSchema,
+  beaconPreparation: v2BeaconPreparationSchema,
+  reserveCondition: v2ReserveConditionSchema,
+  partnerConsent: v2PartnerConsentSchema,
+  consultationPromise: v2ConsultationPromiseSchema,
+  partnerAuthority: v2PartnerAuthoritySchema,
+  politicalConcession: v2PoliticalConcessionSchema,
+  liaisonObligation: v2LiaisonObligationSchema,
+  latticeInvestment: v2LatticeInvestmentSchema,
+  attributionSourceUse: v2AttributionSourceUseSchema,
+}).strict();
+export type V2CampaignRecords = z.infer<typeof v2CampaignRecordsSchema>;
+
+/** The exact opening state of a fresh Kestrel campaign (25 section 2). */
+export const v2OpeningCampaignRecords: V2CampaignRecords = Object.freeze({
+  beaconExposure: "thin",
+  beaconPreparation: "routine",
+  reserveCondition: "usable",
+  partnerConsent: "cooperative",
+  consultationPromise: "none",
+  partnerAuthority: "pending",
+  politicalConcession: "none",
+  liaisonObligation: "none",
+  latticeInvestment: Object.freeze({ state: "on-track", protectedThroughCycle: 0 }),
+  attributionSourceUse: Object.freeze({ state: "unspent" }),
+} as const);
+
+/**
+ * Derived consequence fact (25 section 4). Recomputed by replaying the same
+ * transition; never persisted and never trusted from a saved payload.
+ */
+export const v2ConsequenceFactSchema = z.object({
+  cycle: z.number().int().min(1).max(6),
+  ruleId: z.string().min(1),
+  provenance: z.enum(["player-caused", "player-conditioned", "adversary-caused", "external"]),
+  sourceOrderIds: z.array(z.string().min(1)),
+  stateField: z.string().min(1),
+  beforeRef: z.string().min(1),
+  afterRef: z.string().min(1),
+  contributionRef: z.string().min(1).optional(),
+}).strict();
+export type V2ConsequenceFact = z.infer<typeof v2ConsequenceFactSchema>;
+
+/** Derived attribution availability (25 section 3); never persisted. */
+export const v2AttributionAvailabilitySchema = z.union([
+  z.object({ state: z.literal("unavailable"), reason: z.literal("source-already-used") }).strict(),
+  v2HqPublicCaseBasisSchema,
+]);
+export type V2AttributionAvailability = z.infer<typeof v2AttributionAvailabilitySchema>;

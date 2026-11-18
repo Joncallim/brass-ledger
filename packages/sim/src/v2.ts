@@ -18,6 +18,7 @@ import {
   v2AgendaIssueSchema,
   v2CommandSetSchema,
   v2IntentDeclarationSchema,
+  v2OpeningCampaignRecords,
   v2SessionSchema,
 } from "@brass-ledger/shared";
 
@@ -25,6 +26,7 @@ import { createHash } from "node:crypto";
 
 export { canonicalV2Json };
 import { V2VerifiedProjectionContext, createVerifiedProjectionContext } from "./v2-hq-verified-context";
+import { V2ConsequenceError, V2UndecidedConsequenceError, resolveV2Consequences, type V2PublicCaseBasisProvider } from "./v2-consequences";
 
 /** SHA-256 digest of canonical V2 JSON representation (sim-local, uses node:crypto). */
 export function v2Sha256(value: unknown): string {
@@ -164,7 +166,19 @@ export class V2CommandValidationError extends Error {
  */
 export type V2TrustedAgendaProvider = (state: V2Session["state"]) => readonly V2AgendaIssue[];
 
+/**
+ * Trusted history a command set extends. `history` is the validated session
+ * prefix (its ledger drives reserve-deployment history and the #100 cut) and
+ * the provider re-derives the public-case basis; neither comes from a client.
+ */
+export type V2ConsequenceInputs = Readonly<{
+  history: Pick<V2Session, "initialState" | "initialStateDigest" | "actionLedger">;
+  publicCaseBasisProvider?: V2PublicCaseBasisProvider;
+}>;
+
 export type V2ResolvedCommandSet = {
+  /** Derived 25 section 4 consequence facts; recomputed, never persisted. */
+  consequenceFacts: ReturnType<typeof resolveV2Consequences>["facts"];
   finalOrders: V2FinalOrder[];
   interventionCost: number;
   postState: V2Session["state"];
@@ -278,6 +292,7 @@ export function resolveV2CommandSet(
   revision: number,
   trustedAgenda: readonly V2AgendaIssue[],
   rawCommandSet: unknown,
+  inputs?: V2ConsequenceInputs,
 ): V2ResolvedCommandSet {
   const commandSet = canonicalizeV2CommandSet(trustedAgenda, rawCommandSet);
   if (commandSet.expectedRevision !== revision) {
@@ -318,10 +333,24 @@ export function resolveV2CommandSet(
     finalOrders.push({ issueId: issue.id, responsibleOfficer: issue.responsibleOfficer, disposition: "intervene", orderId: disposition.orderId, interventionCost: 1 });
   }
 
+  const provider = inputs?.publicCaseBasisProvider;
+  const consequences = resolveV2Consequences({
+    cycle: state.cycle,
+    pre: state.campaign,
+    finalOrders,
+    priorLedger: inputs?.history.actionLedger ?? [],
+    derivePublicCaseBasis: provider === undefined || inputs === undefined ? undefined
+      : () => provider(createVerifiedProjectionContext({ ...inputs.history } as V2Session, state.cycle), state.cycle),
+  });
+  const ravellan = consequences.observations.length === 0 ? state.ravellan : {
+    ...state.ravellan,
+    observations: canonicalizeV2RavellanObservations([...state.ravellan.observations, ...consequences.observations], state.cycle),
+  };
   return {
+    consequenceFacts: consequences.facts,
     finalOrders,
     interventionCost: interventions,
-    postState: { ...state, cycle: state.cycle + 1 },
+    postState: { ...state, cycle: state.cycle + 1, campaign: consequences.campaign, ravellan },
     postRevision: revision + 1,
   };
 }
@@ -417,9 +446,10 @@ export function createV2CommandSetLedgerEntry(
   revision: number,
   trustedAgenda: readonly V2AgendaIssue[],
   rawCommandSet: unknown,
+  inputs?: V2ConsequenceInputs,
 ): V2CommandSetLedgerEntry {
   const commandSet = canonicalizeV2CommandSet(trustedAgenda, rawCommandSet);
-  const resolved = resolveV2CommandSet(state, revision, trustedAgenda, commandSet);
+  const resolved = resolveV2CommandSet(state, revision, trustedAgenda, commandSet, inputs);
   return {
     kind: "command-set",
     commandSet,
@@ -481,7 +511,7 @@ export function createV2IntentDeclarationLedgerEntry(
  * server import path: a non-empty ledger additionally requires a trusted agenda
  * provider so replay never treats saved client data as authored game content.
  */
-export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProvider?: V2TrustedAgendaProvider): V2Session {
+export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProvider?: V2TrustedAgendaProvider, publicCaseBasisProvider?: V2PublicCaseBasisProvider): V2Session {
   // Keep #95's registry-less import boundary stable for commands: the server
   // cannot trust a saved agenda without live authored content. An opening
   // intent declaration has no agenda and can be structurally replayed alone.
@@ -495,6 +525,9 @@ export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProv
   const identity = session.identity;
   if (session.initialState.standingIntent !== null) {
     throw new V2ReplayValidationError("v2_ledger_transition_invalid", "A V2 session must begin before its opening standing-intent declaration.");
+  }
+  if (canonicalV2Json(session.initialState.campaign) !== canonicalV2Json(v2OpeningCampaignRecords)) {
+    throw new V2ReplayValidationError("v2_ledger_transition_invalid", "A V2 session must begin at the exact opening campaign records.");
   }
   const initialDigest = v2InitialStateDigest(identity, session.initialState);
   if (session.initialStateDigest !== initialDigest) {
@@ -512,6 +545,7 @@ export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProv
     let replayRevision = 0;
     let openingIntentRecorded = false;
     let phase: "ravellan" | "command" = "ravellan";
+    const replayedLedger: V2Session["actionLedger"] = [];
     for (const entry of session.actionLedger) {
       if (canonicalV2Json(entry.preState) !== canonicalV2Json(replayState)) {
         throw new V2ReplayValidationError("v2_ledger_pre_state_mismatch", "A V2 ledger entry does not begin at the reconstructed state.");
@@ -554,12 +588,18 @@ export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProv
           if (canonicalV2Json(entry.commandSet) !== canonicalV2Json(canonicalCommandSet)) {
             throw new V2CommandValidationError("v2_disposition_order", "A V2 ledger command is not stored in canonical agenda order.");
           }
-          resolved = resolveV2CommandSet(replayState, replayRevision, trustedAgenda, canonicalCommandSet);
+          resolved = resolveV2CommandSet(replayState, replayRevision, trustedAgenda, canonicalCommandSet, {
+            history: { initialState: session.initialState, initialStateDigest: session.initialStateDigest, actionLedger: replayedLedger },
+            ...(publicCaseBasisProvider === undefined ? {} : { publicCaseBasisProvider }),
+          });
           phase = "ravellan";
         }
       } catch (error) {
-        if (error instanceof V2CommandValidationError) {
+        if (error instanceof V2CommandValidationError || error instanceof V2ConsequenceError) {
           throw new V2ReplayValidationError("v2_ledger_transition_invalid", `A V2 ledger command is no longer legal: ${error.code}.`);
+        }
+        if (error instanceof V2UndecidedConsequenceError) {
+          throw new V2ReplayValidationError("v2_ledger_transition_invalid", `A V2 ledger command needs an undecided rule: ${error.ruleId}.`);
         }
         throw error;
       }
@@ -578,6 +618,7 @@ export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProv
       }
       replayState = resolved.postState;
       replayRevision = resolved.postRevision;
+      replayedLedger.push(entry);
     }
     if (canonicalV2Json(session.state) !== canonicalV2Json(replayState)) {
       throw new V2ReplayValidationError("v2_ledger_post_state_mismatch", "The V2 session state does not match ledger re-execution.");
@@ -597,7 +638,7 @@ export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProv
  * Registry-aware replay entry point. Callers must pass an identity resolved
  * from trusted live content, never a field supplied by the imported save.
  */
-export function validateV2ReplaySkeleton(rawSession: unknown, trustedLiveIdentity: V2Identity, trustedAgendaProvider?: V2TrustedAgendaProvider): V2Session {
+export function validateV2ReplaySkeleton(rawSession: unknown, trustedLiveIdentity: V2Identity, trustedAgendaProvider?: V2TrustedAgendaProvider, publicCaseBasisProvider?: V2PublicCaseBasisProvider): V2Session {
   // Resolve the identity boundary before interpreting any ledger transition.
   // An import from a different live registry must fail as that mismatch, not
   // because its historical agenda cannot be replayed by this registry.
@@ -609,7 +650,7 @@ export function validateV2ReplaySkeleton(rawSession: unknown, trustedLiveIdentit
     || identity.contentDigest !== trustedLiveIdentity.contentDigest) {
     throw new V2ReplayValidationError("v2_content_identity_mismatch", "V2 content identity does not match the live registry.");
   }
-  return validateV2ReplayIntegrity(parsed, trustedAgendaProvider);
+  return validateV2ReplayIntegrity(parsed, trustedAgendaProvider, publicCaseBasisProvider);
 }
 
 /**
@@ -635,8 +676,9 @@ export function validateV2ReplayAndCreateContext(
   trustedLiveIdentity: V2Identity,
   cutCycle: number,
   trustedAgendaProvider?: V2TrustedAgendaProvider,
+  publicCaseBasisProvider?: V2PublicCaseBasisProvider,
 ): { session: V2Session; context: V2VerifiedProjectionContext } {
-  const session = validateV2ReplaySkeleton(rawSession, trustedLiveIdentity, trustedAgendaProvider);
+  const session = validateV2ReplaySkeleton(rawSession, trustedLiveIdentity, trustedAgendaProvider, publicCaseBasisProvider);
   const context = createVerifiedProjectionContext(session, cutCycle);
   return { session, context };
 }

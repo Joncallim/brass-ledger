@@ -82,6 +82,7 @@
  */
 import { createHash } from "node:crypto";
 export * from "./v2.js";
+export * from "./v2-consequences.js";
 // #100 — Public base intelligence API only
 export { deriveV2BaseHqBeliefAtCycle, deriveV2CurrentHqBelief, deriveV2HqBeliefHistory } from "./v2-hq-belief";
 // V2VerifiedProjectionContext is not constructible from outside the package.
