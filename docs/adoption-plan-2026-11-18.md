@@ -150,13 +150,13 @@ product owner first.
 Record the repo's existing conventions (read from `packages/` and `apps/`, not invented)
 with `/project-settings naming.<key>=<value>`.
 **Time**: 30 min
-- [ ] Naming conventions recorded
+- [x] Naming conventions recorded (project.yaml `naming.*`, mirrored in technical-preferences.md)
 
 ### 4.2 Performance budgets not configured
 Frame-rate budgets mostly do not apply to a turn-based, headless-first game; turn-resolution
 time and bundle size might. Set only the ones that apply, or record that none do.
 **Time**: 15 min
-- [ ] Budgets set, or "not applicable" recorded
+- [x] "Not applicable" recorded; `performance.*` left unset on purpose so /perf-profile reports NOT ASSESSED
 
 (Sprint status, stage and traceability, also medium, are Step 3c–3e.)
 
@@ -166,13 +166,13 @@ time and bundle size might. Set only the ones that apply, or record that none do
 
 ### 5.1 Rendering and physics blank
 Not applicable. Record them as none.
-- [ ] Recorded
+- [x] Recorded
 
 ### 5.2 Forbidden patterns empty
 Candidates from CLAUDE.md: simulation rules outside `packages/sim`; schemas outside
 `packages/shared`; whole-session client saves; headless runner importing browser or server
 state; real user save directories in tests; signing credentials anywhere in the repo.
-- [ ] Recorded
+- [x] Recorded in technical-preferences.md (11 patterns, all from CLAUDE.md)
 
 ---
 

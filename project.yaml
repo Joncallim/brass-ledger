@@ -33,8 +33,23 @@ engine:
   name: Web
   version: 8.1.5
   language: TypeScript
+  rendering: none (headless engine; React DOM workbench; Phaser 3 only in prototypes/map-room)
+  physics: none (turn-based)
   code_root: packages
   test_root: packages
+
+# Naming, as the code already does it (read from packages/ and apps/, 2026-11-18).
+naming:
+  classes: PascalCase; error classes end in Error (RevisionMismatchError)
+  variables: camelCase; Zod schemas end in Schema (chiefPositionSchema)
+  constants: UPPER_SNAKE_CASE (KESTREL_HQ_BELIEF_MODEL_ID)
+  signals: kebab-case string discriminants on kind/type (ravellan-decision, command-set)
+  files: kebab-case .ts modules; PascalCase .tsx for React components; *.test.ts(x) beside the code, *.spec.ts for Playwright
+  scenes: PascalCase ending in Scene (prototypes/map-room only)
+
+# performance.*: deliberately unset. Brass Ledger is turn-based and headless-first,
+# with no frame loop to budget; /perf-profile reports NOT ASSESSED rather than
+# measuring against an invented number. See technical-preferences.md.
 
 # Review depth (product owner, 2026-11-18): rigor standard for documents, with
 # review_mode pinned to full on purpose so every director and specialist review

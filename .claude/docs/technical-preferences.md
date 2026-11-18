@@ -10,10 +10,10 @@
 
 ## Engine & Language
 
-- **Engine**: [TO BE CONFIGURED — run /setup-engine]
-- **Language**: [TO BE CONFIGURED]
-- **Rendering**: [TO BE CONFIGURED]
-- **Physics**: [TO BE CONFIGURED]
+- **Engine**: Web (Vite 8.1.5; TypeScript monorepo, no game engine)
+- **Language**: TypeScript 5.9.3 (strict), Node.js
+- **Rendering**: none (headless engine; React DOM workbench; Phaser 3 only in prototypes/map-room)
+- **Physics**: none (turn-based)
 
 ## Input & Platform
 
@@ -29,19 +29,24 @@
 
 ## Naming Conventions
 
-- **Classes**: [TO BE CONFIGURED]
-- **Variables**: [TO BE CONFIGURED]
-- **Signals/Events**: [TO BE CONFIGURED]
-- **Files**: [TO BE CONFIGURED]
-- **Scenes/Prefabs**: [TO BE CONFIGURED]
-- **Constants**: [TO BE CONFIGURED]
+- **Classes**: PascalCase; error classes end in Error (RevisionMismatchError)
+- **Variables**: camelCase; Zod schemas end in Schema (chiefPositionSchema)
+- **Signals/Events**: kebab-case string discriminants on kind/type (ravellan-decision, command-set)
+- **Files**: kebab-case .ts modules; PascalCase .tsx for React components; *.test.ts(x) beside the code, *.spec.ts for Playwright
+- **Scenes/Prefabs**: PascalCase ending in Scene (prototypes/map-room only)
+- **Constants**: UPPER_SNAKE_CASE (KESTREL_HQ_BELIEF_MODEL_ID)
 
 ## Performance Budgets
 
-- **Target Framerate**: [TO BE CONFIGURED]
-- **Frame Budget**: [TO BE CONFIGURED]
-- **Draw Calls**: [TO BE CONFIGURED]
-- **Memory Ceiling**: [TO BE CONFIGURED]
+Not applicable, deliberately: Brass Ledger is turn-based and headless-first, with no
+frame loop. The `performance.*` keys stay unset in project.yaml so /perf-profile reports
+NOT ASSESSED instead of measuring against an invented budget. Set one only when the
+product owner commits to a real target (for example turn-resolution time).
+
+- **Target Framerate**: not applicable (turn-based)
+- **Frame Budget**: not applicable
+- **Draw Calls**: not applicable
+- **Memory Ceiling**: not set (no committed target)
 
 ## Testing
 
@@ -52,7 +57,19 @@
 ## Forbidden Patterns
 
 <!-- Add patterns that should never appear in this project's codebase -->
-- [None configured yet — add as architectural decisions are made]
+From CLAUDE.md's Brass Ledger Rules (non-negotiable invariants):
+
+- Simulation rules anywhere but `packages/sim` (no reimplementing them in UI, API, CLI or desktop)
+- Shared serializable contracts or Zod schemas outside `packages/shared`
+- Scenario content outside `packages/content`, or content that skips reference and doctrine reachability validation
+- Whole-session client saves, or session mutation that bypasses the server's `expectedRevision` stale-write check
+- Supplied inputs accepted without an explicit accepted-risk override (unless an operator deliberately selects unattended acceptance)
+- The portable headless runner importing browser or server state
+- Non-deterministic turn resolution (`Math.random`, wall-clock time) or changes that break replay hashes or validation
+- A persisted V2 format change without a prototype version bump, or a silent reinterpretation or migration of an older payload
+- Real user save directories in tests
+- Signing credentials in the repository, logs, fixtures or delegated prompts
+- Production code importing from `prototypes/`
 
 ## Allowed Libraries / Addons
 
