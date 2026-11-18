@@ -54,6 +54,12 @@ const agenda: readonly V2AgendaIssue[] = [
 
 const agendaProvider = () => agenda;
 
+/** Placeholder prefix of the right length, for tests that exercise validation rather than consequences. */
+function resolveFake(state: V2Session["state"], revision: number, trustedAgenda: readonly V2AgendaIssue[], raw: unknown) {
+  const actionLedger = Array.from({ length: revision }, () => ({ kind: "intent-declaration" })) as unknown as V2Session["actionLedger"];
+  return resolveV2CommandSet(state, revision, trustedAgenda, raw, { history: { initialState: state as V2Session["state"], initialStateDigest: "0".repeat(64), actionLedger } });
+}
+
 function declaredState() {
   return { cycle: 1, seed: "kestrel-seed", ravellan, campaign: v2OpeningCampaignRecords, standingIntent: intent } as const;
 }
@@ -103,7 +109,7 @@ test("V2 skeleton rejects registry, digest, and zero-ledger state tampering with
 
 test("authoritative command resolution delegates by responsible-officer recommendation and is atomic", () => {
   const state = declaredState();
-  const resolved = resolveV2CommandSet(state, 4, agenda, {
+  const resolved = resolveFake(state, 4, agenda, {
     cycle: 1, expectedRevision: 4,
     dispositions: [
       { issueId: "watch", kind: "delegate" },
@@ -134,22 +140,22 @@ test("command resolution rejects stale, reordered, illegal, and over-budget whol
     [{ cycle: 1, expectedRevision: 4, dispositions: [{ issueId: "watch", kind: "intervene", orderId: "reinforce" }, { issueId: "consult", kind: "intervene", orderId: "agreement" }, { issueId: "lattice", kind: "intervene", orderId: "protect" }] }, "v2_intervention_limit"],
   ];
   for (const [commandSet, code] of cases) {
-    assert.throws(() => resolveV2CommandSet(state, 4, agenda, commandSet), (error: unknown) => error instanceof V2CommandValidationError && error.code === code);
+    assert.throws(() => resolveFake(state, 4, agenda, commandSet), (error: unknown) => error instanceof V2CommandValidationError && error.code === code);
   }
 });
 
 test("complete command submissions canonicalize to trusted agenda order before persistence", () => {
   const state = declaredState();
-  const canonical = resolveV2CommandSet(state, 0, agenda, {
+  const canonical = resolveFake(state, 0, agenda, {
     cycle: 1, expectedRevision: 0,
     dispositions: [{ issueId: "watch", kind: "delegate" }, { issueId: "consult", kind: "defer" }, { issueId: "lattice", kind: "intervene", orderId: "protect" }],
   });
-  const permuted = resolveV2CommandSet(state, 0, agenda, {
+  const permuted = resolveFake(state, 0, agenda, {
     cycle: 1, expectedRevision: 0,
     dispositions: [{ issueId: "lattice", kind: "intervene", orderId: "protect" }, { issueId: "watch", kind: "delegate" }, { issueId: "consult", kind: "defer" }],
   });
   assert.deepEqual(permuted, canonical);
-  assert.throws(() => resolveV2CommandSet(state, 0, [], { cycle: 1, expectedRevision: 0, dispositions: [] }), (error: unknown) => error instanceof V2CommandValidationError && error.code === "v2_invalid_agenda");
+  assert.throws(() => resolveFake(state, 0, [], { cycle: 1, expectedRevision: 0, dispositions: [] }), (error: unknown) => error instanceof V2CommandValidationError && error.code === "v2_invalid_agenda");
 });
 
 test("non-empty command ledger replays only against trusted canonical agenda and detects action evidence tampering", () => {
@@ -159,7 +165,7 @@ test("non-empty command ledger replays only against trusted canonical agenda and
   const entry = createV2CommandSetLedgerEntry(ravellanEntry.postState, 2, agenda, {
     cycle: 1, expectedRevision: 2,
     dispositions: [{ issueId: "lattice", kind: "intervene", orderId: "protect" }, { issueId: "watch", kind: "delegate" }, { issueId: "consult", kind: "defer" }],
-  });
+  }, { history: { initialState, initialStateDigest: v2InitialStateDigest(identity, initialState), actionLedger: [declaration, ravellanEntry] } });
   assert.deepEqual(entry.commandSet.dispositions.map((disposition) => disposition.issueId), ["watch", "consult", "lattice"]);
   const root = { id: "v2-save-1", campaignId: "v2-campaign-1", revision: 3, identity, initialState, state: entry.postState, actionLedger: [declaration, ravellanEntry, entry], updatedAt: "2026-09-02T00:00:00.000Z" };
   const session: V2Session = { ...root, initialStateDigest: v2InitialStateDigest(identity, initialState), finalStateDigest: v2FinalSessionDigest(root) };
@@ -185,7 +191,7 @@ test("opening intent declaration is the sole non-advancing prerequisite for comm
   const resolved = declareV2StandingIntent(initialState, 0, openingDeclaration);
   assert.deepEqual(resolved.postState, { ...initialState, standingIntent: intent });
   assert.equal(resolved.postRevision, 1);
-  assert.throws(() => resolveV2CommandSet(initialState, 0, agenda, { cycle: 1, expectedRevision: 0, dispositions: agenda.map((issue) => ({ issueId: issue.id, kind: "delegate" })) }), (error: unknown) => error instanceof V2CommandValidationError && error.code === "v2_missing_standing_intent");
+  assert.throws(() => resolveFake(initialState, 0, agenda, { cycle: 1, expectedRevision: 0, dispositions: agenda.map((issue) => ({ issueId: issue.id, kind: "delegate" })) }), (error: unknown) => error instanceof V2CommandValidationError && error.code === "v2_missing_standing_intent");
   assert.throws(() => declareV2StandingIntent(resolved.postState, 1, { cycle: 1, expectedRevision: 1, intent }), (error: unknown) => error instanceof V2CommandValidationError && error.code === "v2_invalid_intent_declaration");
   assert.throws(() => declareV2StandingIntent(initialState, 1, { cycle: 1, expectedRevision: 1, intent }), (error: unknown) => error instanceof V2CommandValidationError && error.code === "v2_invalid_intent_declaration");
   assert.throws(() => declareV2StandingIntent(initialState, 0, { ...openingDeclaration, cycle: 2 }), (error: unknown) => error instanceof V2CommandValidationError && error.code === "v2_invalid_intent_declaration");

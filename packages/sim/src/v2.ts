@@ -25,7 +25,7 @@ import {
 import { createHash } from "node:crypto";
 
 export { canonicalV2Json };
-import { V2VerifiedProjectionContext, createVerifiedProjectionContext } from "./v2-hq-verified-context";
+import { V2VerifiedProjectionContext, createLiveProjectionContext, createVerifiedProjectionContext } from "./v2-hq-verified-context";
 import { V2ConsequenceError, V2UndecidedConsequenceError, resolveV2Consequences, type V2PublicCaseBasisProvider } from "./v2-consequences";
 
 /** SHA-256 digest of canonical V2 JSON representation (sim-local, uses node:crypto). */
@@ -167,9 +167,12 @@ export class V2CommandValidationError extends Error {
 export type V2TrustedAgendaProvider = (state: V2Session["state"]) => readonly V2AgendaIssue[];
 
 /**
- * Trusted history a command set extends. `history` is the validated session
- * prefix (its ledger drives reserve-deployment history and the #100 cut) and
- * the provider re-derives the public-case basis; neither comes from a client.
+ * Trusted history a command set extends. `history` is REQUIRED and must be the
+ * full validated session prefix: exactly one ledger entry per revision, so
+ * `history.actionLedger.length === revision`. Its ledger drives the
+ * reserve-deployment history and the #100 cut; the provider re-derives the
+ * public-case basis. Neither comes from a client. A partial or empty prefix is
+ * refused (`v2_history_mismatch`) rather than silently diverging from replay.
  */
 export type V2ConsequenceInputs = Readonly<{
   history: Pick<V2Session, "initialState" | "initialStateDigest" | "actionLedger">;
@@ -292,8 +295,23 @@ export function resolveV2CommandSet(
   revision: number,
   trustedAgenda: readonly V2AgendaIssue[],
   rawCommandSet: unknown,
-  inputs?: V2ConsequenceInputs,
+  inputs: V2ConsequenceInputs,
 ): V2ResolvedCommandSet {
+  return resolveCommandSetWith(state, revision, trustedAgenda, rawCommandSet, inputs, createLiveProjectionContext);
+}
+
+/** Replay-only entry: the sole path that stamps a context as trusted-replay. */
+function resolveCommandSetWith(
+  state: V2Session["state"],
+  revision: number,
+  trustedAgenda: readonly V2AgendaIssue[],
+  rawCommandSet: unknown,
+  inputs: V2ConsequenceInputs,
+  makeContext: typeof createLiveProjectionContext,
+): V2ResolvedCommandSet {
+  if (inputs.history.actionLedger.length !== revision) {
+    throw new V2ConsequenceError("v2_history_mismatch", "The supplied history must be the full validated ledger prefix (one entry per revision).");
+  }
   const commandSet = canonicalizeV2CommandSet(trustedAgenda, rawCommandSet);
   if (commandSet.expectedRevision !== revision) {
     throw new V2CommandValidationError("v2_stale_revision", "The command set was created for a stale revision.");
@@ -333,19 +351,24 @@ export function resolveV2CommandSet(
     finalOrders.push({ issueId: issue.id, responsibleOfficer: issue.responsibleOfficer, disposition: "intervene", orderId: disposition.orderId, interventionCost: 1 });
   }
 
-  const provider = inputs?.publicCaseBasisProvider;
+  const provider = inputs.publicCaseBasisProvider;
   const consequences = resolveV2Consequences({
     cycle: state.cycle,
     pre: state.campaign,
     finalOrders,
-    priorLedger: inputs?.history.actionLedger ?? [],
-    derivePublicCaseBasis: provider === undefined || inputs === undefined ? undefined
-      : () => provider(createVerifiedProjectionContext({ ...inputs.history } as V2Session, state.cycle), state.cycle),
+    priorLedger: inputs.history.actionLedger,
+    derivePublicCaseBasis: provider === undefined ? undefined
+      : () => provider(makeContext({ ...inputs.history } as V2Session, state.cycle), state.cycle),
   });
-  const ravellan = consequences.observations.length === 0 ? state.ravellan : {
-    ...state.ravellan,
-    observations: canonicalizeV2RavellanObservations([...state.ravellan.observations, ...consequences.observations], state.cycle),
-  };
+  let ravellan = state.ravellan;
+  if (consequences.observations.length > 0) {
+    try {
+      ravellan = { ...state.ravellan, observations: canonicalizeV2RavellanObservations([...state.ravellan.observations, ...consequences.observations], state.cycle) };
+    } catch (error) {
+      if (error instanceof TypeError) throw new V2ConsequenceError("v2_contradictory_observation", error.message);
+      throw error;
+    }
+  }
   return {
     consequenceFacts: consequences.facts,
     finalOrders,
@@ -446,7 +469,7 @@ export function createV2CommandSetLedgerEntry(
   revision: number,
   trustedAgenda: readonly V2AgendaIssue[],
   rawCommandSet: unknown,
-  inputs?: V2ConsequenceInputs,
+  inputs: V2ConsequenceInputs,
 ): V2CommandSetLedgerEntry {
   const commandSet = canonicalizeV2CommandSet(trustedAgenda, rawCommandSet);
   const resolved = resolveV2CommandSet(state, revision, trustedAgenda, commandSet, inputs);
@@ -588,10 +611,10 @@ export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProv
           if (canonicalV2Json(entry.commandSet) !== canonicalV2Json(canonicalCommandSet)) {
             throw new V2CommandValidationError("v2_disposition_order", "A V2 ledger command is not stored in canonical agenda order.");
           }
-          resolved = resolveV2CommandSet(replayState, replayRevision, trustedAgenda, canonicalCommandSet, {
+          resolved = resolveCommandSetWith(replayState, replayRevision, trustedAgenda, canonicalCommandSet, {
             history: { initialState: session.initialState, initialStateDigest: session.initialStateDigest, actionLedger: replayedLedger },
             ...(publicCaseBasisProvider === undefined ? {} : { publicCaseBasisProvider }),
-          });
+          }, createVerifiedProjectionContext);
           phase = "ravellan";
         }
       } catch (error) {

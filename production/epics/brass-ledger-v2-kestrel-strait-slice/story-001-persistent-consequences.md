@@ -55,6 +55,8 @@ implementer plus an independent determinism/replay reviewer.
 - 25 §10 C5 `quiet-reinforce-beacon` reserve −1 "when material commitment required" has no defined trigger. Check `39-KESTREL-CROSS-SYSTEM-COMPOSITION.md`; if it is not there, stop with `BLOCKED: PRODUCT DECISION REQUIRED` for that case.
 - `60-DECISION-LOG` D50 (`used|expired`) conflicts with 25 §2 (`unspent|used`). Follow 25.
 - Cross-field combinations across records (e.g. promise × partner authority) are not defined in 25; reject only what 25 §2 defines.
+- **Decided 2026-11-18 (product owner):** the quiet-reinforce reserve effect stays unbuilt: it throws `V2UndecidedConsequenceError` (`BLOCKED: PRODUCT DECISION REQUIRED`) with an `it.todo`. An all-Delegate C5 package containing it is refused, so this blocks the first real C5 agenda (story 003) until decided.
+- **Left open 2026-11-18 (product owner):** whether Honour (+1) and attribution Use (+1) stack on the partner in one C5 package (code currently stacks them, then clamps once); and whether "accessible partner" for Use's +1 is judged before the package (current code) or after Concession.
 
 ---
 
@@ -68,11 +70,14 @@ implementer plus an independent determinism/replay reviewer.
 
 ## Files
 
-- `packages/shared/src/` (V2 campaign-state schemas)
-- `packages/sim/src/v2.ts` (command-set resolver, replay)
-- `packages/sim/src/v2-consequences.test.ts`
-
----
+- `packages/shared/src/v2.ts` — campaign record schemas, opening state, ruleset 0.5.0-prototype
+- `packages/shared/src/v2.test.ts` — fixtures and version
+- `packages/sim/src/v2-consequences.ts` — new: consequence resolver, attribution availability, undecided extension point
+- `packages/sim/src/v2.ts` — command-set resolver and replay wiring; required history prefix; live vs replay provenance
+- `packages/sim/src/index.ts` — export
+- `packages/sim/src/v2.test.ts` — fixtures, golden digests, prefix helper
+- `packages/sim/src/v2-consequences.test.ts` — new: AC-1..AC-4, live/replay equivalence, provenance, malformed basis; 1 it.todo
+- `apps/server/src/index.test.ts` — fixture gains opening campaign records (outside the planned scope; required by the format change)
 
 ## QA Test Cases
 

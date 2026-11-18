@@ -40,7 +40,7 @@ import type { V2VerifiedProjectionContext } from "./v2-hq-verified-context";
 /** A complete command set that 25/39 define as illegal or unreachable. */
 export class V2ConsequenceError extends Error {
   constructor(
-    readonly code: "v2_consequence_precondition" | "v2_commander_only_order" | "v2_act_without_sensitive_action" | "v2_sensitive_action_without_authority" | "v2_source_already_used" | "v2_attribution_case_unavailable" | "v2_trusted_basis_required",
+    readonly code: "v2_consequence_precondition" | "v2_commander_only_order" | "v2_act_without_sensitive_action" | "v2_sensitive_action_without_authority" | "v2_source_already_used" | "v2_attribution_case_unavailable" | "v2_trusted_basis_required" | "v2_malformed_basis" | "v2_contradictory_observation" | "v2_history_mismatch",
     message: string,
   ) {
     super(message);
@@ -311,13 +311,17 @@ export function resolveV2Consequences(input: V2ConsequenceInput): V2ConsequenceR
     if (available.state !== "credible-source-sensitive") {
       throw new V2ConsequenceError("v2_attribution_case_unavailable", "Source use requires a credible corroborated public case with a claim direction.");
     }
-    const used = v2AttributionSourceUseSchema.parse({
+    const parsed = v2AttributionSourceUseSchema.safeParse({
       state: "used",
       usedAtCycle,
       direction: available.direction,
       supportingEvidenceInstanceIds: [...available.supportingInstanceIds],
       supportingCorroborationGroupIds: [...available.supportingCorroborationGroupIds],
     });
+    if (!parsed.success) {
+      throw new V2ConsequenceError("v2_malformed_basis", "The derived public-case basis is not a valid two-item corroborated source-use record.");
+    }
+    const used = parsed.data;
     transition(orderIds, `${orderIds[0]}:attributionSourceUse`, "attributionSourceUse", used, false);
   }
 
@@ -400,6 +404,7 @@ export function resolveV2Consequences(input: V2ConsequenceInput): V2ConsequenceR
   }
 
   // Sum every ordinal field's contributions, then clamp once from the pre-command state.
+  // For C1/C3/C4 this is the deliberate order-independent reading of "improve/worsen one step": each field has at most one contribution there.
   const orders = { beaconExposure: exposureOrder, reserveCondition: reserveOrder, partnerConsent: partnerOrder } as const;
   for (const field of Object.keys(orders) as OrdinalField[]) {
     const own = contributions.filter((entry) => entry.field === field);
