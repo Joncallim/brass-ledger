@@ -43,6 +43,19 @@ Brass Ledger's own layout, which the code-root override above maps onto:
      that need the pinned version read that file on demand either way. -->
 @docs/engine-reference/web/VERSION.md
 
+**Brass Ledger installs older versions than that template pin: the lockfile wins.**
+Write code for these, and do not upgrade without the product owner:
+
+| Package | Installed | Where |
+|---------|-----------|-------|
+| `vite` | 8.1.5 (`engine.version`) | root lockfile; `apps/web` |
+| `typescript` | 5.9.3 | root lockfile (not 7.x: no native compiler, JS API present) |
+| `@playwright/test` | 1.62.1 | root lockfile |
+| `react` | 19.2.4 | root lockfile; `apps/web` |
+| `phaser` | 3.90.0 | `prototypes/map-room` only (Phaser 3 API, not 4) |
+
+Read a package's version from `package-lock.json` (or the prototype's own lockfile)
+before using a version-specific API.
 
 ## Technical Preferences
 

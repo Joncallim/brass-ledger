@@ -31,6 +31,15 @@ framework:
 # asset-pipeline); clients under apps/ and desktop/. Tests sit beside the code.
 engine:
   name: Web
+  version: 8.1.5
   language: TypeScript
   code_root: packages
   test_root: packages
+
+# Review depth (product owner, 2026-11-18): rigor standard for documents, with
+# review_mode pinned to full on purpose so every director and specialist review
+# runs, including the independent adversarial review CLAUDE.md requires for
+# replay/hash, save, concurrency and accepted-risk changes.
+modes:
+  rigor: standard
+  review_mode: full

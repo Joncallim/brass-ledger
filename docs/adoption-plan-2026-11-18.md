@@ -63,8 +63,8 @@ installs" note to the top of `VERSION.md` (or to CLAUDE.md's Engine Version Refe
 listing the installed versions above, so the lockfile wins over the template pin.
 
 **Time**: 30 min
-- [ ] `engine.version` set in `project.yaml`
-- [ ] Installed versions recorded where every session reads them
+- [x] `engine.version` set in `project.yaml` (8.1.5)
+- [x] Installed versions recorded in CLAUDE.md's Engine Version Reference (2026-11-18)
 
 ### 2.2 Review mode skips the independent reviews the project requires
 
@@ -81,7 +81,9 @@ Alternative: keep `minimal` and request the independent review explicitly whenev
 risk trigger applies (the CLAUDE.md rule still binds; only the automation is missing).
 
 **Time**: 5 min (plus a re-run of `/adopt`)
-- [ ] Rigor chosen and set, or the manual-review alternative chosen deliberately
+- [x] Rigor chosen and set: `modes.rigor: standard` with `modes.review_mode: full`
+      pinned on purpose (product owner, 2026-11-18). Workflow tier is now `standard`:
+      re-run `/adopt`.
 
 ---
 
