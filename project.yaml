@@ -39,7 +39,10 @@ engine:
 # Review depth (product owner, 2026-11-18): rigor standard for documents, with
 # review_mode pinned to full on purpose so every director and specialist review
 # runs, including the independent adversarial review CLAUDE.md requires for
-# replay/hash, save, concurrency and accepted-risk changes.
+# replay/hash, save, concurrency and accepted-risk changes. workflow is pinned to
+# minimal on purpose: the GROCER V2 contracts are the only design source, and
+# design/game-brief.md points to them; no studio GDDs or ADRs duplicate them.
 modes:
   rigor: standard
   review_mode: full
+  workflow: minimal

@@ -1,149 +1,188 @@
 # Adoption Plan
 
-> **Generated**: 2026-11-18
+> **Generated**: 2026-11-18 (second pass, after rigor changed; replaces the minimal-tier plan
+> from earlier the same day, whose completed items are under "Done" below)
 > **Project phase**: Production (inferred from 41 source files under `packages/`; no
-> `project.stage` set — and the V2 human gate has not passed, so treat this as unreliable)
-> **Engine**: Web / TypeScript — `engine.version` not configured
+> `project.stage` set, and the V2 human gate has not passed, so treat this as unreliable)
+> **Engine**: Web / TypeScript, Vite 8.1.5 (installed versions in CLAUDE.md)
 > **Template version**: v1.3.0 (Claude Code Game Studios, commit abc0de7)
-> **Workflow tier**: `minimal` (default — `modes.rigor` unset)
+> **Settings**: `modes.rigor: standard` → workflow `standard`; `modes.review_mode: full` (pinned)
 
 Work through these steps in order. Check off each item as you complete it.
 Re-run `/adopt` anytime to check remaining gaps.
 
-**Scope of this audit.** At `workflow: minimal` the design record is
-`design/game-brief.md`; GDDs, ADRs, the systems index, stories, the TR registry, the
-control manifest and sprint status are not expected and were **not audited**. The
-GROCER vault (`Brass Ledge Documentation/`, 184 notes including `GROCER/POTATO/V2/`)
-is the project's canonical design record under CLAUDE.md's Brass Ledger Rules; it was
-**not audited against studio formats** and must not be rewritten into them. No v1.0
-config migration is needed (`project.yaml` exists).
+**Scope of this audit.** Standard tier: GDDs (5 required sections, plus Formulas where a
+system has numeric rules), critical ADRs, systems index, stories and infrastructure.
+Found in the studio's format: 0 GDDs, 0 ADRs, 0 stories, no systems index. The GROCER vault
+(`Brass Ledge Documentation/`) is canonical under CLAUDE.md's Brass Ledger Rules and was
+**not audited against studio formats**; nothing in this plan rewrites it. The V2 design is in
+`GROCER/POTATO/V2/` (numbered contracts), decisions are in `60-DECISION-LOG.md` (50 entries,
+a table), and the work items are GitHub issues #94–#110.
+
+---
+
+## Done (first pass, 2026-11-18)
+
+- [x] `design/game-brief.md` written as a pointer to the V2 contracts; product owner
+      answered its open questions.
+- [x] `engine.version` 8.1.5 set; installed versions recorded in CLAUDE.md.
+- [x] Review depth chosen: `modes.rigor: standard`, `modes.review_mode: full`.
 
 ---
 
 ## Step 1: Fix Blocking Gaps
 
-### 1.1 No game brief
+None. No studio skill reads a malformed artifact today: there are no studio-format
+artifacts for one to misread.
 
-**Problem**: `design/game-brief.md` does not exist. At the minimal tier it is the whole
-design record that `/next-step`, `/cut` and `/prototype` read; without it they see no
-game and may steer toward starting one.
+### 1.0 Decision first (product owner): how to meet the standard tier
 
-**Fix**: `/reverse-document` the brief from `GROCER/POTATO/V2/00-NORTH-STAR.md` and
-`10-GAMEPLAY-CONTRACT.md` (plus `20-VERTICAL-SLICE.md` for Build order). Constraints:
-- The brief is a one-page pointer to the V2 contracts, not a new design. Every field
-  links the contract it comes from.
-- Anything the contracts leave open is marked *(provisional)* or left as a question for
-  the product owner — CLAUDE.md: "Escalate unspecified gameplay decisions; do not
-  invent them."
-- **Out of scope** carries the V2 freeze (no scenario expansion, graphics, doctrine,
-  tutorials, meta-progression, plugin frameworks until the human gate).
+The standard tier expects GDDs and ADRs. Brass Ledger's design already lives in GROCER, so
+pick one before Step 2:
 
+- **A. Pointer documents.** One short GDD per system and one ADR per critical decision, each
+  carrying the studio's required headings, summarising and linking its numbered contract
+  ("where this and the contract disagree, the contract wins"). The whole pipeline works
+  (`/create-stories`, `/architecture-review`, `/story-readiness`, sprint tracking).
+  Cost: about 10 GDDs and 5 ADRs to keep in step with GROCER; `/consistency-check` and
+  `/propagate-design-change` help.
+- **B. Keep the documents light.** `/project-settings modes.workflow=minimal` (an explicit
+  value wins over rigor). The brief stays the studio's design record, GROCER the only design
+  source, and `review_mode: full` keeps every review. Cost: GDD/ADR/story skills mostly do not
+  apply; Steps 2–4 below shrink to the config items. Re-run `/adopt` after.
+
+**Time**: 5 min
+- [x] **B chosen** (product owner, 2026-11-18): `modes.workflow: minimal` pinned in
+      `project.yaml`, `review_mode: full` kept. Steps 2 and 3 do not apply; at the minimal
+      tier the remaining gaps are Steps 4 and 5.
+
+---
+
+## Step 2: Fix High-Priority Gaps (option A — not chosen; kept for reference)
+
+### 2.1 Systems index and GDDs
+
+**Problem**: no `design/gdd/systems-index.md` and no GDDs, so `/create-stories`,
+`/design-review`, `/gate-check` and `/consistency-check` have nothing to read.
+
+**Fix**: `/map-systems` to write the index from the V2 authority map, then
+`/reverse-document` (or `/design-system`) one pointer GDD per system. Each GDD has Overview,
+Detailed Rules, Edge Cases, Dependencies and Acceptance Criteria (plus Formulas for numeric
+rules), each section linking the contract section it summarises. Gaps in a contract are
+marked as questions, never filled ("Escalate unspecified gameplay decisions").
+
+Candidate systems, from `V2/README.md` and `50-EXECUTION-PLAN.md`:
+
+| System (GDD stem) | Issue | Contracts |
+|---|---|---|
+| `command-package` | #96 | 10 (command semantics), 39 |
+| `standing-direction` | #97 | 10, 20 §1 |
+| `ravellan-adversary` | #99 | 22, 37, 37A |
+| `hq-intelligence` | #100 | 23, 23A–23F |
+| `persistent-consequences` | #101 | 25 |
+| `lattice-collection` | #102 | 26 |
+| `staff-recommendation` | #98 | 24, 36 |
+| `terminal-crisis` | #104 | 27 |
+| `command-room` | #105 | 28, 38 |
+| `consequence-reveal` | #106 | 29, 38 |
+
+**Time**: 2 sessions
+- [ ] `design/gdd/systems-index.md` written
+- [ ] One pointer GDD per system, each run through `/design-review`
+
+### 2.2 ADRs for critical decisions
+
+**Problem**: no ADRs, so `/story-readiness` cannot check a story's decisions and
+`/architecture-review` has nothing to trace.
+
+**Fix**: `/architecture-decision` for each critical decision, each citing its source in
+`30-ARCHITECTURE-CONTRACT.md`, `10-GAMEPLAY-CONTRACT.md` or `60-DECISION-LOG.md` (by D-number).
+Candidates:
+- replay: canonical initial state plus ordered authoritative transitions, hash verification;
+- persisted-format rule: version bump, no silent reinterpretation, no migration without
+  authority;
+- #100 intelligence is pure derived state, never persisted (D47, D50);
+- information boundary and player-safe projection (38);
+- V1 protections: server-authoritative mutation, `expectedRevision` stale-write rejection,
+  accepted-risk semantics.
+
+Each ADR must reach `Accepted` (stories referencing a `Proposed` ADR are blocked).
 **Time**: 1 session
-- [x] `design/game-brief.md` written, six required fields filled (Pitch, Core loop,
-      Goal & fail state, Features, Out of scope, Build order), each sourced
-- [x] Product owner answered its open questions (map room: a #105 candidate only;
-      audience; references none yet; genre) — 2026-11-18
+- [ ] ADRs written and accepted
 
 ---
 
-## Step 2: Fix High-Priority Gaps
+## Step 3: Bootstrap Infrastructure (option A — not chosen; kept for reference)
 
-### 2.1 Engine reference describes versions the project does not use
+### 3a. Register existing requirements (fills tr-registry.yaml)
+`docs/architecture/tr-registry.yaml` exists but holds no requirements. Run
+`/architecture-review` after Step 2.
+**Time**: 1 session
+- [ ] tr-registry.yaml has requirement IDs
 
-**Problem**: `docs/engine-reference/web/VERSION.md` (imported into every session by
-CLAUDE.md) pins the template's versions — TypeScript 7.0.2, Vite 8.3.4, Playwright
-1.64.1, Phaser 4.2.1. The lockfile installs TypeScript 5.9.3, Vite 8.1.5, Playwright
-1.62.1 and React 19.2.4; `prototypes/map-room` pins Phaser 3.90.0. Agents may write
-TypeScript 7 or Phaser 4 code. `engine.version` is unset.
-
-**Fix**: set `engine.version` to the installed Vite version (8.1.5) — via
-`/setup-engine web` **choosing to pin, not upgrade** (a version bump is an always-ask
-decision), or `/project-settings engine.version=8.1.5`. Then add a "Brass Ledger
-installs" note to the top of `VERSION.md` (or to CLAUDE.md's Engine Version Reference)
-listing the installed versions above, so the lockfile wins over the template pin.
-
+### 3b. Create control manifest
+Run `/create-control-manifest`. Seed it with the CLAUDE.md invariants (rules only in
+`packages/sim`, schemas only in `packages/shared`, no headless coupling to browser/server).
 **Time**: 30 min
-- [x] `engine.version` set in `project.yaml` (8.1.5)
-- [x] Installed versions recorded in CLAUDE.md's Engine Version Reference (2026-11-18)
+- [ ] docs/architecture/control-manifest.md created
 
-### 2.2 Review mode skips the independent reviews the project requires
+### 3c. Create sprint tracking file
+Run `/sprint-plan update` (the GitHub issues #94–#110 are the backlog).
+**Time**: 15 min
+- [ ] production/sprint-status.yaml created
 
-**Problem**: review mode resolves to `solo` (from the default `modes.rigor: minimal`):
-no director or reviewer agents are spawned. CLAUDE.md's risk triggers require
-independent adversarial review for replay/hash changes, save migrations, session
-deletion, revision/concurrency, accepted-risk handling, file paths, import/export,
-release replacement and signing.
+### 3d. Set authoritative project stage
+Run `/gate-check` for the stage you are actually in. The inferred "Production" comes from
+file counts; the V2 human gate (#110) has not passed, so confirm the stage with the
+product owner first.
+**Time**: 5 min
+- [ ] `project.stage` written
 
-**Fix (your decision)**: `/project-settings modes.rigor=standard` (phase-gate reviews,
-standard GDD/ADR tier) or `modes.rigor=full`. Note that raising rigor also raises the
-workflow tier, which brings GDDs/ADRs back into scope — re-run `/adopt` afterwards.
-Alternative: keep `minimal` and request the independent review explicitly whenever a
-risk trigger applies (the CLAUDE.md rule still binds; only the automation is missing).
-
-**Time**: 5 min (plus a re-run of `/adopt`)
-- [x] Rigor chosen and set: `modes.rigor: standard` with `modes.review_mode: full`
-      pinned on purpose (product owner, 2026-11-18). Workflow tier is now `standard`:
-      re-run `/adopt`.
-
----
-
-## Step 3: Bootstrap Infrastructure
-
-Not on the minimal path — the brief's build order is the plan. Next: `/create-stories`
-(or `/dev-story` once stories exist).
+### 3e. Traceability matrix
+`/architecture-review` writes `docs/architecture/requirements-traceability.md`.
+- [ ] Traceability matrix created
 
 ---
 
 ## Step 4: Medium-Priority Gaps
 
 ### 4.1 Naming conventions not configured
-
-**Problem**: `naming.*` is unset in `project.yaml` and `[TO BE CONFIGURED]` in
-`.claude/docs/technical-preferences.md`, so skills fall back to generic conventions.
-
-**Fix**: record the repo's existing conventions (read from `packages/` and `apps/`, not
-invented) with `/project-settings naming.<key>=<value>`.
+Record the repo's existing conventions (read from `packages/` and `apps/`, not invented)
+with `/project-settings naming.<key>=<value>`.
 **Time**: 30 min
 - [ ] Naming conventions recorded
 
 ### 4.2 Performance budgets not configured
-
-**Problem**: `performance.*` is unset. Frame-rate and draw-call budgets mostly do not
-apply to a turn-based, headless-first game; turn-resolution time and bundle size might.
-
-**Fix**: set only the budgets that apply, or record that none do.
+Frame-rate budgets mostly do not apply to a turn-based, headless-first game; turn-resolution
+time and bundle size might. Set only the ones that apply, or record that none do.
 **Time**: 15 min
 - [ ] Budgets set, or "not applicable" recorded
+
+(Sprint status, stage and traceability, also medium, are Step 3c–3e.)
 
 ---
 
 ## Step 5: Optional Improvements
 
 ### 5.1 Rendering and physics blank
-
-Not applicable to Brass Ledger. Set them to `none` so engine-aware skills stop asking.
-**Time**: 5 min
-- [ ] `rendering` and `physics` recorded as none
+Not applicable. Record them as none.
+- [ ] Recorded
 
 ### 5.2 Forbidden patterns empty
-
-`technical-preferences.md` has no forbidden patterns. Candidates already stated in
-CLAUDE.md: simulation rules outside `packages/sim`; schemas outside `packages/shared`;
-whole-session client saves; headless runner importing browser or server state; real
-user save directories in tests; signing credentials anywhere in the repo.
-**Time**: 15 min
-- [ ] Forbidden patterns recorded
+Candidates from CLAUDE.md: simulation rules outside `packages/sim`; schemas outside
+`packages/shared`; whole-session client saves; headless runner importing browser or server
+state; real user save directories in tests; signing credentials anywhere in the repo.
+- [ ] Recorded
 
 ---
 
 ## What to Expect from Existing Stories
 
-There are no stories in the studio's format. The roadmap and issue lists in
-`GROCER/POTATO/` stay where they are; nothing here regenerates them.
+There are no story files. The GitHub issues stay the source of work; `/create-stories`
+would write story files from GDDs (option A), not replace the issues.
 
 ---
 
 ## Re-run
 
-Run `/adopt` again after Step 2 (especially if rigor changes, which widens the audit) to
-verify the blocking and high gaps are resolved.
+Run `/adopt` again after Step 1.0 (option B changes the tier) or after Step 3 (option A).
