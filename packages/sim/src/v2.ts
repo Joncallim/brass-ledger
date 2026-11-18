@@ -309,8 +309,11 @@ function resolveCommandSetWith(
   inputs: V2ConsequenceInputs,
   makeContext: typeof createLiveProjectionContext,
 ): V2ResolvedCommandSet {
-  if (inputs.history.actionLedger.length !== revision) {
-    throw new V2ConsequenceError("v2_history_mismatch", "The supplied history must be the full validated ledger prefix (one entry per revision).");
+  const priorLedger = inputs.history.actionLedger;
+  const tail = priorLedger.at(-1);
+  // A stale or swapped prefix of the right length would otherwise write an entry that replay later rejects.
+  if (priorLedger.length !== revision || (tail !== undefined && (tail.postRevision !== revision || tail.postStateHash !== v2StateHash(state)))) {
+    throw new V2ConsequenceError("v2_history_mismatch", "The supplied history must be the full validated ledger prefix ending at the current state.");
   }
   const commandSet = canonicalizeV2CommandSet(trustedAgenda, rawCommandSet);
   if (commandSet.expectedRevision !== revision) {

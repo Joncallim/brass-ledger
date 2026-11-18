@@ -345,7 +345,8 @@ describe("AC-2 extends the existing command-set resolver", () => {
   const intent = { mainPriority: "beacon-security", redLine: "civilian-shipping", toleratedCost: "political-friction", defaultStyle: "quiet-preparation" } as const;
   const state = { cycle: 1, seed: "s", ravellan: { posture: "testing", preparation: "none", observations: [] }, campaign: opening, standingIntent: intent } as const;
   const command = (dispositions: unknown[]) => ({ cycle: 1, expectedRevision: 2, dispositions });
-  const prefix = (length: number) => ({ history: { initialState: state, initialStateDigest: "0".repeat(64), actionLedger: Array.from({ length }, () => ({ kind: "intent-declaration" })) as unknown as V2ActionLedger } });
+  // Placeholder entries; the last ends at `state`, as a validated prefix would.
+  const prefix = (length: number) => ({ history: { initialState: state, initialStateDigest: "0".repeat(64), actionLedger: Array.from({ length }, (_, i) => ({ kind: "intent-declaration", postRevision: i + 1, postStateHash: i === length - 1 ? v2StateHash(state) : "0".repeat(64) })) as unknown as V2ActionLedger } });
 
   it("applies consequences from the final command set regardless of agenda or disposition order", () => {
     const dispositions = [{ issueId: "watch", kind: "intervene", orderId: "reinforce-watch" }, { issueId: "consult", kind: "intervene", orderId: "formal-consultation-agreement" }];
@@ -426,7 +427,7 @@ describe("AC-3 attribution availability and source use", () => {
     const issue: V2AgendaIssue = { id: "attr", responsibleOfficer: "political", recommendedOrderId: "hold-attribution", authoredOrders: [{ id: "hold-attribution" }, { id: "use-attribution" }], mayDefer: false };
     const intent = { mainPriority: "beacon-security", redLine: "civilian-shipping", toleratedCost: "political-friction", defaultStyle: "quiet-preparation" } as const;
     const state = { cycle: 5, seed: "s", ravellan: { posture: "testing", preparation: "none", observations: [] }, campaign: opening, standingIntent: intent } as const;
-    const prefix1 = { history: { initialState: state, initialStateDigest: "0".repeat(64), actionLedger: [{ kind: "intent-declaration" }] as unknown as V2ActionLedger } };
+    const prefix1 = { history: { initialState: state, initialStateDigest: "0".repeat(64), actionLedger: [{ kind: "intent-declaration", postRevision: 1, postStateHash: v2StateHash(state) }] as unknown as V2ActionLedger } };
     const forged = { cycle: 5, expectedRevision: 1, dispositions: [{ issueId: "attr", kind: "intervene", orderId: "use-attribution", direction: "coercion", supportingEvidenceInstanceIds: ["x", "y"] }] };
     assert.throws(() => resolveV2CommandSet(state, 1, [issue], forged, prefix1), (e: unknown) => e instanceof V2CommandValidationError && e.code === "v2_invalid_command");
     assert.throws(() => resolveV2CommandSet(state, 1, [issue], { ...forged, basis: credibleBasis("coercion"), dispositions: [{ issueId: "attr", kind: "intervene", orderId: "use-attribution" }] }, prefix1), V2CommandValidationError);
@@ -556,7 +557,10 @@ describe("AC-4 versioning and trusted replay", () => {
       // The same C3 command built live without its prefix is refused, never silently built without exhaustion.
       const cycleThree = session.actionLedger[session.actionLedger.length - 1]!;
       const empty = { initialState: session.initialState, initialStateDigest: session.initialStateDigest, actionLedger: [] as V2ActionLedger };
-      for (const history of [empty, { ...empty, actionLedger: session.actionLedger.slice(0, 3) }]) {
+      // Right length but a stale tail (N5): it would otherwise write an entry replay later rejects.
+      const full = session.actionLedger.slice(0, cycleThree.preRevision);
+      const swapped = { ...empty, actionLedger: [...full.slice(0, -1), full[0]] as V2ActionLedger };
+      for (const history of [empty, { ...empty, actionLedger: session.actionLedger.slice(0, 3) }, swapped]) {
         assert.throws(() => createV2CommandSetLedgerEntry(cycleThree.preState, cycleThree.preRevision, agendaFor(3), { cycle: 3, expectedRevision: cycleThree.preRevision, dispositions: agendaFor(3).map((entry) => ({ issueId: entry.id, kind: "delegate" })) }, { history }),
           (e: unknown) => e instanceof V2ConsequenceError && e.code === "v2_history_mismatch");
       }
@@ -585,6 +589,6 @@ describe("AC-4 versioning and trusted replay", () => {
   it("an undecided package cannot enter a ledger", () => {
     const state = { cycle: 5, seed: "s", ravellan: { posture: "testing", preparation: "none", observations: [] }, campaign: opening, standingIntent: intent } as const;
     const agenda: V2AgendaIssue[] = [{ id: "beacon", responsibleOfficer: "operations", recommendedOrderId: "quiet-reinforce-beacon", authoredOrders: [{ id: "quiet-reinforce-beacon" }, { id: "hold-beacon-posture" }], mayDefer: false }];
-    assert.throws(() => createV2CommandSetLedgerEntry(state, 1, agenda, { cycle: 5, expectedRevision: 1, dispositions: [{ issueId: "beacon", kind: "delegate" }] }, { history: { initialState: state, initialStateDigest: "0".repeat(64), actionLedger: [{ kind: "intent-declaration" }] as unknown as V2ActionLedger } }), V2UndecidedConsequenceError);
+    assert.throws(() => createV2CommandSetLedgerEntry(state, 1, agenda, { cycle: 5, expectedRevision: 1, dispositions: [{ issueId: "beacon", kind: "delegate" }] }, { history: { initialState: state, initialStateDigest: "0".repeat(64), actionLedger: [{ kind: "intent-declaration", postRevision: 1, postStateHash: v2StateHash(state) }] as unknown as V2ActionLedger } }), V2UndecidedConsequenceError);
   });
 });

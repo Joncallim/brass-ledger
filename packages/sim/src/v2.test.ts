@@ -56,7 +56,8 @@ const agendaProvider = () => agenda;
 
 /** Placeholder prefix of the right length, for tests that exercise validation rather than consequences. */
 function resolveFake(state: V2Session["state"], revision: number, trustedAgenda: readonly V2AgendaIssue[], raw: unknown) {
-  const actionLedger = Array.from({ length: revision }, () => ({ kind: "intent-declaration" })) as unknown as V2Session["actionLedger"];
+  // Placeholder entries; the last ends at `state`, as a validated prefix would.
+  const actionLedger = Array.from({ length: revision }, (_, i) => ({ kind: "intent-declaration", postRevision: i + 1, postStateHash: i === revision - 1 ? v2StateHash(state) : "0".repeat(64) })) as unknown as V2Session["actionLedger"];
   return resolveV2CommandSet(state, revision, trustedAgenda, raw, { history: { initialState: state as V2Session["state"], initialStateDigest: "0".repeat(64), actionLedger } });
 }
 
