@@ -1,13 +1,13 @@
 # Story 001: Persistent consequences and irreversible source use (#101)
 
 > **Epic**: Brass Ledger — V2 Kestrel Strait slice
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
 > **Build step**: core
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-11-18
 
 ## Context
 
