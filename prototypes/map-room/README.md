@@ -7,7 +7,7 @@ officers brief you in person, and the brass seals are your two personal orders a
 It is **isolated on purpose**. It is not an npm workspace, does not import `packages/sim`
 or `packages/shared`, and plays one fixed route from `src/fixture.js`. Nothing here is a
 rule: the sim's player-safe projection stays the authority for what may be shown or said.
-AGENTS.md freezes graphics work until the V2 human gate; this prototype exists at the
+CLAUDE.md (Brass Ledger Rules) freezes graphics work until the V2 human gate; this prototype exists at the
 product owner's request to explore presentation and should not be wired into `apps/web`
 without that decision.
 

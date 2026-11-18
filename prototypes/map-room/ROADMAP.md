@@ -2,7 +2,7 @@
 
 This is a proposal for the product owner. Signed so far: the player commands a task force
 moving through one war, and the war layer's shape described under phase 2 (both
-29 October 2026). Everything else past phase 1 is an unsigned gameplay decision. Under the repository's V2 freeze (`AGENTS.md`), none of it goes
+29 October 2026). Everything else past phase 1 is an unsigned gameplay decision. Under the repository's V2 freeze (`CLAUDE.md`, Brass Ledger Rules), none of it goes
 into the shipped game until the V2 human fun gate passes. Until then it stays in
 `prototypes/map-room`.
 
