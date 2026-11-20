@@ -380,7 +380,7 @@ Use [[39-KESTREL-CROSS-SYSTEM-COMPOSITION]].
 
 | Course | Exposure delta | Reserve delta | Other |
 | --- | ---: | ---: | --- |
-| `quiet-reinforce-beacon` | +1 | -1 when material commitment required | preparation → prepared |
+| `quiet-reinforce-beacon` | +1 | -1 when material commitment required: pre-package preparation is `routine` ([[60-DECISION-LOG]] D51) | preparation → prepared |
 | `visible-reinforce-beacon` | +1 | -1 | preparation → prepared; partner-sensitive |
 | `hold-beacon-posture` | 0 | 0 | — |
 | `keep-reserve-forward` | 0 | -1 | preparation → prepared |
@@ -470,7 +470,7 @@ Validate two IDs, two distinct groups and correspondence with the current basis.
 Effects:
 
 - severe source exposure;
-- improve partner one only where coordinated/politically usable and partner accessible;
+- improve partner one only where coordinated/politically usable and partner accessible (judged before the package); a coordinated package improves partner at most one step in total, so under Honour this adds nothing further ([[60-DECISION-LOG]] D52, D53);
 - unilateral package uses its one package-level deterioration instead;
 - discovery observation under 37A.
 

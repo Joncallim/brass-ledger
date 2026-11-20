@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { scenarioSummarySchema, chiefSpriteDeterministicSeed, gameSessionSchema, turnInputSchema, v2CurrentRulesetVersion } from "@brass-ledger/shared";
+import { scenarioSummarySchema, chiefSpriteDeterministicSeed, gameSessionSchema, turnInputSchema, v2CurrentRulesetVersion, v2OpeningCampaignRecords } from "@brass-ledger/shared";
 import { hashPromptText } from "@brass-ledger/headless";
 import { soloScenario, staffExerciseScenario } from "@brass-ledger/content";
 import { campaignStateHash, ineligibleStaffNegotiations, initializeV2RavellanState, resolveTurn, v2FinalSessionDigest, v2InitialStateDigest } from "@brass-ledger/sim";
@@ -84,6 +84,7 @@ function validV2Export() {
     seed: "kestrel-seed",
     standingIntent: null,
     ravellan: { ...initializeV2RavellanState({ rulesetId: identity.rulesetVersion, scenarioId: identity.scenarioId, campaignSeed: "kestrel-seed" }), observations: [] },
+    campaign: v2OpeningCampaignRecords,
   };
   const session = {
     id: "v2-save-1", campaignId: "v2-campaign-1", revision: 0, identity,

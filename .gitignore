@@ -26,3 +26,14 @@ __pycache__/
 *.pyc
 
 data/saves/
+
+# === Claude Code Game Studios (local, per developer) ===
+.claude/settings.local.json
+CLAUDE.local.md
+project.local.yaml
+production/session-logs/
+production/session-state/
+.scratch/
+.claude/agent-memory/
+.claude/worktrees/
+docs/consistency-failures.md
