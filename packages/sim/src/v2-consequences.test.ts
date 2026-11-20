@@ -343,6 +343,8 @@ describe("AC-2 C5 atomic package", () => {
     const basis = { basis: credibleBasis("coercion") };
     const honour = resolve(5, withRecords({ consultationPromise: "active", partnerConsent: "conditional" }), ["use-attribution", "honour-consultation"], basis);
     assert.equal(honour.campaign.partnerConsent, "uneasy", "Honour + Use: one step, not two");
+    const useFact = honour.facts.find((fact) => fact.ruleId === "use-attribution:partnerConsent");
+    assert.equal(useFact?.contributionRef, "0", "Use under Honour keeps its causal fact with a zero contribution");
     const concession = resolve(5, withRecords({ partnerConsent: "conditional" }), ["use-attribution", "political-concession"], basis);
     assert.equal(concession.campaign.partnerConsent, "uneasy", "Concession + Use on an accessible partner: one step");
     const withdrawn = resolve(5, withRecords({ partnerConsent: "withdrawn" }), ["use-attribution", "political-concession"], basis);
