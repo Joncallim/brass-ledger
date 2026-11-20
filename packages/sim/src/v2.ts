@@ -26,7 +26,7 @@ import { createHash } from "node:crypto";
 
 export { canonicalV2Json };
 import { V2VerifiedProjectionContext, createLiveProjectionContext, createVerifiedProjectionContext } from "./v2-hq-verified-context";
-import { V2ConsequenceError, V2UndecidedConsequenceError, resolveV2Consequences, type V2PublicCaseBasisProvider } from "./v2-consequences";
+import { V2ConsequenceError, resolveV2Consequences, type V2PublicCaseBasisProvider } from "./v2-consequences";
 
 /** SHA-256 digest of canonical V2 JSON representation (sim-local, uses node:crypto). */
 export function v2Sha256(value: unknown): string {
@@ -623,9 +623,6 @@ export function validateV2ReplayIntegrity(rawSession: unknown, trustedAgendaProv
       } catch (error) {
         if (error instanceof V2CommandValidationError || error instanceof V2ConsequenceError) {
           throw new V2ReplayValidationError("v2_ledger_transition_invalid", `A V2 ledger command is no longer legal: ${error.code}.`);
-        }
-        if (error instanceof V2UndecidedConsequenceError) {
-          throw new V2ReplayValidationError("v2_ledger_transition_invalid", `A V2 ledger command needs an undecided rule: ${error.ruleId}.`);
         }
         throw error;
       }

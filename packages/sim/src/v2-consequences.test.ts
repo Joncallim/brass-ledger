@@ -25,13 +25,13 @@ import {
   V2CommandValidationError,
   V2ConsequenceError,
   V2ReplayValidationError,
-  V2UndecidedConsequenceError,
   canonicalV2Json,
   createV2CommandSetLedgerEntry,
   createV2IntentDeclarationLedgerEntry,
   createV2PublicCaseBasisProvider,
   createV2RavellanDecisionLedgerEntry,
   deriveV2AttributionAvailability,
+  quietReinforceBeaconReserveDelta,
   resolveV2CommandSet,
   resolveV2Consequences,
   v2FinalSessionDigest,
@@ -324,19 +324,30 @@ describe("AC-2 C5 atomic package", () => {
     }
   });
 
-  it("the other C5 courses are unaffected by the undecided rule", () => {
-    for (const ids of [["hold-beacon-posture", "keep-reserve-forward", "honour-consultation"], ["visible-reinforce-beacon", "emergency-consolidation", "act-then-inform"], ["hold-beacon-posture", "emergency-consolidation", "political-concession"]]) {
-      assert.doesNotThrow(() => resolve(5, channel, ids));
+  it("D51: quiet reinforcement costs reserve only when no denial plan is prepared", () => {
+    const routine = resolve(5, channel, ["quiet-reinforce-beacon", "hold-attribution"]);
+    assert.equal(routine.campaign.reserveCondition, "strained", "routine preparation commits reserve");
+    assert.equal(routine.campaign.beaconPreparation, "prepared");
+    const prepared = resolve(5, withRecords({ consultationPromise: "active", beaconPreparation: "prepared" }), ["quiet-reinforce-beacon"]);
+    assert.equal(prepared.campaign.reserveCondition, "usable", "an existing plan costs no further reserve");
+    assert.equal(quietReinforceBeaconReserveDelta("routine"), -1);
+    assert.equal(quietReinforceBeaconReserveDelta("prepared"), 0);
+    // Judged on the pre-package state: keep-reserve-forward in the same package does not waive it.
+    assert.equal(resolve(5, channel, ["quiet-reinforce-beacon", "keep-reserve-forward"]).campaign.reserveCondition, "brittle");
+    for (const order of permutations(["quiet-reinforce-beacon", "keep-reserve-forward", "honour-consultation"])) {
+      assert.equal(canonicalV2Json(resolve(5, channel, order)), canonicalV2Json(resolve(5, channel, ["quiet-reinforce-beacon", "keep-reserve-forward", "honour-consultation"])));
     }
   });
 
-  it("quiet-reinforce-beacon fails loudly instead of defaulting its reserve delta", () => {
-    for (const ids of [["quiet-reinforce-beacon"], ["quiet-reinforce-beacon", "keep-reserve-forward", "honour-consultation"]]) {
-      assert.throws(() => resolve(5, channel, ids), (e: unknown) => e instanceof V2UndecidedConsequenceError && e.ruleId === "c5-quiet-reinforce-beacon-reserve" && /BLOCKED: PRODUCT DECISION REQUIRED/.test(e.message));
-    }
+  it("D52/D53: a coordinated package improves the partner at most one step, judged before the package", () => {
+    const basis = { basis: credibleBasis("coercion") };
+    const honour = resolve(5, withRecords({ consultationPromise: "active", partnerConsent: "conditional" }), ["use-attribution", "honour-consultation"], basis);
+    assert.equal(honour.campaign.partnerConsent, "uneasy", "Honour + Use: one step, not two");
+    const concession = resolve(5, withRecords({ partnerConsent: "conditional" }), ["use-attribution", "political-concession"], basis);
+    assert.equal(concession.campaign.partnerConsent, "uneasy", "Concession + Use on an accessible partner: one step");
+    const withdrawn = resolve(5, withRecords({ partnerConsent: "withdrawn" }), ["use-attribution", "political-concession"], basis);
+    assert.equal(withdrawn.campaign.partnerConsent, "conditional", "Concession restores access; Use cannot also improve a partner withdrawn before the package");
   });
-
-  it.todo("BLOCKED: PRODUCT DECISION REQUIRED - 25 section 10 quiet-reinforce-beacon reserve -1 'when material commitment required' has no defined trigger (contracts 24, 25, 36, 39); implement quietReinforceBeaconReserveDelta() once decided");
 });
 
 describe("AC-2 extends the existing command-set resolver", () => {
@@ -387,7 +398,7 @@ describe("AC-3 attribution availability and source use", () => {
       assert.equal(result.observations.find((entry) => entry.signal === "ravellan_discovery_signal")?.source, "c5-public-attribution");
       assert.equal(result.campaign.partnerConsent, "cooperative");
     }
-    assert.equal(resolve(5, withRecords({ consultationPromise: "active", partnerConsent: "uneasy" }), useIds, { basis: credibleBasis("coercion") }).campaign.partnerConsent, "cooperative", "coordinated Use improves an accessible partner");
+    assert.equal(resolve(5, withRecords({ consultationPromise: "active", partnerConsent: "uneasy" }), useIds, { basis: credibleBasis("coercion") }).campaign.partnerConsent, "cooperative", "a coordinated package improves an accessible partner one step (D52)");
     const act = resolve(5, withRecords({ partnerConsent: "cooperative" }), ["use-attribution", "act-then-inform"], { basis: credibleBasis("coercion") });
     assert.equal(act.campaign.partnerConsent, "uneasy", "unilateral package keeps its one deterioration");
     const both = resolve(5, opening, ["visible-reinforce-beacon", "use-attribution", "act-then-inform"], { basis: credibleBasis("coercion") });
@@ -586,9 +597,10 @@ describe("AC-4 versioning and trusted replay", () => {
     rejects(buildSession(5), "v2_ledger_transition_invalid", sameGroup);
   });
 
-  it("an undecided package cannot enter a ledger", () => {
+  it("a delegated quiet-reinforcement package enters a ledger", () => {
     const state = { cycle: 5, seed: "s", ravellan: { posture: "testing", preparation: "none", observations: [] }, campaign: opening, standingIntent: intent } as const;
     const agenda: V2AgendaIssue[] = [{ id: "beacon", responsibleOfficer: "operations", recommendedOrderId: "quiet-reinforce-beacon", authoredOrders: [{ id: "quiet-reinforce-beacon" }, { id: "hold-beacon-posture" }], mayDefer: false }];
-    assert.throws(() => createV2CommandSetLedgerEntry(state, 1, agenda, { cycle: 5, expectedRevision: 1, dispositions: [{ issueId: "beacon", kind: "delegate" }] }, { history: { initialState: state, initialStateDigest: "0".repeat(64), actionLedger: [{ kind: "intent-declaration", postRevision: 1, postStateHash: v2StateHash(state) }] as unknown as V2ActionLedger } }), V2UndecidedConsequenceError);
+    const entry = createV2CommandSetLedgerEntry(state, 1, agenda, { cycle: 5, expectedRevision: 1, dispositions: [{ issueId: "beacon", kind: "delegate" }] }, { history: { initialState: state, initialStateDigest: "0".repeat(64), actionLedger: [{ kind: "intent-declaration", postRevision: 1, postStateHash: v2StateHash(state) }] as unknown as V2ActionLedger } });
+    assert.equal(entry.postState.campaign.reserveCondition, "strained");
   });
 });

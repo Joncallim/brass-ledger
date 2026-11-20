@@ -49,40 +49,16 @@ export class V2ConsequenceError extends Error {
 }
 
 /**
- * Raised when a package needs a rule the contracts leave undecided. It never
- * resolves to a default: the package is refused until a product decision exists.
+ * Reserve delta of `quiet-reinforce-beacon` (25 section 10, "-1 when material
+ * commitment required"; 36 "dynamically crosses reserve"). Decision D51: a
+ * material commitment is required exactly when the pre-package Beacon
+ * preparation is still `routine` (no denial plan built, so reinforcing commits
+ * reserve now). With `prepared` (paid for by C3 forward preparation or C4
+ * quiet preparation), the reinforcement executes that plan at no further cost.
+ * Judged on the pre-package state, so issue order cannot matter.
  */
-export class V2UndecidedConsequenceError extends Error {
-  constructor(readonly ruleId: V2UndecidedConsequenceRule["ruleId"], message: string) {
-    super(message);
-    this.name = "V2UndecidedConsequenceError";
-  }
-}
-
-// --- the one undecided rule (BLOCKED: PRODUCT DECISION REQUIRED) -------------
-
-/** A typed "no decision exists" result, deliberately not a number. */
-export type V2UndecidedConsequenceRule = Readonly<{
-  kind: "undecided";
-  ruleId: "c5-quiet-reinforce-beacon-reserve";
-  question: string;
-}>;
-
-/**
- * EXTENSION POINT. 25 section 10 gives `quiet-reinforce-beacon` a reserve
- * delta of "-1 when material commitment required", but no contract (24, 25,
- * 36, 39) defines when a material commitment is required. This must neither
- * default to 0 nor to -1. Once the product owner decides the trigger, replace
- * this function's body with the executable condition returning `0 | -1`
- * (it receives nothing today because no input is yet known to matter), and
- * replace the matching `it.todo` in v2-consequences.test.ts.
- */
-export function quietReinforceBeaconReserveDelta(): 0 | -1 | V2UndecidedConsequenceRule {
-  return {
-    kind: "undecided",
-    ruleId: "c5-quiet-reinforce-beacon-reserve",
-    question: "25 section 10: when is a material commitment required for quiet-reinforce-beacon (reserve -1)?",
-  };
+export function quietReinforceBeaconReserveDelta(preparation: V2CampaignRecords["beaconPreparation"]): 0 | -1 {
+  return preparation === "routine" ? -1 : 0;
 }
 
 // --- ordinal helpers -----------------------------------------------------
@@ -163,8 +139,7 @@ const latticeOrders: Readonly<Record<number, { protect: string; leave: string }>
 
 /**
  * Applies exactly the 25 section 6-11 effects of the complete final order set.
- * Throws {@link V2ConsequenceError} for a package the contracts make illegal and
- * {@link V2UndecidedConsequenceError} for the one rule left undecided.
+ * Throws {@link V2ConsequenceError} for a package the contracts make illegal.
  */
 export function resolveV2Consequences(input: V2ConsequenceInput): V2ConsequenceResolution {
   const { cycle, pre, finalOrders } = input;
@@ -182,7 +157,6 @@ export function resolveV2Consequences(input: V2ConsequenceInput): V2ConsequenceR
   const emissions: Array<Readonly<{ signal: V2RavellanObservation["signal"]; value: string; source: string }>> = [];
   const contributions: Contribution[] = [];
   const next: { -readonly [K in keyof V2CampaignRecords]: V2CampaignRecords[K] } = { ...pre };
-  let undecided: V2UndecidedConsequenceRule | null = null;
 
   const addFact = (ruleId: string, orderIds: readonly string[], stateField: string, before: string, after: string, conditioned: boolean, contributionRef?: string): void => {
     facts.push({
@@ -343,9 +317,7 @@ export function resolveV2Consequences(input: V2ConsequenceInput): V2ConsequenceR
     // Beacon / reserve signed effects (25 section 10).
     if (has("quiet-reinforce-beacon")) {
       contribute("quiet-reinforce-beacon", "beaconExposure", +1);
-      const reserve = quietReinforceBeaconReserveDelta();
-      if (typeof reserve === "number") contribute("quiet-reinforce-beacon", "reserveCondition", reserve);
-      else undecided = reserve;
+      contribute("quiet-reinforce-beacon", "reserveCondition", quietReinforceBeaconReserveDelta(pre.beaconPreparation));
     }
     if (has("visible-reinforce-beacon")) { contribute("visible-reinforce-beacon", "beaconExposure", +1); contribute("visible-reinforce-beacon", "reserveCondition", -1); }
     if (has("keep-reserve-forward")) contribute("keep-reserve-forward", "reserveCondition", -1);
@@ -380,7 +352,11 @@ export function resolveV2Consequences(input: V2ConsequenceInput): V2ConsequenceR
       useSource(5, ["use-attribution"]);
       // The unilateral package takes its single deterioration instead of this improvement.
       const coordinated = authority === "honour" || authority === "concession";
-      if (coordinated && partnerAccessible) contribute("use-attribution", "partnerConsent", +1, true);
+      // D52: a coordinated package improves the partner at most one step in total, as the
+      // unilateral package worsens it exactly one; Honour's +1 already is that step.
+      // D53: "accessible" is judged on the pre-package partner, so a Concession that lifts a
+      // withdrawn partner does not also let Use improve them.
+      if (coordinated && partnerAccessible) contribute("use-attribution", "partnerConsent", authority === "concession" ? +1 : 0, true);
     }
 
     // 37A package-level C5 emissions: at most one value per signal.
@@ -397,10 +373,6 @@ export function resolveV2Consequences(input: V2ConsequenceInput): V2ConsequenceR
     if (authority === "honour" && partnerAccessible) emit("coalition_unity_signal", "coherent", "honour-consultation");
     else if (authority === "concession") emit("coalition_unity_signal", "coherent", "political-concession");
     else if (authority === "act") emit("coalition_unity_signal", "fractured", "act-then-inform");
-  }
-
-  if (undecided !== null) {
-    throw new V2UndecidedConsequenceError((undecided as V2UndecidedConsequenceRule).ruleId, `BLOCKED: PRODUCT DECISION REQUIRED - ${(undecided as V2UndecidedConsequenceRule).question}`);
   }
 
   // Sum every ordinal field's contributions, then clamp once from the pre-command state.
